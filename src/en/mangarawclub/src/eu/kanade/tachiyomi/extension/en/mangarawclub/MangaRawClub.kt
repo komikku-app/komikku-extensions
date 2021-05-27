@@ -84,19 +84,18 @@ class MangaRawClub : ParsedHttpSource() {
             genres.add(genre)
         }
         manga.genre = genres.joinToString(", ")
-        manga.status = parseStatus(document.select("h5:contains(Status) + div").text())
+        val status = when {
+            document.select("div.header-stats").select("strong.completed").first() != null -> SManga.COMPLETED
+            document.select("div.header-stats").select("strong.ongoing").first() != null -> SManga.ONGOING
+            else -> SManga.UNKNOWN
+        }
+        manga.status = status
         manga.description = document.getElementsByClass("description").first().text()
+        manga.description = document.select("div.summary > div.content").first().text()
         val coverElement = document.getElementsByClass("cover")
         manga.thumbnail_url = baseUrl + coverElement.select("img").attr("data-src")
 
         return manga
-    }
-
-    private fun parseStatus(element: String): Int = when {
-
-        element.toLowerCase(Locale.getDefault()).contains("publishing") -> SManga.ONGOING
-        element.toLowerCase(Locale.getDefault()).contains("finished") -> SManga.COMPLETED
-        else -> SManga.UNKNOWN
     }
 
     override fun chapterListSelector() = "ul.chapter-list > li"
@@ -117,15 +116,18 @@ class MangaRawClub : ParsedHttpSource() {
         val fdate = date.replace(".", "").replace("Sept", "Sep")
         val format = "MMMMM dd, yyyy, h:mm a"
         val format2 = "MMMMM dd, yyyy, h a" // because sometimes if it is exact hour it wont have minutes because why not
-        val sdf = SimpleDateFormat(format)
-
-        return try {
-            val value = sdf.parse(fdate)
-            value!!.time
+        val sdf = SimpleDateFormat(format, Locale.ENGLISH)
+        try {
+            return try {
+                val value = sdf.parse(fdate)
+                value!!.time
+            } catch (e: ParseException) {
+                val sdfF = SimpleDateFormat(format2, Locale.ENGLISH)
+                val value = sdfF.parse(fdate)
+                value!!.time
+            }
         } catch (e: ParseException) {
-            val sdfF = SimpleDateFormat(format2)
-            val value = sdfF.parse(fdate)
-            value!!.time
+            return 0
         }
     }
 
