@@ -4,10 +4,10 @@ import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Page
-import okhttp3.OkHttpClient
-import java.util.concurrent.TimeUnit
 import okhttp3.Headers
+import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.concurrent.TimeUnit
 
 class SekteKomik : WPMangaStream("Sekte Komik", "https://sektekomik.com", "id") {
     // Formerly "Sekte Komik (WP Manga Stream)"
@@ -29,7 +29,7 @@ class SekteKomik : WPMangaStream("Sekte Komik", "https://sektekomik.com", "id") 
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()
             .set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
-            .set("Referer", page.url)
+            .set("Referer", baseUrl)
             .build()
 
         return GET(page.imageUrl!!, newHeaders)

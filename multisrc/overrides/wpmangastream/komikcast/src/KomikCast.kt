@@ -36,7 +36,7 @@ class KomikCast : WPMangaStream("Komik Cast", "https://komikcast.com", "id") {
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()
             .set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
-            .set("Referer", page.url)
+            .set("Referer", baseUrl)
             .build()
 
         return GET(page.imageUrl!!, newHeaders)
