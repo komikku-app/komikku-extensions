@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.en.mangaclash
+package eu.kanade.tachiyomi.extension.en.midnightmessscans
 
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
@@ -7,9 +7,9 @@ import java.util.Locale
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
-class MangaClash : Madara(
-    "Manga Clash",
-    "https://mangaclash.com",
+class MidnightMessScans : Madara(
+    "Midnight Mess Scans",
+    "https://midnightmess.org",
     "en",
     dateFormat = SimpleDateFormat("MM/dd/yy", Locale.US)
 ) {
