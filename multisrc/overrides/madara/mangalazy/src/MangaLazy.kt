@@ -1,4 +1,3 @@
-  
 package eu.kanade.tachiyomi.extension.en.mangalazy
 
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
@@ -16,6 +15,8 @@ class MangaLazy : Madara("MangaLazy", "https://mangalazy.com", "en") {
         .readTimeout(30, TimeUnit.SECONDS)
         .addNetworkInterceptor(rateLimitInterceptor)
         .build()
+        
+    override val pageListParseSelector = "div.page-break, li.blocks-gallery-item"
         
     override fun getGenreList() = listOf(
         Genre("Action", "action"),
