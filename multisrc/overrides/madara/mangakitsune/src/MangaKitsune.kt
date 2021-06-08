@@ -9,7 +9,7 @@ import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
 @Nsfw
-class MangaKitsune : Madara("MangaKitsune", "https://mangakitsune.com", "en", dateFormat = SimpleDateFormat("MM/dd/yy", Locale.US)) {
+class MangaKitsune : Madara("MangaKitsune", "https://mangakitsune.com", "en", dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)) {
     private val rateLimitInterceptor = RateLimitInterceptor(1)
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
@@ -18,7 +18,7 @@ class MangaKitsune : Madara("MangaKitsune", "https://mangakitsune.com", "en", da
         .addNetworkInterceptor(rateLimitInterceptor)
         .build()
         
-    override val pageListParseSelector = "div.page-break, li.blocks-gallery-item"
+    override val pageListParseSelector = ".reading-content div.text-left :has(>img)"
     
     override fun getGenreList() = listOf(
         Genre("Action", "action"),
