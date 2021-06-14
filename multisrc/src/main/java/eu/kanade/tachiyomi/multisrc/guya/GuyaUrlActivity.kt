@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.en.guya
+package eu.kanade.tachiyomi.multisrc.guya
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
@@ -8,7 +8,7 @@ import android.util.Log
 import kotlin.system.exitProcess
 
 /**
- * Accepts https://guya.moe/read/manga/xyz intents
+ * Accepts $baseURL/read/manga/xyz intents
  *
  * Added due to requests from various users to allow for opening of titles when given the
  * Guya URL whilst on mobile.

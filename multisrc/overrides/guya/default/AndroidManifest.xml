@@ -4,7 +4,7 @@
 
     <application>
         <activity
-            android:name=".en.coloredcouncil.ColoredCouncilUrlActivity"
+            android:name="eu.kanade.tachiyomi.multisrc.guya.GuyaUrlActivity"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
@@ -12,11 +12,10 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
                 <data
-                    android:host="coloredcouncil.moe"
-                    android:pathPattern="/read/manga/..*"
-                    android:scheme="https" />
+                    android:host="${SOURCEHOST}"
+                    android:pathPattern="/.*/.*/..*"
+                    android:scheme="${SOURCESCHEME}" />
             </intent-filter>
         </activity>
     </application>
