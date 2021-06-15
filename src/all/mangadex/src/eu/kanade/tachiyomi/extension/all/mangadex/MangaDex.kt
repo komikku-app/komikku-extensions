@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.AggregateDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterListDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDto
@@ -183,7 +184,22 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
 
     override fun mangaDetailsParse(response: Response): SManga {
         val manga = helper.json.decodeFromString<MangaDto>(response.body!!.string())
-        return helper.createManga(manga, lang.substringBefore("-"))
+        val shortLang = lang.substringBefore("-")
+        return helper.createManga(manga, fetchSimpleChapterList(manga, shortLang), shortLang)
+    }
+
+    /**
+     * get a quick-n-dirty list of the chapters to be used in determining the manga status.
+     * uses the 'aggregate' endpoint
+     * @see MangaDexHelper.getPublicationStatus
+     * @see MangaDexHelper.doubleCheckChapters
+     * @see AggregateDto
+     */
+    private fun fetchSimpleChapterList(manga: MangaDto, langCode: String): List<String> {
+        val url = "${MDConstants.apiMangaUrl}/${manga.data.id}/aggregate?translatedLanguage[]=${langCode}"
+        val response = client.newCall(GET(url, headers)).execute()
+        val chapters = helper.json.decodeFromString<AggregateDto>(response.body!!.string())
+        return chapters.volumes.values.flatMap { it.chapters.values }.map { it.chapter }
     }
 
     // Chapter list section
