@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -305,7 +304,6 @@ open class BatoTo(
             throw RuntimeException("Unexpected Branch: Please File A Bug Report describing this issue")
             // val imgJson = json.parseToJsonElement(script.substringAfter("var images = ").substringBefore(";")).jsonObject
             // imgJson.keys.forEachIndexed { i, s -> pages.add(Page(i, imageUrl = imgJson[s]!!.jsonPrimitive.content)) }
-
         } else if (script.contains("const server =")) { // bato.to
             val duktape = Duktape.create()
             val encryptedServer = script.substringAfter("const server = ").substringBefore(";")
