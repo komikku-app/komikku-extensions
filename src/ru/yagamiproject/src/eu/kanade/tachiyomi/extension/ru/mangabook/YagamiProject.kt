@@ -118,10 +118,9 @@ class YagamiProject : ParsedHttpSource() {
             chapter.attr("title").isNullOrBlank() -> chapter.text()
             else -> chapter.attr("title")
         }
-
+        val numout = name.substringBefore(":").substringAfterLast(" ").substringAfterLast("№")
         chapter_number = when {
-            name.contains("Глава") -> name.substringAfter("Глава ").substringBefore(":").toFloat()
-            name.contains("Акт") -> name.substringAfter("Акт").substringBefore(":").replace("№", "").toFloat()
+            numout.contains(Regex("^[0-9]+")) -> numout.toFloat()
             else -> 0F
         }
         setUrlWithoutDomain(chapter.attr("href"))
@@ -162,7 +161,6 @@ class YagamiProject : ParsedHttpSource() {
     }
 
     // Filters
-
     override fun getFilterList() = FilterList(
         Filter.Header("ПРИМЕЧАНИЕ: Фильтры исключают другдруга!"),
         CategoryList(categoriesName),
