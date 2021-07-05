@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'ManhwaManga.net'
-    pkgNameSuffix = 'en.manhwamanga'
-    extClass = '.ManhwaManga'
-    extVersionCode = 4
+    extName = 'ManhuaManga.net'
+    pkgNameSuffix = 'en.manhuamanga'
+    extClass = '.ManhuaManga'
+    extVersionCode = 1
     libVersion = '1.2'
     containsNsfw = true
 }
