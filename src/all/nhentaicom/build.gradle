@@ -3,9 +3,9 @@ apply plugin: 'kotlin-android'
 
 ext {
     extName = 'nHentai.com (unoriginal)'
-    pkgNameSuffix = 'en.nhentai.com'
-    extClass = '.NHentaiCom'
-    extVersionCode = 1
+    pkgNameSuffix = 'all.nhentaicom'
+    extClass = '.NHentaiComFactory'
+    extVersionCode = 2
     libVersion = '1.2'
     containsNsfw = true
 }
