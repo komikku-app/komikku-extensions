@@ -6,8 +6,8 @@ import GenresDto
 import LibraryDto
 import MangaDetDto
 import PageDto
+import ChunksPageDto
 import PageWrapperDto
-import PaidPageDto
 import SeriesWrapperDto
 import UserDto
 import android.annotation.SuppressLint
@@ -350,11 +350,11 @@ class Remanga : ConfigurableSource, HttpSource() {
         val body = response.body?.string()!!
         return try {
             val page = json.decodeFromString<SeriesWrapperDto<PageDto>>(body)
-            page.content.pages.filter { it.height > 1 }.map {
+            page.content.pages.filter { it.height > 10 }.map {
                 Page(it.page, "", it.link)
             }
         } catch (e: SerializationException) {
-            val page = json.decodeFromString<SeriesWrapperDto<PaidPageDto>>(body)
+            val page = json.decodeFromString<SeriesWrapperDto<ChunksPageDto>>(body)
             val result = mutableListOf<Page>()
             page.content.pages.forEach {
                 it.filter { page -> page.height > 10 }.forEach { page ->
