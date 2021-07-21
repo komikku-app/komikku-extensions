@@ -173,6 +173,30 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
 
     // SEARCH section
 
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        if (query.startsWith(MDConstants.prefixChSearch)) {
+            return getMangaIdFromChapterId(query.removePrefix(MDConstants.prefixChSearch)).flatMap { manga_id ->
+                super.fetchSearchManga(page, MDConstants.prefixIdSearch + manga_id, filters)
+            }
+        }
+        return super.fetchSearchManga(page, query, filters)
+    }
+
+    private fun getMangaIdFromChapterId(id: String): Observable<String> {
+        return client.newCall(GET("${MDConstants.apiChapterUrl}/$id", headers))
+            .asObservableSuccess()
+            .map { response ->
+                if (response.isSuccessful.not()) {
+                    throw Exception("Unable to process Chapter request. HTTP code: ${response.code}")
+                }
+
+                helper.json.decodeFromString<ChapterDto>(response.body!!.string()).relationships
+                    .find {
+                        it.type == MDConstants.manga
+                    }!!.id
+            }
+    }
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.startsWith(MDConstants.prefixIdSearch)) {
             val url = MDConstants.apiMangaUrl.toHttpUrlOrNull()!!.newBuilder().apply {

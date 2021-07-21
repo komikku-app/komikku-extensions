@@ -31,6 +31,7 @@ object MDConstants {
         .apply { timeZone = TimeZone.getTimeZone("UTC") }
 
     const val prefixIdSearch = "id:"
+    const val prefixChSearch = "ch:"
 
     const val dataSaverPref = "dataSaverV5"
 
