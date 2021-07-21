@@ -19,7 +19,7 @@ class DreamUnionScan : Madara(
 
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::authWarningIntercept)
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     override val altName: String = "Nome alternativo: "

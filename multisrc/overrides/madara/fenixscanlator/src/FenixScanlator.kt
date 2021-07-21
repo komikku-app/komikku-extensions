@@ -15,7 +15,7 @@ class FenixScanlator : Madara(
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     // [...document.querySelectorAll('input[name="genre[]"]')]

@@ -6,7 +6,7 @@ ext {
     extName = 'Bruttal'
     pkgNameSuffix = 'pt.bruttal'
     extClass = '.Bruttal'
-    extVersionCode = 3
+    extVersionCode = 4
     libVersion = '1.2'
 }
 

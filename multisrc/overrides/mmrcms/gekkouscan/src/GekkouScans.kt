@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 class GekkouScans : MMRCMS("Gekkou Scans", "https://leitor.gekkouscans.com.br", "pt-BR") {
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     override fun chapterListSelector() = "ul.domaintld > li.li"

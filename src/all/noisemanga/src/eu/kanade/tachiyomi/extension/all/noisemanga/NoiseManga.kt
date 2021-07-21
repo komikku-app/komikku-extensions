@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.noisemanga
 
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -8,11 +9,13 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Headers
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.util.concurrent.TimeUnit
 
 abstract class NoiseManga(override val lang: String) : ParsedHttpSource() {
 
@@ -21,6 +24,10 @@ abstract class NoiseManga(override val lang: String) : ParsedHttpSource() {
     override val baseUrl = "https://noisemanga.com"
 
     override val supportsLatest = false
+
+    override val client: OkHttpClient = network.client.newBuilder()
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", USER_AGENT)

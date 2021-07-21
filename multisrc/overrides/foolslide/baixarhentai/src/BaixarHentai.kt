@@ -18,7 +18,7 @@ class BaixarHentai : FoolSlide(
     override val id: Long = 8908032188831949972
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     override fun mangaDetailsParse(document: Document): SManga {

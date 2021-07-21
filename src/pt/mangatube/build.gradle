@@ -6,7 +6,7 @@ ext {
     extName = 'MangaTube'
     pkgNameSuffix = 'pt.mangatube'
     extClass = '.MangaTube'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '1.2'
 }
 

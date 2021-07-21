@@ -17,7 +17,7 @@ class MangaLivre : MangasProject("Mangá Livre", "https://mangalivre.net", "pt-B
     override val id: Long = 4762777556012432014
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(2, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     override fun popularMangaRequest(page: Int): Request {

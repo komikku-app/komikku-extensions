@@ -39,7 +39,7 @@ class MangaYabu : ParsedHttpSource() {
         .connectTimeout(2, TimeUnit.MINUTES)
         .readTimeout(2, TimeUnit.MINUTES)
         .writeTimeout(2, TimeUnit.MINUTES)
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()

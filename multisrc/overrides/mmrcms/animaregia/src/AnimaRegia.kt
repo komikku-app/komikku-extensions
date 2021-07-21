@@ -9,6 +9,6 @@ class AnimaRegia : MMRCMS("AnimaRegia", "https://animaregia.net", "pt-BR") {
     override val id: Long = 4378659695320121364
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 }

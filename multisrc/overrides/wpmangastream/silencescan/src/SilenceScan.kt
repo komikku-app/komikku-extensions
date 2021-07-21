@@ -23,7 +23,7 @@ class SilenceScan : WPMangaStream(
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .addNetworkInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     private val json: Json by injectLazy()

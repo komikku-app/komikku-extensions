@@ -6,7 +6,7 @@ import android.text.InputType
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.annotations.Nsfw
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -39,6 +39,7 @@ import java.io.IOException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 @Nsfw
 class TsukiMangas : HttpSource(), ConfigurableSource {
@@ -52,9 +53,7 @@ class TsukiMangas : HttpSource(), ConfigurableSource {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(SpecificHostRateLimitInterceptor(baseUrl.toHttpUrl(), 1))
-        .addInterceptor(SpecificHostRateLimitInterceptor(CDN_1_URL, 1, period = 2))
-        .addInterceptor(SpecificHostRateLimitInterceptor(CDN_2_URL, 1, period = 2))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .addInterceptor(::tsukiAuthIntercept)
         .build()
 

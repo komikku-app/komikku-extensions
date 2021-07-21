@@ -8,6 +8,6 @@ import java.util.concurrent.TimeUnit
 class Remangas : MMRCMS("Remangas", "https://remangas.top", "pt-BR") {
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 }

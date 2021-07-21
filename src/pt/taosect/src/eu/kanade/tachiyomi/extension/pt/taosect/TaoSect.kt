@@ -31,7 +31,7 @@ class TaoSect : ParsedHttpSource() {
     override val supportsLatest = false
 
     override val client: OkHttpClient = network.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()

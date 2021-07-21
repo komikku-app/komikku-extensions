@@ -9,7 +9,7 @@ class MangasProjectGenerator : ThemeSourceGenerator {
 
     override val themeClass = "MangasProject"
 
-    override val baseVersionCode: Int = 6
+    override val baseVersionCode: Int = 7
 
     override val sources = listOf(
         SingleLang("Leitor.net", "https://leitor.net", "pt-BR", className = "LeitorNet", isNsfw = true),

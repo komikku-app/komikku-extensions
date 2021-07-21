@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 class Toonei : MangasProject("Toonei", "https://toonei.net", "pt-BR") {
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(2, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     override fun getReaderToken(document: Document): String? {

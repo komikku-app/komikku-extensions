@@ -18,7 +18,7 @@ class LeitorNet : MangasProject("Leitor.net", "https://leitor.net", "pt-BR") {
     override val id: Long = 2225174659569980836
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(2, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     /**

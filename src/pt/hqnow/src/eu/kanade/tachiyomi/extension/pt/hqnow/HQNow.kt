@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.extension.pt.hqnow
 
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -17,7 +17,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -27,6 +26,7 @@ import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.Normalizer
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class HQNow : HttpSource() {
 
@@ -39,8 +39,7 @@ class HQNow : HttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(SpecificHostRateLimitInterceptor(GRAPHQL_URL.toHttpUrl(), 1))
-        .addInterceptor(SpecificHostRateLimitInterceptor(STATIC_URL.toHttpUrl(), 2))
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     private val json: Json by injectLazy()
