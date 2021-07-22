@@ -76,6 +76,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Esomanga", "http://esomanga.com", "tr"),
         SingleLang("FastManhwa", "https://fastmanhwa.net", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("FDM Scan", "https://fdmscan.com", "pt-BR", overrideVersionCode = 3),
+        SingleLang("Fleur Blanche", "https://fleurscan.com", "pt-BR", isNsfw = true),
         SingleLang("Free Manga", "https://freemanga.me", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("FreeWebtoonCoins", "https://freewebtooncoins.com", "en", overrideVersionCode = 1),
         SingleLang("Fudido Scanlator", "https://fudidoscan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
