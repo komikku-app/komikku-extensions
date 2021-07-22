@@ -7,7 +7,7 @@ import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class MangaArabTeam : Madara("مانجا عرب تيم Manga Arab Team", "https://mangaarabteam.com", "ar", SimpleDateFormat("dd MMM، yyyy", Locale.forLanguageTag("ar"))) {
+class MangaArabTeam : Madara("مانجا عرب تيم Manga Arab Team", "https://mangaarbteam.com", "ar", SimpleDateFormat("dd MMM، yyyy", Locale.forLanguageTag("ar"))) {
     override fun imageRequest(page: Page): Request {
         return GET(page.imageUrl!!.replace("http:", "https:"))
     }
