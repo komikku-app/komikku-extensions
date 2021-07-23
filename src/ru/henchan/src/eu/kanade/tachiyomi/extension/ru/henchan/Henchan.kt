@@ -35,7 +35,7 @@ class Henchan : ParsedHttpSource() {
 
     override val name = "Henchan"
 
-    override val baseUrl = "https://hen-chan.pro"
+    override val baseUrl = "https://hchan.pro"
 
     private val exhentaiBaseUrl = "http://exhentai-dono.me"
 
@@ -307,6 +307,7 @@ class Henchan : ParsedHttpSource() {
         Genre("netorare"),
         Genre("netori"),
         Genre("nipple_penetration"),
+        Genre("oyakodon"),
         Genre("paizuri_(titsfuck)"),
         Genre("rpg"),
         Genre("scat"),
@@ -320,6 +321,7 @@ class Henchan : ParsedHttpSource() {
         Genre("анал"),
         Genre("андроид"),
         Genre("анилингус"),
+        Genre("анимация"),
         Genre("аркада"),
         Genre("арт"),
         Genre("бабушка"),
@@ -333,6 +335,7 @@ class Henchan : ParsedHttpSource() {
         Genre("больница"),
         Genre("большая_грудь"),
         Genre("большие_попки"),
+        Genre("бондаж"),
         Genre("буккаке"),
         Genre("в_ванной"),
         Genre("в_общественном_месте"),
@@ -347,8 +350,11 @@ class Henchan : ParsedHttpSource() {
         Genre("внучка"),
         Genre("волосатые_женщины"),
         Genre("гаремник"),
+        Genre("гг_девушка"),
+        Genre("гг_парень"),
         Genre("гипноз"),
         Genre("глубокий_минет"),
+        Genre("горничные"),
         Genre("горячий_источник"),
         Genre("грудастая_лоли"),
         Genre("групповой_секс"),
@@ -372,9 +378,12 @@ class Henchan : ParsedHttpSource() {
         Genre("исполнение_желаний"),
         Genre("камера"),
         Genre("квест"),
+        Genre("кимоно"),
         Genre("колготки"),
         Genre("комиксы"),
         Genre("косплей"),
+        Genre("кремпай"),
+        Genre("кудере"),
         Genre("кузина"),
         Genre("куннилингус"),
         Genre("купальники"),
@@ -387,6 +396,7 @@ class Henchan : ParsedHttpSource() {
         Genre("мерзкий_дядька"),
         Genre("много_девушек"),
         Genre("молоко"),
+        Genre("монашки"),
         Genre("монстры"),
         Genre("мочеиспускание"),
         Genre("мужская_озвучка"),
@@ -395,6 +405,7 @@ class Henchan : ParsedHttpSource() {
         Genre("на_природе"),
         Genre("наблюдение"),
         Genre("непрямой_инцест"),
+        Genre("новелла"),
         Genre("обмен_партнерами"),
         Genre("обмен_телами"),
         Genre("огромная_грудь"),
@@ -419,9 +430,11 @@ class Henchan : ParsedHttpSource() {
         Genre("секс_игрушки"),
         Genre("сестра"),
         Genre("сетакон"),
+        Genre("скрытный_секс"),
         Genre("спортивная_форма"),
         Genre("спящие"),
         Genre("страпон"),
+        Genre("суккубы"),
         Genre("темнокожие"),
         Genre("тентакли"),
         Genre("толстушки"),
@@ -443,6 +456,7 @@ class Henchan : ParsedHttpSource() {
         Genre("чикан"),
         Genre("чирлидеры"),
         Genre("чулки"),
+        Genre("школьная_форма"),
         Genre("школьники"),
         Genre("школьницы"),
         Genre("школьный_купальник"),
