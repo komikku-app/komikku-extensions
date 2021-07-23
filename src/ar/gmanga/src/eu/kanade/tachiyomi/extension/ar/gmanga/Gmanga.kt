@@ -30,7 +30,7 @@ import okhttp3.Response
 
 class Gmanga : ConfigurableSource, HttpSource() {
 
-    private val domain: String = "gmanga.me"
+    private val domain: String = "gmanga.org"
 
     override val baseUrl: String = "https://$domain"
 
