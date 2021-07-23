@@ -134,7 +134,7 @@ class NeoxScanlator :
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7,es;q=0.6,gl;q=0.5"
         private const val REFERER = "https://google.com/"
 
-        private const val DEFAULT_BASE_URL = "https://neoxscans.com"
+        private const val DEFAULT_BASE_URL = "https://neoxscans.net"
         private const val BASE_URL_PREF_KEY = "base_url_${BuildConfig.VERSION_NAME}"
         private const val BASE_URL_PREF_TITLE = "URL da fonte"
         private const val BASE_URL_PREF_SUMMARY = "Para uso temporário. Quando você atualizar a " +
