@@ -1,6 +1,5 @@
 name: 🐞 Issue report
 description: Report a source issue in Tachiyomi
-title: "Source name: Short description"
 labels: [Bug]
 body:
 
