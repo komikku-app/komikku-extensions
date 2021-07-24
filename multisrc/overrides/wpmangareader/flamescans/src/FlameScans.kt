@@ -30,11 +30,8 @@ class FlameScans : WPMangaReader(
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .addInterceptor(::composedImageIntercept)
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 3, TimeUnit.SECONDS))
         .build()
-
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", USER_AGENT)
 
     private val composedSelector: String = "#readerarea div.figure_container div.composed_figure"
 
@@ -118,8 +115,6 @@ class FlameScans : WPMangaReader(
     }
 
     companion object {
-        private const val USER_AGENT = "Tachiyomi Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36"
 
         private const val COMPOSED_SUFFIX = "?comp"
         private val MEDIA_TYPE = "image/png".toMediaType()
