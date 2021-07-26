@@ -166,12 +166,16 @@ class MangaDexHelper() {
     /**
      * create an SManga from json element only basic elements
      */
-    fun createBasicManga(mangaDto: MangaDto, coverFileName: String?): SManga {
+    fun createBasicManga(mangaDto: MangaDto, coverFileName: String?, coverSuffix: String?): SManga {
         return SManga.create().apply {
             url = "/manga/${mangaDto.data.id}"
             title = cleanString(mangaDto.data.attributes.title.asMdMap()["en"] ?: "")
+            
             coverFileName?.let {
-                thumbnail_url = "${MDConstants.cdnUrl}/covers/${mangaDto.data.id}/$coverFileName"
+                thumbnail_url = when(coverSuffix != null && coverSuffix != "") {
+                    true -> "${MDConstants.cdnUrl}/covers/${mangaDto.data.id}/$coverFileName$coverSuffix"
+                    else -> "${MDConstants.cdnUrl}/covers/${mangaDto.data.id}/$coverFileName"
+                }
             }
         }
     }
@@ -179,7 +183,7 @@ class MangaDexHelper() {
     /**
      * Create an SManga from json element with all details
      */
-    fun createManga(mangaDto: MangaDto, chapters: List<String>, lang: String): SManga {
+    fun createManga(mangaDto: MangaDto, chapters: List<String>, lang: String, coverSuffix: String?): SManga {
         try {
             val data = mangaDto.data
             val attr = data.attributes
@@ -228,7 +232,7 @@ class MangaDexHelper() {
                 .filter { it.isNullOrBlank().not() }
 
             val desc = attr.description.asMdMap()
-            return createBasicManga(mangaDto, coverFileName).apply {
+            return createBasicManga(mangaDto, coverFileName, coverSuffix).apply {
                 description = cleanString(desc[lang] ?: desc["en"] ?: "")
                 author = authors.joinToString(", ")
                 artist = artists.joinToString(", ")

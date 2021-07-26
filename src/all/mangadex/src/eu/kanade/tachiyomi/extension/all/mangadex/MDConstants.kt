@@ -33,6 +33,18 @@ object MDConstants {
     const val prefixIdSearch = "id:"
     const val prefixChSearch = "ch:"
 
+    const val coverQualityPref = "thumbnailQuality"
+
+    fun getCoverQualityPreferenceKey(dexLang: String): String {
+        return "${coverQualityPref}_$dexLang"
+    }
+    
+    fun getCoverQualityPreferenceEntries() = arrayOf("Orginal", "Medium", "Low")
+    
+    fun getCoverQualityPreferenceEntryValues() = arrayOf("", ".512.jpg", ".256.jpg")
+    
+    fun getCoverQualityPreferenceDefaultValue() = getCoverQualityPreferenceEntryValues()[0]
+
     const val dataSaverPref = "dataSaverV5"
 
     fun getDataSaverPreferenceKey(dexLang: String): String {
