@@ -258,6 +258,8 @@ open class NHentai(
         Filter.Header("Uploaded valid units are h, d, w, m, y."),
         Filter.Header("example: (>20d)"),
         UploadedFilter(),
+        Filter.Header("Filter by pages, for example: (>20)"),
+        PagesFilter(),
 
         Filter.Separator(),
         SortFilter(),
@@ -272,6 +274,7 @@ open class NHentai(
     class ParodyFilter : AdvSearchEntryFilter("Parodies")
     class CharactersFilter : AdvSearchEntryFilter("Characters")
     class UploadedFilter : AdvSearchEntryFilter("Uploaded")
+    class PagesFilter : AdvSearchEntryFilter("Pages")
     open class AdvSearchEntryFilter(name: String) : Filter.Text(name)
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
