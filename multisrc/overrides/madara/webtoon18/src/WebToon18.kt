@@ -8,7 +8,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Nsfw
-class WebToon18 : Madara("WebToon18", "https://webtoon18.net", "en", dateFormat = SimpleDateFormat("d MMMM, yyyy", Locale.US)) {
+class WebToon18 : Madara("WebToon18", "http://webtoon18.net", "en", dateFormat = SimpleDateFormat("d MMMM, yyyy", Locale.US)) {
     private fun pagePath(page: Int) = if (page > 1) "page/$page/" else ""
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/webtoons/${pagePath(page)}?m_orderby=views", headers)
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/webtoons/${pagePath(page)}?m_orderby=latest", headers)
