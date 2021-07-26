@@ -39,7 +39,7 @@ object MDConstants {
         return "${coverQualityPref}_$dexLang"
     }
     
-    fun getCoverQualityPreferenceEntries() = arrayOf("Orginal", "Medium", "Low")
+    fun getCoverQualityPreferenceEntries() = arrayOf("Original", "Medium", "Low")
     
     fun getCoverQualityPreferenceEntryValues() = arrayOf("", ".512.jpg", ".256.jpg")
     
