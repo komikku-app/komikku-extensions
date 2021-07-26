@@ -70,7 +70,8 @@ class MangaOwl : ParsedHttpSource() {
     // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search/$page?search=$query".toHttpUrlOrNull()!!.newBuilder()
+        val url = "$baseUrl/search/$page".toHttpUrlOrNull()!!.newBuilder()
+        url.addQueryParameter("search", query)
 
         filters.forEach { filter ->
             when (filter) {
@@ -92,7 +93,7 @@ class MangaOwl : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
-    override fun searchMangaNextPageSelector() = "div.navigation li a:contains(next)"
+    override fun searchMangaNextPageSelector() = "div.blog-pagenat-wthree li a.page-link.next"
 
     // Manga summary page
 
