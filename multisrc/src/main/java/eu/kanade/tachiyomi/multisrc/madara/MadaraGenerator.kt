@@ -85,6 +85,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Furio Scans", "https://furioscans.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("Fênix Scanlator", "https://fenixscanlator.xyz", "pt-BR", pkgName = "fenixscanlator", className = "FenixScanlator", overrideVersionCode = 2),
         SingleLang("GalaxyDegenScans", "https://gdegenscans.xyz/", "en", overrideVersionCode = 1),
+        SingleLang("Gatemanga", "https://gatemanga.com", "ar"),
         SingleLang("Geass Hentai", "https://geasshentai.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Glory Scans", "https://gloryscan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Gogoscans", "https://www.gogoscans.com", "en"),
