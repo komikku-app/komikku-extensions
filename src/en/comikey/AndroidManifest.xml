@@ -23,11 +23,11 @@
                     android:scheme="https" />
 
                 <data
-                    android:host="comikey.com"
+                    android:host="www.comikey.com"
                     android:pathPattern="/comics/..*"
                     android:scheme="https" />
                 <data
-                    android:host="comikey.com"
+                    android:host="www.comikey.com"
                     android:pathPattern="/read/..*"
                     android:scheme="https" />
             </intent-filter>
