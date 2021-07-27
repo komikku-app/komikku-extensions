@@ -100,6 +100,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Hero Manhua", "https://heromanhua.com", "en"),
         SingleLang("Heroz Scanlation", "https://herozscans.com", "en", overrideVersionCode = 1),
         SingleLang("Hiperdex", "https://hiperdex.com", "en", isNsfw = true, overrideVersionCode = 4),
+        SingleLang("Hizomanga", "https://hizomanga.com", "ar"),
         SingleLang("hManhwa", "https://hmanhwa.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Hscans", "https://hscans.com", "en", overrideVersionCode = 1),
         SingleLang("Hunter Fansub", "https://hunterfansub.com", "es", overrideVersionCode = 1),
