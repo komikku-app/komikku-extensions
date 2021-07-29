@@ -1,18 +1,15 @@
 package eu.kanade.tachiyomi.extension.fr.lecercleduscan
 
 import eu.kanade.tachiyomi.multisrc.foolslide.FoolSlide
+import java.util.Locale
 
 class LeCercleDuScan : FoolSlide("Le Cercle du Scan", "https://lel.lecercleduscan.com", "fr") {
-
-    override fun parseChapterDate(date: String): Long? {
-        val dateToEnglish = when (val lcDate = date.toLowerCase()) {
+    override fun parseChapterDate(date: String) = super.parseChapterDate(
+        when (val lcDate = date.toLowerCase(Locale.FRENCH)) {
             "hier" -> "yesterday"
             "aujourd'hui" -> "today"
             "demain" -> "tomorrow"
-
             else -> lcDate
         }
-
-        return super.parseChapterDate(dateToEnglish)
-    }
+    )
 }

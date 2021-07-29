@@ -1,7 +1,13 @@
 package eu.kanade.tachiyomi.multisrc.foolslide
 
+import android.app.Application
+import android.os.Build
+import androidx.preference.CheckBoxPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -17,26 +23,24 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.injectLazy
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.HashSet
 import java.util.Locale
 
 abstract class FoolSlide(
     override val name: String,
     override val baseUrl: String,
     override val lang: String,
-    val urlModifier: String = ""
-) : ParsedHttpSource() {
-
-    protected open val dedupeLatestUpdates = true
+    open val urlModifier: String = ""
+) : ConfigurableSource, ParsedHttpSource() {
 
     override val supportsLatest = true
 
-    private val json: Json by injectLazy()
+    private val json by lazy { Injekt.get<Json>() }
 
     override fun popularMangaSelector() = "div.group"
 
@@ -44,48 +48,39 @@ abstract class FoolSlide(
         return GET("$baseUrl$urlModifier/directory/$page/", headers)
     }
 
-    val latestUpdatesUrls = HashSet<String>()
+    private val latestUpdatesUrls = mutableSetOf<String>()
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val mp = super.latestUpdatesParse(response)
-        return if (dedupeLatestUpdates) {
-            val mangas = mp.mangas.distinctBy { it.url }.filterNot { latestUpdatesUrls.contains(it.url) }
-            latestUpdatesUrls.addAll(mangas.map { it.url })
-            MangasPage(mangas, mp.hasNextPage)
-        } else mp
+        return mp.copy(
+            mp.mangas.distinctBy { it.url }.filter {
+                latestUpdatesUrls.add(it.url)
+            }
+        )
     }
 
     override fun latestUpdatesSelector() = "div.group"
 
     override fun latestUpdatesRequest(page: Int): Request {
-        if (page == 1) {
-            latestUpdatesUrls.clear()
-        }
+        if (page == 1) latestUpdatesUrls.clear()
         return GET("$baseUrl$urlModifier/latest/$page/")
     }
 
-    override fun popularMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
-
+    override fun popularMangaFromElement(element: Element) = SManga.create().apply {
         element.select("a[title]").first().let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.text()
+            setUrlWithoutDomain(it.attr("href"))
+            title = it.text()
         }
-
         element.select("img").first()?.let {
-            manga.thumbnail_url = it.absUrl("src").replace("/thumb_", "/")
+            thumbnail_url = it.absUrl("src").replace("/thumb_", "/")
         }
-
-        return manga
     }
 
-    override fun latestUpdatesFromElement(element: Element): SManga {
-        val manga = SManga.create()
+    override fun latestUpdatesFromElement(element: Element) = SManga.create().apply {
         element.select("a[title]").first().let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.text()
+            setUrlWithoutDomain(it.attr("href"))
+            title = it.text()
         }
-        return manga
     }
 
     override fun popularMangaNextPageSelector() = "div.next"
@@ -94,11 +89,8 @@ abstract class FoolSlide(
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val searchHeaders = headersBuilder().add("Content-Type", "application/x-www-form-urlencoded").build()
-
-        val form = FormBody.Builder()
-            .add("search", query)
-
-        return POST("$baseUrl$urlModifier/search/", searchHeaders, form.build())
+        val form = FormBody.Builder().add("search", query).build()
+        return POST("$baseUrl$urlModifier/search/", searchHeaders, form)
     }
 
     override fun searchMangaSelector() = "div.group"
@@ -116,61 +108,52 @@ abstract class FoolSlide(
 
     override fun mangaDetailsRequest(manga: SManga) = allowAdult(super.mangaDetailsRequest(manga))
 
-    open val mangaDetailsInfoSelector = "div.info"
+    protected open val mangaDetailsInfoSelector = "div.info"
 
     // if there's no image on the details page, get the first page of the first chapter
-    fun getDetailsThumbnail(document: Document, urlSelector: String = chapterUrlSelector): String? {
+    protected fun getDetailsThumbnail(document: Document, urlSelector: String = chapterUrlSelector): String? {
         return document.select("div.thumbnail img, table.thumb img").firstOrNull()?.attr("abs:src")
             ?: document.select(chapterListSelector()).last().select(urlSelector).attr("abs:href")
-                .let { url -> client.newCall(allowAdult(GET(url, headers))).execute() }
+                .let { url -> client.newCall(allowAdult(GET(url))).execute() }
                 .let { response -> pageListParse(response).first().imageUrl }
     }
 
-    override fun mangaDetailsParse(document: Document): SManga {
-        return SManga.create().apply {
-            document.select(mangaDetailsInfoSelector).firstOrNull()?.html()?.let { infoHtml ->
-                author = Regex("""(?i)(Author|Autore)</b>:\s?([^\n<]*)[\n<]""").find(infoHtml)?.groupValues?.get(2)
-                artist = Regex("""Artist</b>:\s?([^\n<]*)[\n<]""").find(infoHtml)?.groupValues?.get(1)
-                description = Regex("""(?i)(Synopsis|Description|Trama)</b>:\s?([^\n<]*)[\n<]""").find(infoHtml)?.groupValues?.get(2)
-            }
-            thumbnail_url = getDetailsThumbnail(document)
+    override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        document.select(mangaDetailsInfoSelector).firstOrNull()?.html()?.let { infoHtml ->
+            author = Regex("""(?i)(Author|Autore)</b>:\s?([^\n<]*)[\n<]""").find(infoHtml)?.groupValues?.get(2)
+            artist = Regex("""Artist</b>:\s?([^\n<]*)[\n<]""").find(infoHtml)?.groupValues?.get(1)
+            description = Regex("""(?i)(Synopsis|Description|Trama)</b>:\s?([^\n<]*)[\n<]""").find(infoHtml)?.groupValues?.get(2)
         }
+        thumbnail_url = getDetailsThumbnail(document)
     }
 
-    /**
-     * Transform a GET request into a POST request that automatically authorizes all adult content
-     */
-    private fun allowAdult(request: Request) = allowAdult(request.url.toString())
+    protected open val allowAdult: Boolean
+        get() = preferences.getBoolean("adult", true)
 
-    private fun allowAdult(url: String): Request {
-        return POST(
-            url,
-            body = FormBody.Builder()
-                .add("adult", "true")
-                .build()
-        )
+    private fun allowAdult(request: Request): Request {
+        val form = FormBody.Builder().add("adult", allowAdult.toString()).build()
+        return POST(request.url.toString(), headers, form)
     }
 
     override fun chapterListRequest(manga: SManga) = allowAdult(super.chapterListRequest(manga))
 
     override fun chapterListSelector() = "div.group div.element, div.list div.element"
 
-    open val chapterDateSelector = "div.meta_r"
+    protected open val chapterDateSelector = "div.meta_r"
 
-    open val chapterUrlSelector = "a[title]"
+    protected open val chapterUrlSelector = "a[title]"
 
-    override fun chapterFromElement(element: Element): SChapter {
+    override fun chapterFromElement(element: Element) = SChapter.create().apply {
         val urlElement = element.select(chapterUrlSelector).first()
         val dateElement = element.select(chapterDateSelector).first()
-        val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(urlElement.attr("href"))
-        chapter.name = urlElement.text()
-        chapter.date_upload = dateElement.text()?.let { parseChapterDate(it.substringAfter(", ")) }
-            ?: 0
-        return chapter
+        setUrlWithoutDomain(urlElement.attr("href"))
+        name = urlElement.text()
+        date_upload = dateElement.text()?.let {
+            parseChapterDate(it.substringAfter(", "))
+        } ?: 0
     }
 
-    open fun parseChapterDate(date: String): Long? {
+    protected open fun parseChapterDate(date: String): Long? {
         val lcDate = date.toLowerCase(Locale.ROOT)
         if (lcDate.endsWith(" ago"))
             parseRelativeDate(lcDate)?.let { return it }
@@ -279,18 +262,32 @@ abstract class FoolSlide(
         val doc = document.toString()
         val jsonStr = doc.substringAfter("var pages = ").substringBefore(";")
         val pages = json.parseToJsonElement(jsonStr).jsonArray
-
         return pages.mapIndexed { i, jsonEl ->
             // Create dummy element to resolve relative URL
             val absUrl = document.createElement("a")
                 .attr("href", jsonEl.jsonObject["url"]!!.jsonPrimitive.content)
                 .absUrl("href")
-
             Page(i, "", absUrl)
         }
     }
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
+
+    protected val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)!!
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        CheckBoxPreference(screen.context).apply {
+            key = "adult"
+            summary = "Show adult content"
+            setDefaultValue(true)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }.let(screen::addPreference)
+    }
 
     companion object {
         private val ORDINAL_SUFFIXES = listOf("st", "nd", "rd", "th")

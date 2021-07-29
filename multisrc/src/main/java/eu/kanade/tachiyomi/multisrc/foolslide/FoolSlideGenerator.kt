@@ -10,10 +10,10 @@ class FoolSlideGenerator : ThemeSourceGenerator {
 
     override val themeClass = "FoolSlide"
 
-    override val baseVersionCode: Int = 2
+    override val baseVersionCode: Int = 3
 
     override val sources = listOf(
-        SingleLang("The Cat Scans", "https://reader2.thecatscans.com/", "en"),
+        SingleLang("The Cat Scans", "https://reader2.thecatscans.com", "en"),
         SingleLang("Silent Sky", "https://reader.silentsky-scans.net", "en"),
         SingleLang("Death Toll Scans", "https://reader.deathtollscans.net", "en"),
         SingleLang("MangaScouts", "http://onlinereader.mangascouts.org", "de"),
@@ -25,7 +25,7 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("Menudo-Fansub", "https://www.menudo-fansub.com", "es", className = "MenudoFansub", overrideVersionCode = 1),
         SingleLang("Sense-Scans", "https://sensescans.com", "en", className = "SenseScans", overrideVersionCode = 1),
         SingleLang("Kirei Cake", "https://reader.kireicake.com", "en"),
-        SingleLang("Mangatellers", "http://www.mangatellers.gr", "en"),
+        SingleLang("Mangatellers", "https://reader.mangatellers.gr", "en"),
         SingleLang("Iskultrip Scans", "https://maryfaye.net", "en"),
         SingleLang("Anata no Motokare", "https://motokare.xyz", "en", className = "AnataNoMotokare"),
         SingleLang("Yuri-ism", "https://www.yuri-ism.net", "en", className = "YuriIsm"),
@@ -42,10 +42,9 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("Tortuga Ceviri", "http://tortuga-ceviri.com", "tr"),
         SingleLang("Rama", "https://www.ramareader.it", "it"),
         SingleLang("Mabushimajo", "http://mabushimajo.com", "tr"),
-        SingleLang("Hyakuro", "https://hyakuro.com/reader", "en"),
-        SingleLang("Le Cercle du Scan", "https://lel.lecercleduscan.com", "fr", className = "LeCercleDuScan", overrideVersionCode = 1)
-        //Sites that are down
-        //SingleLang("One Time Scans", "https://reader.otscans.com", "en"),
+        SingleLang("Hyakuro", "https://hyakuro.com", "en"),
+        SingleLang("Le Cercle du Scan", "https://lel.lecercleduscan.com", "fr", className = "LeCercleDuScan", overrideVersionCode = 1),
+        SingleLang("LetItGo Scans", "https://reader.letitgo.scans.today", "en", overrideVersionCode = 1)
     )
 
     companion object {

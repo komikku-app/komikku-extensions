@@ -1,34 +1,28 @@
 package eu.kanade.tachiyomi.extension.all.foolslidecustomizable
 
-import eu.kanade.tachiyomi.multisrc.foolslide.FoolSlide
-import eu.kanade.tachiyomi.source.Source
-import eu.kanade.tachiyomi.source.SourceFactory
-import android.app.Application
-import android.content.SharedPreferences
 import android.widget.Toast
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.BuildConfig
-import eu.kanade.tachiyomi.source.ConfigurableSource
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
+import eu.kanade.tachiyomi.multisrc.foolslide.FoolSlide
+import eu.kanade.tachiyomi.source.SourceFactory
 
 class FoolSlideCustomizableFactory : SourceFactory {
-    override fun createSources(): List<Source> = listOf(
-        FoolSlideCustomizable(),
-    )
+    override fun createSources() = listOf(FoolSlideCustomizable())
 }
-class FoolSlideCustomizable : ConfigurableSource, FoolSlide("FoolSlide Customizable", "", "other") {
-    override val baseUrl: String by lazy { getPrefBaseUrl() }
 
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+class FoolSlideCustomizable : FoolSlide("FoolSlide Customizable", "", "other") {
+    override val baseUrl: String by lazy {
+        preferences.getString(BASE_URL_PREF, DEFAULT_BASEURL)!!.substringBefore("/directory")
     }
 
-    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-        val baseUrlPref = androidx.preference.EditTextPreference(screen.context).apply {
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        super.setupPreferenceScreen(screen)
+        EditTextPreference(screen.context).apply {
             key = BASE_URL_PREF_TITLE
             title = BASE_URL_PREF_TITLE
             summary = BASE_URL_PREF_SUMMARY
-            this.setDefaultValue(DEFAULT_BASEURL)
+            setDefaultValue(DEFAULT_BASEURL)
             dialogTitle = BASE_URL_PREF_TITLE
             dialogMessage = "Default: $DEFAULT_BASEURL"
 
@@ -42,16 +36,8 @@ class FoolSlideCustomizable : ConfigurableSource, FoolSlide("FoolSlide Customiza
                     false
                 }
             }
-        }
-
-        screen.addPreference(baseUrlPref)
+        }.let(screen::addPreference)
     }
-
-    /**
-     *  Tell the user to include /directory/ in the URL even though we remove it
-     *  To increase the chance they input a usable URL
-     */
-    private fun getPrefBaseUrl() = preferences.getString(BASE_URL_PREF, DEFAULT_BASEURL)!!.substringBefore("/directory")
 
     companion object {
         private const val DEFAULT_BASEURL = "https://127.0.0.1"
