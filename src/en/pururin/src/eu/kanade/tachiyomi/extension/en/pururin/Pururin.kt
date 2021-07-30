@@ -21,7 +21,7 @@ class Pururin : ParsedHttpSource() {
 
     override val name = "Pururin"
 
-    override val baseUrl = "https://pururin.io"
+    override val baseUrl = "https://pururin.to"
 
     override val lang = "en"
 
@@ -56,30 +56,31 @@ class Pururin : ParsedHttpSource() {
         val manga = SManga.create()
         val genres = mutableListOf<String>()
 
-        document.select("tr:has(td:contains(Contents)) li").forEach { element ->
+        document.select("tr:has(td:containsOwn(Contents)) li").forEach { element ->
             val genre = element.text()
             genres.add(genre)
         }
 
         manga.title = infoElement.select("h1").text()
-        manga.author = infoElement.select("tr:has(td:contains(Artist)) a").attr("title")
-        manga.artist = infoElement.select("tr:has(td:contains(Circle)) a").text()
+        manga.author = infoElement.select("tr:has(td:containsOwn(Artist)) a").text()
+        manga.artist = infoElement.select("tr:has(td:containsOwn(Circle)) a").text()
         manga.status = SManga.COMPLETED
         manga.genre = genres.joinToString(", ")
         manga.thumbnail_url = document.select("div.cover-wrapper v-lazy-image").attr("abs:src")
 
         manga.description = getDesc(document)
+        manga.initialized = true
 
         return manga
     }
 
     private fun getDesc(document: Document): String {
         val infoElement = document.select("div.box.box-gallery")
-        val uploader = infoElement.select("tr:has(td:contains(Uploader)) .user-link")?.text()
-        val pages = infoElement.select("tr:has(td:contains(Pages)) td:eq(1)").text()
-        val ratingCount = infoElement.select("tr:has(td:contains(Ratings)) span[itemprop=\"ratingCount\"]")?.attr("content")
+        val uploader = infoElement.select("tr:has(td:containsOwn(Uploader)) .user-link")?.text()
+        val pages = infoElement.select("tr:has(td:containsOwn(Pages)) td:eq(1)").text()
+        val ratingCount = infoElement.select("tr:has(td:containsOwn(Ratings)) span[itemprop=\"ratingCount\"]")?.attr("content")
 
-        val rating = infoElement.select("tr:has(td:contains(Ratings)) gallery-rating").attr(":rating")?.toFloatOrNull()?.let {
+        val rating = infoElement.select("tr:has(td:containsOwn(Ratings)) gallery-rating").attr(":rating")?.toFloatOrNull()?.let {
             if (it > 5.0f) minOf(it, 5.0f) // cap rating to 5.0 for rare cases where value exceeds 5.0f
             else it
         }
@@ -91,7 +92,7 @@ class Pururin : ParsedHttpSource() {
             "Category",
             "Character",
             "Language"
-        ).map { it to infoElement.select("tr:has(td:contains($it)) a").map { v -> v.text() } }
+        ).map { it to infoElement.select("tr:has(td:containsOwn($it)) a").map { v -> v.text() } }
             .filter { !it.second.isNullOrEmpty() }
             .map { "${it.first}: ${it.second.joinToString()}" }
 
@@ -135,14 +136,6 @@ class Pururin : ParsedHttpSource() {
             )
     }
 
-    override fun pageListRequest(chapter: SChapter): Request = GET(
-        "$baseUrl${chapter.url.let {
-            it.substringAfterLast("/").let { titleUri ->
-                it.replace(titleUri, "01/$titleUri")
-            }.replace("gallery", "read")
-        }}"
-    )
-
     override fun chapterListSelector(): String = throw UnsupportedOperationException("Not used")
 
     override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException("Not used")
@@ -150,12 +143,15 @@ class Pururin : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
 
-        val galleryInfo = document.select("gallery-read").toString().substringAfter('{').substringBefore('}')
-        val id = galleryInfo.substringAfter("id&quot;:").substringBefore(',')
-        val total: Int = (galleryInfo.substringAfter("total_pages&quot;:").substringBefore(',')).toInt()
+        // Gets gallery id from meta tags
+        val galleryUrl = document.select("meta[property='og:url']").attr("content")
+        val id = galleryUrl.substringAfter("gallery/").substringBefore('/')
+        // Gets total pages from gallery desc
+        val infoElement = document.select("div.box.box-gallery")
+        val total: Int = infoElement.select("tr:has(td:containsOwn(Pages)) td:eq(1)").text().substringBefore(' ').toInt()
 
         for (i in 1..total) {
-            pages.add(Page(i, "", "https://cdn.pururin.io/assets/images/data/$id/$i.jpg"))
+            pages.add(Page(i, "", "https://cdn.pururin.to/assets/images/data/$id/$i.jpg"))
         }
 
         return pages
