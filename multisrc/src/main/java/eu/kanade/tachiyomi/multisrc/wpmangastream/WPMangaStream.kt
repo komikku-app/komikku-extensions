@@ -286,7 +286,8 @@ abstract class WPMangaStream(
         val imageList = json.parseToJsonElement(imageListJson).jsonArray
 
         val scriptPages = imageList.mapIndexed { i, jsonEl ->
-            Page(i, "", jsonEl.jsonPrimitive.content)
+            val imageUrl = jsonEl.jsonPrimitive.content
+            Page(i, "", if (imageUrl.startsWith(baseUrl)) imageUrl else baseUrl + imageUrl)
         }
 
         if (htmlPages.size < scriptPages.size) {
