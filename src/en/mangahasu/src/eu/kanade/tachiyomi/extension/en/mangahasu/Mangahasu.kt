@@ -27,7 +27,7 @@ class Mangahasu : ParsedHttpSource() {
 
     override val name = "Mangahasu"
 
-    override val baseUrl = "http://mangahasu.se"
+    override val baseUrl = "https://mangahasu.se"
 
     override val lang = "en"
 
@@ -165,7 +165,8 @@ class Mangahasu : ParsedHttpSource() {
             .substringBefore("\"")
 
         // Base64 = [] or empty file
-        if (lstDUrls != "W10=") {
+        // Ensures lstDUrls exists, otherwise errors will occur
+        if (lstDUrls.isNotEmpty() && lstDUrls != "W10=") {
             val jsonRaw = String(Base64.decode(lstDUrls, Base64.DEFAULT))
             val jsonArr = json.parseToJsonElement(jsonRaw).jsonArray
 
