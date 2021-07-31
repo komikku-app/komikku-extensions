@@ -9,18 +9,12 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:host="assortedscans.com"
+        <data android:host="${SOURCEHOST}"
               android:pathPattern="/reader/..*"
-              android:scheme="https"/>
-        <data android:host="www.assortedscans.com"
+              android:scheme="${SOURCESCHEME}" />
+        <data android:host="www.${SOURCEHOST}"
               android:pathPattern="/reader/..*"
-              android:scheme="https"/>
-        <data android:host="helveticascans.com"
-              android:pathPattern="/reader/..*"
-              android:scheme="https"/>
-        <data android:host="www.helveticascans.com"
-              android:pathPattern="/reader/..*"
-              android:scheme="https"/>
+              android:scheme="${SOURCESCHEME}" />
       </intent-filter>
     </activity>
   </application>
