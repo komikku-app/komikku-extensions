@@ -1,7 +1,7 @@
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GenresDto(
+data class TagsDto(
     val id: Int,
     val name: String
 )
@@ -44,8 +44,9 @@ data class MangaDetDto(
     val description: String,
     val issue_year: Int?,
     val img: ImgDto,
-    val type: GenresDto,
-    val genres: List<GenresDto>,
+    val type: TagsDto,
+    val genres: List<TagsDto>,
+    val categories: List<TagsDto>,
     val branches: List<BranchesDto>,
     val status: StatusDto,
     val avg_rating: String,

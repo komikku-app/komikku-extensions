@@ -3,12 +3,12 @@ package eu.kanade.tachiyomi.extension.ru.remanga
 import BookDto
 import BranchesDto
 import ChunksPageDto
-import GenresDto
 import LibraryDto
 import MangaDetDto
 import PageDto
 import PageWrapperDto
 import SeriesWrapperDto
+import TagsDto
 import UserDto
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
@@ -205,9 +205,9 @@ class Remanga : ConfigurableSource, HttpSource() {
         }
     }
 
-    private fun parseType(type: GenresDto): GenresDto {
+    private fun parseType(type: TagsDto): TagsDto {
         return when (type.name) {
-            "Западный комикс" -> GenresDto(type.id, "Комикс")
+            "Западный комикс" -> TagsDto(type.id, "Комикс")
             else -> type
         }
     }
@@ -245,7 +245,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 altName = "Альтернативные названия:\n" + another_name + "\n\n"
             }
             this.description = rus_name + "\n" + ratingStar + " " + ratingValue + " (голосов: " + count_rating + ")\n" + altName + Jsoup.parse(o.description).text()
-            genre = (genres + parseType(type)).joinToString { it.name } + ", " + parseAge(age_limit)
+            genre = (genres + categories + parseType(type)).joinToString { it.name } + ", " + parseAge(age_limit)
             status = parseStatus(o.status.id)
         }
     }
@@ -355,16 +355,17 @@ class Remanga : ConfigurableSource, HttpSource() {
     @TargetApi(Build.VERSION_CODES.N)
     override fun pageListParse(response: Response): List<Page> {
         val body = response.body?.string()!!
+        val heightEmptyChunks = 10
         return try {
             val page = json.decodeFromString<SeriesWrapperDto<PageDto>>(body)
-            page.content.pages.filter { it.height > 10 }.map {
+            page.content.pages.filter { it.height > heightEmptyChunks }.map {
                 Page(it.page, "", fixLink(it.link))
             }
         } catch (e: SerializationException) {
             val page = json.decodeFromString<SeriesWrapperDto<ChunksPageDto>>(body)
             val result = mutableListOf<Page>()
             page.content.pages.forEach {
-                it.filter { page -> page.height > 10 }.forEach { page ->
+                it.filter { page -> page.height > heightEmptyChunks }.forEach { page ->
                     result.add(Page(result.size, "", fixLink(page.link)))
                 }
             }
@@ -457,6 +458,11 @@ class Remanga : ConfigurableSource, HttpSource() {
     )
 
     private fun getCategoryList() = listOf(
+        SearchFilter("веб", "5"),
+        SearchFilter("в цвете", "6"),
+        SearchFilter("ёнкома", "8"),
+        SearchFilter("сборник", "10"),
+        SearchFilter("сингл", "11"),
         SearchFilter("алхимия", "47"),
         SearchFilter("ангелы", "48"),
         SearchFilter("антигерой", "26"),
@@ -465,12 +471,12 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("аристократия", "117"),
         SearchFilter("армия", "51"),
         SearchFilter("артефакты", "52"),
+        SearchFilter("амнезия / потеря памяти", "123"),
         SearchFilter("боги", "45"),
         SearchFilter("борьба за власть", "52"),
         SearchFilter("будущее", "55"),
-        SearchFilter("в цвете", "6"),
+        SearchFilter("бои на мечах", "122"),
         SearchFilter("вампиры", "112"),
-        SearchFilter("веб", "5"),
         SearchFilter("вестерн", "56"),
         SearchFilter("видеоигры", "35"),
         SearchFilter("виртуальная реальность", "44"),
@@ -480,17 +486,22 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("воспоминания из другого мира", "60"),
         SearchFilter("врачи / доктора", "116"),
         SearchFilter("выживание", "41"),
+        SearchFilter("горничные", "23"),
+        SearchFilter("гяру", "28"),
         SearchFilter("гг женщина", "63"),
         SearchFilter("гг мужчина", "64"),
-        SearchFilter("гг силён с самого начала", "110"),
+        SearchFilter("умный гг", "111"),
+        SearchFilter("тупой гг", "109"),
+        SearchFilter("гг имба", "110"),
+        SearchFilter("гг не человек", "123"),
+        SearchFilter("грузовик-сан", "125"),
         SearchFilter("геймеры", "61"),
         SearchFilter("гильдии", "62"),
-        SearchFilter("гяру", "28"),
+        SearchFilter("гоблины", "65"),
         SearchFilter("девушки-монстры", "37"),
         SearchFilter("демоны", "15"),
         SearchFilter("драконы", "66"),
         SearchFilter("дружба", "67"),
-        SearchFilter("ёнкома", "62"),
         SearchFilter("жестокий мир", "69"),
         SearchFilter("животные компаньоны", "70"),
         SearchFilter("завоевание мира", "71"),
@@ -515,8 +526,9 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("насилие / жестокость", "82"),
         SearchFilter("нежить", "83"),
         SearchFilter("ниндзя", "30"),
-        SearchFilter("оборотни", "113"),
+        SearchFilter("офисные работники", "40"),
         SearchFilter("обратный гарем", "40"),
+        SearchFilter("оборотни", "113"),
         SearchFilter("пародия", "85"),
         SearchFilter("подземелья", "86"),
         SearchFilter("политика", "87"),
@@ -530,21 +542,16 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("реинкарнация", "13"),
         SearchFilter("роботы", "89"),
         SearchFilter("рыцари", "90"),
+        SearchFilter("средневековье", "25"),
         SearchFilter("самураи", "33"),
-        SearchFilter("сборник", "10"),
-        SearchFilter("сингл", "11"),
         SearchFilter("система", "91"),
         SearchFilter("скрытие личности", "93"),
         SearchFilter("спасение мира", "94"),
-        SearchFilter("средневековье", "25"),
-        SearchFilter("спасение мира", "94"),
-        SearchFilter("средневековье", "25"),
         SearchFilter("стимпанк", "92"),
         SearchFilter("супергерои", "95"),
         SearchFilter("традиционные игры", "34"),
-        SearchFilter("тупой гг", "109"),
-        SearchFilter("умный гг", "111"),
-        SearchFilter("управление", "114"),
+        SearchFilter("учитель / ученик", "96"),
+        SearchFilter("управление территорией", "114"),
         SearchFilter("философия", "97"),
         SearchFilter("хентай", "12"),
         SearchFilter("хикикомори", "21"),
@@ -553,11 +560,8 @@ class Remanga : ConfigurableSource, HttpSource() {
     )
 
     private fun getGenreList() = listOf(
-        SearchFilter("арт", "1"),
-        SearchFilter("бдсм", "44"),
         SearchFilter("боевик", "2"),
         SearchFilter("боевые искусства", "3"),
-        SearchFilter("вампиры", "4"),
         SearchFilter("гарем", "5"),
         SearchFilter("гендерная интрига", "6"),
         SearchFilter("героическое фэнтези", "7"),
@@ -569,7 +573,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("история", "13"),
         SearchFilter("киберпанк", "14"),
         SearchFilter("кодомо", "15"),
-        SearchFilter("комедия", "16"),
+        SearchFilter("комедия", "50"),
         SearchFilter("махо-сёдзё", "17"),
         SearchFilter("меха", "18"),
         SearchFilter("мистика", "19"),
@@ -578,6 +582,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("постапокалиптика", "22"),
         SearchFilter("приключения", "23"),
         SearchFilter("психология", "24"),
+        SearchFilter("психодел-упоротость-треш", "124"),
         SearchFilter("романтика", "25"),
         SearchFilter("сверхъестественное", "27"),
         SearchFilter("сёдзё", "28"),
@@ -592,7 +597,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("фантастика", "37"),
         SearchFilter("фэнтези", "38"),
         SearchFilter("школа", "39"),
-        SearchFilter("эротика", "42"),
+        SearchFilter("элементы юмора", "16"),
         SearchFilter("этти", "40"),
         SearchFilter("юри", "41"),
         SearchFilter("яой", "43")
