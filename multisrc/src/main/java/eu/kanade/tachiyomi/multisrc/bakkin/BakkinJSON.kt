@@ -14,7 +14,8 @@ internal data class Series(
         it.map { ch -> ch.copy(name = "$it - $ch") }
     }.iterator()
 
-    val cover get() = thumb ?: "static/nocover.png"
+    val cover: String
+        get() = thumb ?: "static/nocover.png"
 
     override fun toString() = name.ifEmpty { dir }
 }

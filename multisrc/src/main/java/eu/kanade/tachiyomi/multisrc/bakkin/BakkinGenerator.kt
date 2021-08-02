@@ -8,7 +8,7 @@ class BakkinGenerator : ThemeSourceGenerator {
 
     override val themeClass = "BakkinReaderX"
 
-    override val baseVersionCode: Int = 1
+    override val baseVersionCode = 2
 
     override val sources = listOf(
         SingleLang("Bakkin", "https://bakkin.moe/reader/", "en"),
@@ -16,6 +16,7 @@ class BakkinGenerator : ThemeSourceGenerator {
     )
 
     companion object {
-        @JvmStatic fun main(args: Array<String>) = BakkinGenerator().createAll()
+        @JvmStatic
+        fun main(args: Array<String>) = BakkinGenerator().createAll()
     }
 }
