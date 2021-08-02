@@ -10,14 +10,14 @@ class GuyaGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Guya"
 
-    override val baseVersionCode: Int = 2
+    override val baseVersionCode = 3
 
     override val sources = listOf(
         SingleLang("Guya", "https://guya.moe", "en", overrideVersionCode = 18),
         SingleLang("Danke fürs Lesen", "https://danke.moe", "en", className = "DankeFursLesen"),
         SingleLang("Colored Council", "https://coloredcouncil.moe", "en"),
         SingleLang("Hachirumi", "https://hachirumi.com", "en", isNsfw = true),
-        MultiLang("Magical Translators", "https://mahoushoujobu.com", listOf("en", "pl"), className = "MagicalTranslatorsFactory"),
+        MultiLang("Magical Translators", "https://mahoushoujobu.com", listOf("en", "pl")),
     )
     companion object {
         @JvmStatic

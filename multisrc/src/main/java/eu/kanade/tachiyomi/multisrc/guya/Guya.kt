@@ -3,6 +3,8 @@ package eu.kanade.tachiyomi.multisrc.guya
 import android.app.Application
 import android.content.SharedPreferences
 import android.os.Build
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
@@ -23,26 +25,23 @@ import rx.Observable
 import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.util.HashMap
 
 abstract class Guya(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String) : ConfigurableSource, HttpSource() {
+    override val lang: String
+) : ConfigurableSource, HttpSource() {
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
-    private val scanlatorCacheUrl = "$baseUrl/api/get_all_groups/"
+    private val scanlatorCacheUrl by lazy { "$baseUrl/api/get_all_groups/" }
 
-    override fun headersBuilder() = Headers.Builder().apply {
-        add(
-            "User-Agent",
-            "(Android ${Build.VERSION.RELEASE}; " +
-                "${Build.MANUFACTURER} ${Build.MODEL}) " +
-                "Tachiyomi/${BuildConfig.VERSION_NAME} " +
-                Build.ID
-        )
-    }
+    override fun headersBuilder() = Headers.Builder().add(
+        "User-Agent",
+        "(Android ${Build.VERSION.RELEASE}; " +
+            "${Build.MANUFACTURER} ${Build.MODEL}) " +
+            "Tachiyomi/${BuildConfig.VERSION_NAME} ${Build.ID}"
+    )
 
     private val scanlators: ScanlatorStore = ScanlatorStore()
 
@@ -50,6 +49,7 @@ abstract class Guya(
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
+
     private val scanlatorPreference = "SCANLATOR_PREFERENCE"
 
     // Request builder for the "browse" page of the manga
@@ -61,6 +61,23 @@ abstract class Guya(
     override fun popularMangaParse(response: Response): MangasPage {
         val res = response.body!!.string()
         return parseManga(JSONObject(res))
+    }
+
+    override fun latestUpdatesRequest(page: Int): Request {
+        return popularMangaRequest(page)
+    }
+
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val payload = JSONObject(response.body!!.string())
+        val mangas = sortedMapOf<Long, SManga>()
+
+        for (series in payload.keys()) {
+            val json = payload.getJSONObject(series)
+            val timestamp = json.getLong("last_updated")
+            mangas[timestamp] = parseMangaFromJson(json, "", series)
+        }
+
+        return MangasPage(mangas.values.reversed(), false)
     }
 
     // Overridden to use our overload
@@ -89,11 +106,6 @@ abstract class Guya(
             manga.url.startsWith(PROXY_PREFIX) -> proxySeriesRequest(manga.url, false)
             else -> GET("$baseUrl/reader/series/${manga.url}/", headers)
         }
-    }
-
-    // Stub
-    override fun mangaDetailsParse(response: Response): SManga {
-        throw Exception("Unused")
     }
 
     private fun mangaDetailsParse(response: Response, manga: SManga): SManga {
@@ -125,14 +137,9 @@ abstract class Guya(
         return GET("$baseUrl/api/series/${manga.url}/", headers)
     }
 
-    override fun chapterListParse(response: Response): List<SChapter> {
-        throw Exception("Unused")
-    }
-
     // Called after the request
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
-        val res = response.body!!.string()
-        return parseChapterList(res, manga)
+        return parseChapterList(response.body!!.string(), manga)
     }
 
     // Overridden fetch so that we use our overloaded method instead
@@ -159,11 +166,6 @@ abstract class Guya(
         return GET("$baseUrl/api/series/${chapter.url.split("/")[0]}/", headers)
     }
 
-    // Stub
-    override fun pageListParse(response: Response): List<Page> {
-        throw Exception("Unused")
-    }
-
     private fun pageListParse(response: Response, chapter: SChapter): List<Page> {
         val res = response.body!!.string()
 
@@ -175,7 +177,7 @@ abstract class Guya(
         val metadata = JSONObject()
 
         metadata.put("chapter", chapterNum)
-        metadata.put("scanlator", scanlators.getKeyFromValue(chapter.scanlator.toString()))
+        metadata.put("scanlator", scanlators.getKeyFromValue(chapter.scanlator ?: ""))
         metadata.put("slug", json.getString("slug"))
         metadata.put(
             "folder",
@@ -198,7 +200,7 @@ abstract class Guya(
                     }
             }
             query.startsWith(PROXY_PREFIX) && query.contains("/") -> {
-                client.newCall(proxySearchMangaRequest(page, query, filters))
+                client.newCall(proxySearchMangaRequest(query))
                     .asObservableSuccess()
                     .map { response ->
                         proxySearchMangaParse(response, query)
@@ -218,17 +220,11 @@ abstract class Guya(
         return GET("$baseUrl/api/get_all_series/", headers)
     }
 
-    override fun searchMangaParse(response: Response): MangasPage {
-        throw Exception("Unused.")
-    }
-
     protected open fun searchMangaParseWithSlug(response: Response, slug: String): MangasPage {
         val results = JSONObject(response.body!!.string())
-        val mangaIter = results.keys()
         val truncatedJSON = JSONObject()
 
-        while (mangaIter.hasNext()) {
-            val mangaTitle = mangaIter.next()
+        for (mangaTitle in results.keys()) {
             val mangaDetails = results.getJSONObject(mangaTitle)
 
             if (mangaDetails.get("slug") == slug) {
@@ -244,11 +240,8 @@ abstract class Guya(
         val json = JSONObject(res)
         val truncatedJSON = JSONObject()
 
-        val iter = json.keys()
-
-        while (iter.hasNext()) {
-            val candidate = iter.next()
-            if (candidate.contains(query.toRegex(RegexOption.IGNORE_CASE))) {
+        for (candidate in json.keys()) {
+            if (candidate.contains(query, ignoreCase = true)) {
                 truncatedJSON.put(candidate, json.get(candidate))
             }
         }
@@ -256,8 +249,8 @@ abstract class Guya(
         return parseManga(truncatedJSON)
     }
 
-    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-        val preference = androidx.preference.ListPreference(screen.context).apply {
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val preference = ListPreference(screen.context).apply {
             key = "preferred_scanlator"
             title = "Preferred scanlator"
             entries = arrayOf<String>()
@@ -271,7 +264,7 @@ abstract class Guya(
                 "on chapter refresh/update. It will get the next available if " +
                 "your preferred scanlator isn't an option (yet)."
 
-            this.setDefaultValue("1")
+            setDefaultValue("1")
 
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue.toString()
@@ -332,27 +325,23 @@ abstract class Guya(
                 .getJSONObject("groups")
                 .getJSONArray(groupNum)
         }
-        val pageArray = ArrayList<Page>()
-        for (i in 0 until pages.length()) {
-            val page = if (pages.optJSONObject(i) != null) {
-                pages.getJSONObject(i).getString("src")
-            } else {
-                pages[i]
-            }
-            pageArray.add(Page(i + 1, "", page.toString()))
+        return List(pages.length()) {
+            Page(
+                it + 1,
+                "",
+                pages.optJSONObject(it)?.getString("src")
+                    ?: pages[it].toString()
+            )
         }
-        return pageArray
     }
 
-    private fun proxySearchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+    private fun proxySearchMangaRequest(query: String): Request {
         return proxySeriesRequest(query)
     }
 
     protected open fun proxySearchMangaParse(response: Response, query: String): MangasPage {
-        return MangasPage(
-            arrayListOf(parseMangaFromJson(JSONObject(response.body!!.string()), query)),
-            false
-        )
+        val json = JSONObject(response.body!!.string())
+        return MangasPage(listOf(parseMangaFromJson(json, query)), false)
     }
 
     // ------------- Helpers and whatnot ---------------
@@ -363,7 +352,7 @@ abstract class Guya(
         val chapters = response.getJSONObject("chapters")
         val mapping = response.getJSONObject("groups")
 
-        val chapterList = ArrayList<SChapter>()
+        val chapterList = mutableListOf<SChapter>()
 
         val iter = chapters.keys()
 
@@ -408,11 +397,9 @@ abstract class Guya(
                         chapter.chapter_number = chapterNum.toFloat()
                         chapter.url =
                             if (groups.optJSONArray(groupNum) != null) {
-                                val mangaUrl = manga.url
-                                "$mangaUrl/$chapterNum/$groupNum"
+                                "${manga.url}/$chapterNum/$groupNum"
                             } else {
-                                val url = groups.getString(groupNum)
-                                "$PROXY_PREFIX$url"
+                                "$PROXY_PREFIX${groups.getString(groupNum)}"
                             }
                         chapterList.add(chapter)
                     }
@@ -425,15 +412,11 @@ abstract class Guya(
 
     // Helper function to get all the listings
     private fun parseManga(payload: JSONObject): MangasPage {
-        val mangas = ArrayList<SManga>()
+        val mangas = mutableListOf<SManga>()
 
-        val iter = payload.keys()
-
-        while (iter.hasNext()) {
-            val series = iter.next()
+        for (series in payload.keys()) {
             val json = payload.getJSONObject(series)
-            val manga = parseMangaFromJson(json, "", series)
-            mangas.add(manga)
+            mangas += parseMangaFromJson(json, "", series)
         }
 
         return MangasPage(mangas, false)
@@ -442,14 +425,19 @@ abstract class Guya(
     // Takes a json of the manga to parse
     private fun parseMangaFromJson(json: JSONObject, slug: String, title: String = ""): SManga {
         val manga = SManga.create()
-        manga.title = if (title.isNotEmpty()) title else json.getString("title")
-        manga.artist = json.optString("artist", "Unknown")
-        manga.author = json.optString("author", "Unknown")
-        manga.description = json.optString("description", "None")
+        manga.title = title.ifEmpty { json.getString("title") }
+        manga.artist = json.optString("artist")
+        manga.author = json.optString("author")
+        manga.description = json.optString("description")
         manga.url = if (slug.startsWith(PROXY_PREFIX)) slug else json.getString("slug")
 
-        val cover = json.optString("cover", "")
-        manga.thumbnail_url = if (cover.startsWith("http")) cover else "$baseUrl/$cover"
+        val cover = json.optString("cover")
+        manga.thumbnail_url = when {
+            cover.startsWith("http") -> cover
+            cover.isNotEmpty() -> "$baseUrl/$cover"
+            else -> null
+        }
+
         return manga
     }
 
@@ -469,23 +457,18 @@ abstract class Guya(
 
     private fun parsePageFromJson(json: JSONObject, metadata: JSONObject): List<Page> {
         val pages = json.getJSONArray(metadata.getString("scanlator"))
-        val pageArray = ArrayList<Page>()
-
-        for (i in 0 until pages.length()) {
-            val page = Page(
-                i + 1,
+        return List(pages.length()) {
+            Page(
+                it + 1,
                 "",
                 pageBuilder(
                     metadata.getString("slug"),
                     metadata.getString("folder"),
-                    pages[i].toString(),
+                    pages[it].toString(),
                     metadata.getString("scanlator")
                 )
             )
-            pageArray.add(page)
         }
-
-        return pageArray
     }
 
     private fun getBestScanlator(json: JSONObject, sort: JSONArray): String {
@@ -509,8 +492,8 @@ abstract class Guya(
     }
 
     inner class ScanlatorStore {
-        private val scanlatorMap = HashMap<String, String>()
-        private val TOTAL_RETRIES = 10
+        private val scanlatorMap = mutableMapOf<String, String>()
+        private val totalRetries = 10
         private var retryCount = 0
 
         init {
@@ -519,13 +502,10 @@ abstract class Guya(
 
         fun getKeyFromValue(value: String): String {
             update()
-            for (key in scanlatorMap.keys) {
-                if (scanlatorMap[key].equals(value)) {
-                    return key
-                }
-            }
             // Fall back to value as key if endpoint fails
-            return value
+            return scanlatorMap.keys.firstOrNull {
+                scanlatorMap[it].equals(value)
+            } ?: value
         }
 
         fun getValueFromKey(key: String): String {
@@ -545,30 +525,28 @@ abstract class Guya(
                 retryCount++
             } else {
                 val json = JSONObject(response.body!!.string())
-                val iter = json.keys()
-                while (iter.hasNext()) {
-                    val scanId = iter.next()
+                for (scanId in json.keys()) {
                     scanlatorMap[scanId] = json.getString(scanId)
                 }
             }
         }
 
         private fun onError(error: Throwable) {
-            // Do nothing for now
+            error.printStackTrace()
         }
 
         private fun update(blocking: Boolean = true) {
-            if (scanlatorMap.isEmpty() && retryCount < TOTAL_RETRIES) {
+            if (scanlatorMap.isEmpty() && retryCount < totalRetries) {
                 try {
                     val call = client.newCall(GET(scanlatorCacheUrl, headers))
                         .asObservable()
 
                     if (blocking) {
                         call.toBlocking()
-                            .subscribe({ res -> onResponse(res) }, { err -> onError(err) })
+                            .subscribe(::onResponse, ::onError)
                     } else {
                         call.subscribeOn(Schedulers.io())
-                            .subscribe({ res -> onResponse(res) }, { err -> onError(err) })
+                            .subscribe(::onResponse, ::onError)
                     }
                 } catch (e: Exception) {
                     // Prevent the extension from failing to load
@@ -579,16 +557,24 @@ abstract class Guya(
 
     // ----------------- Things we aren't supporting -----------------
 
+    override fun mangaDetailsParse(response: Response): SManga {
+        throw UnsupportedOperationException("Unused")
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        throw UnsupportedOperationException("Unused")
+    }
+
+    override fun pageListParse(response: Response): List<Page> {
+        throw UnsupportedOperationException("Unused")
+    }
+
+    override fun searchMangaParse(response: Response): MangasPage {
+        throw UnsupportedOperationException("Unused.")
+    }
+
     override fun imageUrlParse(response: Response): String {
-        throw Exception("imageUrlParse not supported.")
-    }
-
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw Exception("Latest updates not supported.")
-    }
-
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        throw Exception("Latest updates not supported.")
+        throw UnsupportedOperationException("Unused.")
     }
 
     companion object {

@@ -1,13 +1,12 @@
 package eu.kanade.tachiyomi.extension.all.magicaltranslators
 
 import eu.kanade.tachiyomi.multisrc.guya.Guya
-import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.MangasPage
 import okhttp3.Response
 
 class MagicalTranslatorsFactory : SourceFactory {
-    override fun createSources(): List<Source> = listOf(
+    override fun createSources() = listOf(
         MagicalTranslatorsEN(),
         MagicalTranslatorsPL(),
     )
@@ -15,18 +14,23 @@ class MagicalTranslatorsFactory : SourceFactory {
 
 abstract class MagicalTranslatorsCommon(lang: String) :
     Guya("Magical Translators", "https://mahoushoujobu.com", lang) {
+
     protected abstract fun filterMangasPage(mangasPage: MangasPage): MangasPage
+
     override fun popularMangaParse(response: Response): MangasPage =
         filterMangasPage(super.popularMangaParse(response))
 
-    override fun proxySearchMangaParse(response: Response, slug: String): MangasPage =
-        filterMangasPage(super.proxySearchMangaParse(response, slug))
+    override fun latestUpdatesParse(response: Response): MangasPage =
+        filterMangasPage(super.latestUpdatesParse(response))
+
+    override fun proxySearchMangaParse(response: Response, query: String): MangasPage =
+        filterMangasPage(super.proxySearchMangaParse(response, query))
 
     override fun searchMangaParseWithSlug(response: Response, slug: String): MangasPage =
         filterMangasPage(super.searchMangaParseWithSlug(response, slug))
 
-    override fun searchMangaParse(response: Response, slug: String): MangasPage =
-        filterMangasPage(super.searchMangaParse(response, slug))
+    override fun searchMangaParse(response: Response, query: String): MangasPage =
+        filterMangasPage(super.searchMangaParse(response, query))
 }
 
 class MagicalTranslatorsEN : MagicalTranslatorsCommon("en") {
