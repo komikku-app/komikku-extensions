@@ -36,6 +36,8 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.math.BigInteger
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.floor
@@ -74,9 +76,11 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
                 val response = chain.proceed(chain.request())
                 if (!url.contains("media/photos", ignoreCase = true)) return response // 对非漫画图片连接直接放行
                 if (url.substring(url.indexOf("photos/") + 7, url.lastIndexOf("/")).toInt() < scrambleId) return response // 对在漫画章节ID为220980之前的图片未进行图片分割,直接放行
-// 章节ID:220980(包含)之后的漫画(2020.10.27之后)图片进行了分割倒序处理
+// 章节ID:220980(包含)之后的漫画(2020.10.27之后)图片进行了分割getRows倒序处理
+                val aid = url.substring(url.indexOf("photos/") + 7, url.lastIndexOf("/")).toInt()
+                val imgIndex: String = url.substringAfterLast("/").substringBefore(".")
                 val res = response.body!!.byteStream().use {
-                    decodeImage(it)
+                    decodeImage(it, getRows(aid, imgIndex))
                 }
                 val mediaType = "image/avif,image/webp,image/apng,image/*,*/*".toMediaTypeOrNull()
                 val outputBytes = res.toResponseBody(mediaType)
@@ -84,15 +88,26 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
             }
         ).build()
 
+    private fun getRows(aid: Int, imgIndex: String): Int {
+        fun md5(input: String): String {
+            val md = MessageDigest.getInstance("MD5")
+            return BigInteger(1, md.digest(input.toByteArray())).toString(16).padStart(32, '0')
+        }
+
+        return if (aid >= 268850) {
+            2 * (md5(aid.toString() + imgIndex).last().toInt() % 10) + 2
+        } else {
+            10
+        }
+    }
+
     // 对被分割的图片进行分割,排序处理
-    private fun decodeImage(img: InputStream): ByteArray {
+    private fun decodeImage(img: InputStream, rows: Int): ByteArray {
         // 使用bitmap进行图片处理
         val input = BitmapFactory.decodeStream(img)
         // 漫画高度 and width
         val height = input.height
         val width = input.width
-        // 水平分割10个小图
-        val rows = 10
         // 未除尽像素
         val remainder = (height % rows)
         // 创建新的图片对象
