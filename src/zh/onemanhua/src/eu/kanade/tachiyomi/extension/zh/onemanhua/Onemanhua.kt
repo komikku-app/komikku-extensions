@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import org.jsoup.nodes.Document
@@ -25,6 +26,9 @@ class Onemanhua : ParsedHttpSource() {
     override val supportsLatest = true
     override val name = "COCO漫画 (OH漫画)"
     override val baseUrl = "https://www.cocomanhua.com/"
+
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .add("Referer", baseUrl)
 
     // Prepend with new decrypt keys (latest keys should appear at the start of the array)
     private var decryptKey1Arr = arrayOf("fw122587mkertyui", "fw12558899ertyui")
