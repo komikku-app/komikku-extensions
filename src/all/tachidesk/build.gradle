@@ -1,0 +1,14 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'Tachidesk'
+    pkgNameSuffix = 'all.tachidesk'
+    extClass = '.Tachidesk'
+    extVersionCode = 1
+    libVersion = '1.2'
+    containsNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
