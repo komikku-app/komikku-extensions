@@ -375,6 +375,12 @@ class TsukiMangas : HttpSource(), ConfigurableSource {
                 throw IOException(ERROR_CANNOT_LOGIN)
             }
 
+            // API returns 403 or 1020 when User-Agent permission is disabled.
+            if (loginResponse.code == 403 || loginResponse.code == 1020) {
+                loginResponse.close()
+                throw IOException(UA_DISABLED_MESSAGE)
+            }
+
             try {
                 val loginResponseBody = loginResponse.body?.string().orEmpty()
                 val authResult = json.decodeFromString<TsukiAuthResultDto>(loginResponseBody)
@@ -394,11 +400,10 @@ class TsukiMangas : HttpSource(), ConfigurableSource {
 
         val response = chain.proceed(authorizedRequest)
 
-        // API returns 403 when User-Agent permission is disabled
-        // and returns 401 when the token is invalid.
-        if (response.code == 403 || response.code == 401) {
+        // API returns 401 when the token is invalid.
+        if (response.code == 401) {
             response.close()
-            throw IOException(if (response.code == 403) UA_DISABLED_MESSAGE else ERROR_INVALID_TOKEN)
+            throw IOException(ERROR_INVALID_TOKEN)
         }
 
         return response
