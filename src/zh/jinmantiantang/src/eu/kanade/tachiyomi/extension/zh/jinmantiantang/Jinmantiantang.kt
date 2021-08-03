@@ -305,7 +305,7 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
             }
             return listOf(singleChapter)
         }
-        return document.select(chapterListSelector()).map { chapterFromElement(it) }
+        return document.select(chapterListSelector()).map { chapterFromElement(it) }.reversed()
     }
 
     // 漫画图片信息
