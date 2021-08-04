@@ -9,7 +9,7 @@ class ZbuluGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Zbulu"
 
-    override val baseVersionCode: Int = 1
+    override val baseVersionCode: Int = 2
 
     override val sources = listOf(
         SingleLang("HolyManga", "https://w15.holymanga.net", "en", overrideVersionCode = 1),

@@ -14,6 +14,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -165,7 +166,12 @@ abstract class Zbulu(
         return if (this.isNullOrEmpty()) {
             0
         } else {
-            dateFormat.parse(this)?.time ?: 0
+            // In the event site displays invalid date
+            try {
+                dateFormat.parse(this)?.time ?: 0
+            } catch (_: ParseException) {
+                0
+            }
         }
     }
 
