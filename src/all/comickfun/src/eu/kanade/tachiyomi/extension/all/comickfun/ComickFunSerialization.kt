@@ -20,6 +20,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonTransformingSerializer
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.serializer
+import java.lang.Exception
 import java.text.SimpleDateFormat
 import kotlin.math.pow
 import kotlin.math.truncate
@@ -72,7 +73,11 @@ inline fun <reified T : Any> deepSelectDeserializer(vararg keys: String, tDeseri
  * @param objKey: String - A key identifying an object in JsonElement
  * @param keys: vararg String - Keys identifying values to lift from objKey
  */
-inline fun <reified T : Any> jsonFlatten(objKey: String, vararg keys: String, tDeserializer: KSerializer<T> = serializer()): JsonTransformingSerializer<T> {
+inline fun <reified T : Any> jsonFlatten(
+    objKey: String,
+    vararg keys: String,
+    tDeserializer: KSerializer<T> = serializer()
+): JsonTransformingSerializer<T> {
     return object : JsonTransformingSerializer<T>(tDeserializer) {
         override fun transformDeserialize(element: JsonElement) = buildJsonObject {
             require(element is JsonObject)
@@ -204,24 +209,24 @@ class SMangaDeserializer : KSerializer<SManga> {
         return SManga.create().apply {
             var id: Int? = null
             var slug: String? = null
-            val tryTo = (
-                {
-                    var hasThrown = false;
-                    { fn: () -> Unit ->
-                        if (!hasThrown) {
-                            try {
-                                fn()
-                            } catch (_: java.lang.Exception) {
-                                hasThrown = true
-                            }
-                        }
-                    }
+            val tryTo = { fn: () -> Unit ->
+                try {
+                    fn()
+                } catch (_: Exception) {
+                    // Do nothing when fn fails to decode due to type mismatch
                 }
-                )()
+            }
             decoder.decodeStructureByKnownName(descriptor) { names ->
                 for ((name, index) in names) {
                     val sluggedNameSerializer = ListSerializer(deepSelectDeserializer<String>("name"))
-                    fun nameList() = decodeSerializableElement(descriptor, index, sluggedNameSerializer).joinToString(", ")
+                    fun nameList(): String? {
+                        val list = decodeSerializableElement(descriptor, index, sluggedNameSerializer)
+                        return if (list.isEmpty()) {
+                            null
+                        } else {
+                            list.joinToString(", ")
+                        }
+                    }
                     when (name) {
                         "slug" -> {
                             slug = decodeStringElement(descriptor, index)
