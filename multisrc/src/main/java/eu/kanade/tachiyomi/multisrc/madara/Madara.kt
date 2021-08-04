@@ -317,11 +317,15 @@ abstract class Madara(
             select("div.post-title h3").first()?.let {
                 manga.title = it.ownText()
             }
-            select("div.author-content").first()?.let {
-                if (it.text().notUpdating()) manga.author = it.text()
+            select("div.author-content > a").eachText().filter {
+                it.notUpdating()
+            }.joinToString().takeIf { it.isNotBlank() }?.let {
+                manga.author = it
             }
-            select("div.artist-content").first()?.let {
-                if (it.text().notUpdating()) manga.artist = it.text()
+            select("div.artist-content > a").eachText().filter {
+                it.notUpdating()
+            }.joinToString().takeIf { it.isNotBlank() }?.let {
+                manga.artist = it
             }
             select("div.description-summary div.summary__content").let {
                 if (it.select("p").text().isNotEmpty()) {
