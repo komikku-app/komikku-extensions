@@ -118,7 +118,8 @@ abstract class BakkinReaderX(
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = "quality"
-            summary = "Image quality: %s"
+            summary = "%s"
+            title = "Image quality"
             entries = arrayOf("Original", "Compressed")
             entryValues = arrayOf("?fullsize", "")
             setDefaultValue("")

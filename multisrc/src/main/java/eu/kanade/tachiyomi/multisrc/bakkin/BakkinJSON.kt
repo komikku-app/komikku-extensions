@@ -9,9 +9,8 @@ internal data class Series(
     val thumb: String?,
     val volumes: List<Volume>
 ) : Iterable<Chapter> {
-    override fun iterator() = volumes.flatMap {
-        // Prepend the volume name to the chapter name
-        it.map { ch -> ch.copy(name = "$it - $ch") }
+    override fun iterator() = volumes.flatMap { vol ->
+        vol.map { it.copy("$dir/${vol.dir}/${it.dir}", "$vol - $it") }
     }.iterator()
 
     val cover: String
