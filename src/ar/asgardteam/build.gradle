@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Asgard Team'
+    pkgNameSuffix = 'ar.asgardteam'
+    extClass = '.AsgardTeam'
+    extVersionCode = 10
+    libVersion = '1.2'
+}
+
+apply from: "$rootDir/common.gradle"
