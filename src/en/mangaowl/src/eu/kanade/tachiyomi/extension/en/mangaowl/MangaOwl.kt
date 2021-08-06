@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
@@ -79,10 +78,10 @@ class MangaOwl : ParsedHttpSource() {
                 is SortFilter -> url.addQueryParameter("sort", filter.toUriPart())
                 is StatusFilter -> url.addQueryParameter("completed", filter.toUriPart())
                 is GenreFilter -> {
-                        val genres = filter.state
-                            .filter { it.state }
-                            .joinToString(".") { it.uriPart }
-                        url.addQueryParameter("genres", genres)
+                    val genres = filter.state
+                        .filter { it.state }
+                        .joinToString(".") { it.uriPart }
+                    url.addQueryParameter("genres", genres)
                 }
             }
         }
@@ -122,14 +121,15 @@ class MangaOwl : ParsedHttpSource() {
 
     // Chapters
 
-    override fun chapterListSelector() = "div.table-chapter-list ul li"
+    // Only selects chapter elements with links, since sometimes chapter lists have unlinked chapters
+    override fun chapterListSelector() = "div.table-chapter-list ul li:has(a)"
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
         element.select("a").let {
             // They replace some URLs with a different host getting a path of domain.com/reader/reader/, fix to make usable on baseUrl
             chapter.setUrlWithoutDomain(it.attr("href").replace("/reader/reader/", "/reader/"))
-            chapter.name = it.select("label")[0].text()
+            chapter.name = it.select("label").first().text()
         }
         chapter.date_upload = parseChapterDate(element.select("small:last-of-type").text())
 
@@ -160,7 +160,6 @@ class MangaOwl : ParsedHttpSource() {
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
 
-
     // Filters
 
     override fun getFilterList() = FilterList(
@@ -169,12 +168,12 @@ class MangaOwl : ParsedHttpSource() {
         StatusFilter(),
         GenreFilter(getGenreList())
     )
-    
+
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
     }
-    
+
     private class SearchFilter : UriPartFilter(
         "Search in",
         arrayOf(
