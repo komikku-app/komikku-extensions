@@ -227,7 +227,7 @@ abstract class WPMangaStream(
     }
 
     fun parseChapterDate(date: String): Long {
-        return if (date.contains("ago")) {
+        return if (date.endsWith("ago")) {
             val value = date.split(' ')[0].toInt()
             when {
                 "min" in date -> Calendar.getInstance().apply {
