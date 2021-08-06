@@ -55,7 +55,7 @@ class MangaYabu : ParsedHttpSource() {
         val tooltip = element.select("div.card-image.mango-hover").first()!!
 
         title = Jsoup.parse(tooltip.attr("data-tooltip")).select("span b").first()!!.text()
-        thumbnail_url = element.select("img").first()!!.attr("src")
+        thumbnail_url = element.select("img").first()!!.attr("data-ezsrc")
         setUrlWithoutDomain(element.attr("href"))
     }
 
@@ -105,22 +105,20 @@ class MangaYabu : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector(): String? = null
 
-    override fun mangaDetailsParse(document: Document): SManga {
+    override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val infoElement = document.select("div.manga-column")
 
-        return SManga.create().apply {
-            title = document.select("div.manga-info > h1").first()!!.text()
-            status = infoElement.select("div.manga-column:contains(Status:)").first()!!
-                .textWithoutLabel()
-                .toStatus()
-            genre = infoElement.select("div.manga-column:contains(Gêneros:)").first()!!
-                .textWithoutLabel()
-            description = document.select("div.manga-info").first()!!.text()
-                .substringAfter(title)
-                .trim()
-            thumbnail_url = document.select("div.manga-index div.mango-hover img")!!
-                .attr("src")
-        }
+        title = document.select("div.manga-info > h1").first()!!.text()
+        status = infoElement.select("div.manga-column:contains(Status:)").first()!!
+            .textWithoutLabel()
+            .toStatus()
+        genre = infoElement.select("div.manga-column:contains(Gêneros:)").first()!!
+            .textWithoutLabel()
+        description = document.select("div.manga-info").first()!!.text()
+            .substringAfter(title)
+            .trim()
+        thumbnail_url = document.select("div.manga-index div.mango-hover img")!!
+            .attr("data-ezsrc")
     }
 
     override fun chapterListSelector() = "div.manga-info:contains(Capítulos) div.manga-chapters div.single-chapter"
@@ -142,6 +140,7 @@ class MangaYabu : ParsedHttpSource() {
 
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()
+            .add("Accept", ACCEPT_IMAGE)
             .set("Referer", page.url)
             .build()
 
@@ -183,8 +182,9 @@ class MangaYabu : ParsedHttpSource() {
     private fun Element.textWithoutLabel(): String = text()!!.substringAfter(":").trim()
 
     companion object {
+        private const val ACCEPT_IMAGE = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36"
 
         private val FLAG_REGEX = "\\((Pt[-/]br|Scan)\\)".toRegex(RegexOption.IGNORE_CASE)
 
