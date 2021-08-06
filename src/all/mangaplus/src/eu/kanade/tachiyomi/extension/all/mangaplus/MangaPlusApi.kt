@@ -28,21 +28,29 @@ data class Popup(
 @Serializable
 data class SuccessResult(
     @ProtoNumber(1) val isFeaturedUpdated: Boolean? = false,
-    @ProtoNumber(5) val allTitlesView: AllTitlesView? = null,
     @ProtoNumber(6) val titleRankingView: TitleRankingView? = null,
     @ProtoNumber(8) val titleDetailView: TitleDetailView? = null,
     @ProtoNumber(10) val mangaViewer: MangaViewer? = null,
-    @ProtoNumber(11) val webHomeView: WebHomeView? = null
+    @ProtoNumber(25) val allTitlesViewV2: AllTitlesViewV2? = null,
+    @ProtoNumber(31) val webHomeViewV3: WebHomeViewV3? = null
 )
 
 @Serializable
 data class TitleRankingView(@ProtoNumber(1) val titles: List<Title> = emptyList())
 
 @Serializable
-data class AllTitlesView(@ProtoNumber(1) val titles: List<Title> = emptyList())
+data class AllTitlesViewV2(
+    @ProtoNumber(1) val allTitlesGroup: List<AllTitlesGroup> = emptyList()
+)
 
 @Serializable
-data class WebHomeView(@ProtoNumber(2) val groups: List<UpdatedTitleGroup> = emptyList())
+data class AllTitlesGroup(
+    @ProtoNumber(1) val theTitle: String,
+    @ProtoNumber(2) val titles: List<Title> = emptyList()
+)
+
+@Serializable
+data class WebHomeViewV3(@ProtoNumber(2) val groups: List<UpdatedTitleV2Group> = emptyList())
 
 @Serializable
 data class TitleDetailView(
@@ -86,30 +94,41 @@ enum class Language(val id: Int) {
     @SerializedName("1")
     SPANISH(1),
 
-    // Temporary add the languages that are not present on the API yet.
-    // @ProtoNumber(2)
-    // @SerializedName("2")
-    THAI(2),
+    @ProtoNumber(2)
+    @SerializedName("2")
+    FRENCH(2),
 
-    // @ProtoNumber(3)
-    // @SerializedName("3")
-    PORTUGUESE_BR(3),
+    @ProtoNumber(3)
+    @SerializedName("3")
+    INDONESIAN(4),
 
-    // @ProtoNumber(4)
-    // @SerializedName("4")
-    INDONESIAN(4)
+    @ProtoNumber(4)
+    @SerializedName("4")
+    PORTUGUESE_BR(4),
+
+    @ProtoNumber(5)
+    @SerializedName("5")
+    RUSSIAN(5),
+
+    @ProtoNumber(6)
+    @SerializedName("6")
+    THAI(6)
 }
 
 @Serializable
-data class UpdatedTitleGroup(
+data class UpdatedTitleV2Group(
     @ProtoNumber(1) val groupName: String,
-    @ProtoNumber(2) val titles: List<UpdatedTitle> = emptyList()
+    @ProtoNumber(2) val titleGroups: List<OriginalTitleGroup> = emptyList()
 )
 
 @Serializable
-data class UpdatedTitle(
-    @ProtoNumber(1) val title: Title? = null
+data class OriginalTitleGroup(
+    @ProtoNumber(1) val theTitle: String,
+    @ProtoNumber(3) val titles: List<UpdatedTitle> = emptyList()
 )
+
+@Serializable
+data class UpdatedTitle(@ProtoNumber(1) val title: Title)
 
 @Serializable
 data class Chapter(
@@ -169,21 +188,25 @@ const val DECODE_SCRIPT: String =
         .add(new Field("isFeaturedUpdated", 1, "bool"))
         .add(
               new OneOf("data")
-                  .add(new Field("allTitlesView", 5, "AllTitlesView"))
                   .add(new Field("titleRankingView", 6, "TitleRankingView"))
                   .add(new Field("titleDetailView", 8, "TitleDetailView"))
                   .add(new Field("mangaViewer", 10, "MangaViewer"))
-                  .add(new Field("webHomeView", 11, "WebHomeView"))
+                  .add(new Field("allTitlesViewV2", 25, "AllTitlesViewV2"))
+                  .add(new Field("webHomeViewV3", 31, "WebHomeViewV3"))
           );
 
     var TitleRankingView = new Type("TitleRankingView")
         .add(new Field("titles", 1, "Title", "repeated"));
 
-    var AllTitlesView = new Type("AllTitlesView")
-        .add(new Field("titles", 1, "Title", "repeated"));
+    var AllTitlesViewV2 = new Type("AllTitlesViewV2")
+        .add(new Field("allTitlesGroup", 1, "AllTitlesGroup", "repeated"));
 
-    var WebHomeView = new Type("WebHomeView")
-        .add(new Field("groups", 2, "UpdatedTitleGroup", "repeated"));
+    var AlLTitlesGroup = new Type("AllTitlesGroup")
+        .add(new Field("theTitle", 1, "string"))
+        .add(new Field("titles", 2, "Title", "repeated"));
+
+    var WebHomeViewV3 = new Type("WebHomeViewV3")
+        .add(new Field("groups", 2, "UpdatedTitleV2Group", "repeated"));
 
     var TitleDetailView = new Type("TitleDetailView")
         .add(new Field("title", 1, "Title"))
@@ -224,13 +247,20 @@ const val DECODE_SCRIPT: String =
 
     var Language = new Enum("Language")
         .add("ENGLISH", 0)
-        .add("SPANISH", 1);
-    //     .add("THAI", 2)
-    //     .add("PORTUGUESE_BR", 3);
+        .add("SPANISH", 1)
+        .add("FRENCH", 2)
+        .add("INDONESIAN", 3)
+        .add("PORTUGUESE_BR", 4)
+        .add("RUSSIAN", 5)
+        .add("THAI", 6);
 
-    var UpdatedTitleGroup = new Type("UpdatedTitleGroup")
+    var UpdatedTitleV2Group = new Type("UpdatedTitleV2Group")
         .add(new Field("groupName", 1, "string"))
-        .add(new Field("titles", 2, "UpdatedTitle", "repeated"));
+        .add(new Field("titleGroups", 2, "OriginalTitleGroup", "repeated"));
+
+    var OriginalTitleGroup = new Type("OriginalTitleGroup")
+        .add(new Field("theTitle", 1, "string"))
+        .add(new Field("titles", 3, "UpdatedTitle", "repeated"));
 
     var UpdatedTitle = new Type("UpdatedTitle")
         .add(new Field("title", 1, "Title"))
@@ -263,14 +293,16 @@ const val DECODE_SCRIPT: String =
         .add(Popup)
         .add(SuccessResult)
         .add(TitleRankingView)
-        .add(AllTitlesView)
-        .add(WebHomeView)
+        .add(AllTitlesViewV2)
+        .add(AllTitlesGroup)
+        .add(WebHomeViewV3)
         .add(TitleDetailView)
         .add(UpdateTiming)
         .add(MangaViewer)
         .add(Title)
         .add(Language)
-        .add(UpdatedTitleGroup)
+        .add(UpdatedTitleV2Group)
+        .add(OriginalTitleGroup)
         .add(UpdatedTitle)
         .add(Chapter)
         .add(Page)

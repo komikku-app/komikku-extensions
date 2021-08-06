@@ -74,33 +74,6 @@ abstract class MangaPlus(
 
     private var titleList: List<Title>? = null
 
-    /**
-     * MANGA Plus recently started supporting other languages, but
-     * they are not defined by the API. This is a temporary fix
-     * to properly filter the titles while their API doesn't get an update.
-     */
-    private val titlesToFix: Map<Int, Language> = mapOf(
-        // Thai
-        100079 to Language.THAI,
-        100080 to Language.THAI,
-        100082 to Language.THAI,
-        100120 to Language.THAI,
-        100121 to Language.THAI,
-        100158 to Language.THAI,
-
-        // Brazilian Portuguese
-        100149 to Language.PORTUGUESE_BR,
-        100150 to Language.PORTUGUESE_BR,
-        100151 to Language.PORTUGUESE_BR,
-        100163 to Language.PORTUGUESE_BR,
-
-        // Indonesian
-        100140 to Language.INDONESIAN,
-        100142 to Language.INDONESIAN,
-        100143 to Language.INDONESIAN,
-        100162 to Language.INDONESIAN
-    )
-
     override fun popularMangaRequest(page: Int): Request {
         val newHeaders = headersBuilder()
             .set("Referer", "$baseUrl/manga_list/hot")
@@ -116,7 +89,6 @@ abstract class MangaPlus(
             throw Exception(result.error!!.langPopup.body)
 
         titleList = result.success.titleRankingView!!.titles
-            .fixWrongLanguages()
             .filter { it.language == langCode }
 
         val mangas = titleList!!.map {
@@ -135,7 +107,7 @@ abstract class MangaPlus(
             .set("Referer", "$baseUrl/updates")
             .build()
 
-        return GET("$API_URL/web/web_home?lang=$internalLang", newHeaders)
+        return GET("$API_URL/web/web_homeV3?lang=$internalLang", newHeaders)
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
@@ -149,14 +121,13 @@ abstract class MangaPlus(
 
         if (popularResponse.success != null) {
             titleList = popularResponse.success.titleRankingView!!.titles
-                .fixWrongLanguages()
                 .filter { it.language == langCode }
         }
 
-        val mangas = result.success.webHomeView!!.groups
+        val mangas = result.success.webHomeViewV3!!.groups
+            .flatMap { it.titleGroups }
             .flatMap { it.titles }
-            .mapNotNull { it.title }
-            .fixWrongLanguages()
+            .map { it.title }
             .filter { it.language == langCode }
             .map {
                 SManga.create().apply {
@@ -191,7 +162,7 @@ abstract class MangaPlus(
             .set("Referer", "$baseUrl/manga_list/all")
             .build()
 
-        return GET("$API_URL/title_list/all", newHeaders)
+        return GET("$API_URL/title_list/allV2", newHeaders)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
@@ -201,10 +172,7 @@ abstract class MangaPlus(
             throw Exception(result.error!!.langPopup.body)
 
         if (result.success.titleDetailView != null) {
-            val mangaPlusTitle = result.success.titleDetailView.title.let {
-                val correctLanguage = titlesToFix[it.titleId]
-                if (correctLanguage != null) it.copy(language = correctLanguage) else it
-            }
+            val mangaPlusTitle = result.success.titleDetailView.title
 
             if (mangaPlusTitle.language == langCode) {
                 val manga = SManga.create().apply {
@@ -219,8 +187,8 @@ abstract class MangaPlus(
             return MangasPage(emptyList(), hasNextPage = false)
         }
 
-        titleList = result.success.allTitlesView!!.titles
-            .fixWrongLanguages()
+        titleList = result.success.allTitlesViewV2!!.allTitlesGroup
+            .flatMap { it.titles }
             .filter { it.language == langCode }
 
         val mangas = titleList!!.map {
@@ -446,11 +414,6 @@ abstract class MangaPlus(
         }
 
         return response
-    }
-
-    private fun List<Title>.fixWrongLanguages(): List<Title> = map { title ->
-        val correctLanguage = titlesToFix[title.titleId]
-        if (correctLanguage != null) title.copy(language = correctLanguage) else title
     }
 
     private val ErrorResult.langPopup: Popup
