@@ -1,9 +1,8 @@
 package eu.kanade.tachiyomi.extension.en.dilbert
 
-import android.os.Build.VERSION
-import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -11,8 +10,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
-import okhttp3.OkHttpClient
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -21,7 +18,6 @@ import java.util.Calendar
 import java.util.Locale
 
 class Dilbert : ParsedHttpSource() {
-
     override val name = "Dilbert"
 
     override val baseUrl = "https://dilbert.com"
@@ -30,51 +26,29 @@ class Dilbert : ParsedHttpSource() {
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.client.newBuilder()
-        .addNetworkInterceptor(RateLimitInterceptor(4)).build()
+    override val client = network.client.newBuilder()
+        .addNetworkInterceptor(RateLimitInterceptor(3)).build()
 
-    private val userAgent = "Mozilla/5.0 " +
-        "(Android ${VERSION.RELEASE}; Mobile) " +
-        "Tachiyomi/${BuildConfig.VERSION_NAME}"
+    override fun fetchPopularManga(page: Int) = (currentYear downTo 1989).map {
+        SManga.create().apply {
+            url = it.toString()
+            title = "$name ($it)"
+            author = "Scott Adams"
+            thumbnail_url = FAVICON
+            status = if (it != currentYear) SManga.COMPLETED else SManga.ONGOING
+            description = "$SUMMARY (This entry includes all the chapters published in $it.)"
+        }
+    }.let { Observable.just(MangasPage(it, false))!! }
 
-    private val dateFormat = SimpleDateFormat("EEEE MMMM dd, yyyy", Locale.US)
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList) =
+        fetchPopularManga(page).map { mp ->
+            mp.copy(mp.mangas.filter { it.title == query })
+        }!!
 
-    override fun headersBuilder() = Headers.Builder().apply {
-        add("User-Agent", userAgent)
-        add("Referer", baseUrl)
-    }
+    override fun mangaDetailsRequest(manga: SManga) = GET("", headers)
 
-    override fun fetchPopularManga(page: Int): Observable<MangasPage> {
-        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-        return Observable.just(
-            MangasPage(
-                (currentYear downTo 1989).map {
-                    SManga.create().apply {
-                        url = "?$it"
-                        title = "$name ($it)"
-                        artist = "Scott Adams"
-                        author = "Scott Adams"
-                        status = if (it < currentYear) SManga.COMPLETED else SManga.ONGOING
-                        description =
-                            """
-                A satirical comic strip featuring Dilbert, a competent, but seldom recognized engineer.
-                (This entry includes all the chapters published in $it.)
-                            """.trimIndent()
-                        thumbnail_url = "https://dilbert.com/assets/favicon/favicon-196x196-cf4d86b485e628a034ab8b961c1c3520b5969252400a80b9eed544d99403e037.png"
-                    }
-                },
-                false
-            )
-        )
-    }
-
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList) = fetchPopularManga(page)
-
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> =
-        Observable.just(manga.apply { initialized = true })
-
-    private fun chapterListRequest(manga: SManga, page: Int = 1) =
-        GET("$baseUrl/search_results?sort=date_asc&year=${manga.year}&page=$page", headers)
+    override fun fetchMangaDetails(manga: SManga) =
+        Observable.just(manga.apply { initialized = true })!!
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         val date = element.first(".comic-title-date").text()
@@ -83,38 +57,37 @@ class Dilbert : ParsedHttpSource() {
         date_upload = dateFormat.parse(date)?.time ?: 0L
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val chapters = mutableListOf<SChapter>()
-        fun getChapters(page: Int = 1): Document {
-            val res = client.newCall(chapterListRequest(manga, page)).execute()
-            if (!res.isSuccessful) {
-                res.close()
-                throw Exception("HTTP error ${res.code}")
-            }
-            return res.asJsoup().also {
-                chapters.addAll(it.select(".comic-item").map(::chapterFromElement))
-            }
-        }
-        val pages = getChapters().first(".pagination > li:nth-last-child(2) > a")?.text()?.toIntOrNull()
-        if (pages != null) for (page in 2..pages) getChapters(page)
-        return Observable.just(
-            chapters.sortedBy(SChapter::date_upload).mapIndexed {
-                i, ch ->
-                ch.apply { chapter_number = i + 1f }
-            }.reversed()
-        )
-    }
+    override fun chapterListSelector() = ".pagination > li:nth-last-child(2) > a"
+
+    override fun fetchChapterList(manga: SManga) =
+        List(manga.pages) { chapterListParse(manga, it + 1) }
+            .flatMapIndexed { i, ch ->
+                ch.map { it.apply { chapter_number = i + 1f } }
+            }.let { Observable.just(it)!! }
 
     override fun fetchPageList(chapter: SChapter) =
-        Observable.just(listOf(Page(0, chapter.url)))
+        Observable.just(listOf(Page(0, chapter.url)))!!
 
-    override fun imageUrlRequest(page: Page) = GET(page.url, headers)
+    override fun imageUrlParse(document: Document) = document.first(".img-comic").attr("src")!!
 
-    override fun imageUrlParse(document: Document) =
-        document.first(".img-comic").attr("src")
+    private fun chapterListRequest(manga: SManga, page: Int) =
+        GET("$baseUrl/search_results?year=${manga.url}&page=$page", headers)
 
-    private val SManga.year: Int
-        get() = url.substringAfterLast('?').toInt()
+    private fun chapterListParse(manga: SManga, page: Int) =
+        client.newCall(chapterListRequest(manga, page)).execute().run {
+            if (!isSuccessful) {
+                close()
+                throw Exception("HTTP error $code")
+            }
+            asJsoup().select(".comic-item").map(::chapterFromElement)
+        }
+
+    private inline val SManga.pages: Int
+        get() = when (url.toInt()) {
+            currentYear -> currentDay / 10 + 1
+            1989 -> 26
+            else -> 37
+        }
 
     private fun Element.first(selector: String) = select(selector).first()
 
@@ -129,8 +102,6 @@ class Dilbert : ParsedHttpSource() {
     override fun latestUpdatesSelector() = ""
 
     override fun latestUpdatesNextPageSelector() = ""
-
-    override fun chapterListSelector() = ""
 
     override fun popularMangaRequest(page: Int) =
         throw UnsupportedOperationException("This method should not be called!")
@@ -158,4 +129,23 @@ class Dilbert : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element) =
         throw UnsupportedOperationException("This method should not be called!")
+
+    companion object {
+        private const val FAVICON =
+            "https://dilbert.com/assets/favicon/favicon-196x196-" +
+                "cf4d86b485e628a034ab8b961c1c3520b5969252400a80b9eed544d99403e037.png"
+
+        private const val SUMMARY =
+            "A satirical comic strip featuring Dilbert, a competent, but seldom recognized engineer."
+
+        private val dateFormat = SimpleDateFormat("EEEE MMMM dd, yyyy", Locale.US)
+
+        private val currentYear by lazy {
+            Calendar.getInstance()[Calendar.YEAR]
+        }
+
+        private val currentDay by lazy {
+            Calendar.getInstance()[Calendar.DAY_OF_YEAR]
+        }
+    }
 }

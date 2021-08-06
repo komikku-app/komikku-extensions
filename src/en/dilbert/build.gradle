@@ -5,7 +5,7 @@ ext {
     extName = 'Dilbert'
     pkgNameSuffix = 'en.dilbert'
     extClass = '.Dilbert'
-    extVersionCode = 3
+    extVersionCode = 4
     libVersion = '1.2'
 }
 
