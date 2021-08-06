@@ -1,16 +1,8 @@
 package eu.kanade.tachiyomi.extension.pt.tsukimangas
 
-import android.app.Application
-import android.content.SharedPreferences
-import android.text.InputType
-import androidx.preference.EditTextPreference
-import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.annotations.Nsfw
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -18,31 +10,25 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
-import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 @Nsfw
-class TsukiMangas : HttpSource(), ConfigurableSource {
+class TsukiMangas : HttpSource() {
 
     override val name = "Tsuki Mangás"
 
@@ -53,28 +39,14 @@ class TsukiMangas : HttpSource(), ConfigurableSource {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .addInterceptor(::tsukiAuthIntercept)
         .build()
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
-
-    private val usernameOrEmail: String
-        get() = preferences.getString(USERNAME_OR_EMAIL_PREF_KEY, "")!!
-
-    private val password: String
-        get() = preferences.getString(PASSWORD_PREF_KEY, "")!!
-
-    private var apiToken: String? = null
-
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Accept", ACCEPT)
         .add("Accept-Language", ACCEPT_LANGUAGE)
-        .add("User-Agent", USER_AGENT)
         .add("Referer", baseUrl)
 
     override fun popularMangaRequest(page: Int): Request {
@@ -319,101 +291,16 @@ class TsukiMangas : HttpSource(), ConfigurableSource {
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val usernameOrEmailPref = EditTextPreference(screen.context).apply {
-            key = USERNAME_OR_EMAIL_PREF_KEY
-            title = USERNAME_OR_EMAIL_PREF_TITLE
-            setDefaultValue("")
-            summary = USERNAME_OR_EMAIL_PREF_SUMMARY
-            dialogTitle = USERNAME_OR_EMAIL_PREF_TITLE
-
-            setOnPreferenceChangeListener { _, newValue ->
-                apiToken = null
-
-                preferences.edit()
-                    .putString(USERNAME_OR_EMAIL_PREF_KEY, newValue as String)
-                    .commit()
-            }
-        }
-
-        val passwordPref = EditTextPreference(screen.context).apply {
-            key = PASSWORD_PREF_KEY
-            title = PASSWORD_PREF_TITLE
-            setDefaultValue("")
-            summary = PASSWORD_PREF_SUMMARY
-            dialogTitle = PASSWORD_PREF_TITLE
-
-            setOnBindEditTextListener {
-                it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            }
-
-            setOnPreferenceChangeListener { _, newValue ->
-                apiToken = null
-
-                preferences.edit()
-                    .putString(PASSWORD_PREF_KEY, newValue as String)
-                    .commit()
-            }
-        }
-
-        screen.addPreference(usernameOrEmailPref)
-        screen.addPreference(passwordPref)
-    }
-
     private fun tsukiAuthIntercept(chain: Interceptor.Chain): Response {
-        if (apiToken.isNullOrEmpty()) {
-            if (usernameOrEmail.isEmpty() || password.isEmpty()) {
-                throw IOException(ERROR_CREDENTIALS_MISSING)
-            }
+        val response = chain.proceed(chain.request())
 
-            val loginRequest = loginRequest(usernameOrEmail, password)
-            val loginResponse = chain.proceed(loginRequest)
-
-            // API returns 422 when the credentials are invalid.
-            if (loginResponse.code == 422) {
-                loginResponse.close()
-                throw IOException(ERROR_CANNOT_LOGIN)
-            }
-
-            // API returns 403 or 1020 when User-Agent permission is disabled.
-            if (loginResponse.code == 403 || loginResponse.code == 1020) {
-                loginResponse.close()
-                throw IOException(UA_DISABLED_MESSAGE)
-            }
-
-            try {
-                val loginResponseBody = loginResponse.body?.string().orEmpty()
-                val authResult = json.decodeFromString<TsukiAuthResultDto>(loginResponseBody)
-
-                apiToken = authResult.token
-
-                loginResponse.close()
-            } catch (e: SerializationException) {
-                loginResponse.close()
-                throw IOException(ERROR_LOGIN_FAILED)
-            }
-        }
-
-        val authorizedRequest = chain.request().newBuilder()
-            .addHeader("Authorization", "Bearer $apiToken")
-            .build()
-
-        val response = chain.proceed(authorizedRequest)
-
-        // API returns 401 when the token is invalid.
-        if (response.code == 401) {
+        // API returns 403 or 1020 when User-Agent permission is disabled.
+        if (response.code == 403 || response.code == 1020) {
             response.close()
-            throw IOException(ERROR_INVALID_TOKEN)
+            throw IOException(UA_DISABLED_MESSAGE)
         }
 
         return response
-    }
-
-    private fun loginRequest(usernameOrEmail: String, password: String): Request {
-        val authInfo = TsukiAuthRequestDto(usernameOrEmail, password)
-        val payload = json.encodeToString(authInfo).toRequestBody(JSON_MEDIA_TYPE)
-
-        return POST("$baseUrl/api/v2/login", headers, payload)
     }
 
     private class Genre(name: String) : Filter.CheckBox(name)
@@ -571,8 +458,8 @@ class TsukiMangas : HttpSource(), ConfigurableSource {
         private val CDN_1_URL = "https://cdn1.tsukimangas.com".toHttpUrl()
         private val CDN_2_URL = "https://cdn2.tsukimangas.com".toHttpUrl()
 
-        private const val UA_DISABLED_MESSAGE = "Permissão de acesso da extensão desativada. " +
-            "Aguarde a reativação pelo site para continuar utilizando."
+        private const val UA_DISABLED_MESSAGE = "O site está bloqueando o Tachiyomi. " +
+            "Aguarde com que eles parem de bloquear ou migre para outras fontes."
 
         private const val EMPTY_COVER = "/ext/errorcapa.jpg"
 
@@ -582,24 +469,5 @@ class TsukiMangas : HttpSource(), ConfigurableSource {
 
         const val PREFIX_ID_SEARCH = "id:"
         private val ID_SEARCH_PATTERN = "^id:(\\d+)$".toRegex()
-
-        private val JSON_MEDIA_TYPE = "application/json;charset=UTF-8".toMediaType()
-
-        private const val USERNAME_OR_EMAIL_PREF_KEY = "username_or_email"
-        private const val USERNAME_OR_EMAIL_PREF_TITLE = "Usuário ou E-mail"
-        private const val USERNAME_OR_EMAIL_PREF_SUMMARY = "Defina aqui o seu usuário ou e-mail para o login."
-
-        private const val PASSWORD_PREF_KEY = "password"
-        private const val PASSWORD_PREF_TITLE = "Senha"
-        private const val PASSWORD_PREF_SUMMARY = "Defina aqui a sua senha para o login."
-
-        private const val ERROR_CANNOT_LOGIN = "Não foi possível realizar o login. " +
-            "Revise suas informações nas configurações da extensão."
-        private const val ERROR_CREDENTIALS_MISSING = "Acesso restrito a usuários cadastrados " +
-            "no site. Defina suas credenciais de acesso nas configurações da extensão."
-        private const val ERROR_LOGIN_FAILED = "Não foi possível realizar o login devido " +
-            "a um erro inesperado. Tente novamente mais tarde."
-        private const val ERROR_INVALID_TOKEN = "Token inválido. " +
-            "Revise suas credenciais nas configurações da extensão."
     }
 }

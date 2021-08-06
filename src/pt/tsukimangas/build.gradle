@@ -6,13 +6,9 @@ ext {
     extName = 'Tsuki Mangás'
     pkgNameSuffix = 'pt.tsukimangas'
     extClass = '.TsukiMangas'
-    extVersionCode = 24
+    extVersionCode = 25
     libVersion = '1.2'
     containsNsfw = true
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"
