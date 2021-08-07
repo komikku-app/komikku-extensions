@@ -50,7 +50,6 @@ class TsukiMangas : HttpSource() {
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Accept", ACCEPT)
         .add("Accept-Language", ACCEPT_LANGUAGE)
-        .add("Component", "157")
         .add("Referer", baseUrl)
 
     override fun popularMangaRequest(page: Int): Request {
