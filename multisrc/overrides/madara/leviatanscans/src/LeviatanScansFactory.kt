@@ -12,7 +12,5 @@ class LeviatanScansFactory : SourceFactory {
         LeviatanScansES(),
     )
 }
-class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "en") {
-    override fun chapterListParse(response: Response): List<SChapter> = super.chapterListParse(response).sortedBy { it.name.toInt() }.reversed()
-}
+class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "en")
 class LeviatanScansES : Madara("Leviatan Scans", "https://es.leviatanscans.com", "es")

@@ -13,7 +13,7 @@ class MadaraGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 8
 
     override val sources = listOf(
-        MultiLang("Leviatan Scans", "https://leviatanscans.com", listOf("en", "es"), className = "LeviatanScansFactory", overrideVersionCode = 5),
+        MultiLang("Leviatan Scans", "https://leviatanscans.com", listOf("en", "es"), className = "LeviatanScansFactory", overrideVersionCode = 6),
         MultiLang("MangaForFree.net", "https://mangaforfree.net",  listOf("en", "ko", "all") , isNsfw = true, className = "MangaForFreeFactory", pkgName = "mangaforfree", overrideVersionCode = 1),
         MultiLang("Manhwa18.cc", "https://manhwa18.cc", listOf("en", "ko", "all"), isNsfw = true, className = "Manhwa18CcFactory", pkgName = "manhwa18cc"),
         SingleLang("1st Kiss Manga.love", "https://1stkissmanga.love", "en", className = "FirstKissMangaLove"),
@@ -315,7 +315,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Reset Scans", "https://reset-scans.com", "en", overrideVersionCode = 3),
         SingleLang("Rüya Manga", "https://www.ruyamanga.com", "tr", className = "RuyaManga", overrideVersionCode = 1),
         SingleLang("S2Manga", "https://s2manga.com", "en", overrideVersionCode = 1),
-        SingleLang("SISI GELAP", "https://sisigelap.club/", "id", overrideVersionCode = 1),
+        SingleLang("SISI GELAP", "https://baru.sisigelap.club/", "id", overrideVersionCode = 2),
         SingleLang("SamuraiScan", "https://samuraiscan.com", "es"),
         SingleLang("Sani-Go", "https://sani-go.net", "ar", className = "SaniGo", overrideVersionCode = 1),
         SingleLang("Sawamics", "https://sawamics.com", "en"),
