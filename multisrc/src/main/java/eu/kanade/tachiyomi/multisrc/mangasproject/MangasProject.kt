@@ -156,7 +156,7 @@ abstract class MangasProject(
 
         return SManga.create().apply {
             thumbnail_url = seriesData.select("div.series-img > div.cover > img").attr("src")
-            description = seriesData.select("span.series-desc span").text()
+            description = seriesData.select("span.series-desc > span").text()
 
             status = parseStatus(seriesBlocked, isCompleted)
             author = seriesAuthors[false]?.joinToString(", ") ?: author
