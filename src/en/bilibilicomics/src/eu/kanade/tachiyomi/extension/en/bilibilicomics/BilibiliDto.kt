@@ -11,16 +11,6 @@ data class BilibiliResultDto<T>(
 )
 
 @Serializable
-data class BilibiliFeaturedDto(
-    @SerialName("roll_six_comics") val rollSixComics: List<BilibiliComicDto> = emptyList()
-)
-
-@Serializable
-data class BilibiliScheduleDto(
-    val list: List<BilibiliComicDto> = emptyList()
-)
-
-@Serializable
 data class BilibiliSearchDto(
     val list: List<BilibiliComicDto> = emptyList()
 )

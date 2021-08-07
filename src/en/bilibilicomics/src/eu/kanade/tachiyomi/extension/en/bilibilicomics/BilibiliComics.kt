@@ -29,7 +29,6 @@ import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -54,9 +53,6 @@ class BilibiliComics : HttpSource() {
         .add("Referer", "$baseUrl/")
 
     private val json: Json by injectLazy()
-
-    private val day: Int
-        get() = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1
 
     override fun popularMangaRequest(page: Int): Request {
         val requestPayload = buildJsonObject {
@@ -103,7 +99,16 @@ class BilibiliComics : HttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val requestPayload = buildJsonObject { put("day", day) }
+        val requestPayload = buildJsonObject {
+            put("area_id", -1)
+            put("is_finish", -1)
+            put("is_free", 1)
+            put("order", 1)
+            put("page_num", page)
+            put("page_size", POPULAR_PER_PAGE)
+            put("style_id", -1)
+            put("style_prefer", "[]")
+        }
         val requestBody = requestPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
 
         val newHeaders = headersBuilder()
@@ -112,29 +117,29 @@ class BilibiliComics : HttpSource() {
             .build()
 
         return POST(
-            "$baseUrl/$BASE_API_ENDPOINT/GetSchedule?device=pc&platform=web",
+            "$baseUrl/$BASE_API_ENDPOINT/ClassPage?device=pc&platform=web",
             headers = newHeaders,
             body = requestBody
         )
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<BilibiliResultDto<BilibiliScheduleDto>>(response.body!!.string())
+        val result = json.decodeFromString<BilibiliResultDto<List<BilibiliComicDto>>>(response.body!!.string())
 
         if (result.code != 0) {
             return MangasPage(emptyList(), hasNextPage = false)
         }
 
-        val comicList = result.data!!.list
-            .map(::latestMangaFromObject)
+        val comicList = result.data!!.map(::latestMangaFromObject)
+        val hasNextPage = comicList.size == POPULAR_PER_PAGE
 
-        return MangasPage(comicList, hasNextPage = false)
+        return MangasPage(comicList, hasNextPage)
     }
 
     private fun latestMangaFromObject(comic: BilibiliComicDto): SManga = SManga.create().apply {
         title = comic.title
         thumbnail_url = comic.verticalCover
-        url = "/detail/mc${comic.comicId}"
+        url = "/detail/mc${comic.seasonId}"
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
