@@ -8,8 +8,10 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Response
-import org.json.JSONObject
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
@@ -70,25 +72,14 @@ class MangaDenizi : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element) = throw UnsupportedOperationException("Unused")
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val res = response.body!!.string()
-        return getMangasPage(res)
-    }
-
-    private fun getMangasPage(json: String): MangasPage {
-        val response = JSONObject(json)
-        val results = response.getJSONArray("suggestions")
-        val mangas = ArrayList<SManga>()
-
-        // No thumbnail here either
-        for (i in 0 until results.length()) {
-            val obj = results.getJSONObject(i)
-            val manga = SManga.create()
-            manga.title = obj.getString("value")
-            manga.url = "/manga/${obj.getString("data")}"
-            mangas.add(manga)
+        val mangaListJson = Json.decodeFromString<SearchMangaJson>(response.body!!.string())
+        val mangaList = mangaListJson.suggestions.map {
+            SManga.create().apply {
+                title = it.value
+                url = "/manga/${it.data}"
+            }
         }
-
-        return MangasPage(mangas, false)
+        return MangasPage(mangaList, false)
     }
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
@@ -132,4 +123,14 @@ class MangaDenizi : ParsedHttpSource() {
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
 
     override fun getFilterList() = FilterList()
+
+    @Serializable
+    data class SearchMangaJson(
+        val suggestions: List<MangaJson>
+    )
+    @Serializable
+    data class MangaJson(
+        val value: String,
+        val data: String,
+    )
 }

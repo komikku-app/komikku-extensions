@@ -1,7 +1,5 @@
 package eu.kanade.tachiyomi.extension.zh.bainianmanga
 
-import com.github.salomonbrys.kotson.fromJson
-import com.google.gson.Gson
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -9,6 +7,8 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
@@ -80,19 +80,16 @@ class BainianManga : ParsedHttpSource() {
         return super.chapterListParse(response).asReversed()
     }
 
-    private val gson = Gson()
-
     override fun pageListParse(document: Document): List<Page> {
         val html = document.html()
-        val baseURLRe = Regex("var z_yurl='(.*?)';")
-        val baseImageUrl = baseURLRe.find(html)?.groups?.get(1)?.value
+        val baseImgUrl = "https://img.hltongchen.com/"
 
-        val re = Regex("var z_img='(.*?)';")
-        val imgCode = re.find(html)?.groups?.get(1)?.value
-        if (imgCode != null) {
-            val anotherStr = gson.fromJson<List<String>>(imgCode)
-            return anotherStr.mapIndexed { i, imgStr ->
-                Page(i, "", "$baseImageUrl$imgStr")
+        val imgUrlRegex = Regex("var z_img='(.*?)';")
+        val imgUrlArray = imgUrlRegex.find(html)?.groups?.get(1)?.value
+        if (imgUrlArray != null) {
+            val imgUrlList = Json.decodeFromString<List<String>>(imgUrlArray)
+            return imgUrlList.mapIndexed { i, imgUrl ->
+                Page(i, "", "$baseImgUrl$imgUrl")
             }
         }
         return listOf()
