@@ -20,12 +20,14 @@ class BilibiliComicsUrlActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
-            val titleid = pathSegments[1]
+            val titleId = pathSegments[1]
+
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"
-                putExtra("query", "${BilibiliComics.prefixIdSearch}${titleid.removePrefix("mc")}")
+                putExtra("query", BilibiliComics.PREFIX_ID_SEARCH + titleId)
                 putExtra("filter", packageName)
             }
 
@@ -35,7 +37,7 @@ class BilibiliComicsUrlActivity : Activity() {
                 Log.e("BilibiliUrlActivity", e.toString())
             }
         } else {
-            Log.e("BilibiliUrlActivity", "could not parse uri from intent $intent")
+            Log.e("BilibiliUrlActivity", "Could not parse URI from intent $intent")
         }
 
         finish()

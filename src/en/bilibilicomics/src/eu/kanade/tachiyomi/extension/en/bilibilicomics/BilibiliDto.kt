@@ -33,6 +33,7 @@ data class BilibiliComicDto(
     @SerialName("ep_list") val episodeList: List<BilibiliEpisodeDto> = emptyList(),
     val id: Int = 0,
     @SerialName("is_finish") val isFinish: Int = 0,
+    @SerialName("season_id") val seasonId: Int = 0,
     val styles: List<String> = emptyList(),
     val title: String,
     @SerialName("vertical_cover") val verticalCover: String = ""
