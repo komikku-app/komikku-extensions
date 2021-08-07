@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.pt.tsukimangas
 
 import eu.kanade.tachiyomi.annotations.Nsfw
+import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
@@ -26,6 +27,7 @@ import java.io.IOException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 @Nsfw
 class TsukiMangas : HttpSource() {
@@ -40,6 +42,7 @@ class TsukiMangas : HttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .addInterceptor(::tsukiAuthIntercept)
+        .addInterceptor(SpecificHostRateLimitInterceptor(baseUrl.toHttpUrl(), 1, 1, TimeUnit.SECONDS))
         .build()
 
     private val json: Json by injectLazy()
@@ -47,6 +50,7 @@ class TsukiMangas : HttpSource() {
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Accept", ACCEPT)
         .add("Accept-Language", ACCEPT_LANGUAGE)
+        .add("Component", "157")
         .add("Referer", baseUrl)
 
     override fun popularMangaRequest(page: Int): Request {
@@ -294,8 +298,8 @@ class TsukiMangas : HttpSource() {
     private fun tsukiAuthIntercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
 
-        // API returns 403 or 1020 when User-Agent permission is disabled.
-        if (response.code == 403 || response.code == 1020) {
+        // API returns 403, 429 or 1020 when the extension is getting blocked.
+        if (BLOCKING_CODES.contains(response.code)) {
             response.close()
             throw IOException(UA_DISABLED_MESSAGE)
         }
@@ -453,10 +457,12 @@ class TsukiMangas : HttpSource() {
         private const val ACCEPT_IMAGE = "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7,es;q=0.6,gl;q=0.5"
         // By request of site owner. Detailed at Issue #4912 (in Portuguese).
-        private val USER_AGENT = "Tachiyomi " + System.getProperty("http.agent")!!
+        // private val USER_AGENT = "Tachiyomi " + System.getProperty("http.agent")!!
 
-        private val CDN_1_URL = "https://cdn1.tsukimangas.com".toHttpUrl()
-        private val CDN_2_URL = "https://cdn2.tsukimangas.com".toHttpUrl()
+        // private val CDN_1_URL = "https://cdn1.tsukimangas.com".toHttpUrl()
+        // private val CDN_2_URL = "https://cdn2.tsukimangas.com".toHttpUrl()
+
+        private val BLOCKING_CODES = arrayOf(403, 429, 1020)
 
         private const val UA_DISABLED_MESSAGE = "O site está bloqueando o Tachiyomi. " +
             "Aguarde com que eles parem de bloquear ou migre para outras fontes."
