@@ -201,7 +201,7 @@ const val DECODE_SCRIPT: String =
     var AllTitlesViewV2 = new Type("AllTitlesViewV2")
         .add(new Field("allTitlesGroup", 1, "AllTitlesGroup", "repeated"));
 
-    var AlLTitlesGroup = new Type("AllTitlesGroup")
+    var AllTitlesGroup = new Type("AllTitlesGroup")
         .add(new Field("theTitle", 1, "string"))
         .add(new Field("titles", 2, "Title", "repeated"));
 

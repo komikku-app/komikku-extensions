@@ -447,7 +447,7 @@ abstract class MangaPlus(
     companion object {
         private const val API_URL = "https://jumpg-webapi.tokyo-cdn.com/api"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36"
 
         private val HEX_GROUP = "(.{1,2})".toRegex()
 
