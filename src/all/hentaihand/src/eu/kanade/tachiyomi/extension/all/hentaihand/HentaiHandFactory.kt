@@ -50,7 +50,7 @@ class HentaiHandFactory : SourceFactory {
     )
 }
 
-class HentaiHandOther : HentaiHand("other", extraName = " (Unfiltered)")
+class HentaiHandOther : HentaiHand("all", extraName = " (Unfiltered)")
 class HentaiHandEn : HentaiHand("en", 1)
 class HentaiHandZh : HentaiHand("zh", 2)
 class HentaiHandJa : HentaiHand("ja", 3)

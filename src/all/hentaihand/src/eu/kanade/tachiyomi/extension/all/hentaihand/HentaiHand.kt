@@ -1,17 +1,9 @@
 package eu.kanade.tachiyomi.extension.all.hentaihand
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.content.SharedPreferences
 import android.text.InputType
 import android.widget.Toast
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.github.salomonbrys.kotson.nullObj
-import com.github.salomonbrys.kotson.nullString
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -24,20 +16,28 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.json.JSONException
-import org.json.JSONObject
 import rx.Observable
 import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Nsfw
 abstract class HentaiHand(
@@ -50,29 +50,37 @@ abstract class HentaiHand(
     override val name: String = "HentaiHand$extraName"
     override val supportsLatest = true
 
-    private val gson = Gson()
-
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .addInterceptor { authIntercept(it) }
         .build()
 
-    private fun parseGenericResponse(response: Response): MangasPage {
-        val data = gson.fromJson<JsonObject>(response.body!!.string())
-        return MangasPage(
-            data.getAsJsonArray("data").map {
-                SManga.create().apply {
-                    url = "/en/comic/${it["slug"].asString}"
-                    title = it["title"].asString
-                    thumbnail_url = it["thumb_url"].asString
-                }
-            },
-            !data["next_page_url"].isJsonNull
-        )
+    private val json: Json by injectLazy()
+
+    private fun slugToUrl(json: JsonObject) = json["slug"]!!.jsonPrimitive.content.prependIndent("/en/comic/")
+
+    private fun jsonArrayToString(arrayKey: String, obj: JsonObject): String? {
+        val array = obj[arrayKey]!!.jsonArray
+        if (array.isEmpty()) return null
+        return array.joinToString(", ") {
+            it.jsonObject["name"]!!.jsonPrimitive.content
+        }
     }
 
     // Popular
 
-    override fun popularMangaParse(response: Response): MangasPage = parseGenericResponse(response)
+    override fun popularMangaParse(response: Response): MangasPage {
+        val jsonResponse = json.parseToJsonElement(response.body!!.string())
+        val mangaList = jsonResponse.jsonObject["data"]!!.jsonArray.map {
+            val obj = it.jsonObject
+            SManga.create().apply {
+                url = slugToUrl(obj)
+                title = obj["title"]!!.jsonPrimitive.content
+                thumbnail_url = obj["thumb_url"]!!.jsonPrimitive.content
+            }
+        }
+        val hasNextPage = jsonResponse.jsonObject["next_page_url"]!!.jsonPrimitive.content.isNotEmpty()
+        return MangasPage(mangaList, hasNextPage)
+    }
 
     override fun popularMangaRequest(page: Int): Request {
         val url = "$baseUrl/api/comics?page=$page&sort=popularity&order=desc&duration=all"
@@ -81,7 +89,7 @@ abstract class HentaiHand(
 
     // Latest
 
-    override fun latestUpdatesParse(response: Response): MangasPage = parseGenericResponse(response)
+    override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
     override fun latestUpdatesRequest(page: Int): Request {
         val url = "$baseUrl/api/comics?page=$page&sort=uploaded_at&order=desc&duration=week"
@@ -90,17 +98,20 @@ abstract class HentaiHand(
 
     // Search
 
-    override fun searchMangaParse(response: Response): MangasPage = parseGenericResponse(response)
+    override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
 
     private fun lookupFilterId(query: String, uri: String): Int? {
         // filter query needs to be resolved to an ID
         return client.newCall(GET("$baseUrl/api/$uri?q=$query"))
             .asObservableSuccess()
             .subscribeOn(Schedulers.io())
-            .map {
-                val data = gson.fromJson<JsonObject>(it.body!!.string())
-                // only the first tag will be used
-                data.getAsJsonArray("data").firstOrNull()?.let { t -> t["id"].asInt }
+            .map { response ->
+                // Returns the first matched id, or null if there are no results
+                val idList = json.parseToJsonElement(response.body!!.string()).jsonObject["data"]!!.jsonArray.map {
+                    it.jsonObject["id"]!!.jsonPrimitive.content
+                }
+                if (idList.isEmpty()) return@map null
+                else idList.first().toInt()
             }.toBlocking().first()
     }
 
@@ -138,12 +149,6 @@ abstract class HentaiHand(
 
     // Details
 
-    private fun tagArrayToString(array: JsonArray, key: String = "name"): String? {
-        if (array.size() == 0)
-            return null
-        return array.joinToString { it[key].asString }
-    }
-
     private fun mangaDetailsApiRequest(manga: SManga): Request {
         val slug = manga.url.removePrefix("/en/comic/")
         return GET("$baseUrl/api/comics/$slug")
@@ -156,28 +161,26 @@ abstract class HentaiHand(
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val data = gson.fromJson<JsonObject>(response.body!!.string())
+        val obj = json.parseToJsonElement(response.body!!.string()).jsonObject
         return SManga.create().apply {
-
-            artist = tagArrayToString(data.getAsJsonArray("artists"))
-            author = tagArrayToString(data.getAsJsonArray("authors")) ?: artist
-
-            genre = listOf("tags", "relationships").map {
-                data.getAsJsonArray(it).map { t -> t["name"].asString }
-            }.flatten().distinct().joinToString()
-
+            url = slugToUrl(obj)
+            title = obj["title"]!!.jsonPrimitive.content
+            thumbnail_url = obj["thumb_url"]!!.jsonPrimitive.content
+            artist = jsonArrayToString("artists", obj)
+            author = jsonArrayToString("authors", obj) ?: artist
+            genre = listOfNotNull(jsonArrayToString("tags", obj), jsonArrayToString("relationships", obj)).joinToString(", ")
             status = SManga.COMPLETED
 
             description = listOf(
-                Pair("Alternative Title", data["alternative_title"].nullString),
-                Pair("Groups", tagArrayToString(data.getAsJsonArray("groups"))),
-                Pair("Description", data["description"].nullString),
-                Pair("Pages", data["pages"].asInt.toString()),
-                Pair("Category", data["category"].nullObj?.get("name")?.asString),
-                Pair("Language", data["language"].nullObj?.get("name")?.asString),
-                Pair("Parodies", tagArrayToString(data.getAsJsonArray("parodies"))),
-                Pair("Characters", tagArrayToString(data.getAsJsonArray("characters")))
-            ).filter { !it.second.isNullOrEmpty() }.joinToString("\n\n") { "${it.first}:\n${it.second}" }
+                Pair("Alternative Title", obj["alternative_title"]!!.jsonPrimitive.content),
+                Pair("Groups", jsonArrayToString("groups", obj)),
+                Pair("Description", obj["description"]!!.jsonPrimitive.content),
+                Pair("Pages", obj["pages"]!!.jsonPrimitive.content),
+                Pair("Category", obj["category"]!!.jsonObject["name"]!!.jsonPrimitive.content),
+                Pair("Language", obj["language"]!!.jsonObject["name"]!!.jsonPrimitive.content),
+                Pair("Parodies", jsonArrayToString("parodies", obj)),
+                Pair("Characters", jsonArrayToString("characters", obj))
+            ).filter { !it.second.isNullOrEmpty() }.joinToString("\n\n") { "${it.first}: ${it.second}" }
         }
     }
 
@@ -186,12 +189,12 @@ abstract class HentaiHand(
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsApiRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val data = gson.fromJson<JsonObject>(response.body!!.string())
+        val obj = json.parseToJsonElement(response.body!!.string()).jsonObject
         return listOf(
             SChapter.create().apply {
-                url = "/en/comic/${data["slug"].asString}/reader/1"
+                url = "/en/comic/${obj["slug"]!!.jsonPrimitive.content}/reader/1"
                 name = "Chapter"
-                date_upload = DATE_FORMAT.parse(data["uploaded_at"].asString)?.time ?: 0
+                date_upload = DATE_FORMAT.parse(obj["uploaded_at"]!!.jsonPrimitive.content)?.time ?: 0
                 chapter_number = 1f
             }
         )
@@ -204,12 +207,13 @@ abstract class HentaiHand(
         return GET("$baseUrl/api/comics/$slug/images")
     }
 
-    override fun pageListParse(response: Response): List<Page> {
-        val data = gson.fromJson<JsonObject>(response.body!!.string())
-        return data.getAsJsonArray("images").mapIndexed { i, it ->
-            Page(i, "/en/comic/${data["comic"]["slug"].asString}/reader/${it["page"].asInt}", it["source_url"].asString)
+    override fun pageListParse(response: Response): List<Page> =
+        json.parseToJsonElement(response.body!!.string()).jsonObject["images"]!!.jsonArray.map {
+            val imgObj = it.jsonObject
+            val index = imgObj["page"]!!.jsonPrimitive.int
+            val imgUrl = imgObj["source_url"]!!.jsonPrimitive.content
+            Page(index, "", imgUrl)
         }
-    }
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used")
 
@@ -231,12 +235,12 @@ abstract class HentaiHand(
     }
 
     private fun login(chain: Interceptor.Chain, username: String, password: String): String {
-        val jsonObject = JSONObject().apply {
-            this.put("username", username)
-            this.put("password", password)
-            this.put("remember_me", true)
+        val jsonObject = buildJsonObject {
+            put("username", username)
+            put("password", password)
+            put("remember_me", true)
         }
-        val body = RequestBody.create(MEDIA_TYPE, jsonObject.toString())
+        val body = jsonObject.toString().toRequestBody(MEDIA_TYPE)
         val response = chain.proceed(POST("$baseUrl/api/login", headers, body))
         if (response.code == 401) {
             throw Exception("Failed to login, check if username and password are correct")
@@ -245,10 +249,9 @@ abstract class HentaiHand(
         if (response.body == null)
             throw Exception("Login response body is empty")
         try {
-            return JSONObject(response.body!!.string())
-                .getJSONObject("auth")
-                .getString("access_token")
-        } catch (e: JSONException) {
+            // Returns access token as a string, unless unparseable
+            return json.parseToJsonElement(response.body!!.string()).jsonObject["auth"]!!.jsonObject["access-token"]!!.jsonPrimitive.content
+        } catch (e: IllegalArgumentException) {
             throw Exception("Cannot parse login response body")
         }
     }
@@ -357,8 +360,7 @@ abstract class HentaiHand(
     )
 
     companion object {
-        @SuppressLint("SimpleDateFormat")
-        private val DATE_FORMAT = SimpleDateFormat("yyyy-dd-MM")
+        private val DATE_FORMAT = SimpleDateFormat("yyyy-dd-MM", Locale.US)
         private val MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
         private const val USERNAME_TITLE = "Username"
         private const val USERNAME_DEFAULT = ""

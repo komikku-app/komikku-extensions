@@ -1,12 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.simplyhentai
 
 import android.annotation.SuppressLint
-import com.github.salomonbrys.kotson.forEach
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.github.salomonbrys.kotson.string
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -15,12 +9,16 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 
 abstract class SimplyHentai(
@@ -36,7 +34,7 @@ abstract class SimplyHentai(
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val gson = Gson()
+    private val json: Json by injectLazy()
 
     // Popular
 
@@ -158,8 +156,13 @@ abstract class SimplyHentai(
     override fun pageListParse(response: Response): List<Page> {
         val pages = mutableListOf<Page>()
 
-        gson.fromJson<JsonObject>(response.body!!.string()).forEach { _, jsonElement ->
-            pages.add(Page(pages.size, "", jsonElement["sizes"]["full"].string))
+        json.parseToJsonElement(response.body!!.string()).jsonObject.forEach {
+            pages.add(
+                Page(
+                    pages.size, "",
+                    it.value.jsonObject["sizes"]!!.jsonObject["full"]!!.jsonPrimitive.content
+                )
+            )
         }
 
         return pages

@@ -1,11 +1,5 @@
 package eu.kanade.tachiyomi.extension.fr.kangaryu
 
-import com.github.salomonbrys.kotson.array
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.github.salomonbrys.kotson.string
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -13,11 +7,16 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -87,14 +86,15 @@ class Kangaryu : ParsedHttpSource() {
         return GET("$baseUrl/search?query=$query", headers)
     }
 
-    private val gson by lazy { Gson() }
+    private val json: Json by injectLazy()
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val mangas = gson.fromJson<JsonObject>(response.body!!.string())["suggestions"].array.map { json ->
+        val mangas = json.parseToJsonElement(response.body!!.string()).jsonObject["suggestions"]!!.jsonArray.map {
+            val data = it.jsonObject["data"]!!.jsonPrimitive.content
             SManga.create().apply {
-                url = "/manga/${json["data"].string}"
-                title = json["value"].string
-                thumbnail_url = "https://kangaryu-team.fr/uploads/manga/${json["data"].string}/cover/cover_250x350.jpg"
+                url = "/manga/$data"
+                title = it.jsonObject["value"]!!.jsonPrimitive.content
+                thumbnail_url = "https://kangaryu-team.fr/uploads/manga/$data/cover/cover_250x350.jpg"
             }
         }
         return MangasPage(mangas, false)
