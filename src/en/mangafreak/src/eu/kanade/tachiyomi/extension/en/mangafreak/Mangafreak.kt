@@ -19,8 +19,11 @@ import java.util.concurrent.TimeUnit
 
 class Mangafreak : ParsedHttpSource() {
     override val name: String = "Mangafreak"
+
     override val lang: String = "en"
-    override val baseUrl: String = "https://w11.mangafreak.net"
+
+    override val baseUrl: String = "https://w12.mangafreak.net"
+
     override val supportsLatest: Boolean = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
@@ -28,7 +31,7 @@ class Mangafreak : ParsedHttpSource() {
         .readTimeout(1, TimeUnit.MINUTES)
         .retryOnConnectionFailure(true)
         .followRedirects(true)
-        .build()!!
+        .build()
 
     private fun mangaFromElement(element: Element, urlSelector: String): SManga {
         return SManga.create().apply {
@@ -45,7 +48,7 @@ class Mangafreak : ParsedHttpSource() {
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/Genre/All/$page", headers)
     }
-    override fun popularMangaNextPageSelector(): String? = "a.next_p"
+    override fun popularMangaNextPageSelector(): String = "a.next_p"
     override fun popularMangaSelector(): String = "div.ranking_item"
     override fun popularMangaFromElement(element: Element): SManga = mangaFromElement(element, "a")
 
@@ -54,7 +57,7 @@ class Mangafreak : ParsedHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/Latest_Releases/$page", headers)
     }
-    override fun latestUpdatesNextPageSelector(): String? = popularMangaNextPageSelector()
+    override fun latestUpdatesNextPageSelector(): String = popularMangaNextPageSelector()
     override fun latestUpdatesSelector(): String = "div.latest_releases_item"
     override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
         thumbnail_url = element.select("img").attr("abs:src").replace("mini", "manga").substringBeforeLast("/") + ".jpg"
@@ -68,7 +71,7 @@ class Mangafreak : ParsedHttpSource() {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val uri = Uri.parse(baseUrl).buildUpon()
-        if (!query.isBlank()) {
+        if (query.isNotBlank()) {
             uri.appendPath("Search")
                 .appendPath(query)
         }
@@ -114,12 +117,13 @@ class Mangafreak : ParsedHttpSource() {
 
     // Chapter
 
-    override fun chapterListSelector(): String = "div.manga_series_list tbody tr"
+    // HTML response does not actually include a tbody tag, must select tr directly
+    override fun chapterListSelector(): String = "div.manga_series_list tr:has(a)"
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        name = element.select(" td:eq(0)").text()
+        name = element.select("td:eq(0)").text()
         chapter_number = name.substringAfter("Chapter ").substringBefore(" -").toFloat()
-        url = element.select("a").attr("href")
-        date_upload = parseDate(element.select(" td:eq(1)").text())
+        setUrlWithoutDomain(element.select("a").attr("href"))
+        date_upload = parseDate(element.select("td:eq(1)").text())
     }
     private fun parseDate(date: String): Long {
         return SimpleDateFormat("yyyy/MM/dd", Locale.US).parse(date)?.time ?: 0L
