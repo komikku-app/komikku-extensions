@@ -243,7 +243,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
                 "ENDED" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
             }
-            genre = (metadata.genres + metadata.tags).joinToString(", ")
+            genre = (metadata.genres + metadata.tags + booksMetadata.tags).distinct().joinToString(", ")
             description = metadata.summary.ifBlank { booksMetadata.summary }
             booksMetadata.authors.groupBy { it.role }.let { map ->
                 author = map["writer"]?.map { it.name }?.distinct()?.joinToString()
@@ -254,6 +254,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
     private fun ReadListDto.toSManga(): SManga =
         SManga.create().apply {
             title = name
+            description = summary
             url = "$baseUrl/api/v1/readlists/$id"
             thumbnail_url = "$url/thumbnail"
             status = SManga.UNKNOWN
@@ -473,7 +474,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
                 )
 
             Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/tags/series", headers)).execute()
+                client.newCall(GET("$baseUrl/api/v1/tags", headers)).execute()
             }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

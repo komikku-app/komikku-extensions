@@ -1,3 +1,13 @@
+## 1.2.30
+
+Minimum Komga version required: `0.113.0`
+
+### Features
+
+* display read list summary
+* display aggregated tags on series
+* search series by book tags
+
 ## 1.2.29
 
 Minimum Komga version required: `0.97.0`

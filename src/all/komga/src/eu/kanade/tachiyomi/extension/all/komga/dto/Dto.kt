@@ -41,6 +41,7 @@ data class SeriesMetadataDto(
 
 data class BookMetadataAggregationDto(
     val authors: List<AuthorDto> = emptyList(),
+    val tags: Set<String> = emptySet(),
     val releaseDate: String?,
     val summary: String,
     val summaryNumber: String,
@@ -108,6 +109,7 @@ data class CollectionDto(
 data class ReadListDto(
     val id: String,
     val name: String,
+    val summary: String,
     val bookIds: List<String>,
     val createdDate: String,
     val lastModifiedDate: String,
