@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.mangafreak
 
-import android.net.Uri
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -8,6 +7,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -70,34 +70,35 @@ class Mangafreak : ParsedHttpSource() {
     // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val uri = Uri.parse(baseUrl).buildUpon()
+        val url = baseUrl.toHttpUrlOrNull()!!.newBuilder()
+
         if (query.isNotBlank()) {
-            uri.appendPath("Search")
-                .appendPath(query)
+            url.addPathSegments("Search/$query")
         }
+
         filters.forEach { filter ->
-            uri.appendPath("Genre")
             when (filter) {
-                is GenreList -> {
-                    uri.appendPath(
-                        filter.state.joinToString("") {
-                            when (it.state) {
-                                Filter.TriState.STATE_IGNORE -> "0"
-                                Filter.TriState.STATE_INCLUDE -> "1"
-                                Filter.TriState.STATE_EXCLUDE -> "2"
-                                else -> "0"
-                            }
+                is GenreFilter -> {
+                    val genres = filter.state.joinToString("") {
+                        when (it.state) {
+                            Filter.TriState.STATE_IGNORE -> "0"
+                            Filter.TriState.STATE_INCLUDE -> "1"
+                            Filter.TriState.STATE_EXCLUDE -> "2"
+                            else -> "0"
                         }
-                    )
+                    }
+                    url.addPathSegments("Genre/$genres")
                 }
+                is StatusFilter -> url.addPathSegments("Status/${filter.toUriPart()}")
+                is TypeFilter -> url.addPathSegments("Type/${filter.toUriPart()}")
             }
-            uri.appendEncodedPath("Status/0/Type/0")
         }
-        return GET(uri.toString(), headers)
+
+        return GET(url.toString(), headers)
     }
     override fun searchMangaNextPageSelector(): String? = null
     override fun searchMangaSelector(): String = "div.manga_search_item , div.mangaka_search_item"
-    override fun searchMangaFromElement(element: Element): SManga = mangaFromElement(element, "h3 a")
+    override fun searchMangaFromElement(element: Element): SManga = mangaFromElement(element, "h3 a, h5 a")
 
     // Details
 
@@ -147,10 +148,13 @@ class Mangafreak : ParsedHttpSource() {
     // Filter
 
     private class Genre(name: String) : Filter.TriState(name)
-    private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genres", genres)
+    private class GenreFilter(genres: List<Genre>) : Filter.Group<Genre>("Genres", genres)
 
     override fun getFilterList() = FilterList(
-        GenreList(getGenreList())
+        Filter.Header("Filters do not work if search bar is empty"),
+        GenreFilter(getGenreList()),
+        TypeFilter(),
+        StatusFilter()
     )
     private fun getGenreList() = listOf(
         Genre("Act"),
@@ -193,4 +197,27 @@ class Mangafreak : ParsedHttpSource() {
         Genre("Yaoi"),
         Genre("Yuri")
     )
+
+    private class TypeFilter : UriPartFilter(
+        "Manga Type",
+        arrayOf(
+            Pair("Both", "0"),
+            Pair("Manga", "2"),
+            Pair("Manhwa", "1")
+        )
+    )
+
+    private class StatusFilter : UriPartFilter(
+        "Manga Status",
+        arrayOf(
+            Pair("Both", "0"),
+            Pair("Completed", "1"),
+            Pair("Ongoing", "2")
+        )
+    )
+
+    private open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
+        Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
+    }
 }
