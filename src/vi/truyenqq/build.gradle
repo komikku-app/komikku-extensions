@@ -5,7 +5,7 @@ ext {
     extName = 'TruyenQQ'
     pkgNameSuffix = 'vi.truyenqq'
     extClass = '.TruyenQQ'
-    extVersionCode = 3
+    extVersionCode = 4
     libVersion = '1.2'
 }
 

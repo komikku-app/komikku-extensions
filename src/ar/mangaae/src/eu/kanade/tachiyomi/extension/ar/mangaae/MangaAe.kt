@@ -125,7 +125,7 @@ class MangaAe : ParsedHttpSource() {
         val chapter = SChapter.create()
         element.select("a").let {
             // use full pages for easier links
-            chapter.setUrlWithoutDomain(it.attr("href").removeSuffix("/1/") + "/0/full")
+            chapter.setUrlWithoutDomain(it.attr("href").removeSuffix("/1/") + "/0/fully")
             chapter.name = "\u061C" + it.text() // Add unicode ARABIC LETTER MARK to ensure all titles are right to left
         }
         return chapter

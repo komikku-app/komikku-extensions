@@ -314,7 +314,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Reset Scans", "https://reset-scans.com", "en", overrideVersionCode = 3),
         SingleLang("Rüya Manga", "https://www.ruyamanga.com", "tr", className = "RuyaManga", overrideVersionCode = 1),
         SingleLang("S2Manga", "https://s2manga.com", "en", overrideVersionCode = 1),
-        SingleLang("SISI GELAP", "https://baru.sisigelap.club/", "id", overrideVersionCode = 2),
+        SingleLang("SISI GELAP", "https://sigel.xyz", "id", overrideVersionCode = 3),
         SingleLang("SamuraiScan", "https://samuraiscan.com", "es"),
         SingleLang("Sani-Go", "https://sani-go.net", "ar", className = "SaniGo", overrideVersionCode = 1),
         SingleLang("Sawamics", "https://sawamics.com", "en"),

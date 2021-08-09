@@ -17,16 +17,21 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class TruyenQQ : ParsedHttpSource() {
+
     override val name: String = "TruyenQQ"
+
     override val lang: String = "vi"
-    override val baseUrl: String = "https://truyenqq.com"
+
+    override val baseUrl: String = "https://truyenqq.net"
+
     override val supportsLatest: Boolean = true
+
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(1, TimeUnit.MINUTES)
         .readTimeout(1, TimeUnit.MINUTES)
         .retryOnConnectionFailure(true)
         .followRedirects(true)
-        .build()!!
+        .build()
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder().add("Referer", baseUrl)
@@ -36,7 +41,7 @@ class TruyenQQ : ParsedHttpSource() {
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/top-thang/trang-$page.html", headers)
     }
-    override fun popularMangaNextPageSelector(): String? = "a.pagination-link:contains(›)"
+    override fun popularMangaNextPageSelector(): String = "a.pagination-link:contains(›)"
     override fun popularMangaSelector(): String = "div.story-item"
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         setUrlWithoutDomain(element.select("a").first().attr("abs:href"))
@@ -48,7 +53,7 @@ class TruyenQQ : ParsedHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/truyen-moi-cap-nhat/trang-$page.html", headers)
     }
-    override fun latestUpdatesNextPageSelector(): String? = popularMangaNextPageSelector()
+    override fun latestUpdatesNextPageSelector(): String = popularMangaNextPageSelector()
     override fun latestUpdatesSelector(): String = popularMangaSelector()
     override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
 
@@ -60,7 +65,7 @@ class TruyenQQ : ParsedHttpSource() {
 
         // Todo Filters
     }
-    override fun searchMangaNextPageSelector(): String? = popularMangaNextPageSelector()
+    override fun searchMangaNextPageSelector(): String = popularMangaNextPageSelector()
     override fun searchMangaSelector(): String = popularMangaSelector()
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
