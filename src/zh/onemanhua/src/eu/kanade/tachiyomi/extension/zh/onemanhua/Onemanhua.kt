@@ -1,9 +1,13 @@
 package eu.kanade.tachiyomi.extension.zh.onemanhua
 
 import android.annotation.SuppressLint
+import android.app.Application
+import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Base64
+import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -12,21 +16,38 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.util.regex.Pattern
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
 // Originally, the site was called One漫画. The name has been changing every once in awhile
-class Onemanhua : ParsedHttpSource() {
+class Onemanhua : ConfigurableSource, ParsedHttpSource() {
     override val id = 8252565807829914103 // name used to be "One漫画"
     override val lang = "zh"
     override val supportsLatest = true
     override val name = "COCO漫画 (OH漫画)"
     override val baseUrl = "https://www.cocomanhua.com/"
 
+    // Preference setting
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    // Client configs
+    private val mainSiteRateLimitInterceptor = SpecificHostRateLimitInterceptor(
+        baseUrl.toHttpUrlOrNull()!!,
+        preferences.getString(MAINSITE_RATEPERMITS_PREF, MAINSITE_RATEPERMITS_PREF_DEFAULT)!!.toInt(),
+        preferences.getString(MAINSITE_RATEPERIOD_PREF, MAINSITE_RATEPERIOD_PREF_DEFAULT)!!.toLong(),
+    )
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addNetworkInterceptor(mainSiteRateLimitInterceptor)
+        .build()
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
 
@@ -296,24 +317,70 @@ class Onemanhua : ParsedHttpSource() {
         throw Error(messageIfError)
     }
 
-    /*
-    private fun regexExtractIntValue(mangaData: String, regex: String, messageIfError: String): Int {
-        return regexExtractStringValue(mangaData, regex, messageIfError).let { Integer.parseInt(it) }
-    }
-    */
-
-    /*
-    private fun encodeUriComponent(str: String): String {
-        return URLEncoder.encode(str, "UTF-8")
-            .replace("+", "%20")
-            .replace("%7E", "~")
-            .replace("*", "%2A")
-    }
-    */
-
     private fun encodeUri(str: String): String {
         // https://stackoverflow.com/questions/31511922/is-uri-encode-in-android-equivalent-to-encodeuricomponent-in-javascript
         val whitelistChar = "@#&=*+-_.,:!?()/~'%"
         return Uri.encode(str, whitelistChar)
+    }
+
+    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
+        val mainSiteRatePermitsPreference = androidx.preference.ListPreference(screen.context).apply {
+            key = MAINSITE_RATEPERMITS_PREF
+            title = MAINSITE_RATEPERMITS_PREF_TITLE
+            entries = MAINSITE_RATEPERMITS_PREF_ENTRIES_ARRAY
+            entryValues = MAINSITE_RATEPERMITS_PREF_ENTRIES_ARRAY
+            summary = MAINSITE_RATEPERMITS_PREF_SUMMARY
+
+            setDefaultValue(MAINSITE_RATEPERMITS_PREF_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val setting = preferences.edit().putString(MAINSITE_RATEPERMITS_PREF, newValue as String).commit()
+                    setting
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
+
+        val mainSiteRatePeriodPreference = androidx.preference.ListPreference(screen.context).apply {
+            key = MAINSITE_RATEPERIOD_PREF
+            title = MAINSITE_RATEPERIOD_PREF_TITLE
+            entries = MAINSITE_RATEPERIOD_PREF_ENTRIES_ARRAY
+            entryValues = MAINSITE_RATEPERIOD_PREF_ENTRIES_ARRAY
+            summary = MAINSITE_RATEPERIOD_PREF_SUMMARY
+
+            setDefaultValue(MAINSITE_RATEPERIOD_PREF_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val setting = preferences.edit().putString(MAINSITE_RATEPERIOD_PREF, newValue as String).commit()
+                    setting
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
+
+        screen.addPreference(mainSiteRatePermitsPreference)
+        screen.addPreference(mainSiteRatePeriodPreference)
+    }
+
+    companion object {
+        private const val MAINSITE_RATEPERMITS_PREF = "mainSiteRatePermitsPreference"
+        private const val MAINSITE_RATEPERMITS_PREF_DEFAULT = "1"
+        /** "Ratelimit permits per period for main website" */
+        private const val MAINSITE_RATEPERMITS_PREF_TITLE = "主站连接数限制"
+        /** "This value affects network request amount to main website url. Lower this value may reduce the chance to get HTTP 403 error, but loading speed will be slower too. Tachiyomi restart required. Current value: %s" */
+        private const val MAINSITE_RATEPERMITS_PREF_SUMMARY = "此值影响向网站发起连接请求的数量。调低此值可能减少发生HTTP 403 错误的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s"
+        private val MAINSITE_RATEPERMITS_PREF_ENTRIES_ARRAY = (1..10).map { i -> i.toString() }.toTypedArray()
+
+        private const val MAINSITE_RATEPERIOD_PREF = "mainSiteRatePeriodPreference"
+        private const val MAINSITE_RATEPERIOD_PREF_DEFAULT = "2"
+        /** "Ratelimit period per second for main website" */
+        private const val MAINSITE_RATEPERIOD_PREF_TITLE = "主站连接每秒周期"
+        /** "This value affects network request delay to main website url. Lower this value may reduce the chance to get HTTP 403 error, but loading speed will be slower too. Tachiyomi restart required. Current value: %s" */
+        private const val MAINSITE_RATEPERIOD_PREF_SUMMARY = "此值影响向网站发起连接请求的延迟期。调低此值可能减少发生HTTP 403 错误的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s"
+        private val MAINSITE_RATEPERIOD_PREF_ENTRIES_ARRAY = (1..10).map { i -> i.toString() }.toTypedArray()
     }
 }
