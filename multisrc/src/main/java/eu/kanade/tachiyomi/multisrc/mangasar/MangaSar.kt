@@ -1,6 +1,5 @@
-package eu.kanade.tachiyomi.extension.pt.mangatube
+package eu.kanade.tachiyomi.multisrc.mangasar
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -24,27 +23,22 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
+import org.jsoup.parser.Parser
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
-class MangaTube : HttpSource() {
-
-    override val name = "MangaTube"
-
-    override val baseUrl = "https://mangatube.site"
-
-    override val lang = "pt-BR"
+abstract class MangaSar(
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String
+) : HttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
-        .addInterceptor(::searchIntercept)
-        .build()
+    override val client: OkHttpClient = network.cloudflareClient
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Accept", ACCEPT_HTML)
@@ -66,13 +60,16 @@ class MangaTube : HttpSource() {
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
 
-        val mangas = document.select("div:contains(Populares) ~ ul.mangasList li div.gridbox")
+        val mangas = document.select(popularMangaSelector())
             .map(::popularMangaFromElement)
 
         return MangasPage(mangas, hasNextPage = false)
     }
 
-    private fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
+    protected open fun popularMangaSelector(): String =
+        "div:contains(Populares) ~ ul.mangasList li div.gridbox"
+
+    protected open fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("div.title a").first()!!.text()
         thumbnail_url = element.select("div.thumb img").first()!!.attr("abs:src")
         setUrlWithoutDomain(element.select("a").first()!!.attr("href"))
@@ -92,18 +89,19 @@ class MangaTube : HttpSource() {
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<MangaTubeLatestDto>(response.body!!.string())
+        val result = json.decodeFromString<MangaSarLatestDto>(response.body!!.string())
 
         val latestMangas = result.releases
             .map(::latestUpdatesFromObject)
+            .distinctBy { it.url }
 
         val hasNextPage = result.page.toInt() < result.totalPage
 
         return MangasPage(latestMangas, hasNextPage)
     }
 
-    private fun latestUpdatesFromObject(release: MangaTubeReleaseDto) = SManga.create().apply {
-        title = release.name
+    private fun latestUpdatesFromObject(release: MangaSarReleaseDto) = SManga.create().apply {
+        title = release.name.withoutEntities()
         thumbnail_url = release.image
         url = release.link
     }
@@ -118,14 +116,14 @@ class MangaTube : HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<Map<String, MangaTubeTitleDto>>(response.body!!.string())
+        val result = json.decodeFromString<Map<String, MangaSarTitleDto>>(response.body!!.string())
 
         val searchResults = result.values.map(::searchMangaFromObject)
 
         return MangasPage(searchResults, hasNextPage = false)
     }
 
-    private fun searchMangaFromObject(manga: MangaTubeTitleDto) = SManga.create().apply {
+    private fun searchMangaFromObject(manga: MangaSarTitleDto) = SManga.create().apply {
         title = manga.title
         thumbnail_url = manga.image
         setUrlWithoutDomain(manga.url)
@@ -164,7 +162,7 @@ class MangaTube : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         val mangaUrl = response.request.header("Referer")!!.substringAfter(baseUrl)
 
-        var result = json.decodeFromString<MangaTubePaginatedChaptersDto>(response.body!!.string())
+        var result = json.decodeFromString<MangaSarPaginatedChaptersDto>(response.body!!.string())
 
         if (result.chapters.isNullOrEmpty()) {
             return emptyList()
@@ -191,7 +189,7 @@ class MangaTube : HttpSource() {
         return chapters
     }
 
-    private fun chapterFromObject(chapter: MangaTubeChapterDto): SChapter = SChapter.create().apply {
+    private fun chapterFromObject(chapter: MangaSarChapterDto): SChapter = SChapter.create().apply {
         name = "Cap. " + (if (chapter.number.booleanOrNull != null) "0" else chapter.number.content) +
             (if (chapter.name.isString) " - " + chapter.name.content else "")
         chapter_number = chapter.number.floatOrNull ?: -1f
@@ -224,7 +222,7 @@ class MangaTube : HttpSource() {
 
         val apiRequest = pageListApiRequest(chapterUrl, serieId, token)
         val apiResponse = client.newCall(apiRequest).execute().let {
-            json.decodeFromString<MangaTubeReaderDto>(it.body!!.string())
+            json.decodeFromString<MangaSarReaderDto>(it.body!!.string())
         }
 
         return apiResponse.images
@@ -245,7 +243,7 @@ class MangaTube : HttpSource() {
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    private fun searchIntercept(chain: Interceptor.Chain): Response {
+    protected fun searchIntercept(chain: Interceptor.Chain): Response {
         if (chain.request().url.toString().contains("/search/")) {
             val homeRequest = popularMangaRequest(1)
             val document = chain.proceed(homeRequest).asJsoup()
@@ -276,6 +274,10 @@ class MangaTube : HttpSource() {
         } catch (e: ParseException) {
             0L
         }
+    }
+
+    private fun String.withoutEntities(): String {
+        return Parser.unescapeEntities(this, true)
     }
 
     companion object {
