@@ -92,7 +92,7 @@ class MangaOwl : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
-    override fun searchMangaNextPageSelector() = "div.blog-pagenat-wthree li a.page-link.next"
+    override fun searchMangaNextPageSelector() = "div.blog-pagenat-wthree li a:contains(>)"
 
     // Manga summary page
 
