@@ -41,19 +41,20 @@ class Mangahasu : ParsedHttpSource() {
         .add("Referer", baseUrl)
 
     override fun popularMangaRequest(page: Int): Request =
-        GET("$baseUrl/directory.html?page=$page", headers)
+        GET("$baseUrl/most-popular.html?page=$page", headers)
 
     override fun latestUpdatesRequest(page: Int): Request =
         GET("$baseUrl/latest-releases.html?page=$page", headers)
 
-    override fun popularMangaSelector() = "div.div_item"
+    // Only selects popular of all time
+    override fun popularMangaSelector() = "div.right div.div_item"
 
     override fun latestUpdatesSelector() = "div.div_item"
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("img").first().attr("src")
-        element.select("a.name-manga").first().let {
+        element.select("a:has(h3.name-manga), a.name-manga").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
         }
@@ -91,8 +92,7 @@ class Mangahasu : ParsedHttpSource() {
         return GET(url.toString(), headers)
     }
 
-    override fun searchMangaSelector() =
-        popularMangaSelector()
+    override fun searchMangaSelector() = latestUpdatesSelector()
 
     override fun searchMangaFromElement(element: Element): SManga =
         popularMangaFromElement(element)
@@ -104,9 +104,9 @@ class Mangahasu : ParsedHttpSource() {
         val infoElement = document.select(".info-c").first()
 
         val manga = SManga.create()
-        manga.author = infoElement.select(".info")[0].text()
-        manga.artist = infoElement.select(".info")[1].text()
-        manga.genre = infoElement.select(".info")[3].text()
+        manga.author = isUpdating(infoElement.select(".info")[0].text())
+        manga.artist = isUpdating(infoElement.select(".info")[1].text())
+        manga.genre = isUpdating(infoElement.select(".info")[3].text())
         manga.status = parseStatus(infoElement.select(".info")[4].text())
         manga.description = document.select("div.content-info:has(h3:contains(summary)) div").first()?.text()
         manga.thumbnail_url = document.select("div.info-img img").attr("src")
@@ -117,6 +117,10 @@ class Mangahasu : ParsedHttpSource() {
         element.contains("Ongoing") -> SManga.ONGOING
         element.contains("Completed") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
+    }
+
+    private fun isUpdating(string: String): String {
+        return if (string == "Updating...") "" else string
     }
 
     override fun chapterListSelector() = "tbody tr"
