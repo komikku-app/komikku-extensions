@@ -12,6 +12,8 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 8
 
     override val sources = listOf(
+        SingleLang("Anitation Arts", "https://anitationarts.org", "en", overrideVersionCode = 1),
+        SingleLang("Alpha Scans", "https://alpha-scans.org", "en"),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 1),
         SingleLang("KomikMama", "https://komikmama.net", "id"),
         SingleLang("MangaKita", "https://mangakita.net", "id", overrideVersionCode = 1),
@@ -21,6 +23,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Sekaikomik", "https://www.sekaikomik.xyz", "id", isNsfw = true, overrideVersionCode = 6),
         SingleLang("Davey Scans", "https://daveyscans.com/", "id"),
         SingleLang("Mangasusu", "https://mangasusu.co.in", "id", isNsfw = true),
+        SingleLang("Manhua Raw", "https://manhuaraw.com", "en"),
         SingleLang("TurkToon", "https://turktoon.com", "tr"),
         SingleLang("Gecenin Lordu", "https://geceninlordu.com/", "tr", overrideVersionCode = 1),
         SingleLang("A Pair of 2+", "https://pairof2.com", "en", className = "APairOf2"),

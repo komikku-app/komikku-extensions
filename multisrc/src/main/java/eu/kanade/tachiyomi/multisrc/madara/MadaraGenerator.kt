@@ -32,7 +32,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Ancient Empire Scan", "https://ancientempirescan.website", "es", overrideVersionCode = 1),
         SingleLang("Aqua Manga", "https://aquamanga.com", "en"),
         SingleLang("Anisa Manga", "https://anisamanga.com", "tr"),
-        SingleLang("Anitation Arts", "https://anitationarts.org", "en"),
         SingleLang("ApollComics", "https://apollcomics.xyz", "es", overrideVersionCode = 1),
         SingleLang("ArazNovel", "https://www.araznovel.com", "tr", overrideVersionCode = 1),
         SingleLang("Argos Scan", "https://argosscan.com", "pt-BR", overrideVersionCode = 3),
