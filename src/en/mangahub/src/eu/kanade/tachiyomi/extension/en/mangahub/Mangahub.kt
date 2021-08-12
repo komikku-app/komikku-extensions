@@ -88,6 +88,16 @@ class Mangahub : ParsedHttpSource() {
             }
         }
 
+        // add alternative name to manga description
+        document.select("h1 small").firstOrNull()?.ownText()?.let {
+            if (it.isEmpty().not()) {
+                manga.description += when {
+                    manga.description!!.isEmpty() -> "Alternative Name: $it"
+                    else -> "\n\nAlternative Name: $it"
+                }
+            }
+        }
+
         return manga
     }
 
