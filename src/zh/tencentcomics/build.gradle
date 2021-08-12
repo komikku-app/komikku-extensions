@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Tencent Comics (ac.qq.com)'
+    pkgNameSuffix = 'zh.tencentcomics'
+    extClass = '.TencentComics'
+    extVersionCode = 1
+    libVersion = '1.2'
+}
+
+apply from: "$rootDir/common.gradle"
