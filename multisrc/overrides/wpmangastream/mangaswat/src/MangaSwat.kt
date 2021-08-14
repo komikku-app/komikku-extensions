@@ -9,8 +9,10 @@ import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Headers
 import okhttp3.Request
 import org.jsoup.nodes.Document
+import java.text.SimpleDateFormat
+import java.util.Locale
 
-class MangaSwat : WPMangaStream("MangaSwat", "https://mangaswat.com", "ar") {
+class MangaSwat : WPMangaStream("MangaSwat", "https://mangaswat.com", "ar", SimpleDateFormat("yyyy-MM-dd", Locale.US)) {
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
