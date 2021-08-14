@@ -9,12 +9,15 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 
 @Nsfw
@@ -27,6 +30,8 @@ class HBrowse : ParsedHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    private val json: Json by injectLazy()
 
     // Clients
 
@@ -171,14 +176,14 @@ class HBrowse : ParsedHttpSource() {
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("td.pageList a").mapIndexed { i, element ->
-            Page(i, element.attr("abs:href"))
-        }
+        val script = document.select("script:containsData(imageDir)").first().data()
+        val imageDir = Regex("""imageDir\s*=\s*"(.+?)";""").find(script)?.groupValues!!.get(1)
+        var images = json.decodeFromString<List<String>>(Regex("""list\s*=\s*(\[.+?]);""").find(script)?.groupValues!!.get(1))
+        images = images.subList(0, images.size - 2)
+        return images.mapIndexed { index, element -> Page(index, "", baseUrl + imageDir + element) }
     }
 
-    override fun imageUrlParse(document: Document): String {
-        return document.select("img#mangaImage").attr("abs:src")
-    }
+    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
 
     // Filters
 
