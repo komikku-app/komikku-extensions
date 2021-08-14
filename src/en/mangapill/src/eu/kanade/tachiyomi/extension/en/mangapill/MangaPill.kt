@@ -12,6 +12,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.util.Locale
 
 class MangaPill : ParsedHttpSource() {
 
@@ -26,7 +27,7 @@ class MangaPill : ParsedHttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl", headers)
+        return GET("$baseUrl/chapters", headers)
     }
 
     override fun popularMangaSelector() = ".grid.justify-between.gap-3.grid-cols-2 > div"
@@ -44,7 +45,7 @@ class MangaPill : ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("img").attr("data-src")
-        var url = element.select("a").first().attr("href")
+        val url = element.select("a").first().attr("href")
         manga.setUrlWithoutDomain(url.substringBeforeLast("/").replace("chapters", "manga").substringBeforeLast("-") + "/" + url.substringAfterLast("/").substringBefore("-chapter"))
         manga.title = element.select(".inilne.block").text().trim()
         return manga
@@ -53,7 +54,7 @@ class MangaPill : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
     override fun popularMangaNextPageSelector() = "a.next.page-numbers"
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
+    override fun latestUpdatesNextPageSelector() = null
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga {
@@ -75,8 +76,8 @@ class MangaPill : ParsedHttpSource() {
 
     private fun parseStatus(element: String): Int = when {
 
-        element.toLowerCase().contains("publishing") -> SManga.ONGOING
-        element.toLowerCase().contains("finished") -> SManga.COMPLETED
+        element.toLowerCase(Locale.ENGLISH).contains("publishing") -> SManga.ONGOING
+        element.toLowerCase(Locale.ENGLISH).contains("finished") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
