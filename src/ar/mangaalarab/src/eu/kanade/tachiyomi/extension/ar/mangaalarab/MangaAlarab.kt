@@ -90,8 +90,29 @@ class MangaAlarab : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
             document.select("article").first().let { info ->
-
                 description = info.select("p.text-sm").text()
+            }
+
+            // add series type(manga/manhwa/manhua/other) thinggy to genre
+            genre = document.select("div.text-gray-600 a, div.container > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > span:nth-child(2)").joinToString(", ") { it.text() }
+
+            // add series Status to manga description
+            document.select("div.container > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(6) > span:nth-child(2)")?.first()?.text()?.also { statusText ->
+                when {
+                    statusText.contains("مستمرة", true) -> status = SManga.ONGOING
+                    statusText.contains("مكتملة", true) -> status = SManga.COMPLETED
+                    else -> status = SManga.UNKNOWN
+                }
+            }
+
+            // add alternative name to manga description
+            document.select("article span").text()?.let {
+                if (it.isEmpty().not()) {
+                    description += when {
+                        description!!.isEmpty() -> "Alternative Name: $it"
+                        else -> "\n\nAlternativ Name: $it"
+                    }
+                }
             }
         }
     }
