@@ -23,6 +23,7 @@ import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.net.URLEncoder
 import java.util.Locale
 import androidx.preference.CheckBoxPreference as AndroidXCheckBoxPreference
 import androidx.preference.PreferenceScreen as AndroidXPreferenceScreen
@@ -177,7 +178,7 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
                 val hn = Single.zip(tagIndexVersion(), galleryIndexVersion()) { tv, gv -> tv to gv }
                     .map { HitomiNozomi(client, it.first, it.second) }
                 val base = hn.flatMap { n ->
-                    n.getGalleryIdsForQuery("$area:$keyword", nozomiLang, popular).map { n to it.toSet() }
+                    n.getGalleryIdsForQuery("$area:${URLEncoder.encode(keyword, "utf-8")}", nozomiLang, popular).map { n to it.toSet() }
                 }
                 base.flatMap { (_, ids) ->
                     val chunks = ids.chunked(PAGE_SIZE)
@@ -368,9 +369,9 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
     // Change g's if statement from !isNaN(g)
     private fun firstSubdomainFromGalleryId(pathSegment: String): Char {
         var o = 0
-        var g = pathSegment.toInt(16)
-        if (g < 0x80) o = 1
-        if (g < 0x40) o = 2
+        val g = pathSegment.toInt(16)
+        if (g < 0x88) o = 1
+        if (g < 0x44) o = 2
         return (97 + o).toChar()
     }
 
