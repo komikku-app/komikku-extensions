@@ -3,13 +3,16 @@ package eu.kanade.tachiyomi.extension.en.mangaowl
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.text.ParseException
@@ -68,6 +71,19 @@ class MangaOwl : ParsedHttpSource() {
 
     // Search
 
+    // This is necessary because the HTML response does not contain pagination links
+    override fun searchMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+
+        val mangas = document.select(searchMangaSelector()).map { element ->
+            searchMangaFromElement(element)
+        }
+        // Max manga in 1 page is 36
+        val hasNextPage = document.select(searchMangaSelector()).size == 36
+
+        return MangasPage(mangas, hasNextPage)
+    }
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = "$baseUrl/search/$page".toHttpUrlOrNull()!!.newBuilder()
         url.addQueryParameter("search", query)
@@ -83,6 +99,8 @@ class MangaOwl : ParsedHttpSource() {
                         .joinToString(".") { it.uriPart }
                     url.addQueryParameter("genres", genres)
                 }
+                is MinChapterFilter -> url.addQueryParameter("chapter_from", filter.state)
+                is MaxChapterFilter -> url.addQueryParameter("chapter_to", filter.state)
             }
         }
         return GET(url.toString(), headers)
@@ -92,7 +110,7 @@ class MangaOwl : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
-    override fun searchMangaNextPageSelector() = "div.blog-pagenat-wthree li a:contains(>)"
+    override fun searchMangaNextPageSelector() = throw UnsupportedOperationException("Not used")
 
     // Manga summary page
 
@@ -166,7 +184,11 @@ class MangaOwl : ParsedHttpSource() {
         SearchFilter(),
         SortFilter(),
         StatusFilter(),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
+        Filter.Separator(),
+        Filter.Header("Only works with text search"),
+        MinChapterFilter(),
+        MaxChapterFilter()
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -206,6 +228,7 @@ class MangaOwl : ParsedHttpSource() {
 
     private class Genre(name: String, val uriPart: String) : Filter.CheckBox(name)
     private class GenreFilter(genres: List<Genre>) : Filter.Group<Genre>("Genres", genres)
+
     private fun getGenreList() = listOf(
         Genre("4-koma", "89"),
         Genre("Action", "1"),
@@ -315,4 +338,7 @@ class MangaOwl : ParsedHttpSource() {
         Genre("Yuri", "54"),
         Genre("Zombies", "108")
     )
+
+    private class MinChapterFilter : Filter.Text("Minimum Chapters")
+    private class MaxChapterFilter : Filter.Text("Maximum Chapters")
 }
