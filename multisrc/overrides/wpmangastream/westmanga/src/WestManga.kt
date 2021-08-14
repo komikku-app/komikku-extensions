@@ -38,10 +38,10 @@ class WestManga : WPMangaStream("West Manga", "https://westmanga.info", "id") {
 
                 // add alternative name to manga description
                 document.select(altNameSelector).firstOrNull()?.ownText()?.let {
-                    if (it.isEmpty().not() && it !="N/A" && it != "-") {
-                        description += when {
-                            description!!.isEmpty() -> altName + it
-                            else -> "\n\n$altName" + it
+                    if (it.isBlank().not() && it !="N/A" && it != "-") {
+                        description = when {
+                            description.isNullOrBlank() -> altName + it
+                            else -> description + "\n\n$altName" + it
                         }
                     }
                 }

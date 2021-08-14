@@ -9,7 +9,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
 
     override val themeClass = "WPMangaReader"
 
-    override val baseVersionCode: Int = 8
+    override val baseVersionCode: Int = 9
 
     override val sources = listOf(
         SingleLang("Anitation Arts", "https://anitationarts.org", "en", overrideVersionCode = 1),

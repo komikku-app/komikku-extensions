@@ -121,10 +121,10 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
         // add alternative name to manga description
         val altName = "Alternative Name: "
         document.select(".attr > tbody > tr:contains(Alter) td").firstOrNull()?.ownText()?.let {
-            if (it.isEmpty().not()) {
-                description += when {
-                    description!!.isEmpty() -> altName + it
-                    else -> "\n\n$altName" + it
+            if (it.isBlank().not()) {
+                description = when {
+                    description.isNullOrBlank() -> altName + it
+                    else -> description + "\n\n$altName" + it
                 }
             }
         }

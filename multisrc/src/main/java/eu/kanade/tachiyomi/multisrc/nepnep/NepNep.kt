@@ -232,10 +232,10 @@ abstract class NepNep(
                 // add alternative name to manga description
                 val altName = "Alternative Name: "
                 info.select("li.list-group-item:has(span:contains(Alter))").firstOrNull()?.ownText()?.let {
-                    if (it.isEmpty().not() && it != "N/A") {
-                        description += when {
-                            description!!.isEmpty() -> altName + it
-                            else -> "\n\n$altName" + it
+                    if (it.isBlank().not() && it != "N/A") {
+                        description = when {
+                            description.isNullOrBlank() -> altName + it
+                            else -> description + "\n\n$altName" + it
                         }
                     }
                 }

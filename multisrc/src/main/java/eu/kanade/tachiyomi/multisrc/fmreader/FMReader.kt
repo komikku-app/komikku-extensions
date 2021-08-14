@@ -169,10 +169,10 @@ abstract class FMReader(
 
             // add alternative name to manga description
             infoElement.select(altNameSelector).firstOrNull()?.ownText()?.let {
-                if (it.isEmpty().not() && it.contains("Updating", true).not()) {
-                    description += when {
-                        description!!.isEmpty() -> altName + it
-                        else -> "\n\n$altName" + it
+                if (it.isBlank().not() && it.contains("Updating", true).not()) {
+                    description = when {
+                        description.isNullOrBlank() -> altName + it
+                        else -> description + "\n\n$altName" + it
                     }
                 }
             }

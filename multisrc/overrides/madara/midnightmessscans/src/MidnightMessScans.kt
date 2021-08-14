@@ -84,10 +84,10 @@ class MidnightMessScans : Madara("Midnight Mess Scans", "https://midnightmess.or
 
             // add alternative name to manga description
             document.select(altNameSelector).firstOrNull()?.ownText()?.let {
-                if (it.isEmpty().not() && it.notUpdating()) {
-                    manga.description += when {
-                        manga.description.isNullOrEmpty() -> altName + it
-                        else -> "\n\n$altName" + it
+                if (it.isBlank().not() && it.notUpdating()) {
+                    manga.description = when {
+                        manga.description.isNullOrBlank() -> altName + it
+                        else -> manga.description + "\n\n$altName" + it
                     }
                 }
             }
@@ -95,7 +95,7 @@ class MidnightMessScans : Madara("Midnight Mess Scans", "https://midnightmess.or
 
         return manga
     }
-    
+
     override fun getGenreList() = listOf(
         Genre("Bilibili", "bilibili"),
         Genre("Complete", "complete"),
