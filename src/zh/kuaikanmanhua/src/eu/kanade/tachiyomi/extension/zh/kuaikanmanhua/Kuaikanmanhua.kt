@@ -9,12 +9,16 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import rx.Observable
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import kotlin.collections.ArrayList
 
 class Kuaikanmanhua : HttpSource() {
 
@@ -138,34 +142,35 @@ class Kuaikanmanhua : HttpSource() {
 
     // Chapters & Pages
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val newUrl = apiUrl + "/v1/topics/" + manga.url.trimEnd('/').substringAfterLast("/")
-        val response = client.newCall(GET(newUrl)).execute()
-        val chapters = chapterListParse(response)
-        return Observable.just(chapters)
-    }
-
     override fun chapterListParse(response: Response): List<SChapter> {
-        val data = JSONObject(response.body!!.string()).getJSONObject("data")
-        val chaptersJson = data.getJSONArray("comics")
+        val document = response.asJsoup()
         val chapters = mutableListOf<SChapter>()
+        val script = document.select("script:containsData(comics)").first().data()
+        val comics = JSONArray(script.substringAfter("comics:").substringBefore(",first_comic_id"))
+        val variable = script.substringAfter("(function(").substringBefore("){").split(",")
+        val value = script.substringAfterLast("}}(").substringBefore("));").split(",")
 
-        for (i in 0 until chaptersJson.length()) {
-            val obj = chaptersJson.getJSONObject(i)
+        document.select("div.TopicItem").forEachIndexed { index, element ->
             chapters.add(
                 SChapter.create().apply {
-                    url = "/v2/comic/" + obj.getString("id")
-                    name = obj.getString("title") +
-                        if (!obj.getBoolean("can_view")) {
-                            " \uD83D\uDD12"
-                        } else {
-                            ""
-                        }
-                    date_upload = obj.getLong("created_at") * 1000
+                    val idVar = comics.getJSONObject(index).getString("id")
+                    val id = value[variable.indexOf(idVar)]
+                    url = "/web/comic/$id"
+                    name = element.select("div.title > a").text()
+                    if (element.select("i.lockedIcon").isNotEmpty()) {
+                        name += " \uD83D\uDD12"
+                    }
+                    var dateStr = element.select("div.date > span").text()
+                    dateStr = if (dateStr.length == 5) {
+                        val year = Calendar.getInstance().get(Calendar.YEAR)
+                        "$year-$dateStr"
+                    } else {
+                        "20$dateStr"
+                    }
+                    date_upload = SimpleDateFormat("yyyy-MM-dd").parse(dateStr).time
                 }
             )
         }
-
         return chapters
     }
 
@@ -178,16 +183,20 @@ class Kuaikanmanhua : HttpSource() {
         if (chapter.name.endsWith("🔒")) {
             throw Exception("[此章节为付费内容]")
         }
-        return GET(apiUrl + chapter.url)
+        return GET(baseUrl + chapter.url)
     }
 
     override fun pageListParse(response: Response): List<Page> {
         val pages = ArrayList<Page>()
-        val data = JSONObject(response.body!!.string()).getJSONObject("data")
-        val pagesJson = data.getJSONArray("images")
-
-        for (i in 0 until pagesJson.length()) {
-            pages.add(Page(i, pagesJson.getString(i), pagesJson.getString(i)))
+        val document = response.asJsoup()
+        val script = document.selectFirst("script:containsData(comicImages)").data()
+        val images = JSONArray(script.substringAfter("comicImages:").substringBefore("},nextComicInfo"))
+        val variable = script.substringAfter("(function(").substringBefore("){").split(",")
+        val value = script.substringAfterLast("}}(").substringBefore("));").split(",")
+        for (i in 0 until images.length()) {
+            val urlVar = images.getJSONObject(i).getString("url")
+            val url = value[variable.indexOf(urlVar)].replace("\\u002F", "/").replace("\"", "")
+            pages.add(Page(i, "", url))
         }
         return pages
     }
