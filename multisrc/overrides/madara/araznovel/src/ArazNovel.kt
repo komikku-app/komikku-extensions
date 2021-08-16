@@ -59,14 +59,20 @@ class ArazNovel : Madara("ArazNovel", "https://www.araznovel.com", "tr", SimpleD
     )
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        return getXhrChapters(response.asJsoup().select("div#manga-chapters-holder").attr("data-id")).let { document ->
-            document.select("li.parent").let { elements ->
+        val document = response.asJsoup()
+        val mangaId = document.select("div#manga-chapters-holder").attr("data-id")
+
+        val xhrRequest = xhrChaptersRequest(mangaId)
+        val xhrResponse = client.newCall(xhrRequest).execute()
+
+        return xhrResponse.asJsoup().let { xhrDocument ->
+            xhrDocument.select("li.parent").let { elements ->
                 if (!elements.isNullOrEmpty()) {
                     elements.reversed()
                         .map { volumeElement -> volumeElement.select(chapterListSelector()).map { chapterFromElement(it) } }
                         .flatten()
                 } else {
-                    document.select(chapterListSelector()).map { chapterFromElement(it) }
+                    xhrDocument.select(chapterListSelector()).map { chapterFromElement(it) }
                 }
             }
         }

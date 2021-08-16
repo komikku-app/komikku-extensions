@@ -3,6 +3,9 @@ package eu.kanade.tachiyomi.extension.en.isekaiscancom
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 
 class IsekaiScanCom : Madara("IsekaiScan.com", "https://isekaiscan.com", "en") {
+
+    override val useNewChapterEndpoint = true
+
     override fun getGenreList() = listOf(
         Genre("4 koma", "4-koma"),
         Genre("Action", "action"),
@@ -34,7 +37,7 @@ class IsekaiScanCom : Madara("IsekaiScan.com", "https://isekaiscan.com", "en") {
         Genre("Manhwa", "manhwa"),
         Genre("Martial arts", "martial-arts"),
         Genre("Mature", "mature"),
-        Genre("Mature 2", "adult"), //site says Mature 2 but the value is adult
+        Genre("Mature 2", "adult"), // site says Mature 2 but the value is adult
         Genre("Mature 3", "mature-3"),
         Genre("Mecha", "mecha"),
         Genre("Medical", "medical"),

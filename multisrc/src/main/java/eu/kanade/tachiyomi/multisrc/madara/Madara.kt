@@ -130,7 +130,7 @@ abstract class Madara(
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.startsWith(URL_SEARCH_PREFIX)){
             val mangaUrl = "$baseUrl/$mangaSubString/${query.substringAfter(URL_SEARCH_PREFIX)}"
-            return client.newCall(GET("$baseUrl/$mangaSubString/${query.substringAfter(URL_SEARCH_PREFIX)}", headers))
+            return client.newCall(GET(mangaUrl, headers))
                 .asObservable().map { response ->
                     MangasPage(listOf(mangaDetailsParse(response.asJsoup()).apply { url = "/$mangaSubString/${query.substringAfter(URL_SEARCH_PREFIX)}/" }), false)
                 }
@@ -400,25 +400,55 @@ abstract class Madara(
         }
     }
 
-    protected open fun getXhrChapters(mangaId: String): Document {
-        val xhrHeaders = headersBuilder().add("Content-Type: application/x-www-form-urlencoded; charset=UTF-8")
-            .add("Referer", baseUrl)
+    /**
+     * Set it to true if the source uses the new AJAX endpoint to
+     * fetch the manga chapters instead of the old admin-ajax.php one.
+     */
+    protected open val useNewChapterEndpoint: Boolean = false
+
+    protected open fun oldXhrChaptersRequest(mangaId: String): Request {
+        val form = FormBody.Builder()
+            .add("action", "manga_get_chapters")
+            .add("manga", mangaId)
             .build()
-        val body = "action=manga_get_chapters&manga=$mangaId".toRequestBody(null)
-        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", xhrHeaders, body)).execute().asJsoup()
+
+        val xhrHeaders = headersBuilder()
+            .add("Content-Length", form.contentLength().toString())
+            .add("Content-Type", form.contentType().toString())
+            .add("Referer", baseUrl)
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
+
+        return POST("$baseUrl/wp-admin/admin-ajax.php", xhrHeaders, form)
+    }
+
+    protected open fun xhrChaptersRequest(mangaUrl: String): Request {
+        val xhrHeaders = headersBuilder()
+            .add("Referer", baseUrl)
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
+
+        return POST("$mangaUrl/ajax/chapters", xhrHeaders)
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val dataIdSelector = "div[id^=manga-chapters-holder]"
+        val chaptersWrapper = document.select("div[id^=manga-chapters-holder]")
 
-        return document.select(chapterListSelector())
-            .let { elements ->
-                if (elements.isEmpty() && !document.select(dataIdSelector).isNullOrEmpty())
-                    getXhrChapters(document.select(dataIdSelector).attr("data-id")).select(chapterListSelector())
-                else elements
-            }
-            .map { chapterFromElement(it) }
+        var chapterElements = document.select(chapterListSelector())
+
+        if (chapterElements.isEmpty() && !chaptersWrapper.isNullOrEmpty()) {
+            val mangaUrl = document.location().removeSuffix("/")
+            val mangaId = chaptersWrapper.attr("data-id")
+
+            val xhrRequest = if (useNewChapterEndpoint) xhrChaptersRequest(mangaUrl) else oldXhrChaptersRequest(mangaId)
+            val xhrResponse = client.newCall(xhrRequest).execute()
+
+            chapterElements = xhrResponse.asJsoup().select(chapterListSelector())
+            xhrResponse.close()
+        }
+
+        return chapterElements.map(::chapterFromElement)
     }
 
     override fun chapterListSelector() = "li.wp-manga-chapter"
