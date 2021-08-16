@@ -9,8 +9,8 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
@@ -79,28 +79,19 @@ class MangaYabu : ParsedHttpSource() {
     override fun latestUpdatesNextPageSelector(): String? = null
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val form = FormBody.Builder()
-            .add("action", "data_fetch")
-            .add("search_keyword", query)
-            .build()
+        val searchUrl = baseUrl.toHttpUrl().newBuilder()
+            .addQueryParameter("s", query)
+            .toString()
 
-        val newHeaders = headers.newBuilder()
-            .add("X-Requested-With", "XMLHttpRequest")
-            .add("Content-Length", form.contentLength().toString())
-            .add("Content-Type", form.contentType().toString())
-            .build()
-
-        return POST("$baseUrl/wp-admin/admin-ajax.php", newHeaders, form)
+        return POST(searchUrl, headers)
     }
 
-    override fun searchMangaSelector() = "ul.popup-list div.row > div.col.s4 a.search-links"
+    override fun searchMangaSelector() = "#main div.row:contains(Resultados) div.card"
 
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val thumbnail = element.select("img").first()!!
-
-        title = thumbnail.attr("alt").withoutFlags()
-        thumbnail_url = thumbnail.attr("src")
-        setUrlWithoutDomain(element.attr("href"))
+        title = element.selectFirst("div.card-content h4")!!.text()
+        thumbnail_url = element.selectFirst("div.card-image img")!!.imgAttr()
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("abs:href"))
     }
 
     override fun searchMangaNextPageSelector(): String? = null
