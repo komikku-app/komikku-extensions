@@ -55,7 +55,7 @@ class MangaPill : ParsedHttpSource() {
 
     override fun popularMangaNextPageSelector() = "a.next.page-numbers"
     override fun latestUpdatesNextPageSelector() = null
-    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
+    override fun searchMangaNextPageSelector() = "a.btn:contains(Next)"
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
