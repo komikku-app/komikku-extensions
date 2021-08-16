@@ -11,6 +11,9 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class MangaAlarab : ParsedHttpSource() {
 
@@ -123,9 +126,19 @@ class MangaAlarab : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
-            name = "${element.text()}"
+            name = "${element.select("div > span").text()}"
             setUrlWithoutDomain(element.attr("href"))
+            date_upload = element.select("div > time").firstOrNull()?.text()
+                ?.let { parseChapterDate(it) } ?: 0
         }
+    }
+
+    private fun parseChapterDate(date: String): Long {
+        var parsedDate = 0L
+        try {
+            parsedDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(date)?.time ?: 0L
+        } catch (e: ParseException) { /*nothing to do, parsedDate is initialized with 0L*/ }
+        return parsedDate
     }
 
     // Pages
