@@ -90,13 +90,18 @@ class MangaOwl : ParsedHttpSource() {
 
         filters.forEach { filter ->
             when (filter) {
-                is SearchFilter -> url.addQueryParameter("search_field", filter.toUriPart())
+                is SearchFieldFilter -> {
+                    val fields = filter.state
+                        .filter { it.state }
+                        .joinToString("") { it.uriPart }
+                    url.addQueryParameter("search_field", fields)
+                }
                 is SortFilter -> url.addQueryParameter("sort", filter.toUriPart())
                 is StatusFilter -> url.addQueryParameter("completed", filter.toUriPart())
                 is GenreFilter -> {
                     val genres = filter.state
                         .filter { it.state }
-                        .joinToString(".") { it.uriPart }
+                        .joinToString(",") { it.uriPart }
                     url.addQueryParameter("genres", genres)
                 }
                 is MinChapterFilter -> url.addQueryParameter("chapter_from", filter.state)
@@ -181,7 +186,7 @@ class MangaOwl : ParsedHttpSource() {
     // Filters
 
     override fun getFilterList() = FilterList(
-        SearchFilter(),
+        SearchFieldFilter(getSearchFields()),
         SortFilter(),
         StatusFilter(),
         GenreFilter(getGenreList()),
@@ -195,16 +200,6 @@ class MangaOwl : ParsedHttpSource() {
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
     }
-
-    private class SearchFilter : UriPartFilter(
-        "Search in",
-        arrayOf(
-            Pair("Manga title", "1"),
-            Pair("Authors", "2"),
-            Pair("Description", "3"),
-            Pair("All", "123")
-        )
-    )
 
     private class SortFilter : UriPartFilter(
         "Sort by",
@@ -337,6 +332,15 @@ class MangaOwl : ParsedHttpSource() {
         Genre("Yaoi", "51"),
         Genre("Yuri", "54"),
         Genre("Zombies", "108")
+    )
+
+    private class SearchField(name: String, state: Boolean, val uriPart: String) : Filter.CheckBox(name, state)
+    private class SearchFieldFilter(fields: List<SearchField>) : Filter.Group<SearchField>("Search in", fields)
+
+    private fun getSearchFields() = listOf(
+        SearchField("Manga title", true, "1"),
+        SearchField("Authors", true, "2"),
+        SearchField("Description", false, "3")
     )
 
     private class MinChapterFilter : Filter.Text("Minimum Chapters")
