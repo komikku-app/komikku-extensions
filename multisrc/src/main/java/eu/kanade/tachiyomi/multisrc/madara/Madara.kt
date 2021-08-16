@@ -400,7 +400,7 @@ abstract class Madara(
         }
     }
 
-    protected fun getXhrChapters(mangaId: String): Document {
+    protected open fun getXhrChapters(mangaId: String): Document {
         val xhrHeaders = headersBuilder().add("Content-Type: application/x-www-form-urlencoded; charset=UTF-8")
             .add("Referer", baseUrl)
             .build()

@@ -35,7 +35,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("ApollComics", "https://apollcomics.xyz", "es", overrideVersionCode = 1),
         SingleLang("ArazNovel", "https://www.araznovel.com", "tr", overrideVersionCode = 1),
         SingleLang("Argos Scan", "https://argosscan.com", "pt-BR", overrideVersionCode = 3),
-        SingleLang("Arthur Scan", "https://arthurscan.xyz", "pt-BR", overrideVersionCode = 2),
+        SingleLang("Arthur Scan", "https://arthurscan.xyz", "pt-BR", overrideVersionCode = 3),
         SingleLang("Astral Library", "https://www.astrallibrary.net", "en", overrideVersionCode = 2),
         SingleLang("Asura Raw", "https://asuraraw.com", "en"),
         SingleLang("Atikrost", "https://atikrost.com", "tr", overrideVersionCode = 1),
