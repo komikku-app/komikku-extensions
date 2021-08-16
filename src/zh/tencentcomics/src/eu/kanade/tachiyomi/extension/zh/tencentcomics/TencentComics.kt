@@ -12,13 +12,18 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.json.JSONObject
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 import kotlin.collections.ArrayList
 
 class TencentComics : ParsedHttpSource() {
@@ -35,14 +40,20 @@ class TencentComics : ParsedHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    private val json: Json by injectLazy()
+
     override fun chapterListSelector(): String = "ul.chapter-wrap-list.reverse > li > a"
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
             url = element.attr("href").trim()
-            name = element.text().trim()
+            name = (if (element.isLockedChapter()) "\uD83D\uDD12 " else "") + element.text().trim()
             chapter_number = element.attr("data-seq").toFloat()
         }
+    }
+
+    private fun Element.isLockedChapter(): Boolean {
+        return this.selectFirst("div.lock") != null
     }
 
     override fun popularMangaSelector(): String = "ul.ret-search-list.clearfix > li"
@@ -135,13 +146,13 @@ class TencentComics : ParsedHttpSource() {
         val raw = html.substringAfterLast("var DATA =").substringBefore("PRELOAD_NUM").trim().replace(Regex("^\'|\',$"), "")
         val decodePrefix = "var raw = \"$raw\"; var nonce = $nonce"
         val full = duktape.evaluate(decodePrefix + jsDecodeFunction).toString()
-        val chapterData = JSONObject(String(Base64.decode(full, Base64.DEFAULT)))
+        val chapterData = json.parseToJsonElement(String(Base64.decode(full, Base64.DEFAULT))).jsonObject
 
-        if (!chapterData.getJSONObject("chapter").getBoolean("canRead")) throw Exception("[此章节为付费内容]")
+        if (!chapterData["chapter"]!!.jsonObject["canRead"]!!.jsonPrimitive.boolean) throw Exception("[此章节为付费内容]")
 
-        val pictures = chapterData.getJSONArray("picture")
-        for (i in 0 until pictures.length()) {
-            pages.add(Page(i, "", pictures.getJSONObject(i).getString("url")))
+        val pictures = chapterData["picture"]!!.jsonArray
+        for (i in 0 until pictures.size) {
+            pages.add(Page(i, "", pictures[i].jsonObject["url"]!!.jsonPrimitive.content))
         }
         return pages
     }
