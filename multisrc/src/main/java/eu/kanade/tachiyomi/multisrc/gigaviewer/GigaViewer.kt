@@ -89,7 +89,8 @@ abstract class GigaViewer(
         }
 
         val collectionSelected = (filters[0] as CollectionFilter).selected
-        return GET("$baseUrl/series/${collectionSelected.path}", headers)
+        val collectionPath = if (collectionSelected.path.isBlank()) "" else "/" + collectionSelected.path
+        return GET("$baseUrl/series$collectionPath", headers)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
