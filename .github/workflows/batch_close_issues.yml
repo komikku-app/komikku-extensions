@@ -1,0 +1,16 @@
+name: "Batch close stale issues"
+on:
+  workflow_dispatch:
+    inputs:
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/stale@v4
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        # Close everything older than 2 years
+        days-before-stale: 730
+        days-before-close: 0
+        close-issue-message: "In an effort to have a more manageable issue backlog, we're closing issues older than 2 years. If you think your request or report is still relevant and may benefit others, please open a new issue."
