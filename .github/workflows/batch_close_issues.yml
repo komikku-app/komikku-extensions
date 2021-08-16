@@ -10,7 +10,7 @@ jobs:
     - uses: actions/stale@v4
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        # Close everything older than 2 years
-        days-before-stale: 730
+        # Close everything older than 1 year
+        days-before-stale: 365
         days-before-close: 0
-        close-issue-message: "In an effort to have a more manageable issue backlog, we're closing issues older than 2 years. If you think your request or report is still relevant and may benefit others, please open a new issue."
+        close-issue-message: "In an effort to have a more manageable issue backlog, we're closing issues older than 1 year. If you think your request or report is still relevant and may benefit others, please open a new issue."
