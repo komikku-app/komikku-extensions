@@ -26,7 +26,7 @@ class Toonkor : ConfigurableSource, ParsedHttpSource() {
 
     override val name = "Toonkor"
 
-    private val defaultBaseUrl = "https://tkor.cx"
+    private val defaultBaseUrl = "https://tkor.dog"
 
     private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
 
