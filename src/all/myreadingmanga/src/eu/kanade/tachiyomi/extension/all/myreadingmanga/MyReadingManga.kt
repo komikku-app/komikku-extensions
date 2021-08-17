@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.CacheControl
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -31,15 +30,13 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
     override val name = "MyReadingManga"
     final override val baseUrl = "https://myreadingmanga.info"
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(CloudflareWafInterceptor(".myreadingmanga.info"))
         .connectTimeout(1, TimeUnit.MINUTES)
         .readTimeout(1, TimeUnit.MINUTES)
         .retryOnConnectionFailure(true)
         .followRedirects(true)
         .build()!!
     override val supportsLatest = true
-
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
-        .add("Referer", baseUrl)
 
     // Popular - Random
     override fun popularMangaRequest(page: Int): Request {
