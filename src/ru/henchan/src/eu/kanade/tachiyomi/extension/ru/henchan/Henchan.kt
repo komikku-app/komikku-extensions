@@ -35,7 +35,7 @@ class Henchan : ParsedHttpSource() {
 
     override val name = "Henchan"
 
-    override val baseUrl = "https://hchan.me"
+    override val baseUrl = "https://hentaichan.live"
 
     private val exhentaiBaseUrl = "http://exhentai-dono.me"
 
