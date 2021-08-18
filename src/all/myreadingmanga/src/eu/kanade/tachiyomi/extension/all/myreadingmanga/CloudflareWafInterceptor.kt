@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 class CloudflareWafInterceptor(private val cookieDomain: String) : Interceptor {
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
-    private val cookieManager = CookieManager.getInstance()
+    private val cookieManager by lazy { CookieManager.getInstance() }
 
     private val initWebView by lazy {
         WebSettings.getDefaultUserAgent(context)
