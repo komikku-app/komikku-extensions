@@ -46,7 +46,6 @@ abstract class MangasProject(
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
-        .add("User-Agent", USER_AGENT)
 
     // Use internal headers to allow "Open in WebView" to work.
     private fun sourceHeadersBuilder(): Headers.Builder = headersBuilder()
