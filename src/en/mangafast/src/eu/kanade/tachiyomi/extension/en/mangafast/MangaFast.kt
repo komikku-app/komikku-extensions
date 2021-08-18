@@ -1,17 +1,28 @@
 package eu.kanade.tachiyomi.extension.en.mangafast
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
+import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.put
+import okhttp3.Response
+import org.jsoup.select.Elements
+import uy.kohesive.injekt.injectLazy
 
 class MangaFast : ParsedHttpSource() {
     override val name = "MangaFast"
@@ -22,95 +33,125 @@ class MangaFast : ParsedHttpSource() {
 
     override val supportsLatest = true
 
-    // popular
+    private val json: Json by injectLazy()
+
+    // Popular
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/list-manga" + if (page > 1) "/page/$page" else "", headers)
+        // Every thing is in a single page.
+        return GET("$baseUrl/list-manga", headers)
     }
 
-    override fun popularMangaSelector() = ".list-content .ls4 .ls4v"
+    override fun popularMangaSelector(): String = "div#animelist li a"
 
-    override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        val a = element.select("a")
-        setUrlWithoutDomain(a.attr("href"))
-        title = a.attr("title")
-        thumbnail_url = a.select("img").attr("src")
+    override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
+        element.select("a").let { a ->
+            setUrlWithoutDomain(a.attr("href"))
+            title = a.attr("title")
+            thumbnail_url = a.select("img").imageFromElement()
+        }
     }
 
-    override fun popularMangaNextPageSelector() = ".btn-w a:contains(Next »)"
+    override fun popularMangaNextPageSelector(): String? = null
 
-    // latest
-    override fun latestUpdatesRequest(page: Int) = GET(baseUrl, headers)
+    // Latest
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/read", headers)
 
-    override fun latestUpdatesSelector() = ".ls8w div.ls8 .ls8v"
+    override fun latestUpdatesSelector() = "div.ls5"
 
     override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
 
     override fun latestUpdatesNextPageSelector(): String? = null
 
-    // search
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = GET("$baseUrl/page/$page/?s=$query", headers)
-
-    override fun searchMangaSelector() = popularMangaSelector()
-
-    override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
-
-    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
-
-    // manga details
-    override fun mangaDetailsParse(document: Document): SManga {
-        val articleTitle = document.select("article header[id=article-title]")
-        val articleInfo = document.select("article section[id=article-info]")
-
-        val manga = SManga.create().apply {
-            title = articleTitle.select("h1[itemprop=name]").text().trim()
-            description = articleTitle.select("p.desc").text().trim()
-            thumbnail_url = articleInfo.select("img.shadow").attr("src")
+    // Search
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val jsonPayload = buildJsonObject {
+            put("limit", 30)
+            put("q", query)
         }
-        articleInfo.select("table.inftable tbody tr").forEach {
-            val row = it.select("td")
-            when (row[0].text()) {
-                "Comic Title" -> manga.title = row[1].text().trim()
-                "Genre" -> manga.genre = row[1].text().trim().removeSuffix(",")
-                "Author" -> manga.author = row[1].text().trim()
-                "Status" -> manga.status = parseStatus(row[1].text())
+        val requestBody = jsonPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
+
+        val newHeaders = headersBuilder()
+            .add("Content-Length", requestBody.contentLength().toString())
+            .add("Content-Type", requestBody.contentType().toString())
+            .add("Accept", ACCEPT_JSON)
+            .add("Origin", baseUrl)
+            .add("Referer", "$baseUrl/")
+            .build()
+
+        return POST(
+            "https://search.${baseUrl.substringAfterLast("/")}/comics/ms",
+            headers = newHeaders,
+            body = requestBody
+        )
+    }
+
+    override fun searchMangaParse(response: Response): MangasPage {
+        val result = json.decodeFromString<SearchResultDto>(response.body!!.string())
+
+        val comicList = result.mangaList
+            .map(::searchMangaFromObject)
+
+        return MangasPage(comicList, hasNextPage = false)
+    }
+
+    private fun searchMangaFromObject(manga: MangaDto): SManga = SManga.create().apply {
+        title = manga.title
+        thumbnail_url = manga.thumbnail
+        url = "/read/${manga.slug}"
+    }
+
+    // Manga Details
+    override fun mangaDetailsParse(document: Document): SManga {
+        val sManga = SManga.create()
+        val infoTable = document.select("table.inftable tbody tr")
+
+        sManga.apply {
+            title = document.select("h1[itemprop=name]").text().trim()
+            description = document.select("h2[id^=Synopsis] + p").text().trim()
+            thumbnail_url = document.select("img#Thumbnail").imageFromElement()
+        }
+        infoTable.forEach { column ->
+            val rows = column.select("td")
+            when (rows[0].text().trim()) {
+                "Title" -> sManga.title = rows[1].text().trim()
+                "Genres" -> sManga.genre = rows[1].text().trim().removeSuffix(",")
+                "Author" -> sManga.author = rows[1].text().trim()
+                "Status" -> sManga.status = rows[1].text().parseStatus()
             }
         }
 
-        return manga
+        return sManga
     }
 
-    private fun parseStatus(status: String) = when {
-        status.contains("Ongoing") -> SManga.ONGOING
-        status.contains("Completed") -> SManga.COMPLETED
+    private fun String?.parseStatus() = if (this == null) SManga.UNKNOWN else when {
+        this.toLowerCase(Locale.ENGLISH).contains("ongoing") -> SManga.ONGOING
+        this.toLowerCase(Locale.ENGLISH).contains("completed") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
-    // chapter list
-    override fun chapterListSelector() = "a.chapter-link:not(:has(i:contains(Spoiler & Release Date)))"
+    // Chapter List
+    override fun chapterListSelector() =
+        "tbody:has(th:contains(Chapter List)) tr[itemprop]:not(:contains(Spoiler & Release Date))"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
-        name = element.select(".left").text()
-        date_upload = parseDate(element.select(".right").text())
+        val link = element.select("a.chapter-link")
+        setUrlWithoutDomain(link.attr("href"))
+        name = link.text().trim()
+        date_upload = element.select("td:last-of-type").text().parseDate()
     }
 
-    private fun parseDate(text: String): Long {
+    private fun String?.parseDate(): Long {
+        if (this == null) return 0L
         return try {
-            dateFormat.parse(text.trim())?.time ?: 0L
+            dateFormat.parse(this.trim())?.time ?: 0L
         } catch (pe: ParseException) { // this can happen for spoiler & release date entries
             0L
         }
     }
 
-    companion object {
-        val dateFormat by lazy {
-            SimpleDateFormat("MM/dd/yyyy", Locale.US)
-        }
-    }
-
-    // pages
+    // Pages
     override fun pageListParse(document: Document): List<Page> {
-        return document.select(".content-comic > img").mapIndexed { i, element ->
+        return document.select("div#Read img").mapIndexed { i, element ->
             var url = element.attr("abs:data-src")
 
             if (url.isEmpty()) {
@@ -121,7 +162,32 @@ class MangaFast : ParsedHttpSource() {
         }
     }
 
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
+    private fun Elements.imageFromElement(): String? {
+        return when {
+            this.hasAttr("data-src") -> this.attr("abs:data-src")
+            this.hasAttr("abs:src") -> this.attr("abs:src")
+            else -> null
+        }
+    }
+
+    // Unused Function
+    override fun searchMangaSelector() = throw UnsupportedOperationException("Not Used")
+
+    override fun searchMangaFromElement(element: Element) =
+        throw UnsupportedOperationException("Not Used")
+
+    override fun searchMangaNextPageSelector() = throw UnsupportedOperationException("Not Used")
+
+    override fun imageUrlParse(document: Document): String =
+        throw UnsupportedOperationException("Not Used")
 
     override fun getFilterList() = FilterList()
+
+    companion object {
+        val dateFormat by lazy {
+            SimpleDateFormat("MM/dd/yyyy", Locale.US)
+        }
+        private val JSON_MEDIA_TYPE = "application/json;charset=UTF-8".toMediaType()
+        private const val ACCEPT_JSON = "application/json, text/plain, */*"
+    }
 }
