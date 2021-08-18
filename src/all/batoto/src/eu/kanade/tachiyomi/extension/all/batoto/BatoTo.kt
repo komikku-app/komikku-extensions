@@ -20,6 +20,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.parser.Parser
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
@@ -57,7 +58,7 @@ open class BatoTo(
         val item = element.select("a.item-cover")
         val imgurl = item.select("img").attr("abs:src")
         manga.setUrlWithoutDomain(item.attr("href"))
-        manga.title = element.select("a.item-title").text()
+        manga.title = element.select("a.item-title").text().removeEntities()
         manga.thumbnail_url = imgurl
         return manga
     }
@@ -149,7 +150,7 @@ open class BatoTo(
         val document = response.asJsoup()
         val infoElement = document.select("div#mainer div.container-fluid")
         val manga = SManga.create()
-        manga.title = infoElement.select("h3").text()
+        manga.title = infoElement.select("h3").text().removeEntities()
         manga.thumbnail_url = document.select("div.attr-cover img")
             .attr("abs:src")
         manga.url = infoElement.select("h3 a").attr("abs:href")
@@ -157,11 +158,9 @@ open class BatoTo(
     }
 
     private fun queryParse(response: Response): MangasPage {
-        val mangas = mutableListOf<SManga>()
         val document = response.asJsoup()
-        document.select(latestUpdatesSelector()).forEach { element ->
-            mangas.add(latestUpdatesFromElement(element))
-        }
+        val mangas = document.select(latestUpdatesSelector())
+            .map { element -> latestUpdatesFromElement(element) }
         val nextPage = document.select(latestUpdatesNextPageSelector()).first() != null
         return MangasPage(mangas, nextPage)
     }
@@ -181,15 +180,8 @@ open class BatoTo(
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select("div#mainer div.container-fluid")
         val manga = SManga.create()
-        val genres = mutableListOf<String>()
         val status = infoElement.select("div.attr-item:contains(status) span").text()
-        infoElement.select("div.attr-item:contains(genres) span").text().split(
-            " / "
-                .toRegex()
-        ).forEach { element ->
-            genres.add(element)
-        }
-        manga.title = infoElement.select("h3").text()
+        manga.title = infoElement.select("h3").text().removeEntities()
         manga.author = infoElement.select("div.attr-item:contains(author) a:first-child").text()
         manga.artist = infoElement.select("div.attr-item:contains(author) a:last-child").text()
         manga.status = parseStatus(status)
@@ -336,6 +328,8 @@ open class BatoTo(
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
+
+    private fun String.removeEntities(): String = Parser.unescapeEntities(this, true)
 
     override fun getFilterList() = FilterList(
         // LetterFilter(),
