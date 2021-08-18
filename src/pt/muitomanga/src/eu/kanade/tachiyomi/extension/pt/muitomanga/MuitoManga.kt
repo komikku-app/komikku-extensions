@@ -116,11 +116,13 @@ class MuitoManga : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val infoElement = document.select("div.content_post").first()!!
+        val isFinished = infoElement.select("span.series_autor2 > span.series_autor").firstOrNull()
 
         title = document.select("div.content div.widget-title h1").first()!!.text()
-        author = infoElement.select("span.series_autor2").first()!!.text()
+        author = infoElement.select("span.series_autor2").first()!!.ownText()
         genre = infoElement.select("ul.lancamento-list a").joinToString { it.text() }
         description = document.select("ul.lancamento-list ~ p").text().trim()
+        status = if (isFinished != null) SManga.COMPLETED else SManga.ONGOING
         thumbnail_url = infoElement.select("div.capaMangaInfo img").first()!!.attr("data-src")
     }
 
