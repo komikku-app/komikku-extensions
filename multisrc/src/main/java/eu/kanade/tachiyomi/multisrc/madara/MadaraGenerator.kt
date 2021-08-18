@@ -87,6 +87,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("GalaxyDegenScans", "https://gdegenscans.xyz/", "en", overrideVersionCode = 1),
         SingleLang("Gatemanga", "https://gatemanga.com", "ar"),
         SingleLang("Geass Hentai", "https://geasshentai.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("Gemanga", "https://gemanga.com", "ar"),
         SingleLang("Glory Scans", "https://gloryscan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Gogoscans", "https://www.gogoscans.com", "en"),
         SingleLang("Graze Scans", "https://grazescans.com/", "en", overrideVersionCode = 1),
