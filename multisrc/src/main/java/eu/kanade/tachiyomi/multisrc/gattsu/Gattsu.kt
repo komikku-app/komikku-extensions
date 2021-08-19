@@ -129,7 +129,7 @@ abstract class Gattsu(
         return GET(page.imageUrl!!, imageHeaders)
     }
 
-    private fun String.toDate(): Long {
+    protected fun String.toDate(): Long {
         return try {
             DATE_FORMATTER.parse(this.substringBefore("T"))?.time ?: 0L
         } catch (e: ParseException) {
@@ -137,7 +137,7 @@ abstract class Gattsu(
         }
     }
 
-    private fun String.withoutSize(): String = this.replace(THUMB_SIZE_REGEX, ".")
+    protected fun String.withoutSize(): String = this.replace(THUMB_SIZE_REGEX, ".")
 
     companion object {
         private const val ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9," +
