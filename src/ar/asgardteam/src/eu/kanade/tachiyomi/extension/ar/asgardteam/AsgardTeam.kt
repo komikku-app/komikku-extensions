@@ -1,12 +1,14 @@
 package eu.kanade.tachiyomi.extension.ar.asgardteam
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
@@ -70,7 +72,17 @@ class AsgardTeam : ParsedHttpSource() {
     // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        return GET("$baseUrl/search/?s=$query&page=$page", headers)
+        return if (query.isNotBlank()) {
+            GET("$baseUrl/search/?s=$query&page=$page", headers)
+        } else {
+            val url = "$baseUrl/manga-list/?page=$page".toHttpUrlOrNull()!!.newBuilder()
+            filters.forEach { filter ->
+                when (filter) {
+                    is TypeFilter -> url.addQueryParameter("type", filter.toUriPart())
+                }
+            }
+            GET(url.build().toString(), headers)
+        }
     }
 
     override fun searchMangaSelector() = popularMangaSelector()
@@ -129,5 +141,24 @@ class AsgardTeam : ParsedHttpSource() {
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
 
-    override fun getFilterList() = FilterList()
+    // Filters (TODO: Add Genre Filters Later)
+
+    override fun getFilterList() = FilterList(
+        Filter.Header("NOTE: Ignored if using text search!"),
+        TypeFilter(getTypeFilter()),
+    )
+
+    private class TypeFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("Type", vals)
+
+    open fun getTypeFilter(): Array<Pair<String?, String>> = arrayOf(
+        Pair("", "<select>"),
+        Pair("3", "صينية (مانها)"),
+        Pair("2", "مانجا (يابانية)"),
+        Pair("1", "كورية (مانهوا)")
+    )
+
+    open class UriPartFilter(displayName: String, private val vals: Array<Pair<String?, String>>) :
+        Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray()) {
+        fun toUriPart() = vals[state].first
+    }
 }
