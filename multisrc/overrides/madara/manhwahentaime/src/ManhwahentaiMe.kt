@@ -6,6 +6,8 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 @Nsfw
 class ManhwahentaiMe : Madara("Manhwahentai.me", "https://manhwahentai.me", "en") {
 
+    override val useNewChapterEndpoint: Boolean = true
+
     override fun getGenreList() = listOf(
         Genre("Action", "action"),
         Genre("Adult", "adult"),

@@ -9,4 +9,6 @@ class AsuraRaw : Madara(
     "https://asuraraw.com",
     "en",
     dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
-)
+) {
+    override val useNewChapterEndpoint: Boolean = true
+}
