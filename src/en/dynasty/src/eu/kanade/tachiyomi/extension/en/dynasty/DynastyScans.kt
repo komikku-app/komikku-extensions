@@ -107,7 +107,8 @@ abstract class DynastyScans : ParsedHttpSource() {
     }
 
     protected fun parseHeader(document: Document, manga: SManga): Boolean {
-        val elements = document.select("div.tags > h2.tag-title").first().getElementsByTag("a")
+        manga.title = document.selectFirst("div.tags > h2.tag-title > b").text()
+        val elements = document.selectFirst("div.tags > h2.tag-title").getElementsByTag("a")
         if (elements.isEmpty()) {
             return false
         }

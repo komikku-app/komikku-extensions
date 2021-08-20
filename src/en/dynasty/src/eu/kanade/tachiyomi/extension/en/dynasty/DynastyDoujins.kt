@@ -37,6 +37,7 @@ class DynastyDoujins : DynastyScans() {
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create().apply {
+            title = document.selectFirst("div.tags > h2.tag-title > b").text().substringAfter("Doujins › ")
             thumbnail_url = document.select("a.thumbnail img").firstOrNull()?.attr("abs:src")
                 ?.replace("/thumb/", "/medium/")
         }
