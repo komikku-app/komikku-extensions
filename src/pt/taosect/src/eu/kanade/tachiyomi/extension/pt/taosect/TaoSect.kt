@@ -133,7 +133,12 @@ class TaoSect : ParsedHttpSource() {
         name = element.select("td[align='left'] a")!!.text()
         scanlator = this@TaoSect.name
         date_upload = element.select("td[align='right']")!!.text().toDate()
-        setUrlWithoutDomain(element.select("td[align='left'] a")!!.attr("href"))
+
+        // The page have a template problem and it's printing the end of the PHP echo command.
+        val fixedUrl = element.select("td[align='left'] a")!!
+            .attr("href")
+            .substringBeforeLast(";")
+        setUrlWithoutDomain(fixedUrl)
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
@@ -201,11 +206,8 @@ class TaoSect : ParsedHttpSource() {
     override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException("Not used")
 
     private fun String.toDate(): Long {
-        return try {
-            DATE_FORMATTER.parse(this)?.time ?: 0L
-        } catch (e: ParseException) {
-            0L
-        }
+        return runCatching { DATE_FORMATTER.parse(this)?.time }
+            .getOrNull() ?: 0L
     }
 
     private fun String.toStatus() = when (this) {
@@ -263,7 +265,7 @@ class TaoSect : ParsedHttpSource() {
 
     companion object {
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("(dd/MM/yyyy)", Locale.ENGLISH)
