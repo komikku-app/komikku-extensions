@@ -26,7 +26,7 @@ class NineMangaFactory : SourceFactory {
 class NineMangaEn : NineManga("NineMangaEn", "https://en.ninemanga.com", "en") {
     override fun latestUpdatesFromElement(element: Element) = SManga.create().apply {
         element.select("a.bookname").let {
-            url = it.attr("abs:href").replace("www", "en").substringAfter(baseUrl)
+            url = it.attr("abs:href").substringAfter("ninemanga.com")
             title = it.text()
         }
         thumbnail_url = element.select("img").attr("abs:src")
