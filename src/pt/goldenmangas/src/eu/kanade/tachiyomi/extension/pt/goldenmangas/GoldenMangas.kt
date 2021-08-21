@@ -13,7 +13,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -102,12 +101,12 @@ class GoldenMangas : ParsedHttpSource() {
         val secondColumn = infoElement.select("div.col-sm-8").first()
 
         title = secondColumn.select("h2:eq(0)").text().withoutLanguage()
-        author = secondColumn.select("h5:eq(3)")!!.text().withoutLabel()
-        artist = secondColumn.select("h5:eq(4)")!!.text().withoutLabel()
-        genre = secondColumn.select("h5:eq(2) a")
+        author = secondColumn.select("h5:contains(Autor)")!!.text().withoutLabel()
+        artist = secondColumn.select("h5:contains(Artista)")!!.text().withoutLabel()
+        genre = secondColumn.select("h5:contains(Genero) a")
             .filter { it.text().isNotEmpty() }
             .joinToString { it.text() }
-        status = secondColumn.select("h5:eq(5) a").text().toStatus()
+        status = secondColumn.select("h5:contain(Status) a").text().toStatus()
         description = document.select("#manga_capitulo_descricao").text()
         thumbnail_url = firstColumn.attr("abs:src")
     }
@@ -154,11 +153,8 @@ class GoldenMangas : ParsedHttpSource() {
     }
 
     private fun String.toDate(): Long {
-        return try {
-            DATE_FORMATTER.parse(this.trim())?.time ?: 0L
-        } catch (e: ParseException) {
-            0L
-        }
+        return runCatching { DATE_FORMATTER.parse(trim())?. time }
+            .getOrNull() ?: 0L
     }
 
     private fun String.toStatus() = when (this) {
@@ -178,7 +174,7 @@ class GoldenMangas : ParsedHttpSource() {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7,es;q=0.6,gl;q=0.5"
         private const val REFERER = "https://google.com/"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
 
         private val FLAG_REGEX = "\\((Pt[-/]br|Scan)\\)".toRegex(RegexOption.IGNORE_CASE)
 
