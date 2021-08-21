@@ -10,6 +10,7 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -21,6 +22,9 @@ import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
+import rx.Single
+import rx.android.schedulers.AndroidSchedulers
+import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -37,7 +41,7 @@ class Tachidesk : ConfigurableSource, HttpSource() {
     // ------------- Popular Manga -------------
 
     override fun popularMangaRequest(page: Int): Request =
-        GET("$checkedBaseUrl/api/v1/library")
+        GET("$checkedBaseUrl/api/v1/category/$defaultCategoryId")
 
     override fun popularMangaParse(response: Response): MangasPage =
         MangasPage(
@@ -92,6 +96,57 @@ class Tachidesk : ConfigurableSource, HttpSource() {
         }
     }
 
+    // ------------- Filters & Search -------------
+
+    override fun getFilterList(): FilterList =
+        FilterList(
+            CategorySelect(categoryList),
+            Filter.Header("Note: Restart tachiyomi to refresh categories!")
+        )
+
+    private lateinit var categoryList: List<CategoryDataClass>
+    init {
+        Single.fromCallable {
+            client.newCall(GET("$checkedBaseUrl/api/v1/category", headers)).execute()
+        }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { response ->
+                categoryList = try {
+                    json.decodeFromString<List<CategoryDataClass>>(response.body!!.string())
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            }
+    }
+
+    private val defaultCategoryId: Int
+        get() = categoryList.firstOrNull()?.id ?: 0
+
+    class CategorySelect(categoryList: List<CategoryDataClass>) :
+        Filter.Select<String>("Category", categoryList.map { it.name }.toTypedArray())
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        if (query.isNotEmpty()) {
+            throw RuntimeException("Only Empty search is supported!")
+        } else {
+            var selectedFilter = defaultCategoryId
+
+            filters.forEach { filter ->
+                when (filter) {
+                    is CategorySelect -> {
+                        selectedFilter = categoryList[filter.state].id
+                    }
+                    else -> {}
+                }
+            }
+
+            return GET("$checkedBaseUrl/api/v1/category/$selectedFilter")
+        }
+    }
+
+    override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
+
     // ------------- Preferences -------------
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         screen.addPreference(screen.editTextPreference(ADDRESS_TITLE, ADDRESS_DEFAULT, baseUrl))
@@ -102,7 +157,7 @@ class Tachidesk : ConfigurableSource, HttpSource() {
         return EditTextPreference(context).apply {
             key = title
             this.title = title
-            summary = value
+            summary = if (value.isEmpty()) "i.e. http://192.168.1.115:4567" else value
             this.setDefaultValue(default)
             dialogTitle = title
 
@@ -132,7 +187,7 @@ class Tachidesk : ConfigurableSource, HttpSource() {
     private fun getPrefBaseUrl(): String = preferences.getString(ADDRESS_TITLE, ADDRESS_DEFAULT)!!
 
     companion object {
-        private const val ADDRESS_TITLE = "Address"
+        private const val ADDRESS_TITLE = "Server URL Address"
         private const val ADDRESS_DEFAULT = ""
     }
 
@@ -141,10 +196,6 @@ class Tachidesk : ConfigurableSource, HttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
 
     override fun latestUpdatesParse(response: Response): MangasPage = throw Exception("Not used")
-
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = throw Exception("Not used")
-
-    override fun searchMangaParse(response: Response): MangasPage = throw Exception("Not used")
 
     override fun pageListParse(response: Response): List<Page> = throw Exception("Not used")
 

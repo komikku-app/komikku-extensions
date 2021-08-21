@@ -71,3 +71,11 @@ data class ChapterDataClass(
     /** used to store client specific values */
     val meta: Map<String, String> = emptyMap(),
 )
+
+@Serializable
+data class CategoryDataClass(
+    val id: Int,
+    val order: Int,
+    val name: String,
+    val default: Boolean
+)
