@@ -2,12 +2,15 @@ package eu.kanade.tachiyomi.extension.pt.taosect
 
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -15,7 +18,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -124,7 +126,23 @@ class TaoSect : ParsedHttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        return super.chapterListParse(response).reversed()
+        val document = response.asJsoup()
+
+        // Count the project views, requested by the scanlator.
+        // The website counts the views every time a request is done to the project page,
+        // so to mimic this behavior, the count view request is sent in the chapterListParse,
+        // that will then get called every time in the global update.
+        val projectScript = document.selectFirst("script:containsData(dataAjax.url)").data()
+        val projectId = PROJECT_ID_REGEX.find(projectScript)?.groupValues?.get(1)
+
+        if (projectId.isNullOrBlank().not()) {
+            val countViewRequest = countViewRequest(document.location(), projectId!!)
+            runCatching { client.newCall(countViewRequest).execute().close() }
+        }
+
+        return document.select(chapterListSelector())
+            .map(::chapterFromElement)
+            .reversed()
     }
 
     override fun chapterListSelector() = "table.tabela-volumes tr"
@@ -154,8 +172,18 @@ class TaoSect : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("script:containsData(var paginas)").first()!!
-            .data()
+        val readerScript = document.selectFirst("script:containsData(var paginas)")!!.data()
+
+        // Count the chapter views, requested by the scanlator.
+        val projectId = PROJECT_ID_REGEX.find(readerScript)?.groupValues?.get(1)
+        val chapterId = CHAPTER_ID_REGEX.find(readerScript)?.groupValues?.get(1)
+
+        if (projectId.isNullOrBlank().not() && chapterId.isNullOrEmpty().not()) {
+            val countViewRequest = countViewRequest(document.location(), projectId!!, chapterId!!)
+            runCatching { client.newCall(countViewRequest).execute().close() }
+        }
+
+        return readerScript
             .substringAfter("var paginas = [")
             .substringBefore("];")
             .split(",")
@@ -172,6 +200,26 @@ class TaoSect : ParsedHttpSource() {
             .build()
 
         return GET(page.imageUrl!!, newHeaders)
+    }
+
+    private fun countViewRequest(chapterUrl: String, projectId: String, chapterId: String? = null): Request {
+        val formBodyBuilder = FormBody.Builder()
+            .add("action", "update_views")
+            .add("projeto", projectId)
+
+        if (chapterId.isNullOrBlank().not()) {
+            formBodyBuilder.add("capitulo", chapterId!!)
+        }
+
+        val formBody = formBodyBuilder.build()
+
+        val newHeaders = headersBuilder()
+            .add("Content-Length", formBody.contentLength().toString())
+            .add("Content-Type", formBody.contentType().toString())
+            .set("Referer", chapterUrl)
+            .build()
+
+        return POST("$baseUrl/wp-admin/admin-ajax.php", newHeaders, formBody)
     }
 
     override fun getFilterList(): FilterList = FilterList(
@@ -275,5 +323,8 @@ class TaoSect : ParsedHttpSource() {
             Triple("a_z", "z_a", "Nome"),
             Triple("dt_asc", "date-desc", "Data")
         )
+
+        private val PROJECT_ID_REGEX = "projeto: '(\\d+)',?".toRegex()
+        private val CHAPTER_ID_REGEX = "capitulo: '(\\d+)',?".toRegex()
     }
 }
