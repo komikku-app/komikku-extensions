@@ -5,7 +5,7 @@ ext {
     extName = 'TCB Scans'
     pkgNameSuffix = 'en.tcbscans'
     extClass = '.TCBScans'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '1.2'
 }
 

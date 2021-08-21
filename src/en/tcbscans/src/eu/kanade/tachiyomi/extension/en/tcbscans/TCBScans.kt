@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.tcbscans
 
+import android.app.Application
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -14,6 +15,8 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 class TCBScans : ParsedHttpSource() {
 
@@ -47,14 +50,15 @@ class TCBScans : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SManga = throw UnsupportedOperationException()
 
-    override fun latestUpdatesNextPageSelector(): String? = throw UnsupportedOperationException()
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
     // search
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = Observable.just(MangasPage(emptyList(), false))
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> =
+        Observable.just(MangasPage(emptyList(), false))
 
     override fun searchMangaFromElement(element: Element): SManga = throw Exception("Not used")
 
-    override fun searchMangaNextPageSelector(): String? = throw Exception("Not used")
+    override fun searchMangaNextPageSelector(): String = throw Exception("Not used")
 
     override fun searchMangaSelector(): String = throw Exception("Not used")
 
@@ -70,7 +74,25 @@ class TCBScans : ParsedHttpSource() {
     }
 
     // chapters
-    override fun chapterListSelector() = ".elementor-column-gap-no .elementor-widget-image-box,.elementor-column-gap-default .elementor-widget-image-box"
+    override fun chapterListSelector() =
+        ".elementor-column-gap-no .elementor-widget-image-box,.elementor-column-gap-default .elementor-widget-image-box"
+
+    private fun chapterWithDate(element: Element, slug: String): SChapter {
+        val seriesPrefs = Injekt.get<Application>().getSharedPreferences("source_${id}_updateTime:$slug", 0)
+        val seriesPrefsEditor = seriesPrefs.edit()
+
+        val chapter = chapterFromElement(element)
+
+        val currentTimeMillis = System.currentTimeMillis()
+        if (!seriesPrefs.contains(chapter.name)) {
+            seriesPrefsEditor.putLong(chapter.name, currentTimeMillis)
+        }
+
+        chapter.date_upload = seriesPrefs.getLong(chapter.name, currentTimeMillis)
+
+        seriesPrefsEditor.apply()
+        return chapter
+    }
 
     override fun chapterFromElement(element: Element): SChapter {
         val urlElement = element.select("a").first()
@@ -84,9 +106,9 @@ class TCBScans : ParsedHttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val chapterList = document.select(chapterListSelector()).map { chapterFromElement(it) }
+        val slug = response.request.url.pathSegments[0]
 
-        return chapterList
+        return document.select(chapterListSelector()).map { chapterWithDate(it, slug) }
     }
 
     // pages
