@@ -38,68 +38,30 @@ import java.util.Locale
 
 class Tapastic : ConfigurableSource, ParsedHttpSource() {
 
-    // Preferences
-
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val chapterVisibilityPref = SwitchPreferenceCompat(screen.context).apply {
-            key = CHAPTER_VIS_PREF_KEY
-            title = "Show paywalled chapters"
-            summary = "Tapas requires login/payment for some chapters. Enable to always show paywalled chapters."
-            setDefaultValue(true)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit().putBoolean(CHAPTER_VIS_PREF_KEY, checkValue).commit()
-            }
-        }
-        screen.addPreference(chapterVisibilityPref)
-
-        val lockPref = SwitchPreferenceCompat(screen.context).apply {
-            key = SHOW_LOCK_PREF_KEY
-            title = "Show lock icon"
-            summary = "Enable to continue showing \uD83D\uDD12 for locked chapters after login."
-            setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit().putBoolean(SHOW_LOCK_PREF_KEY, checkValue).commit()
-            }
-        }
-        screen.addPreference(lockPref)
-    }
-
-    private fun showLockedChapterPref() = preferences.getBoolean(CHAPTER_VIS_PREF_KEY, false)
-    private fun showLockPref() = preferences.getBoolean(SHOW_LOCK_PREF_KEY, false)
-
-    companion object {
-        private const val CHAPTER_VIS_PREF_KEY = "lockedChapterVisibility"
-        private const val SHOW_LOCK_PREF_KEY = "showChapterLock"
-    }
-
-    // Info
-    override val lang = "en"
-    override val supportsLatest = true
-    override val name = "Tapas" // originally Tapastic
-    override val baseUrl = "https://tapas.io"
+    // Originally Tapastic
     override val id = 3825434541981130345
+
+    override val name = "Tapas"
+
+    override val lang = "en"
+
+    override val baseUrl = "https://tapas.io"
+
+    override val supportsLatest = true
+
+    private val webViewCookieManager: CookieManager by lazy { CookieManager.getInstance() }
 
     override val client: OkHttpClient = super.client.newBuilder()
         .cookieJar(
             // Syncs okhttp with webview cookies, allowing logged-in users do logged-in stuff
             object : CookieJar {
-                private val webviewCookieManager = CookieManager.getInstance()
-
                 override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
                     for (cookie in cookies) {
-                        webviewCookieManager.setCookie(url.toString(), cookie.toString())
+                        webViewCookieManager.setCookie(url.toString(), cookie.toString())
                     }
                 }
                 override fun loadForRequest(url: HttpUrl): MutableList<Cookie> {
-                    val cookiesString = webviewCookieManager.getCookie(url.toString())
+                    val cookiesString = webViewCookieManager.getCookie(url.toString())
 
                     if (cookiesString != null && cookiesString.isNotEmpty()) {
                         val cookieHeaders = cookiesString.split("; ").toList()
@@ -134,8 +96,43 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
         )
         .build()
 
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", "https://m.tapas.io")
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val chapterVisibilityPref = SwitchPreferenceCompat(screen.context).apply {
+            key = CHAPTER_VIS_PREF_KEY
+            title = "Show paywalled chapters"
+            summary = "Tapas requires login/payment for some chapters. Enable to always show paywalled chapters."
+            setDefaultValue(true)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+                preferences.edit().putBoolean(CHAPTER_VIS_PREF_KEY, checkValue).commit()
+            }
+        }
+        screen.addPreference(chapterVisibilityPref)
+
+        val lockPref = SwitchPreferenceCompat(screen.context).apply {
+            key = SHOW_LOCK_PREF_KEY
+            title = "Show lock icon"
+            summary = "Enable to continue showing \uD83D\uDD12 for locked chapters after login."
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+                preferences.edit().putBoolean(SHOW_LOCK_PREF_KEY, checkValue).commit()
+            }
+        }
+        screen.addPreference(lockPref)
+    }
+
+    private fun showLockedChapterPref() = preferences.getBoolean(CHAPTER_VIS_PREF_KEY, false)
+    private fun showLockPref() = preferences.getBoolean(SHOW_LOCK_PREF_KEY, false)
 
     // Popular
 
@@ -429,5 +426,10 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
     private interface UriFilter {
         val isMature: Boolean
         fun addToUri(uri: HttpUrl.Builder)
+    }
+
+    companion object {
+        private const val CHAPTER_VIS_PREF_KEY = "lockedChapterVisibility"
+        private const val SHOW_LOCK_PREF_KEY = "showChapterLock"
     }
 }
