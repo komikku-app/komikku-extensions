@@ -9,7 +9,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
 
     override val themeClass = "WPMangaStream"
 
-    override val baseVersionCode: Int = 10
+    override val baseVersionCode: Int = 11
 
     override val sources = listOf(
             SingleLang("Asura Scans", "https://www.asurascans.com", "en", overrideVersionCode = 5),

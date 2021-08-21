@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.wpmangareader
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -13,6 +14,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -59,7 +61,6 @@ abstract class WPMangaReader(
     // search
     override fun searchMangaSelector() = ".utao .uta .imgu, .listupd .bs .bsx, .listo .bs .bsx"
 
-
     /**
      * Given some string which represents an http url, returns a identifier (id) for a manga
      * which can be used to fetch its details at "$baseUrl$mangaUrlDirectory/$id"
@@ -75,7 +76,8 @@ abstract class WPMangaReader(
             val isMangaUrl = listOf(
                 baseMangaUrl.host == url.host,
                 pathLengthIs(url, 2),
-                url.pathSegments[0] == baseMangaUrl.pathSegments[0]).all { it }
+                url.pathSegments[0] == baseMangaUrl.pathSegments[0]
+            ).all { it }
             val potentiallyChapterUrl = pathLengthIs(url, 1)
             if (isMangaUrl)
                 Single.just(url.pathSegments[1])
@@ -104,13 +106,11 @@ abstract class WPMangaReader(
                 else
                     fetchMangaDetails(SManga.create().apply { this.url = "$mangaUrlDirectory/$id" })
                         .map {
-                            it.url = "$mangaUrlDirectory/$id"// isn't set in returned manga
+                            it.url = "$mangaUrlDirectory/$id" // isn't set in returned manga
                             MangasPage(listOf(it), false)
                         }
             }
-
     }
-
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var url = "$baseUrl".toHttpUrlOrNull()!!.newBuilder()
@@ -182,10 +182,10 @@ abstract class WPMangaReader(
 
         // add alternative name to manga description
         document.select(altNameSelector).firstOrNull()?.ownText()?.let {
-            if (it.isBlank().not()) {
-                description = when {
-                    description.isNullOrBlank() -> altName + it
-                    else -> description + "\n\n$altName" + it
+            if (it.isEmpty().not()) {
+                description += when {
+                    description!!.isEmpty() -> altName + it
+                    else -> "\n\n$altName" + it
                 }
             }
         }
@@ -212,6 +212,8 @@ abstract class WPMangaReader(
         val date = document.select(".listinfo time[itemprop=dateModified]").attr("datetime")
         val checkChapter = document.select(chapterListSelector()).firstOrNull()
         if (date != "" && checkChapter != null) chapters[0].date_upload = parseDate(date)
+
+        countViews(document)
 
         return chapters
     }
@@ -243,6 +245,8 @@ abstract class WPMangaReader(
             .filterNot { it.attr("abs:src").isNullOrEmpty() }
             .mapIndexed { i, img -> pages.add(Page(i, "", img.attr("abs:src"))) }
 
+        countViews(document)
+
         // Some sites like mangakita now load pages via javascript
         if (pages.isNotEmpty()) { return pages }
 
@@ -260,6 +264,48 @@ abstract class WPMangaReader(
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
+
+    /**
+     * Set it to false if you want to disable the extension reporting the view count
+     * back to the source website through admin-ajax.php.
+     */
+    protected open val sendViewCount: Boolean = true
+
+    protected open fun countViewsRequest(document: Document): Request? {
+        val wpMangaData = document.select("script:containsData(dynamic_view_ajax)").firstOrNull()
+            ?.data() ?: return null
+
+        val postId = CHAPTER_PAGE_ID_REGEX.find(wpMangaData)?.groupValues?.get(1)
+            ?: MANGA_PAGE_ID_REGEX.find(wpMangaData)?.groupValues?.get(1)
+            ?: return null
+
+        val formBody = FormBody.Builder()
+            .add("action", "dynamic_view_ajax")
+            .add("post_id", postId)
+            .build()
+
+        val newHeaders = headersBuilder()
+            .set("Content-Length", formBody.contentLength().toString())
+            .set("Content-Type", formBody.contentType().toString())
+            .set("Referer", document.location())
+            .build()
+
+        return POST("$baseUrl/wp-admin/admin-ajax.php", newHeaders, formBody)
+    }
+
+    /**
+     * Send the view count request to the Madara endpoint.
+     *
+     * @param document The response document with the wp-manga data
+     */
+    protected open fun countViews(document: Document) {
+        if (!sendViewCount) {
+            return
+        }
+
+        val request = countViewsRequest(document) ?: return
+        runCatching { client.newCall(request).execute().close() }
+    }
 
     private interface UrlEncoded {
         fun encode(url: HttpUrl.Builder)
@@ -379,5 +425,8 @@ abstract class WPMangaReader(
 
     companion object {
         const val URL_SEARCH_PREFIX = "url:"
+
+        private val MANGA_PAGE_ID_REGEX = "post_id\\s*:\\s*(\\d+)\\}".toRegex()
+        private val CHAPTER_PAGE_ID_REGEX = "post_id\\s*=\\s*(\\d+);?".toRegex()
     }
 }

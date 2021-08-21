@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.multisrc.wpmangastream
 import android.app.Application
 import android.content.SharedPreferences
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -14,6 +15,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -38,14 +40,6 @@ abstract class WPMangaStream(
     private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
 ) : ConfigurableSource, ParsedHttpSource() {
     override val supportsLatest = true
-
-    companion object {
-        private const val MID_QUALITY = 1
-        private const val LOW_QUALITY = 2
-
-        private const val SHOW_THUMBNAIL_PREF_Title = "Default thumbnail quality"
-        private const val SHOW_THUMBNAIL_PREF = "showThumbnailDefault"
-    }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -210,6 +204,8 @@ abstract class WPMangaStream(
         val checkChapter = document.select(chapterListSelector()).firstOrNull()
         if (date != "" && checkChapter != null) chapters[0].date_upload = parseDate(date)
 
+        countViews(document)
+
         return chapters
     }
 
@@ -296,6 +292,8 @@ abstract class WPMangaStream(
             htmlPages += scriptPages
         }
 
+        countViews(document)
+
         return htmlPages.distinctBy { it.imageUrl }
     }
 
@@ -325,6 +323,48 @@ abstract class WPMangaStream(
             MID_QUALITY -> "https://images.weserv.nl/?w=600&q=70&url=$url"
             else -> originalUrl
         }
+    }
+
+    /**
+     * Set it to false if you want to disable the extension reporting the view count
+     * back to the source website through admin-ajax.php.
+     */
+    protected open val sendViewCount: Boolean = true
+
+    protected open fun countViewsRequest(document: Document): Request? {
+        val wpMangaData = document.select("script:containsData(dynamic_view_ajax)").firstOrNull()
+            ?.data() ?: return null
+
+        val postId = CHAPTER_PAGE_ID_REGEX.find(wpMangaData)?.groupValues?.get(1)
+            ?: MANGA_PAGE_ID_REGEX.find(wpMangaData)?.groupValues?.get(1)
+            ?: return null
+
+        val formBody = FormBody.Builder()
+            .add("action", "dynamic_view_ajax")
+            .add("post_id", postId)
+            .build()
+
+        val newHeaders = headersBuilder()
+            .set("Content-Length", formBody.contentLength().toString())
+            .set("Content-Type", formBody.contentType().toString())
+            .set("Referer", document.location())
+            .build()
+
+        return POST("$baseUrl/wp-admin/admin-ajax.php", newHeaders, formBody)
+    }
+
+    /**
+     * Send the view count request to the Madara endpoint.
+     *
+     * @param document The response document with the wp-manga data
+     */
+    protected open fun countViews(document: Document) {
+        if (!sendViewCount) {
+            return
+        }
+
+        val request = countViewsRequest(document) ?: return
+        runCatching { client.newCall(request).execute().close() }
     }
 
     private class AuthorFilter : Filter.Text("Author")
@@ -475,5 +515,16 @@ abstract class WPMangaStream(
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
+    }
+
+    companion object {
+        private const val MID_QUALITY = 1
+        private const val LOW_QUALITY = 2
+
+        private const val SHOW_THUMBNAIL_PREF_Title = "Default thumbnail quality"
+        private const val SHOW_THUMBNAIL_PREF = "showThumbnailDefault"
+
+        private val MANGA_PAGE_ID_REGEX = "post_id\\s*:\\s*(\\d+)\\}".toRegex()
+        private val CHAPTER_PAGE_ID_REGEX = "chapter_id\\s*=\\s*(\\d+);?".toRegex()
     }
 }
