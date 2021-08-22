@@ -100,24 +100,36 @@ class Tachidesk : ConfigurableSource, HttpSource() {
 
     override fun getFilterList(): FilterList =
         FilterList(
-            CategorySelect(categoryList),
-            Filter.Header("Note: Restart tachiyomi to refresh categories!")
+            CategorySelect(refreshCategoryList(baseUrl).let { categoryList }),
+            Filter.Header("Press reset to attempt to fetch categories")
         )
 
-    private lateinit var categoryList: List<CategoryDataClass>
-    init {
+    private var categoryList: List<CategoryDataClass> = emptyList()
+
+    private fun refreshCategoryList(baseUrl: String) {
         Single.fromCallable {
-            client.newCall(GET("$checkedBaseUrl/api/v1/category", headers)).execute()
+            client.newCall(GET("$baseUrl/api/v1/category", headers)).execute()
         }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { response ->
-                categoryList = try {
-                    json.decodeFromString<List<CategoryDataClass>>(response.body!!.string())
-                } catch (e: Exception) {
-                    emptyList()
-                }
-            }
+            .subscribe(
+                { response ->
+                    categoryList = try {
+                        json.decodeFromString<List<CategoryDataClass>>(response.body!!.string())
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                },
+                {}
+            )
+    }
+
+    init {
+        val initBaseUrl = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000).getString(ADDRESS_TITLE, ADDRESS_DEFAULT)!!
+
+        if (initBaseUrl.isNotBlank()) {
+            refreshCategoryList(initBaseUrl)
+        }
     }
 
     private val defaultCategoryId: Int
@@ -137,7 +149,8 @@ class Tachidesk : ConfigurableSource, HttpSource() {
                     is CategorySelect -> {
                         selectedFilter = categoryList[filter.state].id
                     }
-                    else -> {}
+                    else -> {
+                    }
                 }
             }
 
