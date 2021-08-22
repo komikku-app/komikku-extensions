@@ -596,11 +596,12 @@ abstract class Madara(
         val wpMangaData = document.select("script#wp-manga-js-extra").firstOrNull()
             ?.data() ?: return null
 
-        val wpManga = wpMangaData
+        val wpMangaInfo = wpMangaData
             .substringAfter("var manga = ")
             .substringBeforeLast(";")
-            .let { json.parseToJsonElement(it) }
-            .jsonObject
+
+        val wpManga = runCatching { json.parseToJsonElement(wpMangaInfo).jsonObject }
+            .getOrNull() ?: return null
 
         if (wpManga["enable_manga_view"]?.jsonPrimitive?.content == "1") {
             val formBuilder = FormBody.Builder()
