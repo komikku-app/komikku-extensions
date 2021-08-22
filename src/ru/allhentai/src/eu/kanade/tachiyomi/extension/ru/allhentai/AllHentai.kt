@@ -229,9 +229,7 @@ class AllHentai : ParsedHttpSource() {
 
     override fun pageListParse(response: Response): List<Page> {
         val html = response.body!!.string()
-        val beginIndex = html.indexOf("rm_h.init( [")
-        val endIndex = html.indexOf(");", beginIndex)
-        val trimmedHtml = html.substring(beginIndex, endIndex)
+        val trimmedHtml = html.substringAfter("rm_h.initReader(").substringBefore(");")
 
         val p = Pattern.compile("'.*?','.*?',\".*?\"")
         val m = p.matcher(trimmedHtml)
