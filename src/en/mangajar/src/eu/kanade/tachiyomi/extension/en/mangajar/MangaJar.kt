@@ -100,7 +100,7 @@ class MangaJar : ParsedHttpSource() {
 
     private fun parseStatus(status: String) = when {
         status.contains("Ongoing") -> SManga.ONGOING
-        status.contains("Completed") -> SManga.COMPLETED
+        status.contains("Ended") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
