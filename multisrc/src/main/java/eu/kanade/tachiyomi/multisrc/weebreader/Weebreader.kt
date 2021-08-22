@@ -25,7 +25,7 @@ abstract class Weebreader(
     override val name: String,
     override val baseUrl: String,
     override val lang: String,
-): HttpSource() {
+) : HttpSource() {
 
     override val supportsLatest = true
 

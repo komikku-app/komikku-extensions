@@ -1,16 +1,8 @@
 package eu.kanade.tachiyomi.extension.en.readonepunchmanmangaonlinetwo
 
 import eu.kanade.tachiyomi.multisrc.mangacatalog.MangaCatalog
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.util.asJsoup
-import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import okhttp3.Request
-import rx.Observable
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
@@ -33,6 +25,6 @@ class ReadOnePunchManMangaOnlineTwo : MangaCatalog("Read One-Punch Man Manga Onl
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = element.select("td:first-child").text()
         url = element.select("a").attr("abs:href")
-        date_upload = System.currentTimeMillis() //I have no idear how to parse Date stuff
+        date_upload = System.currentTimeMillis() // I have no idear how to parse Date stuff
     }
 }

@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.id.sekaikomik
 
-import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
 import eu.kanade.tachiyomi.annotations.Nsfw
+import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
 import java.text.SimpleDateFormat
 import java.util.Locale
 

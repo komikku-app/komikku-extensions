@@ -11,6 +11,4 @@ class Manhwa68 : Madara(
     "https://manhwa68.com",
     "en",
     dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
-) {
-
-}
+)

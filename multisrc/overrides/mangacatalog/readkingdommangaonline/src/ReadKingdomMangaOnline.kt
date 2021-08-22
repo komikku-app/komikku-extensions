@@ -1,8 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.readkingdommangaonline
 
 import eu.kanade.tachiyomi.multisrc.mangacatalog.MangaCatalog
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.util.asJsoup
 
 class ReadKingdomMangaOnline : MangaCatalog("Read Kingdom Manga Online", "https://ww2.readkingdom.com", "en") {
     override val sourceList = listOf(

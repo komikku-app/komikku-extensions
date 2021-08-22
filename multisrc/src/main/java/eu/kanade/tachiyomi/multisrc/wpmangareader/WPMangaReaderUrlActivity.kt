@@ -5,7 +5,6 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
 import kotlin.system.exitProcess
 
 class WPMangaReaderUrlActivity : Activity() {
@@ -18,7 +17,7 @@ class WPMangaReaderUrlActivity : Activity() {
 
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"
-                putExtra("query","${WPMangaReader.URL_SEARCH_PREFIX}${intent?.data?.toString()}")
+                putExtra("query", "${WPMangaReader.URL_SEARCH_PREFIX}${intent?.data?.toString()}")
                 putExtra("filter", packageName)
             }
             try {

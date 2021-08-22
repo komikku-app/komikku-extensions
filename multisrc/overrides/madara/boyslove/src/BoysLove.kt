@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 
 @Nsfw
 class BoysLove : Madara("BoysLove", "https://boyslove.me", "en") {
-    
+
     override fun getGenreList() = listOf(
         Genre("Action", "action"),
         Genre("Adult", "adult"),

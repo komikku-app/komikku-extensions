@@ -1,11 +1,11 @@
 package eu.kanade.tachiyomi.extension.id.sheamanga
 
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
+import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
 import java.util.Locale
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import java.util.concurrent.TimeUnit
-import okhttp3.OkHttpClient
 
 class SheaManga : WPMangaStream(
     "Shea Manga",

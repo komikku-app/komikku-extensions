@@ -59,7 +59,8 @@ interface ThemeSourceGenerator {
                 "SOURCEHOST" to source.baseUrl.toHttpUrlOrNull()?.host,
                 "SOURCESCHEME" to source.baseUrl.toHttpUrlOrNull()?.scheme
             ).filter { it.value != null }
-            gradle.writeText("""
+            gradle.writeText(
+                """
                 // THIS FILE IS AUTO-GENERATED; DO NOT EDIT
                 apply plugin: 'com.android.application'
                 apply plugin: 'kotlin-android'
@@ -85,7 +86,8 @@ ${placeholders.map { "${" ".repeat(28)}${it.key}: \"${it.value}\""}.joinToString
                         ]
                     }
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         private fun writeAndroidManifest(androidManifestFile: File, manifestOverridesPath: String, defaultAndroidManifestPath: String) {
@@ -96,11 +98,13 @@ ${placeholders.map { "${" ".repeat(28)}${it.key}: \"${it.value}\""}.joinToString
             else if (defaultAndroidManifest.exists())
                 defaultAndroidManifest.copyTo(androidManifestFile)
             else
-                androidManifestFile.writeText("""
+                androidManifestFile.writeText(
+                    """
                 <?xml version="1.0" encoding="utf-8"?>
                 <!-- THIS FILE IS AUTO-GENERATED; DO NOT EDIT -->
                 <manifest package="eu.kanade.tachiyomi.extension" />
-                """.trimIndent())
+                    """.trimIndent()
+                )
         }
 
         private fun createGradleProject(source: ThemeSourceData, themePkg: String, themeClass: String, baseVersionCode: Int, userDir: String) {
@@ -143,8 +147,8 @@ ${placeholders.map { "${" ".repeat(28)}${it.key}: \"${it.value}\""}.joinToString
             themeDestFile.mkdirs()
 
             themeSrcFile.list()!!
-                    .filter { it.endsWith(".kt") && !it.endsWith("Generator.kt") }
-                    .forEach { Files.copy(File("$themeSrcPath/$it").toPath(), File("$themeDestPath/$it").toPath(), StandardCopyOption.REPLACE_EXISTING) }
+                .filter { it.endsWith(".kt") && !it.endsWith("Generator.kt") }
+                .forEach { Files.copy(File("$themeSrcPath/$it").toPath(), File("$themeDestPath/$it").toPath(), StandardCopyOption.REPLACE_EXISTING) }
         }
 
         private fun copyResFiles(resOverridePath: String, defaultResPath: String, source: ThemeSourceData, projectRootPath: String): Any {
@@ -190,7 +194,8 @@ ${placeholders.map { "${" ".repeat(28)}${it.key}: \"${it.value}\""}.joinToString
                 }
             }
 
-            File("$classPath/${source.className}.kt").writeText("""/* ktlint-disable */
+            File("$classPath/${source.className}.kt").writeText(
+                """/* ktlint-disable */
                 // THIS FILE IS AUTO-GENERATED; DO NOT EDIT
                 package eu.kanade.tachiyomi.extension.${pkgNameSuffix(source, ".")}
 
@@ -200,7 +205,8 @@ ${placeholders.map { "${" ".repeat(28)}${it.key}: \"${it.value}\""}.joinToString
 
                 ${if (source.isNsfw) "\n@Nsfw" else ""}
                 ${factoryClassText()}
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         private fun cleanDirectory(dir: File) {
@@ -230,23 +236,23 @@ sealed class ThemeSourceData {
     abstract val overrideVersionCode: Int
 
     data class SingleLang(
-            override val name: String,
-            override val baseUrl: String,
-            val lang: String,
-            override val isNsfw: Boolean = false,
-            override val className: String = name.replace(" ", ""),
-            override val pkgName: String = className.toLowerCase(Locale.ENGLISH),
-            override val overrideVersionCode: Int = 0,
+        override val name: String,
+        override val baseUrl: String,
+        val lang: String,
+        override val isNsfw: Boolean = false,
+        override val className: String = name.replace(" ", ""),
+        override val pkgName: String = className.toLowerCase(Locale.ENGLISH),
+        override val overrideVersionCode: Int = 0,
     ) : ThemeSourceData()
 
     data class MultiLang(
-            override val name: String,
-            override val baseUrl: String,
-            val langs: List<String>,
-            override val isNsfw: Boolean = false,
-            override val className: String = name.replace(" ", "") + "Factory",
-            override val pkgName: String = className.substringBefore("Factory").toLowerCase(Locale.ENGLISH),
-            override val overrideVersionCode: Int = 0,
+        override val name: String,
+        override val baseUrl: String,
+        val langs: List<String>,
+        override val isNsfw: Boolean = false,
+        override val className: String = name.replace(" ", "") + "Factory",
+        override val pkgName: String = className.substringBefore("Factory").toLowerCase(Locale.ENGLISH),
+        override val overrideVersionCode: Int = 0,
     ) : ThemeSourceData()
 }
 

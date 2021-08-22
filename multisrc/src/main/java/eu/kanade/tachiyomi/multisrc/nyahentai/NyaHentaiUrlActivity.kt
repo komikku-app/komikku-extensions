@@ -5,7 +5,6 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import eu.kanade.tachiyomi.multisrc.nyahentai.NyaHentai
 import kotlin.system.exitProcess
 
 /**

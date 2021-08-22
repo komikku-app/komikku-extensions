@@ -3,17 +3,17 @@ package eu.kanade.tachiyomi.extension.en.mangakitsune
 import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.source.model.SChapter
+import okhttp3.Response
 import java.text.SimpleDateFormat
 import java.util.Locale
-import okhttp3.Response
 
 @Nsfw
 class MangaKitsune : Madara("MangaKitsune", "https://mangakitsune.com", "en", dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)) {
-        
+
     override fun chapterListParse(response: Response): List<SChapter> = super.chapterListParse(response).reversed()
 
     override val pageListParseSelector = ".reading-content div.text-left :has(>img)"
-    
+
     override fun getGenreList() = listOf(
         Genre("Action", "action"),
         Genre("Adult", "adult"),

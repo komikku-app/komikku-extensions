@@ -5,20 +5,18 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import eu.kanade.tachiyomi.multisrc.madara.Madara
 import kotlin.system.exitProcess
 
-class MadaraUrlActivity: Activity() {
+class MadaraUrlActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
 
         if (pathSegments != null && pathSegments.size >= 2) {
 
-
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"
-                putExtra("query","${getSLUG(pathSegments)}")
+                putExtra("query", "${getSLUG(pathSegments)}")
                 putExtra("filter", packageName)
             }
             try {

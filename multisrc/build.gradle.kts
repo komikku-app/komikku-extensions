@@ -29,8 +29,8 @@ tasks {
             val isWindows = System.getProperty("os.name").toString().toLowerCase().contains("win")
             var classPath = (configurations.debugCompileOnly.get().asFileTree.toList() +
                 listOf(
-                    configurations.androidApis.get().asFileTree.first().absolutePath, // android.jar path
-                    "$projectDir/build/intermediates/aar_main_jar/debug/classes.jar" // jar made from this module
+                        configurations.androidApis.get().asFileTree.first().absolutePath, // android.jar path
+                        "$projectDir/build/intermediates/aar_main_jar/debug/classes.jar" // jar made from this module
                 ))
                 .joinToString(if (isWindows) ";" else ":")
 
@@ -63,6 +63,14 @@ tasks {
                 throw Exception("Java process failed with exit code: $exitCode")
             }
         }
-        dependsOn("assembleDebug")
+        dependsOn("ktFormat", "ktLint", "assembleDebug")
+    }
+
+    register<org.jmailen.gradle.kotlinter.tasks.LintTask>("ktLint") {
+        source(files("src", "overrides"))
+    }
+
+    register<org.jmailen.gradle.kotlinter.tasks.FormatTask>("ktFormat") {
+        source(files("src", "overrides"))
     }
 }

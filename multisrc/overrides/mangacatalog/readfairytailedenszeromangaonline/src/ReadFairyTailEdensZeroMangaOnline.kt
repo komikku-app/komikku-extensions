@@ -1,8 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.readfairytailedenszeromangaonline
 
 import eu.kanade.tachiyomi.multisrc.mangacatalog.MangaCatalog
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.util.asJsoup
 
 class ReadFairyTailEdensZeroMangaOnline : MangaCatalog("Read Fairy Tail & Edens Zero Manga Online", "https://ww4.readfairytail.com", "en") {
     override val sourceList = listOf(

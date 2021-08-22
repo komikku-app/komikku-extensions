@@ -1,15 +1,15 @@
 package eu.kanade.tachiyomi.extension.id.mangaindonesia
 
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Element
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import java.util.concurrent.TimeUnit
-import okhttp3.OkHttpClient
 
 class MangaIndonesia : WPMangaStream("MangaIndonesia", "https://mangaindonesia.net", "id") {
     private val rateLimitInterceptor = RateLimitInterceptor(4)

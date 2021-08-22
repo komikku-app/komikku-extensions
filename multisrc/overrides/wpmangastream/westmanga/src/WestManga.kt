@@ -1,12 +1,11 @@
 package eu.kanade.tachiyomi.extension.id.westmanga
 
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import eu.kanade.tachiyomi.source.model.SManga
-import org.jsoup.nodes.Document
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
-import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
-
+import org.jsoup.nodes.Document
+import java.util.concurrent.TimeUnit
 
 class WestManga : WPMangaStream("West Manga", "https://westmanga.info", "id") {
     // Formerly "West Manga (WP Manga Stream)"
@@ -38,7 +37,7 @@ class WestManga : WPMangaStream("West Manga", "https://westmanga.info", "id") {
 
                 // add alternative name to manga description
                 document.select(altNameSelector).firstOrNull()?.ownText()?.let {
-                    if (it.isBlank().not() && it !="N/A" && it != "-") {
+                    if (it.isBlank().not() && it != "N/A" && it != "-") {
                         description = when {
                             description.isNullOrBlank() -> altName + it
                             else -> description + "\n\n$altName" + it

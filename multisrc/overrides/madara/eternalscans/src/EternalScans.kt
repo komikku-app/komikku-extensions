@@ -9,6 +9,4 @@ class EternalScans : Madara(
     "https://eternalscans.com",
     "en",
     dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
-) {
-
-}
+)

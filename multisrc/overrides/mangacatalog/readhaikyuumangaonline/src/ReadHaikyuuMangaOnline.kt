@@ -1,8 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.readhaikyuumangaonline
 
 import eu.kanade.tachiyomi.multisrc.mangacatalog.MangaCatalog
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.util.asJsoup
 
 class ReadHaikyuuMangaOnline : MangaCatalog("Read Haikyuu!! Manga Online", "https://ww6.readhaikyuu.com", "en") {
     override val sourceList = listOf(

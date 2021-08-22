@@ -2,11 +2,10 @@ package eu.kanade.tachiyomi.extension.en.asurascans
 
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
-import okhttp3.OkHttpClient
-import java.util.concurrent.TimeUnit
-import org.jsoup.nodes.Document
 import eu.kanade.tachiyomi.source.model.Page
-
+import okhttp3.OkHttpClient
+import org.jsoup.nodes.Document
+import java.util.concurrent.TimeUnit
 
 class AsuraScans : WPMangaStream("AsuraScans", "https://www.asurascans.com", "en") {
 

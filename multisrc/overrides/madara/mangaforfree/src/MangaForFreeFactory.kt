@@ -1,12 +1,12 @@
 package eu.kanade.tachiyomi.extension.all.mangaforfree
 
+import eu.kanade.tachiyomi.annotations.Nsfw
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
-import java.util.concurrent.TimeUnit
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import okhttp3.OkHttpClient
-import eu.kanade.tachiyomi.annotations.Nsfw
+import java.util.concurrent.TimeUnit
 
 class MangaForFreeFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(

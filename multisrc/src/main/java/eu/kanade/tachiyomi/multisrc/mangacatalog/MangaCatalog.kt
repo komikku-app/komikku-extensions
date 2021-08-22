@@ -3,15 +3,14 @@ package eu.kanade.tachiyomi.multisrc.mangacatalog
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
+import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Request
-import rx.Observable
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-
+import rx.Observable
 
 // Based On the original manga maniac source
 // MangaCatalog is a network of sites for single franshise sites
@@ -91,7 +90,7 @@ abstract class MangaCatalog(
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         val name1 = element.select(".col-span-3 > a").text()
         val name2 = element.select(".text-xs:not(a)").text()
-        if (name2 == ""){
+        if (name2 == "") {
             name = name1
         } else {
             name = "$name1 - $name2"

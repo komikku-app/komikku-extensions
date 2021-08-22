@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.manhwabiz
 
-import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.annotations.Nsfw
+import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Request
 import java.text.SimpleDateFormat

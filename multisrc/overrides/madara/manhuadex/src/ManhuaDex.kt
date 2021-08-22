@@ -9,6 +9,4 @@ class ManhuaDex : Madara(
     "https://manhuadex.com",
     "en",
     dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale.US)
-) {
-
-}
+)

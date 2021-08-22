@@ -1,11 +1,11 @@
 package eu.kanade.tachiyomi.extension.tr.liebeschneehiver
 
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
+import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
 import java.util.Locale
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import java.util.concurrent.TimeUnit
-import okhttp3.OkHttpClient
 
 class LiebeSchneeHiver : WPMangaStream(
     "Liebe Schnee Hiver",
@@ -20,5 +20,4 @@ class LiebeSchneeHiver : WPMangaStream(
         .readTimeout(30, TimeUnit.SECONDS)
         .addNetworkInterceptor(rateLimitInterceptor)
         .build()
-
 }

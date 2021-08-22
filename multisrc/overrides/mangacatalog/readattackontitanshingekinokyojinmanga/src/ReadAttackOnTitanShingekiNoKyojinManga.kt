@@ -1,17 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.readattackontitanshingekinokyojinmanga
 
 import eu.kanade.tachiyomi.multisrc.mangacatalog.MangaCatalog
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.util.asJsoup
-import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.SChapter
-import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import okhttp3.Request
-import rx.Observable
-import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 class ReadAttackOnTitanShingekiNoKyojinManga : MangaCatalog("Read Attack on Titan Shingeki no Kyojin Manga", "https://ww7.readsnk.com", "en") {
@@ -35,7 +25,7 @@ class ReadAttackOnTitanShingekiNoKyojinManga : MangaCatalog("Read Attack on Tita
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         val name1 = element.select(".flex > a.text-gray-900").text()
         val name2 = element.select(".flex > div.text-xs").text()
-        if (name2 == ""){
+        if (name2 == "") {
             name = name1
         } else {
             name = "$name1 - $name2"

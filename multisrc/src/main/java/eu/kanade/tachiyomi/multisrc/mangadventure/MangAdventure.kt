@@ -107,33 +107,38 @@ abstract class MangAdventure(
 
     override fun latestUpdatesParse(response: Response) =
         json.parseToJsonElement(response.body!!.string()).run {
-            MangasPage(jsonArray.map {
-                val obj = it.jsonObject
-                SManga.create().apply {
-                    url = obj["url"]!!.jsonPrimitive.content
-                    title = obj["title"]!!.jsonPrimitive.content
-                    thumbnail_url = obj["cover"]!!.jsonPrimitive.content
-                    // A bit of a hack to sort by date
-                    val latest = obj["latest_chapter"]!!.jsonObject
-                    description = httpDateToTimestamp(
-                        latest["date"]!!.jsonPrimitive.content
-                    ).toString()
-                }
-            }.sortedByDescending(SManga::description), false)
+            MangasPage(
+                jsonArray.map {
+                    val obj = it.jsonObject
+                    SManga.create().apply {
+                        url = obj["url"]!!.jsonPrimitive.content
+                        title = obj["title"]!!.jsonPrimitive.content
+                        thumbnail_url = obj["cover"]!!.jsonPrimitive.content
+                        // A bit of a hack to sort by date
+                        val latest = obj["latest_chapter"]!!.jsonObject
+                        description = httpDateToTimestamp(
+                            latest["date"]!!.jsonPrimitive.content
+                        ).toString()
+                    }
+                }.sortedByDescending(SManga::description),
+                false
+            )
         }
 
     override fun chapterListParse(response: Response) =
         json.parseToJsonElement(response.body!!.string())
             .jsonObject["volumes"]!!.jsonObject.entries.flatMap { vol ->
-                vol.value.jsonObject.entries.map { ch ->
-                    SChapter.create().fromJSON(JsonObject(
+            vol.value.jsonObject.entries.map { ch ->
+                SChapter.create().fromJSON(
+                    JsonObject(
                         ch.value.jsonObject.toMutableMap().also {
                             it["volume"] = JsonPrimitive(vol.key)
                             it["chapter"] = JsonPrimitive(ch.key)
                         }
-                    ))
-                }
+                    )
+                )
             }
+        }
 
     override fun mangaDetailsParse(response: Response) =
         SManga.create().fromJSON(
@@ -151,14 +156,17 @@ abstract class MangAdventure(
 
     override fun searchMangaParse(response: Response) =
         json.parseToJsonElement(response.body!!.string()).run {
-            MangasPage(jsonArray.map {
-                val obj = it.jsonObject
-                SManga.create().apply {
-                    url = obj["url"]!!.jsonPrimitive.content
-                    title = obj["title"]!!.jsonPrimitive.content
-                    thumbnail_url = obj["cover"]!!.jsonPrimitive.content
-                }
-            }.sortedBy(SManga::title), false)
+            MangasPage(
+                jsonArray.map {
+                    val obj = it.jsonObject
+                    SManga.create().apply {
+                        url = obj["url"]!!.jsonPrimitive.content
+                        title = obj["title"]!!.jsonPrimitive.content
+                        thumbnail_url = obj["cover"]!!.jsonPrimitive.content
+                    }
+                }.sortedBy(SManga::title),
+                false
+            )
         }
 
     override fun getFilterList() =

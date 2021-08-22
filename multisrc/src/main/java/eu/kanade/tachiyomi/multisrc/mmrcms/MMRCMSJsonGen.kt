@@ -9,7 +9,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import java.io.File
 import java.io.PrintWriter
 import java.security.cert.CertificateException
 import java.time.ZonedDateTime
@@ -27,11 +26,11 @@ import javax.net.ssl.X509TrustManager
  */
 
 class MMRCMSJsonGen {
-    //private var preRunTotal: String
+    // private var preRunTotal: String
 
     init {
         System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2,TLSv1.3")
-        //preRunTotal = Regex("""-> (\d+)""").findAll(File(relativePath).readText(Charsets.UTF_8)).last().groupValues[1]
+        // preRunTotal = Regex("""-> (\d+)""").findAll(File(relativePath).readText(Charsets.UTF_8)).last().groupValues[1]
     }
 
     @TargetApi(Build.VERSION_CODES.O)
@@ -101,7 +100,7 @@ class MMRCMSJsonGen {
         buffer.append("        }\n")
         buffer.append("    }\n")
         buffer.append("}\n")
-        //println("Pre-run sources: $preRunTotal")
+        // println("Pre-run sources: $preRunTotal")
         println("Post-run sources: ${number - 1}")
         val writer = PrintWriter(relativePath)
         writer.write(buffer.toString())

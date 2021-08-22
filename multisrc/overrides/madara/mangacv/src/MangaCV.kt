@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 
 @Nsfw
 class MangaCV : Madara("MangaCV", "https://mangacv.com", "en") {
-        
+
     override fun getGenreList() = listOf(
         Genre("Action", "action"),
         Genre("Adult", "adult"),

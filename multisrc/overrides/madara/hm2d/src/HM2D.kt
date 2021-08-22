@@ -1,10 +1,10 @@
 package eu.kanade.tachiyomi.extension.en.hm2d
 
-import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.annotations.Nsfw
+import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
-import okhttp3.Request
 import eu.kanade.tachiyomi.source.model.SManga
+import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -24,4 +24,3 @@ class HM2D : Madara(
         return GET(baseUrl + manga.url.removePrefix("/hdoujin/"), headers)
     }
 }
-

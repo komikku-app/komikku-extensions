@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.zh.dongmanmanhua
 
-import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.multisrc.webtoons.Webtoons
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga

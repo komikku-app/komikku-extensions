@@ -62,5 +62,4 @@ class ManyToon : Madara("ManyToon", "https://manytoon.com", "en") {
         Genre("Yaoi", "yaoi"),
         Genre("Yuri", "yuri"),
     )
-
 }

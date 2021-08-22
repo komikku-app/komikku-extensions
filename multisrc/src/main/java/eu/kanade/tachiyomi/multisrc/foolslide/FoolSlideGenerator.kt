@@ -21,7 +21,7 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("Evil Flowers", "https://reader.evilflowers.com", "en"),
         SingleLang("Русификация", "https://rusmanga.ru", "ru", className = "Russification"),
         SingleLang("PowerManga", "https://reader.powermanga.org", "it", className = "PowerMangaIT"),
-        MultiLang("FoolSlide Customizable", "",  listOf("other")),
+        MultiLang("FoolSlide Customizable", "", listOf("other")),
         SingleLang("Menudo-Fansub", "https://www.menudo-fansub.com", "es", className = "MenudoFansub", overrideVersionCode = 1),
         SingleLang("Sense-Scans", "https://sensescans.com", "en", className = "SenseScans", overrideVersionCode = 1),
         SingleLang("Kirei Cake", "https://reader.kireicake.com", "en"),

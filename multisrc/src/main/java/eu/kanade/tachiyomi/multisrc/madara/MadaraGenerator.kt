@@ -14,7 +14,7 @@ class MadaraGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         MultiLang("Leviatan Scans", "https://leviatanscans.com", listOf("en", "es"), className = "LeviatanScansFactory", overrideVersionCode = 6),
-        MultiLang("MangaForFree.net", "https://mangaforfree.net",  listOf("en", "ko", "all") , isNsfw = true, className = "MangaForFreeFactory", pkgName = "mangaforfree", overrideVersionCode = 1),
+        MultiLang("MangaForFree.net", "https://mangaforfree.net", listOf("en", "ko", "all"), isNsfw = true, className = "MangaForFreeFactory", pkgName = "mangaforfree", overrideVersionCode = 1),
         MultiLang("Manhwa18.cc", "https://manhwa18.cc", listOf("en", "ko", "all"), isNsfw = true, className = "Manhwa18CcFactory", pkgName = "manhwa18cc"),
         SingleLang("1st Kiss Manga.love", "https://1stkissmanga.love", "en", className = "FirstKissMangaLove"),
         SingleLang("1st Kiss", "https://1stkissmanga.com", "en", className = "FirstKissManga", pkgName = "firstkissmanga", overrideVersionCode = 5),
@@ -129,7 +129,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Kami Sama Explorer", "https://kamisama.com.br", "pt-BR"),
         SingleLang("KawaScans", "https://kawascans.com", "en"),
         SingleLang("KisekiManga", "https://kisekimanga.com", "en", overrideVersionCode = 1),
-        SingleLang("Kissmanga.in", "https://kissmanga.in", "en", className= "KissmangaIn", overrideVersionCode = 2),
+        SingleLang("Kissmanga.in", "https://kissmanga.in", "en", className = "KissmangaIn", overrideVersionCode = 2),
         SingleLang("KlikManga", "https://klikmanga.com", "id", overrideVersionCode = 1),
         SingleLang("Kokomanga", "https://kokomanga.com", "en"),
         SingleLang("Kun Manga", "https://kunmanga.com", "en", overrideVersionCode = 1),
@@ -239,7 +239,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("MangaYami", "https://www.mangayami.club", "en", overrideVersionCode = 2),
         SingleLang("Mangaka3rb", "https://mangaka3rb.com", "ar"),
         SingleLang("Mangakik", "https://mangakik.com", "en"),
-        SingleLang("Mangas Origines", "https://mangas-origines.fr", "fr" , true, overrideVersionCode = 1),
+        SingleLang("Mangas Origines", "https://mangas-origines.fr", "fr", true, overrideVersionCode = 1),
         SingleLang("Mangasushi", "https://mangasushi.net", "en", overrideVersionCode = 1),
         SingleLang("Mangauptocats", "https://mangauptocats.online", "th", overrideVersionCode = 1),
         SingleLang("Mangazuki.me", "https://mangazuki.me", "en", className = "MangazukiMe", overrideVersionCode = 1),

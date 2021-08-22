@@ -1,16 +1,8 @@
 package eu.kanade.tachiyomi.extension.en.readnoblessemanhwaonline
 
 import eu.kanade.tachiyomi.multisrc.mangacatalog.MangaCatalog
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.util.asJsoup
-import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import okhttp3.Request
-import rx.Observable
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
@@ -32,7 +24,7 @@ class ReadNoblesseManhwaOnline : MangaCatalog("Read Noblesse Manhwa Online", "ht
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         val name1 = element.select(".flex-col > a:not(.text-xs)").text()
         val name2 = element.select(".text-xs:not(a)").text()
-        if (name2 == ""){
+        if (name2 == "") {
             name = name1
         } else {
             name = "$name1 - $name2"

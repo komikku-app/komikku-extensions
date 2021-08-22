@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.kumascans
 
-import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
+import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 

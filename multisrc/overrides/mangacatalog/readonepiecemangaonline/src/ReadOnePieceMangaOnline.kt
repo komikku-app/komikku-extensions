@@ -1,8 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.readonepiecemangaonline
 
 import eu.kanade.tachiyomi.multisrc.mangacatalog.MangaCatalog
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.util.asJsoup
 
 class ReadOnePieceMangaOnline : MangaCatalog("Read One Piece Manga Online", "https://ww8.readonepiece.com", "en") {
     override val sourceList = listOf(

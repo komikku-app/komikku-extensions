@@ -6,6 +6,5 @@ import okhttp3.Response
 
 class MangaHero : Madara("Manga Hero", "https://mangahero.xyz", "en") {
 
-  override fun chapterListParse(response: Response): List<SChapter> = super.chapterListParse(response).reversed()
-
+    override fun chapterListParse(response: Response): List<SChapter> = super.chapterListParse(response).reversed()
 }

@@ -6,7 +6,7 @@ import okhttp3.Response
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class EGYManga : Madara( "EGY Manga", "https://egymanga.net", "ar", SimpleDateFormat("MMMM dd, yyyy", Locale("ar"))) {
+class EGYManga : Madara("EGY Manga", "https://egymanga.net", "ar", SimpleDateFormat("MMMM dd, yyyy", Locale("ar"))) {
     override fun chapterListParse(response: Response): List<SChapter> = super.chapterListParse(response).reversed()
     override val pageListParseSelector = "div.separator"
 }

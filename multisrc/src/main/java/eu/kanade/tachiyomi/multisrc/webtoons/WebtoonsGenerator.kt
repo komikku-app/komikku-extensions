@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.webtoons
 
-import generator.ThemeSourceData.SingleLang
 import generator.ThemeSourceData.MultiLang
+import generator.ThemeSourceData.SingleLang
 import generator.ThemeSourceGenerator
 
 class WebtoonsGenerator : ThemeSourceGenerator {

@@ -9,6 +9,4 @@ class DragonTea : Madara(
     "https://dragontea.ink/",
     "en",
     dateFormat = SimpleDateFormat("MM/dd/yyyy", Locale.US)
-) {
-
-}
+)

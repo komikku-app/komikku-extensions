@@ -68,13 +68,13 @@ class MMRCMSSources {
             SourceData.Single("Ama Scans", "https://amascan.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
             // NOTE: THIS SOURCE CONTAINS A CUSTOM LANGUAGE SYSTEM (which will be ignored)!
             SourceData.Single("HentaiShark", "https://www.hentaishark.com", "all", isNsfw = true),
-            //MultiLang("HentaiShark", "https://www.hentaishark.com", listOf("en", "ja", "zh", "de", "nl", "ko", "cz", "eo", "mn", "ar", "sk", "la", "ua", "ceb", "tl", "fi", "bg", "tr"), isNsfw = true, className = "HentaiSharkFactory"),
+            // MultiLang("HentaiShark", "https://www.hentaishark.com", listOf("en", "ja", "zh", "de", "nl", "ko", "cz", "eo", "mn", "ar", "sk", "la", "ua", "ceb", "tl", "fi", "bg", "tr"), isNsfw = true, className = "HentaiSharkFactory"),
         )
     }
 }
 
-//SingleLang("Mangás Yuri", "https://mangasyuri.net", "pt-BR", className = "MangasYuri"), override val id: Long = 6456162511058446409
-//SingleLang("FR Scan", "https://www.frscan.me", "fr"),
+// SingleLang("Mangás Yuri", "https://mangasyuri.net", "pt-BR", className = "MangasYuri"), override val id: Long = 6456162511058446409
+// SingleLang("FR Scan", "https://www.frscan.me", "fr"),
 // Reference from old Factory Source
 // Changed CMS
 // SourceData("es", "Tumangaonline.co", "http://tumangaonline.com"),

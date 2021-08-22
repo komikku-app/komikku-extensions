@@ -53,4 +53,3 @@ data class PizzaChapterDto(
 data class PizzaTeamDto(
     val name: String = ""
 )
-

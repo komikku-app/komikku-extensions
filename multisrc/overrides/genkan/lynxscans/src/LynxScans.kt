@@ -1,13 +1,12 @@
 package eu.kanade.tachiyomi.extension.en.lynxscans
 
 import eu.kanade.tachiyomi.multisrc.genkan.Genkan
-import org.jsoup.nodes.Document
 import eu.kanade.tachiyomi.source.model.Page
+import org.jsoup.nodes.Document
 
 class LynxScans : Genkan("LynxScans", "https://lynxscans.com", "en") {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
-
 
         val allImages = document.select("div#pages-container + script").first().data()
             .substringAfter("[").substringBefore("];")

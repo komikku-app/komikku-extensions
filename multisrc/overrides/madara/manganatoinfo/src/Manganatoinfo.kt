@@ -9,6 +9,4 @@ class Manganatoinfo : Madara(
     "https://manganato.info",
     "en",
     dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
-) {
-
-}
+)

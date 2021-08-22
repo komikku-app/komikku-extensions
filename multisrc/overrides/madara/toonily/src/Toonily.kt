@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.toonily
 
-import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.annotations.Nsfw
+import eu.kanade.tachiyomi.multisrc.madara.Madara
 
 @Nsfw
 class Toonily : Madara("Toonily", "https://toonily.com", "en") {

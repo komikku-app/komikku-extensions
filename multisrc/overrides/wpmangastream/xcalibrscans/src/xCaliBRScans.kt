@@ -2,9 +2,7 @@ package eu.kanade.tachiyomi.extension.en.xcalibrscans
 
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
-import eu.kanade.tachiyomi.source.model.Page
 import okhttp3.OkHttpClient
-import org.jsoup.nodes.Document
 import java.util.concurrent.TimeUnit
 
 class xCaliBRScans : WPMangaStream("xCaliBR Scans", "https://xcalibrscans.com", "en") {

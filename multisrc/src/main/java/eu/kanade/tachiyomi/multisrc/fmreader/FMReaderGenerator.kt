@@ -26,8 +26,8 @@ class FMReaderGenerator : ThemeSourceGenerator {
         SingleLang("Say Truyen", "https://saytruyen.net", "vi", overrideVersionCode = 1),
         SingleLang("KSGroupScans", "https://ksgroupscans.com", "en"),
         // Sites that went down
-        //SingleLang("18LHPlus", "https://18lhplus.com", "en", className = "EighteenLHPlus"),
-        //SingleLang("HanaScan (RawQQ)", "https://hanascan.com", "ja", className = "HanaScanRawQQ"),
+        // SingleLang("18LHPlus", "https://18lhplus.com", "en", className = "EighteenLHPlus"),
+        // SingleLang("HanaScan (RawQQ)", "https://hanascan.com", "ja", className = "HanaScanRawQQ"),
     )
 
     companion object {

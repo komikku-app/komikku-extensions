@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import org.jsoup.nodes.Element
 import java.util.Calendar
 
-
 class KSGroupScans : FMReader("KSGroupScans", "https://ksgroupscans.com", "en") {
     override fun chapterFromElement(element: Element, mangaTitle: String): SChapter {
         return SChapter.create().apply {

@@ -313,7 +313,6 @@ abstract class FMReader(
         }
     }
 
-
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
 
     private class TextField(name: String, val key: String) : Filter.Text(name)
@@ -471,5 +470,4 @@ abstract class FMReader(
         Genre("Western"),
         Genre("Zombies")
     )
-
 }

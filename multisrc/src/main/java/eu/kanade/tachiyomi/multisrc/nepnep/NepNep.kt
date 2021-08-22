@@ -145,10 +145,10 @@ abstract class NepNep(
             .filter {
                 // Comparing query with display name
                 it.getString("s")!!.contains(trimmedQuery, ignoreCase = true) or
-                        // Comparing query with list of alternate names
-                        it.getArray("al").any { altName ->
-                            altName.jsonPrimitive.content.contains(trimmedQuery, ignoreCase = true)
-                        }
+                    // Comparing query with list of alternate names
+                    it.getArray("al").any { altName ->
+                        altName.jsonPrimitive.content.contains(trimmedQuery, ignoreCase = true)
+                    }
             }
 
         val genres = mutableListOf<String>()
@@ -309,13 +309,13 @@ abstract class NepNep(
         val pageTotal = curChapter.getString("Page")!!.toInt()
 
         val host = "https://" +
-                script
-                    .substringAfter("vm.CurPathName = \"", "")
-                    .substringBefore("\"")
-                    .also {
-                        if (it.isEmpty())
-                            throw Exception("$name is overloaded and blocking Tachiyomi right now. Wait for unblock.")
-                    }
+            script
+                .substringAfter("vm.CurPathName = \"", "")
+                .substringBefore("\"")
+                .also {
+                    if (it.isEmpty())
+                        throw Exception("$name is overloaded and blocking Tachiyomi right now. Wait for unblock.")
+                }
         val titleURI = script.substringAfter("vm.IndexName = \"").substringBefore("\"")
         val seasonURI = curChapter.getString("Directory")!!
             .let { if (it.isEmpty()) "" else "$it/" }

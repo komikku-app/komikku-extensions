@@ -9,6 +9,4 @@ class MangaMe : Madara(
     "https://mangame.org",
     "en",
     dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.US)
-) {
-
-}
+)

@@ -1,8 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.readkaguyasamamangaonline
 
 import eu.kanade.tachiyomi.multisrc.mangacatalog.MangaCatalog
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.util.asJsoup
 
 class ReadKaguyaSamaMangaOnline : MangaCatalog("Read Kaguya-sama Manga Online", "https://ww1.readkaguyasama.com", "en") {
     override val sourceList = listOf(

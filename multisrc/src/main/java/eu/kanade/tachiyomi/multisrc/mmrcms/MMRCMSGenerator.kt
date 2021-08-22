@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.multisrc.mmrcms
 
-import generator.ThemeSourceData
 import generator.ThemeSourceData.SingleLang
 import generator.ThemeSourceGenerator
 

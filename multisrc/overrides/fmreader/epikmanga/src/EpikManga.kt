@@ -22,21 +22,21 @@ class EpikManga : FMReader("Epik Manga", "https://www.epikmanga.com", "tr") {
     // search wasn't working on source's website
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         return client.newCall(searchMangaRequest(page, query, filters))
-                .asObservableSuccess()
-                .map { response ->
-                    searchMangaParse(response, query)
-                }
+            .asObservableSuccess()
+            .map { response ->
+                searchMangaParse(response, query)
+            }
     }
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = GET("$baseUrl/seri-listesi?type=text", headers)
     private fun searchMangaParse(response: Response, query: String): MangasPage {
         val mangas = response.asJsoup().select("div.char.col-lg-4 a")
-                .filter { it.text().contains(query, ignoreCase = true) }
-                .map {
-                    SManga.create().apply {
-                        setUrlWithoutDomain(it.attr("href"))
-                        title = it.text()
-                    }
+            .filter { it.text().contains(query, ignoreCase = true) }
+            .map {
+                SManga.create().apply {
+                    setUrlWithoutDomain(it.attr("href"))
+                    title = it.text()
                 }
+            }
         return MangasPage(mangas, false)
     }
     override fun mangaDetailsParse(document: Document): SManga {

@@ -30,8 +30,8 @@ class MangaTR : FMReader("Manga-TR", "https://manga-tr.com", "tr") {
         val mangas = mutableListOf<SManga>()
 
         response.asJsoup().select("div.row a[data-toggle]")
-                .filterNot { it.siblingElements().text().contains("Novel") }
-                .map { mangas.add(searchMangaFromElement(it)) }
+            .filterNot { it.siblingElements().text().contains("Novel") }
+            .map { mangas.add(searchMangaFromElement(it)) }
 
         return MangasPage(mangas, false)
     }
@@ -66,10 +66,10 @@ class MangaTR : FMReader("Manga-TR", "https://manga-tr.com", "tr") {
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         val requestUrl = "$baseUrl/cek/fetch_pages_manga.php?manga_cek=${manga.url.substringAfter("manga-").substringBefore(".")}"
         return client.newCall(GET(requestUrl, chapterListHeaders))
-                .asObservableSuccess()
-                .map { response ->
-                    chapterListParse(response, requestUrl)
-                }
+            .asObservableSuccess()
+            .map { response ->
+                chapterListParse(response, requestUrl)
+            }
     }
 
     private fun chapterListParse(response: Response, requestUrl: String): List<SChapter> {
@@ -83,8 +83,8 @@ class MangaTR : FMReader("Manga-TR", "https://manga-tr.com", "tr") {
             document.select(chapterListSelector()).map { chapters.add(chapterFromElement(it)) }
             if (document.select("a[data-page=$nextPage]").isNotEmpty()) {
                 val body = FormBody.Builder()
-                        .add("page", nextPage.toString())
-                        .build()
+                    .add("page", nextPage.toString())
+                    .build()
                 document = client.newCall(POST(requestUrl, chapterListHeaders, body)).execute().asJsoup()
                 nextPage++
             } else {

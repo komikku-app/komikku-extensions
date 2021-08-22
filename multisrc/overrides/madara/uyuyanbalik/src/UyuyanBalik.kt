@@ -5,4 +5,3 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class UyuyanBalik : Madara("Uyuyan Balik", "https://uyuyanbalik.com/", "tr", SimpleDateFormat("dd MMMM yyyy", Locale.US))
-
