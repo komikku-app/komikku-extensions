@@ -106,7 +106,7 @@ class GoldenMangas : ParsedHttpSource() {
         genre = secondColumn.select("h5:contains(Genero) a")
             .filter { it.text().isNotEmpty() }
             .joinToString { it.text() }
-        status = secondColumn.select("h5:contain(Status) a").text().toStatus()
+        status = secondColumn.select("h5:contains(Status) a").text().toStatus()
         description = document.select("#manga_capitulo_descricao").text()
         thumbnail_url = firstColumn.attr("abs:src")
     }
