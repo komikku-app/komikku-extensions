@@ -32,10 +32,7 @@ class CloudflareWafInterceptor(private val cookieDomain: String) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         initWebView
 
-        val originalRequest = chain.request()
-        val request = originalRequest.newBuilder()
-            .header("User-Agent", initWebView)
-            .build()
+        val request = chain.request()
         val response = chain.proceed(request)
 
         if (response.code != 403 || response.header("Server") !in SERVER_CHECK) {
