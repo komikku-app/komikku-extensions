@@ -15,7 +15,8 @@ class ZbuluGenerator : ThemeSourceGenerator {
         SingleLang("HolyManga", "https://w15.holymanga.net", "en", overrideVersionCode = 1),
         SingleLang("My Toon", "https://mytoon.net", "en"),
         SingleLang("Koo Manga", "https://ww9.koomanga.com", "en", overrideVersionCode = 1),
-        SingleLang("Bulu Manga", "https://ww8.bulumanga.net", "en")
+        SingleLang("Bulu Manga", "https://ww8.bulumanga.net", "en"),
+        SingleLang("BeeManga", "https://ww1.beemanga.com", "en")
     )
 
     companion object {
