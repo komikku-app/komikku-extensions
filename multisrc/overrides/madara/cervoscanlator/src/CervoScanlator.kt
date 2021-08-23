@@ -11,12 +11,10 @@ class CervoScanlator : Madara(
     "Cervo Scanlator",
     "https://cervoscan.xyz",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
 ) {
 
-    override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
-        .build()
+    override val altName: String = "Nome alternativo: "
 
     override fun popularMangaSelector() = "div.page-item-detail.manga"
 }
