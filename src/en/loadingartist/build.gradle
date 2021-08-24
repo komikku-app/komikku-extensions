@@ -6,7 +6,7 @@ ext {
     extName = 'Loading Artist'
     pkgNameSuffix = 'en.loadingartist'
     extClass = '.LoadingArtist'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '1.2'
 }
 
