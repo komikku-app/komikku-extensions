@@ -172,10 +172,10 @@ abstract class MangaSar(
             .map(::chapterFromObject)
             .toMutableList()
 
-        var page = result.page + 1
+        var page = result.page!! + 1
         val lastPage = result.totalPages
 
-        while (++page <= lastPage) {
+        while (++page <= lastPage!!) {
             val nextPageRequest = chapterListPaginatedRequest(mangaUrl, page)
             result = client.newCall(nextPageRequest).execute().let {
                 json.decodeFromString(it.body!!.string())

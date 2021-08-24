@@ -28,8 +28,8 @@ data class MangaSarTitleDto(
 @Serializable
 data class MangaSarPaginatedChaptersDto(
     val chapters: List<MangaSarChapterDto>? = emptyList(),
-    @SerialName("pagina") val page: Int,
-    @SerialName("total_pags") val totalPages: Int
+    @SerialName("pagina") val page: Int? = -1,
+    @SerialName("total_pags") val totalPages: Int? = -1
 )
 
 @Serializable

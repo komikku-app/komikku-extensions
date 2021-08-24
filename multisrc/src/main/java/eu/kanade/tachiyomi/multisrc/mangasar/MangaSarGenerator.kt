@@ -9,7 +9,7 @@ class MangaSarGenerator : ThemeSourceGenerator {
 
     override val themeClass = "MangaSar"
 
-    override val baseVersionCode: Int = 4
+    override val baseVersionCode: Int = 5
 
     override val sources = listOf(
         SingleLang("MangaTube", "https://mangatube.site", "pt-BR"),
