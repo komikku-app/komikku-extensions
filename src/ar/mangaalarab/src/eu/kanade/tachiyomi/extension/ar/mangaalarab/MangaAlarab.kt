@@ -51,9 +51,17 @@ class MangaAlarab : ParsedHttpSource() {
         return GET(baseUrl)
     }
 
-    override fun latestUpdatesSelector() = popularMangaSelector()
+    override fun latestUpdatesSelector() = "section:nth-child(5) > div.container > div > article"
 
-    override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
+    override fun latestUpdatesFromElement(element: Element): SManga {
+        return SManga.create().apply {
+            element.select("figure > a").let {
+                setUrlWithoutDomain(it.attr("abs:href"))
+                title = element.select("img").attr("title")
+                thumbnail_url = element.select("img").attr("data-src")
+            }
+        }
+    }
 
     override fun latestUpdatesNextPageSelector(): String? = null
 
@@ -68,8 +76,16 @@ class MangaAlarab : ParsedHttpSource() {
                 when (filter) {
                     is SortFilter -> url.addQueryParameter("order", filter.toUriPart())
                     is OTypeFilter -> url.addQueryParameter("order_type", filter.toUriPart())
-                    is StatusFilter -> url.addQueryParameter("statuses[]", filter.toUriPart())
-                    is TypeFilter -> url.addQueryParameter("types[]", filter.toUriPart())
+                    is StatusFilter -> {
+                        filter.state
+                            .filter { it.state != Filter.TriState.STATE_IGNORE }
+                            .forEach { url.addQueryParameter("statuses[]", it.id) }
+                    }
+                    is TypeFilter -> {
+                        filter.state
+                            .filter { it.state != Filter.TriState.STATE_IGNORE }
+                            .forEach { url.addQueryParameter("types[]", it.id) }
+                    }
                     is GenreFilter -> {
                         filter.state
                             .filter { it.state != Filter.TriState.STATE_IGNORE }
@@ -151,26 +167,30 @@ class MangaAlarab : ParsedHttpSource() {
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
 
+    // Filters
+
     override fun getFilterList() = FilterList(
         Filter.Header("NOTE: Ignored if using text search!"),
         Filter.Separator(),
         SortFilter(getSortFilters()),
         OTypeFilter(getOTypeFilters()),
-        Filter.Separator(),
-        Filter.Header("Genre exclusion not available for all sources"),
-        StatusFilter(getStatusFilters()),
-        TypeFilter(getTypeFilter()),
         GenresSelection(getGenresSelection()),
         Filter.Separator(),
-        Filter.Header("Genre exclusion not available for all sources"),
+        Filter.Header("exclusion not available for This source"),
+        StatusFilter(getStatusFilters()),
+        TypeFilter(getTypeFilter()),
+        Filter.Separator(),
+        Filter.Header("Genre exclusion not available for This source"),
         GenreFilter(getGenreFilters()),
     )
 
     private class SortFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("Order by", vals)
     private class OTypeFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("Order Type", vals)
-    private class TypeFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("Type", vals)
-    private class StatusFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("Status", vals)
     private class GenresSelection(vals: Array<Pair<String?, String>>) : UriPartFilter("Genres Selection", vals)
+    class Type(name: String, val id: String = name) : Filter.TriState(name)
+    private class TypeFilter(types: List<Type>) : Filter.Group<Type>("Type", types)
+    class Status(name: String, val id: String = name) : Filter.TriState(name)
+    private class StatusFilter(statuses: List<Status>) : Filter.Group<Status>("Status", statuses)
     class Genre(name: String, val id: String = name) : Filter.TriState(name)
     private class GenreFilter(genres: List<Genre>) : Filter.Group<Genre>("Genre", genres)
 
@@ -187,20 +207,18 @@ class MangaAlarab : ParsedHttpSource() {
         Pair("asc", "تصاعدي")
     )
 
-    open fun getStatusFilters(): Array<Pair<String?, String>> = arrayOf(
-        Pair("", "<select>"),
-        Pair("completed", "مكتملة"),
-        Pair("ongoing", "مستمرة"),
-        Pair("cancelled", "متوقفة"),
-        Pair("onhold", "في الانتظار")
+    open fun getStatusFilters(): List<Status> = listOf(
+        Status("مكتملة", "completed"),
+        Status("مستمرة", "ongoing"),
+        Status("متوقفة", "cancelled"),
+        Status("في الانتظار", "onhold")
     )
 
-    open fun getTypeFilter(): Array<Pair<String?, String>> = arrayOf(
-        Pair("", "<select>"),
-        Pair("manhua", "صينية (مانها)"),
-        Pair("manhwa", "كورية (مانهوا)"),
-        Pair("english", "انجليزية"),
-        Pair("manga", "مانجا (يابانية)")
+    open fun getTypeFilter(): List<Type> = listOf(
+        Type("صينية (مانها)", "manhua"),
+        Type("كورية (مانهوا)", "manhwa"),
+        Type("انجليزية", "english"),
+        Type("مانجا (يابانية)", "manga")
     )
 
     open fun getGenresSelection(): Array<Pair<String?, String>> = arrayOf(
