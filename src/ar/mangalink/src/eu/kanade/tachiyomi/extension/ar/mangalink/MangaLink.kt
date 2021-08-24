@@ -85,7 +85,8 @@ class MangaLink : ParsedHttpSource() {
         return SManga.create().apply {
             document.select("div.card").first().let { info ->
                 title = info.select("h1").text()
-                genre = info.select("span.d-flex a.btn").joinToString { it.text() }
+                // add series type(manga/manhwa/manhua/other) thinggy to genre
+                genre = info.select("span.d-flex a.btn, span:nth-child(1) > label:nth-child(2)").joinToString { it.text() }
                 description = info.select("p.card-text").text()
                 thumbnail_url = info.select("img").attr("abs:src")
             }
