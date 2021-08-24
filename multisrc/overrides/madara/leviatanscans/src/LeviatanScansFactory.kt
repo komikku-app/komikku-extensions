@@ -10,5 +10,9 @@ class LeviatanScansFactory : SourceFactory {
         LeviatanScansES(),
     )
 }
-class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "en")
-class LeviatanScansES : Madara("Leviatan Scans", "https://es.leviatanscans.com", "es")
+class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "en") {
+    override val useNewChapterEndpoint: Boolean = true
+}
+class LeviatanScansES : Madara("Leviatan Scans", "https://es.leviatanscans.com", "es") {
+    override val useNewChapterEndpoint: Boolean = true
+}

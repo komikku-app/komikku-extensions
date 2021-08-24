@@ -3,9 +3,27 @@ package eu.kanade.tachiyomi.extension.en.manhwanelo
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.source.model.SManga
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import java.util.Locale
 
 class ManhwaNelo : Madara("ManhwaNelo", "https://manhwanelo.com", "en") {
+
+    override fun popularMangaFromElement(element: Element): SManga {
+        val manga = SManga.create()
+
+        with(element) {
+            select("div.item-thumb a").first()?.let {
+                manga.setUrlWithoutDomain(it.attr("abs:href"))
+                manga.title = it.attr("title")
+            }
+
+            select("img").first()?.let {
+                manga.thumbnail_url = imageFromElement(it)
+            }
+        }
+
+        return manga
+    }
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
