@@ -170,7 +170,7 @@ class MangaDexHelper() {
         return SManga.create().apply {
             url = "/manga/${mangaDto.data.id}"
             title = cleanString(mangaDto.data.attributes.title.asMdMap()["en"] ?: "")
-            
+
             coverFileName?.let {
                 thumbnail_url = when(coverSuffix != null && coverSuffix != "") {
                     true -> "${MDConstants.cdnUrl}/covers/${mangaDto.data.id}/$coverFileName$coverSuffix"
@@ -260,6 +260,8 @@ class MangaDexHelper() {
                 )
             }.mapNotNull { it.attributes!!.name }
                 .joinToString(" & ")
+                .replace("no group", "No Group")
+                .ifEmpty { "No Group" }
 
             val chapterName = mutableListOf<String>()
             // Build chapter name
@@ -289,6 +291,7 @@ class MangaDexHelper() {
             if (chapterName.isEmpty()) {
                 chapterName.add("Oneshot")
             }
+
             // In future calculate [END] if non mvp api doesnt provide it
 
             return SChapter.create().apply {
