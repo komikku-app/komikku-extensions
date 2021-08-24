@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.id.maidmanga
+package eu.kanade.tachiyomi.multisrc.zmanga
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
@@ -15,40 +15,48 @@ import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class MaidManga : ParsedHttpSource() {
-
-    override val name = "Maid - Manga"
-
-    override val baseUrl = "https://www.maid.my.id"
-
-    override val lang = "id"
+abstract class ZManga(
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String,
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US),
+) : ParsedHttpSource() {
 
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private fun pagePathSegment(page: Int): String = if (page > 1) "page/$page/" else ""
+    protected fun pagePathSegment(page: Int): String = if (page > 1) "page/$page/" else ""
 
-    override fun latestUpdatesSelector() = searchMangaSelector()
+    // popular
+    override fun popularMangaRequest(page: Int): Request {
+        return GET("$baseUrl/advanced-search/${pagePathSegment(page)}?order=popular")
+    }
+
+    override fun popularMangaSelector() = "div.flexbox2-item"
+
+    override fun popularMangaFromElement(element: Element): SManga {
+        return SManga.create().apply {
+            setUrlWithoutDomain(element.select("div.flexbox2-content a").attr("href"))
+            title = element.select("div.flexbox2-title > span").first().text()
+            thumbnail_url = element.select("img").attr("abs:src")
+        }
+    }
+
+    override fun popularMangaNextPageSelector() = "div.pagination .next"
+
+    // latest
+    override fun latestUpdatesSelector() = popularMangaSelector()
 
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/advanced-search/${pagePathSegment(page)}?order=update")
     }
 
-    override fun latestUpdatesFromElement(element: Element): SManga = searchMangaFromElement(element)
+    override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
 
-    override fun latestUpdatesNextPageSelector() = searchMangaNextPageSelector()
+    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
-    override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/advanced-search/${pagePathSegment(page)}?order=popular")
-    }
-
-    override fun popularMangaSelector() = searchMangaSelector()
-
-    override fun popularMangaFromElement(element: Element): SManga = searchMangaFromElement(element)
-
-    override fun popularMangaNextPageSelector() = searchMangaNextPageSelector()
-
+    // search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var url = "$baseUrl/advanced-search/${pagePathSegment(page)}".toHttpUrlOrNull()!!.newBuilder()
         url.addQueryParameter("title", query)
@@ -79,9 +87,10 @@ class MaidManga : ParsedHttpSource() {
                         .filter { it.state }
                         .forEach { url.addQueryParameter("genre[]", it.id) }
                 }
+                // if site has project page, default value "hasProjectPage" = false
                 is ProjectFilter -> {
                     if (filter.toUriPart() == "project-filter-on") {
-                        url = "$baseUrl/project-list/page/$page".toHttpUrlOrNull()!!.newBuilder()
+                        url = "$baseUrl$projectPageString/page/$page".toHttpUrlOrNull()!!.newBuilder()
                     }
                 }
             }
@@ -89,36 +98,33 @@ class MaidManga : ParsedHttpSource() {
         return GET(url.toString(), headers)
     }
 
-    override fun searchMangaSelector() = "div.flexbox2-item"
+    open val projectPageString = "/project-list"
 
-    override fun searchMangaFromElement(element: Element): SManga {
-        return SManga.create().apply {
-            setUrlWithoutDomain(element.select("div.flexbox2-content a").attr("href"))
-            title = element.select("div.flexbox2-title > span").first().text()
-            thumbnail_url = element.select("img").attr("abs:src")
-        }
-    }
+    override fun searchMangaSelector() = popularMangaSelector()
 
-    override fun searchMangaNextPageSelector() = "div.pagination span.current + a"
+    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
+    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
+
+    // manga details
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            genre = document.select("div.series-genres a").joinToString { it.text() }
-            description = document.select("div.series-synops").text()
             thumbnail_url = document.select("div.series-thumb img").attr("abs:src")
-            status = parseStatus(document.select("div.block span.status").text())
-            author = document.select("ul.series-infolist li b:contains(Author) + span").text()
+            author = document.select(".series-infolist li:contains(Author) span").text()
+            artist = document.select(".series-infolist li:contains(Artist) span").text()
+            status = parseStatus(document.select(".series-infoz .status").firstOrNull()?.ownText())
+            description = document.select("div.series-synops").text()
+            genre = document.select("div.series-genres a").joinToString { it.text() }
 
             // add series type(manga/manhwa/manhua/other) thinggy to genre
-            document.select("div.block span.type").firstOrNull()?.ownText()?.let {
+            document.select(seriesTypeSelector).firstOrNull()?.ownText()?.let {
                 if (it.isEmpty().not() && it != "-" && genre!!.contains(it, true).not()) {
                     genre += if (genre!!.isEmpty()) it else ", $it"
                 }
             }
 
             // add alternative name to manga description
-            val altName = "Alternative Name: "
-            document.select(".series-title span").firstOrNull()?.ownText()?.let {
+            document.select(altNameSelector).firstOrNull()?.ownText()?.let {
                 if (it.isBlank().not()) {
                     description = when {
                         description.isNullOrBlank() -> altName + it
@@ -129,19 +135,28 @@ class MaidManga : ParsedHttpSource() {
         }
     }
 
+    open val seriesTypeSelector = "div.block span.type"
+    open val altNameSelector = ".series-title span"
+    open val altName = "Alternative Name" + ": "
+
     private fun parseStatus(status: String?) = when {
         status == null -> SManga.UNKNOWN
-        status.contains("Ongoing") -> SManga.ONGOING
-        status.contains("Completed") -> SManga.COMPLETED
+        status.contains("Ongoing", true) -> SManga.ONGOING
+        status.contains("Completed", true) -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
     private fun parseDate(date: String): Long {
-        return SimpleDateFormat("MMM d, yyyy", Locale("id")).parse(date)?.time ?: 0L
+        return try {
+            dateFormat.parse(date)?.time ?: 0
+        } catch (_: Exception) {
+            0L
+        }
     }
 
+    // chapters
     // careful not to include download links
-    override fun chapterListSelector() = "ul.series-chapterlist div.flexch-infoz > a"
+    override fun chapterListSelector() = "ul.series-chapterlist div.flexch-infoz a"
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
@@ -151,6 +166,7 @@ class MaidManga : ParsedHttpSource() {
         }
     }
 
+    // pages
     override fun pageListParse(document: Document): List<Page> {
         return document.select("div.reader-area img").mapIndexed { i, img ->
             Page(i, "", img.attr("abs:src"))
@@ -159,22 +175,35 @@ class MaidManga : ParsedHttpSource() {
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
 
-    override fun getFilterList() = FilterList(
-        Filter.Header("You can combine filter."),
-        Filter.Separator(),
-        AuthorFilter(),
-        YearFilter(),
-        StatusFilter(),
-        TypeFilter(),
-        OrderByFilter(),
-        GenreList(getGenreList()),
-        Filter.Separator(),
-        Filter.Header("NOTE: cant be used with other filter!"),
-        Filter.Header("$name Project List page"),
-        ProjectFilter(),
-    )
+    open val hasProjectPage = false
 
-    private class ProjectFilter : UriPartFilter(
+    // filters
+
+    override fun getFilterList(): FilterList {
+        val filters = mutableListOf<Filter<*>>(
+            Filter.Header("You can combine filter."),
+            Filter.Separator(),
+            AuthorFilter(),
+            YearFilter(),
+            StatusFilter(),
+            TypeFilter(),
+            OrderByFilter(),
+            GenreList(getGenreList()),
+        )
+        if (hasProjectPage) {
+            filters.addAll(
+                mutableListOf<Filter<*>>(
+                    Filter.Separator(),
+                    Filter.Header("NOTE: cant be used with other filter!"),
+                    Filter.Header("$name Project List page"),
+                    ProjectFilter(),
+                )
+            )
+        }
+        return FilterList(filters)
+    }
+
+    protected class ProjectFilter : UriPartFilter(
         "Filter Project",
         arrayOf(
             Pair("Show all manga", ""),
@@ -270,7 +299,7 @@ class MaidManga : ParsedHttpSource() {
         Tag("yuri", "Yuri")
     )
 
-    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+    open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
     }
@@ -278,4 +307,5 @@ class MaidManga : ParsedHttpSource() {
     private class Tag(val id: String, name: String) : Filter.CheckBox(name)
 
     private class GenreList(genres: List<Tag>) : Filter.Group<Tag>("Genres", genres)
+
 }
