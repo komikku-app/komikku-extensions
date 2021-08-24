@@ -131,7 +131,7 @@ class MuitoManga : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = element.select("a").first()!!.text()
         date_upload = element.select("small[title]").first()!!.text().toDate()
-        scanlator = element.select("scanlator2 a").joinToString { it.text().trim() }
+        scanlator = element.select("div.scanlator2 a").joinToString { it.text().trim() }
         setUrlWithoutDomain(element.select("a").first()!!.attr("abs:href"))
     }
 
@@ -204,11 +204,8 @@ class MuitoManga : ParsedHttpSource() {
     }
 
     private fun String.toDate(): Long {
-        return try {
-            DATE_FORMATTER.parse(this)?.time ?: 0L
-        } catch (e: ParseException) {
-            0L
-        }
+        return runCatching { DATE_FORMATTER.parse(this)?.time }
+            .getOrNull() ?: 0L
     }
 
     companion object {
