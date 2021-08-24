@@ -69,14 +69,14 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
                 addQueryParameter("contentRating[]", "safe")
             }
             if (preferences.getBoolean(
-                    MDConstants.getContentRatingEroticaPrefKey(dexLang),
+                    MDConstants.getContentRatingSuggestivePrefKey(dexLang),
                     false
                 )
             ) {
                 addQueryParameter("contentRating[]", "suggestive")
             }
             if (preferences.getBoolean(
-                    MDConstants.getContentRatingSuggestivePrefKey(dexLang),
+                    MDConstants.getContentRatingEroticaPrefKey(dexLang),
                     false
                 )
             ) {
@@ -426,7 +426,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
                 preferences.edit().putString(MDConstants.getCoverQualityPreferenceKey(dexLang), entry).commit()
             }
         }
-        
+
         val dataSaverPref = SwitchPreferenceCompat(screen.context).apply {
             key = MDConstants.getDataSaverPreferenceKey(dexLang)
             title = "Data saver"
