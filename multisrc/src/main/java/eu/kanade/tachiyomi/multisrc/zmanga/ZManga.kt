@@ -307,5 +307,4 @@ abstract class ZManga(
     private class Tag(val id: String, name: String) : Filter.CheckBox(name)
 
     private class GenreList(genres: List<Tag>) : Filter.Group<Tag>("Genres", genres)
-
 }

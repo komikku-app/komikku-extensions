@@ -325,7 +325,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("RawDEX", "https://rawdex.net", "ko", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ReadAdult", "https://readadult.net", "en", isNsfw = true),
         SingleLang("ReadManhua", "https://readmanhua.net", "en", overrideVersionCode = 2),
-        SingleLang("Reaper Scans", "https://reaperscans.com", "en"),
+        SingleLang("Reaper Scans", "https://reaperscans.com", "en", overrideVersionCode = 1),
         SingleLang("Red Ribbon Scanlator", "https://redribbon.site", "pt-BR", overrideVersionCode = 1),
         SingleLang("Renascence Scans (Renascans)", "https://new.renascans.com", "en", className = "RenaScans", overrideVersionCode = 1),
         SingleLang("Reset Scans", "https://reset-scans.com", "en", overrideVersionCode = 3),

@@ -542,7 +542,7 @@ abstract class Madara(
 
     // Parses dates in this form:
     // 21 horas ago
-    private fun parseRelativeDate(date: String): Long {
+    fun parseRelativeDate(date: String): Long {
         val number = Regex("""(\d+)""").find(date)?.value?.toIntOrNull() ?: return 0
         val cal = Calendar.getInstance()
 
