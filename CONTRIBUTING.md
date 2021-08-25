@@ -291,6 +291,7 @@ multisrc
             │                   └── <ThemeName>.kt
             └── generator
                 ├── GeneratorMain.kt
+                ├── IntelijConfigurationGeneratorMain.kt
                 └── ThemeSourceGenerator.kt
 ```
 
@@ -308,16 +309,20 @@ multisrc
 There are three steps in running and testing a theme source:
 
 1. Generate the sources
-    - **Method 1:** run `./gradlew multisrc:generateExtensions` from a terminal window to generate all sources.
-    - **Method 2:** Directly run `Generator.GeneratorMain.main` by pressing the play button in front of the method shown inside Android Studio's Code Editor to generate all sources.
-    - **Method 3:** Directly run `<themepkg>.<ThemeName>Generator.main` by pressing the play button in front of the method shown inside Android Studio's Code Editor to generate sources from the said theme.
+    - **Option 1: Only generate sources from one theme** 
+        - **Method 1:** Find and run `<ThemeName>Generator` run configuration form the `Run/Debug Configuration` menu.
+        - **Method 2:** Directly run `<themepkg>.<ThemeName>Generator.main` by pressing the play button in front of the method shown inside Android Studio's Code Editor to generate sources from the said theme.
+    - **Option 2: Generate sources from all themes** 
+        - **Method 1:** Run `./gradlew multisrc:generateExtensions` from a terminal window to generate all sources.
+        - **Method 2:** Directly run `Generator.GeneratorMain.main` by pressing the play button in front of the method shown inside Android Studio's Code Editor to generate all sources.
+    - 
 2. Sync gradle to import the new generated sources inside `generated-src`
     - **Method 1:** Android Studio might prompt to sync the gradle. Click on `Sync Now`.
     - **Method 2:** Manually re-sync by opening `File` -> `Sync Project with Gradle Files` or by pressing `Alt+f` then `g`.
 3. Build and test the generated Extention like normal `src` sources.
     - It's recommended to make changes here to skip going through step 1 and 2 multiple times, and when you are done, copying the changes back to `multisrc`. 
 
-### Scaffolding sources
+### Scaffolding overrides
 You can use this python script to generate scaffolds for source overrides. Put it inside `multisrc/overrides/<themepkg>/` as `scaffold.py`.
 ```python
 import os, sys
