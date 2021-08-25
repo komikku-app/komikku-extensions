@@ -259,7 +259,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     override fun imageRequest(page: Page) = GET(page.imageUrl!!, headers)
 
     override fun imageUrlParse(document: Document): String {
-        return document.select("div.viewer-container > div.img-container > img.viewer-image").attr("src")
+        return document.select("div.viewer-container > div.viewer-image-container > img.viewer-image").attr("src")
     }
 
     private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/$PREFIX_LIBRARY/$id", headers)
