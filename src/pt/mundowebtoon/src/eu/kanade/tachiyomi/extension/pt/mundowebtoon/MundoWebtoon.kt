@@ -1,0 +1,169 @@
+package eu.kanade.tachiyomi.extension.pt.mundowebtoon
+
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
+import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+
+class MundoWebtoon : ParsedHttpSource() {
+
+    override val name = "Mundo Webtoon"
+
+    override val baseUrl = "https://mundowebtoon.com"
+
+    override val lang = "pt-BR"
+
+    override val supportsLatest = true
+
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .build()
+
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .add("Accept", ACCEPT)
+        .add("Accept-Language", ACCEPT_LANGUAGE)
+        .add("Referer", "$baseUrl/")
+
+    override fun popularMangaRequest(page: Int): Request = GET(baseUrl, headers)
+
+    override fun popularMangaSelector(): String =
+        "div.section:contains(Mais Lídos) + div.section div.andro_product"
+
+    override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
+        title = element.select("h6.andro_product-title small").text().withoutLanguage()
+        thumbnail_url = element.select("div.andro_product-thumb img").attr("abs:data-src")
+        setUrlWithoutDomain(element.select("div.andro_product-thumb > a").attr("abs:href"))
+    }
+
+    override fun popularMangaNextPageSelector(): String? = null
+
+    override fun latestUpdatesRequest(page: Int): Request {
+        val path = if (page > 1) "/index.php?pagina=$page" else ""
+        return GET("$baseUrl$path", headers)
+    }
+
+    override fun latestUpdatesSelector() = "div.row.atualizacoes div.andro_product"
+
+    override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
+        title = element.select("h5.andro_product-title").text().withoutLanguage()
+        thumbnail_url = element.select("div.andro_product-thumb img").attr("abs:src")
+        setUrlWithoutDomain(element.select("div.andro_product-thumb > a").attr("abs:href"))
+    }
+
+    override fun latestUpdatesNextPageSelector() = "ul.paginacao li:last-child:not(.active) a"
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val newHeaders = headers.newBuilder()
+            .set("Referer", "$baseUrl/mangas")
+            .build()
+
+        val url = "$baseUrl/mangas".toHttpUrl().newBuilder()
+            .addQueryParameter("busca", query)
+            .toString()
+
+        return GET(url, newHeaders)
+    }
+
+    override fun searchMangaSelector() = "div.container div.andro_product"
+
+    override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
+        title = element.select("span.andro_product-title").text().withoutLanguage()
+        thumbnail_url = element.select("div.andro_product-thumb img").attr("abs:src")
+        setUrlWithoutDomain(element.select("div.andro_product-thumb > a").attr("abs:href"))
+    }
+
+    override fun searchMangaNextPageSelector(): String? = null
+
+    override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
+        val infoElement = document.selectFirst("div.andro_product-single-content")
+
+        title = infoElement.select("div.mangaTitulo h3").text().withoutLanguage()
+        author = infoElement.select("div.BlDataItem:contains(Autor) a")
+            ?.joinToString(", ") { it.text() }
+        artist = infoElement.select("div.BlDataItem:contains(Artista) a")
+            ?.joinToString(", ") { it.text() }
+        genre = infoElement.select("div.col-md-12:contains(Gêneros) a.label-warning")
+            .filter { it.text().isNotEmpty() }
+            .joinToString { it.text() }
+        status = infoElement.select("div.BlDataItem:contains(Status) a").firstOrNull()
+            ?.text()?.toStatus() ?: SManga.UNKNOWN
+        description = infoElement.select("div.andro_product-excerpt").text()
+        thumbnail_url = document.select("div.andro_product-single-thumb img").attr("abs:src")
+    }
+
+    override fun chapterListSelector() = "div#CapitulosLista div.CapitulosListaItem"
+
+    override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
+        name = element.selectFirst("h5").ownText()
+        scanlator = element.select("a.color_gray[target='_blank']")
+            .joinToString(", ") { it.text() }
+        date_upload = element.select("h5 span[style]").text().toDate()
+        setUrlWithoutDomain(element.selectFirst("a").attr("abs:href"))
+    }
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        val newHeaders = headersBuilder()
+            .set("Referer", baseUrl + chapter.url.substringBeforeLast("/"))
+            .build()
+
+        return GET(baseUrl + chapter.url, newHeaders)
+    }
+
+    override fun pageListParse(document: Document): List<Page> {
+        val chapterImages = document.select("div.container_images_img").first()
+
+        return chapterImages.select("img[pag]")
+            .mapIndexed { i, element ->
+                Page(i, document.location(), element.attr("abs:src"))
+            }
+    }
+
+    override fun imageUrlParse(document: Document) = ""
+
+    override fun imageRequest(page: Page): Request {
+        val newHeaders = headersBuilder()
+            .set("Accept", ACCEPT_IMAGE)
+            .set("Referer", page.url)
+            .build()
+
+        return GET(page.imageUrl!!, newHeaders)
+    }
+
+    private fun String.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(trim())?. time }
+            .getOrNull() ?: 0L
+    }
+
+    private fun String.toStatus() = when (this) {
+        "Ativo" -> SManga.ONGOING
+        "Completo" -> SManga.COMPLETED
+        else -> SManga.UNKNOWN
+    }
+
+    private fun String.withoutLanguage(): String = replace(FLAG_REGEX, "").trim()
+
+    companion object {
+        private const val ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9," +
+            "image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+        private const val ACCEPT_IMAGE = "image/webp,image/apng,image/*,*/*;q=0.8"
+        private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7,es;q=0.6,gl;q=0.5"
+
+        private val FLAG_REGEX = "\\((Pt[-/]br|Scan)\\)".toRegex(RegexOption.IGNORE_CASE)
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("(dd/MM/yyyy)", Locale.ENGLISH)
+        }
+    }
+}
