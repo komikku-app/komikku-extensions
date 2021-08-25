@@ -32,17 +32,11 @@ class MangaJar : ParsedHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    // Popular
+
+    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/manga?sortBy=popular&page=$page")
+
     override fun popularMangaSelector() = "article[class*=flex-item]"
-
-    override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/manga?sortBy=popular&page=$page")
-    }
-
-    override fun latestUpdatesSelector() = popularMangaSelector()
-
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/manga?sortBy=last_chapter_at&page=$page")
-    }
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
         setUrlWithoutDomain(element.select("a").attr("href"))
@@ -53,15 +47,23 @@ class MangaJar : ParsedHttpSource() {
         }
     }
 
-    override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
+    override fun popularMangaNextPageSelector() = "a.page-link[rel=next]"
 
-    override fun popularMangaNextPageSelector() = "[rel=next]"
+    // Latest
+
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/manga?sortBy=last_chapter_at&page=$page")
+
+    override fun latestUpdatesSelector() = popularMangaSelector()
+
+    override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
 
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
+    // Search
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val filters = if (filters.isEmpty()) getFilterList() else filters
-        val genreFilter = filters.findInstance<GenreList>()
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val genreFilter = filterList.findInstance<GenreList>()
         val genre = genreFilter?.let { f -> f.values[f.state] }
 
         val url = (if (genre!!.isEmpty()) "$baseUrl/search" else "$baseUrl/genre/$genre").toHttpUrlOrNull()!!.newBuilder()
@@ -69,19 +71,16 @@ class MangaJar : ParsedHttpSource() {
         url.addQueryParameter("q", query)
         url.addQueryParameter("page", page.toString())
 
-        (
-            filters.forEach { filter ->
-                when (filter) {
-                    is OrderBy -> {
-                        url.addQueryParameter("sortBy", filter.toUriPart())
-                    }
-                    is SortBy -> {
-                        url.addQueryParameter("sortAscending", filter.toUriPart())
-                    }
+        for (filter in filterList) {
+            when (filter) {
+                is OrderBy -> {
+                    url.addQueryParameter("sortBy", filter.toUriPart())
+                }
+                is SortBy -> {
+                    url.addQueryParameter("sortAscending", filter.toUriPart())
                 }
             }
-            )
-
+        }
         return GET(url.toString(), headers)
     }
 
@@ -90,6 +89,8 @@ class MangaJar : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
+
+    // Details
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         description = document.select("div.manga-description.entry").text()
@@ -104,6 +105,11 @@ class MangaJar : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
 
+    // Chapters
+
+    /** For the first page. Pagination is done in [findChapters] */
+    override fun chapterListRequest(manga: SManga) = GET(baseUrl + manga.url + "/chaptersList")
+
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         return findChapters(chapterListRequest(manga)).toObservable()
     }
@@ -117,6 +123,7 @@ class MangaJar : ParsedHttpSource() {
                     url = link.attr("href")
                     name = link.text()
                     chapter_number = 0f
+                    date_upload = parseChapterDate(chapter.select("span.chapter-date").text().trim())
                 }
             }
             val nextPageLink = document.select("a.page-link[rel=\"next\"]").firstOrNull()
@@ -130,33 +137,19 @@ class MangaJar : ParsedHttpSource() {
         }
     }
 
-    /** For the first page. Pagination is done in [findChapters] */
-    override fun chapterListRequest(manga: SManga) = GET(baseUrl + manga.url + "/chaptersList")
-
     override fun chapterListSelector() = "li.list-group-item.chapter-item"
 
-    override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.select("a").attr("href"))
-        name = element.select("span.chapter-title").text().trim()
-        date_upload = parseChapterDate(element.select("span.chapter-date").text().trim()) ?: 0
-    }
+    override fun chapterFromElement(element: Element) = throw Exception("Not Used")
 
-    // The following date related code is taken directly from Genkan.kt
-    companion object {
-        val dateFormat by lazy {
-            SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
-        }
-    }
-
-    private fun parseChapterDate(string: String): Long? {
+    private fun parseChapterDate(string: String): Long {
         return if ("ago" in string) {
-            parseRelativeDate(string) ?: 0
+            parseRelativeDate(string)
         } else {
             dateFormat.parse(string)?.time ?: 0L
         }
     }
 
-    private fun parseRelativeDate(date: String): Long? {
+    private fun parseRelativeDate(date: String): Long {
         val trimmedDate = date.substringBefore(" ago").removeSuffix("s").split(" ")
 
         val calendar = Calendar.getInstance()
@@ -172,6 +165,8 @@ class MangaJar : ParsedHttpSource() {
         return calendar.timeInMillis
     }
 
+    // Page List
+
     override fun pageListParse(document: Document): List<Page> {
         return document.select("img[data-page]").mapIndexed { i, element ->
             Page(i, "", if (element.hasAttr("data-src")) element.attr("abs:data-src") else element.attr("abs:src"))
@@ -179,6 +174,8 @@ class MangaJar : ParsedHttpSource() {
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
+
+    // Filters
 
     override fun getFilterList() = FilterList(
         OrderBy(),
@@ -264,5 +261,12 @@ class MangaJar : ParsedHttpSource() {
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
+    }
+
+    // The following date related code is taken directly from Genkan.kt
+    companion object {
+        val dateFormat by lazy {
+            SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
+        }
     }
 }
