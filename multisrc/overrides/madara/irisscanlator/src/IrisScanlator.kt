@@ -1,5 +1,6 @@
-package eu.kanade.tachiyomi.extension.pt.vaposcan
+package eu.kanade.tachiyomi.extension.pt.irisscanlator
 
+import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import okhttp3.OkHttpClient
@@ -7,11 +8,12 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class VapoScan : Madara(
-    "Vapo Scan",
-    "https://vaposcan.net",
+@Nsfw
+class IrisScanlator : Madara(
+    "Iris Scanlator",
+    "https://irisscanlator.com",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
