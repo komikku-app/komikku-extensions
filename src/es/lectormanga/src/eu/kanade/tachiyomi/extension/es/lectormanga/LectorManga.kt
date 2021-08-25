@@ -255,7 +255,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
         if (getPageMethodPref() == "cascade") {
-            document.select("div.viewer-container img").forEach {
+            document.select("div.viewer-image-container img").forEach {
                 add(
                     Page(
                         size,
