@@ -14,6 +14,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -37,6 +38,15 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     override val supportsLatest = true
 
     private val imageCDNUrl = "https://img1.japanreader.com"
+
+    private val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+        "(KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36"
+
+    override fun headersBuilder(): Headers.Builder {
+        return Headers.Builder()
+            .add("User-Agent", userAgent)
+            .add("Referer", "$baseUrl/")
+    }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -167,6 +177,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         status.contains("Finalizado") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
+
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
         // One-shot
@@ -244,8 +255,8 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             }
         }
     }
-    // Note: At this moment (15/02/2021) it's necessary to make the image request without headers to prevent 403.
-    override fun imageRequest(page: Page) = GET(page.imageUrl!!)
+    // Note: At this moment (24/08/2021) it's necessary to make the image request with headers to prevent 403.
+    override fun imageRequest(page: Page) = GET(page.imageUrl!!, headers)
 
     override fun imageUrlParse(document: Document): String {
         return document.select("div.viewer-container > div.img-container > img.viewer-image").attr("src")
