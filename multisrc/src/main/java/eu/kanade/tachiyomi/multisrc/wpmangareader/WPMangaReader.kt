@@ -165,7 +165,7 @@ abstract class WPMangaReader(
 
         genre = document.select("div.gnr a, .mgen a, .seriestugenre a").joinToString { it.text() }
         status = parseStatus(
-            document.select("div.listinfo li:contains(Status), .tsinfo .imptdt:contains(status), .infotable tr:contains(status) td")
+            document.select("div.listinfo li:contains(Status), .tsinfo .imptdt:contains(status), .tsinfo .imptdt:contains(الحالة), .infotable tr:contains(status) td")
                 .text()
         )
 
