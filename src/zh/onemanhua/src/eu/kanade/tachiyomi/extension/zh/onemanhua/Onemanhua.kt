@@ -32,7 +32,7 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
     override val lang = "zh"
     override val supportsLatest = true
     override val name = "COCO漫画 (OH漫画)"
-    override val baseUrl = "https://www.cocomanhua.com/"
+    override val baseUrl = "https://www.cocomanga.com/"
 
     // Preference setting
     private val preferences: SharedPreferences by lazy {
