@@ -276,8 +276,8 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
         }
     }
 
-    // Note: At this moment (13/07/2020) it's necessary to make the image request without headers to prevent 403.
-    override fun imageRequest(page: Page) = GET(page.imageUrl!!)
+    // Note: At this moment (26/08/2021) it's necessary to make the image request with headers to prevent 403.
+    override fun imageRequest(page: Page) = GET(page.imageUrl!!, headers)
 
     override fun imageUrlParse(document: Document): String = document.select("img.viewer-image").attr("src")
 
