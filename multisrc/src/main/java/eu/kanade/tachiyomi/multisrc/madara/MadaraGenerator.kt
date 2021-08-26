@@ -145,7 +145,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Lolicon", "https://lolicon.mobi", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Lord Manga", "https://lordmanga.com", "en"),
         SingleLang("LovableSubs", "https://lovablesubs.com", "tr", overrideVersionCode = 1),
-        SingleLang("Lumine Scans", "https://luminescans.xyz/", "en"),
+        SingleLang("Lumine Scans", "https://luminescans.xyz/", "en", overrideVersionCode = 1),
         SingleLang("MadaraDex", "https://madaradx.org", "en", isNsfw = true),
         SingleLang("MG Komik", "https://mgkomik.com", "id", overrideVersionCode = 2),
         SingleLang("MMScans", "https://mm-scans.com/", "en", overrideVersionCode = 1),
