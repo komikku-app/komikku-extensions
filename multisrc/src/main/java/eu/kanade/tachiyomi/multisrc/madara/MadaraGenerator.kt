@@ -90,6 +90,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Fênix Scanlator", "https://fenixscanlator.xyz", "pt-BR", pkgName = "fenixscanlator", className = "FenixScanlator", overrideVersionCode = 2),
         SingleLang("GalaxyDegenScans", "https://gdegenscans.xyz/", "en", overrideVersionCode = 1),
         SingleLang("Gatemanga", "https://gatemanga.com", "ar"),
+        SingleLang("Gekkou Scans", "https://gekkouscans.com.br", "pt-BR", isNsfw = true, pkgName = "gekkouscan"),
         SingleLang("Geass Hentai", "https://geasshentai.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Gemanga", "https://gemanga.com", "ar"),
         SingleLang("Glory Scans", "https://gloryscan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),

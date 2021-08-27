@@ -64,7 +64,6 @@ class MMRCMSSources {
             SourceData.Single("Jpmangas", "https://jpmangas.co", "fr"),
             SourceData.Single("Op-VF", "https://www.op-vf.com", "fr", className = "OpVF"),
             SourceData.Single("FR Scan", "https://frscan.cc", "fr"),
-            SourceData.Single("Gekkou Scans", "https://leitor.gekkouscans.com.br", "pt-BR", isNsfw = true, pkgName = "gekkouscan", overrideVersionCode = 2),
             SourceData.Single("Ama Scans", "https://amascan.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
             // NOTE: THIS SOURCE CONTAINS A CUSTOM LANGUAGE SYSTEM (which will be ignored)!
             SourceData.Single("HentaiShark", "https://www.hentaishark.com", "all", isNsfw = true),
