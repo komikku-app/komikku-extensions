@@ -13,7 +13,7 @@ fun main(args: Array<String>) {
 
     // cleanup from past runs
     File("$userDir/.run").apply {
-        if(exists())
+        if (exists())
             deleteRecursively()
         mkdirs()
     }
