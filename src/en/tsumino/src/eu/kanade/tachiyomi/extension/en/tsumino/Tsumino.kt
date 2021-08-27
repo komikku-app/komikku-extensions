@@ -1,9 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.tsumino
 
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.getArtists
 import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.getChapter
@@ -18,18 +14,27 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
+import okhttp3.ResponseBody.Companion.toResponseBody
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 
 @Nsfw
-class Tsumino : ParsedHttpSource() {
+class Tsumino : HttpSource() {
 
     override val name = "Tsumino"
 
@@ -39,46 +44,65 @@ class Tsumino : ParsedHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    // Based on Pufei ext
+    private val rewriteOctetStream: Interceptor = Interceptor { chain ->
+        val originalResponse: Response = chain.proceed(chain.request())
+        if (originalResponse.headers("Content-Type").contains("application/octet-stream") &&
+            originalResponse.request.url.pathSegments.any { it == "parts" }
+        ) {
+            val orgBody = originalResponse.body!!.bytes()
+            val newBody = orgBody.toResponseBody("image/jpeg".toMediaTypeOrNull())
+            originalResponse.newBuilder()
+                .body(newBody)
+                .build()
+        } else originalResponse
+    }
 
-    private val gson = Gson()
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addNetworkInterceptor(rewriteOctetStream)
+        .build()
 
-    override fun latestUpdatesSelector() = "Not needed"
+    private val json: Json by injectLazy()
+
+    @Serializable
+    data class Manga(
+        val id: Int,
+        val title: String,
+        val thumbnailUrl: String
+    )
+
+    // Latest
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/Search/Operate/?PageNumber=$page&Sort=Newest")
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val allManga = mutableListOf<SManga>()
-        val body = response.body!!.string()
-        val jsonManga = gson.fromJson<JsonObject>(body)["data"].asJsonArray
-        for (i in 0 until jsonManga.size()) {
-            val manga = SManga.create()
-            manga.url = "/entry/" + jsonManga[i]["entry"]["id"].asString
-            manga.title = jsonManga[i]["entry"]["title"].asString
-            manga.thumbnail_url = jsonManga[i]["entry"]["thumbnailUrl"].asString
-            allManga.add(manga)
+        val mangaList = mutableListOf<SManga>()
+        val jsonResponse = json.parseToJsonElement(response.body!!.string()).jsonObject
+
+        for (element in jsonResponse["data"]!!.jsonArray) {
+            val manga = json.decodeFromJsonElement<Manga>(element.jsonObject["entry"]!!)
+            mangaList.add(
+                SManga.create().apply {
+                    setUrlWithoutDomain("/entry/${manga.id}")
+                    title = manga.title
+                    thumbnail_url = manga.thumbnailUrl
+                }
+            )
         }
 
-        val currentPage = gson.fromJson<JsonObject>(body)["pageNumber"].asString
-        val totalPage = gson.fromJson<JsonObject>(body)["pageCount"].asString
-        val hasNextPage = currentPage.toInt() != totalPage.toInt()
+        val currentPage = jsonResponse["pageNumber"]!!.jsonPrimitive.int
+        val totalPage = jsonResponse["pageCount"]!!.jsonPrimitive.int
 
-        return MangasPage(allManga, hasNextPage)
+        return MangasPage(mangaList, currentPage < totalPage)
     }
 
-    override fun latestUpdatesFromElement(element: Element): SManga = throw UnsupportedOperationException("Not used")
-
-    override fun latestUpdatesNextPageSelector() = "Not needed"
+    // Popular
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/Search/Operate/?PageNumber=$page&Sort=Popularity")
 
     override fun popularMangaParse(response: Response): MangasPage = latestUpdatesParse(response)
 
-    override fun popularMangaFromElement(element: Element) = latestUpdatesFromElement(element)
-
-    override fun popularMangaSelector() = latestUpdatesSelector()
-
-    override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
+    // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         // Taken from github.com/NerdNumber9/TachiyomiEH
@@ -132,62 +156,38 @@ class Tsumino : ParsedHttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage = latestUpdatesParse(response)
 
-    override fun searchMangaSelector() = latestUpdatesSelector()
+    // Details
 
-    override fun searchMangaFromElement(element: Element) = latestUpdatesFromElement(element)
-
-    override fun searchMangaNextPageSelector() = latestUpdatesNextPageSelector()
-
-    override fun mangaDetailsRequest(manga: SManga): Request {
-        if (manga.url.startsWith("http")) {
-            return GET(manga.url, headers)
-        }
-        return super.mangaDetailsRequest(manga)
-    }
-
-    override fun mangaDetailsParse(document: Document): SManga {
+    override fun mangaDetailsParse(response: Response): SManga {
+        val document = response.asJsoup()
         val infoElement = document.select("div.book-page-container")
-        val manga = SManga.create()
-
-        manga.title = infoElement.select("#Title").text()
-        manga.artist = getArtists(document)
-        manga.author = manga.artist
-        manga.status = SManga.COMPLETED
-        manga.thumbnail_url = infoElement.select("img").attr("src")
-        manga.description = getDesc(document)
-        manga.genre = document.select("#Tag a").joinToString { it.text() }
-
-        return manga
-    }
-    override fun chapterListRequest(manga: SManga): Request {
-        if (manga.url.startsWith("http")) {
-            return GET(manga.url, headers)
+        return SManga.create().apply {
+            title = infoElement.select("#Title").text()
+            artist = getArtists(document)
+            author = artist
+            status = SManga.COMPLETED
+            thumbnail_url = infoElement.select("img").attr("src")
+            description = getDesc(document)
+            genre = document.select("#Tag a").joinToString { it.text() }
         }
-        return super.chapterListRequest(manga)
     }
+
+    // Chapters
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val collection = document.select(chapterListSelector())
+        val collection = document.select(".book-collection-table a")
         return if (collection.isNotEmpty()) {
-            getCollection(document, chapterListSelector())
+            getCollection(document, ".book-collection-table a")
         } else {
             getChapter(document, response)
         }
     }
 
-    override fun chapterListSelector() = ".book-collection-table a"
+    // Page List
 
-    override fun chapterFromElement(element: Element) = throw UnsupportedOperationException("Not used")
-
-    override fun pageListRequest(chapter: SChapter): Request {
-        if (chapter.url.startsWith("http")) {
-            return GET(chapter.url, headers)
-        }
-        return super.pageListRequest(chapter)
-    }
-
-    override fun pageListParse(document: Document): List<Page> {
+    override fun pageListParse(response: Response): List<Page> {
+        val document = response.asJsoup()
         val pages = mutableListOf<Page>()
         val numPages = document.select("h1").text().split(" ").last()
 
@@ -203,7 +203,7 @@ class Tsumino : ParsedHttpSource() {
         return pages
     }
 
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
+    override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used")
 
     data class AdvSearchEntry(val type: Int, val text: String, val exclude: Boolean)
 
