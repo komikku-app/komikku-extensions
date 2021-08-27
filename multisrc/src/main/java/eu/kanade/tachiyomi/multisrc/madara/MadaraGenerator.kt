@@ -322,7 +322,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Prisma Scans", "https://prismascans.net", "pt-BR", overrideVersionCode = 1),
         SingleLang("Projeto Scanlator", "https://projetoscanlator.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("QueensManga ملكات المانجا", "https://queensmanga.com", "ar", className = "QueensManga", overrideVersionCode = 1),
-        SingleLang("Rachel Scanlator", "https://rachelscanlator.tk", "pt-BR", isNsfw = true),
+        SingleLang("Rachel Scanlator", "https://rachelscanlator.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Random Scan", "https://randomscan.online", "pt-BR", overrideVersionCode = 4),
         SingleLang("Random Translations", "https://randomtranslations.com", "en", overrideVersionCode = 1),
         SingleLang("Raw Mangas", "https://rawmangas.net", "ja", isNsfw = true, overrideVersionCode = 1),

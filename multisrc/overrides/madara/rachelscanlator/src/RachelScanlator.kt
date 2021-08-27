@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 @Nsfw
 class RachelScanlator : Madara(
     "Rachel Scanlator",
-    "https://rachelscanlator.tk",
+    "https://rachelscanlator.com",
     "pt-BR",
     SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
 ) {
