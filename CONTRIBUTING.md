@@ -100,7 +100,7 @@ The extension's version name is generated automatically by concatenating `libVer
 
 #### Extension API
 
-Extensions rely on [extensions-lib](https://github.com/tachiyomiorg/extensions-lib), which provides some interfaces and stubs from the [app](https://github.com/tachiyomiorg/tachiyomi) for compilation purposes. The actual implementations can be found [here](https://github.com/tachiyomiorg/tachiyomi/tree/dev/app/src/main/java/eu/kanade/tachiyomi/source). Referencing the actual implementation will help with understanding extensions' call flow.
+Extensions rely on [extensions-lib](https://github.com/tachiyomiorg/extensions-lib), which provides some interfaces and stubs from the [app](https://github.com/tachiyomiorg/tachiyomi) for compilation purposes. The actual implementations can be found [here](https://github.com/tachiyomiorg/tachiyomi/tree/master/app/src/main/java/eu/kanade/tachiyomi/source). Referencing the actual implementation will help with understanding extensions' call flow.
 
 #### Duktape stub
 
