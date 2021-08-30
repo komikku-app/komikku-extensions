@@ -351,7 +351,8 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             val now = Date().time
 
             return chapterListResults.map { helper.createChapter(it) }
-                .filter { it.date_upload <= now && "MangaPlus" != it.scanlator }
+                .filter { it.date_upload <= now && "MangaPlus" != it.scanlator
+                    && "Comikey" != it.scanlator}
         } catch (e: Exception) {
             Log.e("MangaDex", "error parsing chapter list", e)
             throw(e)
