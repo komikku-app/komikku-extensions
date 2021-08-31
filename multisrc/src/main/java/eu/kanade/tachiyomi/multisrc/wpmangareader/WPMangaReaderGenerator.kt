@@ -30,7 +30,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("A Pair of 2+", "https://pairof2.com", "en", className = "APairOf2"),
         SingleLang("PMScans", "https://reader.pmscans.com", "en"),
         SingleLang("Skull Scans", "https://www.skullscans.com", "en"),
-        SingleLang("Luminous Scans", "https://www.luminousscans.com", "en"),
+        SingleLang("Luminous Scans", "https://www.luminousscans.com", "en", overrideVersionCode = 1),
         SingleLang("Azure Scans", "https://azuremanga.com", "en"),
         SingleLang("ReaperScans.fr (GS)", "https://reaperscans.fr", "fr", className = "ReaperScansFR", pkgName = "gsnation", overrideVersionCode = 2),
         SingleLang("YugenMangas", "https://yugenmangas.com", "es"),
