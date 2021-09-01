@@ -5,7 +5,7 @@ ext {
     extName = 'Commit Strip'
     pkgNameSuffix = 'all.commitstrip'
     extClass = '.CommitStripFactory'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '1.2'
 }
 

@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -74,6 +75,12 @@ abstract class CommitStrip(
         }
     )!!
 
+    // Open in WebView
+
+    override fun mangaDetailsRequest(manga: SManga): Request {
+        return GET("${manga.url}/?", headers)
+    }
+
     // Chapters
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
@@ -109,7 +116,7 @@ abstract class CommitStrip(
     override fun chapterListSelector() = ".excerpt a"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        url = element.attr("href")
+        url = "$baseUrl/$siteLang" + element.attr("href").substringAfter(baseUrl)
 
         // get the chapter date from the url
         val date = Regex("\\d{4}\\/\\d{2}\\/\\d{2}").find(url)?.value
