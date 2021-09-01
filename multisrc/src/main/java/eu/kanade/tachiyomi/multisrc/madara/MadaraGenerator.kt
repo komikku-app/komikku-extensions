@@ -365,6 +365,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Tatakae Scan", "https://tatakaescan.xyz", "pt-BR", isNsfw = true),
         SingleLang("TeenManhua", "https://teenmanhua.com", "en"),
         SingleLang("TheFluffyHangoutGroup", "https://www.fluffyhangout.club", "en", overrideVersionCode = 2),
+        SingleLang("The Guild", "https://theguildscans.com/", "en"),
         SingleLang("Three Queens Scanlator", "https://tqscan.com.br", "pt-BR", overrideVersionCode = 3),
         SingleLang("Time Naight", "https://timenaight.com", "tr"),
         SingleLang("Todaymic", "https://todaymic.com", "en", overrideVersionCode = 1),
