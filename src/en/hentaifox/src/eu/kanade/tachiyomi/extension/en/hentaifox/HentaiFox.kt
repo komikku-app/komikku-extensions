@@ -134,7 +134,7 @@ class HentaiFox : ParsedHttpSource() {
     }
 
     override fun imageUrlParse(document: Document): String {
-        return document.select("img#gimg").attr("abs:src")
+        return document.select("img#gimg").attr("abs:data-src")
     }
 
     override fun pageListParse(document: Document): List<Page> = throw UnsupportedOperationException("Not used")
