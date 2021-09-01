@@ -46,7 +46,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
             .add("Referer", "$baseUrl/")
     }
 
-    private val imageCDNUrls = arrayOf("https://img1.followmanga.com", "https://img1.biggestchef.com", "https://img1.indalchef.com")
+    private val imageCDNUrls = arrayOf("https://img1.followmanga.com", "https://img1.biggestchef.com", "https://img1.indalchef.com", "https://img1.recipesandcook.com")
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -71,12 +71,18 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
         imageCDNUrls[2].toHttpUrlOrNull()!!,
         preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
     )
+    
+    private val imageCDNRateLimitInterceptor3 = SpecificHostRateLimitInterceptor(
+        imageCDNUrls[3].toHttpUrlOrNull()!!,
+        preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
+    )
 
     override val client: OkHttpClient = network.client.newBuilder()
         .addNetworkInterceptor(webRateLimitInterceptor)
         .addNetworkInterceptor(imageCDNRateLimitInterceptor)
         .addNetworkInterceptor(imageCDNRateLimitInterceptor1)
         .addNetworkInterceptor(imageCDNRateLimitInterceptor2)
+        .addNetworkInterceptor(imageCDNRateLimitInterceptor3)
         .build()
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/library?order_item=likes_count&order_dir=desc&type=&filter_by=title&page=$page", headers)
@@ -278,11 +284,16 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
                 )
             }
         } else {
-            val pageList = document.select("#viewer-pages-select").first().select("option").map { it.attr("value").toInt() }
-            val url = document.baseUri().substringBefore("/paginated") // Accounts for url ending in number "/paginated/1"
-            pageList.forEach {
-                add(Page(it, "$url/paginated/$it"))
-            }
+            val body = document.select("script:containsData(var dirPath)").first().data()
+            val path = body.substringAfter("var dirPath = '").substringBefore("'")
+
+            body.substringAfter("var images = JSON.parse('[")
+                .substringBefore("]')")
+                .replace("\"", "")
+                .split(",")
+                .forEach {
+                    add(Page(size, document.baseUri(), path + it))
+                }
         }
     }
 
