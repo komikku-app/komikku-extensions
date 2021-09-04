@@ -87,7 +87,7 @@ abstract class CommitStrip(
         // create a new call to parse the no of pages in the site
         // example responseString - Page 1 of 11
         val responseString = client.newCall(GET("${manga.url}", headers)).execute().run {
-            asJsoup().select(".wp-pagenavi .pages").first().text()
+            asJsoup().selectFirst(".wp-pagenavi .pages")?.text() ?: "1"
         }
         // use regex to get the last number (i.e. 11 above)
         val pages = Regex("\\d+").findAll(responseString).last().value.toInt()
