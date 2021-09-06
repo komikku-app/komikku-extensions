@@ -25,7 +25,6 @@ import uy.kohesive.injekt.api.get
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
@@ -137,60 +136,60 @@ class CopyManga : ConfigurableSource, HttpSource() {
     override fun chapterListRequest(manga: SManga) = mangaDetailsRequest(manga)
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val disposableData = document.select("div.disposableData").first().attr("disposable")
         val disposablePass = document.select("div.disposablePass").first().attr("disposable")
 
+        // Get encrypted chapters data from another endpoint
+        val chapterResponse = client.newCall(GET("${response.request.url}/chapters", headers)).execute()
+        val disposableData = JSONObject(chapterResponse.body!!.string()).get("results").toString()
+
+        // Decrypt chapter JSON
         val chapterJsonString = decryptChapterData(disposableData, disposablePass)
-        // default > groups > 全部 []
+
         val chapterJson = JSONObject(chapterJsonString)
-        var chapterArray = chapterJson.optJSONObject("default")?.optJSONObject("groups")?.optJSONArray("全部")
-        if (chapterArray == null) {
+        // Get the comic path word
+        val comicPathWord = chapterJson.optJSONObject("build")?.optString("path_word")
+
+        // Get chapter groups
+        val chapterGroups = chapterJson.optJSONObject("groups")
+        if (chapterGroups == null) {
             return listOf()
         }
 
-        val retDefault = ArrayList<SChapter>(chapterArray.length())
-        for (i in 0 until chapterArray.length()) {
-            val chapter = chapterArray.getJSONObject(i)
-            retDefault.add(
-                SChapter.create().apply {
-                    name = chapter.getString("name")
-                    date_upload = stringToUnixTimestamp(chapter.getString("datetime_created")) * 1000
-                    url = "/comic/${chapter.getString("comic_path_word")}/chapter/${chapter.getString("uuid")}"
-                }
-            )
-        }
+        val retChapter = ArrayList<SChapter>()
+        // Get chapters according to groups
+        chapterGroups.keys().forEach { groupName ->
+            run {
+                val chapterGroup = chapterGroups.getJSONObject(groupName)
 
-        // {others} > groups > 全部 []
-        val retOthers = ArrayList<SChapter>()
-        for (categroy in chapterJson.keys()) {
-            if (categroy != "default") {
-                chapterArray = chapterJson.optJSONObject(categroy)?.optJSONObject("groups")?.optJSONArray("全部")
-                if (chapterArray == null) {
-                    continue
-                }
-                for (i in 0 until chapterArray.length()) {
-                    val chapter = chapterArray.getJSONObject(i)
-                    retOthers.add(
-                        SChapter.create().apply {
-                            name = chapter.getString("name")
-                            date_upload = stringToUnixTimestamp(chapter.getString("datetime_created")) * 1000
-                            url = "/comic/${chapter.getString("comic_path_word")}/chapter/${chapter.getString("uuid")}"
-                        }
-                    )
+                // group's last update time
+                val groupLastUpdateTime = chapterGroup.optJSONObject("last_chapter")?.optString("datetime_created")
+
+                // chapters in the group to
+                val chapterArray = chapterGroup.optJSONArray("chapters")
+                if (chapterArray != null) {
+                    for (i in 0 until chapterArray.length()) {
+                        val chapter = chapterArray.getJSONObject(i)
+                        retChapter.add(
+                            SChapter.create().apply {
+                                name = chapter.getString("name")
+                                date_upload = stringToUnixTimestamp(groupLastUpdateTime)
+                                url = "/comic/$comicPathWord/chapter/${chapter.getString("id")}"
+                            }
+                        )
+                    }
                 }
             }
         }
 
         // place others to top, as other group updates not so often
-        retDefault.addAll(0, retOthers)
-        return retDefault.asReversed()
+        return retChapter.asReversed()
     }
 
     override fun pageListRequest(chapter: SChapter) = GET(baseUrl + chapter.url, headers)
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        val disposableData = document.select("div.disposableData").first().attr("disposable")
-        val disposablePass = document.select("div.disposablePass").first().attr("disposable")
+        val disposableData = document.select("div.disData").first().attr("contentKey")
+        val disposablePass = document.select("div.disPass").first().attr("contentKey")
 
         val pageJsonString = decryptChapterData(disposableData, disposablePass)
         val pageArray = JSONArray(pageJsonString)
@@ -392,12 +391,15 @@ class CopyManga : ConfigurableSource, HttpSource() {
         return bytes
     }
 
-    private fun stringToUnixTimestamp(string: String, pattern: String = "yyyy-MM-dd", locale: Locale = Locale.CHINA): Long {
+    private fun stringToUnixTimestamp(string: String?, pattern: String = "yyyy-MM-dd", locale: Locale = Locale.CHINA): Long {
+        if (string == null) System.currentTimeMillis()
+
         return try {
             val time = SimpleDateFormat(pattern, locale).parse(string)?.time
-            if (time != null) time / 1000 else Date().time / 1000
+            if (time != null) time else System.currentTimeMillis()
         } catch (ex: Exception) {
-            Date().time / 1000
+            // Set the time to current in order to display the updated manga in the "Recent updates" section
+            System.currentTimeMillis()
         }
     }
 
