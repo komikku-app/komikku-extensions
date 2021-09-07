@@ -26,6 +26,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -246,13 +247,18 @@ open class Webtoons(
         if (element.select(".ico_bgm").isNotEmpty()) {
             chapter.name += " ♫"
         }
-        chapter.date_upload = element.select("a > div.row > div.info > p.date").text()?.let { chapterParseDate(it) } ?: 0
+        chapter.date_upload = element.select("a > div.row > div.col > div.sub_info > span.date").text()?.let { chapterParseDate(it) } ?: 0
         return chapter
     }
 
     open fun chapterParseDate(date: String): Long {
-        return dateFormat.parse(date)?.time ?: 0
+        return try {
+            dateFormat.parse(date)?.time ?: 0
+        } catch (e: ParseException) {
+            0
+        }
     }
+
     override fun chapterListRequest(manga: SManga) = GET("https://m.webtoons.com" + manga.url, mobileHeaders)
 
     override fun pageListParse(document: Document): List<Page> {
