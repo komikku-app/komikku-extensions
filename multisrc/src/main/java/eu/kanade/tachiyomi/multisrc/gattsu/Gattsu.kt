@@ -109,12 +109,12 @@ abstract class Gattsu(
         setUrlWithoutDomain(element.ownerDocument().location())
     }
 
-    protected open fun pageListSelector(): String = "div.meio div.post-box ul.post-fotos li a img"
+    protected open fun pageListSelector(): String = "div.meio div.post-box ul.post-fotos li a > img"
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select(pageListSelector())
             .mapIndexed { i, el ->
-                Page(i, document.location(), el.attr("src").withoutSize())
+                Page(i, document.location(), el.imgAttr().withoutSize())
             }
     }
 
@@ -128,6 +128,10 @@ abstract class Gattsu(
 
         return GET(page.imageUrl!!, imageHeaders)
     }
+
+    protected fun Element.imgAttr(): String =
+        if (hasAttr("data-src")) attr("abs:data-src")
+        else attr("abs:src")
 
     protected fun String.toDate(): Long {
         return try {
