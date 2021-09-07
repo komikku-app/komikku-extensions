@@ -4,9 +4,11 @@ import android.app.Application
 import android.content.SharedPreferences
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
@@ -17,6 +19,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -25,6 +28,8 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
+import rx.Observable
+import rx.Single
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -81,6 +86,60 @@ abstract class WPMangaStream(
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/manga/?page=$page&order=update", headers)
     }
+
+    /**
+     * Given some string which represents an http url, returns the URI path to the corresponding series
+     * if the original pointed to either a series or a chapter
+     *
+     * @param s: String - url
+     *
+     * @returns URI path or null
+     */
+    protected open fun mangaPathFromUrl(s: String): Single<String?> {
+        val baseMangaUrl = baseUrl.toHttpUrlOrNull()!!
+         // Would be dope if wpmangastream had a mangaUrlDirectory like wpmangareader
+        val mangaDirectories = listOf("manga", "comics", "komik")
+        return s.toHttpUrlOrNull()?.let { url ->
+            fun pathLengthIs(url: HttpUrl, n: Int, strict: Boolean = false) = url.pathSegments.size == n && url.pathSegments[n - 1].isNotEmpty() || (!strict && url.pathSegments.size == n + 1 && url.pathSegments[n].isEmpty())
+            val potentiallyChapterUrl = pathLengthIs(url, 1)
+            val isMangaUrl = listOf(
+                baseMangaUrl.topPrivateDomain() == url.topPrivateDomain(),
+                pathLengthIs(url, 2),
+                url.pathSegments[0] in mangaDirectories
+            ).all { it }
+            if (isMangaUrl)
+                Single.just(url.encodedPath)
+            else if (potentiallyChapterUrl)
+                client.newCall(GET(s, headers)).asObservableSuccess().map {
+                    val links = it.asJsoup().select("a[itemprop=item]")
+                    if (links.size == 3) //  near the top of page: home > manga > current chapter
+                        links[1].attr("href").toHttpUrlOrNull()?.encodedPath
+                    else
+                        null
+                }.toSingle()
+            else
+                Single.just(null)
+        } ?: Single.just(null)
+    }
+
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        if (!query.startsWith(URL_SEARCH_PREFIX))
+            return super.fetchSearchManga(page, query, filters)
+
+        return mangaPathFromUrl(query.substringAfter(URL_SEARCH_PREFIX))
+            .toObservable()
+            .concatMap { path ->
+                if (path == null)
+                    Observable.just(MangasPage(emptyList(), false))
+                else
+                    fetchMangaDetails(SManga.create().apply { this.url = path })
+                        .map {
+                            it.url = path // isn't set in returned manga
+                            MangasPage(listOf(it), false)
+                        }
+            }
+    }
+
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var url = "$baseUrl/manga/".toHttpUrlOrNull()!!.newBuilder()
@@ -218,7 +277,8 @@ abstract class WPMangaStream(
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         chapter.name = if (urlElement.select("span.chapternum").isNotEmpty()) urlElement.select("span.chapternum").text() else urlElement.text()
-        chapter.date_upload = element.select("span.rightoff, time, span.chapterdate").firstOrNull()?.text()?.let { parseChapterDate(it) } ?: 0
+        chapter.date_upload = element.select("span.rightoff, time, span.chapterdate").firstOrNull()?.text()?.let { parseChapterDate(it) }
+            ?: 0
         return chapter
     }
 
@@ -523,6 +583,8 @@ abstract class WPMangaStream(
 
         private const val SHOW_THUMBNAIL_PREF_Title = "Default thumbnail quality"
         private const val SHOW_THUMBNAIL_PREF = "showThumbnailDefault"
+
+        const val URL_SEARCH_PREFIX = "url:"
 
         private val MANGA_PAGE_ID_REGEX = "post_id\\s*:\\s*(\\d+)\\}".toRegex()
         private val CHAPTER_PAGE_ID_REGEX = "chapter_id\\s*=\\s*(\\d+);?".toRegex()
