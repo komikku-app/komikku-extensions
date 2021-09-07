@@ -6,7 +6,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -21,34 +20,19 @@ abstract class DbMultiverse(override val lang: String, private val internalLang:
     override val baseUrl = "https://www.dragonball-multiverse.com"
     override val supportsLatest = false
 
-    private fun chapterFromElement(element: Element, name: String): SChapter {
+    override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(element.attr("abs:href"))
-        chapter.name = name + element.text().let { num ->
-            if (num.contains("-")) {
-                "Pages $num"
-            } else {
-                "Page $num"
-            }
-        }
+        val href = element.attr("href")
+        chapter.url = "$baseUrl/$internalLang/$href"
+        chapter.name = href.substringBefore(".html").replace("-", " ")
+
         return chapter
     }
 
-    override fun chapterListSelector(): String = "div.cadrelect.chapters a[href*=page-]"
+    override fun chapterListSelector(): String = ".cadrelect.chapters p a[href*=-]"
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val chapters = mutableListOf<SChapter>()
-        val document = response.asJsoup()
-
-        document.select("div[ch]").forEach { container ->
-            container.select(chapterListSelector()).mapIndexed { i, chapter ->
-                // Each page is its own chapter, add chapter name when a first page is mapped
-                val name = if (i == 0) container.select("h4").text() + " - " else ""
-                chapters.add(chapterFromElement(chapter, name))
-            }
-        }
-
-        return chapters.reversed()
+        return super.chapterListParse(response).reversed()
     }
 
     override fun pageListParse(document: Document): List<Page> {
@@ -57,21 +41,33 @@ abstract class DbMultiverse(override val lang: String, private val internalLang:
         }
     }
 
-    override fun mangaDetailsParse(document: Document): SManga = createManga(document)
-
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
-        return Observable.just(MangasPage(listOf(createManga(null)), hasNextPage = false))
+        // site hosts three titles that can be read by the app
+        return listOf("page", "strip", "namekseijin")
+            .map { createManga(it) }
+            .let { Observable.just(MangasPage(it, hasNextPage = false)) }
     }
 
-    private fun createManga(document: Document?) = SManga.create().apply {
-        title = name
+    private fun createManga(type: String) = SManga.create().apply {
+        title = when (type) {
+            "comic" -> "DB Multiverse"
+            "namekseijin" -> "Namekseijin Densetsu"
+            "strip" -> "Minicomic"
+            else -> name
+        }
         status = SManga.ONGOING
-        url = "/$internalLang/chapters.html"
+        url = "/$internalLang/chapters.html?comic=$type"
         description = "Dragon Ball Multiverse (DBM) is a free online comic, made by a whole team of fans. It's our personal sequel to DBZ."
-        thumbnail_url = document?.select("div[ch=\"1\"] img")?.attr("abs:src")
+        thumbnail_url = "$baseUrl/imgs/read/$type.jpg"
     }
 
-    override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException()
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        return manga.apply {
+            initialized = true
+        }.let { Observable.just(it) }
+    }
+
+    override fun mangaDetailsParse(document: Document): SManga = throw Exception("Not Used")
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
 

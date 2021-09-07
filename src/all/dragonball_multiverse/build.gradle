@@ -5,7 +5,7 @@ ext {
     extName = 'Dragon Ball Multiverse'
     pkgNameSuffix = 'all.dragonball_multiverse'
     extClass = '.DbMFactory'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '1.2'
 }
 
