@@ -6,7 +6,8 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Nsfw
-class DragonTranslation : WPMangaReader("DragonTranslation",
+class DragonTranslation : WPMangaReader(
+    "DragonTranslation",
     "https://dragontranslation.com",
     "es",
     dateFormat = SimpleDateFormat("MMM d, yyyy", Locale("es"))

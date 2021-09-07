@@ -36,7 +36,7 @@ abstract class ReaperScans(
             // Added "title" alternative
             chapter.date_upload = select("img").firstOrNull()?.attr("alt")?.let { parseRelativeDate(it) }
                 ?: select("span a").firstOrNull()?.attr("title")?.let { parseRelativeDate(it) }
-                    ?: parseChapterDate(select("span.chapter-release-date i").firstOrNull()?.text())
+                ?: parseChapterDate(select("span.chapter-release-date i").firstOrNull()?.text())
         }
 
         return chapter
