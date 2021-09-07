@@ -13,7 +13,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -34,22 +34,30 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
 
-    private fun String.cleaned() = this.replace(" ", "%20").replace(Regex("/[0-9]+(?!.*?/)"), "")
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .add("Referer", baseUrl)
 
-    override fun popularMangaSelector() = "div.conts > ul > li a"
+    private fun String.cleanedUrl() = this.replace(" ", "%20").replace(Regex("/[0-9]+(?!.*?/)"), "")
+
+    // Latest page has chapter number appended to the title
+    private fun String.cleanedTitle() = this.removeSuffix("([0-9]+-)?[0-9]+화".toRegex().find(this)?.value ?: "").trim()
+
+    override fun popularMangaSelector() = "div.content > div.search-result-wrap > div.img-lst-wrap > ul > li"
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            setUrlWithoutDomain(element.attr("href").cleaned())
-            title = element.select("span.price").text()
-            thumbnail_url = element.select("img").attr("abs:src")
+            element.select("div.txt-wrap > a.tit").let {
+                setUrlWithoutDomain("/" + it.attr("href").cleanedUrl())
+                title = it.text()
+            }
+            thumbnail_url = element.select("a.img-wrap > img").attr("abs:src")
         }
     }
 
     override fun popularMangaNextPageSelector() = throw UnsupportedOperationException("This method should not be called!")
 
     // Do not add page parameter if page is 1 to prevent tracking.
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/comic_main_frame?tag=null&keyword=null&chosung=null&page=${page - 1}", headers)
+    override fun popularMangaRequest(page: Int) = GET("$baseUrl/comic_list?page=${page - 1}", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
@@ -58,8 +66,7 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
             popularMangaFromElement(element)
         }
 
-        // Can not detect what page is last page but max mangas are 15 per page.
-        val hasNextPage = mangas.size == 15
+        val hasNextPage = document.select("div.lst-btm-wrap > div.cnt-wrap > ul.pager-wrap > li.next > a").attr("href") != "#"
 
         return MangasPage(mangas, hasNextPage)
     }
@@ -68,38 +75,37 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
     override fun searchMangaNextPageSelector() = throw UnsupportedOperationException("This method should not be called!")
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = GET("$baseUrl/comic_main_frame?page=${page - 1}&keyword=$query", headers)
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = GET("$baseUrl/comic_list?page=${page - 1}&keyword=$query", headers)
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val descriptionElement = document.select(".media > .row > .media-body.col-9 > div")
+        val descriptionElement = document.select("div.content > div.books-list-detail > div.books-db-detail")
 
         val manga = SManga.create()
-        descriptionElement
+        descriptionElement.select("div.books-d-wrap > dl")
             .map { it.text() }
             .forEach { text ->
                 when {
-                    DETAIL_TITLE in text -> manga.title = text.substringAfter(DETAIL_TITLE).trim()
                     DETAIL_AUTHOR in text -> manga.author = text.substringAfter(DETAIL_AUTHOR).trim()
-                    DETAIL_GENRE in text -> manga.genre = text.substringAfter("장르 : [").substringBefore("]").trim()
+                    DETAIL_GENRE in text -> manga.genre = text.substringAfter(DETAIL_GENRE).trim()
                 }
             }
-        manga.description = descriptionElement.select("#desc").text().substringAfter(DETAIL_DESCRIPTION).trim()
-        manga.thumbnail_url = document.select("div.media-left img").attr("abs:src")
-        manga.status = SManga.UNKNOWN
+        manga.title = descriptionElement.select("a.tit").text()
+        manga.thumbnail_url = descriptionElement.select("div.books-thumnail img").attr("abs:src")
         return manga
     }
 
-    override fun chapterListSelector() = "div.section > .post > .post-content-list"
+    override fun chapterListSelector() = "div.content > div.books-list-detail > div.lst-wrap > ul > li"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val linkElement = element.select(".entry-title a")
-        val rawName = linkElement.text()
+        val top = element.select("div.top-layout-m > div.inner > a.tit")
+        val bottom = element.select("div.btm-layout-m > div.inner > p.date")
+        val rawName = top.text()
 
         return SChapter.create().apply {
-            url = linkElement.attr("abs:href").toHttpUrlOrNull()!!.let { "${it.encodedPath}?${it.encodedQuery}" }
+            setUrlWithoutDomain(top.attr("abs:href"))
             chapter_number = parseChapterNumber(rawName)
             name = rawName.trim()
-            date_upload = parseChapterDate(element.select("li.publish-date span").last().text())
+            date_upload = parseChapterDate(bottom.text())
         }
     }
 
@@ -119,7 +125,7 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
 
     private fun parseChapterDate(date: String): Long {
         return try {
-            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).parse(date)?.time ?: 0
+            SimpleDateFormat("yy-MM-dd", Locale.getDefault()).parse(date)?.time ?: 0
         } catch (e: Exception) {
             e.printStackTrace()
             0
@@ -127,31 +133,34 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("ul.view img").mapIndexed { i, img ->
+        return document.select("div.pdf-wrap img").mapIndexed { i, img ->
             Page(i, "", if (img.hasAttr("data-src")) img.attr("abs:data-src") else img.attr("abs:src"))
         }
     }
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/comic_recent", headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/comic_recent?page=$page", headers)
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        val mangas = mutableListOf<SManga>()
-        val lastPage = document.select("select#page option:last-of-type").text()
-        val currentPage = document.select("select#page option[selected]").text()
 
-        document.select(latestUpdatesSelector()).map { mangas.add(latestUpdatesFromElement(it)) }
+        val mangas = document.select(latestUpdatesSelector()).map { element ->
+            latestUpdatesFromElement(element)
+        }
 
-        return MangasPage(mangas.distinctBy { it.url }, currentPage < lastPage)
+        val hasNextPage = document.select("div.lst-btm-wrap > div.cnt-wrap > ul.pager-wrap > li.next > a").attr("href") != "#"
+
+        return MangasPage(mangas, hasNextPage)
     }
 
-    override fun latestUpdatesSelector() = "div.contents div.detail ul:not(:first-of-type) li:has(a.btn)"
+    override fun latestUpdatesSelector() = "div.content > div.board03 > div.img-lst-wrap > ul > li"
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         return SManga.create().apply {
-            setUrlWithoutDomain(element.select("a.btn").attr("href").cleaned())
-            title = element.select("div.info a").text()
-            thumbnail_url = element.select("img").attr("abs:src")
+            element.select("div.list-con > div.books-db").let {
+                setUrlWithoutDomain(it.select("a.btn").attr("href").cleanedUrl())
+                title = it.select("a.tit").text().cleanedTitle()
+            }
+            thumbnail_url = element.select("a.img-wrap > img").attr("abs:src")
         }
     }
 
@@ -161,11 +170,10 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("This method should not be called!")
 
     companion object {
-        const val DETAIL_TITLE = "제목 : "
         const val DETAIL_GENRE = "장르 : "
         const val DETAIL_AUTHOR = "작가 : "
         const val DETAIL_DESCRIPTION = "설명 : "
-        const val DEFAULT_BASEURL = "https://003.jmana2.net"
+        const val DEFAULT_BASEURL = "https://jmana1.net"
         private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
         private const val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
         private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."

@@ -5,7 +5,7 @@ ext {
     extName = 'JMana'
     pkgNameSuffix = 'ko.jmana'
     extClass = '.JMana'
-    extVersionCode = 11
+    extVersionCode = 12
     libVersion = '1.2'
 }
 
