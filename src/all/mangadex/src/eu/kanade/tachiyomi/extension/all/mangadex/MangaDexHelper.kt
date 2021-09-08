@@ -172,7 +172,7 @@ class MangaDexHelper() {
             title = cleanString(mangaDto.data.attributes.title.asMdMap()["en"] ?: "")
 
             coverFileName?.let {
-                thumbnail_url = when(coverSuffix != null && coverSuffix != "") {
+                thumbnail_url = when (coverSuffix != null && coverSuffix != "") {
                     true -> "${MDConstants.cdnUrl}/covers/${mangaDto.data.id}/$coverFileName$coverSuffix"
                     else -> "${MDConstants.cdnUrl}/covers/${mangaDto.data.id}/$coverFileName"
                 }
@@ -248,7 +248,7 @@ class MangaDexHelper() {
     /**
      * create the SChapter from json
      */
-    fun createChapter(chapterDto: ChapterDto): SChapter {
+    fun createChapter(chapterDto: ChapterDto): SChapter? {
         try {
             val data = chapterDto.data
             val attr = data.attributes
@@ -285,6 +285,10 @@ class MangaDexHelper() {
                     }
                     chapterName.add(it)
                 }
+            }
+
+            if (attr.externalUrl != null && attr.data.isEmpty()) {
+                return null
             }
 
             // if volume, chapter and title is empty its a oneshot

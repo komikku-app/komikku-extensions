@@ -11,7 +11,7 @@ class MangaDexFilters {
     internal fun getMDFilterList(preferences: SharedPreferences, dexLang: String): FilterList {
 
         return FilterList(
-            OriginalLanguageList(getOriginalLanguage()),
+            OriginalLanguageList(getOriginalLanguage(preferences, dexLang)),
             ContentRatingList(getContentRating(preferences, dexLang)),
             DemographicList(getDemographics()),
             StatusList(getStatus()),
@@ -24,8 +24,10 @@ class MangaDexFilters {
 
     private fun getContentRating(preferences: SharedPreferences, dexLang: String) = listOf(
         ContentRating("Safe").apply {
-            state =
-                preferences.getBoolean(MDConstants.getContentRatingSafePrefKey(dexLang), true)
+            state = preferences.getBoolean(
+                MDConstants.getContentRatingSafePrefKey(dexLang),
+                true
+            )
         },
         ContentRating("Suggestive").apply {
             state = preferences.getBoolean(
@@ -78,10 +80,25 @@ class MangaDexFilters {
     private class OriginalLanguageList(originalLanguage: List<OriginalLanguage>) :
         Filter.Group<OriginalLanguage>("Original language", originalLanguage)
 
-    private fun getOriginalLanguage() = listOf(
-        OriginalLanguage("Japanese (Manga)", "ja"),
-        OriginalLanguage("Chinese (Manhua)", "zh"),
-        OriginalLanguage("Korean (Manhwa)", "ko"),
+    private fun getOriginalLanguage(preferences: SharedPreferences, dexLang: String) = listOf(
+        OriginalLanguage("Japanese (Manga)", "ja").apply {
+            state = preferences.getBoolean(
+                MDConstants.getOriginalLanguageJapanesePref(dexLang),
+                false
+            )
+        },
+        OriginalLanguage("Chinese (Manhua)", "zh").apply {
+            state = preferences.getBoolean(
+                MDConstants.getOriginalLanguageChinesePref(dexLang),
+                false
+            )
+        },
+        OriginalLanguage("Korean (Manhwa)", "ko").apply {
+            state = preferences.getBoolean(
+                MDConstants.getOriginalLanguageKoreanPref(dexLang),
+                false
+            )
+        },
     )
 
     internal class Tag(val id: String, name: String) : Filter.TriState(name)

@@ -38,11 +38,11 @@ object MDConstants {
     fun getCoverQualityPreferenceKey(dexLang: String): String {
         return "${coverQualityPref}_$dexLang"
     }
-    
+
     fun getCoverQualityPreferenceEntries() = arrayOf("Original", "Medium", "Low")
-    
+
     fun getCoverQualityPreferenceEntryValues() = arrayOf("", ".512.jpg", ".256.jpg")
-    
+
     fun getCoverQualityPreferenceDefaultValue() = getCoverQualityPreferenceEntryValues()[0]
 
     const val dataSaverPref = "dataSaverV5"
@@ -79,5 +79,23 @@ object MDConstants {
 
     fun getContentRatingPornographicPrefKey(dexLang: String): String {
         return "${contentRatingPornographicPref}_$dexLang"
+    }
+
+    private const val originalLanguageJapanesePref = "originalLanguageJapanese"
+
+    fun getOriginalLanguageJapanesePref(dexLang: String): String {
+        return "${originalLanguageJapanesePref}_$dexLang"
+    }
+
+    private const val originalLanguageChinesePref = "originalLanguageChinese"
+
+    fun getOriginalLanguageChinesePref(dexLang: String): String {
+        return "${originalLanguageChinesePref}_$dexLang"
+    }
+
+    private const val originalLanguageKoreanPref = "originalLanguageKorean"
+
+    fun getOriginalLanguageKoreanPref(dexLang: String): String {
+        return "${originalLanguageKoreanPref}_$dexLang"
     }
 }
