@@ -1,12 +1,9 @@
-<!--
-If you are updating extensions, please remember to:
+Checklist:
 
-- Update the `extVersionCode` value in `build.gradle`
-- Annotate `Source` or `SourceFactory` classes with `@Nsfw` when appropriate
-- Add the `containsNsfw = true` flag in `build.gradle` when appropriate
-
-Please also mention the related issues, e.g.:
-
-Closes #123
-Closes #456
--->
+- [ ] Updated `extVersionCode` value in `build.gradle` for individual extensions
+- [ ] Updated `overrideVersionCode` or `baseVersionCode` as needed for all multisrc extensions
+- [ ] Referenced all related issues in the PR body (e.g. "Closes #xyz")
+- [ ] Annotated `Source` or `SourceFactory` classes with `@Nsfw` when appropriate
+- [ ] Added the `containsNsfw = true` flag in `build.gradle` when appropriate
+- [ ] Have not changed source names
+- [ ] Have explicitly kept the `versionId` if a source's name or language were changed
