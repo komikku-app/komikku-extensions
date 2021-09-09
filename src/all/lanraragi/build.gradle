@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'all.lanraragi'
     extClass = '.LANraragi'
     extVersionCode = 6
-    libVersion = '1.2'
 }
 
 dependencies {

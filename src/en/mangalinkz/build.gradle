@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.mangalinkz'
     extClass = '.MangaLinkz'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

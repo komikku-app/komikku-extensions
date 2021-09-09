@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'zh.comico'
     extClass = '.ComicoFactory'
     extVersionCode = 2
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

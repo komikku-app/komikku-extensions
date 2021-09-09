@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'zh.imitui'
     extClass = '.Imitui'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 

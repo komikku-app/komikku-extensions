@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'all.mango'
     extClass = '.Mango'
     extVersionCode = 4
-    libVersion = '1.2'
 }
 
 dependencies {

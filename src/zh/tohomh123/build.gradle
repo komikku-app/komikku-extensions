@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'zh.tohomh123'
     extClass = '.Tohomh'
     extVersionCode = 2
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

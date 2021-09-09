@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'it.digitalteam'
     extClass = '.DigitalTeam'
     extVersionCode = 2
-    libVersion = '1.2'
     containsNsfw = false
 }
 

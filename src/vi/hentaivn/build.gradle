@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'vi.hentaivn'
     extClass = '.HentaiVN'
     extVersionCode = 9
-    libVersion = '1.2'
     containsNsfw = true
 }
 

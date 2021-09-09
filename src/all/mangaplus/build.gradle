@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'all.mangaplus'
     extClass = '.MangaPlusFactory'
     extVersionCode = 23
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

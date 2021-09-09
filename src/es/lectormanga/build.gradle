@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.lectormanga'
     extClass = '.LectorManga'
     extVersionCode = 21
-    libVersion = '1.2'
 }
 
 dependencies {

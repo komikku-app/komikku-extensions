@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.mangaowl'
     extClass = '.MangaOwl'
     extVersionCode = 22
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'pt.goldenmangas'
     extClass = '.GoldenMangas'
     extVersionCode = 12
-    libVersion = '1.2'
 }
 
 dependencies {

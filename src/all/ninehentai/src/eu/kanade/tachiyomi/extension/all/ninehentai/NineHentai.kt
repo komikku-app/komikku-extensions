@@ -56,7 +56,7 @@ class NineHentai : HttpSource() {
     ): Request {
         val request = SearchRequest(
             text = searchText,
-            page = page - 1,    // Source starts counting from 0, not 1
+            page = page - 1, // Source starts counting from 0, not 1
             sort = sort,
             pages = Range(range),
             tag = Items(

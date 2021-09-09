@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'zh.gufengmh'
     extClass = '.Gufengmh'
     extVersionCode = 3
-    libVersion = '1.2'
 }
 
 

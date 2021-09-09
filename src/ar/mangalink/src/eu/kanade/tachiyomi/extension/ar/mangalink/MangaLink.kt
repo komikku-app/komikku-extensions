@@ -134,5 +134,4 @@ class MangaLink : ParsedHttpSource() {
         Type("كوميك", "5"),
         Type("غير معروف", "6"),
     )
-
 }

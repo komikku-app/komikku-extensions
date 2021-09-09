@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.pururin'
     extClass = '.Pururin'
     extVersionCode = 4
-    libVersion = '1.2'
     containsNsfw = true
 }
 

@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'pt.mangayabu'
     extClass = '.MangaYabu'
     extVersionCode = 12
-    libVersion = '1.2'
 }
 
 dependencies {

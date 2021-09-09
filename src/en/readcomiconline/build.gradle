@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.readcomiconline'
     extClass = '.Readcomiconline'
     extVersionCode = 10
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

@@ -71,7 +71,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
         imageCDNUrls[2].toHttpUrlOrNull()!!,
         preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
     )
-    
+
     private val imageCDNRateLimitInterceptor3 = SpecificHostRateLimitInterceptor(
         imageCDNUrls[3].toHttpUrlOrNull()!!,
         preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60

@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.mangarockes'
     extClass = '.MangaRockEs'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

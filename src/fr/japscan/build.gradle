@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'fr.japscan'
     extClass = '.Japscan'
     extVersionCode = 29
-    libVersion = '1.2'
 }
 
 dependencies {

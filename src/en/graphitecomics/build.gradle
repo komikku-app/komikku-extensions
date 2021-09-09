@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'en.graphitecomics'
     extClass = '.GraphiteComics'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 dependencies {

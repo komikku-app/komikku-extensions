@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.reallifecomics'
     extClass = '.RealLifeComics'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 dependencies {

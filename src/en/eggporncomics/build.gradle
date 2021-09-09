@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.eggporncomics'
     extClass = '.Eggporncomics'
     extVersionCode = 2
-    libVersion = '1.2'
     containsNsfw = true
 }
 

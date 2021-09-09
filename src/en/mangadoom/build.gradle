@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.mangadoom'
     extClass = '.MangaDoom'
     extVersionCode = 3
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

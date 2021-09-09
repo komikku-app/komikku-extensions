@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = "en.homeheroscans"
     extClass = '.HomeHeroScans'
     extVersionCode = 5
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

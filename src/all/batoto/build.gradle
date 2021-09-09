@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'all.batoto'
     extClass = '.BatoToFactory'
     extVersionCode = 14
-    libVersion = '1.2'
     containsNsfw = true
 }
 

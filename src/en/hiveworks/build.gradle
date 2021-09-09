@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.hiveworks'
     extClass = '.Hiveworks'
     extVersionCode = 5
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

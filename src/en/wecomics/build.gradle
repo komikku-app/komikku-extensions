@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.wecomics'
     extClass = '.WeComics'
     extVersionCode = 2
-    libVersion = '1.2'
 }
 
 dependencies {

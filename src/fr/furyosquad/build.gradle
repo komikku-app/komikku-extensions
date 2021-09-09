@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'fr.furyosquad'
     extClass = '.FuryoSquad'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 dependencies {

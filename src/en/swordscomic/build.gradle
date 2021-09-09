@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.swordscomic'
     extClass = '.SwordsComic'
     extVersionCode = 2
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

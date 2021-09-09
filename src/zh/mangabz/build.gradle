@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'zh.mangabz'
     extClass = '.Mangabz'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 dependencies {

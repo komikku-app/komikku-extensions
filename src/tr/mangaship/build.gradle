@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'tr.mangaship'
     extClass = '.MangaShip'
     extVersionCode = 2
-    libVersion = '1.2'
 }
 
 dependencies {

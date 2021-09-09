@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.hbrowse'
     extClass = '.HBrowse'
     extVersionCode = 5
-    libVersion = '1.2'
     containsNsfw = true
 }
 

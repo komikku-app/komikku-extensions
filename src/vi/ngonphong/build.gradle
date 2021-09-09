@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'vi.ngonphong'
     extClass = '.NgonPhong'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

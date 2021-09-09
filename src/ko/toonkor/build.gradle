@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ko.toonkor'
     extClass = '.Toonkor'
     extVersionCode = 4
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

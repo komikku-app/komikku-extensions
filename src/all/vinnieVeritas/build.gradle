@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'all.vinnieVeritas'
     extClass = '.vinnieVeritasFactory'
     extVersionCode = 2
-    libVersion = '1.2'
 }
 
 dependencies {

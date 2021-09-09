@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.tmohentai'
     extClass = '.TMOHentai'
     extVersionCode = 5
-    libVersion = '1.2'
     containsNsfw = true
 }
 

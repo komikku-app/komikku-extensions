@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ko.jmana'
     extClass = '.JMana'
     extVersionCode = 12
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

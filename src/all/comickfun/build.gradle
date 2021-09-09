@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'all.comickfun'
     extClass = '.ComickFunFactory'
     extVersionCode = 6
-    libVersion = '1.2'
     containsNsfw = true
 }
 

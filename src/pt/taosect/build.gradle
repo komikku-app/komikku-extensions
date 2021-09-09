@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'pt.taosect'
     extClass = '.TaoSect'
     extVersionCode = 7
-    libVersion = '1.2'
 }
 
 dependencies {

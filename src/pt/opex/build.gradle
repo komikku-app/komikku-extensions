@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'pt.opex'
     extClass = '.OnePieceEx'
     extVersionCode = 4
-    libVersion = '1.2'
 }
 
 dependencies {

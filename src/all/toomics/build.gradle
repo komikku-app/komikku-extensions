@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'all.toomics'
     extClass = '.ToomicsFactory'
     extVersionCode = 6
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

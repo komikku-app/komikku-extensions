@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'pt.hqnow'
     extClass = '.HQNow'
     extVersionCode = 5
-    libVersion = '1.2'
 }
 
 dependencies {

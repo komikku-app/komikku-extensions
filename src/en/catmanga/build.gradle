@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = "en.catmanga"
     extClass = '.CatManga'
     extVersionCode = 4
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

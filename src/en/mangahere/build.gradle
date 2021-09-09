@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.mangahere'
     extClass = '.Mangahere'
     extVersionCode = 17
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

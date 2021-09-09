@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ko.newtoki'
     extClass = '.NewTokiFactory'
     extVersionCode = 21
-    libVersion = '1.2'
 }
 
 dependencies {

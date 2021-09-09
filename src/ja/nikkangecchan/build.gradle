@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ja.nikkangecchan'
     extClass = '.Nikkangecchan'
     extVersionCode = 2
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

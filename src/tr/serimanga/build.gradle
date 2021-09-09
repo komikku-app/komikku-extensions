@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'tr.serimanga'
     extClass = '.SeriManga'
     extVersionCode = 3
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

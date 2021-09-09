@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'zh.manhuagui'
     extClass = '.Manhuagui'
     extVersionCode = 9
-    libVersion = '1.2'
 }
 
 dependencies {

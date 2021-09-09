@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'zh.hanhankuman'
     extClass = '.HanhanKuman'
     extVersionCode = 4
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

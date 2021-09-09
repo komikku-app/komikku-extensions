@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'pt.muitomanga'
     extClass = '.MuitoManga'
     extVersionCode = 5
-    libVersion = '1.2'
     containsNsfw = true
 }
 

@@ -66,7 +66,7 @@ class Megatokyo : ParsedHttpSource() {
             .mapIndexed { i, element ->
                 Page(i, "", "https://megatokyo.com/" + element.attr("src"))
             }
-    //certificate wasn't trusted for some reason so trusted all certificates
+    // certificate wasn't trusted for some reason so trusted all certificates
     private fun getUnsafeOkHttpClient(): OkHttpClient {
         // Create a trust manager that does not validate certificate chains
         val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {

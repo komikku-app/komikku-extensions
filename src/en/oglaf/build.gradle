@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.oglaf'
     extClass = '.Oglaf'
     extVersionCode = 3
-    libVersion = '1.2'
     containsNsfw = true
 }
 

@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.mangahub'
     extClass = '.Mangahub'
     extVersionCode = 9
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

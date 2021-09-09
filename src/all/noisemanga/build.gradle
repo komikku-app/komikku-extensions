@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'all.noisemanga'
     extClass = '.NoiseMangaFactory'
     extVersionCode = 4
-    libVersion = '1.2'
 }
 
 dependencies {

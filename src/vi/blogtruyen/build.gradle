@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'vi.blogtruyen'
     extClass = '.BlogTruyen'
     extVersionCode = 8
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

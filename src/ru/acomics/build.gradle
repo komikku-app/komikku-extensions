@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ru.acomics'
     extClass = '.AComics'
     extVersionCode = 2
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

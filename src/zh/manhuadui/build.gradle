@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'zh.manhuadui'
     extClass = '.Manhuadui'
     extVersionCode = 15
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'fr.mangakawaii'
     extClass = '.MangaKawaii'
     extVersionCode = 31
-    libVersion = '1.2'
 }
 
 dependencies {

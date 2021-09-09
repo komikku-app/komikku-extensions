@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.tumangaonline'
     extClass = '.TuMangaOnline'
     extVersionCode = 35
-    libVersion = '1.2'
 }
 
 dependencies {

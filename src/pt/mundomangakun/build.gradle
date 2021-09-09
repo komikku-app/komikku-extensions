@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'pt.mundomangakun'
     extClass = '.MundoMangaKun'
     extVersionCode = 6
-    libVersion = '1.2'
     containsNsfw = true
 }
 

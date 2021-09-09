@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = "all.ninemanga"
     extClass = '.NineMangaFactory'
     extVersionCode = 15
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

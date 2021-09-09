@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'zh.baozimanhua'
     extClass = '.Baozimanhua'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

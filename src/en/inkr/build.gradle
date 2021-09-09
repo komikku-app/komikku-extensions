@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'en.inkr'
     extClass = '.Inkr'
     extVersionCode = 3
-    libVersion = '1.2'
     containsNsfw = true
 }
 

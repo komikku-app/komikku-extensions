@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'fr.lirescan'
     extClass = '.LireScan'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

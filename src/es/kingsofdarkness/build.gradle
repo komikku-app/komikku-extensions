@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.kingsofdarkness'
     extClass = '.KingsOfDarkness'
     extVersionCode = 1
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

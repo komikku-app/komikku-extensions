@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'it.perveden'
     extClass = '.Perveden'
     extVersionCode = 3
-    libVersion = '1.2'
     containsNsfw = true
 }
 

@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'en.mangafast'
     extClass = '.MangaFast'
     extVersionCode = 13
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"

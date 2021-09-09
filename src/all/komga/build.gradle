@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'all.komga'
     extClass = '.KomgaFactory'
     extVersionCode = 30
-    libVersion = '1.2'
 }
 
 dependencies {

@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'fr.kangaryu'
     extClass = '.Kangaryu'
     extVersionCode = 3
-    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"
