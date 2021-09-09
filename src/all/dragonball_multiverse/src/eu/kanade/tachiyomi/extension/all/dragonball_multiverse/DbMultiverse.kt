@@ -23,7 +23,7 @@ abstract class DbMultiverse(override val lang: String, private val internalLang:
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
         val href = element.attr("href")
-        chapter.url = "$baseUrl/$internalLang/$href"
+        chapter.setUrlWithoutDomain("/$internalLang/$href")
         chapter.name = href.substringBefore(".html").replace("-", " ")
 
         return chapter
