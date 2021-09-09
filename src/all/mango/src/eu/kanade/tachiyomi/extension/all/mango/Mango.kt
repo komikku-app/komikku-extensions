@@ -22,6 +22,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import info.debatty.java.stringsimilarity.JaroWinkler
 import info.debatty.java.stringsimilarity.Levenshtein
+import okhttp3.Dns
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.Interceptor
@@ -184,6 +185,7 @@ class Mango : ConfigurableSource, HttpSource() {
     override val supportsLatest = false
 
     override val baseUrl by lazy { getPrefBaseUrl() }
+    private val port by lazy { getPrefPort() }
     private val username by lazy { getPrefUsername() }
     private val password by lazy { getPrefPassword() }
     private val gson by lazy { Gson() }
@@ -199,6 +201,7 @@ class Mango : ConfigurableSource, HttpSource() {
 
     override val client: OkHttpClient =
         network.client.newBuilder()
+            .dns(Dns.SYSTEM)
             .addInterceptor { authIntercept(it) }
             .build()
 
@@ -211,7 +214,7 @@ class Mango : ConfigurableSource, HttpSource() {
         }
 
         // Do the login if we have not gotten the cookies yet
-        if (apiCookies.isEmpty() || !apiCookies.contains("mango-sessid-9000", true)) {
+        if (apiCookies.isEmpty() || !apiCookies.contains("mango-sessid-$port", true)) {
             doLogin(chain)
         }
 
@@ -243,16 +246,17 @@ class Mango : ConfigurableSource, HttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-        screen.addPreference(screen.editTextPreference(ADDRESS_TITLE, ADDRESS_DEFAULT, baseUrl))
-        screen.addPreference(screen.editTextPreference(USERNAME_TITLE, USERNAME_DEFAULT, username))
-        screen.addPreference(screen.editTextPreference(PASSWORD_TITLE, PASSWORD_DEFAULT, password, true))
+        screen.addPreference(screen.editTextPreference(ADDRESS_TITLE, ADDRESS_DEFAULT, baseUrl, "The URL to access your Mango instance. Please include the port number if you didn't set up a reverse proxy"))
+        screen.addPreference(screen.editTextPreference(PORT_TITLE, PORT_DEFAULT, port, "The port number to use if it's not the default 9000"))
+        screen.addPreference(screen.editTextPreference(USERNAME_TITLE, USERNAME_DEFAULT, username, "Your login username"))
+        screen.addPreference(screen.editTextPreference(PASSWORD_TITLE, PASSWORD_DEFAULT, password, "Your login password", true))
     }
 
-    private fun androidx.preference.PreferenceScreen.editTextPreference(title: String, default: String, value: String, isPassword: Boolean = false): androidx.preference.EditTextPreference {
+    private fun androidx.preference.PreferenceScreen.editTextPreference(title: String, default: String, value: String, summary: String, isPassword: Boolean = false): androidx.preference.EditTextPreference {
         return androidx.preference.EditTextPreference(context).apply {
             key = title
             this.title = title
-            summary = value
+            this.summary = summary
             this.setDefaultValue(default)
             dialogTitle = title
 
@@ -283,14 +287,17 @@ class Mango : ConfigurableSource, HttpSource() {
         }
         return path
     }
+    private fun getPrefPort(): String = preferences.getString(PORT_TITLE, PORT_DEFAULT)!!
     private fun getPrefUsername(): String = preferences.getString(USERNAME_TITLE, USERNAME_DEFAULT)!!
     private fun getPrefPassword(): String = preferences.getString(PASSWORD_TITLE, PASSWORD_DEFAULT)!!
 
     companion object {
         private const val ADDRESS_TITLE = "Address"
         private const val ADDRESS_DEFAULT = ""
+        private const val PORT_TITLE = "Server Port Number"
+        private const val PORT_DEFAULT = "9000"
         private const val USERNAME_TITLE = "Username"
-        private const val USERNAME_DEFAULT = ""
+        private const val USERNAME_DEFAULT = "admin"
         private const val PASSWORD_TITLE = "Password"
         private const val PASSWORD_DEFAULT = ""
     }

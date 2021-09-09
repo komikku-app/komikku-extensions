@@ -5,7 +5,7 @@ ext {
     extName = 'Mango'
     pkgNameSuffix = 'all.mango'
     extClass = '.Mango'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 dependencies {
