@@ -5,6 +5,7 @@
         <activity
             android:name=".zh.baozimanhua.BaozimanhuaUrlActivity"
             android:excludeFromRecents="true"
+            android:exported="true"
             android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

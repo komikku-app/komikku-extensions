@@ -6,6 +6,7 @@
         <activity
             android:name=".all.cubari.CubariUrlActivity"
             android:excludeFromRecents="true"
+            android:exported="true"
             android:theme="@android:style/Theme.NoDisplay">
             <!-- We need another intent filter so the /a/..* shortcut -->
             <!-- doesn't pollute the cubari one, since they work in any combination -->

@@ -4,6 +4,7 @@
   <application>
     <activity android:name="eu.kanade.tachiyomi.multisrc.mangadventure.MangAdventureActivity"
               android:theme="@android:style/Theme.NoDisplay"
+              android:exported="true"
               android:excludeFromRecents="true">
       <intent-filter>
         <action android:name="android.intent.action.VIEW"/>

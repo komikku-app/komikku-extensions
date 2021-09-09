@@ -97,7 +97,7 @@ abstract class WPMangaStream(
      */
     protected open fun mangaPathFromUrl(s: String): Single<String?> {
         val baseMangaUrl = baseUrl.toHttpUrlOrNull()!!
-         // Would be dope if wpmangastream had a mangaUrlDirectory like wpmangareader
+        // Would be dope if wpmangastream had a mangaUrlDirectory like wpmangareader
         val mangaDirectories = listOf("manga", "comics", "komik")
         return s.toHttpUrlOrNull()?.let { url ->
             fun pathLengthIs(url: HttpUrl, n: Int, strict: Boolean = false) = url.pathSegments.size == n && url.pathSegments[n - 1].isNotEmpty() || (!strict && url.pathSegments.size == n + 1 && url.pathSegments[n].isEmpty())
@@ -139,7 +139,6 @@ abstract class WPMangaStream(
                         }
             }
     }
-
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var url = "$baseUrl/manga/".toHttpUrlOrNull()!!.newBuilder()
