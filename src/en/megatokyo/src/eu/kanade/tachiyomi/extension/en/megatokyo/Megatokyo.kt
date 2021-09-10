@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -49,6 +50,10 @@ class Megatokyo : ParsedHttpSource() {
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> = fetchPopularManga(1)
         .map { it.mangas.first().apply { initialized = true } }
 
+    override fun chapterListParse(response: Response): List<SChapter> {
+        return super.chapterListParse(response).reversed()
+    }
+
     override fun chapterListSelector() =
         "div.content h2:contains(Comics by Date) + div ul li a[name]"
 
@@ -62,7 +67,7 @@ class Megatokyo : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document) =
-        document.select("#strip-bl a img")
+        document.select("#strip img")
             .mapIndexed { i, element ->
                 Page(i, "", "https://megatokyo.com/" + element.attr("src"))
             }
