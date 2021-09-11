@@ -40,8 +40,10 @@ if (System.getenv("CI") == null) {
 //    val lang = "all"
 //    val name = "mangadex"
 //    val projectName = ":extensions:individual:$lang:$name"
+//    val projectName = ":extensions:multisrc:$lang:$name"
 //    include(projectName)
 //    project(projectName).projectDir = File("src/${lang}/${name}")
+//    project(projectName).projectDir = File("generated-src/${lang}/${name}")
 } else {
     // Running in CI (GitHub Actions)
 
