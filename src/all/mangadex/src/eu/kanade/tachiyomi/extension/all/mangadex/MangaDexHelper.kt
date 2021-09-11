@@ -204,15 +204,15 @@ class MangaDexHelper() {
                 Locale(attr.originalLanguage ?: "").displayLanguage
             )
 
-            val authors = mangaDto.relationships.filter { relationshipDto ->
+            val authors = mangaDto.data.relationships.filter { relationshipDto ->
                 relationshipDto.type.equals(MDConstants.author, true)
             }.mapNotNull { it.attributes!!.name }.distinct()
 
-            val artists = mangaDto.relationships.filter { relationshipDto ->
+            val artists = mangaDto.data.relationships.filter { relationshipDto ->
                 relationshipDto.type.equals(MDConstants.artist, true)
             }.mapNotNull { it.attributes!!.name }.distinct()
 
-            val coverFileName = mangaDto.relationships.firstOrNull { relationshipDto ->
+            val coverFileName = mangaDto.data.relationships.firstOrNull { relationshipDto ->
                 relationshipDto.type.equals(MDConstants.coverArt, true)
             }?.attributes?.fileName
 
@@ -253,7 +253,7 @@ class MangaDexHelper() {
             val data = chapterDto.data
             val attr = data.attributes
 
-            val groups = chapterDto.relationships.filter { relationshipDto ->
+            val groups = chapterDto.data.relationships.filter { relationshipDto ->
                 relationshipDto.type.equals(
                     MDConstants.scanlator,
                     true
