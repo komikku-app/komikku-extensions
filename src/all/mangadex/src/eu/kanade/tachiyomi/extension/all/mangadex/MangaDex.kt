@@ -207,6 +207,18 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             if (preferences.getBoolean(MDConstants.getOriginalLanguageKoreanPref(dexLang), false)) {
                 addQueryParameter("originalLanguage[]", "ko")
             }
+            if (preferences.getBoolean(MDConstants.getContentRatingSafePrefKey(dexLang), true)) {
+                addQueryParameter("contentRating[]", "safe")
+            }
+            if (preferences.getBoolean(MDConstants.getContentRatingSuggestivePrefKey(dexLang), true)) {
+                addQueryParameter("contentRating[]", "suggestive")
+            }
+            if (preferences.getBoolean(MDConstants.getContentRatingEroticaPrefKey(dexLang), false)) {
+                addQueryParameter("contentRating[]", "erotica")
+            }
+            if (preferences.getBoolean(MDConstants.getContentRatingPornographicPrefKey(dexLang), false)) {
+                addQueryParameter("contentRating[]", "pornographic")
+            }
         }.build().toString()
         return GET(url, headers, CacheControl.FORCE_NETWORK)
     }
