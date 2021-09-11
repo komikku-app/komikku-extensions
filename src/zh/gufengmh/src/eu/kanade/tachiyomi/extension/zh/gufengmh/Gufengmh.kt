@@ -17,7 +17,7 @@ class Gufengmh : ParsedHttpSource() {
     override val name: String = "古风漫画网"
     override val lang: String = "zh"
     override val supportsLatest: Boolean = true
-    override val baseUrl: String = "https://m.gufengmh8.com"
+    override val baseUrl: String = "https://m.gufengmh9.com"
 
     // Popular
 
