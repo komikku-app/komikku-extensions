@@ -7,7 +7,7 @@ data class ChapterListDto(
     val limit: Int,
     val offset: Int,
     val total: Int,
-    val results: List<ChapterDto>,
+    val data: List<ChapterDataDto>,
 )
 
 @Serializable

@@ -11,7 +11,7 @@ data class MangaListDto(
     val limit: Int,
     val offset: Int,
     val total: Int,
-    val results: List<MangaDto>,
+    val data: List<MangaDataDto>,
 )
 
 @Serializable

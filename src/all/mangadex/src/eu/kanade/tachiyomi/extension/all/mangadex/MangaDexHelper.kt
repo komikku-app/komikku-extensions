@@ -2,9 +2,9 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 
 import android.util.Log
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AtHomeDto
-import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterDataDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaAttributesDto
-import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDataDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.asMdMap
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Page
@@ -166,15 +166,15 @@ class MangaDexHelper() {
     /**
      * create an SManga from json element only basic elements
      */
-    fun createBasicManga(mangaDto: MangaDto, coverFileName: String?, coverSuffix: String?): SManga {
+    fun createBasicManga(mangaDataDto: MangaDataDto, coverFileName: String?, coverSuffix: String?): SManga {
         return SManga.create().apply {
-            url = "/manga/${mangaDto.data.id}"
-            title = cleanString(mangaDto.data.attributes.title.asMdMap()["en"] ?: "")
+            url = "/manga/${mangaDataDto.id}"
+            title = cleanString(mangaDataDto.attributes.title.asMdMap()["en"] ?: "")
 
             coverFileName?.let {
                 thumbnail_url = when (coverSuffix != null && coverSuffix != "") {
-                    true -> "${MDConstants.cdnUrl}/covers/${mangaDto.data.id}/$coverFileName$coverSuffix"
-                    else -> "${MDConstants.cdnUrl}/covers/${mangaDto.data.id}/$coverFileName"
+                    true -> "${MDConstants.cdnUrl}/covers/${mangaDataDto.id}/$coverFileName$coverSuffix"
+                    else -> "${MDConstants.cdnUrl}/covers/${mangaDataDto.id}/$coverFileName"
                 }
             }
         }
@@ -183,10 +183,9 @@ class MangaDexHelper() {
     /**
      * Create an SManga from json element with all details
      */
-    fun createManga(mangaDto: MangaDto, chapters: List<String>, lang: String, coverSuffix: String?): SManga {
+    fun createManga(mangaDataDto: MangaDataDto, chapters: List<String>, lang: String, coverSuffix: String?): SManga {
         try {
-            val data = mangaDto.data
-            val attr = data.attributes
+            val attr = mangaDataDto.attributes
 
             // things that will go with the genre tags but aren't actually genre
 
@@ -204,15 +203,15 @@ class MangaDexHelper() {
                 Locale(attr.originalLanguage ?: "").displayLanguage
             )
 
-            val authors = mangaDto.data.relationships.filter { relationshipDto ->
+            val authors = mangaDataDto.relationships.filter { relationshipDto ->
                 relationshipDto.type.equals(MDConstants.author, true)
             }.mapNotNull { it.attributes!!.name }.distinct()
 
-            val artists = mangaDto.data.relationships.filter { relationshipDto ->
+            val artists = mangaDataDto.relationships.filter { relationshipDto ->
                 relationshipDto.type.equals(MDConstants.artist, true)
             }.mapNotNull { it.attributes!!.name }.distinct()
 
-            val coverFileName = mangaDto.data.relationships.firstOrNull { relationshipDto ->
+            val coverFileName = mangaDataDto.relationships.firstOrNull { relationshipDto ->
                 relationshipDto.type.equals(MDConstants.coverArt, true)
             }?.attributes?.fileName
 
@@ -222,7 +221,7 @@ class MangaDexHelper() {
             // map ids to tag names
             val genreList = (
                 attr.tags
-                    .map { it.id }
+                    .map { mangaDataDto.id }
                     .map { dexId ->
                         tags.firstOrNull { it.id == dexId }
                     }
@@ -232,7 +231,7 @@ class MangaDexHelper() {
                 .filter { it.isNullOrBlank().not() }
 
             val desc = attr.description.asMdMap()
-            return createBasicManga(mangaDto, coverFileName, coverSuffix).apply {
+            return createBasicManga(mangaDataDto, coverFileName, coverSuffix).apply {
                 description = cleanString(desc[lang] ?: desc["en"] ?: "")
                 author = authors.joinToString(", ")
                 artist = artists.joinToString(", ")
@@ -248,12 +247,11 @@ class MangaDexHelper() {
     /**
      * create the SChapter from json
      */
-    fun createChapter(chapterDto: ChapterDto): SChapter? {
+    fun createChapter(chapterDataDto: ChapterDataDto): SChapter? {
         try {
-            val data = chapterDto.data
-            val attr = data.attributes
+            val attr = chapterDataDto.attributes
 
-            val groups = chapterDto.data.relationships.filter { relationshipDto ->
+            val groups = chapterDataDto.relationships.filter { relationshipDto ->
                 relationshipDto.type.equals(
                     MDConstants.scanlator,
                     true
@@ -299,7 +297,7 @@ class MangaDexHelper() {
             // In future calculate [END] if non mvp api doesnt provide it
 
             return SChapter.create().apply {
-                url = "/chapter/${data.id}"
+                url = "/chapter/${chapterDataDto.id}"
                 name = cleanString(chapterName.joinToString(" "))
                 date_upload = parseDate(attr.publishAt)
                 scanlator = groups
