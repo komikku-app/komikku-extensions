@@ -70,7 +70,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Disaster Scans", "https://disasterscans.com", "en", overrideVersionCode = 1),
         SingleLang("Diskus Scan", "https://diskusscan.com", "pt-BR", overrideVersionCode = 1),
         SingleLang("DoujinHentai", "https://doujinhentai.net", "es", isNsfw = true, overrideVersionCode = 1),
-        SingleLang("DragonTea", "https://dragontea.ink/", "en", overrideVersionCode = 2),
+        SingleLang("DragonTea", "https://dragontea.ink", "en", overrideVersionCode = 3),
         SingleLang("Dream Manga", "https://en.ruyamanga.com", "en", overrideVersionCode = 2),
         SingleLang("Drope Scan", "https://dropescan.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("Dream Union Scan", "https://www.dreamunionscan.com", "pt-BR", overrideVersionCode = 1),
