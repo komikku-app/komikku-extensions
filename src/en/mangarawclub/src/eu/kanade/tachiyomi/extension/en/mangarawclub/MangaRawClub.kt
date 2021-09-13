@@ -58,7 +58,7 @@ class MangaRawClub : ParsedHttpSource() {
         if (titleElement == null) {
             titleElement = element.getElementsByClass("novel-title text2row").first()
         }
-        manga.thumbnail_url = coverElement.select("img").attr("data-src")
+        manga.thumbnail_url = coverElement.select("img").attr("abs:data-src")
         manga.setUrlWithoutDomain(element.select("a").first().attr("href"))
         manga.title = titleElement.text()
         return manga
