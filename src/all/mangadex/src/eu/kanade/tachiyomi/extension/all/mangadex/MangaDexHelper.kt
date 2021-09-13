@@ -221,7 +221,7 @@ class MangaDexHelper() {
             // map ids to tag names
             val genreList = (
                 attr.tags
-                    .map { mangaDataDto.id }
+                    .map { it.id }
                     .map { dexId ->
                         tags.firstOrNull { it.id == dexId }
                     }

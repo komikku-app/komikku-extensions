@@ -196,6 +196,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             addQueryParameter("limit", MDConstants.latestChapterLimit.toString())
             addQueryParameter("translatedLanguage[]", dexLang)
             addQueryParameter("order[publishAt]", "desc")
+            addQueryParameter("includeFutureUpdates", "0")
             if (preferences.getBoolean(MDConstants.getOriginalLanguageJapanesePref(dexLang), false)) {
                 addQueryParameter("originalLanguage[]", "ja")
             }
