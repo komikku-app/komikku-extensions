@@ -92,4 +92,6 @@ class PojokManga : Madara("Pojok Manga", "https://pojokmanga.com", "id", SimpleD
         Filter.Header("$name Project List page"),
         ProjectFilter(),
     )
+
+    override val useNewChapterEndpoint = true
 }
