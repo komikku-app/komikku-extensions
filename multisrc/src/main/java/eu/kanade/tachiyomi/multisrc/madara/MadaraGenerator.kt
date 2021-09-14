@@ -96,7 +96,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Glory Scans", "https://gloryscan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Gogoscans", "https://www.gogoscans.com", "en"),
         SingleLang("Graze Scans", "https://grazescans.com/", "en", overrideVersionCode = 1),
-        SingleLang("Gunahkar Manga", "https://gunahkarmanga.com", "tr"),
         SingleLang("GuncelManga", "https://guncelmanga.com", "tr", overrideVersionCode = 1),
         SingleLang("Hades no Fansub", "https://mangareaderpro.com/es", "es"),
         SingleLang("Hades no Fansub Hentai", "https://h.mangareaderpro.com", "es", isNsfw = true),
