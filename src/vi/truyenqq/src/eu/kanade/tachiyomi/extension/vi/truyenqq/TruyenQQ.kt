@@ -22,7 +22,7 @@ class TruyenQQ : ParsedHttpSource() {
 
     override val lang: String = "vi"
 
-    override val baseUrl: String = "https://truyenqq.net"
+    override val baseUrl: String = "https://truyenqqtop.com"
 
     override val supportsLatest: Boolean = true
 
