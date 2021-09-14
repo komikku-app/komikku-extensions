@@ -214,7 +214,7 @@ open class MangaPark(
             .build()
 
         return POST(
-            "$baseUrl/ajax.reader.subject.episodes.lang",
+            "$baseUrl/ajax.reader.subject.episodes.by.serial",
             headers = newHeaders,
             body = requestBody
         )
