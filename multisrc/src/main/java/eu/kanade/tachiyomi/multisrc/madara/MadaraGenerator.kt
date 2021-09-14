@@ -352,7 +352,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("SiXiang Scans", "http://www.sixiangscans.com", "en", overrideVersionCode = 1),
         SingleLang("Sindria Scanlator", "https://sindriascanlator.com", "pt-BR"),
         SingleLang("Sinensis", "https://sinensisscan.com", "pt-BR", overrideVersionCode = 1),
-        SingleLang("Siyahmelek", "https://siyahmelek.net", "tr", isNsfw = true, overrideVersionCode = 2),
+        SingleLang("Siyahmelek", "https://siyahmelek.net", "tr", isNsfw = true, overrideVersionCode = 3),
         SingleLang("Skymanga", "https://skymanga.co", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("SkyRaws", "https://skyraws.com", "en", overrideVersionCode = 1),
         SingleLang("Sleeping Knight Scans", "https://skscans.com", "en", overrideVersionCode = 2),
