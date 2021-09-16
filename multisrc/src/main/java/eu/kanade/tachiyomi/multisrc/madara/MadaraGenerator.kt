@@ -77,7 +77,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("EGY Manga", "https://egymanga.net", "ar"),
         SingleLang("Esomanga", "http://esomanga.com", "tr"),
         SingleLang("Eternal Scans", "https://eternalscans.com", "en"),
-        SingleLang("FastManhwa", "https://fastmanhwa.net", "en", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("FastManhwa", "https://fastmanhwa.net", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("FDM Scan", "https://fdmscan.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("Final Scans", "https://finalscans.com", "pt-BR", isNsfw = true),
         SingleLang("Fiz Manga", "https://fizmanga.com", "en"),

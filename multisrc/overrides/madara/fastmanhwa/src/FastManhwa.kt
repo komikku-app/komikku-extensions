@@ -6,4 +6,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Nsfw
-class FastManhwa : Madara("FastManhwa", "https://fastmanhwa.net", "en", dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.US))
+class FastManhwa : Madara("FastManhwa", "https://fastmanhwa.net", "en", dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.US)) {
+    override val useNewChapterEndpoint = true
+}
