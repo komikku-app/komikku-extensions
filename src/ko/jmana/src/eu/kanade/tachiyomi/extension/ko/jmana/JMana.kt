@@ -95,6 +95,7 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun chapterListSelector() = "div.content > div.books-list-detail > div.lst-wrap > ul > li"
+    private val TAG = "JMana"
 
     override fun chapterFromElement(element: Element): SChapter {
         val top = element.select("div.top-layout-m > div.inner > a.tit")
@@ -133,10 +134,35 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("div.pdf-wrap img").mapIndexed { i, img ->
-            Page(i, "", if (img.hasAttr("data-src")) img.attr("abs:data-src") else img.attr("abs:src"))
-        }
+        // <img class="comicdetail" style="width:auto;min-width:auto;margin:auto;display:block"
+        // data-src="https://img6.xyz.futbol/comics/jdrive01/202005/하야테처럼/하야테처럼! 1화/2d206674-93f5-4991-9420-6d63e2a00010.jpg">
+        val pages = document.select("div.pdf-wrap img.comicdetail")
+            .groupBy { img ->
+                val imageUrl = getImageUrl(img)
+                extractChapterName(imageUrl)
+            }
+            .maxByOrNull { it.value.size }
+            ?.value
+            ?.mapIndexed { i, img ->
+                Page(
+                    i,
+                    "",
+                    getImageUrl(img)
+                )
+            }
+        return pages ?: emptyList()
     }
+
+    /**
+     * Extracts the chapter name from the image url, e.g.
+     * https://img6.xyz.futbol/comics/jdrive01/202005/하야테처럼/하야테처럼! 1화/2d206674-93f5-4991-9420-6d63e2a00010.jpg
+     * -> '하야테처럼! 1화'
+     */
+    private fun extractChapterName(imageUrl: String) =
+        imageUrl.split('/').dropLast(1).lastOrNull()
+
+    private fun getImageUrl(img: Element) =
+        if (img.hasAttr("data-src")) img.attr("abs:data-src") else img.attr("abs:src")
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/comic_recent?page=$page", headers)
 
