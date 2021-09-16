@@ -112,7 +112,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
         val manga = SManga.create().apply {
             title = _title
             var picture = document.select("div.comicParticulars-title-left img").first().attr("data-src")
-            if (preferences.getBoolean(change_cdn_tomainland, false)) {
+            if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
                 picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun")
                 picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun")
             }
@@ -197,7 +197,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
         val ret = ArrayList<Page>(pageArray.length())
         for (i in 0 until pageArray.length()) {
             var page = pageArray.getJSONObject(i).getString("url")
-            if (preferences.getBoolean(change_cdn_tomainland, false)) {
+            if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
                 page = replaceToMirror2.replace(page, "mirror2.mangafunc.fun")
                 page = replaceToMirror.replace(page, "mirror.mangafunc.fun")
             }
@@ -339,7 +339,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
                 SManga.create().apply {
                     title = _title
                     var picture = obj.getString("cover")
-                    if (preferences.getBoolean(change_cdn_tomainland, false)) {
+                    if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
                         picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun")
                         picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun")
                     }
@@ -358,7 +358,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
         val manga = SManga.create()
         element.select("div.exemptComicItem-img > a > img").first().let {
             var picture = it.attr("data-src")
-            if (preferences.getBoolean(change_cdn_tomainland, false)) {
+            if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
                 picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun")
                 picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun")
             }
@@ -438,13 +438,13 @@ class CopyManga : ConfigurableSource, HttpSource() {
             }
         }
         val cdnPreference = androidx.preference.CheckBoxPreference(screen.context).apply {
-            key = change_cdn_tomainland
-            title = "转换图片CDN为国内"
-            summary = "加载图片使用国内CDN,可以使用代理的情况下请不要打开此选项"
+            key = CHANGE_CDN_OVERSEAS
+            title = "转换图片CDN为境外CDN"
+            summary = "加载图片使用境外CDN，使用代理的情况下推荐打开此选项（境外CDN可能无法查看一些刚刚更新的漫画，需要等待资源更新到CDN）"
 
             setOnPreferenceChangeListener { _, newValue ->
                 try {
-                    val setting = preferences.edit().putBoolean(change_cdn_tomainland, newValue as Boolean).commit()
+                    val setting = preferences.edit().putBoolean(CHANGE_CDN_OVERSEAS, newValue as Boolean).commit()
                     setting
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -458,6 +458,6 @@ class CopyManga : ConfigurableSource, HttpSource() {
 
     companion object {
         private const val SHOW_Simplified_Chinese_TITLE_PREF = "showSCTitle"
-        private const val change_cdn_tomainland = "changeCDN"
+        private const val CHANGE_CDN_OVERSEAS = "changeCDN"
     }
 }
