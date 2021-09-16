@@ -112,7 +112,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
         val manga = SManga.create().apply {
             title = _title
             var picture = document.select("div.comicParticulars-title-left img").first().attr("data-src")
-            if (!preferences.getBoolean(change_cdn_tomainland, false)) {
+            if (preferences.getBoolean(change_cdn_tomainland, false)) {
                 picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun")
                 picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun")
             }
@@ -197,7 +197,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
         val ret = ArrayList<Page>(pageArray.length())
         for (i in 0 until pageArray.length()) {
             var page = pageArray.getJSONObject(i).getString("url")
-            if (!preferences.getBoolean(change_cdn_tomainland, false)) {
+            if (preferences.getBoolean(change_cdn_tomainland, false)) {
                 page = replaceToMirror2.replace(page, "mirror2.mangafunc.fun")
                 page = replaceToMirror.replace(page, "mirror.mangafunc.fun")
             }
@@ -339,7 +339,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
                 SManga.create().apply {
                     title = _title
                     var picture = obj.getString("cover")
-                    if (!preferences.getBoolean(change_cdn_tomainland, false)) {
+                    if (preferences.getBoolean(change_cdn_tomainland, false)) {
                         picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun")
                         picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun")
                     }
@@ -358,7 +358,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
         val manga = SManga.create()
         element.select("div.exemptComicItem-img > a > img").first().let {
             var picture = it.attr("data-src")
-            if (!preferences.getBoolean(change_cdn_tomainland, false)) {
+            if (preferences.getBoolean(change_cdn_tomainland, false)) {
                 picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun")
                 picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun")
             }
