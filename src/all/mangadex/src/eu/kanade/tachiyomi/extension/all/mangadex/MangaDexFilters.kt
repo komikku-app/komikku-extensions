@@ -191,10 +191,13 @@ class MangaDexFilters {
         Filter.Select<String>("Excluded tags mode", arrayOf("And", "Or"), 1)
 
     val sortableList = listOf(
+        Pair("Alphabetic", "title"),
+        Pair("Chapter uploaded at", "latestUploadedChapter"),
         Pair("Number of follows", "followedCount"),
         Pair("Manga created at", "createdAt"),
         Pair("Manga info updated at", "updatedAt"),
-        Pair("Relevant manga", "relevance")
+        Pair("Relevant manga", "relevance"),
+        Pair("Year", "year")
     )
 
     class SortFilter(sortables: Array<String>) : Filter.Sort("Sort", sortables, Selection(0, false))
