@@ -246,7 +246,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Mangasushi", "https://mangasushi.net", "en", overrideVersionCode = 2),
         SingleLang("Mangauptocats", "https://mangauptocats.online", "th", overrideVersionCode = 1),
         SingleLang("Mangazuki.me", "https://mangazuki.me", "en", className = "MangazukiMe", overrideVersionCode = 1),
-        SingleLang("Mangceh", "https://mangceh.me", "id", isNsfw = true, overrideVersionCode = 2),
+        SingleLang("Mangceh", "https://mangceh.me", "id", isNsfw = true, overrideVersionCode = 3),
         SingleLang("Manhua Dragon", "https://manhuadragon.com", "en"),
         SingleLang("Manhua ES", "https://manhuaes.com", "en", overrideVersionCode = 5),
         SingleLang("Manhua Plus", "https://manhuaplus.com", "en", overrideVersionCode = 5),
