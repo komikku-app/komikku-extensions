@@ -298,7 +298,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Moon Witch In Love", "https://moonwitchinlove.com", "pt-BR", overrideVersionCode = 1),
         SingleLang("Mortals Groove", "https://mortalsgroove.com", "en"),
         SingleLang("Muctau", "https://muctau.com", "en"),
-        SingleLang("Mystical Merries", "https://mysticalmerries.com", "en", overrideVersionCode = 1),
+        SingleLang("Mystical Merries", "https://mysticalmerries.com", "en", overrideVersionCode = 2),
         SingleLang("NeatManga", "https://neatmanga.com", "en", overrideVersionCode = 2),
         SingleLang("NekoScan", "https://nekoscan.com", "en", overrideVersionCode = 2),
         SingleLang("NekoBreaker Scan", "https://nekobreakerscan.com", "pt-BR", overrideVersionCode = 1),
