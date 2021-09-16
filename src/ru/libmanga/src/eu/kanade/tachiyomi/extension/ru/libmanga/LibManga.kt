@@ -190,7 +190,7 @@ class LibManga : ConfigurableSource, HttpSource() {
         }
         val genres = document.select(".media-tags > a").map { it.text() }
         manga.title = document.select(".media-name__alt").text()
-        manga.thumbnail_url = baseUrl + document.select(".media-sidebar__cover > img").attr("src").substringAfter(baseOrig)
+        manga.thumbnail_url = document.select(".media-sidebar__cover > img").attr("src").substringAfter(baseOrig)
         manga.author = body.select("div.media-info-list__title:contains(Автор) + div").text()
         manga.artist = body.select("div.media-info-list__title:contains(Художник) + div").text()
         manga.status = if (document.html().contains("Манга удалена по просьбе правообладателей") ||
