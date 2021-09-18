@@ -36,4 +36,5 @@ class Toonily : Madara("Toonily", "https://toonily.com", "en") {
         Genre("Yaoi", "yaoi-webtoon"),
         Genre("Yuri", "yuri-webtoon")
     )
+    override val useNewChapterEndpoint: Boolean = true
 }

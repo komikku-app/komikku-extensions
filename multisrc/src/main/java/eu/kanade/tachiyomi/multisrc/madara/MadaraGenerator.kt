@@ -372,7 +372,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Time Naight", "https://timenaight.com", "tr"),
         SingleLang("Todaymic", "https://todaymic.com", "en", overrideVersionCode = 1),
         SingleLang("ToonGod", "https://www.toongod.com", "en", isNsfw = true, overrideVersionCode = 2),
-        SingleLang("Toonily", "https://toonily.com", "en", isNsfw = true, overrideVersionCode = 4),
+        SingleLang("Toonily", "https://toonily.com", "en", isNsfw = true, overrideVersionCode = 5),
         SingleLang("Toonily.net", "https://toonily.net", "en", isNsfw = true, className = "Toonilynet", overrideVersionCode = 2),
         SingleLang("ToonMany", "https://toonmany.com", "en", isNsfw = true),
         SingleLang("Top Manhua", "https://topmanhua.com", "en", overrideVersionCode = 1),
