@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.zh.copymanga
 import android.app.Application
 import android.content.SharedPreferences
 import com.luhuiguo.chinese.ChineseUtils
+import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
@@ -40,9 +41,16 @@ class CopyManga : ConfigurableSource, HttpSource() {
     override val supportsLatest = true
     private val popularLatestPageSize = 50 // default
     private val searchPageSize = 12 // default
+    private val mainlandCdn1Url = "https://1767566263.rsc.cdn77.org"
+    private val mainlandCdn2Url = "https://1025857477.rsc.cdn77.org"
+    private val overseasCdn1Url = "https://mirror2.mangafunc.fun"
+    private val overseasCdn2Url = "https://mirror.mangafunc.fun"
 
     val replaceToMirror2 = Regex("1767566263\\.rsc\\.cdn77\\.org")
     val replaceToMirror = Regex("1025857477\\.rsc\\.cdn77\\.org")
+
+    private val CONNECT_PERMITS = 1
+    private val CONNECT_PERIOD = 2L
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -62,7 +70,42 @@ class CopyManga : ConfigurableSource, HttpSource() {
         init(null, arrayOf(trustManager), SecureRandom())
     }
 
+    private val mainSiteApiRateLimitInterceptor = SpecificHostRateLimitInterceptor(
+        baseUrl.toHttpUrlOrNull()!!,
+        CONNECT_PERMITS,
+        CONNECT_PERIOD
+    )
+
+    private val mainlandCDN1RateLimitInterceptor = SpecificHostRateLimitInterceptor(
+        mainlandCdn1Url.toHttpUrlOrNull()!!,
+        CONNECT_PERMITS,
+        CONNECT_PERIOD
+    )
+
+    private val mainlandCDN2RateLimitInterceptor = SpecificHostRateLimitInterceptor(
+        mainlandCdn2Url.toHttpUrlOrNull()!!,
+        CONNECT_PERMITS,
+        CONNECT_PERIOD
+    )
+
+    private val overseasCDN1RateLimitInterceptor = SpecificHostRateLimitInterceptor(
+        overseasCdn1Url.toHttpUrlOrNull()!!,
+        CONNECT_PERMITS,
+        CONNECT_PERIOD
+    )
+
+    private val overseasCDN2RateLimitInterceptor = SpecificHostRateLimitInterceptor(
+        overseasCdn2Url.toHttpUrlOrNull()!!,
+        CONNECT_PERMITS,
+        CONNECT_PERIOD
+    )
+
     override val client: OkHttpClient = super.client.newBuilder()
+        .addInterceptor(mainSiteApiRateLimitInterceptor)
+        .addInterceptor(mainlandCDN1RateLimitInterceptor)
+        .addInterceptor(mainlandCDN2RateLimitInterceptor)
+        .addInterceptor(overseasCDN1RateLimitInterceptor)
+        .addInterceptor(overseasCDN2RateLimitInterceptor)
         .sslSocketFactory(sslContext.socketFactory, trustManager)
         .build()
 
@@ -136,10 +179,11 @@ class CopyManga : ConfigurableSource, HttpSource() {
     override fun chapterListRequest(manga: SManga) = mangaDetailsRequest(manga)
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val disposablePass = document.select("div.disposablePass").first().attr("disposable")
+        val disposablePass = document.select("div.detailPass").first()?.attr("disposable")
 
         // Get encrypted chapters data from another endpoint
-        val chapterResponse = client.newCall(GET("${response.request.url}/chapters", headers)).execute()
+        val chapterResponse =
+            client.newCall(GET("${response.request.url}/chapters", headers)).execute()
         val disposableData = JSONObject(chapterResponse.body!!.string()).get("results").toString()
 
         // Decrypt chapter JSON
@@ -162,7 +206,8 @@ class CopyManga : ConfigurableSource, HttpSource() {
                 val chapterGroup = chapterGroups.getJSONObject(groupName)
 
                 // group's last update time
-                val groupLastUpdateTime = chapterGroup.optJSONObject("last_chapter")?.optString("datetime_created")
+                val groupLastUpdateTime =
+                    chapterGroup.optJSONObject("last_chapter")?.optString("datetime_created")
 
                 // chapters in the group to
                 val chapterArray = chapterGroup.optJSONArray("chapters")
@@ -188,8 +233,8 @@ class CopyManga : ConfigurableSource, HttpSource() {
     override fun pageListRequest(chapter: SChapter) = GET(baseUrl + chapter.url, headers)
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        val disposableData = document.select("div.disData").first().attr("contentKey")
-        val disposablePass = document.select("div.disPass").first().attr("contentKey")
+        val disposableData = document.select("div.imageData").first().attr("contentKey")
+        val disposablePass = document.select("div.imagePass").first()?.attr("contentKey")
 
         val pageJsonString = decryptChapterData(disposableData, disposablePass)
         val pageArray = JSONArray(pageJsonString)
@@ -404,10 +449,10 @@ class CopyManga : ConfigurableSource, HttpSource() {
     }
 
     // thanks to unpacker toolsite, http://matthewfl.com/unPacker.html
-    private fun decryptChapterData(disposableData: String, disposablePass: String = "hotmanga.aes.key"): String {
+    private fun decryptChapterData(disposableData: String, disposablePass: String? = "hotmanga.aes.key"): String {
         val prePart = disposableData.substring(0, 16)
         val postPart = disposableData.substring(16, disposableData.length)
-        val disposablePassByteArray = disposablePass.toByteArray(Charsets.UTF_8)
+        val disposablePassByteArray = disposablePass?.toByteArray(Charsets.UTF_8)
         val prepartByteArray = prePart.toByteArray(Charsets.UTF_8)
         val dataByteArray = hexStringToByteArray(postPart)
 
