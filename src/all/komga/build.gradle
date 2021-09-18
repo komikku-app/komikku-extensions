@@ -1,11 +1,12 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Komga'
     pkgNameSuffix = 'all.komga'
     extClass = '.KomgaFactory'
-    extVersionCode = 30
+    extVersionCode = 31
 }
 
 dependencies {

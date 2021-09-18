@@ -1,5 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.komga.dto
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class PageWrapperDto<T>(
     val content: List<T>,
     val empty: Boolean,

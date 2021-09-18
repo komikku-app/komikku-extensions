@@ -1,10 +1,14 @@
 package eu.kanade.tachiyomi.extension.all.komga.dto
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class LibraryDto(
     val id: String,
     val name: String
 )
 
+@Serializable
 data class SeriesDto(
     val id: String,
     val libraryId: String,
@@ -17,6 +21,7 @@ data class SeriesDto(
     val booksMetadata: BookMetadataAggregationDto
 )
 
+@Serializable
 data class SeriesMetadataDto(
     val status: String,
     val created: String?,
@@ -39,6 +44,7 @@ data class SeriesMetadataDto(
     val tagsLock: Boolean
 )
 
+@Serializable
 data class BookMetadataAggregationDto(
     val authors: List<AuthorDto> = emptyList(),
     val tags: Set<String> = emptySet(),
@@ -50,6 +56,7 @@ data class BookMetadataAggregationDto(
     val lastModified: String
 )
 
+@Serializable
 data class BookDto(
     val id: String,
     val seriesId: String,
@@ -64,18 +71,21 @@ data class BookDto(
     val metadata: BookMetadataDto
 )
 
+@Serializable
 data class MediaDto(
     val status: String,
     val mediaType: String,
     val pagesCount: Int
 )
 
+@Serializable
 data class PageDto(
     val number: Int,
     val fileName: String,
     val mediaType: String
 )
 
+@Serializable
 data class BookMetadataDto(
     val title: String,
     val titleLock: Boolean,
@@ -91,11 +101,13 @@ data class BookMetadataDto(
     val authorsLock: Boolean
 )
 
+@Serializable
 data class AuthorDto(
     val name: String,
     val role: String
 )
 
+@Serializable
 data class CollectionDto(
     val id: String,
     val name: String,
@@ -106,6 +118,7 @@ data class CollectionDto(
     val filtered: Boolean
 )
 
+@Serializable
 data class ReadListDto(
     val id: String,
     val name: String,

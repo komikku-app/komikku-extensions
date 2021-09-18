@@ -1,3 +1,11 @@
+## 1.2.31
+
+Minimum Komga version required: `0.113.0`
+
+### Refactor
+
+* replace Gson with kotlinx.serialization 
+
 ## 1.2.30
 
 Minimum Komga version required: `0.113.0`
