@@ -30,7 +30,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Agent of Change Translations", "https://aoc.moe", "en", overrideVersionCode = 1),
         SingleLang("AkuManga", "https://akumanga.com", "ar", overrideVersionCode = 1),
         SingleLang("AllPornComic", "https://allporncomic.com", "en", isNsfw = true),
-        SingleLang("Ancient Empire Scan", "https://ancientempirescan.website", "es", overrideVersionCode = 1),
         SingleLang("Anime Center Scan", "https://animecenterscan.com", "pt-BR", isNsfw = true),
         SingleLang("Aqua Manga", "https://aquamanga.com", "en"),
         SingleLang("Anisa Manga", "https://anisamanga.com", "tr"),
