@@ -29,7 +29,7 @@ class AllHentai : ParsedHttpSource() {
 
     override val name = "AllHentai"
 
-    override val baseUrl = "http://wwv.allhen.live"
+    override val baseUrl = "http://24.allhen.online"
 
     override val lang = "ru"
 
