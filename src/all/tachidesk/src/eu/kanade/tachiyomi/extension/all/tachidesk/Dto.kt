@@ -8,8 +8,18 @@ data class SourceDataClass(
     val name: String?,
     val lang: String?,
     val iconUrl: String?,
+
+    /** The Source provides a latest listing */
     val supportsLatest: Boolean?,
-    val isConfigurable: Boolean?
+
+    /** The Source implements [ConfigurableSource] */
+    val isConfigurable: Boolean?,
+
+    /** The Source class has a @Nsfw annotation */
+    val isNsfw: Boolean?,
+
+    /** A nicer version of [name] */
+    val displayName: String?,
 )
 
 @Serializable
@@ -26,13 +36,15 @@ data class MangaDataClass(
     val artist: String? = null,
     val author: String? = null,
     val description: String? = null,
-    val genre: String? = null,
+    val genre: List<String> = emptyList(),
     val status: String = "UNKNOWN",
     val inLibrary: Boolean = false,
     val source: SourceDataClass? = null,
     val meta: Map<String, String> = emptyMap(),
 
-    val freshData: Boolean = false
+    val realUrl: String? = null,
+
+    val freshData: Boolean = false,
 )
 
 @Serializable

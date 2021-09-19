@@ -217,12 +217,13 @@ class Tachidesk : ConfigurableSource, HttpSource() {
     // ------------- Util -------------
 
     private fun MangaDataClass.toSManga() = SManga.create().also {
-        it.title = title
         it.url = id.toString()
+        it.title = title
         it.thumbnail_url = "$baseUrl$thumbnailUrl"
         it.artist = artist
         it.author = author
         it.description = description
+        it.genre = genre.joinToString(", ")
         it.status = when (status) {
             "ONGOING" -> SManga.ONGOING
             "COMPLETED" -> SManga.COMPLETED
