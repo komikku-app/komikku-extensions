@@ -3,26 +3,31 @@ package eu.kanade.tachiyomi.extension.pt.taosect
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
+import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
+import rx.Observable
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class TaoSect : ParsedHttpSource() {
+class TaoSect : HttpSource() {
 
     override val name = "Tao Sect"
 
@@ -30,179 +35,309 @@ class TaoSect : ParsedHttpSource() {
 
     override val lang = "pt-BR"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.client.newBuilder()
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
+
+    private val json: Json by injectLazy()
+
+    private val apiHeaders: Headers by lazy { apiHeadersBuilder().build() }
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", USER_AGENT)
         .add("Origin", baseUrl)
         .add("Referer", baseUrl)
 
+    private fun apiHeadersBuilder(): Headers.Builder = headersBuilder()
+        .add("Accept", ACCEPT_JSON)
+
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/situacao/ativos", headers)
+        val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
+            .addQueryParameter("order", "desc")
+            .addQueryParameter("orderby", "views")
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("per_page", PROJECTS_PER_PAGE.toString())
+            .addQueryParameter("_fields", DEFAULT_FIELDS)
+            .toString()
+
+        return GET(apiUrl, apiHeaders)
     }
 
-    override fun popularMangaSelector(): String = "div.post-list article.post-projeto"
+    override fun popularMangaParse(response: Response): MangasPage {
+        val result = json.decodeFromString<List<TaoSectProjectDto>>(response.body!!.string())
 
-    override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val sibling = element.nextElementSibling()!!
+        val projectList = result.map(::popularMangaFromObject)
 
-        title = sibling.select("h3.titulo-popover").text()!!
-        thumbnail_url = element.select("div.post-projeto-background")!!
-            .attr("style")
-            .substringAfter("url(")
-            .substringBefore(");")
-        setUrlWithoutDomain(element.select("a[title]").first()!!.attr("href"))
+        val currentPage = response.request.url.queryParameter("page")!!.toInt()
+        val lastPage = response.headers["X-Wp-TotalPages"]!!.toInt()
+        val hasNextPage = currentPage < lastPage
+
+        return MangasPage(projectList, hasNextPage)
     }
 
-    override fun popularMangaNextPageSelector(): String? = null
+    private fun popularMangaFromObject(obj: TaoSectProjectDto): SManga = SManga.create().apply {
+        title = Parser.unescapeEntities(obj.title!!.rendered, true)
+        thumbnail_url = obj.thumbnail
+        setUrlWithoutDomain(obj.link!!)
+    }
+
+    override fun latestUpdatesRequest(page: Int): Request {
+        val apiUrl = "$baseUrl/$API_BASE_PATH/capitulos".toHttpUrl().newBuilder()
+            .addQueryParameter("order", "desc")
+            .addQueryParameter("orderby", "date")
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("per_page", PROJECTS_PER_PAGE.toString())
+            .toString()
+
+        return GET(apiUrl, apiHeaders)
+    }
+
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val result = json.decodeFromString<List<TaoSectChapterDto>>(response.body!!.string())
+
+        if (result.isNullOrEmpty()) {
+            return MangasPage(emptyList(), hasNextPage = false)
+        }
+
+        val projectIds = result
+            .distinctBy { it.projectId!! }
+            .joinToString(",") { it.projectId!! }
+
+        val projectsApiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
+            .addQueryParameter("include", projectIds)
+            .addQueryParameter("orderby", "include")
+            .addQueryParameter("_fields", DEFAULT_FIELDS)
+            .toString()
+        val projectsRequest = GET(projectsApiUrl, apiHeaders)
+        val projectsResponse = client.newCall(projectsRequest).execute()
+        val projectsResult = json.decodeFromString<List<TaoSectProjectDto>>(projectsResponse.body!!.string())
+
+        val projectList = projectsResult.map(::popularMangaFromObject)
+
+        val currentPage = response.request.url.queryParameter("page")!!.toInt()
+        val lastPage = response.headers["X-Wp-TotalPages"]!!.toInt()
+        val hasNextPage = currentPage < lastPage
+
+        projectsResponse.close()
+
+        return MangasPage(projectList, hasNextPage)
+    }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/pesquisar-leitor".toHttpUrlOrNull()!!.newBuilder()
-            .addQueryParameter("leitor_titulo_projeto", query)
+        val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("per_page", PROJECTS_PER_PAGE.toString())
+            .addQueryParameter("search", query)
+            .addQueryParameter("_fields", DEFAULT_FIELDS)
 
         filters.forEach { filter ->
             when (filter) {
                 is CountryFilter -> {
                     filter.state
-                        .filter { it.state }
-                        .forEach { url.addQueryParameter("leitor_pais_projeto[]", it.id) }
+                        .groupBy { it.state }
+                        .entries
+                        .forEach { entry ->
+                            val values = entry.value.joinToString(",") { it.id }
+
+                            if (entry.key == Filter.TriState.STATE_EXCLUDE) {
+                                apiUrl.addQueryParameter("paises_exclude", values)
+                            } else if (entry.key == Filter.TriState.STATE_INCLUDE) {
+                                apiUrl.addQueryParameter("paises", values)
+                            }
+                        }
                 }
                 is StatusFilter -> {
                     filter.state
-                        .filter { it.state }
-                        .forEach { url.addQueryParameter("leitor_status_projeto[]", it.id) }
+                        .groupBy { it.state }
+                        .entries
+                        .forEach { entry ->
+                            val values = entry.value.joinToString(",") { it.id }
+
+                            if (entry.key == Filter.TriState.STATE_EXCLUDE) {
+                                apiUrl.addQueryParameter("situacao_exclude", values)
+                            } else if (entry.key == Filter.TriState.STATE_INCLUDE) {
+                                apiUrl.addQueryParameter("situacao", values)
+                            }
+                        }
                 }
                 is GenreFilter -> {
-                    filter.state.forEach { genre ->
-                        if (genre.isIncluded()) {
-                            url.addQueryParameter("leitor_tem_genero_projeto[]", genre.id)
-                        } else if (genre.isExcluded()) {
-                            url.addQueryParameter("leitor_n_tem_genero_projeto[]", genre.id)
+                    filter.state
+                        .groupBy { it.state }
+                        .entries
+                        .forEach { entry ->
+                            val values = entry.value.joinToString(",") { it.id }
+
+                            if (entry.key == Filter.TriState.STATE_EXCLUDE) {
+                                apiUrl.addQueryParameter("generos_exclude", values)
+                            } else if (entry.key == Filter.TriState.STATE_INCLUDE) {
+                                apiUrl.addQueryParameter("generos", values)
+                            }
                         }
-                    }
                 }
                 is SortFilter -> {
-                    val sort = when {
-                        filter.state == null -> "a_z"
-                        filter.state!!.ascending -> SORT_LIST[filter.state!!.index].first
-                        else -> SORT_LIST[filter.state!!.index].second
-                    }
+                    val orderBy = if (filter.state == null) SORT_LIST[DEFAULT_ORDERBY].id else
+                        SORT_LIST[filter.state!!.index].id
+                    val order = if (filter.state?.ascending == true) "asc" else "desc"
 
-                    url.addQueryParameter("leitor_ordem_projeto", sort)
+                    apiUrl.addQueryParameter("order", order)
+                    apiUrl.addQueryParameter("orderby", orderBy)
                 }
             }
         }
 
-        return GET(url.toString(), headers)
+        return GET(apiUrl.toString(), apiHeaders)
     }
 
-    override fun searchMangaSelector() = "article.manga_item"
+    override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
 
-    override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.select("h2.titulo_manga_item a")!!.text()
-        thumbnail_url = element.select("div.container_imagem")!!
-            .attr("style")
-            .substringAfter("url(")
-            .substringBefore(");")
-        setUrlWithoutDomain(element.select("h2.titulo_manga_item a")!!.attr("href"))
+    // Workaround to allow "Open in browser" use the real URL.
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        return client.newCall(mangaDetailsApiRequest(manga))
+            .asObservableSuccess()
+            .map { response ->
+                mangaDetailsParse(response).apply { initialized = true }
+            }
     }
 
-    override fun searchMangaNextPageSelector(): String? = null
+    private fun mangaDetailsApiRequest(manga: SManga): Request {
+        val projectSlug = manga.url
+            .substringAfterLast("projeto/")
+            .substringBefore("/")
 
-    override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val header = document.select("div.cabelho-projeto").first()!!
+        val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
+            .addQueryParameter("per_page", "1")
+            .addQueryParameter("slug", projectSlug)
+            .addQueryParameter("_fields", "title,informacoes,content,thumbnail")
+            .toString()
 
-        title = header.select("h1.titulo-projeto")!!.text()
-        author = header.select("table.tabela-projeto tr:eq(1) td:eq(1)")!!.text()
-        artist = header.select("table.tabela-projeto tr:eq(0) td:eq(1)")!!.text()
-        genre = header.select("table.tabela-projeto tr:eq(11) a").joinToString { it.text() }
-        status = header.select("table.tabela-projeto tr:eq(5) td:eq(1)")!!.text().toStatus()
-        description = header.select("table.tabela-projeto tr:eq(10) p")!!.text()
-        thumbnail_url = header.select("div.imagens-projeto img[alt]").first()!!.attr("data-src")
+        return GET(apiUrl, apiHeaders)
+    }
+
+    override fun mangaDetailsParse(response: Response): SManga {
+        val result = json.decodeFromString<List<TaoSectProjectDto>>(response.body!!.string())
+
+        if (result.isNullOrEmpty()) {
+            throw Exception(PROJECT_NOT_FOUND)
+        }
+
+        val project = result[0]
+
+        return SManga.create().apply {
+            title = Parser.unescapeEntities(project.title!!.rendered, true)
+            author = project.info!!.script
+            artist = project.info.art
+            genre = project.info.genres.joinToString { it.name }
+            status = project.info.status!!.name.toStatus()
+            description = Jsoup.parse(project.content!!.rendered).text() +
+                "\n\nTítulo original: " + project.info.originalTitle +
+                "\nSerialização: " + project.info.serialization
+            thumbnail_url = project.thumbnail
+        }
+    }
+
+    override fun chapterListRequest(manga: SManga): Request {
+        val projectSlug = manga.url
+            .substringAfterLast("projeto/")
+            .substringBefore("/")
+
+        val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
+            .addQueryParameter("per_page", "1")
+            .addQueryParameter("slug", projectSlug)
+            .addQueryParameter("_fields", "id,slug,capitulos")
+            .toString()
+
+        return GET(apiUrl, apiHeaders)
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val document = response.asJsoup()
+        val result = json.decodeFromString<List<TaoSectProjectDto>>(response.body!!.string())
 
-        // Count the project views, requested by the scanlator.
-        // The website counts the views every time a request is done to the project page,
-        // so to mimic this behavior, the count view request is sent in the chapterListParse,
-        // that will then get called every time in the global update.
-        val projectScript = document.selectFirst("script:containsData(dataAjax.url)").data()
-        val projectId = PROJECT_ID_REGEX.find(projectScript)?.groupValues?.get(1)
-
-        if (projectId.isNullOrBlank().not()) {
-            val countViewRequest = countViewRequest(document.location(), projectId!!)
-            runCatching { client.newCall(countViewRequest).execute().close() }
+        if (result.isNullOrEmpty()) {
+            throw Exception(PROJECT_NOT_FOUND)
         }
 
-        return document.select(chapterListSelector())
-            .map(::chapterFromElement)
+        val project = result[0]
+
+        // Count the project views, requested by the scanlator.
+        val countViewRequest = countViewRequest(project.id.toString())
+        runCatching { client.newCall(countViewRequest).execute().close() }
+
+        val timeNow = System.currentTimeMillis()
+
+        return project.volumes!!
+            .flatMap { it.chapters }
             .reversed()
+            .map { chapterFromObject(it, project) }
+            .filter { it.date_upload <= timeNow }
     }
 
-    override fun chapterListSelector() = "table.tabela-volumes tr"
-
-    override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        name = element.select("td[align='left'] a")!!.text()
+    private fun chapterFromObject(obj: TaoSectChapterDto, project: TaoSectProjectDto): SChapter = SChapter.create().apply {
+        name = obj.name
         scanlator = this@TaoSect.name
-        date_upload = element.select("td[align='right']")!!.text().toDate()
-
-        // The page have a template problem and it's printing the end of the PHP echo command.
-        val fixedUrl = element.select("td[align='left'] a")!!
-            .attr("href")
-            .substringBeforeLast(";")
-        setUrlWithoutDomain(fixedUrl)
+        date_upload = if (obj.releaseDate.isNullOrEmpty().not()) obj.releaseDate!!.toDate() else obj.date.toDate()
+        url = "/leitor-online/projeto/${project.slug!!}/${obj.slug}/"
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
-        val projectUrl = "$baseUrl/" + chapter.url
-            .substringAfter("online/")
+        val projectSlug = chapter.url
+            .substringAfter("projeto/")
             .substringBefore("/")
+        val chapterSlug = chapter.url
+            .removeSuffix("/")
+            .substringAfterLast("/")
 
-        val newHeaders = headersBuilder()
-            .set("Referer", projectUrl)
-            .build()
+        val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
+            .addQueryParameter("per_page", "1")
+            .addQueryParameter("slug", projectSlug)
+            .addQueryParameter("chapter_slug", chapterSlug)
+            .addQueryParameter("_fields", "id,slug,capitulos")
+            .toString()
 
-        return GET(baseUrl + chapter.url, newHeaders)
+        return GET(apiUrl, apiHeaders)
     }
 
-    override fun pageListParse(document: Document): List<Page> {
-        val readerScript = document.selectFirst("script:containsData(var paginas)")!!.data()
+    override fun pageListParse(response: Response): List<Page> {
+        val result = json.decodeFromString<List<TaoSectProjectDto>>(response.body!!.string())
 
-        // Count the chapter views, requested by the scanlator.
-        val projectId = PROJECT_ID_REGEX.find(readerScript)?.groupValues?.get(1)
-        val chapterId = CHAPTER_ID_REGEX.find(readerScript)?.groupValues?.get(1)
-
-        if (projectId.isNullOrBlank().not() && chapterId.isNullOrEmpty().not()) {
-            val countViewRequest = countViewRequest(document.location(), projectId!!, chapterId!!)
-            runCatching { client.newCall(countViewRequest).execute().close() }
+        if (result.isNullOrEmpty()) {
+            throw Exception(PROJECT_NOT_FOUND)
         }
 
-        return readerScript
-            .substringAfter("var paginas = [")
-            .substringBefore("];")
-            .split(",")
-            .mapIndexed { i, url ->
-                Page(i, document.location(), url.replace("\"", ""))
-            }
+        val project = result[0]
+        val chapterSlug = response.request.url.queryParameter("chapter_slug")!!
+
+        val chapter = project.volumes!!
+            .flatMap { it.chapters }
+            .firstOrNull { it.slug == chapterSlug }
+            ?: throw Exception(CHAPTER_NOT_FOUND)
+
+        val chapterUrl = "$baseUrl/leitor-online/projeto/${project.slug!!}/${chapter.slug}"
+
+        // Count the chapter views, requested by the scanlator.
+        val countViewRequest = countViewRequest(project.id!!.toString(), chapter.id)
+        runCatching { client.newCall(countViewRequest).execute().close() }
+
+        return chapter.pages.mapIndexed { i, pageUrl ->
+            Page(i, chapterUrl, pageUrl)
+        }
     }
 
-    override fun imageUrlParse(document: Document) = ""
+    override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
+
+    override fun imageUrlParse(response: Response): String = ""
 
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()
+            .add("Accept", ACCEPT_IMAGE)
             .set("Referer", page.url)
             .build()
 
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    private fun countViewRequest(chapterUrl: String, projectId: String, chapterId: String? = null): Request {
+    private fun countViewRequest(projectId: String, chapterId: String? = null): Request {
         val formBodyBuilder = FormBody.Builder()
             .add("action", "update_views")
             .add("projeto", projectId)
@@ -216,7 +351,6 @@ class TaoSect : ParsedHttpSource() {
         val newHeaders = headersBuilder()
             .add("Content-Length", formBody.contentLength().toString())
             .add("Content-Type", formBody.contentType().toString())
-            .set("Referer", chapterUrl)
             .build()
 
         return POST("$baseUrl/wp-admin/admin-ajax.php", newHeaders, formBody)
@@ -224,34 +358,26 @@ class TaoSect : ParsedHttpSource() {
 
     override fun getFilterList(): FilterList = FilterList(
         CountryFilter(getCountryList()),
-        StatusFilter(getStatusList()),
+        // Status filter is broken on the API at the moment.
+        // It will be fixed by the scanlator team.
+        // StatusFilter(getStatusList()),
         GenreFilter(getGenreList()),
         SortFilter()
     )
 
-    private class Tag(val id: String, name: String) : Filter.CheckBox(name)
-
-    private class Genre(val id: String, name: String) : Filter.TriState(name)
+    private class Tag(val id: String, name: String) : Filter.TriState(name)
 
     private class CountryFilter(countries: List<Tag>) : Filter.Group<Tag>("País", countries)
 
     private class StatusFilter(status: List<Tag>) : Filter.Group<Tag>("Status", status)
 
-    private class GenreFilter(genres: List<Genre>) : Filter.Group<Genre>("Gêneros", genres)
+    private class GenreFilter(genres: List<Tag>) : Filter.Group<Tag>("Gêneros", genres)
 
     private class SortFilter : Filter.Sort(
         "Ordem",
-        SORT_LIST.map { it.third }.toTypedArray(),
-        Selection(0, true)
+        SORT_LIST.map { it.name }.toTypedArray(),
+        Selection(DEFAULT_ORDERBY, false)
     )
-
-    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException("Not used")
-
-    override fun latestUpdatesSelector() = throw UnsupportedOperationException("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SManga = throw UnsupportedOperationException("Not used")
-
-    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException("Not used")
 
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(this)?.time }
@@ -277,54 +403,60 @@ class TaoSect : ParsedHttpSource() {
         Tag("6", "One-shot")
     )
 
-    // [...document.querySelectorAll("#leitor_tem_genero_projeto option")]
-    //     .map(el => `Genre("${el.getAttribute("value")}", "${el.innerText}")`).join(',\n')
-    private fun getGenreList(): List<Genre> = listOf(
-        Genre("31", "4Koma"),
-        Genre("24", "Ação"),
-        Genre("84", "Adulto"),
-        Genre("21", "Artes Marciais"),
-        Genre("25", "Aventura"),
-        Genre("26", "Comédia"),
-        Genre("66", "Culinária"),
-        Genre("78", "Doujinshi"),
-        Genre("22", "Drama"),
-        Genre("12", "Ecchi"),
-        Genre("30", "Escolar"),
-        Genre("76", "Esporte"),
-        Genre("23", "Fantasia"),
-        Genre("29", "Harém"),
-        Genre("75", "Histórico"),
-        Genre("83", "Horror"),
-        Genre("18", "Isekai"),
-        Genre("20", "Light Novel"),
-        Genre("61", "Manhua"),
-        Genre("56", "Psicológico"),
-        Genre("7", "Romance"),
-        Genre("27", "Sci-fi"),
-        Genre("28", "Seinen"),
-        Genre("55", "Shoujo"),
-        Genre("54", "Shounen"),
-        Genre("19", "Slice of life"),
-        Genre("17", "Sobrenatural"),
-        Genre("57", "Tragédia"),
-        Genre("62", "Webtoon")
+    private fun getGenreList(): List<Tag> = listOf(
+        Tag("31", "4Koma"),
+        Tag("24", "Ação"),
+        Tag("84", "Adulto"),
+        Tag("21", "Artes Marciais"),
+        Tag("25", "Aventura"),
+        Tag("26", "Comédia"),
+        Tag("66", "Culinária"),
+        Tag("78", "Doujinshi"),
+        Tag("22", "Drama"),
+        Tag("12", "Ecchi"),
+        Tag("30", "Escolar"),
+        Tag("76", "Esporte"),
+        Tag("23", "Fantasia"),
+        Tag("29", "Harém"),
+        Tag("75", "Histórico"),
+        Tag("83", "Horror"),
+        Tag("18", "Isekai"),
+        Tag("20", "Light Novel"),
+        Tag("61", "Manhua"),
+        Tag("56", "Psicológico"),
+        Tag("7", "Romance"),
+        Tag("27", "Sci-fi"),
+        Tag("28", "Seinen"),
+        Tag("55", "Shoujo"),
+        Tag("54", "Shounen"),
+        Tag("19", "Slice of life"),
+        Tag("17", "Sobrenatural"),
+        Tag("57", "Tragédia"),
+        Tag("62", "Webtoon")
     )
 
     companion object {
-        private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
+        private const val ACCEPT_IMAGE = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+        private const val ACCEPT_JSON = "application/json"
+        private val USER_AGENT = "Tachiyomi " + System.getProperty("http.agent")
+
+        private const val API_BASE_PATH = "wp-json/wp/v2"
+        private const val PROJECTS_PER_PAGE = 18
+        private const val DEFAULT_ORDERBY = 4
+        private const val DEFAULT_FIELDS = "title,thumbnail,link"
+        private const val PROJECT_NOT_FOUND = "Projeto não encontrado."
+        private const val CHAPTER_NOT_FOUND = "Capítulo não encontrado."
 
         private val DATE_FORMATTER by lazy {
-            SimpleDateFormat("(dd/MM/yyyy)", Locale.ENGLISH)
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
         }
 
         private val SORT_LIST = listOf(
-            Triple("a_z", "z_a", "Nome"),
-            Triple("dt_asc", "date-desc", "Data")
+            Tag("date", "Data de criação"),
+            Tag("modified", "Data de modificação"),
+            Tag("destaque", "Destaque"),
+            Tag("title", "Título"),
+            Tag("views", "Visualizações")
         )
-
-        private val PROJECT_ID_REGEX = "projeto: '(\\d+)',?".toRegex()
-        private val CHAPTER_ID_REGEX = "capitulo: '(\\d+)',?".toRegex()
     }
 }
