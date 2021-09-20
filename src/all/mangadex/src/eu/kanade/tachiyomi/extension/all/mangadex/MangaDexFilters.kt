@@ -200,7 +200,7 @@ class MangaDexFilters {
         Pair("Year", "year")
     )
 
-    class SortFilter(sortables: Array<String>) : Filter.Sort("Sort", sortables, Selection(0, false))
+    class SortFilter(sortables: Array<String>) : Filter.Sort("Sort", sortables, Selection(2, false))
 
     internal fun addFiltersToUrl(url: HttpUrl.Builder, filters: FilterList): String {
         url.apply {
