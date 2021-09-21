@@ -24,7 +24,7 @@ class GoldenMangas : ParsedHttpSource() {
 
     override val name = "Golden Mangás"
 
-    override val baseUrl = "https://goldenmangas.top"
+    override val baseUrl = "https://goldenmanga.top"
 
     override val lang = "pt-BR"
 
@@ -34,7 +34,7 @@ class GoldenMangas : ParsedHttpSource() {
         .connectTimeout(1, TimeUnit.MINUTES)
         .readTimeout(1, TimeUnit.MINUTES)
         .writeTimeout(1, TimeUnit.MINUTES)
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 3, TimeUnit.SECONDS))
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
@@ -174,10 +174,12 @@ class GoldenMangas : ParsedHttpSource() {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7,es;q=0.6,gl;q=0.5"
         private const val REFERER = "https://google.com/"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36"
 
         private val FLAG_REGEX = "\\((Pt[-/]br|Scan)\\)".toRegex(RegexOption.IGNORE_CASE)
 
-        private val DATE_FORMATTER by lazy { SimpleDateFormat("(dd/MM/yyyy)", Locale.ENGLISH) }
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("(dd/MM/yyyy)", Locale.ENGLISH)
+        }
     }
 }

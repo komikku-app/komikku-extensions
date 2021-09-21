@@ -5,7 +5,7 @@ ext {
     extName = 'Golden Mangás'
     pkgNameSuffix = 'pt.goldenmangas'
     extClass = '.GoldenMangas'
-    extVersionCode = 12
+    extVersionCode = 13
 }
 
 dependencies {
