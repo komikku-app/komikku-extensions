@@ -47,6 +47,5 @@ data class TaoSectChapterDto(
     @SerialName("nome_capitulo") val name: String = "",
     @SerialName("paginas") val pages: List<String> = emptyList(),
     @SerialName("post_id") val projectId: String? = "",
-    @SerialName("data_hora_agendamento") val releaseDate: String? = "",
     val slug: String = ""
 )

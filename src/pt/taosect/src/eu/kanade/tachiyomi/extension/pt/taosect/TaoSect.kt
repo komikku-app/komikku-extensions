@@ -45,6 +45,8 @@ class TaoSect : HttpSource() {
 
     private val apiHeaders: Headers by lazy { apiHeadersBuilder().build() }
 
+    private var latestIds: List<String> = emptyList()
+
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", USER_AGENT)
         .add("Origin", baseUrl)
@@ -66,7 +68,7 @@ class TaoSect : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<List<TaoSectProjectDto>>(response.body!!.string())
+        val result = response.parseAs<List<TaoSectProjectDto>>()
 
         val projectList = result.map(::popularMangaFromObject)
 
@@ -88,37 +90,49 @@ class TaoSect : HttpSource() {
             .addQueryParameter("order", "desc")
             .addQueryParameter("orderby", "date")
             .addQueryParameter("page", page.toString())
-            .addQueryParameter("per_page", PROJECTS_PER_PAGE.toString())
+            .addQueryParameter("per_page", (PROJECTS_PER_PAGE * 2).toString())
             .toString()
 
         return GET(apiUrl, apiHeaders)
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<List<TaoSectChapterDto>>(response.body!!.string())
+        val result = response.parseAs<List<TaoSectChapterDto>>()
 
         if (result.isNullOrEmpty()) {
             return MangasPage(emptyList(), hasNextPage = false)
         }
 
+        val currentPage = response.request.url.queryParameter("page")!!.toInt()
+        val lastPage = response.headers["X-Wp-TotalPages"]!!.toInt()
+        val hasNextPage = currentPage < lastPage
+
+        if (currentPage == 1) {
+            latestIds = emptyList()
+        }
+
         val projectIds = result
-            .distinctBy { it.projectId!! }
-            .joinToString(",") { it.projectId!! }
+            .map { it.projectId!! }
+            .distinct()
+            .filterNot { latestIds.contains(it) }
+
+        latestIds = latestIds + projectIds
+
+        if (projectIds.isEmpty()) {
+            return MangasPage(emptyList(), hasNextPage)
+        }
 
         val projectsApiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
-            .addQueryParameter("include", projectIds)
+            .addQueryParameter("include", projectIds.joinToString(","))
+            .addQueryParameter("per_page", projectIds.size.toString())
             .addQueryParameter("orderby", "include")
             .addQueryParameter("_fields", DEFAULT_FIELDS)
             .toString()
         val projectsRequest = GET(projectsApiUrl, apiHeaders)
         val projectsResponse = client.newCall(projectsRequest).execute()
-        val projectsResult = json.decodeFromString<List<TaoSectProjectDto>>(projectsResponse.body!!.string())
+        val projectsResult = projectsResponse.parseAs<List<TaoSectProjectDto>>()
 
         val projectList = projectsResult.map(::popularMangaFromObject)
-
-        val currentPage = response.request.url.queryParameter("page")!!.toInt()
-        val lastPage = response.headers["X-Wp-TotalPages"]!!.toInt()
-        val hasNextPage = currentPage < lastPage
 
         projectsResponse.close()
 
@@ -129,8 +143,11 @@ class TaoSect : HttpSource() {
         val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
             .addQueryParameter("page", page.toString())
             .addQueryParameter("per_page", PROJECTS_PER_PAGE.toString())
-            .addQueryParameter("search", query)
             .addQueryParameter("_fields", DEFAULT_FIELDS)
+
+        if (query.isNotEmpty()) {
+            apiUrl.addQueryParameter("search", query)
+        }
 
         filters.forEach { filter ->
             when (filter) {
@@ -184,6 +201,15 @@ class TaoSect : HttpSource() {
                     apiUrl.addQueryParameter("order", order)
                     apiUrl.addQueryParameter("orderby", orderBy)
                 }
+                is FeaturedFilter -> {
+                    if (query.isEmpty()) {
+                        if (filter.state == Filter.TriState.STATE_INCLUDE) {
+                            apiUrl.addQueryParameter("destaque", "1")
+                        } else if (filter.state == Filter.TriState.STATE_EXCLUDE) {
+                            apiUrl.addQueryParameter("destaque", "0")
+                        }
+                    }
+                }
             }
         }
 
@@ -216,7 +242,7 @@ class TaoSect : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val result = json.decodeFromString<List<TaoSectProjectDto>>(response.body!!.string())
+        val result = response.parseAs<List<TaoSectProjectDto>>()
 
         if (result.isNullOrEmpty()) {
             throw Exception(PROJECT_NOT_FOUND)
@@ -252,7 +278,7 @@ class TaoSect : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = json.decodeFromString<List<TaoSectProjectDto>>(response.body!!.string())
+        val result = response.parseAs<List<TaoSectProjectDto>>()
 
         if (result.isNullOrEmpty()) {
             throw Exception(PROJECT_NOT_FOUND)
@@ -264,19 +290,16 @@ class TaoSect : HttpSource() {
         val countViewRequest = countViewRequest(project.id.toString())
         runCatching { client.newCall(countViewRequest).execute().close() }
 
-        val timeNow = System.currentTimeMillis()
-
         return project.volumes!!
             .flatMap { it.chapters }
             .reversed()
             .map { chapterFromObject(it, project) }
-            .filter { it.date_upload <= timeNow }
     }
 
     private fun chapterFromObject(obj: TaoSectChapterDto, project: TaoSectProjectDto): SChapter = SChapter.create().apply {
         name = obj.name
         scanlator = this@TaoSect.name
-        date_upload = if (obj.releaseDate.isNullOrEmpty().not()) obj.releaseDate!!.toDate() else obj.date.toDate()
+        date_upload = obj.date.toDate()
         url = "/leitor-online/projeto/${project.slug!!}/${obj.slug}/"
     }
 
@@ -299,7 +322,7 @@ class TaoSect : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = json.decodeFromString<List<TaoSectProjectDto>>(response.body!!.string())
+        val result = response.parseAs<List<TaoSectProjectDto>>()
 
         if (result.isNullOrEmpty()) {
             throw Exception(PROJECT_NOT_FOUND)
@@ -319,9 +342,30 @@ class TaoSect : HttpSource() {
         val countViewRequest = countViewRequest(project.id!!.toString(), chapter.id)
         runCatching { client.newCall(countViewRequest).execute().close() }
 
-        return chapter.pages.mapIndexed { i, pageUrl ->
+        val pages = chapter.pages.mapIndexed { i, pageUrl ->
             Page(i, chapterUrl, pageUrl)
         }
+
+        // Check if the pages have exceeded the view limit of Google Drive.
+        val firstPage = pages[0]
+
+        val hasExceededViewLimit = runCatching {
+            val firstPageRequest = imageRequest(firstPage)
+            val firstPageResponse = client.newCall(firstPageRequest).execute()
+
+            val hasExceeded = firstPageResponse.headers["Content-Type"]!!
+                .contains("text/html")
+
+            firstPageResponse.close()
+
+            hasExceeded
+        }
+
+        if (hasExceededViewLimit.getOrDefault(false)) {
+            throw Exception(EXCEEDED_GOOGLE_DRIVE_VIEW_LIMIT)
+        }
+
+        return pages
     }
 
     override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
@@ -358,11 +402,10 @@ class TaoSect : HttpSource() {
 
     override fun getFilterList(): FilterList = FilterList(
         CountryFilter(getCountryList()),
-        // Status filter is broken on the API at the moment.
-        // It will be fixed by the scanlator team.
-        // StatusFilter(getStatusList()),
+        StatusFilter(getStatusList()),
         GenreFilter(getGenreList()),
-        SortFilter()
+        SortFilter(),
+        FeaturedFilter()
     )
 
     private class Tag(val id: String, name: String) : Filter.TriState(name)
@@ -378,6 +421,12 @@ class TaoSect : HttpSource() {
         SORT_LIST.map { it.name }.toTypedArray(),
         Selection(DEFAULT_ORDERBY, false)
     )
+
+    private class FeaturedFilter : Filter.TriState("Mostrar destaques")
+
+    private inline fun <reified T> Response.parseAs(): T = use {
+        json.decodeFromString(it.body?.string().orEmpty())
+    }
 
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(this)?.time }
@@ -442,10 +491,12 @@ class TaoSect : HttpSource() {
 
         private const val API_BASE_PATH = "wp-json/wp/v2"
         private const val PROJECTS_PER_PAGE = 18
-        private const val DEFAULT_ORDERBY = 4
+        private const val DEFAULT_ORDERBY = 3
         private const val DEFAULT_FIELDS = "title,thumbnail,link"
         private const val PROJECT_NOT_FOUND = "Projeto não encontrado."
         private const val CHAPTER_NOT_FOUND = "Capítulo não encontrado."
+        private const val EXCEEDED_GOOGLE_DRIVE_VIEW_LIMIT = "Limite de visualizações atingido " +
+            "no Google Drive. Aguarde com que o limite seja reestabelecido."
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
@@ -454,7 +505,6 @@ class TaoSect : HttpSource() {
         private val SORT_LIST = listOf(
             Tag("date", "Data de criação"),
             Tag("modified", "Data de modificação"),
-            Tag("destaque", "Destaque"),
             Tag("title", "Título"),
             Tag("views", "Visualizações")
         )
