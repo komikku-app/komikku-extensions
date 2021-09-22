@@ -107,7 +107,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("HentaiXYuri", "https://hentaixyuri.com", "en", isNsfw = true),
         SingleLang("HentaiWebtoon", "https://hentaiwebtoon.com", "en", isNsfw = true),
         SingleLang("Heroz Scanlation", "https://herozscans.com", "en", overrideVersionCode = 1),
-        SingleLang("Hiperdex", "https://hiperdex.com", "en", isNsfw = true, overrideVersionCode = 4),
+        SingleLang("Hiperdex", "https://hiperdex.com", "en", isNsfw = true, overrideVersionCode = 5),
         SingleLang("Hizomanga", "https://hizomanga.com", "ar"),
         SingleLang("hManhwa", "https://hmanhwa.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("HM2D", "https://mangadistrict.com/hdoujin/", "en", isNsfw = true, overrideVersionCode = 1),

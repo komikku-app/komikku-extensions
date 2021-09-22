@@ -39,4 +39,6 @@ class Hiperdex : Madara("Hiperdex", "https://hiperdex.com", "en") {
         Genre("Yaoi", "yaoi"),
         Genre("Yuri", "yuri")
     )
+
+    override val useNewChapterEndpoint: Boolean = true
 }
