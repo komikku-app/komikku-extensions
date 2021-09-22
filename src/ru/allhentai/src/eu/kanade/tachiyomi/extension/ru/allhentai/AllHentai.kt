@@ -1,9 +1,14 @@
 package eu.kanade.tachiyomi.extension.ru.allhentai
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -19,17 +24,24 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.regex.Pattern
 
 @Nsfw
-class AllHentai : ParsedHttpSource() {
+class AllHentai : ConfigurableSource, ParsedHttpSource() {
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     override val name = "AllHentai"
 
-    override val baseUrl = "http://24.allhen.online"
+    private var domain: String = preferences.getString(DOMAIN_TITLE, DOMAIN_DEFAULT)!!
+    override val baseUrl: String = domain
 
     override val lang = "ru"
 
@@ -516,4 +528,32 @@ class AllHentai : ParsedHttpSource() {
     private val tagsName = getTagsList().map {
         it.name
     }.toTypedArray()
+
+    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
+        screen.addPreference(screen.editTextPreference(DOMAIN_TITLE, DOMAIN_DEFAULT, domain))
+    }
+
+    private fun androidx.preference.PreferenceScreen.editTextPreference(title: String, default: String, value: String): androidx.preference.EditTextPreference {
+        return androidx.preference.EditTextPreference(context).apply {
+            key = title
+            this.title = title
+            summary = value
+            this.setDefaultValue(default)
+            dialogTitle = title
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val res = preferences.edit().putString(title, newValue as String).commit()
+                    Toast.makeText(context, "Для смены домена необходимо перезапустить приложение с полной остановкой.", Toast.LENGTH_LONG).show()
+                    res
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
+    }
+    companion object {
+        private const val DOMAIN_TITLE = "Домен"
+        private const val DOMAIN_DEFAULT = "http://23.allhen.online"
+    }
 }
