@@ -340,6 +340,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("SamuraiScan", "https://samuraiscan.com", "es"),
         SingleLang("Sani-Go", "https://sani-go.net", "ar", className = "SaniGo", overrideVersionCode = 1),
         SingleLang("Sawamics", "https://sawamics.com", "en"),
+        SingleLang("Scanlator Hunters", "https://scanlatorhunters.xyz", "pt-BR", isNsfw = true),
         SingleLang("Scans Raw", "https://scansraw.com", "en", overrideVersionCode = 1),
         SingleLang("Seafoam Scans", "https://seafoamscans.com", "en", overrideVersionCode = 2),
         SingleLang("Seikou Scans", "https://seikouscans.com", "pt-BR", isNsfw = true),
