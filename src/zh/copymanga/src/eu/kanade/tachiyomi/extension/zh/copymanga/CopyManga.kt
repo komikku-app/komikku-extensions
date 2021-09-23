@@ -449,10 +449,10 @@ class CopyManga : ConfigurableSource, HttpSource() {
     }
 
     // thanks to unpacker toolsite, http://matthewfl.com/unPacker.html
-    private fun decryptChapterData(disposableData: String, disposablePass: String? = "hotmanga.aes.key"): String {
+    private fun decryptChapterData(disposableData: String, disposablePass: String?): String {
         val prePart = disposableData.substring(0, 16)
         val postPart = disposableData.substring(16, disposableData.length)
-        val disposablePassByteArray = disposablePass?.toByteArray(Charsets.UTF_8)
+        val disposablePassByteArray = (disposablePass ?: "xxxmanga.abc.key").toByteArray(Charsets.UTF_8)
         val prepartByteArray = prePart.toByteArray(Charsets.UTF_8)
         val dataByteArray = hexStringToByteArray(postPart)
 
