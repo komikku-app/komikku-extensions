@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.pt.taosect
 
+import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -27,6 +28,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
+@Nsfw
 class TaoSect : HttpSource() {
 
     override val name = "Tao Sect"
@@ -91,6 +93,7 @@ class TaoSect : HttpSource() {
             .addQueryParameter("orderby", "date")
             .addQueryParameter("page", page.toString())
             .addQueryParameter("per_page", (PROJECTS_PER_PAGE * 2).toString())
+            .addQueryParameter("_fields", "post_id")
             .toString()
 
         return GET(apiUrl, apiHeaders)
@@ -133,8 +136,6 @@ class TaoSect : HttpSource() {
         val projectsResult = projectsResponse.parseAs<List<TaoSectProjectDto>>()
 
         val projectList = projectsResult.map(::popularMangaFromObject)
-
-        projectsResponse.close()
 
         return MangasPage(projectList, hasNextPage)
     }
@@ -210,6 +211,13 @@ class TaoSect : HttpSource() {
                         }
                     }
                 }
+                is NsfwFilter -> {
+                    if (filter.state == Filter.TriState.STATE_INCLUDE) {
+                        apiUrl.addQueryParameter("mais_18", "1")
+                    } else if (filter.state == Filter.TriState.STATE_EXCLUDE) {
+                        apiUrl.addQueryParameter("mais_18", "0")
+                    }
+                }
             }
         }
 
@@ -271,6 +279,8 @@ class TaoSect : HttpSource() {
         val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
             .addQueryParameter("per_page", "1")
             .addQueryParameter("slug", projectSlug)
+            .addQueryParameter("order_vol", "desc")
+            .addQueryParameter("order_cap", "desc")
             .addQueryParameter("_fields", "id,slug,capitulos")
             .toString()
 
@@ -286,13 +296,8 @@ class TaoSect : HttpSource() {
 
         val project = result[0]
 
-        // Count the project views, requested by the scanlator.
-        val countViewRequest = countViewRequest(project.id.toString())
-        runCatching { client.newCall(countViewRequest).execute().close() }
-
         return project.volumes!!
             .flatMap { it.chapters }
-            .reversed()
             .map { chapterFromObject(it, project) }
     }
 
@@ -315,7 +320,7 @@ class TaoSect : HttpSource() {
             .addQueryParameter("per_page", "1")
             .addQueryParameter("slug", projectSlug)
             .addQueryParameter("chapter_slug", chapterSlug)
-            .addQueryParameter("_fields", "id,slug,capitulos")
+            .addQueryParameter("_fields", "slug,capitulos")
             .toString()
 
         return GET(apiUrl, apiHeaders)
@@ -339,7 +344,7 @@ class TaoSect : HttpSource() {
         val chapterUrl = "$baseUrl/leitor-online/projeto/${project.slug!!}/${chapter.slug}"
 
         // Count the chapter views, requested by the scanlator.
-        val countViewRequest = countViewRequest(project.id!!.toString(), chapter.id)
+        val countViewRequest = countChapterViewRequest(chapter.id)
         runCatching { client.newCall(countViewRequest).execute().close() }
 
         val pages = chapter.pages.mapIndexed { i, pageUrl ->
@@ -351,14 +356,10 @@ class TaoSect : HttpSource() {
 
         val hasExceededViewLimit = runCatching {
             val firstPageRequest = imageRequest(firstPage)
-            val firstPageResponse = client.newCall(firstPageRequest).execute()
 
-            val hasExceeded = firstPageResponse.headers["Content-Type"]!!
-                .contains("text/html")
-
-            firstPageResponse.close()
-
-            hasExceeded
+            client.newCall(firstPageRequest).execute().use {
+                it.headers["Content-Type"]!!.contains("text/html")
+            }
         }
 
         if (hasExceededViewLimit.getOrDefault(false)) {
@@ -381,16 +382,11 @@ class TaoSect : HttpSource() {
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    private fun countViewRequest(projectId: String, chapterId: String? = null): Request {
-        val formBodyBuilder = FormBody.Builder()
-            .add("action", "update_views")
-            .add("projeto", projectId)
-
-        if (chapterId.isNullOrBlank().not()) {
-            formBodyBuilder.add("capitulo", chapterId!!)
-        }
-
-        val formBody = formBodyBuilder.build()
+    private fun countChapterViewRequest(chapterId: String): Request {
+        val formBody = FormBody.Builder()
+            .add("action", "update_views_v2")
+            .add("capitulo", chapterId)
+            .build()
 
         val newHeaders = headersBuilder()
             .add("Content-Length", formBody.contentLength().toString())
@@ -405,7 +401,8 @@ class TaoSect : HttpSource() {
         StatusFilter(getStatusList()),
         GenreFilter(getGenreList()),
         SortFilter(),
-        FeaturedFilter()
+        FeaturedFilter(),
+        NsfwFilter()
     )
 
     private class Tag(val id: String, name: String) : Filter.TriState(name)
@@ -423,6 +420,8 @@ class TaoSect : HttpSource() {
     )
 
     private class FeaturedFilter : Filter.TriState("Mostrar destaques")
+
+    private class NsfwFilter : Filter.TriState("Mostrar conteúdo +18")
 
     private inline fun <reified T> Response.parseAs(): T = use {
         json.decodeFromString(it.body?.string().orEmpty())
