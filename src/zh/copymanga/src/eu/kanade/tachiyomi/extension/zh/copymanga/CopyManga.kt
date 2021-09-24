@@ -203,32 +203,24 @@ class CopyManga : ConfigurableSource, HttpSource() {
 
         val retChapter = ArrayList<SChapter>()
         // Get chapters according to groups
-        chapterGroups.keys().forEach { groupName ->
+        val keys = chapterGroups.keys().asSequence().toList()
+        keys.filter { it -> it == "default" }.forEach { groupName ->
             run {
                 val chapterGroup = chapterGroups.getJSONObject(groupName)
+                fillChapters(chapterGroup, retChapter, comicPathWord)
+            }
+        }
 
-                // group's last update time
-                val groupLastUpdateTime =
-                    chapterGroup.optJSONObject("last_chapter")?.optString("datetime_created")
-
-                // chapters in the group to
-                val chapterArray = chapterGroup.optJSONArray("chapters")
-                if (chapterArray != null) {
-                    for (i in 0 until chapterArray.length()) {
-                        val chapter = chapterArray.getJSONObject(i)
-                        retChapter.add(
-                            SChapter.create().apply {
-                                name = chapter.getString("name")
-                                date_upload = stringToUnixTimestamp(groupLastUpdateTime)
-                                url = "/comic/$comicPathWord/chapter/${chapter.getString("id")}"
-                            }
-                        )
-                    }
-                }
+        val otherChapters = ArrayList<SChapter>()
+        keys.filter { it -> it != "default" }.forEach { groupName ->
+            run {
+                val chapterGroup = chapterGroups.getJSONObject(groupName)
+                fillChapters(chapterGroup, otherChapters, comicPathWord)
             }
         }
 
         // place others to top, as other group updates not so often
+        retChapter.addAll(0, otherChapters)
         return retChapter.asReversed()
     }
 
@@ -420,6 +412,27 @@ class CopyManga : ConfigurableSource, HttpSource() {
             manga.title = _title
         }
         return manga
+    }
+
+    private fun fillChapters(chapterGroup: JSONObject, retChapter: ArrayList<SChapter>, comicPathWord: String?) {
+        // group's last update time
+        val groupLastUpdateTime =
+            chapterGroup.optJSONObject("last_chapter")?.optString("datetime_created")
+
+        // chapters in the group to
+        val chapterArray = chapterGroup.optJSONArray("chapters")
+        if (chapterArray != null) {
+            for (i in 0 until chapterArray.length()) {
+                val chapter = chapterArray.getJSONObject(i)
+                retChapter.add(
+                    SChapter.create().apply {
+                        name = chapter.getString("name")
+                        url = "/comic/$comicPathWord/chapter/${chapter.getString("id")}"
+                    }
+                )
+            }
+        }
+        retChapter.lastOrNull()?.date_upload = stringToUnixTimestamp(groupLastUpdateTime)
     }
 
     private fun byteArrayToHexString(byteArray: ByteArray): String {
