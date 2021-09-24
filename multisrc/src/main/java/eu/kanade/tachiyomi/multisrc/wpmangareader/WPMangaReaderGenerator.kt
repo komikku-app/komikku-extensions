@@ -15,6 +15,8 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Anitation Arts", "https://anitationarts.org", "en", overrideVersionCode = 1),
         SingleLang("Alpha Scans", "https://alpha-scans.org", "en"),
         SingleLang("AR FlameScans", "https://ar.flamescans.org", "ar"),
+        SingleLang("iiMANGA", "https://iimanga.com", "ar"),
+        SingleLang("Magus Manga", "https://magusmanga.com", "ar"),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 1),
         SingleLang("KomikMama", "https://komikmama.net", "id"),
         SingleLang("MangaKita", "https://mangakita.net", "id", overrideVersionCode = 1),
