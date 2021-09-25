@@ -6,4 +6,4 @@ Checklist:
 - [ ] Annotated `Source` or `SourceFactory` classes with `@Nsfw` when appropriate
 - [ ] Added the `containsNsfw = true` flag in `build.gradle` when appropriate
 - [ ] Have not changed source names
-- [ ] Have explicitly kept the `versionId` if a source's name or language were changed
+- [ ] Have explicitly kept the `id` if a source's name or language were changed
