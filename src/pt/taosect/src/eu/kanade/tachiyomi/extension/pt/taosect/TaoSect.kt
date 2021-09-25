@@ -276,36 +276,38 @@ class TaoSect : HttpSource() {
             .substringAfterLast("projeto/")
             .substringBefore("/")
 
-        val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
-            .addQueryParameter("per_page", "1")
-            .addQueryParameter("slug", projectSlug)
-            .addQueryParameter("order_vol", "desc")
-            .addQueryParameter("order_cap", "desc")
-            .addQueryParameter("_fields", "id,slug,capitulos")
+        val apiUrl = "$baseUrl/$API_BASE_PATH/capitulos".toHttpUrl().newBuilder()
+            .addQueryParameter("projeto", projectSlug)
+            .addQueryParameter("per_page", "1000")
+            .addQueryParameter("order", "desc")
+            .addQueryParameter("orderby", "date")
+            .addQueryParameter("_fields", "nome_capitulo,post_id,slug,data_insercao")
             .toString()
 
         return GET(apiUrl, apiHeaders)
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = response.parseAs<List<TaoSectProjectDto>>()
+        val result = response.parseAs<List<TaoSectChapterDto>>()
 
         if (result.isNullOrEmpty()) {
             throw Exception(PROJECT_NOT_FOUND)
         }
 
-        val project = result[0]
+        // Count the project views, requested by the scanlator.
+        val countViewRequest = countProjectViewRequest(result[0].projectId!!)
+        runCatching { client.newCall(countViewRequest).execute().close() }
 
-        return project.volumes!!
-            .flatMap { it.chapters }
-            .map { chapterFromObject(it, project) }
+        val projectSlug = response.request.url.queryParameter("projeto")!!
+
+        return result.map { chapterFromObject(it, projectSlug) }
     }
 
-    private fun chapterFromObject(obj: TaoSectChapterDto, project: TaoSectProjectDto): SChapter = SChapter.create().apply {
+    private fun chapterFromObject(obj: TaoSectChapterDto, projectSlug: String): SChapter = SChapter.create().apply {
         name = obj.name
         scanlator = this@TaoSect.name
         date_upload = obj.date.toDate()
-        url = "/leitor-online/projeto/${project.slug!!}/${obj.slug}/"
+        url = "/leitor-online/projeto/$projectSlug/${obj.slug}/"
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
@@ -316,38 +318,29 @@ class TaoSect : HttpSource() {
             .removeSuffix("/")
             .substringAfterLast("/")
 
-        val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
-            .addQueryParameter("per_page", "1")
-            .addQueryParameter("slug", projectSlug)
-            .addQueryParameter("chapter_slug", chapterSlug)
-            .addQueryParameter("_fields", "slug,capitulos")
+        val apiUrl = "$baseUrl/$API_BASE_PATH/capitulos/".toHttpUrl().newBuilder()
+            .addPathSegment(projectSlug)
+            .addPathSegment(chapterSlug)
+            .addQueryParameter("_fields", "paginas")
             .toString()
 
         return GET(apiUrl, apiHeaders)
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = response.parseAs<List<TaoSectProjectDto>>()
+        val result = response.parseAs<TaoSectChapterDto>()
 
-        if (result.isNullOrEmpty()) {
-            throw Exception(PROJECT_NOT_FOUND)
+        if (result.pages.isNullOrEmpty()) {
+            return emptyList()
         }
 
-        val project = result[0]
-        val chapterSlug = response.request.url.queryParameter("chapter_slug")!!
+        val apiUrlPaths = response.request.url.pathSegments
+        val projectSlug = apiUrlPaths[4]
+        val chapterSlug = apiUrlPaths[5]
 
-        val chapter = project.volumes!!
-            .flatMap { it.chapters }
-            .firstOrNull { it.slug == chapterSlug }
-            ?: throw Exception(CHAPTER_NOT_FOUND)
+        val chapterUrl = "$baseUrl/leitor-online/projeto/$projectSlug/$chapterSlug"
 
-        val chapterUrl = "$baseUrl/leitor-online/projeto/${project.slug!!}/${chapter.slug}"
-
-        // Count the chapter views, requested by the scanlator.
-        val countViewRequest = countChapterViewRequest(chapter.id)
-        runCatching { client.newCall(countViewRequest).execute().close() }
-
-        val pages = chapter.pages.mapIndexed { i, pageUrl ->
+        val pages = result.pages.mapIndexed { i, pageUrl ->
             Page(i, chapterUrl, pageUrl)
         }
 
@@ -382,10 +375,10 @@ class TaoSect : HttpSource() {
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    private fun countChapterViewRequest(chapterId: String): Request {
+    private fun countProjectViewRequest(projectId: String): Request {
         val formBody = FormBody.Builder()
             .add("action", "update_views_v2")
-            .add("capitulo", chapterId)
+            .add("projeto", projectId)
             .build()
 
         val newHeaders = headersBuilder()
@@ -493,7 +486,6 @@ class TaoSect : HttpSource() {
         private const val DEFAULT_ORDERBY = 3
         private const val DEFAULT_FIELDS = "title,thumbnail,link"
         private const val PROJECT_NOT_FOUND = "Projeto não encontrado."
-        private const val CHAPTER_NOT_FOUND = "Capítulo não encontrado."
         private const val EXCEEDED_GOOGLE_DRIVE_VIEW_LIMIT = "Limite de visualizações atingido " +
             "no Google Drive. Aguarde com que o limite seja reestabelecido."
 
