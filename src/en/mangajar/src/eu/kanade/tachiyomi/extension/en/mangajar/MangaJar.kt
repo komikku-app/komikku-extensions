@@ -122,7 +122,6 @@ class MangaJar : ParsedHttpSource() {
                     val link = chapter.select("a")
                     url = link.attr("href")
                     name = link.text()
-                    chapter_number = 0f
                     date_upload = parseChapterDate(chapter.select("span.chapter-date").text().trim())
                 }
             }
