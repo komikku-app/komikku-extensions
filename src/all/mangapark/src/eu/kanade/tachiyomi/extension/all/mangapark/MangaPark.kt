@@ -195,7 +195,7 @@ open class MangaPark(
     }
 
     override fun chapterListRequest(manga: SManga): Request {
-        val sid = "$baseUrl/${manga.url}".toHttpUrl().pathSegments[1].toInt()
+        val sid = "$baseUrl${manga.url}".toHttpUrl().pathSegments[1].toInt()
 
         val jsonPayload = buildJsonObject {
             put("lang", siteLang)
