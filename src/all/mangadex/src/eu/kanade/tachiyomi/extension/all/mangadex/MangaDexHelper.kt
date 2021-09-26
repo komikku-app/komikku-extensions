@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -166,10 +167,23 @@ class MangaDexHelper() {
     /**
      * create an SManga from json element only basic elements
      */
-    fun createBasicManga(mangaDataDto: MangaDataDto, coverFileName: String?, coverSuffix: String?): SManga {
+    fun createBasicManga(
+        mangaDataDto: MangaDataDto,
+        coverFileName: String?,
+        coverSuffix: String?,
+        lang: String
+    ): SManga {
         return SManga.create().apply {
             url = "/manga/${mangaDataDto.id}"
-            title = cleanString(mangaDataDto.attributes.title.asMdMap()["en"] ?: "")
+            val titleMap = mangaDataDto.attributes.title.asMdMap()
+            val dirtyTitle = titleMap[lang]
+                ?: titleMap["en"]
+                ?: mangaDataDto.attributes.altTitles.jsonArray
+                    .find {
+                        val altTitle = it.asMdMap()
+                        altTitle[lang] ?: altTitle["en"] != null
+                    }?.asMdMap()?.values?.singleOrNull()
+            title = cleanString(dirtyTitle ?: "")
 
             coverFileName?.let {
                 thumbnail_url = when (coverSuffix != null && coverSuffix != "") {
@@ -231,7 +245,7 @@ class MangaDexHelper() {
                 .filter { it.isNullOrBlank().not() }
 
             val desc = attr.description.asMdMap()
-            return createBasicManga(mangaDataDto, coverFileName, coverSuffix).apply {
+            return createBasicManga(mangaDataDto, coverFileName, coverSuffix, lang).apply {
                 description = cleanString(desc[lang] ?: desc["en"] ?: "")
                 author = authors.joinToString(", ")
                 artist = artists.joinToString(", ")

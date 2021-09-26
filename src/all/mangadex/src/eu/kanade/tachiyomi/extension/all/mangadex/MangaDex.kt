@@ -137,7 +137,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             val fileName = mangaDataDto.relationships.firstOrNull { relationshipDto ->
                 relationshipDto.type.equals(MDConstants.coverArt, true)
             }?.attributes?.fileName
-            helper.createBasicManga(mangaDataDto, fileName, coverSuffix)
+            helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
         }
 
         return MangasPage(mangaList, hasMoreResults)
@@ -185,7 +185,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
                 relationshipDto.type.equals(MDConstants.coverArt, true)
                 relationshipDto.type.equals(MDConstants.coverArt, true)
             }?.attributes?.fileName
-            helper.createBasicManga(mangaDataDto, fileName, coverSuffix)
+            helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
         }
 
         return MangasPage(mangaList, hasMoreResults)
@@ -316,10 +316,8 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
 
     override fun mangaDetailsParse(response: Response): SManga {
         val manga = helper.json.decodeFromString<MangaDto>(response.body!!.string())
-        val shortLang = lang.substringBefore("-")
-
         val coverSuffix = preferences.getString(MDConstants.getCoverQualityPreferenceKey(dexLang), "")
-        return helper.createManga(manga.data, fetchSimpleChapterList(manga, shortLang), shortLang, coverSuffix)
+        return helper.createManga(manga.data, fetchSimpleChapterList(manga, dexLang), dexLang, coverSuffix)
     }
 
     /**
