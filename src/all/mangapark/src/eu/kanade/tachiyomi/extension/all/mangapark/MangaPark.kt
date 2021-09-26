@@ -271,8 +271,8 @@ open class MangaPark(
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        if (document.select("div.wrapper-deleted") != null) {
-            throw Exception("The chapter content seems to be deleted. Contact the site owner if possible.")
+        if (document.selectFirst("div.wrapper-deleted") != null) {
+            throw Exception("The chapter content seems to be deleted.\n\nContact the site owner if possible.")
         }
 
         val duktape = Duktape.create()
