@@ -38,7 +38,7 @@ import java.io.IOException
 class Mango : ConfigurableSource, HttpSource() {
 
     override fun popularMangaRequest(page: Int): Request =
-        GET("$baseUrl/api/library", headersBuilder().build())
+        GET("$baseUrl/api/library?depth=0", headersBuilder().build())
 
     // Our popular manga are just our library of manga
     override fun popularMangaParse(response: Response): MangasPage {
@@ -132,7 +132,7 @@ class Mango : ConfigurableSource, HttpSource() {
     }
 
     override fun chapterListRequest(manga: SManga): Request =
-        GET(baseUrl + "/api" + manga.url, headers)
+        GET(baseUrl + "/api" + manga.url + "?sort=auto", headers)
 
     // The chapter url will contain how many pages the chapter contains for our page list endpoint
     override fun chapterListParse(response: Response): List<SChapter> {
@@ -142,14 +142,30 @@ class Mango : ConfigurableSource, HttpSource() {
             apiCookies = ""
             throw Exception("Login Likely Failed. Try Refreshing.")
         }
-        return result["entries"].asJsonArray.mapIndexed { index, obj ->
+        return listChapters(result)
+    }
+
+    // Helper function for listing chapters and chapters in nested titles recursively
+    private fun listChapters(titleObj: JsonObject): List<SChapter> {
+        val chapters = mutableListOf<SChapter>()
+        val topChapters = titleObj.getAsJsonArray("entries")?.map { obj ->
             SChapter.create().apply {
-                chapter_number = index + 1F
-                name = "${chapter_number.toInt()} - ${obj["display_name"].asString}"
-                url = "/page/${obj["title_id"].asString}/${obj["id"].asString}/${obj["pages"].asString}/"
+                name = obj["display_name"].asString
+                url =
+                    "/page/${obj["title_id"].asString}/${obj["id"].asString}/${obj["pages"].asString}/"
                 date_upload = 1000L * obj["mtime"].asLong
             }
-        }.sortedByDescending { it.date_upload }
+        }
+        val subChapters = titleObj.getAsJsonArray("titles")?.map { obj ->
+            val name = obj["display_name"].asString
+            listChapters(obj.asJsonObject).map { chp ->
+                chp.name = "$name / ${chp.name}"
+                chp
+            }
+        }?.flatten()
+        if (topChapters !== null) chapters += topChapters
+        if (subChapters !== null) chapters += subChapters
+        return chapters
     }
 
     // Stub
@@ -246,17 +262,18 @@ class Mango : ConfigurableSource, HttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-        screen.addPreference(screen.editTextPreference(ADDRESS_TITLE, ADDRESS_DEFAULT, baseUrl, "The URL to access your Mango instance. Please include the port number if you didn't set up a reverse proxy"))
-        screen.addPreference(screen.editTextPreference(PORT_TITLE, PORT_DEFAULT, port, "The port number to use if it's not the default 9000"))
-        screen.addPreference(screen.editTextPreference(USERNAME_TITLE, USERNAME_DEFAULT, username, "Your login username"))
-        screen.addPreference(screen.editTextPreference(PASSWORD_TITLE, PASSWORD_DEFAULT, password, "Your login password", true))
+        screen.addPreference(screen.editTextPreference(ADDRESS_TITLE, ADDRESS_DEFAULT, "The URL to access your Mango instance. Please include the port number if you didn't set up a reverse proxy"))
+        screen.addPreference(screen.editTextPreference(PORT_TITLE, PORT_DEFAULT, "The port number to use if it's not the default 9000"))
+        screen.addPreference(screen.editTextPreference(USERNAME_TITLE, USERNAME_DEFAULT, "Your login username"))
+        screen.addPreference(screen.editTextPreference(PASSWORD_TITLE, PASSWORD_DEFAULT, "Your login password", true))
     }
 
-    private fun androidx.preference.PreferenceScreen.editTextPreference(title: String, default: String, value: String, summary: String, isPassword: Boolean = false): androidx.preference.EditTextPreference {
+    private fun androidx.preference.PreferenceScreen.editTextPreference(title: String, default: String, summary: String, isPassword: Boolean = false): androidx.preference.EditTextPreference {
         return androidx.preference.EditTextPreference(context).apply {
             key = title
             this.title = title
-            this.summary = summary
+            val input = preferences.getString(title, null)
+            this.summary = if (input == null || input.isEmpty()) summary else input
             this.setDefaultValue(default)
             dialogTitle = title
 
