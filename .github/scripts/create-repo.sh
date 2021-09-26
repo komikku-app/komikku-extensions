@@ -38,7 +38,7 @@ for APK in ${APKS[@]}; do
     if [ $SOURCE_LEN = "1" ]; then
       SOURCE_LANG=$(echo $SOURCE_INFO | jq -r '.[0].lang')
 
-      if [ $SOURCE_LANG != $LANG ] && [ $SOURCE_LANG != "all" ] && [ $SOURCE_LANG != "other" ]; then
+      if [ $SOURCE_LANG != $LANG ] && [ $SOURCE_LANG != "all" ] && [ $SOURCE_LANG != "other" ] && [ $LANG != "all" ] && [ $LANG != "other" ]; then
         LANG=$SOURCE_LANG
       fi
     fi
