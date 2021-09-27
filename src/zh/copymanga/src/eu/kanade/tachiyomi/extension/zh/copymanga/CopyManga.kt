@@ -428,11 +428,11 @@ class CopyManga : ConfigurableSource, HttpSource() {
                     SChapter.create().apply {
                         name = chapter.getString("name")
                         url = "/comic/$comicPathWord/chapter/${chapter.getString("id")}"
+                        date_upload = stringToUnixTimestamp(groupLastUpdateTime)
                     }
                 )
             }
         }
-        retChapter.lastOrNull()?.date_upload = stringToUnixTimestamp(groupLastUpdateTime)
     }
 
     private fun byteArrayToHexString(byteArray: ByteArray): String {
