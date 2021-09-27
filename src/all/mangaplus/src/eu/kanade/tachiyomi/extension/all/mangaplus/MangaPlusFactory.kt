@@ -10,7 +10,8 @@ class MangaPlusFactory : SourceFactory {
         MangaPlusPortuguese(),
         MangaPlusRussian(),
         MangaPlusSpanish(),
-        MangaPlusThai()
+        MangaPlusThai(),
+        MangaPlusFrench()
     )
 }
 
@@ -20,3 +21,4 @@ class MangaPlusPortuguese : MangaPlus("pt-BR", "ptb", Language.PORTUGUESE_BR)
 class MangaPlusRussian : MangaPlus("ru", "rus", Language.RUSSIAN)
 class MangaPlusSpanish : MangaPlus("es", "esp", Language.SPANISH)
 class MangaPlusThai : MangaPlus("th", "tha", Language.THAI)
+class MangaPlusFrench : MangaPlus("fr", "fra", Language.FRENCH)
