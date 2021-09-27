@@ -280,7 +280,7 @@ class TaoSect : HttpSource() {
             .addQueryParameter("projeto", projectSlug)
             .addQueryParameter("per_page", "1000")
             .addQueryParameter("order", "desc")
-            .addQueryParameter("orderby", "date")
+            .addQueryParameter("orderby", "sequencia")
             .addQueryParameter("_fields", "nome_capitulo,post_id,slug,data_insercao")
             .toString()
 
