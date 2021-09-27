@@ -30,7 +30,7 @@ import okhttp3.Response
 
 class Gmanga : ConfigurableSource, HttpSource() {
 
-    private val domain: String = "gmanga.org"
+    private val domain: String = "gmanga.me"
 
     override val baseUrl: String = "https://$domain"
 
@@ -143,7 +143,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
             Page(
                 index,
                 "$url#page_$index",
-                "https://media.$domain/uploads/releases/${releaseData["storage_key"].asString}/mq${if (hasWebP) "_webp" else ""}/$pageUri"
+                "https://media.$domain/uploads/releases/${releaseData["storage_key"].asString}/hq${if (hasWebP) "_webp" else ""}/$pageUri"
             )
         }
     }
