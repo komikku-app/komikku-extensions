@@ -144,7 +144,7 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
 
     override fun popularMangaNextPageSelector(): String = "a.prevnext"
     override fun popularMangaSelector(): String {
-        val baseSelector = "div.col-xs-6.col-sm-6.col-md-4.col-lg-3.list-col div.well.well-sm"
+        val baseSelector = ".list-col .well-sm"
         val removedGenres = preferences.getString("BLOCK_GENRES_LIST", "")!!.substringBefore("//").trim()
         // Extra selector is jquery-like selector, it uses regex to match element.text().
         // If string after 標籤 contains any word of removedGenres, the element would be ignored.
