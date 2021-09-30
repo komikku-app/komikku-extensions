@@ -56,8 +56,8 @@ class MangasOrigines : Madara("Mangas Origines", "https://mangas-origines.fr", "
                 }
             }
             val genres = select("div.genres-content a")
-                    .map { element -> element.text().toLowerCase(Locale.ROOT) }
-                    .toMutableSet()
+                .map { element -> element.text().toLowerCase(Locale.ROOT) }
+                .toMutableSet()
 
             // add tag(s) to genre
             select("div.tags-content a").forEach { element ->

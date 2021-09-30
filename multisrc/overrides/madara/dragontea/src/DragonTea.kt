@@ -4,10 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
-import android.util.Log
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.source.model.Page
-import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -17,8 +15,8 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
-import java.util.concurrent.TimeUnit
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class DragonTea : Madara(
     "DragonTea",
@@ -31,16 +29,16 @@ class DragonTea : Madara(
         .readTimeout(30, TimeUnit.SECONDS)
         .addInterceptor(::begonepeconIntercept)
         .build()
-        
+
     override val useNewChapterEndpoint = true
-    
+
     private val begonepeconSelector: String = "div.begonepecon"
-    
+
     private val peconholderSelector: String = "div.peconholder"
-    
+
     override fun pageListParse(document: Document): List<Page> {
         countViews(document)
-        
+
         val hasSplitImages = document
             .select(begonepeconSelector)
             .firstOrNull() != null
@@ -59,7 +57,7 @@ class DragonTea : Madara(
                 Page(index, document.location(), imageUrl)
             }
     }
-    
+
     private fun begonepeconIntercept(chain: Interceptor.Chain): Response {
         if (!chain.request().url.toString().endsWith(BEGONEPECON_SUFFIX)) {
             return chain.proceed(chain.request())
@@ -111,7 +109,7 @@ class DragonTea : Madara(
             .body(responseBody)
             .build()
     }
-    
+
     companion object {
         private const val BEGONEPECON_SUFFIX = "?begonepecon"
         private val PNG_MEDIA_TYPE = "image/png".toMediaType()
