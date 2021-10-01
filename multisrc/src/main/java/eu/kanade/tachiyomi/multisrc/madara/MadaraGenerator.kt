@@ -322,7 +322,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("PoManga", "https://pomanga.com", "en"),
         SingleLang("PornComix", "https://www.porncomixonline.net", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Pornwha", "https://pornwha.com", "en", isNsfw = true, overrideVersionCode = 1),
-        SingleLang("Prisma Scans", "https://prismascans.net", "pt-BR", overrideVersionCode = 1),
+        SingleLang("Prisma Scans", "https://prismascans.net", "pt-BR", overrideVersionCode = 2),
         SingleLang("Projeto Scanlator", "https://projetoscanlator.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("QueensManga ملكات المانجا", "https://queensmanga.com", "ar", className = "QueensManga", overrideVersionCode = 1),
         SingleLang("Rachel Scanlator", "https://rachelscanlator.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
