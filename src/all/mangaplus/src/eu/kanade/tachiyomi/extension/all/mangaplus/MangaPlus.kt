@@ -2,9 +2,7 @@ package eu.kanade.tachiyomi.extension.all.mangaplus
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.os.Build
-import com.google.gson.Gson
-import com.squareup.duktape.Duktape
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -28,6 +26,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import androidx.preference.CheckBoxPreference as AndroidXCheckBoxPreference
 import androidx.preference.ListPreference as AndroidXListPreference
 import androidx.preference.PreferenceScreen as AndroidXPreferenceScreen
@@ -51,16 +50,10 @@ abstract class MangaPlus(
         .add("Session-Token", UUID.randomUUID().toString())
 
     override val client: OkHttpClient = network.client.newBuilder()
-        .addInterceptor { imageIntercept(it) }
-        .addInterceptor { thumbnailIntercept(it) }
+        .addInterceptor(::imageIntercept)
+        .addInterceptor(::thumbnailIntercept)
+        .addInterceptor(RateLimitInterceptor(2, 1, TimeUnit.SECONDS))
         .build()
-
-    private val protobufJs: String by lazy {
-        val request = GET(PROTOBUFJS_CDN, headers)
-        client.newCall(request).execute().body!!.string()
-    }
-
-    private val gson: Gson by lazy { Gson() }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -423,25 +416,7 @@ abstract class MangaPlus(
         }
 
     private fun Response.asProto(): MangaPlusResponse {
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M)
-            return ProtoBuf.decodeFromByteArray(body!!.bytes())
-
-        // The kotlinx.serialization library eventually always have some issues with
-        // devices with Android version below Nougat. So, if the device is running Android 6.x,
-        // the deserialization is done using ProtobufJS + Duktape + Gson.
-
-        val bytes = body!!.bytes()
-        val messageBytes = "var BYTE_ARR = new Uint8Array([${bytes.joinToString()}]);"
-
-        val res = Duktape.create().use {
-            // The current Kotlin version brokes Duktape's module feature,
-            // so we need to provide an workaround to prevent the usage of 'require'.
-            it.evaluate("var module = { exports: true };")
-            it.evaluate(protobufJs)
-            it.evaluate(messageBytes + DECODE_SCRIPT) as String
-        }
-
-        return gson.fromJson(res, MangaPlusResponse::class.java)
+        return ProtoBuf.decodeFromByteArray(body!!.bytes())
     }
 
     companion object {
@@ -450,8 +425,6 @@ abstract class MangaPlus(
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36"
 
         private val HEX_GROUP = "(.{1,2})".toRegex()
-
-        private const val PROTOBUFJS_CDN = "https://cdn.jsdelivr.net/npm/protobufjs@6.10.1/dist/light/protobuf.js"
 
         private const val RESOLUTION_PREF_KEY = "imageResolution"
         private const val RESOLUTION_PREF_TITLE = "Image resolution"
