@@ -21,6 +21,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("KomikMama", "https://komikmama.net", "id"),
         SingleLang("MangaKita", "https://mangakita.net", "id", overrideVersionCode = 1),
         SingleLang("Gabut Scans", "https://gabutscans.com", "id"),
+        SingleLang("Graze Scans", "https://grazescans.com", "en", overrideVersionCode = 2),
         SingleLang("Martial Manga", "https://martialmanga.com/", "es"),
         SingleLang("Ngomik", "https://ngomik.net", "id", overrideVersionCode = 1),
         SingleLang("Sekaikomik", "https://www.sekaikomik.in", "id", isNsfw = true, overrideVersionCode = 7),
