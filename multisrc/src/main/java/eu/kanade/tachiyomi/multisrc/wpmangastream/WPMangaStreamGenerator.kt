@@ -53,6 +53,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Hakai Scan", "http://hakaiscan.xyz", "pt-BR", isNsfw = true),
         SingleLang("Batoto Scans", "https://batotoscans.com", "en", isNsfw = true),
         SingleLang("Random Scans", "https://randomscans.xyz", "en"),
+        SingleLang("Fênix Scanlator", "https://fenixscanlator.xyz", "pt-BR", className = "FenixScanlator", overrideVersionCode = 2)
     )
 
     companion object {
