@@ -1,221 +1,229 @@
 package eu.kanade.tachiyomi.extension.all.simplyhentai
 
-import android.annotation.SuppressLint
+import android.app.Application
+import android.net.Uri
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.source.model.Filter
+import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
-import uy.kohesive.injekt.injectLazy
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
+import java.util.Locale
 
-abstract class SimplyHentai(
-    override val lang: String,
-    private val urlLang: String,
-    private val searchLang: String
-) : ParsedHttpSource() {
+@ExperimentalSerializationApi
+open class SimplyHentai(override val lang: String) : ConfigurableSource, HttpSource() {
     override val name = "Simply Hentai"
 
-    override val baseUrl = "https://old.simply-hentai.com"
+    override val baseUrl = "https://www.simply-hentai.com"
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
-    private val json: Json by injectLazy()
+    override val versionId = 2
 
-    // Popular
+    private val apiUrl = "https://api.simply-hentai.com/v3"
 
-    override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/album/language/$urlLang/$page/popularity/desc", headers)
+    private val langName by lazy {
+        Locale.forLanguageTag(lang).displayName
     }
 
-    override fun popularMangaSelector() = "div.col-sm-3"
+    private val json by lazy { Injekt.get<Json>() }
 
-    override fun popularMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)!!
+    }
 
-        element.select("h3.object-title a").let {
-            manga.url = it.attr("href").substringAfter(baseUrl)
-            manga.title = it.text()
+    override fun popularMangaRequest(page: Int) =
+        Uri.parse("$apiUrl/albums").buildUpon().run {
+            appendQueryParameter("si", "0")
+            appendQueryParameter("locale", lang)
+            appendQueryParameter("language", langName)
+            appendQueryParameter("sort", "spotlight")
+            appendQueryParameter("page", page.toString())
+            GET(build().toString(), headers)
         }
-        manga.thumbnail_url = element.select("img.img-responsive").attr("abs:data-src")
 
-        return manga
-    }
-
-    override fun popularMangaNextPageSelector() = "a[rel=next]"
-
-    // Latest
-
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/album/language/$urlLang/$page", headers)
-    }
-
-    override fun latestUpdatesSelector() = popularMangaSelector()
-
-    override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
-
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
-
-    // Search
-
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search".toHttpUrlOrNull()!!.newBuilder()
-            .addQueryParameter("query", query)
-            .addQueryParameter("language_ids[$searchLang]", searchLang)
-            .addQueryParameter("page", page.toString())
-
-        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-            when (filter) {
-                is GenreList -> {
-                    filter.state.forEach {
-                        if (it.state) url.addQueryParameter("tag_ids[${it.id}]", it.id)
+    override fun popularMangaParse(response: Response) =
+        response.decode<SHList<SHObject>>().run {
+            MangasPage(
+                data.map {
+                    SManga.create().apply {
+                        url = it.path
+                        title = it.title
+                        thumbnail_url = it.preview.sizes.thumb
                     }
-                }
-                is SeriesList -> {
-                    filter.state.forEach {
-                        if (it.state) url.addQueryParameter("series_id[${it.id}]", it.id)
-                    }
-                }
-                is SortOrder -> {
-                    url.addQueryParameter("sort", getSortOrder()[filter.state].second)
-                }
-            }
-        }
-
-        return GET(url.toString(), headers)
-    }
-
-    override fun searchMangaSelector() = popularMangaSelector()
-
-    override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
-
-    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
-
-    // Details
-
-    override fun mangaDetailsParse(document: Document): SManga {
-        val manga = SManga.create()
-
-        document.select("div.padding-md-right-8").let { info ->
-            manga.artist = info.select("div.box-title:contains(Artists) + a").text()
-            manga.author = manga.artist
-            manga.genre = info.select("a[rel=tag]").joinToString { it.text() }
-            manga.description = info.select("div.link-box > div.box-title:contains(Series) ~ a").let { e ->
-                if (e.text().isNotEmpty()) "Series: ${e.joinToString { it.text() }}\n\n" else ""
-            }
-            manga.description += info.select("div.link-box > div.box-title:contains(Characters) ~ a").let { e ->
-                if (e.text().isNotEmpty()) ("Characters: ${e.joinToString { it.text() }}\n\n") else ""
-            }
-            manga.status = SManga.COMPLETED
-        }
-        manga.thumbnail_url = document.select("div.col-xs-12 img.img-responsive").attr("abs:data-src")
-
-        return manga
-    }
-
-    // Chapters
-
-    override fun chapterListParse(response: Response): List<SChapter> {
-        return listOf(
-            SChapter.create().apply {
-                name = "Chapter"
-                url = response.request.url.toString().removeSuffix("/").substringAfterLast("/")
-                chapter_number = 1f
-
-                date_upload = response.asJsoup().select(".stat-container div:contains(Uploaded) div.bold")?.text().let {
-                    DATE_FORMAT.parse(it!!)?.time
-                } ?: 0L
-            }
-        )
-    }
-
-    override fun chapterListSelector() = "not used"
-
-    override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException("Not used")
-
-    // Pages
-
-    override fun pageListRequest(chapter: SChapter): Request {
-        return GET("https://api.simply-hentai.com/v1/images/album/${chapter.url}", headersBuilder().add("X-Requested-With", "XMLHttpRequest").build())
-    }
-
-    override fun pageListParse(response: Response): List<Page> {
-        val pages = mutableListOf<Page>()
-
-        json.parseToJsonElement(response.body!!.string()).jsonObject.forEach {
-            pages.add(
-                Page(
-                    pages.size, "",
-                    it.value.jsonObject["sizes"]!!.jsonObject["full"]!!.jsonPrimitive.content
-                )
+                },
+                pagination.next != null
             )
         }
 
-        return pages
-    }
+    override fun latestUpdatesRequest(page: Int) =
+        Uri.parse("$apiUrl/albums").buildUpon().run {
+            appendQueryParameter("si", "0")
+            appendQueryParameter("locale", lang)
+            appendQueryParameter("language", langName)
+            appendQueryParameter("sort", "newest")
+            appendQueryParameter("page", page.toString())
+            GET(build().toString(), headers)
+        }
 
-    override fun pageListParse(document: Document): List<Page> = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesParse(response: Response) =
+        popularMangaParse(response)
 
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
+        Uri.parse("$apiUrl/search/complex").buildUpon().run {
+            appendQueryParameter("si", "0")
+            appendQueryParameter("locale", lang)
+            appendQueryParameter("query", query)
+            appendQueryParameter("page", page.toString())
+            appendQueryParameter("blacklist", blacklist)
+            appendQueryParameter("filter[languages][0]", langName)
+            filters.forEach { filter ->
+                when (filter) {
+                    is SortFilter -> {
+                        appendQueryParameter("sort", filter.orders[filter.state])
+                    }
+                    is SeriesFilter -> filter.value?.let {
+                        appendQueryParameter("filter[series_title][0]", it)
+                    }
+                    is TagsFilter -> filter.value?.forEachIndexed { idx, tag ->
+                        appendQueryParameter("filter[tags][$idx]", tag.trim())
+                    }
+                    is ArtistsFilter -> filter.value?.forEachIndexed { idx, tag ->
+                        appendQueryParameter("filter[artists][$idx]", tag.trim())
+                    }
+                    is TranslatorsFilter -> filter.value?.forEachIndexed { idx, tag ->
+                        appendQueryParameter("filter[translators][$idx]", tag.trim())
+                    }
+                    is CharactersFilter -> filter.value?.forEachIndexed { idx, tag ->
+                        appendQueryParameter("filter[characters][$idx]", tag.trim())
+                    }
+                    else -> Unit
+                }
+            }
+            GET(build().toString(), headers)
+        }
 
-    // Filters
+    override fun searchMangaParse(response: Response) =
+        response.decode<SHList<SHWrapper>>().run {
+            MangasPage(
+                data.map {
+                    SManga.create().apply {
+                        url = it.`object`.path
+                        title = it.`object`.title
+                        thumbnail_url = it.`object`.preview.sizes.thumb
+                    }
+                },
+                pagination.next != null
+            )
+        }
 
-    private class SortOrder(sortPairs: List<Pair<String, String>>) : Filter.Select<String>("Sort By", sortPairs.map { it.first }.toTypedArray())
-    private class SearchPair(name: String, val id: String = name) : Filter.CheckBox(name)
-    private class GenreList(searchVal: List<SearchPair>) : Filter.Group<SearchPair>("Genres", searchVal)
-    private class SeriesList(searchVal: List<SearchPair>) : Filter.Group<SearchPair>("Series", searchVal)
+    override fun mangaDetailsRequest(manga: SManga) =
+        GET(baseUrl + manga.url, headers)
+
+    override fun fetchMangaDetails(manga: SManga) =
+        client.newCall(chapterListRequest(manga))
+            .asObservableSuccess().map(::mangaDetailsParse)!!
+
+    override fun mangaDetailsParse(response: Response) =
+        SManga.create().apply {
+            val album = response.decode<SHAlbum>().data
+            url = album.path
+            title = album.title
+            description = buildString {
+                if (!album.description.isNullOrEmpty()) {
+                    append("${album.description}\n\n")
+                }
+                append("Series: ${album.series.title}\n")
+                album.characters.joinTo(this, prefix = "Characters: ") { it.title }
+            }
+            thumbnail_url = album.preview.sizes.thumb
+            genre = album.tags.joinToString { it.title }
+            artist = album.artists.joinToString { it.title }
+            author = artist
+            initialized = true
+        }
+
+    override fun chapterListRequest(manga: SManga) =
+        Uri.parse("$apiUrl/album").buildUpon().run {
+            appendEncodedPath(manga.url.split('/')[2])
+            appendQueryParameter("si", "0")
+            appendQueryParameter("locale", lang)
+            GET(build().toString(), headers)
+        }
+
+    override fun chapterListParse(response: Response) =
+        SChapter.create().apply {
+            val album = response.decode<SHAlbum>().data
+            name = "Chapter"
+            chapter_number = -1f
+            url = "${album.path}/all-pages"
+            scanlator = album.translators.joinToString { it.title }
+            date_upload = dateFormat.parse(album.created_at)?.time ?: 0L
+        }.let(::listOf)
+
+    override fun pageListRequest(chapter: SChapter) =
+        Uri.parse("$apiUrl/album").buildUpon().run {
+            appendEncodedPath(chapter.url.split('/')[2])
+            appendQueryParameter("si", "0")
+            appendQueryParameter("locale", lang)
+            GET(build().toString(), headers)
+        }
+
+    override fun pageListParse(response: Response) =
+        response.decode<SHAlbum>().data.images.map {
+            Page(it.page_num, "", it.sizes.full)
+        }
 
     override fun getFilterList() = FilterList(
-        SortOrder(getSortOrder()),
-        GenreList(getGenreList()),
-        SeriesList(getSeriesList())
+        SortFilter(),
+        SeriesFilter(),
+        Note("tags"),
+        TagsFilter(),
+        Note("artists"),
+        ArtistsFilter(),
+        Note("translators"),
+        TranslatorsFilter(),
+        Note("characters"),
+        CharactersFilter(),
     )
 
-    // "Relevance" should be empty, don't add a "Views" sort order
-    private fun getSortOrder() = listOf(
-        Pair("Relevance", ""),
-        Pair("Popularity", "sort_value"),
-        Pair("Upload Date", "created_at")
-    )
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        EditTextPreference(screen.context).apply {
+            key = "blacklist"
+            title = "Blacklist"
+            summary = "Separate multiple tags with commas (,)"
 
-    // TODO: add more to getGenreList and getSeriesList
-    private fun getGenreList() = listOf(
-        SearchPair("Solo Female", "4807"),
-        SearchPair("Solo Male", "4805"),
-        SearchPair("Big Breasts", "2528"),
-        SearchPair("Nakadashi", "2418"),
-        SearchPair("Blowjob", "64"),
-        SearchPair("Schoolgirl Uniform", "2522"),
-        SearchPair("Stockings", "33")
-    )
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putString("blacklist", newValue as String).commit()
+            }
+        }.let(screen::addPreference)
+    }
 
-    private fun getSeriesList() = listOf(
-        SearchPair("Original Work", "1093"),
-        SearchPair("Kantai Collection", "1316"),
-        SearchPair("Touhou", "747"),
-        SearchPair("Fate Grand Order", "2171"),
-        SearchPair("Idolmaster", "306"),
-        SearchPair("Granblue Fantasy", "2041"),
-        SearchPair("Girls Und Panzer", "1324")
-    )
+    private inline val blacklist: String
+        get() = preferences.getString("blacklist", "")!!
+
+    private inline fun <reified T> Response.decode() =
+        json.decodeFromString<T>(body!!.string())
+
+    override fun imageUrlParse(response: Response) =
+        throw UnsupportedOperationException("Not used")
 
     companion object {
-
-        @SuppressLint("SimpleDateFormat")
-        private val DATE_FORMAT = SimpleDateFormat("dd.MM.yyyy")
+        private val dateFormat =
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.ROOT)
     }
 }

@@ -1,34 +1,26 @@
 package eu.kanade.tachiyomi.extension.all.simplyhentai
 
 import eu.kanade.tachiyomi.annotations.Nsfw
-import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
+import kotlinx.serialization.ExperimentalSerializationApi
 
-@Nsfw
+@ExperimentalSerializationApi @Nsfw
 class SimplyHentaiFactory : SourceFactory {
-    override fun createSources(): List<Source> = listOf(
-        SimplyHentaiEN(),
-        SimplyHentaiJA(),
-        SimplyHentaiZH(),
-        SimplyHentaiKO(),
-        SimplyHentaiES(),
-        SimplyHentaiRU(),
-        SimplyHentaiFR(),
-        SimplyHentaiDE(),
-        SimplyHentaiPT()
+    override fun createSources() = listOf(
+        SimplyHentai("en"),
+        SimplyHentai("ja"),
+        SimplyHentai("zh"),
+        SimplyHentai("ko"),
+        SimplyHentai("es"),
+        SimplyHentai("ru"),
+        SimplyHentai("fr"),
+        SimplyHentai("de"),
+        object : SimplyHentai("pt-BR") {
+            // The site uses a Portugal flag for the language,
+            // but the contents are in Brazilian Portuguese.
+            override val id = 23032005200449651
+        },
+        SimplyHentai("it"),
+        SimplyHentai("pl"),
     )
-}
-
-class SimplyHentaiEN : SimplyHentai("en", "english", "1")
-class SimplyHentaiJA : SimplyHentai("ja", "japanese", "2")
-class SimplyHentaiZH : SimplyHentai("zh", "chinese", "11")
-class SimplyHentaiKO : SimplyHentai("ko", "korean", "9")
-class SimplyHentaiES : SimplyHentai("es", "spanish", "8")
-class SimplyHentaiRU : SimplyHentai("ru", "russian", "7")
-class SimplyHentaiFR : SimplyHentai("fr", "french", "3")
-class SimplyHentaiDE : SimplyHentai("de", "german", "4")
-class SimplyHentaiPT : SimplyHentai("pt-BR", "portuguese", "6") {
-    // The site uses a Portugal flag for the language,
-    // but the contents are in Brazilian Portuguese.
-    override val id: Long = 7265793330155215502
 }
