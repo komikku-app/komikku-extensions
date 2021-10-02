@@ -30,7 +30,7 @@ class Readmanga : ParsedHttpSource() {
 
     override val name = "Readmanga"
 
-    override val baseUrl = "https://readmanga.live"
+    override val baseUrl = "https://readmanga.io"
 
     override val lang = "ru"
 
@@ -40,6 +40,11 @@ class Readmanga : ParsedHttpSource() {
 
     override val client: OkHttpClient = network.client.newBuilder()
         .addNetworkInterceptor(rateLimitInterceptor).build()
+
+    override fun headersBuilder() = Headers.Builder().apply {
+        add("User-Agent", "readmangafun")
+        add("Referer", baseUrl)
+    }
 
     override fun popularMangaSelector() = "div.tile"
 
@@ -163,7 +168,7 @@ class Readmanga : ParsedHttpSource() {
         if (infoElement.select(".another-names").isNotEmpty()) {
             altName = "Альтернативные названия:\n" + infoElement.select(".another-names").text() + "\n\n"
         }
-        manga.description = ratingStar + " " + ratingValue + "[ⓘ" + ratingValueOver + "]" + " (голосов: " + ratingVotes + ")\n" + altName + infoElement.select("div.manga-description").text()
+        manga.description = ratingStar + " " + ratingValue + "[ⓘ" + ratingValueOver + "]" + " (голосов: " + ratingVotes + ")\n" + altName + document.select("div.manga-description").text()
         manga.status = parseStatus(infoElement.html())
         manga.thumbnail_url = infoElement.select("img").attr("data-full")
         return manga
