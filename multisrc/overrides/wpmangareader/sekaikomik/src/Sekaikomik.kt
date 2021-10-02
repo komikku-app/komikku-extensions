@@ -6,4 +6,4 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Nsfw
-class Sekaikomik : WPMangaReader("Sekaikomik", "https://www.sekaikomik.in", "id", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("id")))
+class Sekaikomik : WPMangaReader("Sekaikomik", "https://www.sekaikomik.site", "id", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("id")))
