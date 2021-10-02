@@ -5,7 +5,7 @@ ext {
     extName = 'MangaYabu!'
     pkgNameSuffix = 'pt.mangayabu'
     extClass = '.MangaYabu'
-    extVersionCode = 13
+    extVersionCode = 14
 }
 
 dependencies {

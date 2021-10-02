@@ -13,6 +13,7 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -42,11 +43,20 @@ class MangaYabu : ParsedHttpSource() {
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", USER_AGENT)
         .add("Origin", baseUrl)
         .add("Referer", baseUrl)
 
     override fun popularMangaRequest(page: Int): Request = GET(baseUrl, headers)
+
+    override fun popularMangaParse(response: Response): MangasPage {
+        val result = super.popularMangaParse(response)
+
+        if (result.mangas.isEmpty()) {
+            throw Exception(BLOCKING_MESSAGE)
+        }
+
+        return result
+    }
 
     override fun popularMangaSelector(): String = "#main div.row:contains(Populares) div.carousel div.card > a"
 
@@ -67,6 +77,16 @@ class MangaYabu : ParsedHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl, headers)
 
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val result = super.latestUpdatesParse(response)
+
+        if (result.mangas.isEmpty()) {
+            throw Exception(BLOCKING_MESSAGE)
+        }
+
+        return result
+    }
+
     override fun latestUpdatesSelector() = "#main div.row:contains(Lançamentos) div.card"
 
     override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
@@ -83,6 +103,16 @@ class MangaYabu : ParsedHttpSource() {
             .toString()
 
         return POST(searchUrl, headers)
+    }
+
+    override fun searchMangaParse(response: Response): MangasPage {
+        val result = super.searchMangaParse(response)
+
+        if (result.mangas.isEmpty()) {
+            throw Exception(BLOCKING_MESSAGE)
+        }
+
+        return result
     }
 
     override fun searchMangaSelector() = "#main div.row:contains(Resultados) div.card"
@@ -110,6 +140,16 @@ class MangaYabu : ParsedHttpSource() {
         thumbnail_url = document.selectFirst("div.manga-index div.mango-hover img")!!.imgAttr()
     }
 
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val chapters = super.chapterListParse(response)
+
+        if (chapters.isEmpty()) {
+            throw Exception(BLOCKING_MESSAGE)
+        }
+
+        return chapters
+    }
+
     override fun chapterListSelector() = "div.manga-info:contains(Capítulos) div.manga-chapters div.single-chapter"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
@@ -119,10 +159,19 @@ class MangaYabu : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("img.slideit")
-            .mapIndexed { i, element ->
-                Page(i, document.location(), element.imgAttr())
+        val pages = document.select("#main img[loading], #main img[ezimgfmt]")
+            .map { it.imgAttr() }
+            .distinct()
+            .drop(1)
+            .mapIndexed { i, imgUrl ->
+                Page(i, document.location(), imgUrl)
             }
+
+        if (pages.isEmpty()) {
+            throw Exception(BLOCKING_MESSAGE)
+        }
+
+        return pages
     }
 
     override fun imageUrlParse(document: Document) = ""
@@ -190,5 +239,8 @@ class MangaYabu : ParsedHttpSource() {
         private val SLUG_EXCEPTIONS = mapOf(
             "the-promised-neverland-yakusoku-no-neverland" to "yakusoku-no-neverland-the-promised-neverland"
         )
+
+        private const val BLOCKING_MESSAGE = "O site está bloqueando o Tachiyomi. " +
+            "Migre para outras fontes caso o problema persistir."
     }
 }
