@@ -45,6 +45,17 @@ class MeDocTruyenTranh : ParsedHttpSource() {
         return list
     }
 
+    private fun JSONArray.flatten(): JSONArray {
+        val list = mutableListOf<Any>()
+        for (i in 0 until this.length()) {
+            val childArray = this[i] as JSONArray
+            for (j in 0 until childArray.length()) {
+                list.add(childArray[j])
+            }
+        }
+        return JSONArray(list)
+    }
+
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
 
@@ -134,7 +145,7 @@ class MeDocTruyenTranh : ParsedHttpSource() {
             .getJSONObject("initialState")
             .getJSONObject("detail")
             .getJSONArray("story_chapters")
-            .getJSONArray(0)
+            .flatten()
             .mapJSONArray { _, jsonObject: JSONObject ->
                 SChapter.create().apply {
                     name = jsonObject.getString("title")
