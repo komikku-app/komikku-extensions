@@ -291,12 +291,9 @@ class Qiximh : HttpSource() {
         val document = response.asJsoup()
 
         // Special thanks to author who created Mangahere.kt
-        val duktape = Duktape.create()
-
         val script = document.select("script:containsData(function(p,a,c,k,e,d))").html().removePrefix("eval")
-        val deobfuscatedScript = duktape.evaluate(script).toString()
+        val deobfuscatedScript = Duktape.create().use { it.evaluate(script).toString() }
         val urls = deobfuscatedScript.substringAfter("newImgs=[\"").substringBefore("\"]").split("\",\"")
-        duktape.close()
 
         return urls.mapIndexed { index, s -> Page(index, "", s) }
     }

@@ -257,13 +257,11 @@ class Mangahere : ParsedHttpSource() {
             val pageBase = link.substring(0, link.lastIndexOf("/"))
 
             IntRange(1, pagesNumber).map { i ->
-
                 val pageLink = "$pageBase/chapterfun.ashx?cid=$chapterId&page=$i&key=$secretKey"
 
                 var responseText = ""
 
                 for (tr in 1..3) {
-
                     val request = Request.Builder()
                         .url(pageLink)
                         .addHeader("Referer", link)
@@ -302,7 +300,6 @@ class Mangahere : ParsedHttpSource() {
     }
 
     private fun extractSecretKey(html: String, duktape: Duktape): String {
-
         val secretKeyScriptLocation = html.indexOf("eval(function(p,a,c,k,e,d)")
         val secretKeyScriptEndLocation = html.indexOf("</script>", secretKeyScriptLocation)
         val secretKeyScript = html.substring(secretKeyScriptLocation, secretKeyScriptEndLocation).removePrefix("eval")

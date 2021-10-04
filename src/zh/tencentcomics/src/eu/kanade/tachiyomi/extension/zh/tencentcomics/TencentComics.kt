@@ -131,7 +131,6 @@ class TencentComics : ParsedHttpSource() {
     """
 
     override fun pageListParse(document: Document): List<Page> {
-        val duktape = Duktape.create()
         val pages = ArrayList<Page>()
         var html = document.html()
 
@@ -145,7 +144,7 @@ class TencentComics : ParsedHttpSource() {
 
         val raw = html.substringAfterLast("var DATA =").substringBefore("PRELOAD_NUM").trim().replace(Regex("^\'|\',$"), "")
         val decodePrefix = "var raw = \"$raw\"; var nonce = $nonce"
-        val full = duktape.evaluate(decodePrefix + jsDecodeFunction).toString()
+        val full = Duktape.create().use { it.evaluate(decodePrefix + jsDecodeFunction).toString() }
         val chapterData = json.parseToJsonElement(String(Base64.decode(full, Base64.DEFAULT))).jsonObject
 
         if (!chapterData["chapter"]!!.jsonObject["canRead"]!!.jsonPrimitive.boolean) throw Exception("[此章节为付费内容]")

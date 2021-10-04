@@ -275,7 +275,6 @@ open class MangaPark(
             throw Exception("The chapter content seems to be deleted.\n\nContact the site owner if possible.")
         }
 
-        val duktape = Duktape.create()
         val script = document.select("script").html()
         val imgCdnHost = script.substringAfter("const imgCdnHost = \"").substringBefore("\";")
         val imgPathLisRaw = script.substringAfter("const imgPathLis = ").substringBefore(";")
@@ -286,7 +285,7 @@ open class MangaPark(
         val decryptScript =
             cryptoJS + "CryptoJS.AES.decrypt($amWord, $amPass).toString(CryptoJS.enc.Utf8);"
 
-        val imgWordLisRaw = duktape.evaluate(decryptScript).toString()
+        val imgWordLisRaw = Duktape.create().use { it.evaluate(decryptScript).toString() }
         val imgWordLis = json.parseToJsonElement(imgWordLisRaw).jsonArray
 
         return imgWordLis.mapIndexed { i, imgWordE ->
