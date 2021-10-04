@@ -66,9 +66,13 @@ class KouhaiWork : HttpSource() {
     override fun fetchMangaDetails(manga: SManga) =
         client.newCall(chapterListRequest(manga)).asObservableSuccess().map {
             val series = it.data<KouhaiSeries>()
-            manga.description = series.synopsis
-            manga.author = series.authors.joinToString()
-            manga.artist = series.artists.joinToString()
+            manga.description = buildString {
+                append(series.synopsis)
+                append("\n\nAlternative Names:\n")
+                series.alternative_titles.joinTo(this, "\n")
+            }
+            manga.author = series.authors?.joinToString()
+            manga.artist = series.artists?.joinToString()
             manga.genre = series.genres.orEmpty()
                 .plus(series.themes.orEmpty())
                 .plus(series.demographics.orEmpty())
