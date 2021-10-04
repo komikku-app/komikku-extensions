@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.universohentai
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.gattsu.Gattsu
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -12,7 +11,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class UniversoHentai : Gattsu(
     "Universo Hentai",
     "https://universohentai.com",

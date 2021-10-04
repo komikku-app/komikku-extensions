@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'ar.gmanga'
     extClass = '.Gmanga'
     extVersionCode = 7
-    containsNsfw = false
+    isNsfw = false
 }
 
 dependencies {

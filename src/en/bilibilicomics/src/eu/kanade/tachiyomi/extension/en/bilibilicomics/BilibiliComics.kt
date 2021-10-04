@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.bilibilicomics
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -32,7 +31,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class BilibiliComics : HttpSource() {
 
     override val name = "BILIBILI COMICS"

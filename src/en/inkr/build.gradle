@@ -7,7 +7,7 @@ ext {
     pkgNameSuffix = 'en.inkr'
     extClass = '.Inkr'
     extVersionCode = 3
-    containsNsfw = true
+    isNsfw = true
 }
 
 dependencies {

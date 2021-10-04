@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'all.nhentai'
     extClass = '.NHFactory'
     extVersionCode = 29
-    containsNsfw = true
+    isNsfw = true
 }
 
 dependencies {

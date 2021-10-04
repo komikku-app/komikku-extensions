@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.hwtmanga
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -22,7 +21,7 @@ import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-@Nsfw class HWTManga : HttpSource() {
+class HWTManga : HttpSource() {
     override val name = "Hardworking Translations"
 
     override val baseUrl = "https://www.hwtmanga.com/hwt/"

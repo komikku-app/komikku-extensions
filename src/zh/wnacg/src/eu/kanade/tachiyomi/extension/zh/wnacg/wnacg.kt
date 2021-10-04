@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.zh.wnacg
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
@@ -18,7 +17,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 
-@Nsfw
 class wnacg : ParsedHttpSource() {
     override val name = "紳士漫畫"
     override val baseUrl = "https://www.wnacg.org"

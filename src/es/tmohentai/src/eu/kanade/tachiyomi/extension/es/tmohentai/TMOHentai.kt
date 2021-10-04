@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.es.tmohentai
 
 import android.app.Application
 import android.content.SharedPreferences
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -21,7 +20,6 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-@Nsfw
 class TMOHentai : ConfigurableSource, ParsedHttpSource() {
 
     override val name = "TMOHentai"

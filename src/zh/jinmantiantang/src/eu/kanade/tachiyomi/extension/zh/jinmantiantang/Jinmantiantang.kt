@@ -8,7 +8,6 @@ import android.graphics.Canvas
 import android.graphics.Rect
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -42,7 +41,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.floor
 
-@Nsfw
 class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
 
     override val lang: String = "zh"

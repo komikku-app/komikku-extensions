@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.mihentai
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
@@ -17,7 +16,6 @@ import org.jsoup.nodes.Document
 import uy.kohesive.injekt.injectLazy
 import java.util.Locale
 
-@Nsfw
 class Mihentai : WPMangaStream("Mihentai", "https://mihentai.com", "en") {
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/manga/page/$page/?order=popular", headers)

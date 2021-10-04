@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'en.mangarawclub'
     extClass = '.MangaRawClub'
     extVersionCode = 4
-	containsNsfw = true
+	isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

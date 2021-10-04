@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.silencescan
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
 import eu.kanade.tachiyomi.source.model.SManga
@@ -9,7 +8,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class SilenceScan : WPMangaReader(
     "Silence Scan",
     "https://silencescan.com.br",

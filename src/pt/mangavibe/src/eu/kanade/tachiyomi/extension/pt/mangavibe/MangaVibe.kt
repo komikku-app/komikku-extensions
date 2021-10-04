@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.mangavibe
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -29,7 +28,6 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 
-@Nsfw
 class MangaVibe : HttpSource() {
 
     override val name = "MangaVibe"

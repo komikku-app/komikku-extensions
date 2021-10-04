@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.mundomangakun
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
@@ -23,7 +22,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class MundoMangaKun : ParsedHttpSource() {
 
     override val name = "Mundo Mangá-Kun"

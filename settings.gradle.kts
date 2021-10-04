@@ -1,4 +1,3 @@
-include(":annotations")
 include(":core")
 
 include(":lib-ratelimit")

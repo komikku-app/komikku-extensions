@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'ru.henchan'
     extClass = '.Henchan'
     extVersionCode = 26
-    containsNsfw = true
+    isNsfw = true
 }
 
 dependencies {

@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.pururin
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -16,7 +15,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-@Nsfw
 class Pururin : ParsedHttpSource() {
 
     override val name = "Pururin"

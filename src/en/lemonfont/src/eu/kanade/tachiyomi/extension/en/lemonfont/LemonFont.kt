@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.lemonfont
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -14,7 +13,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 
-@Nsfw
 class LemonFont : ParsedHttpSource() {
     override val name = "LemonFont"
 

@@ -7,7 +7,7 @@ ext {
     pkgNameSuffix = 'fr.japanread'
     extClass = '.Japanread'
     extVersionCode = 8
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

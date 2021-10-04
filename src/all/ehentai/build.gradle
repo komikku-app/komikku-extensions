@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'all.ehentai'
     extClass = '.EHFactory'
     extVersionCode = 14
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

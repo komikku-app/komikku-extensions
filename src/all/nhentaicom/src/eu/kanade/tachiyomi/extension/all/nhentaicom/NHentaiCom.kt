@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.all.nhentaicom
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
@@ -21,7 +20,6 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 
-@Nsfw
 class NHentaiCom(override val lang: String) : HttpSource() {
 
     override val name = when (lang) {

@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'zh.jinmantiantang'
     extClass = '.Jinmantiantang'
     extVersionCode = 16
-    containsNsfw = true
+    isNsfw = true
 }
 
 dependencies {

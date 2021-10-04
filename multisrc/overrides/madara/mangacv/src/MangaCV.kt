@@ -1,9 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.mangacv
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 
-@Nsfw
 class MangaCV : Madara("MangaCV", "https://mangacv.com", "en") {
 
     override fun getGenreList() = listOf(

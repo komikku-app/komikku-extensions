@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.all.comickfun
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 
@@ -29,7 +28,6 @@ val toISO639 = mapOf(
 
 ).withDefault { it } // country code matches language code
 
-@Nsfw
 class ComickFunFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         "all",

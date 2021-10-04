@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.all.mangaforfree
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.source.Source
@@ -23,7 +22,6 @@ class MangaForFreeKO : MangaForFree("MangaForFree.net", "https://mangaforfree.ne
 }
 class MangaForFreeALL : MangaForFree("MangaForFree.net", "https://mangaforfree.net", "all")
 
-@Nsfw
 abstract class MangaForFree(
     override val name: String,
     override val baseUrl: String,

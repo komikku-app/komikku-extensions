@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.limascans
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
@@ -11,7 +10,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class LimaScans : Madara(
     "Lima Scans",
     "http://limascans.xyz/v2",

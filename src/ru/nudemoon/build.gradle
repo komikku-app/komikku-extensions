@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'ru.nudemoon'
     extClass = '.Nudemoon'
     extVersionCode = 7
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

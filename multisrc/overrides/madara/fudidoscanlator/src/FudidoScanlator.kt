@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.fudidoscanlator
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -10,7 +9,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class FudidoScanlator : Madara(
     "Fudido Scanlator",
     "https://fudidoscan.com",

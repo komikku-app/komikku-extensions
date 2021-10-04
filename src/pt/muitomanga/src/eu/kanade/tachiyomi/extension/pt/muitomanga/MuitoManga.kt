@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.muitomanga
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -28,7 +27,6 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 
-@Nsfw
 class MuitoManga : ParsedHttpSource() {
 
     override val name = "Muito Mangá"

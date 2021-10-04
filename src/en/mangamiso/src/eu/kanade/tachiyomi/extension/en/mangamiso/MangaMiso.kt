@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.mangamiso
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
@@ -23,7 +22,6 @@ import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-@Nsfw
 class MangaMiso : HttpSource() {
 
     companion object {

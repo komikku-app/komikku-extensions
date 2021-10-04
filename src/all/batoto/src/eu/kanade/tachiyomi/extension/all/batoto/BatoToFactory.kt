@@ -1,10 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.batoto
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 
-@Nsfw
 class BatoToFactory : SourceFactory {
     override fun createSources(): List<Source> = languages.map { BatoTo(it.lang, it.siteLang) }
 }

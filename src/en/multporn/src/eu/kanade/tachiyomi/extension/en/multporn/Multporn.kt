@@ -4,7 +4,6 @@ import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.get
 import com.google.gson.Gson
 import com.google.gson.JsonArray
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservable
@@ -30,7 +29,6 @@ import rx.Observable
 import rx.schedulers.Schedulers
 import java.util.Locale
 
-@Nsfw
 class Multporn : ParsedHttpSource() {
 
     override val name = "Multporn"

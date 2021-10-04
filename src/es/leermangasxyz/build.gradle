@@ -7,7 +7,7 @@ ext {
 	extClass = '.LeerMangasXYZ'
 	extVersionCode = 1
 	libVersion = '1.2'
-	containsNsfw = false
+	isNsfw = false
 }
 
 apply from: "$rootDir/common.gradle"

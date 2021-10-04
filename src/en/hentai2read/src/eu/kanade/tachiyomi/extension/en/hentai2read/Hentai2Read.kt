@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.hentai2read
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -22,7 +21,6 @@ import rx.Observable
 import java.util.Calendar
 import java.util.regex.Pattern
 
-@Nsfw
 class Hentai2Read : ParsedHttpSource() {
 
     override val name = "Hentai2Read"

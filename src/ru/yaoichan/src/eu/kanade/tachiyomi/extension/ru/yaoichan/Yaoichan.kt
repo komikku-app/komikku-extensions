@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.ru.yaoichan
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
@@ -17,7 +16,6 @@ import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-@Nsfw
 class Yaoichan : ParsedHttpSource() {
 
     override val name = "Yaoichan"

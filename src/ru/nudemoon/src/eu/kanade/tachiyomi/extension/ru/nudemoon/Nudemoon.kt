@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.ru.nudemoon
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -17,7 +16,6 @@ import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-@Nsfw
 class Nudemoon : ParsedHttpSource() {
 
     override val name = "Nude-Moon"

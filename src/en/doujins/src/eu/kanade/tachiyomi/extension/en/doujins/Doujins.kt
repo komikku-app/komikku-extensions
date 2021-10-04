@@ -6,7 +6,6 @@ import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.get
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -28,7 +27,6 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-@Nsfw
 class Doujins : HttpSource() {
 
     override val baseUrl: String = "https://doujins.com"

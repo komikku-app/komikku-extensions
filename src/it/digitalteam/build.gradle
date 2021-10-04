@@ -7,7 +7,7 @@ ext {
     pkgNameSuffix = 'it.digitalteam'
     extClass = '.DigitalTeam'
     extVersionCode = 2
-    containsNsfw = false
+    isNsfw = false
 }
 
 apply from: "$rootDir/common.gradle"

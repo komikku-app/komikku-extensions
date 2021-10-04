@@ -72,7 +72,7 @@ interface ThemeSourceGenerator {
                     extClass = '.${source.className}'
                     extFactory = '$themePkg'
                     extVersionCode = ${baseVersionCode + source.overrideVersionCode + multisrcLibraryVersion}
-                    ${if (source.isNsfw) "containsNsfw = true\n" else ""}
+                    ${if (source.isNsfw) "isNsfw = true\n" else ""}
                 }
                 $defaultAdditionalGradleText
                 $additionalGradleOverrideText
@@ -200,9 +200,7 @@ ${placeholders.map { "${" ".repeat(28)}${it.key}: \"${it.value}\""}.joinToString
 
                 import eu.kanade.tachiyomi.multisrc.$themePkg.$themeClass
                 ${if (source is ThemeSourceData.MultiLang) "import eu.kanade.tachiyomi.source.SourceFactory" else ""}
-                ${if (source.isNsfw) "import eu.kanade.tachiyomi.annotations.Nsfw" else ""}
 
-                ${if (source.isNsfw) "\n@Nsfw" else ""}
                 ${factoryClassText()}
                 """.trimIndent()
             )

@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.meusmangas
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.mangasar.MangaSar
 import eu.kanade.tachiyomi.source.model.SManga
@@ -10,7 +9,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Element
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class MeusMangas : MangaSar(
     "Meus Mangás",
     "https://meusmangas.net",

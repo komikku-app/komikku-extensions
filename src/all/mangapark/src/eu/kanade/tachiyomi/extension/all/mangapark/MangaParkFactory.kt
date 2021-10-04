@@ -1,10 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.mangapark
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 
-@Nsfw
 class MangaParkFactory : SourceFactory {
     override fun createSources(): List<Source> = languages.map { MangaPark(it.lang, it.siteLang) }
 }

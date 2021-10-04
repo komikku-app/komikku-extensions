@@ -7,7 +7,7 @@ ext {
     pkgNameSuffix = 'pt.hipercool'
     extClass = '.Hipercool'
     extVersionCode = 8
-    containsNsfw = true
+    isNsfw = true
 }
 
 dependencies {

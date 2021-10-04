@@ -7,7 +7,7 @@ ext {
     pkgNameSuffix = 'pt.mundomangakun'
     extClass = '.MundoMangaKun'
     extVersionCode = 6
-    containsNsfw = true
+    isNsfw = true
 }
 
 dependencies {

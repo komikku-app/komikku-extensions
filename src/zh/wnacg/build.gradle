@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'zh.wnacg'
     extClass = '.wnacg'
     extVersionCode = 6
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

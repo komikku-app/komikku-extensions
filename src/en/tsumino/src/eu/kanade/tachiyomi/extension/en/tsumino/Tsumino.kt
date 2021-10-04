@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.tsumino
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.getArtists
 import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.getChapter
 import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.getCollection
@@ -33,7 +32,6 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 
-@Nsfw
 class Tsumino : HttpSource() {
 
     override val name = "Tsumino"

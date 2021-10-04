@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.latisbooks
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -16,7 +15,6 @@ import okhttp3.Response
 import rx.Observable
 import java.util.Calendar
 
-@Nsfw
 class Latisbooks : HttpSource() {
 
     override val name = "Latis Books"

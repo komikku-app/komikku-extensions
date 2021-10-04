@@ -15,6 +15,5 @@ dependencies {
     compileOnly 'org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.2.0'
     compileOnly 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.0'
 
-    implementation project(":annotations")
     compileOnly project(':duktape-stub')
 }

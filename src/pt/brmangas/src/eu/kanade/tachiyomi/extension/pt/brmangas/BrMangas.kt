@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.brmangas
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -17,7 +16,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class BrMangas : ParsedHttpSource() {
 
     override val name = "BR Mangás"

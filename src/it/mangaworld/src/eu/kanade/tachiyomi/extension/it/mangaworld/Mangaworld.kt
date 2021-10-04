@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.it.mangaworld
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -21,7 +20,6 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-@Nsfw
 class Mangaworld : ParsedHttpSource() {
 
     override val name = "Mangaworld"

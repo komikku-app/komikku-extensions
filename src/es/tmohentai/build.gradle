@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'es.tmohentai'
     extClass = '.TMOHentai'
     extVersionCode = 5
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

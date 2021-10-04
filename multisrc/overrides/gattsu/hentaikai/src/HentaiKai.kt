@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.hentaikai
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.gattsu.Gattsu
 import eu.kanade.tachiyomi.network.GET
@@ -10,7 +9,6 @@ import okhttp3.Request
 import org.jsoup.nodes.Element
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class HentaiKai : Gattsu(
     "Hentai Kai",
     "https://hentaikai.com",

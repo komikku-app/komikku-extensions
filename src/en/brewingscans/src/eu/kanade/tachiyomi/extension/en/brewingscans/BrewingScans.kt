@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.brewingscans
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -14,7 +13,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
 
-@Nsfw class BrewingScans : HttpSource() {
+class BrewingScans : HttpSource() {
     override val lang = "en"
 
     override val name = "Brewing Scans"

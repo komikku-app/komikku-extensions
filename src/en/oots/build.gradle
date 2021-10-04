@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'en.oots'
     extClass = '.oots'
     extVersionCode = 1
-    containsNsfw = false
+    isNsfw = false
 }
 
 apply from: "$rootDir/common.gradle"

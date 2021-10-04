@@ -7,7 +7,6 @@ import android.util.Base64
 import androidx.preference.CheckBoxPreference
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -44,7 +43,6 @@ import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class TopToonPlus : HttpSource(), ConfigurableSource {
 
     override val name = "TOPTOON+"

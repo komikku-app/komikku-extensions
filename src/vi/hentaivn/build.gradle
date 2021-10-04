@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'vi.hentaivn'
     extClass = '.HentaiVN'
     extVersionCode = 9
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

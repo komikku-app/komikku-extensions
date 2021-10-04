@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.vi.hentaivn
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -22,7 +21,6 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-@Nsfw
 class HentaiVN : ParsedHttpSource() {
 
     override val baseUrl = "https://hentaivn.tv"

@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'es.ikuhentai'
     extClass = '.Ikuhentai'
     extVersionCode = 1
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

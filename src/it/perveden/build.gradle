@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'it.perveden'
     extClass = '.Perveden'
     extVersionCode = 3
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

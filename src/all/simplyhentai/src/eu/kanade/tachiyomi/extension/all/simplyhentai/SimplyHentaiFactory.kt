@@ -1,10 +1,9 @@
 package eu.kanade.tachiyomi.extension.all.simplyhentai
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.source.SourceFactory
 import kotlinx.serialization.ExperimentalSerializationApi
 
-@ExperimentalSerializationApi @Nsfw
+@ExperimentalSerializationApi
 class SimplyHentaiFactory : SourceFactory {
     override fun createSources() = listOf(
         SimplyHentai("en"),

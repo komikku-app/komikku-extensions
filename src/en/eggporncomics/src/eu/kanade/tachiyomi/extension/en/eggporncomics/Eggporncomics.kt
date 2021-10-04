@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.eggporncomics
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.source.model.Filter
@@ -20,7 +19,6 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import java.util.Calendar
 
-@Nsfw
 class Eggporncomics : ParsedHttpSource() {
 
     override val name = "Eggporncomics"

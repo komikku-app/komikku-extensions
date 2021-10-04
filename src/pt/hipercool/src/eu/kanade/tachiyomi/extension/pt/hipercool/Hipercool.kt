@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.hipercool
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -30,7 +29,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class Hipercool : HttpSource() {
 
     // Hardcode the id because the language wasn't specific.

@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.all.ninehentai
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -30,7 +29,6 @@ import rx.schedulers.Schedulers
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 
-@Nsfw
 class NineHentai : HttpSource() {
 
     override val baseUrl = "https://9hentai.to"

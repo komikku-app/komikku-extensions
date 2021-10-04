@@ -1,13 +1,11 @@
 package eu.kanade.tachiyomi.extension.es.vcpvmp
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.SManga
 import org.jsoup.nodes.Element
 
-@Nsfw
 class VCPVMPFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         VCP(),

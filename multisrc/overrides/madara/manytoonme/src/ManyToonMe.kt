@@ -1,9 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.manytoonme
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 
-@Nsfw
 class ManyToonMe : Madara("ManyToon.me", "https://manytoon.me", "en") {
 
     override val useNewChapterEndpoint: Boolean = true

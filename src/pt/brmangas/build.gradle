@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'pt.brmangas'
     extClass = '.BrMangas'
     extVersionCode = 3
-    containsNsfw = true
+    isNsfw = true
 }
 
 dependencies {

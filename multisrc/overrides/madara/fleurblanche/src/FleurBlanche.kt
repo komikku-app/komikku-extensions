@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.fleurblanche
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import okhttp3.Interceptor
@@ -11,7 +10,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class FleurBlanche : Madara(
     "Fleur Blanche",
     "https://fleurscan.com",

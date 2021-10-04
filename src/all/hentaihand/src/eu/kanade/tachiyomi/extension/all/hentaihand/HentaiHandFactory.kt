@@ -1,10 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.hentaihand
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 
-@Nsfw
 class HentaiHandFactory : SourceFactory {
 
     override fun createSources(): List<Source> = listOf(

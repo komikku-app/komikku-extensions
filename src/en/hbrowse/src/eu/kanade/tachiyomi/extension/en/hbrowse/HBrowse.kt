@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.hbrowse
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.Filter
@@ -20,7 +19,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 
-@Nsfw
 class HBrowse : ParsedHttpSource() {
 
     override val name = "HBrowse"

@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.mangarawclub
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -25,7 +24,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class MangaRawClub : ParsedHttpSource() {
 
     override val name = "manga-raw.club"

@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.es.doujinyang
 
 import android.net.Uri
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.Filter
@@ -20,7 +19,6 @@ import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-@Nsfw
 class DoujinYang : ParsedHttpSource() {
 
     override val name = "Doujin-Yang"
