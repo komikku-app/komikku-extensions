@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.en.tcbscans
 
 import android.app.Application
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -25,23 +26,40 @@ class TCBScans : ParsedHttpSource() {
     override val lang = "en"
     override val supportsLatest = false
     override val client: OkHttpClient = network.cloudflareClient
-
+    companion object {
+        private const val MIGRATE_MESSAGE = "Migrate from TCB Scans to TCB Scans"
+        private val TITLE_REGEX = "[0-9]+$".toRegex()
+    }
     // popular
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/projects")
     }
 
-    override fun popularMangaSelector() = "#latestProjects .elementor-widget-image-box:not(.elementor-widget-spacer)"
+    override fun popularMangaSelector() = ".bg-card.border.border-border.rounded.p-3.mb-3"
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select(".attachment-thumbnail").attr("src")
-        manga.setUrlWithoutDomain(element.select(".elementor-image-box-title a").attr("href"))
-        manga.title = element.select(".elementor-image-box-title a").text()
+        manga.thumbnail_url = element.select(".w-24.h-24.object-cover.rounded-lg").attr("src")
+        manga.setUrlWithoutDomain(element.select("a.mb-3.text-white.text-lg.font-bold").attr("href"))
+        manga.title = element.select("a.mb-3.text-white.text-lg.font-bold").text()
         return manga
     }
 
     override fun popularMangaNextPageSelector(): String? = null
+
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        return client.newCall(mangaDetailsRequest(manga))
+            .asObservable()
+            .doOnNext { response ->
+                if (!response.isSuccessful) {
+                    response.close()
+                    throw Exception(if (response.code == 404) MIGRATE_MESSAGE else "HTTP error ${response.code}")
+                }
+            }
+            .map { response ->
+                mangaDetailsParse(response).apply { initialized = true }
+            }
+    }
 
     // latest
     override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
@@ -52,30 +70,44 @@ class TCBScans : ParsedHttpSource() {
 
     override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
-    // search
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> =
-        Observable.just(MangasPage(emptyList(), false))
+    override fun searchMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
 
-    override fun searchMangaFromElement(element: Element): SManga = throw Exception("Not used")
+        var mangas = document.select(popularMangaSelector()).map { popularMangaFromElement(it) }
+        val query = response.request.headers["query"]
+        mangas = if (query != null) {
+            mangas.filter { it.title.contains(query, true) }
+        } else {
+            emptyList()
+        }
+
+        return MangasPage(mangas, false)
+    }
+    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
     override fun searchMangaNextPageSelector(): String = throw Exception("Not used")
 
-    override fun searchMangaSelector(): String = throw Exception("Not used")
+    override fun searchMangaSelector(): String = popularMangaSelector()
 
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = throw Exception("Not used")
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val headers = headersBuilder()
+            .add("query", query)
+            .build()
+        return GET("$baseUrl/projects", headers)
+    }
 
     // manga details
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        val descElement = document.select(".elementor-widget-text-editor").parents().first()
+        val descElement = document.select(".order-1.bg-card.border.border-border.rounded.py-3")
 
-        thumbnail_url = descElement.select("img").attr("src")
-        title = descElement.select(".elementor-heading-title").text()
-        description = descElement.select(".elementor-widget-text-editor div").text()
+        thumbnail_url = descElement.select(".flex.items-center.justify-center img").attr("src")
+        title = descElement.select(".my-3.font-bold.text-3xl").text()
+        description = descElement.select(".leading-6.my-3").text()
     }
 
     // chapters
     override fun chapterListSelector() =
-        ".elementor-column-gap-no .elementor-widget-image-box,.elementor-column-gap-default .elementor-widget-image-box"
+        ".block.border.border-border.bg-card.mb-3.p-3.rounded"
 
     private fun chapterWithDate(element: Element, slug: String): SChapter {
         val seriesPrefs = Injekt.get<Application>().getSharedPreferences("source_${id}_updateTime:$slug", 0)
@@ -95,34 +127,45 @@ class TCBScans : ParsedHttpSource() {
     }
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("a").first()
         val chapter = SChapter.create()
 
-        chapter.setUrlWithoutDomain(urlElement.attr("href"))
-        chapter.name = element.select(".elementor-image-box-title").text() + ": " + element.select(".elementor-image-box-description").text()
+        chapter.setUrlWithoutDomain(element.attr("href"))
+
+        // Chapters retro compatibility
+        var name = element.select(".text-lg.font-bold:not(.flex)").text()
+        val description = element.select(".text-gray-500").text()
+        val matchResult = TITLE_REGEX.find(name)
+        if (matchResult != null)
+            name = "Chapter ${matchResult.value}"
+        chapter.name = "$name: $description"
 
         return chapter
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val slug = response.request.url.pathSegments[0]
+        val slug = response.request.url.pathSegments[2]
 
         return document.select(chapterListSelector()).map { chapterWithDate(it, slug) }
     }
 
-    // pages
-    override fun pageListParse(document: Document): List<Page> {
-        val pages = mutableListOf<Page>()
-        var i = 0
-        document.select(".container .img_container center img").forEach { element ->
-            val url = element.attr("src")
-            i++
-            if (url.isNotEmpty()) {
-                pages.add(Page(i, "", url))
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
+        return client.newCall(pageListRequest(chapter))
+            .asObservable()
+            .doOnNext { response ->
+                if (!response.isSuccessful) {
+                    response.close()
+                    throw Exception(if (response.code == 404) MIGRATE_MESSAGE else "HTTP error ${response.code}")
+                }
             }
-        }
-        return pages
+            .map { response ->
+                pageListParse(response)
+            }
+    }
+
+    override fun pageListParse(document: Document): List<Page> {
+        return document.select(".flex.flex-col.items-center.justify-center picture img")
+            .mapIndexed { i, el -> Page(i, "", el.attr("src")) }
     }
 
     override fun imageUrlParse(document: Document) = ""
