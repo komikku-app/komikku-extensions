@@ -1,3 +1,24 @@
+## 1.2.33
+
+Minimum Komga version required: `0.113.0`
+
+### Fix
+
+* Open in WebView and Share options now open regular browser link instead of showing JSON
+* Note that Komga cannot be viewed using System WebView since there is no login prompt
+  However, opening in a regular browser works.
+
+## 1.2.32
+
+Minimum Komga version required: `0.113.0`
+
+### Fix
+
+* Source language, conventionally set to "en", is now changed to "all"
+* Downloaded files, if any, will have to be moved to new location
+    - `Komga (EN)` to `Komga (ALL)`
+    - `Komga (3) (EN)` to `Komga (3) (ALL)`
+
 ## 1.2.31
 
 Minimum Komga version required: `0.113.0`

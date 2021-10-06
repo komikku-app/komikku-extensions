@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.extension.all.komga.dto.PageWrapperDto
 import eu.kanade.tachiyomi.extension.all.komga.dto.ReadListDto
 import eu.kanade.tachiyomi.extension.all.komga.dto.SeriesDto
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -33,6 +34,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
+import rx.Observable
 import rx.Single
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
@@ -175,8 +177,16 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
     override fun searchMangaParse(response: Response): MangasPage =
         processSeriesPage(response)
 
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        return client.newCall(GET(manga.url, headers))
+            .asObservableSuccess()
+            .map { response ->
+                mangaDetailsParse(response).apply { initialized = true }
+            }
+    }
+
     override fun mangaDetailsRequest(manga: SManga): Request =
-        GET(manga.url, headers)
+        GET(manga.url.replaceFirst("api/v1/", "", ignoreCase = true), headers)
 
     override fun mangaDetailsParse(response: Response): SManga {
         val responseBody = response.body
