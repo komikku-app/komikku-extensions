@@ -33,10 +33,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody
 import rx.Observable
 import rx.Single
-import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -457,12 +455,8 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
     init {
         if (baseUrl.isNotBlank()) {
             Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/libraries", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/libraries", headers)).execute().use { response ->
                         libraries = try {
                             val responseBody = response.body
                             if (responseBody != null) {
@@ -475,19 +469,13 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
                             Log.e(LOG_TAG, "error while decoding JSON for libraries filter", e)
                             emptyList()
                         }
-                    },
-                    { tr ->
-                        Log.e(LOG_TAG, "error while loading libraries for filters", tr)
                     }
-                )
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading libraries for filters", e)
+                }
 
-            Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/collections?unpaged=true", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/collections?unpaged=true", headers)).execute().use { response ->
                         collections = try {
                             val responseBody = response.body
                             if (responseBody != null) {
@@ -500,19 +488,13 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
                             Log.e(LOG_TAG, "error while decoding JSON for collections filter", e)
                             emptyList()
                         }
-                    },
-                    { tr ->
-                        Log.e(LOG_TAG, "error while loading collections for filters", tr)
                     }
-                )
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading collections for filters", e)
+                }
 
-            Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/genres", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/genres", headers)).execute().use { response ->
                         genres = try {
                             val responseBody = response.body
                             if (responseBody != null) {
@@ -525,19 +507,13 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
                             Log.e(LOG_TAG, "error while decoding JSON for genres filter", e)
                             emptySet()
                         }
-                    },
-                    { tr ->
-                        Log.e(LOG_TAG, "error while loading genres for filters", tr)
                     }
-                )
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading genres for filters", e)
+                }
 
-            Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/tags", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/tags", headers)).execute().use { response ->
                         tags = try {
                             val responseBody = response.body
                             if (responseBody != null) {
@@ -550,19 +526,13 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
                             Log.e(LOG_TAG, "error while decoding JSON for tags filter", e)
                             emptySet()
                         }
-                    },
-                    { tr ->
-                        Log.e(LOG_TAG, "error while loading tags for filters", tr)
                     }
-                )
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading tags for filters", e)
+                }
 
-            Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/publishers", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/publishers", headers)).execute().use { response ->
                         publishers = try {
                             val responseBody = response.body
                             if (responseBody != null) {
@@ -575,23 +545,17 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
                             Log.e(LOG_TAG, "error while decoding JSON for publishers filter", e)
                             emptySet()
                         }
-                    },
-                    { tr ->
-                        Log.e(LOG_TAG, "error while loading publishers for filters", tr)
                     }
-                )
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading publishers for filters", e)
+                }
 
-            Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/authors", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/authors", headers)).execute().use { response ->
                         authors = try {
                             val responseBody = response.body
                             if (responseBody != null) {
-                                val list = responseBody.use<ResponseBody, List<AuthorDto>> { json.decodeFromString(it.string()) }
+                                val list: List<AuthorDto> = responseBody.use { json.decodeFromString(it.string()) }
                                 list.groupBy { it.role }
                             } else {
                                 Log.e(LOG_TAG, "error while decoding JSON for authors filter: response body is null. Response code: ${response.code}")
@@ -601,9 +565,17 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
                             Log.e(LOG_TAG, "error while decoding JSON for authors filter", e)
                             emptyMap()
                         }
-                    },
+                    }
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading authors for filters", e)
+                }
+            }
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(
+                    {},
                     { tr ->
-                        Log.e(LOG_TAG, "error while loading authors for filters", tr)
+                        Log.e(LOG_TAG, "error while doing initial calls", tr)
                     }
                 )
         }

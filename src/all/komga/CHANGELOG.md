@@ -1,3 +1,11 @@
+## 1.2.34
+
+Minimum Komga version required: `0.113.0`
+
+### Fix
+
+* Loading of filter values could fail in some cases
+
 ## 1.2.33
 
 Minimum Komga version required: `0.113.0`
