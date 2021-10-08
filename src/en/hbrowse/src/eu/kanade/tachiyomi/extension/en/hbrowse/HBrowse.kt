@@ -10,10 +10,11 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.Response
+import okhttp3.Request
+import okhttp3.OkHttpClient
 import okhttp3.CookieJar
 import okhttp3.FormBody
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
@@ -162,12 +163,16 @@ class HBrowse : ParsedHttpSource() {
 
     // Chapters
 
-    override fun chapterListSelector() = "h2:contains(read manga online) + table a:contains(chapter)"
+    override fun chapterListSelector() = "h2:contains(read manga online) + table tr"
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        return super.chapterListParse(response).reversed()
+    }
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
-            name = element.text().substringAfter("View ")
-            setUrlWithoutDomain(element.attr("href"))
+            name = element.select("td:first-of-type").text()
+            setUrlWithoutDomain(element.select("a.listLink").attr("href"))
         }
     }
 
