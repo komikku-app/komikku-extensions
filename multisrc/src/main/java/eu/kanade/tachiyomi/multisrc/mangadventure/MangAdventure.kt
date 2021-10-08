@@ -37,10 +37,14 @@ abstract class MangAdventure(
         "Tachiyomi/${BuildConfig.VERSION_NAME}"
 
     /** The URI of the site's API. */
-    private val apiUri by lazy { Uri.parse("$baseUrl/api/v2")!! }
+    private val apiUri by lazy {
+        Uri.parse("$baseUrl/api/v$versionId")!!
+    }
 
     /** The JSON parser of the class. */
     private val json by injectLazy<Json>()
+
+    override val versionId = 2
 
     override val supportsLatest = true
 
