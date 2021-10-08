@@ -46,10 +46,12 @@ class Doujins : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         return listOf(
             SChapter.create().apply {
+                var element = response.asJsoup()
                 name = "Chapter"
+                scanlator = element.select("div.folder-message:contains(Translated)").text().substringAfter("by:").trim()
                 setUrlWithoutDomain(response.request.url.toString())
 
-                val dateAndPageCountString = response.asJsoup().select(".text-md-right.text-sm-left > .folder-message").text()
+                val dateAndPageCountString = element.select(".text-md-right.text-sm-left > .folder-message").text()
 
                 val date = dateAndPageCountString.substringBefore(" • ")
                 for (dateFormat in MANGA_DETAILS_DATE_FORMAT) {
