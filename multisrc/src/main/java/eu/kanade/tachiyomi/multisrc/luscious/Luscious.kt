@@ -261,9 +261,9 @@ abstract class Luscious(
                             "-1" -> it["url_to_original"].asString
                             else -> it["thumbnails"][getResolutionPref()?.toInt()!!]["url"].asString
                         }
-                        chapter.name = it["title"].asString
-                        chapter.date_upload = "${it["created"].asLong}000".toLong()
                         chapter.chapter_number = it["position"].asInt.toFloat()
+                        chapter.name = chapter.chapter_number.toInt().toString() + " - " + it["title"].asString
+                        chapter.date_upload = "${it["created"].asLong}000".toLong()
                         chapters.add(chapter)
                     }
                     if (nextPage) {
@@ -550,6 +550,7 @@ abstract class Luscious(
             SelectFilterOption("Date - Trending", "date_trending"),
             SelectFilterOption("Date - Featured", "date_featured"),
             SelectFilterOption("Date - Last Viewed", "date_last_interaction"),
+            SelectFilterOption("Other - Search Score", "search_score"),
         ).forEach {
             sortOptions.add(it)
         }
