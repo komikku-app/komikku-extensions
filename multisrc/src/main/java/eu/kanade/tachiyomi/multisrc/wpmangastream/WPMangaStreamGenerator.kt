@@ -32,7 +32,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("GURU Komik", "https://gurukomik.com", "id"),
         SingleLang("Shea Manga", "https://sheamanga.my.id", "id", overrideVersionCode = 1),
         SingleLang("Komik AV", "https://komikav.com", "id", overrideVersionCode = 1),
-        SingleLang("Komik Cast", "https://komikcast.com", "id", overrideVersionCode = 7),
+        SingleLang("Komik Cast", "https://komikcast.com", "id", overrideVersionCode = 8),
         SingleLang("West Manga", "https://westmanga.info", "id", overrideVersionCode = 1),
         SingleLang("MangaSwat", "https://mangaswat.com", "ar", overrideVersionCode = 3),
         SingleLang("Manga Raw.org", "https://mangaraw.org", "ja", className = "MangaRawOrg", overrideVersionCode = 1),

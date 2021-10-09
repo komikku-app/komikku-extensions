@@ -44,7 +44,7 @@ class KomikCast : WPMangaStream("Komik Cast", "https://komikcast.com", "id") {
     override fun popularMangaSelector() = "div.list-update_item"
 
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/daftar-komik/page/$page/?order=popular", headers)
+        return GET("$baseUrl/daftar-komik/page/$page/?orderby=popular", headers)
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
@@ -83,7 +83,7 @@ class KomikCast : WPMangaStream("Komik Cast", "https://komikcast.com", "id") {
                     }
                     is SortByFilter -> {
                         orderBy = filter.toUriPart()
-                        url.addQueryParameter("order", orderBy)
+                        url.addQueryParameter("orderby", orderBy)
                     }
                     is ProjectFilter -> {
                         if (filter.toUriPart() == "project-filter-on") {
@@ -99,10 +99,10 @@ class KomikCast : WPMangaStream("Komik Cast", "https://komikcast.com", "id") {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("div.list-update_item-image img").imgAttr()
         element.select("a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.attr("title")
+            manga.title = it.select(".list-update_item-info h3.title").text()
+            manga.thumbnail_url = element.select("div.list-update_item-image img").imgAttr()
         }
         return manga
     }
