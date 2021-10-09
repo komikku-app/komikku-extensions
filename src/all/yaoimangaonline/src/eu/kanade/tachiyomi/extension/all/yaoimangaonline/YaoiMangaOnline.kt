@@ -18,6 +18,7 @@ class YaoiMangaOnline : ParsedHttpSource() {
 
     override val baseUrl = "https://yaoimangaonline.com"
 
+    // Popular is actually latest
     override val supportsLatest = false
 
     override fun latestUpdatesSelector() = popularMangaSelector()
@@ -34,7 +35,7 @@ class YaoiMangaOnline : ParsedHttpSource() {
     override fun popularMangaNextPageSelector() = searchMangaNextPageSelector()
 
     override fun popularMangaRequest(page: Int) =
-        searchMangaRequest(page, "", FilterList())
+        GET("$baseUrl/page/$page/", headers)
 
     override fun popularMangaFromElement(element: Element) =
         searchMangaFromElement(element)
@@ -57,6 +58,7 @@ class YaoiMangaOnline : ParsedHttpSource() {
                     else -> Unit
                 }
             }
+            addEncodedPathSegments("page/$page")
             addQueryParameter("s", query)
             GET(toString(), headers)
         }
