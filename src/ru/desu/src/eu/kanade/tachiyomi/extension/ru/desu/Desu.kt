@@ -20,7 +20,7 @@ import java.util.ArrayList
 class Desu : HttpSource() {
     override val name = "Desu"
 
-    override val baseUrl = "https://desu.me/manga/api"
+    override val baseUrl = "https://desu.me"
 
     override val lang = "ru"
 
@@ -98,20 +98,21 @@ class Desu : HttpSource() {
         status = when (obj.getString("status")) {
             "ongoing" -> SManga.ONGOING
             "released" -> SManga.COMPLETED
+            "copyright" -> SManga.LICENSED
             else -> SManga.UNKNOWN
         }
     }
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/?limit=50&order=popular&page=$page")
+    override fun popularMangaRequest(page: Int) = GET("$baseUrl$API_URL/?limit=50&order=popular&page=$page")
 
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/?limit=50&order=updated&page=$page")
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl$API_URL/?limit=50&order=updated&page=$page")
 
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var url = "$baseUrl/?limit=20&page=$page"
+        var url = "$baseUrl$API_URL/?limit=20&page=$page"
         val types = mutableListOf<Type>()
         val genres = mutableListOf<Genre>()
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
@@ -145,11 +146,7 @@ class Desu : HttpSource() {
     }
 
     private fun titleDetailsRequest(manga: SManga): Request {
-        val titleId = manga.url.substringAfterLast("/")
-
-        val newHeaders = headersBuilder().build()
-
-        return GET("$baseUrl/$titleId", newHeaders)
+        return GET(baseUrl + API_URL + manga.url, headers)
     }
 
     // Workaround to allow "Open in browser" use the real URL.
@@ -162,7 +159,7 @@ class Desu : HttpSource() {
     }
 
     override fun mangaDetailsRequest(manga: SManga): Request {
-        return GET(baseUrl.substringBefore("/api") + manga.url, headers)
+        return GET(baseUrl + "/manga" + manga.url, headers)
     }
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
         val obj = JSONObject(response.body!!.string()).getJSONObject("response")
@@ -197,7 +194,12 @@ class Desu : HttpSource() {
         }
         return ret
     }
-
+    override fun chapterListRequest(manga: SManga): Request {
+        return GET(baseUrl + API_URL + manga.url, headers)
+    }
+    override fun pageListRequest(chapter: SChapter): Request {
+        return GET(baseUrl + API_URL + chapter.url, headers)
+    }
     override fun pageListParse(response: Response): List<Page> {
         val obj = JSONObject(response.body!!.string()).getJSONObject("response")
         val pages = obj.getJSONObject("pages")
@@ -213,7 +215,7 @@ class Desu : HttpSource() {
         throw UnsupportedOperationException("This method should not be called!")
 
     private fun searchMangaByIdRequest(id: String): Request {
-        return GET("$baseUrl/$id", headers)
+        return GET("$baseUrl$API_URL/$id", headers)
     }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
@@ -236,6 +238,7 @@ class Desu : HttpSource() {
     }
     companion object {
         const val PREFIX_SLUG_SEARCH = "slug:"
+        private const val API_URL = "/manga/api"
     }
 
     private class OrderBy : Filter.Select<String>(
