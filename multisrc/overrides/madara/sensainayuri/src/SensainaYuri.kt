@@ -20,5 +20,7 @@ class SensainaYuri : Madara(
 
     override val altName: String = "Nome alternativo: "
 
+    override val useNewChapterEndpoint = true
+
     override fun popularMangaSelector() = "div.page-item-detail.manga"
 }
