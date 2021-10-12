@@ -257,9 +257,13 @@ abstract class Luscious(
                     nextPage = data["info"]["has_next_page"].asBoolean
                     data["items"].asJsonArray.map {
                         val chapter = SChapter.create()
-                        chapter.url = when (getResolutionPref()) {
+                        val url = when (getResolutionPref()) {
                             "-1" -> it["url_to_original"].asString
                             else -> it["thumbnails"][getResolutionPref()?.toInt()!!]["url"].asString
+                        }
+                        when {
+                            url.startsWith("//") -> chapter.url = "https:$url"
+                            else -> chapter.url = url
                         }
                         chapter.chapter_number = it["position"].asInt.toFloat()
                         chapter.name = chapter.chapter_number.toInt().toString() + " - " + it["title"].asString
@@ -335,8 +339,10 @@ abstract class Luscious(
                     "-1" -> it["url_to_original"].asString
                     else -> it["thumbnails"][getResolutionPref()?.toInt()!!]["url"].asString
                 }
-
-                pages.add(Page(index, url, url))
+                when {
+                    url.startsWith("//") -> pages.add(Page(index, "https:$url", "https:$url"))
+                    else -> pages.add(Page(index, url, url))
+                }
             }
             if (nextPage) {
                 val newPage = client.newCall(GET(buildAlbumPicturesPageUrl(id, page))).execute()
