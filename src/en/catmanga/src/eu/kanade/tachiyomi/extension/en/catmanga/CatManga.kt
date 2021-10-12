@@ -13,8 +13,10 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -118,12 +120,22 @@ class CatManga : HttpSource() {
         return MangasPage(mangas, false)
     }
 
-    override fun pageListParse(response: Response): List<Page> {
-        val jsonElement = response.asJsoup()
-            .getDataJsonObject()["props"]!!
-            .jsonObject["pageProps"]!!
-            .jsonObject["pages"]!!
-        return json.decodeFromJsonElement<List<String>>(jsonElement).mapIndexed { index, s -> Page(index, "", s) }
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
+        return client.newCall(pageListRequest(chapter))
+            .asObservableSuccess()
+            .map {
+                val doc = it.asJsoup().getDataJsonObject()
+                val pages = if (doc["isFallback"]!!.jsonPrimitive.boolean) {
+                    val buildId = doc["buildId"]!!.jsonPrimitive.content
+                    val directRequest = GET("$baseUrl/_next/data/$buildId/${chapter.url}.json")
+                    val directResponse = client.newCall(directRequest).execute()
+                    json.parseToJsonElement(directResponse.body!!.string())
+                } else {
+                    doc["props"]!!
+                }.jsonObject["pageProps"]!!.jsonObject["pages"]!!
+                json.decodeFromJsonElement<List<String>>(pages)
+                    .mapIndexed { index, s -> Page(index, "", s) }
+            }
     }
 
     /**
@@ -136,6 +148,10 @@ class CatManga : HttpSource() {
      */
     private fun Float.chapterNumberToUrlPath(): String {
         return if (toInt().toFloat() == this) toInt().toString() else toString()
+    }
+
+    override fun pageListParse(response: Response): List<Page> {
+        throw UnsupportedOperationException("Not used.")
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
