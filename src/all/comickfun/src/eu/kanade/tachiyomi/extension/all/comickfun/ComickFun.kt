@@ -36,7 +36,7 @@ const val SEARCH_PAGE_LIMIT = 100
 abstract class ComickFun(override val lang: String, private val comickFunLang: String) : HttpSource() {
     override val name = "Comick.fun"
     final override val baseUrl = "https://comick.fun"
-    private val apiBase = "$baseUrl/api"
+    private val apiBase = "https://api.comick.fun"
     override val supportsLatest = true
 
     @ExperimentalSerializationApi
@@ -66,14 +66,25 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
             builder.addInterceptor(
                 Interceptor { chain ->
                     val request = chain.request()
+                    val path = request.url.pathSegments
                     when {
-                        request.url.toString().contains(Regex("""$apiBase/(?:get_chapters|get_newest_chapters)""")) ->
+                        ((path.size == 1) && (path[0] == "chapter")) ||
+                            ((path.size == 3) && (path[0] == "comic") && (path[2] == "chapter")) ->
                             chain.proceed(request.newBuilder().url(request.url.newBuilder().addQueryParameter("lang", comickFunLang).build()).build())
                         else -> chain.proceed(request)
                     }
                 }
             )
-
+        // Add interceptor to append "tachiyomi=true" to all requests (api returns slightly different response to 3rd parties)
+        builder.addInterceptor(
+            Interceptor { chain ->
+                val request = chain.request()
+                return@Interceptor when (request.url.toString().startsWith(apiBase)) {
+                    true -> chain.proceed(request.newBuilder().url(request.url.newBuilder().addQueryParameter("tachiyomi", "true").build()).build())
+                    false -> chain.proceed(request)
+                }
+            }
+        )
         /** Rate Limiter, shamelessly ~stolen from~ inspired by MangaDex
          * Rate limits all requests that go to the baseurl
          */
@@ -117,14 +128,14 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         val noResults = MangasPage(emptyList(), false)
         if (response.code == 204)
             return noResults
-        return json.decodeFromString(
-            deserializer = deepSelectDeserializer<List<SManga>>("data", tDeserializer = ListSerializer(deepSelectDeserializer("md_comics"))),
+        return json.decodeFromString<List<SManga>>(
+            deserializer = ListSerializer(deepSelectDeserializer("md_comics")),
             response.body!!.string()
         ).let { MangasPage(it, true) }
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val url = "$apiBase/get_newest_chapters".toHttpUrl().newBuilder()
+        val url = "$apiBase/chapter".toHttpUrl().newBuilder()
             .addQueryParameter("page", "${page - 1}")
             .addQueryParameter("device-memory", "8")
         return GET("$url", headers)
@@ -143,14 +154,11 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = apiBase.toHttpUrl().newBuilder()
+        val url = apiBase.toHttpUrl().newBuilder().addPathSegment("search")
         if (query.isNotEmpty()) {
-            url.addPathSegment("search_title")
-                .addQueryParameter("t", "1")
-                .addQueryParameter("q", query)
+            url.addQueryParameter("q", query)
         } else {
-            url.addPathSegment("search")
-                .addQueryParameter("page", "$page")
+            url.addQueryParameter("page", "$page")
                 .addQueryParameter("limit", "$SEARCH_PAGE_LIMIT")
             filters.forEach { filter ->
                 when (filter) {
@@ -174,7 +182,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     /** Manga Details **/
 
     private fun apiMangaDetailsRequest(manga: SManga): Request {
-        return GET("$apiBase/get_comic?slug=${slug(manga)}", headers)
+        return GET("$apiBase/comic/${slug(manga)}", headers)
     }
 
     // Shenanigans to allow "open in webview" to show a webpage instead of JSON
@@ -189,14 +197,14 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     @ExperimentalSerializationApi
     override fun mangaDetailsParse(response: Response) = json.decodeFromString(
-        deserializer = deepSelectDeserializer<SManga>("data", tDeserializer = jsonFlatten(objKey = "comic", "id", "title", "desc", "status", "country", "slug")),
+        deserializer = jsonFlatten<SManga>(objKey = "comic", "id", "title", "desc", "status", "country", "slug"),
         response.body!!.string()
     )
 
     /** Chapter List **/
 
     private fun chapterListRequest(page: Int, mangaId: Int) =
-        GET("$apiBase/get_chapters?comicid=$mangaId&page=$page&limit=$SEARCH_PAGE_LIMIT", headers)
+        GET("$apiBase/comic/$mangaId/chapter?page=$page&limit=$SEARCH_PAGE_LIMIT", headers)
 
     @ExperimentalSerializationApi
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
@@ -225,18 +233,18 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     @ExperimentalSerializationApi
     override fun chapterListParse(response: Response) = json.decodeFromString(
-        deserializer = deepSelectDeserializer<List<SChapter>>("data", "chapters"),
+        deserializer = deepSelectDeserializer<List<SChapter>>("chapters"),
         response.body!!.string()
     )
 
     /** Page List **/
 
-    override fun pageListRequest(chapter: SChapter) = GET("$apiBase/get_chapter?hid=${hid(chapter)}", headers, CacheControl.FORCE_NETWORK)
+    override fun pageListRequest(chapter: SChapter) = GET("$apiBase/chapter/${hid(chapter)}", headers, CacheControl.FORCE_NETWORK)
 
     @ExperimentalSerializationApi
     override fun pageListParse(response: Response) =
         json.decodeFromString(
-            deserializer = deepSelectDeserializer<List<String>>("data", "chapter", "images"),
+            deserializer = deepSelectDeserializer<List<String>>("chapter", "images", tDeserializer = ListSerializer(deepSelectDeserializer("url"))),
             response.body!!.string()
         ).mapIndexed { i, url -> Page(i, imageUrl = url) }
 
@@ -252,7 +260,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         val paramName: String
         val selected: Sequence<LabeledValue>
         override fun encode(url: HttpUrl.Builder) {
-            url.addQueryParameter(paramName, selected.joinToString(",") { it.value })
+            selected.forEach { url.addQueryParameter(paramName, it.value) }
         }
     }
 
@@ -281,19 +289,51 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
             get() = this.elems.asSequence().filterIndexed { i, _ -> this.state[i].state }
     }
 
+    private open class MultiTriSelect<T>(header: String, val elems: List<T>) :
+        Filter.Group<Filter.TriState>(header, elems.map { object : Filter.TriState("$it") {} }) {
+        val selected: Pair<Sequence<T>, Sequence<T>>
+            get() {
+                return this.elems.asSequence()
+                    .mapIndexed { index, it -> index to it }
+                    .filterNot { (index, _) -> this.state[index].isIgnored() }
+                    .partition { (index, _) -> this.state[index].isIncluded() }
+                    .let { (included, excluded) ->
+                        included.asSequence().map { it.second } to excluded.asSequence().map { it.second }
+                    }
+            }
+    }
+
     override fun getFilterList() = FilterList(
         Filter.Header("NOTE: Ignored if using text search!"),
         GenreFilter(),
         DemographicFilter(),
         TypesFilter(),
         CreatedAtFilter(),
-        MinChaptersFilter()
+        MinChaptersFilter(),
+        SortFilter()
     )
 
-    private fun GenreFilter() = object : MultiSelect<LabeledValue>("Genre", getGenreList()), ArrayUrlParam {
-        override val paramName = "genres"
+    private fun GenreFilter() = object : MultiTriSelect<LabeledValue>("Genre", getGenreList()), UrlEncoded {
+        val included = object : ArrayUrlParam {
+            override val paramName = "genres"
+            override var selected: Sequence<LabeledValue> = sequence {}
+        }
+        val excluded = object : ArrayUrlParam {
+            override val paramName = "excludes"
+            override var selected: Sequence<LabeledValue> = sequence {}
+        }
+
+        override fun encode(url: HttpUrl.Builder) {
+            this.selected.let { (includedGenres, excludedGenres) ->
+                included.apply { selected = includedGenres }.encode(url)
+                excluded.apply { selected = excludedGenres }.encode(url)
+            }
+        }
     }
 
+    private fun SortFilter() = object : Select<LabeledValue>("Sort", getSorts()), QueryParam {
+        override val paramName = "sort"
+    }
     private fun DemographicFilter() = object : MultiSelect<LabeledValue>("Demographic", getDemographics()), ArrayUrlParam {
         override val paramName = "demographic"
     }
@@ -304,6 +344,10 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     private fun CreatedAtFilter() = object : Select<LabeledValue>("Created At", getCreatedAt()), QueryParam {
         override val paramName = "time"
+        override fun encode(url: HttpUrl.Builder) {
+            // api will reject a request with an empty time
+            if (selected.value.isNotBlank()) super.encode(url)
+        }
     }
 
     private fun MinChaptersFilter() = object : Filter.Text("Minimum Chapters", ""), UrlEncoded {
@@ -421,6 +465,14 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         LabeledValue("3 months", "90"),
         LabeledValue("6 months", "180"),
         LabeledValue("1 year", "365"),
+    )
+
+    private fun getSorts() = arrayOf(
+        LabeledValue("", ""),
+        LabeledValue("Most follows", "follow"),
+        LabeledValue("Most views", "view"),
+        LabeledValue("High rating", "rating"),
+        LabeledValue("Last updated", "uploaded")
     )
 
     companion object {

@@ -3,73 +3,55 @@ package eu.kanade.tachiyomi.extension.all.comickfun
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 
-val toISO639 = mapOf(
-    "gb" to "en", // English
-    "br" to "pt-BR", // Brazilian Portuguese
-    "mx" to "es-419", // Latin-American Spanish
-    "vn" to "vi", // Vietnemese
-    "hk" to "zh-Hant", // Traditional Chinese,
-    "cn" to "zh-Hans", // Simplified Chinese
-    "sa" to "ar", // Arabic
-    "ct" to "ca", // Catalan; Valencian
-    "ir" to "fa", // Persian
-    "ua" to "uk", // Ukranian
-    "il" to "he", // hebrew
-    "my" to "ms", // Malay
-    "ph" to "tl", // Filipino
-    "jp" to "ja", // Japanese
-    "in" to "hi", // Hindi
-    "kr" to "ko", // Korean
-    "cz" to "cs", // Czech
-    "bd" to "bn", // Bengali
-    "gr" to "el", // Modern Greek
-    "rs" to "sr", // Serbo-Croatian
-    "dk" to "da", // Danish
-
+// A legacy mapping  of language codes to ensure that source IDs don't change
+val legacyLanguageMappings = mapOf(
+    "pt-br" to "pt-BR", // Brazilian Portuguese
+    "zh-hk" to "zh-Hant", // Traditional Chinese,
+    "zh" to "zh-Hans", // Simplified Chinese
 ).withDefault { it } // country code matches language code
 
 class ComickFunFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         "all",
-        "gb",
-        "br",
+        "en",
+        "pt-br",
         "ru",
         "fr",
-        "mx",
+        "es-419",
         "pl",
         "tr",
         "it",
         "es",
         "id",
         "hu",
-        "vn",
-        "hk",
-        "sa",
+        "vi",
+        "zh-hk",
+        "ar",
         "de",
-        "cn",
-        "ct",
+        "zh",
+        "ca",
         "bg",
         "th",
-        "ir",
-        "ua",
+        "fa",
+        "uk",
         "mn",
         "ro",
-        "il",
+        "he",
+        "ms",
+        "tl",
+        "ja",
+        "hi",
         "my",
-        "ph",
-        "jp",
-        "in",
-        "mm",
-        "kr",
-        "cz",
+        "ko",
+        "cs",
         "pt",
         "nl",
-        "se",
-        "bd",
+        "sv",
+        "bn",
         "no",
         "lt",
-        "gr",
-        "rs",
-        "dk"
-    ).map { object : ComickFun(toISO639.getValue(it), it) {} }
+        "el",
+        "sr",
+        "da"
+    ).map { object : ComickFun(legacyLanguageMappings.getValue(it), it) {} }
 }

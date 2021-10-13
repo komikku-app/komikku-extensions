@@ -193,7 +193,7 @@ class SMangaDeserializer : KSerializer<SManga> {
     override val descriptor = buildClassSerialDescriptor(SManga::class.qualifiedName!!) {
         element<String>("slug")
         element<String>("title")
-        element<String>("coverURL")
+        element<String>("cover_url")
         element<String>("id", isOptional = true)
         element<List<JsonObject>>("artists", isOptional = true)
         element<List<JsonObject>>("authors", isOptional = true)
@@ -233,7 +233,7 @@ class SMangaDeserializer : KSerializer<SManga> {
                             url = "/comic/$slug"
                         }
                         "title" -> title = decodeStringElement(descriptor, index)
-                        "coverURL" -> thumbnail_url = decodeStringElement(descriptor, index)
+                        "cover_url" -> thumbnail_url = decodeStringElement(descriptor, index)
                         "id" -> id = decodeIntElement(descriptor, index)
                         "artists" -> artist = nameList()
                         "authors" -> author = nameList()
