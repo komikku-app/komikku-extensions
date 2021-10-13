@@ -5,7 +5,8 @@ ext {
     extName = 'Nekopost'
     pkgNameSuffix = 'th.nekopost'
     extClass = '.Nekopost'
-    extVersionCode = 4
+    extVersionCode = 5
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
