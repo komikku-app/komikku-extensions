@@ -19,6 +19,10 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class ComX : ParsedHttpSource() {
     override val name = "Com-x"
@@ -32,7 +36,9 @@ class ComX : ParsedHttpSource() {
     private val userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:72.0) Gecko/20100101 Firefox/72.0"
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(RateLimitInterceptor(2))
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .addNetworkInterceptor(RateLimitInterceptor(3))
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
@@ -132,14 +138,11 @@ class ComX : ParsedHttpSource() {
         val infoElement = document.select("div.maincont").first()
 
         val manga = SManga.create()
-        manga.author = infoElement.select("p:eq(2)").text().removePrefix("Издатель: ")
-        manga.genre = infoElement.select("p:eq(3)").text()
-            .removePrefix("Жанр: ").split(",").plusElement("Комикс").joinToString { it.trim() }
+        manga.author = infoElement.select(".fullstory__infoSection:eq(1) > .fullstory__infoSectionContent").text()
+        manga.genre = infoElement.select(".fullstory__infoSection:eq(2) > .fullstory__infoSectionContent").text()
+            .split(",").plusElement("Комикс").joinToString { it.trim() }
 
-        manga.status = parseStatus(
-            infoElement.select("p:eq(4)").text()
-                .removePrefix("Статус: ")
-        )
+        manga.status = parseStatus(infoElement.select(".fullstory__infoSection:eq(3) > .fullstory__infoSectionContent").text())
 
         val text = infoElement.select("*").text()
         if (!text.contains("Добавить описание на комикс")) {
@@ -159,8 +162,9 @@ class ComX : ParsedHttpSource() {
     }
 
     private fun parseStatus(element: String): Int = when {
-        element.contains("Продолжается") -> SManga.ONGOING
-        element.contains("Завершён") ||
+        element.contains("Продолжается") ||
+            element.contains(" из ") -> SManga.ONGOING
+        element.contains("Заверш") ||
             element.contains("Лимитка") ||
             element.contains("Ван шот") ||
             element.contains("Графический роман") -> SManga.COMPLETED
@@ -202,14 +206,22 @@ class ComX : ParsedHttpSource() {
 
         return list
     }
-
+    private val simpleDateFormat by lazy { SimpleDateFormat("dd.MM.yyyy", Locale.US) }
+    private fun parseDate(date: String?): Long {
+        date ?: return 0L
+        return try {
+            simpleDateFormat.parse(date)!!.time
+        } catch (_: Exception) {
+            Date().time
+        }
+    }
     override fun chapterFromElement(element: Element): SChapter {
         val urlElement = element.select("a").first()
         val urlText = urlElement.text()
         val chapter = SChapter.create()
         chapter.name = urlText.split('/')[0] // Remove english part of name
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
-        chapter.date_upload = 0
+        chapter.date_upload = parseDate(element.select("span:eq(2)").text())
         return chapter
     }
 

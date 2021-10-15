@@ -17,6 +17,7 @@ import com.github.salomonbrys.kotson.toMap
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -57,6 +58,7 @@ class LibManga : ConfigurableSource, HttpSource() {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
+        .addNetworkInterceptor(RateLimitInterceptor(3))
         .build()
 
     private val baseOrig: String = "https://mangalib.me"
@@ -189,7 +191,7 @@ class LibManga : ConfigurableSource, HttpSource() {
         }
         val genres = document.select(".media-tags > a").map { it.text().capitalize() }
         manga.title = document.select(".media-name__alt").text()
-        manga.thumbnail_url = document.select(".media-sidebar__cover > img").attr("src").substringAfter(baseOrig)
+        manga.thumbnail_url = document.select(".media-sidebar__cover > img").attr("src")
         manga.author = body.select("div.media-info-list__title:contains(Автор) + div").text()
         manga.artist = body.select("div.media-info-list__title:contains(Художник) + div").text()
         manga.status = if (document.html().contains("Манга удалена по просьбе правообладателей") ||
