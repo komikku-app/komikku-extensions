@@ -27,7 +27,7 @@ import java.util.Locale
 class MangaFast : ParsedHttpSource() {
     override val name = "MangaFast"
 
-    override val baseUrl = "https://mangafast.net"
+    override val baseUrl = "https://mangafast.org"
 
     override val lang = "en"
 
@@ -46,7 +46,7 @@ class MangaFast : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         element.select("a").let { a ->
             setUrlWithoutDomain(a.attr("href"))
-            title = a.attr("title")
+            title = a.select("h4").text().trim()
             thumbnail_url = a.select("img").imageFromElement()
         }
     }
@@ -58,7 +58,13 @@ class MangaFast : ParsedHttpSource() {
 
     override fun latestUpdatesSelector() = "div.ls5"
 
-    override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
+    override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
+        element.select("a").let { a ->
+            setUrlWithoutDomain(a.attr("href"))
+            title = a.attr("title")
+            thumbnail_url = a.select("img").imageFromElement()
+        }
+    }
 
     override fun latestUpdatesNextPageSelector(): String? = null
 
