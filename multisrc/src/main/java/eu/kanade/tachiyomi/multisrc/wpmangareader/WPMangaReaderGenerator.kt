@@ -14,7 +14,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang("Anitation Arts", "https://anitationarts.org", "en", overrideVersionCode = 1),
         SingleLang("Alpha Scans", "https://alpha-scans.org", "en"),
-        SingleLang("AR FlameScans", "https://ar.flamescans.org", "ar"),
+        SingleLang("AR FlameScans", "https://ar.flamescans.org", "ar", overrideVersionCode = 1),
         SingleLang("iiMANGA", "https://iimanga.com", "ar"),
         SingleLang("Magus Manga", "https://magusmanga.com", "ar"),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 2),
