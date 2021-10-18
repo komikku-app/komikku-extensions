@@ -16,7 +16,7 @@
 
                 <!-- ReadmangaActivity sites can be added here. -->
                 <data
-                    android:host="readmanga.live"
+                    android:host="readmanga.io"
                     android:pathPattern="/..*/vol..*"
                     android:scheme="https" />
             </intent-filter>

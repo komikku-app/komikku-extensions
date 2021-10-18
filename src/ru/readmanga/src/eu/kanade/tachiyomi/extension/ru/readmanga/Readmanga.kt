@@ -343,12 +343,6 @@ class Readmanga : ParsedHttpSource() {
     private class More(moren: List<Genre>) : Filter.Group<Genre>("Прочее", moren)
     private class FilList(fils: List<Genre>) : Filter.Group<Genre>("Фильтры", fils)
 
-    /* [...document.querySelectorAll("tr.advanced_option:nth-child(1) > td:nth-child(3) span.js-link")]
-    *  .map(el => `Genre("${el.textContent.trim()}", $"{el.getAttribute('onclick')
-    *  .substr(31,el.getAttribute('onclick').length-33)"})`).join(',\n')
-    *  on https://readmanga.me/search/advanced
-    */
-
     override fun getFilterList() = FilterList(
         OrderBy(),
         Category(getCategoryList()),

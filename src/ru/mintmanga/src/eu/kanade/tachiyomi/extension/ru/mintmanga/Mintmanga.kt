@@ -41,6 +41,11 @@ class Mintmanga : ParsedHttpSource() {
     override val client: OkHttpClient = network.client.newBuilder()
         .addNetworkInterceptor(rateLimitInterceptor).build()
 
+    override fun headersBuilder() = Headers.Builder().apply {
+        add("User-Agent", "mintmangafun")
+        add("Referer", baseUrl)
+    }
+
     override fun popularMangaRequest(page: Int): Request =
         GET("$baseUrl/list?sortType=rate&offset=${70 * (page - 1)}", headers)
 
@@ -336,11 +341,6 @@ class Mintmanga : ParsedHttpSource() {
     private class More(moren: List<Genre>) : Filter.Group<Genre>("Прочее", moren)
     private class FilList(fils: List<Genre>) : Filter.Group<Genre>("Фильтры", fils)
 
-    /* [...document.querySelectorAll("tr.advanced_option:nth-child(1) > td:nth-child(3) span.js-link")]
-    *  .map(el => `Genre("${el.textContent.trim()}", $"{el.getAttribute('onclick')
-    *  .substr(31,el.getAttribute('onclick').length-33)"})`).join(',\n')
-    *  on https://mintmanga.live/search/advanced
-    */
     override fun getFilterList() = FilterList(
         OrderBy(),
         Category(getCategoryList()),
