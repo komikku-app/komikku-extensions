@@ -185,8 +185,7 @@ class MikuDoujin : ParsedHttpSource() {
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
-        val pageList = document.select("img.lazy")
-        return pageList.subList(0, (pageList.size / 2) - 1).mapIndexed { i, img ->
+        return document.select("div#v-pills-tabContent img.lazy").mapIndexed { i, img ->
             Page(i, "", img.attr("abs:data-src"))
         }
     }

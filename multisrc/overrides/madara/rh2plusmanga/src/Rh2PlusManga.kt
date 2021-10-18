@@ -6,7 +6,7 @@ import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class Rh2PlusManga : Madara("Rh2PlusManga", "https://www.rh2plusmanga.com", "th", SimpleDateFormat("d MMMM d yyyy", Locale("th"))) {
+class Rh2PlusManga : Madara("Rh2PlusManga", "https://www.rh2plusmanga.com", "th", SimpleDateFormat("d MMMM yyyy", Locale("th"))) {
     override val useNewChapterEndpoint = true
     override fun getGenreList() = listOf(
         Genre("เหนือธรรมชาติ", "supernatural"),

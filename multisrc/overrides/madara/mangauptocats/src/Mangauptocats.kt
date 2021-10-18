@@ -4,7 +4,12 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class Mangauptocats : Madara("Mangauptocats", "https://mangauptocats.online", "th", SimpleDateFormat("MMMM d, yyyy", Locale("th"))) {
+class Mangauptocats : Madara(
+    "Mangauptocats",
+    "https://mangauptocats.net",
+    "th",
+    SimpleDateFormat("d MMMM yyyy", Locale("th"))
+) {
     override fun getGenreList() = listOf(
         Genre("Mecha", "mecha"),
         Genre("Mystery", "mystery"),
