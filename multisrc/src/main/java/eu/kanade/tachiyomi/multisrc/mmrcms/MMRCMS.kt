@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.multisrc.mmrcms
 
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.util.Base64
 import com.github.salomonbrys.kotson.array
 import com.github.salomonbrys.kotson.bool
 import com.github.salomonbrys.kotson.get
@@ -25,7 +24,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
 import rx.Observable
-import java.net.URLDecoder
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -116,10 +114,6 @@ abstract class MMRCMS(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url: Uri.Builder
         when {
-            name == "Mangas.pw" -> {
-                url = Uri.parse("$baseUrl/search")!!.buildUpon()
-                url.appendQueryParameter("q", query)
-            }
             query.isNotBlank() -> {
                 url = Uri.parse("$baseUrl/search")!!.buildUpon()
                 url.appendQueryParameter("query", query)
@@ -160,7 +154,7 @@ abstract class MMRCMS(
         return if (listOf("query", "q").any { it in response.request.url.queryParameterNames }) {
             // If a search query was specified, use search instead!
             val jsonArray = JsonParser.parseString(response.body!!.string()).let {
-                if (name == "Mangas.pw") it.array else it["suggestions"].array
+                it["suggestions"].array
             }
             MangasPage(
                 jsonArray
@@ -191,8 +185,6 @@ abstract class MMRCMS(
         val mangas = document.select(latestUpdatesSelector())
             .let { elements ->
                 when {
-                    // Mangas.pw
-                    elements.select("a.fa-info-circle + a").firstOrNull()?.hasText() == true -> elements.map { latestUpdatesFromElement(it, "a.fa-info-circle + a") }
                     // List layout (most sources)
                     elements.select("a").firstOrNull()?.hasText() == true -> elements.map { latestUpdatesFromElement(it, "a") }
                     // Grid layout (e.g. MangaID)
@@ -371,7 +363,7 @@ abstract class MMRCMS(
         val chapter = SChapter.create()
 
         try {
-            val titleWrapper = if (name == "Mangas.pw") element.select("i a").last() else element.select("[class^=chapter-title-rtl]").first()
+            val titleWrapper = element.select("[class^=chapter-title-rtl]").first()
             // Some websites add characters after "..-rtl" thus the need of checking classes that starts with that
             val url = titleWrapper.getElementsByTag("a")
                 .first { it.attr("href").contains(urlRegex) }
@@ -421,12 +413,6 @@ abstract class MMRCMS(
         .mapIndexed { i, e ->
             var url = (if (e.hasAttr("data-src")) e.attr("abs:data-src") else e.attr("abs:src")).trim()
 
-            // Mangas.pw encodes some of their urls, decode them
-            if (name.contains("Mangas.pw") && !url.contains(".")) {
-                url = Base64.decode(url.substringAfter("//"), Base64.DEFAULT).toString(Charsets.UTF_8).substringBefore("=")
-                url = URLDecoder.decode(url, "UTF-8")
-            }
-
             Page(i, response.request.url.toString(), url)
         }
 
@@ -462,7 +448,6 @@ abstract class MMRCMS(
      */
     override fun getFilterList(): FilterList {
         return when {
-            name == "Mangas.pw" -> FilterList()
             tagMappings != emptyList<Pair<String, String>>() -> {
                 FilterList(
                     getInitialFilterList() + UriSelectFilter(

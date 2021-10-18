@@ -48,7 +48,6 @@ class MMRCMSSources {
             SourceData.Single("LeoManga", "https://leomanga.me", "es", overrideVersionCode = 1),
             SourceData.Single("submanga", "https://submanga.io", "es"),
             SourceData.Single("Mangadoor", "https://mangadoor.com", "es"),
-            SourceData.Single("Mangas.pw", "https://mangas.in", "es", className = "MangasPw"),
             SourceData.Single("Utsukushii", "https://manga.utsukushii-bg.com", "bg"),
             SourceData.Single("Phoenix-Scans", "https://phoenix-scans.pl", "pl", className = "PhoenixScans"),
             SourceData.Single("Puzzmos", "https://puzzmos.com", "tr"),
