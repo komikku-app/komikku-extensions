@@ -46,7 +46,7 @@ class EroCool(
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
         if (query.isBlank()) popularMangaRequest(page)
-        else GET("$baseUrl/search/q_$query $langName", headers)
+        else GET("$baseUrl/search/q_$query $langName/page/$page", headers)
 
     override fun searchMangaFromElement(element: Element) = element.toManga()
 
