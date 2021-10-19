@@ -155,7 +155,7 @@ class Tappytoon(override val lang: String) : HttpSource() {
         }
 
     override fun chapterListParse(response: Response) =
-        response.parse<List<Chapter>>().accessible.map {
+        response.parse<List<Chapter>>().accessible.asReversed().map {
             SChapter.create().apply {
                 name = it.toString()
                 url = it.id.toString()
