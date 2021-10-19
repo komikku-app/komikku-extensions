@@ -407,7 +407,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("WoopRead", "https://woopread.com", "en", overrideVersionCode = 1),
         SingleLang("WuxiaWorld", "https://wuxiaworld.site", "en", overrideVersionCode = 1),
         SingleLang("XManga", "https://xmanga.io", "en", isNsfw = true),
-        SingleLang("XXX Yaoi", "https://xxxyaoi.com", "pt-BR", isNsfw = true),
         SingleLang("XuN Scans", "https://xunscans.xyz", "en", overrideVersionCode = 2),
         SingleLang("Yaoi Fan Clube", "https://yaoifanclube.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Yaoi Hentai", "https://yaoihentai.me", "en", isNsfw = true),
