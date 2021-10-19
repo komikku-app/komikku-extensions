@@ -1,6 +1,11 @@
 package eu.kanade.tachiyomi.extension.ar.mangalink
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -12,12 +17,18 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class MangaLink : ParsedHttpSource() {
+class MangaLink : ConfigurableSource, ParsedHttpSource() {
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     override val name = "MangaLink"
 
-    override val baseUrl = "https://mangalink.org"
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://mangalink.cc")!! }
 
     override val lang = "ar"
 
@@ -134,4 +145,25 @@ class MangaLink : ParsedHttpSource() {
         Type("كوميك", "5"),
         Type("غير معروف", "6"),
     )
+
+    //Preferences
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val domainPref = ListPreference(screen.context).apply {
+            key = "preferred_domain"
+            title = "Preferred domain"
+            entries = arrayOf("mangalink.cc", "mangalink.org")
+            entryValues = arrayOf("https://mangalink.cc", "https://mangalink.org")
+            setDefaultValue("https://mangalink.cc")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(domainPref)
+    }
 }
