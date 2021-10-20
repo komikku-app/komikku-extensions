@@ -64,6 +64,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Comics Valley", "https://comicsvalley.com", "hi", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ComicsWorld", "https://comicsworld.in", "hi"),
         SingleLang("CopyPasteScan", "https://copypastescan.xyz", "es", overrideVersionCode = 1),
+        SingleLang("Cronos Scan", "https://cronosscan.net", "pt-BR"),
         SingleLang("DarkYue Realm", "https://darkyuerealm.site/web", "pt-BR", pkgName = "darkyurealm", overrideVersionCode = 4),
         SingleLang("Decadence Scans", "https://reader.decadencescans.com", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("DiamondFansub", "https://diamondfansub.com", "tr", overrideVersionCode = 1),
