@@ -54,3 +54,5 @@ private val statuses: Array<String>
 
 class StatusFilter(values: Array<String> = statuses) :
     Filter.Select<String>("Status", values)
+
+inline fun <reified T> List<Filter<*>>.find() = find { it is T } as? T

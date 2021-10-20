@@ -12,18 +12,14 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
-import java.text.DecimalFormat
-import java.text.SimpleDateFormat
-import java.util.Locale
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 class KouhaiWork : HttpSource() {
-    override val name = "Kouhai Scanlations"
+    override val name = "Kouhai Work"
 
     override val baseUrl = "https://kouhai.work"
 
@@ -31,20 +27,23 @@ class KouhaiWork : HttpSource() {
 
     override val supportsLatest = true
 
-    private val json by injectLazy<Json>()
+    override val id = 1273675602267580928L
+
+    private val json by lazy {
+        Json(Injekt.get()) { isLenient = true }
+    }
 
     override fun latestUpdatesRequest(page: Int) =
-        GET("$API_URL/manga/week", headers)
+        GET("$API_URL/manga/recent", headers)
 
     override fun latestUpdatesParse(response: Response) =
-        response.parse()["data"]?.jsonArray?.map {
-            val arr = it.jsonArray
+        response.decode<List<KouhaiSeries>>().map {
             SManga.create().apply {
-                url = arr[0].jsonPrimitive.content
-                title = arr[1].jsonPrimitive.content
-                thumbnail_url = arr.last().jsonPrimitive.content
+                url = it.url
+                title = it.toString()
+                thumbnail_url = it.thumbnail
             }
-        }.let { MangasPage(it ?: emptyList(), false) }
+        }.let { MangasPage(it, false) }
 
     override fun popularMangaRequest(page: Int) =
         GET("$API_URL/manga/all", headers)
@@ -54,10 +53,16 @@ class KouhaiWork : HttpSource() {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
         FormBody.Builder().add("search", query).add("tags", filters.json())
-            .let { POST("$API_URL/manga/search", headers, it.build()) }
+            .let { POST("$API_URL/search/manga", headers, it.build()) }
 
     override fun searchMangaParse(response: Response) =
-        latestUpdatesParse(response)
+        response.decode<List<KouhaiSearch>>().map {
+            SManga.create().apply {
+                url = it.url
+                title = it.title
+                thumbnail_url = it.thumbnail
+            }
+        }.let { MangasPage(it, false) }
 
     // Request the actual manga URL for the webview
     override fun mangaDetailsRequest(manga: SManga) =
@@ -65,18 +70,11 @@ class KouhaiWork : HttpSource() {
 
     override fun fetchMangaDetails(manga: SManga) =
         client.newCall(chapterListRequest(manga)).asObservableSuccess().map {
-            val series = it.data<KouhaiSeries>()
-            manga.description = buildString {
-                append(series.synopsis)
-                append("\n\nAlternative Names:\n")
-                series.alternative_titles.joinTo(this, "\n")
-            }
+            val series = it.decode<KouhaiSeriesDetails>()
+            manga.description = series.toString()
             manga.author = series.authors?.joinToString()
             manga.artist = series.artists?.joinToString()
-            manga.genre = series.genres.orEmpty()
-                .plus(series.themes.orEmpty())
-                .plus(series.demographics.orEmpty())
-                .joinToString()
+            manga.genre = series.tags.joinToString()
             manga.status = when (series.status) {
                 "ongoing" -> SManga.ONGOING
                 "finished" -> SManga.COMPLETED
@@ -87,31 +85,32 @@ class KouhaiWork : HttpSource() {
         }!!
 
     override fun chapterListRequest(manga: SManga) =
-        GET("$API_URL/mangas/${manga.url}", headers)
+        GET("$API_URL/manga/get/${manga.url}", headers)
 
     override fun chapterListParse(response: Response) =
-        response.data<KouhaiSeries>().chapters.map {
+        response.decode<KouhaiSeriesDetails>().chapters.map {
             SChapter.create().apply {
-                url = it.id.toString()
-                scanlator = it.group
+                url = it.url
+                name = it.toString()
                 chapter_number = it.number
-                name = "Chapter ${decimalFormat.format(it.number)}" +
-                    if (it.name == null) "" else " - ${it.name}"
-                date_upload = dateFormat.parse(it.updated_at)?.time ?: 0L
+                date_upload = it.timestamp
+                scanlator = it.groups.joinToString()
             }
         }
 
     override fun pageListRequest(chapter: SChapter) =
-        GET("$API_URL/chapters/${chapter.url}", headers)
+        GET("$API_URL/chapters/get/${chapter.url}", headers)
 
     override fun pageListParse(response: Response) =
-        response.parse()["chapter"]!!.jsonObject["pages"]!!
-            .jsonArray.mapIndexed { idx, obj ->
-                Page(idx, "", obj.jsonObject["media"]!!.jsonPrimitive.content)
-            }
+        response.decode<KouhaiPages>("chapter")
+            .mapIndexed { idx, img -> Page(idx, "", img.toString()) }
 
-    override fun getFilterList() =
-        FilterList(GenresFilter(), ThemesFilter(), DemographicsFilter(), StatusFilter())
+    override fun getFilterList() = FilterList(
+        GenresFilter(),
+        ThemesFilter(),
+        DemographicsFilter(),
+        StatusFilter()
+    )
 
     override fun mangaDetailsParse(response: Response) =
         throw UnsupportedOperationException("Not used")
@@ -119,37 +118,25 @@ class KouhaiWork : HttpSource() {
     override fun imageUrlParse(response: Response) =
         throw UnsupportedOperationException("Not used")
 
-    @Suppress("NOTHING_TO_INLINE")
-    private inline fun FilterList.json() =
-        json.encodeToJsonElement(
-            KouhaiTagList(
-                find<GenresFilter>()?.state?.filter { it.state }
-                    ?.map { KouhaiTag(it.id) } ?: emptyList(),
-                find<ThemesFilter>()?.state?.filter { it.state }
-                    ?.map { KouhaiTag(it.id) } ?: emptyList(),
-                find<DemographicsFilter>()?.state?.takeIf { it != 0 }
-                    ?.let { listOf(KouhaiTag(it)) } ?: emptyList(),
-                find<StatusFilter>()?.state?.takeIf { it != 0 }
-                    ?.let { KouhaiTag(it - 1) }
-            )
-        ).toString()
+    private fun FilterList.json() = json.encodeToJsonElement(
+        KouhaiTagList(
+            find<GenresFilter>()?.state?.filter { it.state }?.map {
+                KouhaiTag(it.id, it.name)
+            } ?: emptyList(),
+            find<ThemesFilter>()?.state?.filter { it.state }?.map {
+                KouhaiTag(it.id, it.name)
+            } ?: emptyList(),
+            find<DemographicsFilter>()?.takeIf { it.state != 0 }?.let {
+                listOf(KouhaiTag(it.state, it.values[it.state]))
+            } ?: emptyList(),
+            find<StatusFilter>()?.takeIf { it.state != 0 }?.let {
+                KouhaiTag(it.state - 1, it.values[it.state])
+            }
+        )
+    ).toString()
 
-    @Suppress("NOTHING_TO_INLINE")
-    private inline fun Response.parse() =
-        json.parseToJsonElement(body!!.string()).jsonObject
-
-    private inline fun <reified T> Response.data() =
-        json.decodeFromJsonElement<T>(parse()["data"]!!)
-
-    private inline fun <reified T> FilterList.find() = find { it is T } as? T
-
-    companion object {
-        private const val API_URL = "https://api.kouhai.work/v2"
-
-        private const val ISO_DATE = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
-
-        private val dateFormat = SimpleDateFormat(ISO_DATE, Locale.ROOT)
-
-        private val decimalFormat = DecimalFormat("#.##")
-    }
+    private inline fun <reified T> Response.decode(key: String = "data") =
+        json.decodeFromJsonElement<T>(
+            json.parseToJsonElement(body!!.string()).jsonObject[key]!!
+        )
 }
