@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.comickfun
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
+import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
@@ -12,10 +12,8 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import okhttp3.CacheControl
@@ -59,7 +57,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     final override val client: OkHttpClient
 
     init {
-        val rateLimiter = RateLimitInterceptor(2)
         val builder = super.client.newBuilder()
         if (comickFunLang != "all")
         // Add interceptor to enforce language
@@ -85,17 +82,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                 }
             }
         )
-        /** Rate Limiter, shamelessly ~stolen from~ inspired by MangaDex
-         * Rate limits all requests that go to the baseurl
-         */
-        builder.addNetworkInterceptor(
-            Interceptor { chain ->
-                return@Interceptor when (chain.request().url.toString().startsWith(baseUrl)) {
-                    false -> chain.proceed(chain.request())
-                    true -> rateLimiter.intercept(chain)
-                }
-            }
-        )
+        // Add interceptor to ratelimit api calls
+        builder.addNetworkInterceptor(SpecificHostRateLimitInterceptor(apiBase.toHttpUrl(), 2))
         this.client = builder.build()
     }
 
@@ -170,14 +158,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     @ExperimentalSerializationApi
-    override fun searchMangaParse(response: Response): MangasPage = json.parseToJsonElement(response.body!!.string()).let { parsed ->
-        when (parsed) {
-            is JsonObject -> json.decodeFromJsonElement<List<SManga>>(parsed["comics"]!!)
-                .let { MangasPage(it, it.size == SEARCH_PAGE_LIMIT) }
-            is JsonArray -> MangasPage(json.decodeFromJsonElement(parsed), false)
-            else -> MangasPage(emptyList(), false)
-        }
-    }
+    override fun searchMangaParse(response: Response) = json.decodeFromString<List<SManga>>(response.body!!.string())
+        .let { MangasPage(it, it.size == SEARCH_PAGE_LIMIT) }
 
     /** Manga Details **/
 
@@ -334,6 +316,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     private fun SortFilter() = object : Select<LabeledValue>("Sort", getSorts()), QueryParam {
         override val paramName = "sort"
     }
+
     private fun DemographicFilter() = object : MultiSelect<LabeledValue>("Demographic", getDemographics()), ArrayUrlParam {
         override val paramName = "demographic"
     }
