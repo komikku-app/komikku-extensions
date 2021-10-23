@@ -40,6 +40,11 @@ class CatManga : HttpSource() {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = allSeriesRequest
 
+    override fun chapterListRequest(manga: SManga): Request {
+        val seriesId = manga.url.substringAfter("/series/")
+        return GET("$baseUrl/api/series/$seriesId")
+    }
+
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         return client.newCall(searchMangaRequest(page, query, filters))
             .asObservableSuccess()
@@ -69,50 +74,44 @@ class CatManga : HttpSource() {
             }
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val seriesId = manga.url.substringAfter("/series/")
-        return client.newCall(allSeriesRequest)
-            .asObservableSuccess()
-            .map { response ->
-                val seriesPrefs = application.getSharedPreferences("source_${id}_time_found:$seriesId", 0)
-                val seriesPrefsEditor = seriesPrefs.edit()
-                val chapters = json.decodeFromString<List<CatSeries>>(response.body!!.string())
-                    .find { it.series_id == seriesId }!!
-                    .chapters
-                    .asReversed()
-                    .map { chapter ->
-                        val title = chapter.title ?: ""
-                        val groups = chapter.groups.joinToString(", ")
-                        val numberUrl = chapter.number.chapterNumberToUrlPath()
-                        val displayNumber = chapter.display_number ?: numberUrl
-                        SChapter.create().apply {
-                            url = "${manga.url}/$numberUrl"
-                            chapter_number = chapter.number
-                            scanlator = groups
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val series = json.decodeFromString<CatSeries>(response.body!!.string())
+        val seriesPrefs = application.getSharedPreferences("source_${id}_time_found:${series.series_id}", 0)
+        val seriesPrefsEditor = seriesPrefs.edit()
+        val chapters = series.chapters!!
+            .asReversed()
+            .map { chapter ->
+                val title = chapter.title ?: ""
+                val groups = chapter.groups.joinToString(", ")
+                val numberUrl = chapter.number.chapterNumberToUrlPath()
+                val displayNumber = chapter.display_number ?: numberUrl
+                SChapter.create().apply {
+                    url = "/series/${series.series_id}/$numberUrl"
+                    chapter_number = chapter.number
+                    scanlator = groups
 
-                            name = if (chapter.volume != null) {
-                                "Vol.${chapter.volume} "
-                            } else {
-                                ""
-                            }
-                            name += "Ch.$displayNumber"
-                            if (title.isNotBlank()) {
-                                name += " - $title"
-                            }
-
-                            // Save current time when a chapter is found for the first time, and reuse it on future
-                            // checks to prevent manga entry without any new chapter bumped to the top of
-                            // "Latest chapter" list when the library is updated.
-                            val currentTimeMillis = System.currentTimeMillis()
-                            if (!seriesPrefs.contains(numberUrl)) {
-                                seriesPrefsEditor.putLong(numberUrl, currentTimeMillis)
-                            }
-                            date_upload = seriesPrefs.getLong(numberUrl, currentTimeMillis)
-                        }
+                    name = if (chapter.volume != null) {
+                        "Vol.${chapter.volume} "
+                    } else {
+                        ""
                     }
-                seriesPrefsEditor.apply()
-                chapters
+                    name += "Ch.$displayNumber"
+                    if (title.isNotBlank()) {
+                        name += " - $title"
+                    }
+
+                    // Save current time when a chapter is found for the first time, and reuse it on future
+                    // checks to prevent manga entry without any new chapter bumped to the top of
+                    // "Latest chapter" list when the library is updated.
+                    val currentTimeMillis = System.currentTimeMillis()
+                    if (!seriesPrefs.contains(numberUrl)) {
+                        seriesPrefsEditor.putLong(numberUrl, currentTimeMillis)
+                    }
+                    date_upload = seriesPrefs.getLong(numberUrl, currentTimeMillis)
+                }
             }
+        seriesPrefsEditor.apply()
+        return chapters
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
@@ -163,10 +162,6 @@ class CatManga : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun chapterListParse(response: Response): List<SChapter> {
         throw UnsupportedOperationException("Not used.")
     }
 

@@ -8,13 +8,13 @@ data class CatSeries(
     val alt_titles: List<String>,
     val authors: List<String>,
     val genres: List<String>,
-    val chapters: List<CatSeriesChapter>,
+    val chapters: List<CatSeriesChapter>? = null,
     val title: String,
     val series_id: String,
     val description: String,
     val status: String,
     val cover_art: CatSeriesCover,
-    val all_covers: List<CatSeriesCover>
+    val all_covers: List<CatSeriesCover>? = null
 ) {
     fun toSManga() = this.let { series ->
         SManga.create().apply {
@@ -30,9 +30,6 @@ data class CatSeries(
                 else -> SManga.UNKNOWN
             }
 
-            if (chapters.isEmpty()) {
-                description = "[COMING SOON] $description"
-            }
             if (alt_titles.isNotEmpty()) {
                 description += "\n\nAlternative titles:\n"
                 alt_titles.forEach {
