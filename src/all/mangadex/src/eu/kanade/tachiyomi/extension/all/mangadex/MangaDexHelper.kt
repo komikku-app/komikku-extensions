@@ -183,6 +183,8 @@ class MangaDexHelper() {
                         val altTitle = it.asMdMap()
                         altTitle[lang] ?: altTitle["en"] != null
                     }?.asMdMap()?.values?.singleOrNull()
+                ?: titleMap["ja"]   // romaji titles are sometimes ja (and are not altTitles)
+                ?: titleMap.values.firstOrNull()    // use literally anything from title as a last resort
             title = cleanString(dirtyTitle ?: "")
 
             coverFileName?.let {
