@@ -96,7 +96,7 @@ class KouhaiWork : HttpSource() {
                 date_upload = it.timestamp
                 scanlator = it.groups.joinToString()
             }
-        }
+        }.reversed()
 
     override fun pageListRequest(chapter: SChapter) =
         GET("$API_URL/chapters/get/${chapter.url}", headers)
