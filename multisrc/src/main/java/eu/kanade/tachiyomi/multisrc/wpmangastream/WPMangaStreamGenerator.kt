@@ -51,7 +51,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Vapo Scan", "https://vaposcans.com", "pt-BR", overrideVersionCode = 2),
         SingleLang("Argos Hentai", "https://agshentai.com", "pt-BR", isNsfw = true),
         SingleLang("Hakai Scan", "http://hakaiscan.xyz", "pt-BR", isNsfw = true),
-        SingleLang("Batoto Scans", "https://batotoscans.com", "en", isNsfw = true),
+        SingleLang("Snudae Scans", "https://snudaescans.com", "en", isNsfw = true, className = "BatotoScans", overrideVersionCode = 1),
         SingleLang("Random Scans", "https://randomscans.xyz", "en"),
         SingleLang("Fênix Scanlator", "https://fenixscanlator.xyz", "pt-BR", className = "FenixScanlator", overrideVersionCode = 2)
     )
