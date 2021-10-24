@@ -183,8 +183,8 @@ class MangaDexHelper() {
                         val altTitle = it.asMdMap()
                         altTitle[lang] ?: altTitle["en"] != null
                     }?.asMdMap()?.values?.singleOrNull()
-                ?: titleMap["ja"]   // romaji titles are sometimes ja (and are not altTitles)
-                ?: titleMap.values.firstOrNull()    // use literally anything from title as a last resort
+                ?: titleMap["ja"] // romaji titles are sometimes ja (and are not altTitles)
+                ?: titleMap.values.firstOrNull() // use literally anything from title as a last resort
             title = cleanString(dirtyTitle ?: "")
 
             coverFileName?.let {
@@ -213,10 +213,14 @@ class MangaDexHelper() {
                     "Content rating: " + tempContentRating.capitalize(Locale.US)
                 }
 
+            val dexLocale = Locale.forLanguageTag(lang)
+
             val nonGenres = listOf(
                 (attr.publicationDemographic ?: "").capitalize(Locale.US),
                 contentRating,
-                Locale(attr.originalLanguage ?: "").displayLanguage
+                Locale(attr.originalLanguage ?: "")
+                    .getDisplayLanguage(dexLocale)
+                    .capitalize(dexLocale)
             )
 
             val authors = mangaDataDto.relationships.filter { relationshipDto ->
