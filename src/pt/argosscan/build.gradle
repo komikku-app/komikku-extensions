@@ -6,7 +6,7 @@ ext {
     extName = 'Argos Scan'
     pkgNameSuffix = 'pt.argosscan'
     extClass = '.ArgosScan'
-    extVersionCode = 15
+    extVersionCode = 16
 }
 
 dependencies {

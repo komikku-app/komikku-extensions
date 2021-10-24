@@ -1,9 +1,14 @@
 package eu.kanade.tachiyomi.extension.pt.argosscan
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -15,18 +20,22 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class ArgosScan : HttpSource() {
+class ArgosScan : HttpSource(), ConfigurableSource {
 
     // Website changed from Madara to a custom CMS.
     override val versionId = 2
@@ -40,10 +49,15 @@ class ArgosScan : HttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(::tokenIntercept)
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
     private val json: Json by injectLazy()
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     private fun genericMangaFromObject(project: ArgosProjectDto): SManga = SManga.create().apply {
         title = project.name!!
@@ -66,6 +80,10 @@ class ArgosScan : HttpSource() {
 
     override fun popularMangaParse(response: Response): MangasPage {
         val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+
+        if (result["errors"] != null) {
+            throw Exception(REQUEST_ERROR)
+        }
 
         val projectList = result["data"]!!.jsonObject["getProjects"]!!
             .let { json.decodeFromJsonElement<ArgosProjectListDto>(it) }
@@ -134,6 +152,11 @@ class ArgosScan : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
         val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+
+        if (result["errors"] != null) {
+            throw Exception(REQUEST_ERROR)
+        }
+
         val project = result["data"]!!.jsonObject["project"]!!.jsonObject
             .let { json.decodeFromJsonElement<ArgosProjectDto>(it) }
 
@@ -149,6 +172,11 @@ class ArgosScan : HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+
+        if (result["errors"] != null) {
+            throw Exception(REQUEST_ERROR)
+        }
+
         val project = result["data"]!!.jsonObject["project"]!!.jsonObject
             .let { json.decodeFromJsonElement<ArgosProjectDto>(it) }
 
@@ -181,6 +209,10 @@ class ArgosScan : HttpSource() {
     override fun pageListParse(response: Response): List<Page> {
         val result = json.parseToJsonElement(response.body!!.string()).jsonObject
 
+        if (result["errors"] != null) {
+            throw Exception(REQUEST_ERROR)
+        }
+
         val chapterDto = result["data"]!!.jsonObject["getChapters"]!!.jsonObject["chapters"]!!.jsonArray[0]
             .let { json.decodeFromJsonElement<ArgosChapterDto>(it) }
 
@@ -201,6 +233,43 @@ class ArgosScan : HttpSource() {
         return GET(page.imageUrl!!, newHeaders)
     }
 
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val tokenPref = EditTextPreference(screen.context).apply {
+            key = TOKEN_PREF_KEY
+            title = TOKEN_PREF_TITLE
+            summary = TOKEN_PREF_SUMMARY
+            setDefaultValue("")
+            dialogTitle = TOKEN_PREF_TITLE
+            dialogMessage = TOKEN_PREF_SUMMARY
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit()
+                    .putString(TOKEN_PREF_KEY, newValue as String)
+                    .commit()
+            }
+        }
+
+        screen.addPreference(tokenPref)
+    }
+
+    private fun tokenIntercept(chain: Interceptor.Chain): Response {
+        if (chain.request().url.toString().contains("graphql").not()) {
+            return chain.proceed(chain.request())
+        }
+
+        val token = preferences.getString(TOKEN_PREF_KEY, "")
+
+        if (token.isNullOrEmpty()) {
+            throw IOException(TOKEN_NOT_FOUND)
+        }
+
+        val newRequest = chain.request().newBuilder()
+            .addHeader("Token", token)
+            .build()
+
+        return chain.proceed(newRequest)
+    }
+
     private fun String.toDate(): Long {
         return runCatching { DATE_PARSER.parse(this)?.time }
             .getOrNull() ?: 0L
@@ -208,6 +277,12 @@ class ArgosScan : HttpSource() {
 
     companion object {
         private const val GRAPHQL_URL = "https://argosscan.com/graphql"
+
+        private const val TOKEN_PREF_KEY = "token"
+        private const val TOKEN_PREF_TITLE = "Token"
+        private const val TOKEN_PREF_SUMMARY = "Defina o token de acesso ao conteúdo."
+        private const val TOKEN_NOT_FOUND = "Token não informado. Defina-o nas configurações da extensão."
+        private const val REQUEST_ERROR = "Erro na requisição. Tente novamente mais tarde."
 
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
 
