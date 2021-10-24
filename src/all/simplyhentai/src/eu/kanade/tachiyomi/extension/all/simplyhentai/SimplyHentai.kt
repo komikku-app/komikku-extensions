@@ -178,13 +178,14 @@ open class SimplyHentai(override val lang: String) : ConfigurableSource, HttpSou
     override fun pageListRequest(chapter: SChapter) =
         Uri.parse("$apiUrl/album").buildUpon().run {
             appendEncodedPath(chapter.url.split('/')[2])
+            appendEncodedPath("/pages")
             appendQueryParameter("si", "0")
             appendQueryParameter("locale", lang)
             GET(build().toString(), headers)
         }
 
     override fun pageListParse(response: Response) =
-        response.decode<SHAlbum>().data.images.map {
+        response.decode<SHAlbumPages>().data.pages.map {
             Page(it.page_num, "", it.sizes.full)
         }
 

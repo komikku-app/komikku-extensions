@@ -49,3 +49,11 @@ data class SHData(
 ) {
     val path by lazy { "/${series.slug}/$slug" }
 }
+
+@Serializable
+data class SHAlbumPages(val data: SHPagesData)
+
+@Serializable
+data class SHPagesData(
+    val pages: List<SHImage>
+)
