@@ -20,5 +20,7 @@ class OlhoDaLua : Madara(
 
     override val altName = "Nome alternativo: "
 
+    override val useNewChapterEndpoint = true
+
     override fun popularMangaSelector() = "div.page-item-detail.manga"
 }
