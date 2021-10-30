@@ -57,28 +57,15 @@ object MDConstants {
         return "${standardHttpsPortPref}_$dexLang"
     }
 
-    private const val contentRatingSafePref = "contentRatingSafe"
+    private const val contentRatingPref = "contentRating"
+    const val contentRatingPrefValSafe = "safe"
+    const val contentRatingPrefValSuggestive = "suggestive"
+    const val contentRatingPrefValErotica = "erotica"
+    const val contentRatingPrefValPornographic = "pornographic"
+    val contentRatingPrefDefaults = setOf(contentRatingPrefValSafe, contentRatingPrefValSuggestive)
 
-    fun getContentRatingSafePrefKey(dexLang: String): String {
-        return "${contentRatingSafePref}_$dexLang"
-    }
-
-    private const val contentRatingSuggestivePref = "contentRatingSuggestive"
-
-    fun getContentRatingSuggestivePrefKey(dexLang: String): String {
-        return "${contentRatingSuggestivePref}_$dexLang"
-    }
-
-    private const val contentRatingEroticaPref = "contentRatingErotica"
-
-    fun getContentRatingEroticaPrefKey(dexLang: String): String {
-        return "${contentRatingEroticaPref}_$dexLang"
-    }
-
-    private const val contentRatingPornographicPref = "contentRatingPornographic"
-
-    fun getContentRatingPornographicPrefKey(dexLang: String): String {
-        return "${contentRatingPornographicPref}_$dexLang"
+    fun getContentRatingPrefKey(dexLang: String): String {
+        return "${contentRatingPref}_$dexLang"
     }
 
     private const val originalLanguageJapanesePref = "originalLanguageJapanese"

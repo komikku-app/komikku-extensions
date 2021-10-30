@@ -22,32 +22,30 @@ class MangaDexFilters {
         )
     }
 
-    private fun getContentRating(preferences: SharedPreferences, dexLang: String) = listOf(
-        ContentRating("Safe").apply {
-            state = preferences.getBoolean(
-                MDConstants.getContentRatingSafePrefKey(dexLang),
-                true
-            )
-        },
-        ContentRating("Suggestive").apply {
-            state = preferences.getBoolean(
-                MDConstants.getContentRatingSuggestivePrefKey(dexLang),
-                true
-            )
-        },
-        ContentRating("Erotica").apply {
-            state = preferences.getBoolean(
-                MDConstants.getContentRatingEroticaPrefKey(dexLang),
-                false
-            )
-        },
-        ContentRating("Pornographic").apply {
-            state = preferences.getBoolean(
-                MDConstants.getContentRatingPornographicPrefKey(dexLang),
-                false
-            )
-        },
-    )
+    private fun getContentRating(preferences: SharedPreferences, dexLang: String): List<ContentRating> {
+        val contentRatings = preferences.getStringSet(
+            MDConstants.getContentRatingPrefKey(dexLang),
+            MDConstants.contentRatingPrefDefaults
+        )
+        return listOf(
+            ContentRating("Safe").apply {
+                state = contentRatings
+                    ?.contains(MDConstants.contentRatingPrefValSafe) ?: true
+            },
+            ContentRating("Suggestive").apply {
+                state = contentRatings
+                    ?.contains(MDConstants.contentRatingPrefValSuggestive) ?: true
+            },
+            ContentRating("Erotica").apply {
+                state = contentRatings
+                    ?.contains(MDConstants.contentRatingPrefValErotica) ?: false
+            },
+            ContentRating("Pornographic").apply {
+                state = contentRatings
+                    ?.contains(MDConstants.contentRatingPrefValPornographic) ?: false
+            },
+        )
+    }
 
     private class Demographic(name: String) : Filter.CheckBox(name)
     private class DemographicList(demographics: List<Demographic>) :
