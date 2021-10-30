@@ -68,21 +68,13 @@ object MDConstants {
         return "${contentRatingPref}_$dexLang"
     }
 
-    private const val originalLanguageJapanesePref = "originalLanguageJapanese"
+    private const val originalLanguagePref = "originalLanguage"
+    const val originalLanguagePrefValJapanese = "ja"
+    const val originalLanguagePrefValChinese = "zh"
+    const val originalLanguagePrefValChineseHk = "zh-hk"
+    const val originalLanguagePrefValKorean = "ko"
 
-    fun getOriginalLanguageJapanesePref(dexLang: String): String {
-        return "${originalLanguageJapanesePref}_$dexLang"
-    }
-
-    private const val originalLanguageChinesePref = "originalLanguageChinese"
-
-    fun getOriginalLanguageChinesePref(dexLang: String): String {
-        return "${originalLanguageChinesePref}_$dexLang"
-    }
-
-    private const val originalLanguageKoreanPref = "originalLanguageKorean"
-
-    fun getOriginalLanguageKoreanPref(dexLang: String): String {
-        return "${originalLanguageKoreanPref}_$dexLang"
+    fun getOriginalLanguagePrefKey(dexLang: String): String {
+        return "${originalLanguagePref}_$dexLang"
     }
 }

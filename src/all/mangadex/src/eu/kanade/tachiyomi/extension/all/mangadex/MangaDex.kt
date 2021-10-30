@@ -70,28 +70,15 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
                 MDConstants.getContentRatingPrefKey(dexLang),
                 MDConstants.contentRatingPrefDefaults
             )?.forEach { addQueryParameter("contentRating[]", it) }
-            if (preferences.getBoolean(
-                    MDConstants.getOriginalLanguageJapanesePref(dexLang),
-                    false
-                )
-            ) {
-                addQueryParameter("originalLanguage[]", "ja")
-            }
-            // dex has zh and zh-hk for chinese manhua
-            if (preferences.getBoolean(
-                    MDConstants.getOriginalLanguageChinesePref(dexLang),
-                    false
-                )
-            ) {
-                addQueryParameter("originalLanguage[]", "zh")
-                addQueryParameter("originalLanguage[]", "zh-hk")
-            }
-            if (preferences.getBoolean(
-                    MDConstants.getOriginalLanguageKoreanPref(dexLang),
-                    false
-                )
-            ) {
-                addQueryParameter("originalLanguage[]", "ko")
+            preferences.getStringSet(
+                MDConstants.getOriginalLanguagePrefKey(dexLang),
+                setOf()
+            )?.forEach {
+                addQueryParameter("originalLanguage[]", it)
+                // dex has zh and zh-hk for chinese manhua
+                if (it == MDConstants.originalLanguagePrefValChinese) {
+                    addQueryParameter("originalLanguage[]", MDConstants.originalLanguagePrefValChineseHk)
+                }
             }
         }.build().toUrl().toString()
         return GET(
@@ -124,7 +111,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
         return MangasPage(mangaList, hasMoreResults)
     }
 
-    // LATEST section  API can't sort by date yet so not implemented
+    // LATEST section API can't sort by date yet so not implemented
     override fun latestUpdatesParse(response: Response): MangasPage {
         val chapterListDto = helper.json.decodeFromString<ChapterListDto>(response.body!!.string())
         val hasMoreResults = chapterListDto.limit + chapterListDto.offset < chapterListDto.total
@@ -170,16 +157,15 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             addQueryParameter("translatedLanguage[]", dexLang)
             addQueryParameter("order[publishAt]", "desc")
             addQueryParameter("includeFutureUpdates", "0")
-            if (preferences.getBoolean(MDConstants.getOriginalLanguageJapanesePref(dexLang), false)) {
-                addQueryParameter("originalLanguage[]", "ja")
-            }
-            // dex has zh and zh-hk for chinese manhua
-            if (preferences.getBoolean(MDConstants.getOriginalLanguageChinesePref(dexLang), false)) {
-                addQueryParameter("originalLanguage[]", "zh")
-                addQueryParameter("originalLanguage[]", "zh-hk")
-            }
-            if (preferences.getBoolean(MDConstants.getOriginalLanguageKoreanPref(dexLang), false)) {
-                addQueryParameter("originalLanguage[]", "ko")
+            preferences.getStringSet(
+                MDConstants.getOriginalLanguagePrefKey(dexLang),
+                setOf()
+            )?.forEach {
+                addQueryParameter("originalLanguage[]", it)
+                // dex has zh and zh-hk for chinese manhua
+                if (it == MDConstants.originalLanguagePrefValChinese) {
+                    addQueryParameter("originalLanguage[]", MDConstants.originalLanguagePrefValChineseHk)
+                }
             }
             preferences.getStringSet(
                 MDConstants.getContentRatingPrefKey(dexLang),
@@ -489,44 +475,21 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             }
         }
 
-        val originalLanguageJapanesePref = SwitchPreferenceCompat(screen.context).apply {
-            key = MDConstants.getOriginalLanguageJapanesePref(dexLang)
-            title = "Japanese"
-            summary = "If enabled, only shows content that was originally published in Japanese in both latest and browse"
-            setDefaultValue(false)
-
+        val originalLanguagePref = MultiSelectListPreference(screen.context).apply {
+            key = MDConstants.getOriginalLanguagePrefKey(dexLang)
+            title = "Filter original languages"
+            summary = "Only show content that was originally published in the selected languages in both latest and browse"
+            entries = arrayOf("Japanese", "Chinese", "Korean")
+            entryValues = arrayOf(
+                MDConstants.originalLanguagePrefValJapanese,
+                MDConstants.originalLanguagePrefValChinese,
+                MDConstants.originalLanguagePrefValKorean
+            )
+            setDefaultValue(setOf<String>())
             setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
+                val checkValue = newValue as Set<String>
                 preferences.edit()
-                    .putBoolean(MDConstants.getOriginalLanguageJapanesePref(dexLang), checkValue)
-                    .commit()
-            }
-        }
-
-        val originalLanguageChinesePref = SwitchPreferenceCompat(screen.context).apply {
-            key = MDConstants.getOriginalLanguageChinesePref(dexLang)
-            title = "Chinese"
-            summary = "If enabled, only shows content that was originally published in Chinese in both latest and browse"
-            setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit()
-                    .putBoolean(MDConstants.getOriginalLanguageChinesePref(dexLang), checkValue)
-                    .commit()
-            }
-        }
-
-        val originalLanguageKoreanPref = SwitchPreferenceCompat(screen.context).apply {
-            key = MDConstants.getOriginalLanguageKoreanPref(dexLang)
-            title = "Korean"
-            summary = "If enabled, only shows content that was originally published in Korean in both latest and browse"
-            setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit()
-                    .putBoolean(MDConstants.getOriginalLanguageKoreanPref(dexLang), checkValue)
+                    .putStringSet(MDConstants.getOriginalLanguagePrefKey(dexLang), checkValue)
                     .commit()
             }
         }
@@ -535,9 +498,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
         screen.addPreference(dataSaverPref)
         screen.addPreference(standardHttpsPortPref)
         screen.addPreference(contentRatingPref)
-        screen.addPreference(originalLanguageJapanesePref)
-        screen.addPreference(originalLanguageChinesePref)
-        screen.addPreference(originalLanguageKoreanPref)
+        screen.addPreference(originalLanguagePref)
     }
 
     override fun getFilterList(): FilterList =

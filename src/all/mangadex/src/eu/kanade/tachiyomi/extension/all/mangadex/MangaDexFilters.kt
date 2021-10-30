@@ -78,26 +78,26 @@ class MangaDexFilters {
     private class OriginalLanguageList(originalLanguage: List<OriginalLanguage>) :
         Filter.Group<OriginalLanguage>("Original language", originalLanguage)
 
-    private fun getOriginalLanguage(preferences: SharedPreferences, dexLang: String) = listOf(
-        OriginalLanguage("Japanese (Manga)", "ja").apply {
-            state = preferences.getBoolean(
-                MDConstants.getOriginalLanguageJapanesePref(dexLang),
-                false
-            )
-        },
-        OriginalLanguage("Chinese (Manhua)", "zh").apply {
-            state = preferences.getBoolean(
-                MDConstants.getOriginalLanguageChinesePref(dexLang),
-                false
-            )
-        },
-        OriginalLanguage("Korean (Manhwa)", "ko").apply {
-            state = preferences.getBoolean(
-                MDConstants.getOriginalLanguageKoreanPref(dexLang),
-                false
-            )
-        },
-    )
+    private fun getOriginalLanguage(preferences: SharedPreferences, dexLang: String): List<OriginalLanguage> {
+        val originalLanguages = preferences.getStringSet(
+            MDConstants.getOriginalLanguagePrefKey(dexLang),
+            setOf()
+        )
+        return listOf(
+            OriginalLanguage("Japanese (Manga)", "ja").apply {
+                state = originalLanguages
+                    ?.contains(MDConstants.originalLanguagePrefValJapanese) ?: false
+            },
+            OriginalLanguage("Chinese (Manhua)", "zh").apply {
+                state = originalLanguages
+                    ?.contains(MDConstants.originalLanguagePrefValChinese) ?: false
+            },
+            OriginalLanguage("Korean (Manhwa)", "ko").apply {
+                state = originalLanguages
+                    ?.contains(MDConstants.originalLanguagePrefValKorean) ?: false
+            },
+        )
+    }
 
     internal class Tag(val id: String, name: String) : Filter.TriState(name)
     private class TagList(tags: List<Tag>) : Filter.Group<Tag>("Tags", tags)
@@ -209,10 +209,10 @@ class MangaDexFilters {
                         filter.state.forEach { lang ->
                             if (lang.state) {
                                 // dex has zh and zh-hk for chinese manhua
-                                if (lang.isoCode == "zh") {
+                                if (lang.isoCode == MDConstants.originalLanguagePrefValChinese) {
                                     addQueryParameter(
                                         "originalLanguage[]",
-                                        "zh-hk"
+                                        MDConstants.originalLanguagePrefValChineseHk
                                     )
                                 }
                                 addQueryParameter(
