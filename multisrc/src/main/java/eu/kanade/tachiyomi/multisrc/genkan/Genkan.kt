@@ -20,7 +20,8 @@ import java.util.Locale
 open class Genkan(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
+    val mangaUrlDirectory: String = "/comics",
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -30,7 +31,7 @@ open class Genkan(
     override fun popularMangaSelector() = "div.list-item"
 
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/comics?page=$page", headers)
+        return GET("$baseUrl$mangaUrlDirectory?page=$page", headers)
     }
 
     override fun latestUpdatesSelector() = popularMangaSelector()
@@ -79,7 +80,7 @@ open class Genkan(
     // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        return GET("$baseUrl/comics?query=$query", headers)
+        return GET("$baseUrl$mangaUrlDirectory?query=$query", headers)
     }
 
     override fun searchMangaSelector() = popularMangaSelector()
