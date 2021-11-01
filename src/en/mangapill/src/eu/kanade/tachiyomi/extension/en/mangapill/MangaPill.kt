@@ -22,40 +22,37 @@ class MangaPill : ParsedHttpSource() {
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
 
-    override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/search?q=&type=&status=&page=$page", headers)
-    }
+    override fun popularMangaRequest(page: Int): Request = latestUpdatesRequest(page)
 
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/chapters", headers)
     }
 
-    override fun popularMangaSelector() = ".grid.justify-between.gap-3.grid-cols-2 > div"
-    override fun latestUpdatesSelector() = ".flex.bg-color-bg-secondary.p-2.rounded"
-    override fun searchMangaSelector() = popularMangaSelector()
+    override fun popularMangaSelector() = latestUpdatesSelector()
+    override fun latestUpdatesSelector() = ".flex.bg-card.p-2.rounded"
+    override fun searchMangaSelector() = ".my-3.grid.justify-between.gap-3.grid-cols-2 > div"
 
-    override fun popularMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        manga.thumbnail_url = element.select("img").attr("data-src")
-        manga.setUrlWithoutDomain(element.select("a").first().attr("href"))
-        manga.title = element.select(".mt-2 a").text()
-        return manga
-    }
+    override fun popularMangaFromElement(element: Element): SManga = latestUpdatesFromElement(element)
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("img").attr("data-src")
         val url = element.select("a").first().attr("href")
         manga.setUrlWithoutDomain(url.substringBeforeLast("/").replace("chapters", "manga").substringBeforeLast("-") + "/" + url.substringAfterLast("/").substringBefore("-chapter"))
-        manga.title = element.select(".inilne.block").text().trim()
+        manga.title = element.select("a > div:first-child").text().trim()
         return manga
     }
 
-    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
+    override fun searchMangaFromElement(element: Element) = SManga.create().apply {
+        thumbnail_url = element.select("img").attr("data-src")
+        url = element.select("a").first().attr("href")
+        setUrlWithoutDomain(url.substringBeforeLast("/").replace("chapters", "manga").substringBeforeLast("-") + "/" + url.substringAfterLast("/").substringBefore("-chapter"))
+        title = element.select("div > a").text().trim()
+    }
 
-    override fun popularMangaNextPageSelector() = "a.next.page-numbers"
+    override fun popularMangaNextPageSelector() = null
     override fun latestUpdatesNextPageSelector() = null
-    override fun searchMangaNextPageSelector() = "a.btn:contains(Next)"
+    override fun searchMangaNextPageSelector() = "a.btn.btn-sm"
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
@@ -67,9 +64,9 @@ class MangaPill : ParsedHttpSource() {
             genres.add(genre)
         }
         manga.genre = genres.joinToString(", ")
-        manga.status = parseStatus(document.select("label:contains(Status) + div").text())
-        manga.description = document.select("p.text-sm.text-color-text-secondary").text()
-        manga.thumbnail_url = document.select(".object-cover").first().attr("data-src")
+        manga.status = parseStatus(document.select("div.container > div:first-child > div:last-child > div:nth-child(3) > div:nth-child(2) > div").text())
+        manga.description = document.select("div.container > div:first-child > div:last-child > div:nth-child(2) > p").text()
+        manga.thumbnail_url = document.select("div.container > div:first-child > div:first-child > img").first().attr("data-src")
 
         return manga
     }
@@ -81,7 +78,7 @@ class MangaPill : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
 
-    override fun chapterListSelector() = "a.border.border-color-border-primary.p-1"
+    override fun chapterListSelector() = "#chapters > div > a"
 
     override fun chapterFromElement(element: Element): SChapter {
         val urlElement = element.attr("href")
