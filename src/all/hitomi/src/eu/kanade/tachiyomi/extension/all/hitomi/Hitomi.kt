@@ -359,7 +359,7 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
 
             // https://ltn.hitomi.la/reader.js
             // function make_image_element()
-            val secondSubdomain = if (jsonElement.haswebp == 0 && jsonElement.hasavif == 0) "b" else "a"
+            val secondSubdomain = if (jsonElement.haswebp == 0 && jsonElement.hasavif == 0 || !hitomiAlwaysWebp()) "b" else "a"
             Page(i, "", "https://${firstSubdomainFromGalleryId(hashPath2)}$secondSubdomain.hitomi.la/$path/$hashPath1/$hashPath2/$hash.$ext")
         }
     }
@@ -370,8 +370,7 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
     private fun firstSubdomainFromGalleryId(pathSegment: String): Char {
         var o = 0
         val g = pathSegment.toInt(16)
-        if (g < 0x88) o = 1
-        if (g < 0x44) o = 2
+        if (g < 0x7c) o = 1
         return (97 + o).toChar()
     }
 
