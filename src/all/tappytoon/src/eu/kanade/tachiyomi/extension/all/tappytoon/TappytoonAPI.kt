@@ -56,7 +56,7 @@ class Chapter(
 }
 
 @Serializable
-class Images(private val images: List<URL>) : List<URL> by images
+class Media(private val media: List<URL>) : List<URL> by media
 
 @Serializable
 class URL(private val url: String) {

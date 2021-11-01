@@ -32,20 +32,14 @@ class Tappytoon(override val lang: String) : HttpSource() {
     override val client = network.client.newBuilder().addInterceptor { chain ->
         val res = chain.proceed(chain.request())
         if (res.isSuccessful) return@addInterceptor res
-        // Log JSON error if available
+        // Throw JSON error if available
         if (res.headers["Content-Type"] == "application/json") {
             res.body?.string()?.let(json::parseToJsonElement)?.run {
-                val type = jsonObject["type"]?.jsonPrimitive?.content
-                val msg = jsonObject["message"]!!.jsonPrimitive.content
-                Log.e("Tappytoon", "${type ?: "Error"} - $msg")
+                throw Error(jsonObject["message"]!!.jsonPrimitive.content)
             }
-        } else {
-            res.close()
         }
-        when (val code = res.code) {
-            403 -> throw Error("You are not authorized to view this")
-            else -> throw Error("HTTP error $code")
-        }
+        res.close()
+        throw Error("HTTP error ${res.code}")
     }.build()
 
     private val json by injectLazy<Json>()
@@ -60,7 +54,6 @@ class Tappytoon(override val lang: String) : HttpSource() {
         val uuid = obj["X-Device-Uuid"]!!.jsonPrimitive.content
         headers.newBuilder()
             .set("Origin", "https://www.tappytoon.com")
-            .set("Referer", "https://www.tappytoon.com/")
             .set("Accept-Language", lang)
             .set("Authorization", auth)
             .set("X-Device-Uuid", uuid)
@@ -69,8 +62,9 @@ class Tappytoon(override val lang: String) : HttpSource() {
 
     private var nextUrl: String? = null
 
-    override fun headersBuilder() =
-        super.headersBuilder().set("Referer", "https://www.tappytoon.com/")
+    override fun headersBuilder() = super.headersBuilder()
+        .set("User-Agent", System.getProperty("http.agent")!!)
+        .set("Referer", "https://www.tappytoon.com/")
 
     override fun latestUpdatesRequest(page: Int) =
         apiUrl.newBuilder().run {
@@ -118,8 +112,9 @@ class Tappytoon(override val lang: String) : HttpSource() {
 
     override fun pageListRequest(chapter: SChapter) =
         apiUrl.newBuilder().run {
-            addEncodedPathSegments("chapters/${chapter.url}")
-            addEncodedQueryParameter("includes", "images")
+            addEncodedPathSegments("content-delivery/contents")
+            addEncodedQueryParameter("chapterId", chapter.url)
+            addEncodedQueryParameter("variant", "high")
             addEncodedQueryParameter("locale", lang)
             GET(toString(), apiHeaders)
         }
@@ -165,7 +160,7 @@ class Tappytoon(override val lang: String) : HttpSource() {
         }
 
     override fun pageListParse(response: Response) =
-        response.parse<Images>().mapIndexed { idx, img ->
+        response.parse<Media>().mapIndexed { idx, img ->
             Page(idx, "", img.toString())
         }
 
