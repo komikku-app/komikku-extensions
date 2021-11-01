@@ -11,19 +11,30 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
-import org.json.JSONArray
-import org.json.JSONObject
+import uy.kohesive.injekt.injectLazy
 
 class Qiximh : HttpSource() {
+
     override val lang = "zh"
+
     override val supportsLatest = true
+
     override val name = "七夕漫画"
+
     override val baseUrl = "http://qiximh1.com"
+
     // This is hard limit by API
-    val maxPage = 5
+    private val maxPage = 5
+
+    private val json: Json by injectLazy()
 
     // Used in Rank API
     private enum class RANKTYPE(val rankVal: Int) {
@@ -84,20 +95,19 @@ class Qiximh : HttpSource() {
     }
 
     private fun commonDataProcess(origRequest: Request, responseBody: String): MangasPage {
-        val jsonData = JSONArray(responseBody)
+        val jsonData = json.parseToJsonElement(responseBody).jsonArray
 
-        val mangaArr = mutableListOf<SManga>()
+        val mangaArr = jsonData.map {
+            val targetObj = it.jsonObject
 
-        for (i in 0 until jsonData.length()) {
-            val targetObj = jsonData.getJSONObject(i)
-            mangaArr.add(
-                SManga.create().apply {
-                    title = targetObj.get("name") as String
-                    status = SManga.UNKNOWN
-                    thumbnail_url = targetObj.get("imgurl") as String
-                    url = "$baseUrl/${targetObj.get("id")}/"
-                }
-            )
+            SManga.create().apply {
+                title = targetObj["name"]!!.jsonPrimitive.content
+                status = SManga.UNKNOWN
+                thumbnail_url = targetObj["imgurl"]!!.jsonPrimitive.content
+                // Extension is wrongly adding the baseURL to the SManga.
+                // I kept it as it is to avoid user migrations.
+                url = "$baseUrl/${targetObj["id"]!!.jsonPrimitive.int}"
+            }
         }
 
         val requestBody = origRequest.body as FormBody
@@ -153,36 +163,37 @@ class Qiximh : HttpSource() {
     }
     override fun searchMangaParse(response: Response): MangasPage {
         val responseBody = response.body
-        val mangaArr = mutableListOf<SManga>()
+            ?: return MangasPage(emptyList(), false)
 
-        if (responseBody != null) {
-            val responseString = responseBody.string()
-            if (!responseString.isNullOrEmpty()) {
-                if (responseString.startsWith("[")) {
-                    // This is to process filter
-                    return commonDataProcess(response.request, responseString)
-                } else {
-                    val jsonData = JSONObject(responseString)
-                    if (jsonData.get("msg") == "success") {
-                        val jsonArr = jsonData.getJSONArray("search_data")
+        val responseString = responseBody.string()
 
-                        for (i in 0 until jsonArr.length()) {
-                            val targetObj = jsonArr.getJSONObject(i)
-                            mangaArr.add(
-                                SManga.create().apply {
-                                    title = targetObj.get("name") as String
-                                    thumbnail_url = targetObj.get("imgs") as String
-                                    url = "$baseUrl/${targetObj.get("id")}/"
-                                }
-                            )
+        if (responseString.isNotEmpty()) {
+            if (responseString.startsWith("[")) {
+                // This is to process filter
+                return commonDataProcess(response.request, responseString)
+            } else {
+                val jsonData = json.parseToJsonElement(responseString).jsonObject
+
+                if (jsonData["msg"]!!.jsonPrimitive.content == "success") {
+                    val mangaArr = jsonData["search_data"]!!.jsonArray.map {
+                        val targetObj = it.jsonObject
+
+                        SManga.create().apply {
+                            title = targetObj["name"]!!.jsonPrimitive.content
+                            thumbnail_url = targetObj["imgs"]!!.jsonPrimitive.content
+                            // Extension is wrongly adding the baseURL to the SManga.
+                            // I kept it as it is to avoid user migrations.
+                            url = "$baseUrl/${targetObj["id"]!!.jsonPrimitive.int}"
                         }
                     }
+
+                    return MangasPage(mangaArr, false)
                 }
             }
         }
 
         // Search does not have pagination
-        return MangasPage(mangaArr, false)
+        return MangasPage(emptyList(), false)
     }
 
     // Filter
@@ -247,13 +258,16 @@ class Qiximh : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
 
-        // API does not allow retrieve full chapter list, hence the need to parse the chapters from both HTML and API
-        val htmlChapters = document.select(".catalog_list.row_catalog_list a").map {
-            SChapter.create().apply {
-                name = it.text()
-                url = "$baseUrl${it.attr("href")}"
+        // API does not allow retrieve full chapter list, hence the need to parse
+        // the chapters from both HTML and API
+        val chapterList = document.select(".catalog_list.row_catalog_list a")
+            .map {
+                SChapter.create().apply {
+                    name = it.text()
+                    url = "$baseUrl${it.attr("href")}"
+                }
             }
-        }
+            .toMutableList()
 
         val mangaUrl = response.request.url.toString()
 
@@ -267,22 +281,18 @@ class Qiximh : HttpSource() {
         )
 
         val inlineResponse = client.newCall(request).execute()
-        val jsonData = JSONArray(inlineResponse.body!!.string())
+        val jsonData = json.parseToJsonElement(inlineResponse.body!!.string()).jsonArray
 
-        val chapterArr = mutableListOf<SChapter>()
-        chapterArr.addAll(htmlChapters)
+        chapterList += jsonData.map {
+            val targetObj = it.jsonObject
 
-        for (i in 0 until jsonData.length()) {
-            val targetObj = jsonData.getJSONObject(i)
-            chapterArr.add(
-                SChapter.create().apply {
-                    name = targetObj.get("chaptername") as String
-                    url = "$mangaUrl${targetObj.get("chapterid")}.html"
-                }
-            )
+            SChapter.create().apply {
+                name = targetObj["chaptername"]!!.jsonPrimitive.content
+                url = "$mangaUrl${targetObj["chapterid"]!!.jsonPrimitive.int}.html"
+            }
         }
 
-        return chapterArr
+        return chapterList
     }
 
     // Page

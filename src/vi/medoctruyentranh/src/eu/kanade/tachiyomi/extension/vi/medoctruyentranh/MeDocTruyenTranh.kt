@@ -8,12 +8,15 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Request
 import okhttp3.Response
-import org.json.JSONArray
-import org.json.JSONObject
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -29,6 +32,8 @@ class MeDocTruyenTranh : ParsedHttpSource() {
 
     override val client = network.cloudflareClient
 
+    private val json: Json by injectLazy()
+
     override fun popularMangaSelector() = "div.classifyList a"
 
     override fun searchMangaSelector() = ".listCon a"
@@ -37,37 +42,24 @@ class MeDocTruyenTranh : ParsedHttpSource() {
         return GET("$baseUrl/tim-truyen/toan-bo" + if (page > 1) "/$page" else "", headers)
     }
 
-    private inline fun <reified T, R> JSONArray.mapJSONArray(transform: (Int, T) -> R): List<R> {
-        val list = mutableListOf<R>()
-        for (i in 0 until this.length()) {
-            list.add(transform(i, this[i] as T))
-        }
-        return list
-    }
-
-    private fun JSONArray.flatten(): JSONArray {
-        val list = mutableListOf<Any>()
-        for (i in 0 until this.length()) {
-            val childArray = this[i] as JSONArray
-            for (j in 0 until childArray.length()) {
-                list.add(childArray[j])
-            }
-        }
-        return JSONArray(list)
-    }
-
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
 
         // trying to build URLs from this JSONObject could cause issues but we need it to get thumbnails
-        val titleCoverMap = JSONObject(document.select("script#__NEXT_DATA__").first().data())
-            .getJSONObject("props")
-            .getJSONObject("pageProps")
-            .getJSONObject("initialState")
-            .getJSONObject("classify")
-            .getJSONArray("comics")
-            .mapJSONArray { _, jsonObject: JSONObject ->
-                Pair(jsonObject.getString("title"), jsonObject.getString("coverimg"))
+        val nextData = document.select("script#__NEXT_DATA__").first()
+            .let { json.parseToJsonElement(it.data()).jsonObject }
+
+        val titleCoverMap = nextData["props"]!!
+            .jsonObject["pageProps"]!!
+            .jsonObject["initialState"]!!
+            .jsonObject["classify"]!!
+            .jsonObject["comics"]!!
+            .jsonArray
+            .map {
+                Pair(
+                    it.jsonObject["title"]!!.jsonPrimitive.content,
+                    it.jsonObject["coverimg"]!!.jsonPrimitive.content
+                )
             }
             .toMap()
 
@@ -79,6 +71,7 @@ class MeDocTruyenTranh : ParsedHttpSource() {
 
         return MangasPage(mangas, document.select(popularMangaNextPageSelector()) != null)
     }
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         return GET("$baseUrl/search/$query", headers)
     }
@@ -108,26 +101,24 @@ class MeDocTruyenTranh : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
-    override fun mangaDetailsParse(document: Document): SManga {
-        val manga = SManga.create()
-        val jsonData = JSONObject(document.select("#__NEXT_DATA__").first()!!.data())
-        val mangaDetail = jsonData
-            .getJSONObject("props")
-            .getJSONObject("pageProps")
-            .getJSONObject("initialState")
-            .getJSONObject("detail")
-            .getJSONObject("story_item")
-        manga.title = mangaDetail.getString("title")
-        manga.author = mangaDetail.getJSONArray("author_list").getString(0)
-        val genres = mutableListOf<String>()
-        for (i in 0 until mangaDetail.getJSONArray("category_list").length()) {
-            genres.add(mangaDetail.getJSONArray("category_list").getString(i))
-        }
-        manga.genre = genres.joinToString(", ")
-        manga.description = mangaDetail.getString("summary")
-        manga.status = parseStatus(mangaDetail.getString("is_updating"))
-        manga.thumbnail_url = mangaDetail.getString("coverimg")
-        return manga
+    override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
+
+        val nextData = document.select("script#__NEXT_DATA__").first()
+            .let { json.parseToJsonElement(it.data()).jsonObject }
+
+        val mangaDetail = nextData["props"]!!
+            .jsonObject["pageProps"]!!
+            .jsonObject["initialState"]!!
+            .jsonObject["detail"]!!
+            .jsonObject["story_item"]!!
+            .jsonObject
+
+        title = mangaDetail["title"]!!.jsonPrimitive.content
+        author = mangaDetail["author_list"]!!.jsonArray.joinToString { it.jsonPrimitive.content }
+        genre = mangaDetail["category_list"]!!.jsonArray.joinToString { it.jsonPrimitive.content }
+        description = mangaDetail["summary"]!!.jsonPrimitive.content
+        status = parseStatus(mangaDetail["is_updating"]!!.jsonPrimitive.content)
+        thumbnail_url = mangaDetail["coverimg"]!!.jsonPrimitive.content
     }
 
     private fun parseStatus(status: String) = when {
@@ -139,18 +130,23 @@ class MeDocTruyenTranh : ParsedHttpSource() {
     override fun chapterListSelector() = "div.chapters  a"
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        return JSONObject(response.asJsoup().select("script#__NEXT_DATA__").first().data())
-            .getJSONObject("props")
-            .getJSONObject("pageProps")
-            .getJSONObject("initialState")
-            .getJSONObject("detail")
-            .getJSONArray("story_chapters")
-            .flatten()
-            .mapJSONArray { _, jsonObject: JSONObject ->
+        val nextData = response.asJsoup().select("script#__NEXT_DATA__").first()
+            .let { json.parseToJsonElement(it.data()).jsonObject }
+
+        return nextData["props"]!!
+            .jsonObject["pageProps"]!!
+            .jsonObject["initialState"]!!
+            .jsonObject["detail"]!!
+            .jsonObject["story_chapters"]!!
+            .jsonArray
+            .flatMap { it.jsonArray }
+            .map {
+                val chapterObj = it.jsonObject
+
                 SChapter.create().apply {
-                    name = jsonObject.getString("title")
-                    setUrlWithoutDomain("${response.request.url}/${jsonObject.getString("chapter_index")}")
-                    date_upload = parseChapterDate(jsonObject.getString("time"))
+                    name = chapterObj["title"]!!.jsonPrimitive.content
+                    date_upload = parseChapterDate(chapterObj["time"]!!.jsonPrimitive.content)
+                    setUrlWithoutDomain("${response.request.url}/${chapterObj["chapter_index"]!!.jsonPrimitive.content}")
                 }
             }
             .reversed()
@@ -166,15 +162,19 @@ class MeDocTruyenTranh : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return JSONObject(document.select("#__NEXT_DATA__").first()?.data() ?: "{}")
-            .getJSONObject("props")
-            .getJSONObject("pageProps")
-            .getJSONObject("initialState")
-            .getJSONObject("read")
-            .getJSONObject("detail_item")
-            .getJSONArray("elements")
-            .mapJSONArray { i, jsonObject: JSONObject ->
-                Page(i, "", jsonObject.getString("content"))
+        val nextData = document.select("script#__NEXT_DATA__").firstOrNull()
+            ?.let { json.parseToJsonElement(it.data()).jsonObject }
+            ?: return emptyList()
+
+        return nextData["props"]!!
+            .jsonObject["pageProps"]!!
+            .jsonObject["initialState"]!!
+            .jsonObject["read"]!!
+            .jsonObject["detail_item"]!!
+            .jsonObject["elements"]!!
+            .jsonArray
+            .mapIndexed { i, jsonEl ->
+                Page(i, "", jsonEl.jsonObject["content"]!!.jsonPrimitive.content)
             }
     }
 

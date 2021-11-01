@@ -1,11 +1,12 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Desu'
     pkgNameSuffix = 'ru.desu'
     extClass = '.Desu'
-    extVersionCode = 12
+    extVersionCode = 13
 }
 
 apply from: "$rootDir/common.gradle"

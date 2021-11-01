@@ -1,11 +1,12 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'QiXiManhua'
     pkgNameSuffix = 'zh.qiximh'
     extClass = '.Qiximh'
-    extVersionCode = 2
+    extVersionCode = 3
 }
 
 apply from: "$rootDir/common.gradle"

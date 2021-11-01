@@ -9,12 +9,20 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.floatOrNull
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
-import org.json.JSONArray
-import org.json.JSONObject
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 import java.util.ArrayList
 
 class Desu : HttpSource() {
@@ -26,31 +34,34 @@ class Desu : HttpSource() {
 
     override val supportsLatest = true
 
+    private val json: Json by injectLazy()
+
     override fun headersBuilder() = Headers.Builder().apply {
         add("User-Agent", "Tachiyomi")
         add("Referer", baseUrl)
     }
 
-    private fun mangaPageFromJSON(json: String, next: Boolean): MangasPage {
-        val arr = JSONArray(json)
-        val ret = ArrayList<SManga>(arr.length())
-        for (i in 0 until arr.length()) {
-            val obj = arr.getJSONObject(i)
-            ret.add(
+    private fun mangaPageFromJSON(jsonStr: String, next: Boolean): MangasPage {
+        val mangaList = json.parseToJsonElement(jsonStr).jsonArray
+            .map {
                 SManga.create().apply {
-                    mangaFromJSON(obj, false)
+                    mangaFromJSON(it.jsonObject, false)
                 }
-            )
-        }
-        return MangasPage(ret, next)
+            }
+
+        return MangasPage(mangaList, next)
     }
 
-    private fun SManga.mangaFromJSON(obj: JSONObject, chapter: Boolean) {
-        val id = obj.getInt("id")
+    private fun SManga.mangaFromJSON(obj: JsonObject, chapter: Boolean) {
+        val id = obj["id"]!!.jsonPrimitive.int
+
         url = "/$id"
-        title = obj.getString("name").split(" / ").first()
-        thumbnail_url = obj.getJSONObject("image").getString("original")
-        val ratingValue = obj.getString("score").toFloat()
+        title = obj["name"]!!.jsonPrimitive.content
+            .split(" / ")
+            .first()
+        thumbnail_url = obj["image"]!!.jsonObject["original"]!!.jsonPrimitive.content
+
+        val ratingValue = obj["score"]!!.jsonPrimitive.floatOrNull ?: 0F
         val ratingStar = when {
             ratingValue > 9.5 -> "★★★★★"
             ratingValue > 8.5 -> "★★★★✬"
@@ -64,14 +75,13 @@ class Desu : HttpSource() {
             ratingValue > 0.5 -> "✬☆☆☆☆"
             else -> "☆☆☆☆☆"
         }
-        val rawAgeValue = obj.getString("adult")
-        val rawAgeStop = when (rawAgeValue) {
-            "1" -> "18+"
+
+        val rawAgeStop = when (obj["adult"]!!.jsonPrimitive.int) {
+            1 -> "18+"
             else -> "0+"
         }
 
-        val rawTypeValue = obj.getString("kind")
-        val rawTypeStr = when (rawTypeValue) {
+        val rawTypeStr = when (obj["kind"]!!.jsonPrimitive.content) {
             "manga" -> "Манга"
             "manhwa" -> "Манхва"
             "manhua" -> "Маньхуа"
@@ -81,21 +91,32 @@ class Desu : HttpSource() {
         }
 
         var altName = ""
-        if (obj.getString("synonyms").isNotEmpty() && obj.getString("synonyms") != "null") {
-            altName = "Альтернативные названия:\n" + obj.getString("synonyms").replace("|", " / ") + "\n\n"
+
+        if (obj["synonyms"]?.jsonPrimitive?.content.orEmpty().isNotEmpty()) {
+            altName = "Альтернативные названия:\n" +
+                obj["synonyms"]!!.jsonPrimitive.content
+                    .replace("|", " / ") +
+                "\n\n"
         }
-        description = obj.getString("russian") + "\n" + ratingStar + " " + ratingValue + " (голосов: " + obj.getString("score_users") + ")\n" + altName + obj.getString("description")
+
+        description = obj["russian"]!!.jsonPrimitive.content + "\n" +
+            ratingStar + " " + ratingValue +
+            " (голосов: " +
+            obj["score_users"]!!.jsonPrimitive.int +
+            ")\n" + altName +
+            obj["description"]!!.jsonPrimitive.content
+
         genre = if (chapter) {
-            val jsonArray = obj.getJSONArray("genres")
-            val genreList = mutableListOf<String>()
-            for (i in 0 until jsonArray.length()) {
-                genreList.add(jsonArray.getJSONObject(i).getString("russian"))
-            }
-            genreList.plusElement(rawTypeStr).plusElement(rawAgeStop).joinToString()
+            obj["genres"]!!.jsonArray
+                .map { it.jsonObject["russian"]!!.jsonPrimitive.content }
+                .plusElement(rawTypeStr)
+                .plusElement(rawAgeStop)
+                .joinToString()
         } else {
-            obj.getString("genres") + ", " + rawTypeStr + ", " + rawAgeStop
+            obj["genres"]!!.jsonPrimitive.content + ", " + rawTypeStr + ", " + rawAgeStop
         }
-        status = when (obj.getString("status")) {
+
+        status = when (obj["status"]!!.jsonPrimitive.content) {
             "ongoing" -> SManga.ONGOING
             "released" -> SManga.COMPLETED
             "copyright" -> SManga.LICENSED
@@ -103,11 +124,13 @@ class Desu : HttpSource() {
         }
     }
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl$API_URL/?limit=50&order=popular&page=$page")
+    override fun popularMangaRequest(page: Int) =
+        GET("$baseUrl$API_URL/?limit=50&order=popular&page=$page")
 
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl$API_URL/?limit=50&order=updated&page=$page")
+    override fun latestUpdatesRequest(page: Int) =
+        GET("$baseUrl$API_URL/?limit=50&order=updated&page=$page")
 
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
@@ -136,12 +159,13 @@ class Desu : HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val res = response.body!!.string()
-        val obj = JSONObject(res).getJSONArray("response")
-        val nav = JSONObject(res).getJSONObject("pageNavParams")
-        val count = nav.getInt("count")
-        val limit = nav.getInt("limit")
-        val page = nav.getInt("page")
+        val res = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val obj = res["response"]!!.jsonArray
+        val nav = res["pageNavParams"]!!.jsonObject
+        val count = nav["count"]!!.jsonPrimitive.int
+        val limit = nav["limit"]!!.jsonPrimitive.int
+        val page = nav["page"]!!.jsonPrimitive.int
+
         return mangaPageFromJSON(obj.toString(), count > page * limit)
     }
 
@@ -162,53 +186,56 @@ class Desu : HttpSource() {
         return GET(baseUrl + "/manga" + manga.url, headers)
     }
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
-        val obj = JSONObject(response.body!!.string()).getJSONObject("response")
+        val obj = json.parseToJsonElement(response.body!!.string())
+            .jsonObject["response"]!!
+            .jsonObject
+
         mangaFromJSON(obj, true)
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val obj = JSONObject(response.body!!.string()).getJSONObject("response")
-        val ret = ArrayList<SChapter>()
+        val obj = json.parseToJsonElement(response.body!!.string())
+            .jsonObject["response"]!!
+            .jsonObject
 
-        val cid = obj.getInt("id")
+        val cid = obj["id"]!!.jsonPrimitive.int
 
-        val arr = obj.getJSONObject("chapters").getJSONArray("list")
-        for (i in 0 until arr.length()) {
-            val obj2 = arr.getJSONObject(i)
-            ret.add(
-                SChapter.create().apply {
-                    val ch = obj2.getString("ch")
-                    val fullnumstr = obj2.getString("vol") + ". " + "Глава " + ch
-                    val title = if (obj2.getString("title") == "null") "" else obj2.getString("title")
-                    name = if (title.isEmpty()) {
-                        fullnumstr
-                    } else {
-                        "$fullnumstr: $title"
-                    }
-                    val id = obj2.getString("id")
-                    url = "/$cid/chapter/$id"
-                    chapter_number = ch.toFloat()
-                    date_upload = obj2.getLong("date") * 1000
+        return obj["chapters"]!!.jsonObject["list"]!!.jsonArray.map {
+            val chapterObj = it.jsonObject
+            val ch = chapterObj["ch"]!!.jsonPrimitive.float
+            val fullNumStr = "${chapterObj["vol"]!!.jsonPrimitive.int} . Глава $ch"
+            val title = chapterObj["title"]?.jsonPrimitive?.content.orEmpty()
+
+            SChapter.create().apply {
+                name = if (title.isEmpty()) {
+                    fullNumStr
+                } else {
+                    "$fullNumStr: $title"
                 }
-            )
+                url = "/$cid/chapter/${chapterObj["id"]!!.jsonPrimitive.int}"
+                chapter_number = ch
+                date_upload = chapterObj["date"]!!.jsonPrimitive.long * 1000L
+            }
         }
-        return ret
     }
+
     override fun chapterListRequest(manga: SManga): Request {
         return GET(baseUrl + API_URL + manga.url, headers)
     }
+
     override fun pageListRequest(chapter: SChapter): Request {
         return GET(baseUrl + API_URL + chapter.url, headers)
     }
+
     override fun pageListParse(response: Response): List<Page> {
-        val obj = JSONObject(response.body!!.string()).getJSONObject("response")
-        val pages = obj.getJSONObject("pages")
-        val list = pages.getJSONArray("list")
-        val ret = ArrayList<Page>(list.length())
-        for (i in 0 until list.length()) {
-            ret.add(Page(i, "", list.getJSONObject(i).getString("img")))
-        }
-        return ret
+        val obj = json.parseToJsonElement(response.body!!.string())
+            .jsonObject["response"]!!
+            .jsonObject
+
+        return obj["pages"]!!.jsonObject["list"]!!.jsonArray
+            .mapIndexed { i, jsonEl ->
+                Page(i, "", jsonEl.jsonObject["img"]!!.jsonPrimitive.content)
+            }
     }
 
     override fun imageUrlParse(response: Response) =
@@ -236,10 +263,6 @@ class Desu : HttpSource() {
                 }
         }
     }
-    companion object {
-        const val PREFIX_SLUG_SEARCH = "slug:"
-        private const val API_URL = "/manga/api"
-    }
 
     private class OrderBy : Filter.Select<String>(
         "Сортировка",
@@ -247,10 +270,13 @@ class Desu : HttpSource() {
     )
 
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Жанр", genres)
+
     private class TypeList(types: List<Type>) : Filter.Group<Type>("Тип", types)
 
     private class Type(name: String, val id: String) : Filter.CheckBox(name)
+
     private class Genre(name: String, val id: String) : Filter.CheckBox(name)
+
     override fun getFilterList() = FilterList(
         OrderBy(),
         TypeList(getTypeList()),
@@ -312,4 +338,10 @@ class Desu : HttpSource() {
         Genre("Юри", "Yuri"),
         Genre("Яой", "Yaoi")
     )
+
+    companion object {
+        const val PREFIX_SLUG_SEARCH = "slug:"
+
+        private const val API_URL = "/manga/api"
+    }
 }
