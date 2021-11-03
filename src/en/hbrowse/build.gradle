@@ -5,7 +5,7 @@ ext {
     extName = 'HBrowse'
     pkgNameSuffix = 'en.hbrowse'
     extClass = '.HBrowse'
-    extVersionCode = 6
+    extVersionCode = 7
     isNsfw = true
 }
 
