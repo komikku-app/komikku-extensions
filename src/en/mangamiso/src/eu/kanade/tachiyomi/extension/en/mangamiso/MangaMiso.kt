@@ -25,7 +25,7 @@ import java.util.Locale
 class MangaMiso : HttpSource() {
 
     companion object {
-        const val MANGA_PER_PAGE = 50
+        const val MANGA_PER_PAGE = 20
         val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
         const val PREFIX_ID_SEARCH = "id:"
     }
@@ -159,17 +159,19 @@ class MangaMiso : HttpSource() {
     }
 
     private fun cleanDescription(mangaDesc: String): String {
-
-        // Get description up to the closing tag (</p>)
-        var description = mangaDesc.substringBefore("</p>")
+        // Remove the link to the manga on other sites
+        var description = "<p>Link:.*</p>".toRegex(RegexOption.IGNORE_CASE).replace(mangaDesc, "")
 
         // Convert any breaks <br> to newlines
-        description = description.replace("<br>", "\n")
+        description = description.replace("<br>", "\n", true)
+
+        // Convert any paragraphs to double newlines
+        description = description.replace("<p>", "\n\n", true)
 
         // Replace any other tags with nothing
-        description = description.replace("<.*?>".toRegex(), "")
+        description = "<.*?>".toRegex().replace(description, "")
 
-        return description
+        return description.trim()
     }
 
     private fun mapStatus(status: String) =
@@ -387,13 +389,13 @@ class MangaMiso : HttpSource() {
 
     private fun toSManga(manga: MisoManga): SManga {
         return SManga.create().apply {
-            title = manga.title
+            title = manga.title.trim()
             author = manga.author.joinToString(",", transform = ::humanizeID)
             artist = manga.artist.joinToString(",", transform = ::humanizeID)
             thumbnail_url = "$baseUrl${manga.coverImage}"
             url = "$baseUrl/manga/${manga.pathName}"
 
-            genre = manga.tags.joinToString(", ") { humanizeID(it) }
+            genre = manga.tags.joinToString(", ", transform = ::humanizeID)
 
             description = cleanDescription(manga.description)
 
@@ -403,7 +405,7 @@ class MangaMiso : HttpSource() {
 
     private fun toSChapter(chapter: MisoChapter, mangaURL: String): SChapter {
         return SChapter.create().apply {
-            name = chapter.title
+            name = chapter.title.trim()
             date_upload = try { DATE_FORMAT.parse(chapter.createdAt)!!.time } catch (e: Exception) { System.currentTimeMillis() }
             url = "$mangaURL/${chapter.pathName}"
             chapter_number = chapter.chapterNum
