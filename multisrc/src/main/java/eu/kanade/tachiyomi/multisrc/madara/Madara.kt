@@ -319,20 +319,20 @@ abstract class Madara(
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         with(document) {
-            select("div.post-title h3").first()?.let {
+            select(mangaDetailsSelectorTitle).first()?.let {
                 manga.title = it.ownText()
             }
-            select("div.author-content > a").eachText().filter {
+            select(mangaDetailsSelectorAuthor).eachText().filter {
                 it.notUpdating()
             }.joinToString().takeIf { it.isNotBlank() }?.let {
                 manga.author = it
             }
-            select("div.artist-content > a").eachText().filter {
+            select(mangaDetailsSelectorArtist).eachText().filter {
                 it.notUpdating()
             }.joinToString().takeIf { it.isNotBlank() }?.let {
                 manga.artist = it
             }
-            select("div.description-summary div.summary__content").let {
+            select(mangaDetailsSelectorDescription).let {
                 if (it.select("p").text().isNotEmpty()) {
                     manga.description = it.select("p").joinToString(separator = "\n\n") { p ->
                         p.text().replace("<br>", "\n")
@@ -341,10 +341,10 @@ abstract class Madara(
                     manga.description = it.text()
                 }
             }
-            select("div.summary_image img").first()?.let {
+            select(mangaDetailsSelectorThumbnail).first()?.let {
                 manga.thumbnail_url = imageFromElement(it)
             }
-            select("div.summary-content").last()?.let {
+            select(mangaDetailsSelectorStatus).last()?.let {
                 manga.status = when (it.text()) {
                     // I don't know what's the corresponding for COMPLETED and LICENSED
                     // There's no support for "Canceled" or "On Hold"
@@ -353,12 +353,12 @@ abstract class Madara(
                     else -> SManga.UNKNOWN
                 }
             }
-            val genres = select("div.genres-content a")
+            val genres = select(mangaDetailsSelectorGenre)
                 .map { element -> element.text().toLowerCase(Locale.ROOT) }
                 .toMutableSet()
 
             // add tag(s) to genre
-            select("div.tags-content a").forEach { element ->
+            select(mangaDetailsSelectorTag).forEach { element ->
                 if (genres.contains(element.text()).not()) {
                     genres.add(element.text().toLowerCase(Locale.ROOT))
                 }
@@ -386,6 +386,16 @@ abstract class Madara(
 
         return manga
     }
+
+    // Manga Details Selector
+    open val mangaDetailsSelectorTitle = "div.post-title h3"
+    open val mangaDetailsSelectorAuthor = "div.author-content > a"
+    open val mangaDetailsSelectorArtist = "div.artist-content > a"
+    open val mangaDetailsSelectorStatus = "div.summary-content"
+    open val mangaDetailsSelectorDescription = "div.description-summary div.summary__content"
+    open val mangaDetailsSelectorThumbnail = "div.summary_image img"
+    open val mangaDetailsSelectorGenre = "div.genres-content a"
+    open val mangaDetailsSelectorTag = "div.tags-content a"
 
     open val seriesTypeSelector = ".post-content_item:contains(Type) .summary-content"
     open val altNameSelector = ".post-content_item:contains(Alt) .summary-content"

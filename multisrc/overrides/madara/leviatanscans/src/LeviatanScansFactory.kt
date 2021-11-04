@@ -27,6 +27,8 @@ class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "e
 
     override fun chapterFromElement(element: Element) =
         replaceRandomUrlPartInChapter(super.chapterFromElement(element))
+
+    override val mangaDetailsSelectorDescription = "div.post-content div.manga-excerpt"
 }
 class LeviatanScansES : Madara("Leviatan Scans", "https://es.leviatanscans.com", "es") {
     override val useNewChapterEndpoint: Boolean = true
