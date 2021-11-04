@@ -143,7 +143,9 @@ class MikuDoujin : ParsedHttpSource() {
 
     override fun chapterListSelector() = "table.table-episode tr"
 
-    override fun chapterFromElement(element: Element): SChapter {
+    override fun chapterFromElement(element: Element): SChapter = throw Exception("Unused")
+
+    private fun chapterFromElementWithIndex(element: Element, idx: Int, manga: SManga): SChapter {
         val chapter = SChapter.create()
         element.select("td a").let {
             chapter.setUrlWithoutDomain(it.attr("href"))
@@ -151,7 +153,15 @@ class MikuDoujin : ParsedHttpSource() {
             if (chapter.name.isEmpty()) {
                 chapter.chapter_number = 0.0f
             } else {
-                chapter.chapter_number = chapter.name.split(" ").last().toFloat()
+                val lastWord = chapter.name.split(" ").last()
+                try {
+                    chapter.chapter_number = lastWord.toFloat()
+                } catch (ex: NumberFormatException) {
+                    if (lastWord == "จบ") {
+                        manga.status = SManga.COMPLETED
+                    }
+                    chapter.chapter_number = (idx + 1).toFloat()
+                }
             }
         }
 
@@ -167,6 +177,7 @@ class MikuDoujin : ParsedHttpSource() {
                 val mangaDocument = it.asJsoup()
 
                 if (mangaDocument.select(chapterListSelector()).isEmpty()) {
+                    manga.status = SManga.COMPLETED
                     val createdChapter = SChapter.create().apply {
                         url = manga.url
                         name = "Chapter 1"
@@ -174,9 +185,10 @@ class MikuDoujin : ParsedHttpSource() {
                     }
                     chList = listOf(createdChapter)
                 } else {
-                    chList = mangaDocument.select(chapterListSelector()).map { Chapter ->
-                        chapterFromElement(Chapter)
-                    }
+                    chList =
+                        mangaDocument.select(chapterListSelector()).mapIndexed { idx, Chapter ->
+                            chapterFromElementWithIndex(Chapter, idx, manga)
+                        }
                 }
                 chList
             }
