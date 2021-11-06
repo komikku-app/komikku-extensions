@@ -16,7 +16,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
-import java.util.Locale
 
 abstract class ReaderFront(
     override val name: String,
@@ -73,7 +72,7 @@ abstract class ReaderFront(
                     append(it.demographic_name!!)
                     if (it.genres!!.isNotEmpty()) {
                         append(", ")
-                        it.genres.joinTo(this, transform = ::capitalize)
+                        it.genres.joinTo(this) { it.genre }
                     }
                     append(", ")
                     append(it.type!!)
@@ -116,9 +115,6 @@ abstract class ReaderFront(
                 mp.copy(mp.mangas.filter { it.title.contains(query, true) })
             }
         }!!
-
-    private fun capitalize(name: Name) =
-        name.split('_').joinToString(" ") { it.capitalize(Locale(lang)) }
 
     private inline fun <reified T> Response.parse(name: String) =
         json.parseToJsonElement(body!!.string()).jsonObject.run {

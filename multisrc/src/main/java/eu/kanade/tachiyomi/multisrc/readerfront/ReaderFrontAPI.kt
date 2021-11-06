@@ -84,6 +84,9 @@ data class People(val role: Int, private val people: Name) {
 }
 
 @Serializable
-data class Name(private val name: String) : CharSequence by name {
+data class Name(private val name: String) {
+    val genre: String // TODO: replace with a localized genre map
+        get() = name.split('_').joinToString(" ") { it.capitalize(Locale.ROOT) }
+
     override fun toString() = name
 }
