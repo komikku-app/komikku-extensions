@@ -98,6 +98,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Hades no Fansub", "https://mangareaderpro.com/es", "es"),
         SingleLang("Hades no Fansub Hentai", "https://h.mangareaderpro.com", "es", isNsfw = true),
         SingleLang("Hayalistic", "https://hayalistic.com", "tr"),
+        SingleLang("Harimanga", "https://harimanga.com/", "en"),
         SingleLang("Hentai20", "https://hentai20.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Hentaidexy", "https://hentaidexy.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Hentai Manga", "https://hentaimanga.me", "en", isNsfw = true),
