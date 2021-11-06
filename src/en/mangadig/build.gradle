@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'MangaDig'
+    pkgNameSuffix = 'en.mangadig'
+    extClass = '.MangaDig'
+    extVersionCode = 1
+    isNsfw = true
+}
+
+dependencies {
+    implementation project(path: ':lib-ratelimit')
+}
+
+apply from: "$rootDir/common.gradle"
