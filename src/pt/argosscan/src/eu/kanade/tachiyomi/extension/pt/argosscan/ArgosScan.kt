@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.pt.argosscan
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.text.InputType
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
@@ -20,6 +21,7 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -49,7 +51,7 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(::tokenIntercept)
+        .addInterceptor(::loginIntercept)
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
@@ -58,6 +60,8 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
+
+    private var token: String? = null
 
     private fun genericMangaFromObject(project: ArgosProjectDto): SManga = SManga.create().apply {
         title = project.name!!
@@ -234,40 +238,104 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val tokenPref = EditTextPreference(screen.context).apply {
-            key = TOKEN_PREF_KEY
-            title = TOKEN_PREF_TITLE
-            summary = TOKEN_PREF_SUMMARY
+        val emailPref = EditTextPreference(screen.context).apply {
+            key = EMAIL_PREF_KEY
+            title = EMAIL_PREF_TITLE
+            summary = EMAIL_PREF_SUMMARY
             setDefaultValue("")
-            dialogTitle = TOKEN_PREF_TITLE
-            dialogMessage = TOKEN_PREF_SUMMARY
+            dialogTitle = EMAIL_PREF_TITLE
+            dialogMessage = EMAIL_PREF_DIALOG
+
+            setOnBindEditTextListener {
+                it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            }
 
             setOnPreferenceChangeListener { _, newValue ->
+                token = null
+
                 preferences.edit()
-                    .putString(TOKEN_PREF_KEY, newValue as String)
+                    .putString(EMAIL_PREF_KEY, newValue as String)
                     .commit()
             }
         }
 
-        screen.addPreference(tokenPref)
+        val passwordPref = EditTextPreference(screen.context).apply {
+            key = PASSWORD_PREF_KEY
+            title = PASSWORD_PREF_TITLE
+            summary = PASSWORD_PREF_SUMMARY
+            setDefaultValue("")
+            dialogTitle = PASSWORD_PREF_TITLE
+            dialogMessage = PASSWORD_PREF_DIALOG
+
+            setOnBindEditTextListener {
+                it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+
+            setOnPreferenceChangeListener { _, newValue ->
+                token = null
+
+                preferences.edit()
+                    .putString(PASSWORD_PREF_KEY, newValue as String)
+                    .commit()
+            }
+        }
+
+        screen.addPreference(emailPref)
+        screen.addPreference(passwordPref)
     }
 
-    private fun tokenIntercept(chain: Interceptor.Chain): Response {
+    private fun loginIntercept(chain: Interceptor.Chain): Response {
         if (chain.request().url.toString().contains("graphql").not()) {
             return chain.proceed(chain.request())
         }
 
-        val token = preferences.getString(TOKEN_PREF_KEY, "")
+        val email = preferences.getString(EMAIL_PREF_KEY, "")
+        val password = preferences.getString(PASSWORD_PREF_KEY, "")
 
-        if (token.isNullOrEmpty()) {
-            throw IOException(TOKEN_NOT_FOUND)
+        if (!email.isNullOrEmpty() && !password.isNullOrEmpty() && token.isNullOrEmpty()) {
+            val loginResponse = chain.proceed(loginRequest(email, password))
+            val loginResult = json.parseToJsonElement(loginResponse.body!!.string()).jsonObject
+
+            if (loginResult["errors"] != null) {
+                loginResponse.close()
+
+                val errorMessage = runCatching {
+                    loginResult["errors"]!!.jsonArray[0].jsonObject["message"]?.jsonPrimitive?.content
+                }
+
+                throw IOException(errorMessage.getOrNull() ?: REQUEST_ERROR)
+            }
+
+            token = loginResult["data"]!!
+                .jsonObject["login"]!!
+                .jsonObject["token"]!!
+                .jsonPrimitive.content
+
+            loginResponse.close()
         }
 
-        val newRequest = chain.request().newBuilder()
-            .addHeader("Token", token)
+        if (!token.isNullOrEmpty()) {
+            val authorizedRequest = chain.request().newBuilder()
+                .addHeader("Authorization", "Bearer $token")
+                .build()
+
+            return chain.proceed(authorizedRequest)
+        }
+
+        return chain.proceed(chain.request())
+    }
+
+    private fun loginRequest(email: String, password: String): Request {
+        val payload = buildLoginMutationQueryPayload(email, password)
+
+        val body = payload.toString().toRequestBody(JSON_MEDIA_TYPE)
+
+        val newHeaders = headersBuilder()
+            .add("Content-Length", body.contentLength().toString())
+            .add("Content-Type", body.contentType().toString())
             .build()
 
-        return chain.proceed(newRequest)
+        return POST(GRAPHQL_URL, newHeaders, body)
     }
 
     private fun String.toDate(): Long {
@@ -278,10 +346,16 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     companion object {
         private const val GRAPHQL_URL = "https://argosscan.com/graphql"
 
-        private const val TOKEN_PREF_KEY = "token"
-        private const val TOKEN_PREF_TITLE = "Token"
-        private const val TOKEN_PREF_SUMMARY = "Defina o token de acesso ao conteúdo."
-        private const val TOKEN_NOT_FOUND = "Token não informado. Defina-o nas configurações da extensão."
+        private const val EMAIL_PREF_KEY = "email"
+        private const val EMAIL_PREF_TITLE = "E-mail"
+        private const val EMAIL_PREF_SUMMARY = "Defina o e-mail de sua conta no site."
+        private const val EMAIL_PREF_DIALOG = "Deixe em branco caso o site torne o login opcional."
+
+        private const val PASSWORD_PREF_KEY = "password"
+        private const val PASSWORD_PREF_TITLE = "Senha"
+        private const val PASSWORD_PREF_SUMMARY = "Defina a senha de sua conta no site."
+        private const val PASSWORD_PREF_DIALOG = EMAIL_PREF_DIALOG
+
         private const val REQUEST_ERROR = "Erro na requisição. Tente novamente mais tarde."
 
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()

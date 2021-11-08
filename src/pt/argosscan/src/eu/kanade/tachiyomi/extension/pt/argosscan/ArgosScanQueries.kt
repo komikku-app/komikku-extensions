@@ -9,6 +9,25 @@ import kotlinx.serialization.json.putJsonObject
 
 private fun buildQuery(queryAction: () -> String) = queryAction().replace("%", "$")
 
+val LOGIN_MUTATION_QUERY = buildQuery {
+    """
+        | mutation login(%email: String!, %password: String!) {
+        |     login(loginInput: { email: %email, password: %password }) {
+        |         token
+        |     }
+        | }
+    """.trimMargin()
+}
+
+fun buildLoginMutationQueryPayload(email: String, password: String) = buildJsonObject {
+    put("operationName", "login")
+    put("query", LOGIN_MUTATION_QUERY)
+    putJsonObject("variables") {
+        put("email", email)
+        put("password", password)
+    }
+}
+
 val POPULAR_QUERY = buildQuery {
     """
         | query getProjects(
