@@ -18,30 +18,31 @@ import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
 
 abstract class ReaderFront(
-    override val name: String,
-    override val baseUrl: String,
-    override val lang: String,
-    open val langId: Int
+    final override val name: String,
+    final override val baseUrl: String,
+    final override val lang: String
 ) : HttpSource() {
     override val supportsLatest = true
 
     private val json by injectLazy<Json>()
 
-    open val apiUrl by lazy { baseUrl.replaceFirst("://", "://api.") }
+    private val i18n = ReaderFrontI18N(lang)
+
+    open val apiUrl = baseUrl.replaceFirst("://", "://api.")
 
     abstract fun getImageCDN(path: String, width: Int = 350): String
 
     override fun latestUpdatesRequest(page: Int) =
-        GET("$apiUrl?query=${works(langId, "updatedAt", "DESC", page, 12)}", headers)
+        GET("$apiUrl?query=${works(i18n.id, "updatedAt", "DESC", page, 12)}", headers)
 
     override fun popularMangaRequest(page: Int) =
-        GET("$apiUrl?query=${works(langId, "stub", "ASC", page, 120)}", headers)
+        GET("$apiUrl?query=${works(i18n.id, "stub", "ASC", page, 120)}", headers)
 
     override fun mangaDetailsRequest(manga: SManga) =
         GET("$baseUrl/work/$lang/${manga.url}", headers)
 
     override fun chapterListRequest(manga: SManga) =
-        GET("$apiUrl?query=${chaptersByWork(langId, manga.url)}", headers)
+        GET("$apiUrl?query=${chaptersByWork(i18n.id, manga.url)}", headers)
 
     override fun pageListRequest(chapter: SChapter) =
         GET("$apiUrl?query=${chapterById(chapter.url.toInt())}", headers)
@@ -72,7 +73,7 @@ abstract class ReaderFront(
                     append(it.demographic_name!!)
                     if (it.genres!!.isNotEmpty()) {
                         append(", ")
-                        it.genres.joinTo(this) { it.genre }
+                        it.genres.joinTo(this, transform = i18n::get)
                     }
                     append(", ")
                     append(it.type!!)
@@ -88,7 +89,7 @@ abstract class ReaderFront(
         }
 
     override fun chapterListParse(response: Response) =
-        response.parse<List<Chapter>>("chaptersByWork").map {
+        response.parse<List<Release>>("chaptersByWork").map {
             SChapter.create().apply {
                 url = it.id.toString()
                 name = it.toString()
@@ -98,14 +99,14 @@ abstract class ReaderFront(
         }
 
     override fun pageListParse(response: Response) =
-        response.parse<PageList>("chapterById").let {
+        response.parse<Chapter>("chapterById").let {
             it.mapIndexed { idx, page ->
                 Page(idx, "", getImageCDN(it.path(page), page.width))
             }
         }
 
     override fun fetchMangaDetails(manga: SManga) =
-        GET("$apiUrl?query=${work(langId, manga.url)}", headers).let {
+        GET("$apiUrl?query=${work(i18n.id, manga.url)}", headers).let {
             client.newCall(it).asObservableSuccess().map(::mangaDetailsParse)
         }!!
 
