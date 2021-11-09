@@ -65,7 +65,7 @@ class Newbie : HttpSource() {
 
     private val count = 30
 
-    override fun popularMangaRequest(page: Int) = GET("$API_URL/projects/popular?scale=week&size=$count&page=$page", headers)
+    override fun popularMangaRequest(page: Int) = GET("$API_URL/projects/popular?scale=month&size=$count&page=$page", headers)
 
     override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
 

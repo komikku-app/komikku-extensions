@@ -53,7 +53,7 @@ data class MangaDetDto(
     val type: String,
     val status: String,
     val rating: Float,
-    val adult: String
+    val adult: String?
 )
 
 @Serializable
