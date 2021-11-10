@@ -57,6 +57,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Cervo Scanlator", "https://cervoscan.xyz", "pt-BR", overrideVersionCode = 4),
         SingleLang("Chibi Manga", "https://www.cmreader.info", "en", overrideVersionCode = 1),
         SingleLang("Clover Manga", "https://clover-manga.com", "tr", overrideVersionCode = 2),
+        SingleLang("Colored Manga", "https://coloredmanga.com", "en"),
         SingleLang("ComicKiba", "https://comickiba.com", "en", overrideVersionCode = 1),
         SingleLang("Comicdom", "https://comicdom.org", "en", overrideVersionCode = 1),
         SingleLang("Comichub", "https://comichub.net", "en"),
