@@ -19,6 +19,10 @@ package="eu.kanade.tachiyomi.extension">
                 android:host="remanga.org"
                 android:pathPattern="/manga/..*"
                 android:scheme="https" />
+            <data
+                android:host="xn--80aaig9ahr.xn--c1avg"
+                android:pathPattern="/manga/..*"
+                android:scheme="https" />
         </intent-filter>
     </activity>
 </application>

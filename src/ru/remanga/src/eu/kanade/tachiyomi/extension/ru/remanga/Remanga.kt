@@ -58,7 +58,7 @@ import kotlin.random.Random
 class Remanga : ConfigurableSource, HttpSource() {
     override val name = "Remanga"
 
-    override val baseUrl = "https://api.remanga.org"
+    override val baseUrl = "https://api.xn--80aaig9ahr.xn--c1avg"
 
     override val lang = "ru"
 
