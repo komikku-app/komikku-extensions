@@ -387,6 +387,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("TuManga.net", "https://tumanga.net", "es", className = "TuMangaNet"),
         SingleLang("Twilight Scans", "https://twilightscans.com", "en", overrideVersionCode = 1),
         SingleLang("Türkçe Manga", "https://turkcemanga.com", "tr", className = "TurkceManga", overrideVersionCode = 1),
+        SingleLang("Ultralight Scans", "https://readlight.org", "en"),
         SingleLang("Unemployed Scans", "https://unemployedscans.com", "en", overrideVersionCode = 1),
         SingleLang("Uyuyan Balik", "https://uyuyanbalik.com/", "tr", overrideVersionCode = 1),
         SingleLang("Vanguard Bun", "https://vanguardbun.com/", "en", overrideVersionCode = 1),
