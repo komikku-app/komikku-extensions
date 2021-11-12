@@ -6,7 +6,7 @@ ext {
     extName = 'xkcd'
     pkgNameSuffix = 'all.xkcd'
     extClass = '.XkcdFactory'
-    extVersionCode = 11
+    extVersionCode = 12
 }
 
 apply from: "$rootDir/common.gradle"

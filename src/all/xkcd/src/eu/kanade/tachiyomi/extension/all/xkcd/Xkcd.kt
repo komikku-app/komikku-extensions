@@ -27,7 +27,7 @@ open class Xkcd(
     protected open val creator = "Randall Munroe"
 
     protected open val synopsis =
-        "A webcomic of romance, sarcasm, math and language"
+        "A webcomic of romance, sarcasm, math and language."
 
     protected open val interactiveText =
         "To experience the interactive version of this comic," +
@@ -46,6 +46,25 @@ open class Xkcd(
     protected fun String.image() = altTextUrl + "&text=" + encode(this)
 
     protected open fun String.numbered(number: Any) = "$number - $this"
+
+    // TODO: maybe use BreakIterator
+    protected fun wordWrap(title: String, altText: String) = buildString {
+        title.split(' ').forEachIndexed { i, w ->
+            if (i != 0 && i % 7 == 0) append("\n")
+            append(w).append(' ')
+        }
+        append("\n\n")
+
+        var charCount = 0
+        altText.replace("\r\n", " ").split(' ').forEach { w ->
+            if (charCount > 25) {
+                append("\n")
+                charCount = 0
+            }
+            append(w).append(' ')
+            charCount += w.length + 1
+        }
+    }
 
     final override fun fetchPopularManga(page: Int) =
         SManga.create().apply {
@@ -88,27 +107,7 @@ open class Xkcd(
         }
 
         // create a text image for the alt text
-        val titleWords = img.attr("alt").split(' ')
-        val altTextWords = img.attr("title").split(' ')
-
-        // TODO: maybe use BreakIterator
-        val text = buildString {
-            titleWords.forEachIndexed { i, w ->
-                if (i != 0 && i % 7 == 0) append("\n")
-                append(w).append(' ')
-            }
-            append("\n\n")
-
-            var charCount = 0
-            altTextWords.forEach { w ->
-                if (charCount > 25) {
-                    append("\n")
-                    charCount = 0
-                }
-                append(w).append(' ')
-                charCount += w.length + 1
-            }
-        }
+        val text = wordWrap(img.attr("alt"), img.attr("title"))
 
         return listOf(Page(0, "", image), Page(1, "", text.image()))
     }
