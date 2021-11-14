@@ -38,7 +38,7 @@ import java.util.Locale
 class Newbie : HttpSource() {
     override val name = "Newbie"
 
-    override val baseUrl = "https://newbie-tl.ru"
+    override val baseUrl = "https://newmanga.org"
 
     override val lang = "ru"
 
@@ -353,8 +353,8 @@ class Newbie : HttpSource() {
         CheckFilter("яой", "32"),
     )
     companion object {
-        private const val API_URL = "https://api.newbie-tl.ru/v2"
-        private const val IMAGE_URL = "https://storage.newbie-tl.ru"
+        private const val API_URL = "https://api.newmanga.org/v2"
+        private const val IMAGE_URL = "https://storage.newmanga.org"
     }
     private val json: Json by injectLazy()
 }
