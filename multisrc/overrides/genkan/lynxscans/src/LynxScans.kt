@@ -4,7 +4,7 @@ import eu.kanade.tachiyomi.multisrc.genkan.Genkan
 import eu.kanade.tachiyomi.source.model.Page
 import org.jsoup.nodes.Document
 
-class LynxScans : Genkan("LynxScans", "https://lynxscans.com", "en", "/web/comics")  {
+class LynxScans : Genkan("LynxScans", "https://lynxscans.com", "en", "/web/comics") {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
 
