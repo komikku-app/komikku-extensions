@@ -1,5 +1,9 @@
 package eu.kanade.tachiyomi.extension.ru.comx
 
+import com.github.salomonbrys.kotson.get
+import com.github.salomonbrys.kotson.nullArray
+import com.github.salomonbrys.kotson.obj
+import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -59,7 +63,6 @@ class ComX : ParsedHttpSource() {
         val mangas = document.select(popularMangaSelector()).map { element ->
             popularMangaFromElement(element)
         }
-
         if (mangas.isEmpty()) throw UnsupportedOperationException("Error: Open in WebView and solve the Antirobot!")
 
         val hasNextPage = popularMangaNextPageSelector().let { selector ->
@@ -172,40 +175,29 @@ class ComX : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
 
-    override fun chapterListSelector() = "li[id^=cmx-]"
-
-    private fun chapterResponseParse(document: Document): List<SChapter> {
-        return document.select(chapterListSelector()).map { chapterFromElement(it) }
-    }
-
-    private fun chapterPageListParse(document: Document): List<String> {
-        return document.select("span[class=\"\"]").map { it.text() }
-    }
+    override fun chapterListSelector() = throw NotImplementedError("Unused")
 
     override fun chapterListParse(response: Response): List<SChapter> {
+
         val document = response.asJsoup()
-        val id = response.request.url.toString().removePrefix("$baseUrl/").split('-')[0]
+        val dataStr = document
+            .toString()
+            .substringAfter("window.__DATA__ = ")
+            .substringBefore("</script>")
+            .substringBeforeLast(";")
 
-        val list = mutableListOf<SChapter>()
-        list += chapterResponseParse(document)
-
-        val pages = chapterPageListParse(document).distinct()
-
-        for (page in pages) {
-            val post = POST(
-                "$baseUrl/engine/mods/comix/listPages.php",
-                body = FormBody.Builder()
-                    .add("newsid", id)
-                    .add("page", page)
-                    .build(),
-                headers = headers
-            )
-
-            list += chapterResponseParse(client.newCall(post).execute().asJsoup())
+        val data = JsonParser.parseString(dataStr).obj
+        val chaptersList = data["chapters"].nullArray
+        val chapters: List<SChapter>? = chaptersList?.map {
+            val chapter = SChapter.create()
+            chapter.name = it["title"].asString
+            chapter.date_upload = parseDate(it["date"].asString)
+            chapter.setUrlWithoutDomain("/readcomix/" + data["news_id"] + "/" + it["id"] + ".html")
+            chapter
         }
-
-        return list
+        return chapters ?: emptyList()
     }
+
     private val simpleDateFormat by lazy { SimpleDateFormat("dd.MM.yyyy", Locale.US) }
     private fun parseDate(date: String?): Long {
         date ?: return 0L
@@ -215,15 +207,9 @@ class ComX : ParsedHttpSource() {
             Date().time
         }
     }
-    override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("a").first()
-        val urlText = urlElement.text()
-        val chapter = SChapter.create()
-        chapter.name = urlText.split('/')[0] // Remove english part of name
-        chapter.setUrlWithoutDomain(urlElement.attr("href"))
-        chapter.date_upload = parseDate(element.select("span:eq(2)").text())
-        return chapter
-    }
+
+    override fun chapterFromElement(element: Element): SChapter =
+        throw NotImplementedError("Unused")
 
     override fun pageListParse(response: Response): List<Page> {
         val html = response.body!!.string()
@@ -268,12 +254,14 @@ class ComX : ParsedHttpSource() {
         PubList(getPubList()),
         GenreList(getGenreList()),
     )
+
     private fun getTypeList() = listOf(
         CheckFilter("Лимитка", "1"),
         CheckFilter("Ван шот", "2"),
         CheckFilter("Графический Роман", "3"),
         CheckFilter("Онгоинг", "4"),
     )
+
     private fun getPubList() = listOf(
         CheckFilter("Amalgam Comics", "1"),
         CheckFilter("Avatar Press", "2"),
@@ -303,6 +291,7 @@ class ComX : ParsedHttpSource() {
         CheckFilter("WildStorm", "26"),
         CheckFilter("Zenescope Entertainment", "27"),
     )
+
     private fun getGenreList() = listOf(
         CheckFilter("Антиутопия", "1"),
         CheckFilter("Бандитский ситком", "2"),
