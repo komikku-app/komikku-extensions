@@ -198,7 +198,11 @@ class MikuDoujin : ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select("div#v-pills-tabContent img.lazy").mapIndexed { i, img ->
-            Page(i, "", img.attr("abs:data-src"))
+            if (img.hasAttr("data-src")) {
+                Page(i, "", img.attr("abs:data-src"))
+            } else {
+                Page(i, "", img.attr("abs:src"))
+            }
         }
     }
 
