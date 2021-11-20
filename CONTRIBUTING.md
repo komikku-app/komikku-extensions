@@ -373,6 +373,8 @@ And for a release build of Tachiyomi:
 -W -S -n eu.kanade.tachiyomi/eu.kanade.tachiyomi.ui.main.MainActivity -a eu.kanade.tachiyomi.SHOW_CATALOGUES
 ```
 
+If you're deploying to Android 11 or higher, enable the "Always install with package manager" option in the run configurations.
+
 ## Debugging
 
 ### Android Debugger
