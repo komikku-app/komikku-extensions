@@ -58,22 +58,21 @@ class MangaParkFilters {
                     }
                 }
                 is TypeFilter -> {
-                    includedGenre += filter.state.filter { it.isIncluded() } .map { it.value }
-                    excludedGenre += filter.state.filter { it.isExcluded() } .map { it.value }
+                    includedGenre += filter.state.filter { it.isIncluded() }.map { it.value }
+                    excludedGenre += filter.state.filter { it.isExcluded() }.map { it.value }
                 }
                 is DemographicFilter -> {
-                    includedGenre += filter.state.filter { it.isIncluded() } .map { it.value }
-                    excludedGenre += filter.state.filter { it.isExcluded() } .map { it.value }
+                    includedGenre += filter.state.filter { it.isIncluded() }.map { it.value }
+                    excludedGenre += filter.state.filter { it.isExcluded() }.map { it.value }
                 }
                 is ContentFilter -> {
-                    includedGenre += filter.state.filter { it.isIncluded() } .map { it.value }
-                    excludedGenre += filter.state.filter { it.isExcluded() } .map { it.value }
+                    includedGenre += filter.state.filter { it.isIncluded() }.map { it.value }
+                    excludedGenre += filter.state.filter { it.isExcluded() }.map { it.value }
                 }
                 is GenreFilter -> {
-                    includedGenre += filter.state.filter { it.isIncluded() } .map { it.value }
-                    excludedGenre += filter.state.filter { it.isExcluded() } .map { it.value }
+                    includedGenre += filter.state.filter { it.isIncluded() }.map { it.value }
+                    excludedGenre += filter.state.filter { it.isExcluded() }.map { it.value }
                 }
-
             }
         }
 
@@ -101,7 +100,6 @@ class MangaParkFilters {
                 minMaxToChapter(minChap, maxChap)
             )
         }.toString()
-
     }
 
     private fun minMaxToChapter(minChap: Int?, maxChap: Int?): String? {
@@ -152,7 +150,6 @@ class MangaParkFilters {
     class MinChapterFilter : TextFilter("Min. Chapters")
     class MaxChapterFilter : TextFilter("Max. Chapters")
 
-
     // Publication Filter
     class PublicationItem(val name: String, val value: String)
 
@@ -176,7 +173,7 @@ class MangaParkFilters {
             defaultStatusIndex
         )
 
-    //Type
+    // Type
     class TypeItem(name: String, val value: String) : Filter.TriState(name)
 
     private val typeList: List<TypeItem> = listOf(
@@ -192,7 +189,7 @@ class MangaParkFilters {
     class TypeFilter(name: String, typeList: List<TypeItem>) :
         Filter.Group<TypeItem>(name, typeList)
 
-    //Demographic
+    // Demographic
     class DemographicItem(name: String, val value: String) : Filter.TriState(name)
 
     private val demographicList: List<DemographicItem> = listOf(

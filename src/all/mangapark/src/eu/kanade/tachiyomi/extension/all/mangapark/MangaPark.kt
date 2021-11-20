@@ -39,7 +39,7 @@ open class MangaPark(
 
     override val name: String = "MangaPark v3"
 
-    override val baseUrl: String = "https://mangapark.net"
+    override val baseUrl: String = "https://v35.mangapark.net" //temporary url change to keep the ext working after update return to https://mangapark.net or https://v36.mangapark.net at later date
 
     override val supportsLatest = true
 
@@ -87,7 +87,6 @@ open class MangaPark(
 
     override fun popularMangaFromElement(element: Element): SManga =
         browseMangaFromElement(element)
-
 
     // Search
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
@@ -300,19 +299,15 @@ open class MangaPark(
         client.newCall(GET(CryptoJSUrl, headers)).execute().body!!.string()
     }
 
-
     override fun getFilterList() = mpFilters.getFilterList()
 
-    //Unused Stuff
+    // Unused Stuff
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request =
         throw UnsupportedOperationException("Not used")
 
     override fun imageUrlParse(document: Document): String =
         throw UnsupportedOperationException("Not used")
-
-
-
 
     companion object {
 
