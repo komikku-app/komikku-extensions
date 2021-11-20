@@ -12,23 +12,25 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Locale
-import kotlin.collections.ArrayList
 
 class Kuaikanmanhua : HttpSource() {
 
-    override val name = "Kuaikanmanhua"
+    override val name = "快看漫画"
+
+    override val id: Long = 8099870292642776005
 
     override val baseUrl = "https://www.kuaikanmanhua.com"
 
@@ -150,40 +152,36 @@ class Kuaikanmanhua : HttpSource() {
 
     // Chapters & Pages
 
-    override fun chapterListParse(response: Response): List<SChapter> {
-        val document = response.asJsoup()
-        val script = document.select("script:containsData(comics)").first().data()
-        val comics = script.substringAfter("comics:")
-            .substringBefore(",first_comic_id")
-            .let { json.parseToJsonElement(it).jsonArray }
-        val variable = script.substringAfter("(function(")
-            .substringBefore("){")
-            .split(",")
-        val value = script.substringAfterLast("}}(")
-            .substringBefore("));")
-            .split(",")
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+        val newUrl = apiUrl + "/v1/topics/" + manga.url.trimEnd('/').substringAfterLast("/")
+        val response = client.newCall(GET(newUrl)).execute()
+        val chapters = chapterListParse(response)
+        return Observable.just(chapters)
+    }
 
-        return document.select("div.TopicItem")
-            .mapIndexed { index, element ->
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val data = json.parseToJsonElement(response.body!!.string())
+            .jsonObject["data"]!!
+            .jsonObject
+        val chaptersJson = data["comics"]!!.jsonArray
+        val chapters = mutableListOf<SChapter>()
+
+        for (i in 0 until chaptersJson.size) {
+            val obj = chaptersJson[i].jsonObject
+            chapters.add(
                 SChapter.create().apply {
-                    val idVar = comics[index].jsonObject["id"]!!.jsonPrimitive.content
-                    val id = value[variable.indexOf(idVar)]
-                    url = "/web/comic/$id"
-                    name = element.select("div.title > a").text()
-                    if (element.select("i.lockedIcon").isNotEmpty()) {
-                        name += " \uD83D\uDD12"
-                    }
-                    var dateStr = element.select("div.date > span").text()
-                    dateStr = if (dateStr.length == 5) {
-                        val year = Calendar.getInstance().get(Calendar.YEAR)
-                        "$year-$dateStr"
-                    } else {
-                        "20$dateStr"
-                    }
-                    date_upload = runCatching { DATE_FORMAT.parse(dateStr)?.time }
-                        .getOrNull() ?: 0L
+                    url = "/web/comic/" + obj["id"]!!.jsonPrimitive.content
+                    name = obj["title"]!!.jsonPrimitive.content +
+                        if (!obj["can_view"]!!.jsonPrimitive.boolean) {
+                            " \uD83D\uDD12"
+                        } else {
+                            ""
+                        }
+                    date_upload = obj["created_at"]!!.jsonPrimitive.long * 1000
                 }
+            )
         }
+        return chapters
     }
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
@@ -192,10 +190,17 @@ class Kuaikanmanhua : HttpSource() {
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
-        if (chapter.name.endsWith("🔒")) {
-            throw Exception("[此章节为付费内容]")
-        }
+        // if (chapter.name.endsWith("🔒")) {
+        //    throw Exception("[此章节为付费内容]")
+        // }
         return GET(baseUrl + chapter.url)
+    }
+
+    val fixJson: (MatchResult) -> CharSequence = {
+        match: MatchResult ->
+        val str = match.value
+        val out = str[0] + "\"" + str.subSequence(1, str.length - 1) + "\"" + str[str.length - 1]
+        out
     }
 
     override fun pageListParse(response: Response): List<Page> {
@@ -203,6 +208,8 @@ class Kuaikanmanhua : HttpSource() {
         val script = document.selectFirst("script:containsData(comicImages)").data()
         val images = script.substringAfter("comicImages:")
             .substringBefore("},nextComicInfo")
+            .replace("""(:([^\[\{\"]+?)[\},])""".toRegex(), fixJson)
+            .replace("""([,{]([^\[\{\"]+?)[\}:])""".toRegex(), fixJson)
             .let { json.parseToJsonElement(it).jsonArray }
         val variable = script.substringAfter("(function(")
             .substringBefore("){")
