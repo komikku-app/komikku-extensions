@@ -11,10 +11,12 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 
 class ManhwaLatino : ParsedHttpSource() {
 
@@ -29,9 +31,19 @@ class ManhwaLatino : ParsedHttpSource() {
     override val baseUrl = "https://manhwa-latino.com"
 
     /**
+     * Header for Request
+     */
+    override fun headersBuilder() = Headers.Builder().add("Referer", "$baseUrl")
+
+    /**
+     * Http Client
+     */
+    override val client: OkHttpClient = network.client.newBuilder().build()
+
+    /**
      * Parser for Mainsite or Genre Site
      */
-    val manhwaLatinoSiteParser = ManhwaLatinoSiteParser(baseUrl)
+    val manhwaLatinoSiteParser = ManhwaLatinoSiteParser(baseUrl, client, headers)
 
     /**
      * An ISO 639-1 compliant language code (two letters in lower case).
@@ -44,36 +56,24 @@ class ManhwaLatino : ParsedHttpSource() {
     override val supportsLatest = true
 
     /**
-     * User Agent for this wWebsite
-     */
-    private val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-        "(KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36"
-
-    override fun headersBuilder(): Headers.Builder {
-        return Headers.Builder()
-            .add("User-Agent", userAgent)
-            .add("Referer", "$baseUrl/")
-    }
-
-    /**
      * Returns the Jsoup selector that returns a list of [Element] corresponding to each manga.
      */
     override fun popularMangaSelector(): String {
-        return manhwaLatinoSiteParser.popularMangaSelector
+        return MLConstants.popularMangaSelector
     }
 
     /**
      * Returns the Jsoup selector that returns a list of [Element] corresponding to each manga.
      */
     override fun latestUpdatesSelector(): String {
-        return manhwaLatinoSiteParser.latestUpdatesSelector
+        return MLConstants.latestUpdatesSelector
     }
 
     /**
      * Returns the Jsoup selector that returns a list of [Element] corresponding to each manga.
      */
     override fun searchMangaSelector(): String {
-        return manhwaLatinoSiteParser.searchMangaSelector
+        return MLConstants.searchMangaSelector
     }
 
     /**
@@ -87,7 +87,7 @@ class ManhwaLatino : ParsedHttpSource() {
      * there's no next page.
      */
     override fun popularMangaNextPageSelector(): String {
-        return manhwaLatinoSiteParser.popularMangaNextPageSelector
+        return MLConstants.popularMangaNextPageSelector
     }
 
     /**
@@ -95,7 +95,7 @@ class ManhwaLatino : ParsedHttpSource() {
      * there's no next page.
      */
     override fun latestUpdatesNextPageSelector(): String {
-        return manhwaLatinoSiteParser.latestUpdatesNextPageSelector
+        return MLConstants.latestUpdatesNextPageSelector
     }
 
     /**
@@ -103,7 +103,7 @@ class ManhwaLatino : ParsedHttpSource() {
      * there's no next page.
      */
     override fun searchMangaNextPageSelector(): String {
-        return manhwaLatinoSiteParser.searchMangaNextPageSelector
+        return MLConstants.searchMangaNextPageSelector
     }
 
     /**
@@ -157,6 +157,10 @@ class ManhwaLatino : ParsedHttpSource() {
         return GET(uri.toString(), headers)
     }
 
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        return manhwaLatinoSiteParser.fetchSearchManga(page, query, filters)
+    }
+
     /**
      * Parses the response from the site and returns a [MangasPage] object.
      *
@@ -166,13 +170,13 @@ class ManhwaLatino : ParsedHttpSource() {
         return manhwaLatinoSiteParser.searchMangaParse(response)
     }
 
-//    /**
-//     * Returns the request for the details of a manga. Override only if it's needed to change the
-//     * url, send different headers or request method like POST.
-//     *
-//     * @param manga the manga to be updated.
-//     */
-//    override fun mangaDetailsRequest(manga: SManga) = GET(baseUrl + manga.url, headers)
+    /**
+     * Returns the request for the details of a manga. Override only if it's needed to change the
+     * url, send different headers or request method like POST.
+     *
+     * @param manga the manga to be updated.
+     */
+    override fun mangaDetailsRequest(manga: SManga) = GET(baseUrl + manga.url, headers)
 
     /**
      * Returns the request for updating the chapter list. Override only if it's needed to override
