@@ -1,22 +1,26 @@
 package eu.kanade.tachiyomi.extension.en.pururin
 
-import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.source.model.Filter
+import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservable
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
+import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 
-class Pururin : ParsedHttpSource() {
-
+@ExperimentalSerializationApi
+class Pururin : HttpSource() {
     override val name = "Pururin"
 
     override val baseUrl = "https://pururin.to"
@@ -25,195 +29,137 @@ class Pururin : ParsedHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
-    override fun latestUpdatesSelector() = "div.container div.row-gallery a"
+    private val searchUrl = "$baseUrl/api/search/advance"
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        return if (page == 1) {
-            GET(baseUrl, headers)
-        } else {
-            GET("$baseUrl/browse/newest?page=$page", headers)
-        }
-    }
+    private val galleryUrl = "$baseUrl/api/contribute/gallery/info"
 
-    override fun latestUpdatesFromElement(element: Element): SManga {
-        val manga = SManga.create()
+    private val json by injectLazy<Json>()
 
-        manga.setUrlWithoutDomain(element.attr("href"))
-        manga.title = element.select("div.title").text()
-        manga.thumbnail_url = element.select("img.card-img-top").attr("abs:data-src")
+    override fun headersBuilder() = super.headersBuilder()
+        .set("Origin", baseUrl).set("X-Requested-With", "XMLHttpRequest")
 
-        return manga
-    }
+    override fun latestUpdatesRequest(page: Int) =
+        POST(searchUrl, headers, Search(Search.Sort.NEWEST, page))
 
-    override fun latestUpdatesNextPageSelector() = "ul.pagination a.page-link[rel=next]"
+    override fun latestUpdatesParse(response: Response) =
+        searchMangaParse(response)
 
-    override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.box.box-gallery")
-        val manga = SManga.create()
-        val genres = mutableListOf<String>()
+    override fun popularMangaRequest(page: Int) =
+        POST(searchUrl, headers, Search(Search.Sort.POPULAR, page))
 
-        document.select("tr:has(td:containsOwn(Contents)) li").forEach { element ->
-            val genre = element.text()
-            genres.add(genre)
-        }
+    override fun popularMangaParse(response: Response) =
+        searchMangaParse(response)
 
-        manga.title = infoElement.select("h1").text()
-        manga.author = infoElement.select("tr:has(td:containsOwn(Artist)) a").text()
-        manga.artist = infoElement.select("tr:has(td:containsOwn(Circle)) a").text()
-        manga.status = SManga.COMPLETED
-        manga.genre = genres.joinToString(", ")
-        manga.thumbnail_url = document.select("div.cover-wrapper v-lazy-image").attr("abs:src")
-
-        manga.description = getDesc(document)
-        manga.initialized = true
-
-        return manga
-    }
-
-    private fun getDesc(document: Document): String {
-        val infoElement = document.select("div.box.box-gallery")
-        val uploader = infoElement.select("tr:has(td:containsOwn(Uploader)) .user-link")?.text()
-        val pages = infoElement.select("tr:has(td:containsOwn(Pages)) td:eq(1)").text()
-        val ratingCount = infoElement.select("tr:has(td:containsOwn(Ratings)) span[itemprop=\"ratingCount\"]")?.attr("content")
-
-        val rating = infoElement.select("tr:has(td:containsOwn(Ratings)) gallery-rating").attr(":rating")?.toFloatOrNull()?.let {
-            if (it > 5.0f) minOf(it, 5.0f) // cap rating to 5.0 for rare cases where value exceeds 5.0f
-            else it
-        }
-
-        val multiDescriptions = listOf(
-            "Convention",
-            "Parody",
-            "Circle",
-            "Category",
-            "Character",
-            "Language"
-        ).map { it to infoElement.select("tr:has(td:containsOwn($it)) a").map { v -> v.text() } }
-            .filter { !it.second.isNullOrEmpty() }
-            .map { "${it.first}: ${it.second.joinToString()}" }
-
-        val descriptions = listOf(
-            multiDescriptions.joinToString("\n\n"),
-            uploader?.let { "Uploader: $it" },
-            pages?.let { "Pages: $it" },
-            rating?.let { "Ratings: $it" + (ratingCount?.let { c -> " ($c ratings)" } ?: "") }
-        )
-
-        return descriptions.joinToString("\n\n")
-    }
-
-    override fun chapterListParse(response: Response) = with(response.asJsoup()) {
-        val mangaInfoElements = this.select(".table-gallery-info tr td:first-child").map {
-            it.text() to it.nextElementSibling()
-        }.toMap()
-
-        val chapters = this.select(".table-collection tbody tr")
-        if (!chapters.isNullOrEmpty())
-            chapters.map {
-                val details = it.select("td")
-                SChapter.create().apply {
-                    chapter_number = details[0].text().removePrefix("#").toFloat()
-                    name = details[1].select("a").text()
-                    setUrlWithoutDomain(details[1].select("a").attr("href"))
-
-                    if (it.hasClass("active") && mangaInfoElements.containsKey("Scanlator"))
-                        scanlator = mangaInfoElements.getValue("Scanlator").select("li a")?.joinToString { s -> s.text() }
-                }
-            }
-        else
-            listOf(
-                SChapter.create().apply {
-                    name = "Chapter"
-                    setUrlWithoutDomain(response.request.url.toString())
-
-                    if (mangaInfoElements.containsKey("Scanlator"))
-                        scanlator = mangaInfoElements.getValue("Scanlator").select("li a")?.joinToString { s -> s.text() }
-                }
-            )
-    }
-
-    override fun chapterListSelector(): String = throw UnsupportedOperationException("Not used")
-
-    override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException("Not used")
-
-    override fun pageListParse(document: Document): List<Page> {
-        val pages = mutableListOf<Page>()
-
-        // Gets gallery id from meta tags
-        val galleryUrl = document.select("meta[property='og:url']").attr("content")
-        val id = galleryUrl.substringAfter("gallery/").substringBefore('/')
-        // Gets total pages from gallery desc
-        val infoElement = document.select("div.box.box-gallery")
-        val total: Int = infoElement.select("tr:has(td:containsOwn(Pages)) td:eq(1)").text().substringBefore(' ').toInt()
-
-        for (i in 1..total) {
-            pages.add(Page(i, "", "https://cdn.pururin.to/assets/images/data/$id/$i.jpg"))
-        }
-
-        return pages
-    }
-
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
-
-    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/browse/most-popular?page=$page", headers)
-
-    override fun popularMangaFromElement(element: Element) = latestUpdatesFromElement(element)
-
-    override fun popularMangaSelector() = latestUpdatesSelector()
-
-    override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
-
-    private lateinit var tagUrl: String
-
-    // TODO: Additional filter options, specifically the type[] parameter
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var url = "$baseUrl/search?q=$query&page=$page"
-
-        if (query.isBlank()) {
-            filters.forEach { filter ->
-                when (filter) {
-                    is Tag -> {
-                        url = if (page == 1) {
-                            "$baseUrl/search/tag?q=${filter.state}&type[]=3" // "Contents" tag
-                        } else {
-                            "$tagUrl?page=$page"
-                        }
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
+        filters.ifEmpty(::getFilterList).run {
+            val whitelist = mutableListOf<Int>()
+            val blacklist = mutableListOf<Int>()
+            filterIsInstance<TagGroup<*>>().forEach { group ->
+                group.state.forEach {
+                    when {
+                        it.isIncluded() -> whitelist += it.id
+                        it.isExcluded() -> blacklist += it.id
                     }
                 }
             }
+            val body = Search(
+                find<SortFilter>().sort,
+                page,
+                query,
+                whitelist,
+                blacklist,
+                find<TagModeFilter>().mode,
+                find<PagesGroup>().range
+            )
+            POST(searchUrl, headers, body)
         }
-
-        return GET(url, headers)
-    }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        return if (response.request.url.toString().contains("tag?")) {
-            response.asJsoup().select("table.table tbody tr a:first-of-type").attr("abs:href").let {
-                if (it.isNotEmpty()) {
-                    tagUrl = it
-                    super.searchMangaParse(client.newCall(GET(tagUrl, headers)).execute())
-                } else {
-                    MangasPage(emptyList(), false)
-                }
+        val results = json.decodeFromString<Results>(
+            response.jsonObject["results"]!!.jsonPrimitive.content
+        )
+        val mp = results.map {
+            SManga.create().apply {
+                url = it.path
+                title = it.title
+                thumbnail_url = CDN_URL + it.cover
             }
-        } else {
-            super.searchMangaParse(response)
+        }
+        return MangasPage(mp, results.hasNext)
+    }
+
+    override fun mangaDetailsParse(response: Response): SManga {
+        val gallery = json.decodeFromJsonElement<Gallery>(
+            response.jsonObject["gallery"]!!
+        )
+        return SManga.create().apply {
+            description = gallery.description
+            artist = gallery.artists.joinToString()
+            author = gallery.authors.joinToString()
+            genre = gallery.genres.joinToString()
         }
     }
 
-    override fun searchMangaSelector() = latestUpdatesSelector()
+    override fun fetchMangaDetails(manga: SManga) =
+        client.newCall(chapterListRequest(manga))
+            .asObservableSuccess().map(::mangaDetailsParse)!!
 
-    override fun searchMangaFromElement(element: Element) = latestUpdatesFromElement(element)
+    override fun chapterListRequest(manga: SManga) =
+        POST(galleryUrl, headers, Search.info(manga.id))
 
-    override fun searchMangaNextPageSelector() = latestUpdatesNextPageSelector()
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val gallery = json.decodeFromJsonElement<Gallery>(
+            response.jsonObject["gallery"]!!
+        )
+        val chapter = SChapter.create().apply {
+            name = "Chapter"
+            url = gallery.id.toString()
+            scanlator = gallery.scanlators.joinToString()
+        }
+        return listOf(chapter)
+    }
+
+    override fun pageListRequest(chapter: SChapter) =
+        POST(galleryUrl, headers, Search.info(chapter.url))
+
+    override fun pageListParse(response: Response): List<Page> {
+        val pages = json.decodeFromJsonElement<Gallery>(
+            response.jsonObject["gallery"]!!
+        ).pages
+        return pages.mapIndexed { idx, img ->
+            Page(idx + 1, CDN_URL + img)
+        }
+    }
+
+    override fun imageUrlParse(response: Response) =
+        throw UnsupportedOperationException("Not used")
+
+    override fun fetchImageUrl(page: Page) =
+        Request.Builder().url(page.url).head().build()
+            .run(client::newCall).asObservable().map {
+                when (it.code) {
+                    200 -> page.url
+                    // try to fix images that are broken even on the site
+                    404 -> page.url.replaceAfterLast('.', "png")
+                    else -> throw Error("HTTP error ${it.code}")
+                }
+            }!!
 
     override fun getFilterList() = FilterList(
-        Filter.Header("NOTE: Ignored if using text search!"),
-        Filter.Separator(),
-        Tag("Tag")
+        SortFilter(),
+        CategoryGroup(),
+        TagModeFilter(),
+        PagesGroup(),
     )
 
-    private class Tag(name: String) : Filter.Text(name)
+    private inline val Response.jsonObject
+        get() = json.parseToJsonElement(body!!.string()).jsonObject
+
+    private inline val SManga.id get() = url.split('/')[2]
+
+    companion object {
+        private const val CDN_URL = "https://cdn.pururin.to/assets/images/data"
+    }
 }
