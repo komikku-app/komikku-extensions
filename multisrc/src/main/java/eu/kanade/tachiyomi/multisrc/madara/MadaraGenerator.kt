@@ -132,7 +132,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("KawaScans", "https://kawascans.com", "en"),
         SingleLang("KisekiManga", "https://kisekimanga.com", "en", overrideVersionCode = 1),
         SingleLang("Kissmanga.in", "https://kissmanga.in", "en", className = "KissmangaIn", overrideVersionCode = 2),
-        SingleLang("KlikManga", "https://klikmanga.com", "id", overrideVersionCode = 1),
+        SingleLang("KlikManga", "https://klikmanga.id", "id", overrideVersionCode = 2),
         SingleLang("Kokomanga", "https://kokomanga.com", "en"),
         SingleLang("Kun Manga", "https://kunmanga.com", "en", overrideVersionCode = 1),
         SingleLang("Lara Manga", "https://laramanga.com", "en"),
