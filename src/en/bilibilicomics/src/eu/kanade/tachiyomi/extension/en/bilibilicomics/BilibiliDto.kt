@@ -33,8 +33,8 @@ data class BilibiliComicDto(
 data class BilibiliEpisodeDto(
     val id: Int,
     @SerialName("is_locked") val isLocked: Boolean,
-    @SerialName("ord") val order: Float,
     @SerialName("pub_time") val publicationTime: String,
+    @SerialName("short_title") val shortTitle: String,
     val title: String
 )
 

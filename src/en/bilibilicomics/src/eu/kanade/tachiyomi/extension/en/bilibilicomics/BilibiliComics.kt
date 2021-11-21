@@ -26,7 +26,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -78,7 +77,7 @@ class BilibiliComics : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<BilibiliResultDto<List<BilibiliComicDto>>>(response.body!!.string())
+        val result = response.parseAs<List<BilibiliComicDto>>()
 
         if (result.code != 0) {
             return MangasPage(emptyList(), hasNextPage = false)
@@ -122,7 +121,7 @@ class BilibiliComics : HttpSource() {
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<BilibiliResultDto<List<BilibiliComicDto>>>(response.body!!.string())
+        val result = response.parseAs<List<BilibiliComicDto>>()
 
         if (result.code != 0) {
             return MangasPage(emptyList(), hasNextPage = false)
@@ -202,7 +201,7 @@ class BilibiliComics : HttpSource() {
         }
 
         if (response.request.url.toString().contains("ClassPage")) {
-            val result = json.decodeFromString<BilibiliResultDto<List<BilibiliComicDto>>>(response.body!!.string())
+            val result = response.parseAs<List<BilibiliComicDto>>()
 
             if (result.code != 0) {
                 return MangasPage(emptyList(), hasNextPage = false)
@@ -214,7 +213,7 @@ class BilibiliComics : HttpSource() {
             return MangasPage(comicList, hasNextPage)
         }
 
-        val result = json.decodeFromString<BilibiliResultDto<BilibiliSearchDto>>(response.body!!.string())
+        val result = response.parseAs<BilibiliSearchDto>()
 
         if (result.code != 0) {
             return MangasPage(emptyList(), hasNextPage = false)
@@ -263,7 +262,7 @@ class BilibiliComics : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val result = json.decodeFromString<BilibiliResultDto<BilibiliComicDto>>(response.body!!.string())
+        val result = response.parseAs<BilibiliComicDto>()
         val comic = result.data!!
 
         title = comic.title
@@ -279,21 +278,18 @@ class BilibiliComics : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsApiRequest(manga.url)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = json.decodeFromString<BilibiliResultDto<BilibiliComicDto>>(response.body!!.string())
+        val result = response.parseAs<BilibiliComicDto>()
 
         if (result.code != 0)
             return emptyList()
 
         return result.data!!.episodeList
-            .filter { episode -> episode.isLocked.not() }
+            .filterNot { episode -> episode.isLocked }
             .map { ep -> chapterFromObject(ep, result.data.id) }
     }
 
     private fun chapterFromObject(episode: BilibiliEpisodeDto, comicId: Int): SChapter = SChapter.create().apply {
-        name = "Ep. " + episode.order.toString().removeSuffix(".0") +
-            " - " + episode.title
-        chapter_number = episode.order
-        scanlator = this@BilibiliComics.name
+        name = "Ep. " + episode.shortTitle + " - " + episode.title
         date_upload = episode.publicationTime.substringBefore("T").toDate()
         url = "/mc$comicId/${episode.id}"
     }
@@ -318,7 +314,7 @@ class BilibiliComics : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = json.decodeFromString<BilibiliResultDto<BilibiliReader>>(response.body!!.string())
+        val result = response.parseAs<BilibiliReader>()
 
         if (result.code != 0) {
             return emptyList()
@@ -347,7 +343,7 @@ class BilibiliComics : HttpSource() {
     }
 
     override fun imageUrlParse(response: Response): String {
-        val result = json.decodeFromString<BilibiliResultDto<List<BilibiliPageDto>>>(response.body!!.string())
+        val result = response.parseAs<List<BilibiliPageDto>>()
         val page = result.data!![0]
 
         return "${page.url}?token=${page.token}"
@@ -394,12 +390,13 @@ class BilibiliComics : HttpSource() {
         GenreFilter(getAllGenres())
     )
 
+    private inline fun <reified T> Response.parseAs(): BilibiliResultDto<T> = use {
+        json.decodeFromString(it.body?.string().orEmpty())
+    }
+
     private fun String.toDate(): Long {
-        return try {
-            DATE_FORMATTER.parse(this)?.time ?: 0L
-        } catch (e: ParseException) {
-            0L
-        }
+        return runCatching { DATE_FORMATTER.parse(this)?.time }
+            .getOrNull() ?: 0L
     }
 
     companion object {
