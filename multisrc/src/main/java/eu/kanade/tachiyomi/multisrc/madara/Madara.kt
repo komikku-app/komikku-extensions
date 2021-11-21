@@ -57,7 +57,8 @@ abstract class Madara(
 
     // Popular Manga
 
-    override fun popularMangaSelector() = "div.page-item-detail"
+    // exclude/filter bilibili manga from list
+    override fun popularMangaSelector() = "div.page-item-detail:not(:has(a[href*='bilibilicomics.com']))"
 
     open val popularMangaUrlSelector = "div.post-title a"
 
