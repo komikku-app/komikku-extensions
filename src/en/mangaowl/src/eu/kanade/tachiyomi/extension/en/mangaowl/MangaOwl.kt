@@ -151,7 +151,7 @@ class MangaOwl : ParsedHttpSource() {
         val chapter = SChapter.create()
         element.select("a").let {
             // They replace some URLs with a different host getting a path of domain.com/reader/reader/, fix to make usable on baseUrl
-            chapter.setUrlWithoutDomain(it.attr("href").replace("/reader/reader/", "/reader/"))
+            chapter.setUrlWithoutDomain(it.attr("data-href").replace("/reader/reader/", "/reader/"))
             chapter.name = it.select("label").first().text()
         }
         chapter.date_upload = parseChapterDate(element.select("small:last-of-type").text())
