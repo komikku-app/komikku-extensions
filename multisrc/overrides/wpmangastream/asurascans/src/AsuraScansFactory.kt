@@ -33,13 +33,13 @@ abstract class AsuraScans(
 }
 
 class AsuraScansEn : AsuraScans("https://asurascans.com/", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
-    override val pageSelector = "div.rdminimal img[loading*=lazy]"
+    override val pageSelector = "div.rdminimal p noscript img"
 
     // Skip scriptPages
     override fun pageListParse(document: Document): List<Page> {
         return document.select(pageSelector)
-            .filterNot { it.attr("abs:src").isNullOrEmpty() }
-            .mapIndexed { i, img -> Page(i, "", img.attr("abs:src")) }
+            .filterNot { it.attr("src").isNullOrEmpty() }
+            .mapIndexed { i, img -> Page(i, "", img.attr("src")) }
     }
 }
 
