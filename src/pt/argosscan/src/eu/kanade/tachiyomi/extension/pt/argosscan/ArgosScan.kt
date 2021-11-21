@@ -294,6 +294,13 @@ class ArgosScan : HttpSource(), ConfigurableSource {
 
         if (!email.isNullOrEmpty() && !password.isNullOrEmpty() && token.isNullOrEmpty()) {
             val loginResponse = chain.proceed(loginRequest(email, password))
+
+            if (!loginResponse.headers["Content-Type"].orEmpty().contains("application/json")) {
+                loginResponse.close()
+
+                throw IOException(CLOUDFLARE_ERROR)
+            }
+
             val loginResult = json.parseToJsonElement(loginResponse.body!!.string()).jsonObject
 
             if (loginResult["errors"] != null) {
@@ -356,6 +363,7 @@ class ArgosScan : HttpSource(), ConfigurableSource {
         private const val PASSWORD_PREF_SUMMARY = "Defina a senha de sua conta no site."
         private const val PASSWORD_PREF_DIALOG = EMAIL_PREF_DIALOG
 
+        private const val CLOUDFLARE_ERROR = "Falha ao contornar o Cloudflare."
         private const val REQUEST_ERROR = "Erro na requisição. Tente novamente mais tarde."
 
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
