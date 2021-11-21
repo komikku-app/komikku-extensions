@@ -94,7 +94,7 @@ class MeusMangas : MangaSar(
         var hasNextPage = document.select(chapterListNextPageSelector())
             .firstOrNull()
 
-        while (hasNextPage != null && !hasNextPage.attr("href").endsWith("#")) {
+        while (hasNextPage != null) {
             val page = hasNextPage.attr("href")
                 .substringAfter("page/")
                 .toInt()
@@ -115,7 +115,7 @@ class MeusMangas : MangaSar(
 
     private fun chapterListSelector() = "ul.list-of-chapters li > a"
 
-    private fun chapterListNextPageSelector() = "div.loadmore a.loadmore"
+    private fun chapterListNextPageSelector() = "ul.content-pagination li.active + li:not(.next) a"
 
     private fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = element.select("span.cap-text").text()
