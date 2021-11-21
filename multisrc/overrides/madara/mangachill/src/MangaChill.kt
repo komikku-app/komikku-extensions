@@ -7,4 +7,3 @@ import java.util.Locale
 class MangaChill : Madara("Manga Chill", "https://mangachill.com", "en", SimpleDateFormat("dd/MM/yyyy", Locale.US)) {
     override val useNewChapterEndpoint: Boolean = true
 }
-

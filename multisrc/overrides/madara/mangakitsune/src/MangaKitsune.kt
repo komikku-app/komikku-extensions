@@ -10,8 +10,6 @@ class MangaKitsune : Madara("MangaKitsune", "https://mangakitsune.com", "en", da
 
     override fun chapterListParse(response: Response): List<SChapter> = super.chapterListParse(response).reversed()
 
-    override val pageListParseSelector = ".reading-content div.text-left :has(>img)"
-
     override fun getGenreList() = listOf(
         Genre("Action", "action"),
         Genre("Adult", "adult"),

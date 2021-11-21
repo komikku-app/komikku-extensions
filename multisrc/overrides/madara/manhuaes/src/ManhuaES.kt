@@ -7,8 +7,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
 
 class ManhuaES : Madara("Manhua ES", "https://manhuaes.com", "en") {
-    override val pageListParseSelector = ".reading-content div.text-left :has(>img)"
-
     override fun chapterListParse(response: Response): List<SChapter> {
         var chapterList = super.chapterListParse(response)
 
