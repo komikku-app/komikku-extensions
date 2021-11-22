@@ -43,6 +43,8 @@ class Rh2PlusManga : Madara("Rh2PlusManga", "https://www.rh2plusmanga.com", "th"
         Genre("ลามก", "ecchi")
     )
 
+    override val pageListParseSelector = "div.reading-content p code img"
+
     override fun pageListParse(document: Document): List<Page> {
         countViews(document)
 
