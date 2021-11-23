@@ -2,6 +2,9 @@ package eu.kanade.tachiyomi.extension.all.mangaplus
 
 import android.app.Application
 import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -21,15 +24,12 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-import androidx.preference.CheckBoxPreference as AndroidXCheckBoxPreference
-import androidx.preference.ListPreference as AndroidXListPreference
-import androidx.preference.PreferenceScreen as AndroidXPreferenceScreen
 
 abstract class MangaPlus(
     override val lang: String,
@@ -109,7 +109,7 @@ abstract class MangaPlus(
         if (result.success == null)
             throw Exception(result.error!!.langPopup.body)
 
-        // Fetch all titles to get newer thumbnail urls at the interceptor.
+        // Fetch all titles to get newer thumbnail URLs in the interceptor.
         val popularResponse = client.newCall(popularMangaRequest(1)).execute().asProto()
 
         if (popularResponse.success != null) {
@@ -309,8 +309,8 @@ abstract class MangaPlus(
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    override fun setupPreferenceScreen(screen: AndroidXPreferenceScreen) {
-        val resolutionPref = AndroidXListPreference(screen.context).apply {
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val resolutionPref = ListPreference(screen.context).apply {
             key = "${RESOLUTION_PREF_KEY}_$lang"
             title = RESOLUTION_PREF_TITLE
             entries = RESOLUTION_PREF_ENTRIES
@@ -322,10 +322,14 @@ abstract class MangaPlus(
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
-                preferences.edit().putString("${RESOLUTION_PREF_KEY}_$lang", entry).commit()
+
+                preferences.edit()
+                    .putString("${RESOLUTION_PREF_KEY}_$lang", entry)
+                    .commit()
             }
         }
-        val splitPref = AndroidXCheckBoxPreference(screen.context).apply {
+
+        val splitPref = SwitchPreferenceCompat(screen.context).apply {
             key = "${SPLIT_PREF_KEY}_$lang"
             title = SPLIT_PREF_TITLE
             summary = SPLIT_PREF_SUMMARY
@@ -333,7 +337,10 @@ abstract class MangaPlus(
 
             setOnPreferenceChangeListener { _, newValue ->
                 val checkValue = newValue as Boolean
-                preferences.edit().putBoolean("${SPLIT_PREF_KEY}_$lang", checkValue).commit()
+
+                preferences.edit()
+                    .putBoolean("${SPLIT_PREF_KEY}_$lang", checkValue)
+                    .commit()
             }
         }
 
@@ -361,7 +368,7 @@ abstract class MangaPlus(
 
         val contentType = response.header("Content-Type", "image/jpeg")!!
         val image = decodeImage(encryptionKey, response.body!!.bytes())
-        val body = ResponseBody.create(contentType.toMediaTypeOrNull(), image)
+        val body = image.toResponseBody(contentType.toMediaTypeOrNull())
 
         return response.newBuilder()
             .body(body)
@@ -422,7 +429,7 @@ abstract class MangaPlus(
     companion object {
         private const val API_URL = "https://jumpg-webapi.tokyo-cdn.com/api"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
 
         private val HEX_GROUP = "(.{1,2})".toRegex()
 
@@ -434,7 +441,7 @@ abstract class MangaPlus(
 
         private const val SPLIT_PREF_KEY = "splitImage"
         private const val SPLIT_PREF_TITLE = "Split double pages"
-        private const val SPLIT_PREF_SUMMARY = "Not all titles support disabling this."
+        private const val SPLIT_PREF_SUMMARY = "Only a few titles supports disabling this setting."
         private const val SPLIT_PREF_DEFAULT_VALUE = true
 
         private val COMPLETE_REGEX = "completado|complete".toRegex()
