@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -17,6 +18,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Call
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
@@ -27,10 +29,10 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -80,6 +82,13 @@ abstract class GigaViewer(
 
     override fun latestUpdatesNextPageSelector(): String? = null
 
+    // The search returns 404 when there's no results.
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        return client.newCall(searchMangaRequest(page, query, filters))
+            .asObservableIgnoreCode(404)
+            .map(::searchMangaParse)
+    }
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.isNotEmpty()) {
             val url = "$baseUrl/search".toHttpUrlOrNull()!!.newBuilder()
@@ -126,10 +135,10 @@ abstract class GigaViewer(
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
         val readableProductList = document.select("div.js-readable-product-list").first()!!
-        val latestListEndpoint = readableProductList.attr("data-latest-list-endpoint")
-            .toHttpUrlOrNull()!!
         val firstListEndpoint = readableProductList.attr("data-first-list-endpoint")
             .toHttpUrlOrNull()!!
+        val latestListEndpoint = readableProductList.attr("data-latest-list-endpoint")
+            .toHttpUrlOrNull() ?: firstListEndpoint
         val numberSince = latestListEndpoint.queryParameter("number_since")!!.toFloat()
             .coerceAtLeast(firstListEndpoint.queryParameter("number_since")!!.toFloat())
 
@@ -278,12 +287,18 @@ abstract class GigaViewer(
         return output.toByteArray()
     }
 
-    private fun String.toDate(): Long {
-        return try {
-            DATE_PARSER.parse(this)?.time ?: 0L
-        } catch (e: ParseException) {
-            0L
+    private fun Call.asObservableIgnoreCode(code: Int): Observable<Response> {
+        return asObservable().doOnNext { response ->
+            if (!response.isSuccessful && response.code != code) {
+                response.close()
+                throw Exception("HTTP error ${response.code}")
+            }
         }
+    }
+
+    private fun String.toDate(): Long {
+        return runCatching { DATE_PARSER.parse(this)?.time }
+            .getOrNull() ?: 0L
     }
 
     companion object {
