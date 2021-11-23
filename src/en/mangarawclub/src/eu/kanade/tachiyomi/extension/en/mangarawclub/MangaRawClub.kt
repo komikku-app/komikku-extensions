@@ -75,10 +75,11 @@ class MangaRawClub : ParsedHttpSource() {
         val manga = SManga.create()
         val authorElement = document.getElementsByClass("author").first()
         manga.author = authorElement.select("a").attr("title")
+        // manga.author = document.select("a[class=\"property-item\"]").first().attr("title")
         manga.artist = ""
         val genres = mutableListOf<String>()
         document.select("a[href*=genre]").forEach { element ->
-            val genre = element.text()
+            val genre = element.attr("title")
             genres.add(genre)
         }
         manga.genre = genres.joinToString(", ")
@@ -89,7 +90,6 @@ class MangaRawClub : ParsedHttpSource() {
         }
         manga.status = status
         manga.description = document.getElementsByClass("description").first().text()
-        manga.description = document.select("div.summary > div.content").first().text()
         val coverElement = document.getElementsByClass("cover")
         manga.thumbnail_url = coverElement.select("img").attr("data-src")
 
@@ -131,9 +131,21 @@ class MangaRawClub : ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
-        document.select("section.page-in.content-wrap > div > center > img").forEachIndexed { i, it ->
+
+        document.select("img[onerror][style=\"max-width: 100%;max-height: 100%;\"]").forEachIndexed { i, it ->
             pages.add(Page(i, "", it.attr("src")))
         }
+        if (!pages.any()) {
+            document.select("img[onerror]").forEachIndexed { i, it ->
+                pages.add(Page(i, "", it.attr("src")))
+            }
+        }
+        if (!pages.any()) {
+            document.select("article > div > center > img, section.page-in.content-wrap > div > center > img, section.page-in.content-wrap > center > div > center > img").forEachIndexed { i, it ->
+                pages.add(Page(i, "", it.attr("src")))
+            }
+        }
+
         return pages
     }
 
@@ -238,6 +250,7 @@ class MangaRawClub : ParsedHttpSource() {
         "Genres",
         arrayOf(
             Pair("All", ""),
+            Pair("R-18", "R-18"),
             Pair("Action", "Action"),
             Pair("Adult", "Adult"),
             Pair("Adventure", "Adventure"),
