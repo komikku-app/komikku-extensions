@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.mangarawclub
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -90,21 +89,29 @@ class MangaRawClub : ParsedHttpSource() {
         }
         manga.status = status
         manga.description = document.getElementsByClass("description").first().text()
-        val coverElement = document.getElementsByClass("cover")
-        manga.thumbnail_url = coverElement.select("img").attr("data-src")
+        val coverElement = document.getElementsByClass("cover").select("img")
+        val coverUrl = when {
+            coverElement.attr("data-src").isNotBlank() -> coverElement.attr("data-src")
+            else -> coverElement.attr("src")
+        }
+        manga.thumbnail_url = coverUrl
 
         return manga
     }
 
     override fun chapterListSelector() = "ul.chapter-list > li"
 
-    override fun chapterFromElement(element: Element): SChapter {
+    override fun chapterListRequest(manga: SManga): Request {
+        val url = baseUrl + manga.url + "all-chapters"
+        return GET(url, headers)
+    }
 
-        val urlElement = element.getElementsByTag("a").first()
+    override fun chapterFromElement(element: Element): SChapter {
+        val anchor = element.select("a").first()
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(urlElement.attr("href"))
-        chapter.name = element.getElementsByClass("chapter-title").first().text()
-        val date = element.getElementsByTag("time").first().attr("datetime")
+        chapter.setUrlWithoutDomain(anchor.attr("href"))
+        chapter.name = anchor.select(".chapter-title").first().text()
+        val date = anchor.select("time").first().attr("datetime")
         chapter.date_upload = parseChapterDate(date)
         return chapter
     }
@@ -115,8 +122,8 @@ class MangaRawClub : ParsedHttpSource() {
         val format = "MMMMM dd, yyyy, h:mm a"
         val format2 = "MMMMM dd, yyyy, h a" // because sometimes if it is exact hour it wont have minutes because why not
         val sdf = SimpleDateFormat(format, Locale.ENGLISH)
-        try {
-            return try {
+        return try {
+            try {
                 val value = sdf.parse(fdate)
                 value!!.time
             } catch (e: ParseException) {
@@ -125,7 +132,7 @@ class MangaRawClub : ParsedHttpSource() {
                 value!!.time
             }
         } catch (e: ParseException) {
-            return 0
+            0
         }
     }
 
@@ -171,8 +178,7 @@ class MangaRawClub : ParsedHttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-
-        if (query.length > 0) {
+        if (query.isNotEmpty()) {
             return GET("$baseUrl/search/?search=$query", headers)
         }
 
@@ -205,8 +211,8 @@ class MangaRawClub : ParsedHttpSource() {
 
         return GET(url.toString(), headers)
 
-        val built = requestBody.build()
-        return POST("$baseUrl/search", headers, requestBody.build())
+        // val built = requestBody.build()
+        // return POST("$baseUrl/search", headers, requestBody.build())
         // url: String,
         //         headers: Headers = DEFAULT_HEADERS,
         //         body: RequestBody = DEFAULT_BODY,
