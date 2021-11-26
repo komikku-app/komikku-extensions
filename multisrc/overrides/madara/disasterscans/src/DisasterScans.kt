@@ -18,4 +18,7 @@ class DisasterScans : Madara("Disaster Scans", "https://disasterscans.com", "en"
 
         return manga
     }
+
+    override val useNewChapterEndpoint: Boolean = true
+
 }
