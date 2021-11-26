@@ -365,7 +365,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("SodaScan", "https://sodascan.xyz", "pt-BR", isNsfw = true),
         SingleLang("Solo Leveling", "https://readsololeveling.online", "en"),
         SingleLang("StageComics", "https://stagecomics.com", "pt-BR", overrideVersionCode = 3),
-        SingleLang("Sugar Babies", "https://sugarbscan.com", "en", overrideVersionCode = 1),
+        SingleLang("Sugar Babies", "https://sugarbbscan.com", "en", overrideVersionCode = 2),
         SingleLang("Sunshine Butterfly Scans", "https://sunshinebutterflyscan.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Sweet Time Scan", "https://sweetscan.net", "pt-BR", overrideVersionCode = 2),
         SingleLang("TappyToon.Net", "https://tappytoon.net", "en", className = "Tappytoonnet"),
