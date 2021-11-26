@@ -1,0 +1,254 @@
+package eu.kanade.tachiyomi.extension.all.flamescans
+
+import android.app.Application
+import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Rect
+import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
+import eu.kanade.tachiyomi.source.ConfigurableSource
+import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
+import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
+import org.jsoup.nodes.Document
+import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+
+open class FlameScans(
+    override val baseUrl: String,
+    override val lang: String,
+    mangaUrlDirectory: String,
+    dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+) : WPMangaReader(
+        "Flame Scans",
+        baseUrl,
+        lang,
+        mangaUrlDirectory = mangaUrlDirectory,
+        dateFormat = dateFormat
+    ),
+    ConfigurableSource {
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .addInterceptor(::composedImageIntercept)
+        .build()
+
+    // Split Image Fixer Start
+    private val composedSelector: String = "#readerarea div.figure_container div.composed_figure"
+
+    override fun pageListParse(document: Document): List<Page> {
+        val hasSplitImages = document
+            .select(composedSelector)
+            .firstOrNull() != null
+
+        if (!hasSplitImages) {
+            return super.pageListParse(document)
+        }
+
+        return document.select("#readerarea p:has(img), $composedSelector")
+            .filter {
+                it.select("img").all { imgEl ->
+                    imgEl.attr("abs:src").isNullOrEmpty().not()
+                }
+            }
+            .mapIndexed { i, el ->
+                if (el.tagName() == "p") {
+                    Page(i, "", el.select("img").attr("abs:src"))
+                } else {
+                    val imageUrls = el.select("img")
+                        .joinToString("|") { it.attr("abs:src") }
+
+                    Page(i, "", imageUrls + COMPOSED_SUFFIX)
+                }
+            }
+    }
+
+    private fun composedImageIntercept(chain: Interceptor.Chain): Response {
+        if (!chain.request().url.toString().endsWith(COMPOSED_SUFFIX)) {
+            return chain.proceed(chain.request())
+        }
+
+        val imageUrls = chain.request().url.toString()
+            .removeSuffix(COMPOSED_SUFFIX)
+            .split("%7C")
+
+        var width = 0
+        var height = 0
+
+        val imageBitmaps = imageUrls.map { imageUrl ->
+            val request = chain.request().newBuilder().url(imageUrl).build()
+            val response = chain.proceed(request)
+
+            val bitmap = BitmapFactory.decodeStream(response.body!!.byteStream())
+
+            width += bitmap.width
+            height = bitmap.height
+
+            bitmap
+        }
+
+        val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(result)
+
+        var left = 0
+
+        imageBitmaps.forEach { bitmap ->
+            val srcRect = Rect(0, 0, bitmap.width, bitmap.height)
+            val dstRect = Rect(left, 0, left + bitmap.width, bitmap.height)
+
+            canvas.drawBitmap(bitmap, srcRect, dstRect, null)
+
+            left += bitmap.width
+        }
+
+        val output = ByteArrayOutputStream()
+        result.compress(Bitmap.CompressFormat.PNG, 100, output)
+
+        val responseBody = output.toByteArray().toResponseBody(MEDIA_TYPE)
+
+        return Response.Builder()
+            .code(200)
+            .protocol(Protocol.HTTP_1_1)
+            .request(chain.request())
+            .message("OK")
+            .body(responseBody)
+            .build()
+    }
+    // Split Image Fixer End
+
+    override fun fetchPopularManga(page: Int): Observable<MangasPage> {
+        return super.fetchPopularManga(page).tempUrlToPermIfNeeded()
+    }
+
+    override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
+        return super.fetchLatestUpdates(page).tempUrlToPermIfNeeded()
+    }
+
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        return super.fetchSearchManga(page, query, filters).tempUrlToPermIfNeeded()
+    }
+
+    private fun Observable<MangasPage>.tempUrlToPermIfNeeded(): Observable<MangasPage> {
+        return this.map { mangasPage ->
+            MangasPage(
+                mangasPage.mangas.map { it.tempUrlToPermIfNeeded() },
+                mangasPage.hasNextPage
+            )
+        }
+    }
+
+    private fun SManga.tempUrlToPermIfNeeded(): SManga {
+        val sManga = this
+
+        val turnTempUrlToPerm = preferences.getBoolean(getPermanentMangaUrlPreferenceKey(), false)
+        if (!turnTempUrlToPerm) return sManga
+
+        val sMangaUrl = sManga.url
+        val sMangaTitleFirstWord = sManga.title.split(" ")[0]
+        return if (sMangaUrl.startsWith("$mangaUrlDirectory/$sMangaTitleFirstWord")) {
+            sManga
+        } else {
+            sManga.url = sMangaUrl.replaceFirst(TEMP_TO_PERM_URL_REGEX, "$1")
+            sManga
+        }
+    }
+
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+        return super.fetchChapterList(manga).map { sChapterList ->
+            sChapterList.map { it.tempUrlToPermIfNeeded() }
+        }
+    }
+
+    private fun SChapter.tempUrlToPermIfNeeded(): SChapter {
+        val sChapter = this
+
+        val turnTempUrlToPerm = preferences.getBoolean(getPermanentChapterUrlPreferenceKey(), false)
+        if (!turnTempUrlToPerm) return sChapter
+
+        val sChapterUrl = sChapter.url
+        val sChapterNameFirstWord = sChapter.name.split(" ")[0]
+        return if (sChapterUrl.startsWith("/$sChapterNameFirstWord")) {
+            sChapter
+        } else {
+            sChapter.url = sChapterUrl.replaceFirst(TEMP_TO_PERM_URL_REGEX, "$1")
+            sChapter
+        }
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val permanentMangaUrlPref = SwitchPreferenceCompat(screen.context).apply {
+            key = getPermanentMangaUrlPreferenceKey()
+            title = PREF_PERM_MANGA_URL_TITLE
+            summary = PREF_PERM_MANGA_URL_SUMMARY
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+                preferences.edit()
+                    .putBoolean(getPermanentMangaUrlPreferenceKey(), checkValue)
+                    .commit()
+            }
+        }
+        val permanentChapterUrlPref = SwitchPreferenceCompat(screen.context).apply {
+            key = getPermanentChapterUrlPreferenceKey()
+            title = PREF_PERM_CHAPTER_URL_TITLE
+            summary = PREF_PERM_CHAPTER_URL_SUMMARY
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+                preferences.edit()
+                    .putBoolean(getPermanentChapterUrlPreferenceKey(), checkValue)
+                    .commit()
+            }
+        }
+        screen.addPreference(permanentMangaUrlPref)
+        screen.addPreference(permanentChapterUrlPref)
+    }
+
+    private fun getPermanentMangaUrlPreferenceKey(): String {
+        return PREF_PERM_MANGA_URL_KEY_PREFIX + lang
+    }
+
+    private fun getPermanentChapterUrlPreferenceKey(): String {
+        return PREF_PERM_CHAPTER_URL_KEY_PREFIX + lang
+    }
+    // Permanent Url for Manga/Chapter End
+
+    companion object {
+        private const val COMPOSED_SUFFIX = "?comp"
+
+        private const val PREF_PERM_MANGA_URL_KEY_PREFIX = "pref_permanent_manga_url_"
+        private const val PREF_PERM_MANGA_URL_TITLE = "Permanent Manga Url"
+        private const val PREF_PERM_MANGA_URL_SUMMARY = "Turns all manga urls into permanent ones."
+
+        private const val PREF_PERM_CHAPTER_URL_KEY_PREFIX = "pref_permanent_chapter_url"
+        private const val PREF_PERM_CHAPTER_URL_TITLE = "Permanent Chapter URl"
+        private const val PREF_PERM_CHAPTER_URL_SUMMARY = "Turns all chapter urls into permanent one."
+
+        private val TEMP_TO_PERM_URL_REGEX = Regex("""(/)\d+-""")
+
+        private val MEDIA_TYPE = "image/png".toMediaType()
+    }
+}

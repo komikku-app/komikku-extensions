@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.wpmangareader
 
+import generator.ThemeSourceData.MultiLang
 import generator.ThemeSourceData.SingleLang
 import generator.ThemeSourceGenerator
 
@@ -12,9 +13,9 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 11
 
     override val sources = listOf(
+        MultiLang("Flame Scans", "https://flamescans.org", listOf("ar", "en"), className = "FlameScansFactory", pkgName = "flamescans"),
         SingleLang("Anitation Arts", "https://anitationarts.org", "en", overrideVersionCode = 1),
         SingleLang("Alpha Scans", "https://alpha-scans.org", "en"),
-        SingleLang("AR FlameScans", "https://ar.flamescans.org", "ar", overrideVersionCode = 1),
         SingleLang("BeastScans", "https://beastscans.com", "en"),
         SingleLang("iiMANGA", "https://iimanga.com", "ar"),
         SingleLang("Magus Manga", "https://magusmanga.com", "ar"),
