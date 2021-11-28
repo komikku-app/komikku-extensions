@@ -422,6 +422,14 @@ abstract class Madara(
      */
     protected open val useNewChapterEndpoint: Boolean = false
 
+    /**
+     * Internal attribute to control if it should always use the
+     * new chapter endpoint after a first check if useNewChapterEndpoint is
+     * set to false. Using a separate variable to still allow the other
+     * one to be overridable manually in each source.
+     */
+    private var oldChapterEndpointDisabled: Boolean = false
+
     protected open fun oldXhrChaptersRequest(mangaId: String): Request {
         val form = FormBody.Builder()
             .add("action", "manga_get_chapters")
@@ -457,8 +465,19 @@ abstract class Madara(
             val mangaUrl = document.location().removeSuffix("/")
             val mangaId = chaptersWrapper.attr("data-id")
 
-            val xhrRequest = if (useNewChapterEndpoint) xhrChaptersRequest(mangaUrl) else oldXhrChaptersRequest(mangaId)
-            val xhrResponse = client.newCall(xhrRequest).execute()
+            var xhrRequest = if (useNewChapterEndpoint || oldChapterEndpointDisabled)
+                xhrChaptersRequest(mangaUrl) else oldXhrChaptersRequest(mangaId)
+            var xhrResponse = client.newCall(xhrRequest).execute()
+
+            // Newer Madara versions throws HTTP 400 when using the old endpoint.
+            if (!useNewChapterEndpoint && xhrResponse.code == 400) {
+                xhrResponse.close()
+                // Set it to true so following calls will be made directly to the new endpoint.
+                oldChapterEndpointDisabled = true
+
+                xhrRequest = xhrChaptersRequest(mangaUrl)
+                xhrResponse = client.newCall(xhrRequest).execute()
+            }
 
             chapterElements = xhrResponse.asJsoup().select(chapterListSelector())
             xhrResponse.close()
