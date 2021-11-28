@@ -24,11 +24,11 @@ class DoujinDesu : ParsedHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
 
     // Private stuff
-    
+
     private val DATE_FORMAT by lazy {
         SimpleDateFormat("MMMM d, yyyy", Locale("id"))
     }
-    
+
     private fun parseStatus(status: String) = when {
         status.toLowerCase(Locale.US).contains("finished") -> SManga.ONGOING
         status.toLowerCase(Locale.US).contains("publishing") -> SManga.COMPLETED

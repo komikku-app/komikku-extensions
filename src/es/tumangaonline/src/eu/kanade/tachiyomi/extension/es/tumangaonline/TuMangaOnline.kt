@@ -569,7 +569,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         private const val IMAGE_CDN_RATELIMIT_PREF_SUMMARY = "Este valor afecta la cantidad de solicitudes de red para descargar imágenes. Reducir este valor puede disminuir errores al cargar imagenes, pero la velocidad de descarga será más lenta. Se requiere reiniciar Tachiyomi. \nValor actual: %s"
         private const val IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE = "10"
 
-        private val ENTRIES_ARRAY = listOf(1,2,3,5,6,7,8,9,10,15,20,30,40,50,100).map { i -> i.toString() }.toTypedArray()
+        private val ENTRIES_ARRAY = listOf(1, 2, 3, 5, 6, 7, 8, 9, 10, 15, 20, 30, 40, 50, 100).map { i -> i.toString() }.toTypedArray()
 
         const val PREFIX_LIBRARY = "library"
         const val PREFIX_ID_SEARCH = "id:"

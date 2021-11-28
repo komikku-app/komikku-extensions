@@ -3,9 +3,6 @@ include(":core")
 include(":lib-ratelimit")
 project(":lib-ratelimit").projectDir = File("lib/ratelimit")
 
-include(":duktape-stub")
-project(":duktape-stub").projectDir = File("lib/duktape-stub")
-
 include(":lib-dataimage")
 project(":lib-dataimage").projectDir = File("lib/dataimage")
 

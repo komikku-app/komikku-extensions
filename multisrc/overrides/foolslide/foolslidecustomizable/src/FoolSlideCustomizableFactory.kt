@@ -42,7 +42,7 @@ class FoolSlideCustomizable : FoolSlide("FoolSlide Customizable", "", "other") {
     companion object {
         private const val DEFAULT_BASEURL = "https://127.0.0.1"
         private const val BASE_URL_PREF_TITLE = "Example URL: https://domain.com/path_to/directory/"
-        private const val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
+        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
         private const val BASE_URL_PREF_SUMMARY = "Connect to a designated FoolSlide server"
         private const val RESTART_TACHIYOMI = "Restart Tachiyomi to apply new setting."
     }

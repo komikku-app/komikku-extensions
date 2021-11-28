@@ -58,7 +58,7 @@ class MangaDig : ConfigurableSource, ParsedHttpSource() {
     private val commonNextPageSelector = "a:contains(Next):not(.fed-btns-disad)"
     private fun commonMangaFromElement(element: Element): SManga {
         val picElement = element.select("a.fed-list-pics").first()
-        
+
         return SManga.create().apply {
             title = element.select("a.fed-list-title").first().text()
             thumbnail_url = picElement.attr("data-original")

@@ -201,7 +201,7 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
         const val DETAIL_DESCRIPTION = "설명 : "
         const val DEFAULT_BASEURL = "https://jmana1.net"
         private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-        private const val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
+        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
         private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
         private const val RESTART_TACHIYOMI = "Restart Tachiyomi to apply new setting."
     }

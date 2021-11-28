@@ -65,7 +65,7 @@ class NeoXXXScans :
 
     companion object {
         private const val DEFAULT_BASE_URL = "https://xxx.neoxscans.net"
-        private const val BASE_URL_PREF_KEY = "base_url_${BuildConfig.VERSION_NAME}"
+        private val BASE_URL_PREF_KEY = "base_url_${BuildConfig.VERSION_NAME}"
         private const val BASE_URL_PREF_TITLE = "URL da fonte"
         private const val BASE_URL_PREF_SUMMARY = "Para uso temporário. Quando você atualizar a " +
             "extensão, esta configuração será apagada."

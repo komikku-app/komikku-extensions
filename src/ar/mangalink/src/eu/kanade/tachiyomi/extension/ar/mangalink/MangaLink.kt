@@ -146,7 +146,7 @@ class MangaLink : ConfigurableSource, ParsedHttpSource() {
         Type("غير معروف", "6"),
     )
 
-    //Preferences
+    // Preferences
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val domainPref = ListPreference(screen.context).apply {

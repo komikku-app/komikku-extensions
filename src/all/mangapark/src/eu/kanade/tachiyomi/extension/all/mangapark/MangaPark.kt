@@ -39,7 +39,7 @@ open class MangaPark(
 
     override val name: String = "MangaPark v3"
 
-    override val baseUrl: String = "https://v35.mangapark.net" //temporary url change to keep the ext working after update return to https://mangapark.net or https://v36.mangapark.net at later date
+    override val baseUrl: String = "https://v35.mangapark.net" // temporary url change to keep the ext working after update return to https://mangapark.net or https://v36.mangapark.net at later date
 
     override val supportsLatest = true
 
