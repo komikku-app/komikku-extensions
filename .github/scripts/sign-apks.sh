@@ -4,17 +4,8 @@ shopt -s globstar nullglob extglob
 
 TOOLS="$(ls -d ${ANDROID_HOME}/build-tools/* | tail -1)"
 
-# Get APKs from previous jobs' artifacts
-cp -R ~/apk-artifacts/ $PWD
 APKS=( **/*".apk" )
-
-# Fail if too little extensions seem to have been built
-if [ "${#APKS[@]}" -le "1" ]; then
-    echo "Insufficient amount of APKs found. Please check the project configuration."
-    exit 1
-else
-    echo "Signing ${#APKS[@]} APKs"
-fi
+echo "Signing ${#APKS[@]} APKs"
 
 # Take base64 encoded key input and put it into a file
 STORE_PATH=$PWD/signingkey.jks

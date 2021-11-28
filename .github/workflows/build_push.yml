@@ -44,31 +44,35 @@ jobs:
           cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
 
       - name: Generate sources from the multi-source library
-        uses: gradle/gradle-command-action@v1
+        uses: gradle/gradle-command-action@v2
         env:
           CI_MULTISRC: "true"
         with:
           arguments: :multisrc:generateExtensions
-          distributions-cache-enabled: true
-          dependencies-cache-enabled: true
-          configuration-cache-enabled: true
 
       - name: Build "${{ matrix.lang }}" extensions
-        uses: gradle/gradle-command-action@v1
+        uses: gradle/gradle-command-action@v2
         env:
           CI_MULTISRC: "true"
           CI_MATRIX_LANG: ${{ matrix.lang }}
         with:
           arguments: assembleRelease
-          distributions-cache-enabled: true
-          dependencies-cache-enabled: true
-          configuration-cache-enabled: true
+
+      - name: Sign APKs
+        if: "github.repository == 'tachiyomiorg/tachiyomi-extensions'"
+        run: |
+          ./.github/scripts/sign-apks.sh \
+            ${{ secrets.SIGNING_KEY }} \
+            ${{ secrets.ALIAS }} \
+            ${{ secrets.KEY_STORE_PASSWORD }} \
+            ${{ secrets.KEY_PASSWORD }}
 
       - name: Upload "${{ matrix.lang }}" APKs
+        if: "github.repository == 'tachiyomiorg/tachiyomi-extensions'"
         uses: actions/upload-artifact@v2
         with:
           name: "multisrc-${{ matrix.lang }}-apks"
-          path: "**/*.apk"
+          path: "apk/*.apk"
           retention-days: 1
 
   build_individual:
@@ -93,21 +97,28 @@ jobs:
           cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
 
       - name: Build "${{ matrix.lang }}" extensions
-        uses: gradle/gradle-command-action@v1
+        uses: gradle/gradle-command-action@v2
         env:
           CI_MULTISRC: "false"
           CI_MATRIX_LANG: ${{ matrix.lang }}
         with:
           arguments: assembleRelease
-          distributions-cache-enabled: true
-          dependencies-cache-enabled: true
-          configuration-cache-enabled: true
+
+      - name: Sign APKs
+        if: "github.repository == 'tachiyomiorg/tachiyomi-extensions'"
+        run: |
+          ./.github/scripts/sign-apks.sh \
+            ${{ secrets.SIGNING_KEY }} \
+            ${{ secrets.ALIAS }} \
+            ${{ secrets.KEY_STORE_PASSWORD }} \
+            ${{ secrets.KEY_PASSWORD }}
 
       - name: Upload "${{ matrix.lang }}" APKs
+        if: "github.repository == 'tachiyomiorg/tachiyomi-extensions'"
         uses: actions/upload-artifact@v2
         with:
           name: "individual-${{ matrix.lang }}-apks"
-          path: "**/*.apk"
+          path: "apk/*.apk"
           retention-days: 1
 
   publish_repo:
@@ -121,7 +132,7 @@ jobs:
       - name: Download APK artifacts
         uses: actions/download-artifact@v2
         with:
-          path: ~/apk-artifacts
+          path: apk
 
       - name: Checkout master branch
         uses: actions/checkout@v2
@@ -134,21 +145,12 @@ jobs:
         with:
           java-version: 11
 
-      - name: Sign APKs
-        run: |
-          cd master
-          ./.github/scripts/sign-apks.sh \
-            ${{ secrets.SIGNING_KEY }} \
-            ${{ secrets.ALIAS }} \
-            ${{ secrets.KEY_STORE_PASSWORD }} \
-            ${{ secrets.KEY_PASSWORD }}
-
       - name: Run inspector
         run: |
           cd master
           INSPECTOR_LINK="$(curl -s "https://api.github.com/repos/tachiyomiorg/tachiyomi-extensions-inspector/releases/latest" | jq -r '.assets[0].browser_download_url')"
           curl -L "$INSPECTOR_LINK" -o ./Inspector.jar
-          java -jar ./Inspector.jar "apk" "output.json" "tmp"
+          java -jar ./Inspector.jar "../apk" "output.json" "tmp"
 
       - name: Create repo artifacts
         run: |
