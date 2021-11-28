@@ -1,24 +1,18 @@
 #!/bin/bash
 set -e
-shopt -s globstar nullglob extglob
 
 TOOLS="$(ls -d ${ANDROID_HOME}/build-tools/* | tail -1)"
 
 mkdir -p repo/apk
 mkdir -p repo/icon
+
+cp -f apk/* repo/apk
+
 cd repo
 
-APKS=( ../../apk/**/*".apk" )
-
-# Fail if too little extensions seem to have been built
-if [ "${#APKS[@]}" -le "1" ]; then
-    echo "Insufficient amount of APKs found. Please check the project configuration."
-    exit 1
-fi
+APKS=( ../apk/*".apk" )
 
 for APK in ${APKS[@]}; do
-    cp $APK ./apk
-
     FILENAME=$(basename ${APK})
     BADGING="$(${TOOLS}/aapt dump --include-meta-data badging $APK)"
 
@@ -37,7 +31,7 @@ for APK in ${APKS[@]}; do
     unzip -p $APK $ICON > icon/${FILENAME%.*}.png
 
     SOURCE_INFO=$(jq ".[\"$PKGNAME\"]" < ../output.json)
-
+    
     # Fixes the language code without needing to update the packages.
     SOURCE_LEN=$(echo $SOURCE_INFO | jq length)
 
