@@ -9,9 +9,9 @@ import java.util.concurrent.TimeUnit
 
 class WarQueenScan : Madara(
     "War Queen Scan",
-    "https://wqscan.com.br",
+    "https://wqscan.com",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("yyyy-MM-dd", Locale("pt", "BR"))
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
