@@ -1,8 +1,12 @@
 package eu.kanade.tachiyomi.extension.ru.readmanga
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.widget.Toast
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -19,15 +23,19 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.regex.Pattern
 
-class Readmanga : ParsedHttpSource() {
+class Readmanga : ConfigurableSource, ParsedHttpSource() {
 
     override val id: Long = 5
-
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
     override val name = "Readmanga"
 
     override val baseUrl = "https://readmanga.io"
@@ -41,8 +49,9 @@ class Readmanga : ParsedHttpSource() {
     override val client: OkHttpClient = network.client.newBuilder()
         .addNetworkInterceptor(rateLimitInterceptor).build()
 
+    private var uagent: String = preferences.getString(UAGENT_TITLE, UAGENT_DEFAULT)!!
     override fun headersBuilder() = Headers.Builder().apply {
-        add("User-Agent", "readmangafun")
+        add("User-Agent", uagent)
         add("Referer", baseUrl)
     }
 
@@ -326,10 +335,6 @@ class Readmanga : ParsedHttpSource() {
         }
     }
 
-    companion object {
-        const val PREFIX_SLUG_SEARCH = "slug:"
-    }
-
     private class OrderBy : Filter.Select<String>(
         "Сортировка (только)",
         arrayOf("Без сортировки", "По году", "По популярности", "Популярно сейчас", "По рейтингу", "Новинки", "По дате обновления")
@@ -424,4 +429,33 @@ class Readmanga : ParsedHttpSource() {
         Genre("этти", "el_2149"),
         Genre("юри", "el_2123")
     )
+
+    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
+        screen.addPreference(screen.editTextPreference(UAGENT_TITLE, UAGENT_DEFAULT, uagent))
+    }
+
+    private fun androidx.preference.PreferenceScreen.editTextPreference(title: String, default: String, value: String): androidx.preference.EditTextPreference {
+        return androidx.preference.EditTextPreference(context).apply {
+            key = title
+            this.title = title
+            summary = value
+            this.setDefaultValue(default)
+            dialogTitle = title
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val res = preferences.edit().putString(title, newValue as String).commit()
+                    Toast.makeText(context, "Для смены User-Agent необходимо перезапустить приложение с полной остановкой.", Toast.LENGTH_LONG).show()
+                    res
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
+    }
+    companion object {
+        private const val UAGENT_TITLE = "User-Agent(для некоторых стран)"
+        private const val UAGENT_DEFAULT = "arora"
+        const val PREFIX_SLUG_SEARCH = "slug:"
+    }
 }
