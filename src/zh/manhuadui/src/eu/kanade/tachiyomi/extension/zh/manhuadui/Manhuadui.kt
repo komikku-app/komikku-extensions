@@ -20,7 +20,8 @@ class Manhuadui : ParsedHttpSource() {
     override val baseUrl = "https://ykmh.com"
     override val lang = "zh"
     override val supportsLatest = true
-    private val imageServer = arrayOf("https://pic.w1fl.com", "https://mhcdn.manhuazj.com", "https://res.333dm.com", "https://res02.333dm.com")
+    // Servers can be found from resHost in baseUrl/js/config.js
+    private val imageServer = arrayOf("https://js.tingliu.cc")
 
     override val client: OkHttpClient = super.client.newBuilder()
         .followRedirects(true)
@@ -31,7 +32,7 @@ class Manhuadui : ParsedHttpSource() {
     override fun latestUpdatesSelector() = popularMangaSelector()
     override fun chapterListSelector() = "ul[id^=chapter-list] > li a"
 
-    override fun searchMangaNextPageSelector() = "li.next"
+    override fun searchMangaNextPageSelector() = "li.next a"
     override fun popularMangaNextPageSelector() = searchMangaNextPageSelector()
     override fun latestUpdatesNextPageSelector() = searchMangaNextPageSelector()
 
@@ -39,7 +40,7 @@ class Manhuadui : ParsedHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/update/$page/", headers)
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         return if (query != "") {
-            val url = "$baseUrl/search/?keywords=$query".toHttpUrlOrNull()?.newBuilder()
+            val url = "$baseUrl/search/?keywords=$query&page=$page".toHttpUrlOrNull()?.newBuilder()
             GET(url.toString(), headers)
         } else {
             val params = filters.map {
@@ -47,7 +48,10 @@ class Manhuadui : ParsedHttpSource() {
                     it.toUriPart()
                 } else ""
             }.filter { it != "" }.joinToString("-")
-            val url = "$baseUrl/list/$params/$page/".toHttpUrlOrNull()?.newBuilder()
+            val url = when {
+                params.isEmpty() -> "$baseUrl/list_$page/".toHttpUrlOrNull()?.newBuilder()
+                else -> "$baseUrl/list/$params/$page/".toHttpUrlOrNull()?.newBuilder()
+            }
             GET(url.toString(), headers)
         }
     }
@@ -99,6 +103,12 @@ class Manhuadui : ParsedHttpSource() {
         val manga = SManga.create()
         manga.description = document.select("p.comic_deCon_d").text().trim()
         manga.thumbnail_url = document.select("div.comic_i_img > img").attr("src")
+        manga.status = when (document.select("ul.comic_deCon_liO a")[1].attr("href")) {
+            "/list/lianzai/" -> SManga.ONGOING
+            "/list/wanjie/" -> SManga.COMPLETED
+            else -> SManga.UNKNOWN
+        }
+        manga.genre = document.select("ul.comic_deCon_liO li:nth-child(4) a").eachText().joinToString(", ")
         return manga
     }
 
@@ -117,8 +127,10 @@ class Manhuadui : ParsedHttpSource() {
             .replace(imgCodeCleanupRegex, "")
             .replace("%", "%25")
         return imgCode.split(",").mapIndexed { i, imgStr ->
+            // The way image urls are processed by the website can be found in
+            // getChapterImage() in baseUrl/js/common.js
             if (imgStr.startsWith("http://images.dmzj.com")) {
-                Page(i, "", "https://img01.eshanyao.com/showImage.php?url=$imgStr")
+                Page(i, "", "${imageServer[0]}/showImage.php?url=$imgStr")
             } else {
                 Page(i, "", if (imgStr.indexOf("http") == -1) "${imageServer[0]}$imgStr" else imgStr)
             }
