@@ -136,12 +136,29 @@ class MundoMangaKun : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("script:containsData(var paginas)").first().data()
+        val pageList = document.select("script:containsData(var paginas)").first().data()
             .substringAfter("var paginas = ")
             .substringBefore("];")
             .let { json.parseToJsonElement("$it]") }
             .jsonArray
             .mapIndexed { i, page -> Page(i, document.location(), page.jsonPrimitive.content) }
+
+        // Check if the pages have exceeded the view limit of Google Drive.
+        val firstPage = pageList[0]
+
+        val hasExceededViewLimit = runCatching {
+            val firstPageRequest = imageRequest(firstPage)
+
+            client.newCall(firstPageRequest).execute().use {
+                it.headers["Content-Type"]!!.contains("text/html")
+            }
+        }
+
+        if (hasExceededViewLimit.getOrDefault(false)) {
+            throw Exception(EXCEEDED_GOOGLE_DRIVE_VIEW_LIMIT)
+        }
+
+        return pageList
     }
 
     override fun imageUrlParse(document: Document) = ""
@@ -240,6 +257,9 @@ class MundoMangaKun : ParsedHttpSource() {
 
     companion object {
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+
+        private const val EXCEEDED_GOOGLE_DRIVE_VIEW_LIMIT = "Limite de visualizações atingido " +
+            "no Google Drive. Aguarde com que o limite seja reestabelecido."
     }
 }
