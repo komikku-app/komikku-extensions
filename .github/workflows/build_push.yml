@@ -44,25 +44,19 @@ jobs:
           cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
 
       - name: Generate sources from the multi-source library
-        uses: gradle/gradle-command-action@v1
+        uses: gradle/gradle-command-action@v2
         env:
           CI_MULTISRC: "true"
         with:
           arguments: :multisrc:generateExtensions
-          distributions-cache-enabled: true
-          dependencies-cache-enabled: true
-          configuration-cache-enabled: true
 
       - name: Build "${{ matrix.lang }}" extensions
-        uses: gradle/gradle-command-action@v1
+        uses: gradle/gradle-command-action@v2
         env:
           CI_MULTISRC: "true"
           CI_MATRIX_LANG: ${{ matrix.lang }}
         with:
           arguments: assembleRelease
-          distributions-cache-enabled: true
-          dependencies-cache-enabled: true
-          configuration-cache-enabled: true
 
       - name: Upload "${{ matrix.lang }}" APKs
         uses: actions/upload-artifact@v2
@@ -93,15 +87,12 @@ jobs:
           cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
 
       - name: Build "${{ matrix.lang }}" extensions
-        uses: gradle/gradle-command-action@v1
+        uses: gradle/gradle-command-action@v2
         env:
           CI_MULTISRC: "false"
           CI_MATRIX_LANG: ${{ matrix.lang }}
         with:
           arguments: assembleRelease
-          distributions-cache-enabled: true
-          dependencies-cache-enabled: true
-          configuration-cache-enabled: true
 
       - name: Upload "${{ matrix.lang }}" APKs
         uses: actions/upload-artifact@v2
