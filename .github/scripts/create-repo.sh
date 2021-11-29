@@ -31,16 +31,16 @@ for APK in ${APKS[@]}; do
     unzip -p $APK $ICON > icon/${FILENAME%.*}.png
 
     SOURCE_INFO=$(jq ".[\"$PKGNAME\"]" < ../output.json)
-    
+
     # Fixes the language code without needing to update the packages.
     SOURCE_LEN=$(echo $SOURCE_INFO | jq length)
 
     if [ $SOURCE_LEN = "1" ]; then
-      SOURCE_LANG=$(echo $SOURCE_INFO | jq -r '.[0].lang')
+        SOURCE_LANG=$(echo $SOURCE_INFO | jq -r '.[0].lang')
 
-      if [ $SOURCE_LANG != $LANG ] && [ $SOURCE_LANG != "all" ] && [ $SOURCE_LANG != "other" ] && [ $LANG != "all" ] && [ $LANG != "other" ]; then
-        LANG=$SOURCE_LANG
-      fi
+        if [ $SOURCE_LANG != $LANG ] && [ $SOURCE_LANG != "all" ] && [ $SOURCE_LANG != "other" ] && [ $LANG != "all" ] && [ $LANG != "other" ]; then
+            LANG=$SOURCE_LANG
+        fi
     fi
 
     jq -n \
