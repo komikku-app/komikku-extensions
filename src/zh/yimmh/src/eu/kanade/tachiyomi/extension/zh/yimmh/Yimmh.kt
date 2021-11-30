@@ -25,6 +25,14 @@ class Yimmh : ParsedHttpSource() {
     override fun headersBuilder() = Headers.Builder()
         .add("User-Agent", "Mozilla/5.0 (Android 11; Mobile; rv:83.0) Gecko/83.0 Firefox/83.0")
 
+    private fun toHttp(url: String): String {
+        // Images from https://*.yemancomic.com do not load
+        // because of certificate issue, so switch to http.
+        return if (url.startsWith("https")) {
+            "http" + url.substring(5)
+        } else url
+    }
+
     // Popular
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/rank", headers)
@@ -33,7 +41,7 @@ class Yimmh : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("p.rank-list-info-right-title").text()
         setUrlWithoutDomain(element.attr("abs:href"))
-        thumbnail_url = element.select("img").attr("data-original")
+        thumbnail_url = toHttp(element.select("img").attr("abs:data-original"))
     }
 
     // Latest
@@ -52,7 +60,7 @@ class Yimmh : ParsedHttpSource() {
                 SManga.create().apply {
                     title = book.getString("book_name")
                     url = "/book/${book.getString("unique_id")}"
-                    thumbnail_url = book.getString("cover_url")
+                    thumbnail_url = toHttp(book.getString("cover_url"))
                 }
             )
         }
@@ -96,14 +104,14 @@ class Yimmh : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("p.book-list-info-title").text()
         setUrlWithoutDomain(element.select("a").attr("abs:href"))
-        thumbnail_url = element.select("img").attr("data-original")
+        thumbnail_url = toHttp(element.select("img").attr("abs:data-original"))
     }
 
     // Details
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         title = document.select("p.detail-main-info-title").text()
-        thumbnail_url = document.select("div.detail-main-cover > img").attr("data-original")
+        thumbnail_url = toHttp(document.select("div.detail-main-cover > img").attr("abs:data-original"))
         author = document.select("p.detail-main-info-author:contains(作者：) > a").text()
         artist = author
         genre = document.select("p.detail-main-info-class > span").eachText().joinToString(", ")
@@ -133,7 +141,7 @@ class Yimmh : ParsedHttpSource() {
         while (true) {
             val images = page.select("div#cp_img > img.lazy")
             images.forEach {
-                add(Page(size, "", it.attr("data-src")))
+                add(Page(size, "", toHttp(it.attr("abs:data-src"))))
             }
             val nextPage = page.select("a.view-bottom-bar-item:contains(下一页)").attr("href")
             if (nextPage.isNullOrEmpty()) {
@@ -170,8 +178,8 @@ class Yimmh : ParsedHttpSource() {
         "进度",
         arrayOf(
             Pair("-1", "全部"),
-            Pair("1", "连载中"),
-            Pair("2", "已完结")
+            Pair("2", "连载中"),
+            Pair("1", "已完结")
         )
     )
 
