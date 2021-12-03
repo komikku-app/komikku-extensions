@@ -17,7 +17,7 @@ class Zerobyw : ParsedHttpSource() {
     override val name: String = "zero搬运网"
     override val lang: String = "zh"
     override val supportsLatest: Boolean = false
-    override val baseUrl: String = "https://www.zerobyw3ds.com"
+    override val baseUrl: String = "https://www.zerobywdlss.com"
 
     // Popular
     // Website does not provide popular manga, this is actually latest manga
