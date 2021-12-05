@@ -4,14 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Base64
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.google.gson.Gson
-import com.google.gson.JsonObject
-import eu.kanade.tachiyomi.extension.all.lanraragi.model.Archive
-import eu.kanade.tachiyomi.extension.all.lanraragi.model.ArchivePage
-import eu.kanade.tachiyomi.extension.all.lanraragi.model.ArchiveSearchResult
-import eu.kanade.tachiyomi.extension.all.lanraragi.model.Category
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -22,6 +14,11 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.CacheControl
 import okhttp3.Dns
 import okhttp3.Headers
@@ -35,8 +32,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.IOException
 
-open class LANraragi : ConfigurableSource, HttpSource() {
-
+class LANraragi : ConfigurableSource, HttpSource() {
     override val baseUrl: String
         get() = preferences.getString("hostname", "http://127.0.0.1:3000")!!
 
@@ -52,7 +48,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     private val latestNamespacePref: String
         get() = preferences.getString("latestNamespacePref", DEFAULT_SORT_BY_NS)!!
 
-    private val gson: Gson = Gson()
+    private val json by lazy { Injekt.get<Json>() }
 
     private var randomArchiveID: String = ""
 
@@ -78,7 +74,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val archive = gson.fromJson<Archive>(response.body!!.string())
+        val archive = json.decodeFromString<Archive>(response.body!!.string())
 
         return archiveToSManga(archive)
     }
@@ -91,7 +87,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val archive = gson.fromJson<Archive>(response.body!!.string())
+        val archive = json.decodeFromString<Archive>(response.body!!.string())
         val uri = getApiUriBuilder("/api/archives/${archive.arcid}/files")
 
         // Replicate old behavior and unset "isnew" for the archive.
@@ -125,7 +121,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val archivePage = gson.fromJson<ArchivePage>(response.body!!.string())
+        val archivePage = json.decodeFromString<ArchivePage>(response.body!!.string())
 
         return archivePage.pages.mapIndexed { index, url ->
             val uri = Uri.parse("${baseUrl}${url.trimStart('.')}")
@@ -185,6 +181,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
                 is DescendingOrder -> if (filter.state) uri.appendQueryParameter("order", "desc")
                 is SortByNamespace -> if (filter.state.isNotEmpty()) uri.appendQueryParameter("sortby", filter.state.trim())
                 is CategorySelect -> if (filter.state > 0) uri.appendQueryParameter("category", filter.toUriPart())
+                else -> Unit
             }
         }
 
@@ -198,7 +195,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val jsonResult = gson.fromJson<ArchiveSearchResult>(response.body!!.string())
+        val jsonResult = json.decodeFromString<ArchiveSearchResult>(response.body!!.string())
         val currentStart = getStart(response)
         val archives = arrayListOf<SManga>()
 
@@ -233,7 +230,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
         title = archive.title
         description = archive.title
         thumbnail_url = getThumbnailUri(archive.arcid)
-        genre = archive.tags.replace(",", ", ")
+        genre = archive.tags?.replace(",", ", ")
         artist = getArtist(archive.tags)
         author = artist
         status = SManga.COMPLETED
@@ -351,12 +348,12 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     // Helper
     private fun getRandomID(query: String): String {
         val searchRandom = client.newCall(GET("$baseUrl/api/search/random?$query", headers)).execute()
-        val data = gson.fromJson<JsonObject>(searchRandom.body!!.string())["data"]
+        val data = json.parseToJsonElement(searchRandom.body!!.string()).jsonObject["data"]
 
-        return data.asJsonArray.firstOrNull()?.get("id")?.asString ?: ""
+        return data!!.jsonArray.firstOrNull()?.jsonObject?.get("id")?.jsonPrimitive?.content ?: ""
     }
 
-    protected open class UriPartFilter(displayName: String, val vals: Array<Pair<String?, String>>) :
+    open class UriPartFilter(displayName: String, private val vals: Array<Pair<String?, String>>) :
         Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray()) {
         fun toUriPart() = vals[state].first
     }
@@ -370,7 +367,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
             .subscribe(
                 {
                     categories = try {
-                        gson.fromJson(it.body?.charStream()!!)
+                        json.decodeFromString(it.body!!.string())
                     } catch (e: Exception) {
                         emptyList()
                     }
@@ -406,9 +403,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     }
 
     private fun getApiUriBuilder(path: String): Uri.Builder {
-        val uri = Uri.parse("$baseUrl$path").buildUpon()
-
-        return uri
+        return Uri.parse("$baseUrl$path").buildUpon()
     }
 
     private fun getThumbnailUri(id: String): String {
@@ -417,12 +412,8 @@ open class LANraragi : ConfigurableSource, HttpSource() {
         return uri.toString()
     }
 
-    private fun getTopResponse(response: Response): Response {
+    private tailrec fun getTopResponse(response: Response): Response {
         return if (response.priorResponse == null) response else getTopResponse(response.priorResponse!!)
-    }
-
-    private fun getId(response: Response): String {
-        return getTopResponse(response).request.url.queryParameter("id").toString()
     }
 
     private fun getStart(response: Response): Int {
@@ -430,11 +421,11 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     }
 
     private fun getReaderId(url: String): String {
-        return Regex("""\/reader\?id=(\w{40})""").find(url)?.groupValues?.get(1) ?: ""
+        return Regex("""/reader\?id=(\w{40})""").find(url)?.groupValues?.get(1) ?: ""
     }
 
     private fun getThumbnailId(url: String): String {
-        return Regex("""\/(\w{40})\/thumbnail""").find(url)?.groupValues?.get(1) ?: ""
+        return Regex("""/(\w{40})/thumbnail""").find(url)?.groupValues?.get(1) ?: ""
     }
 
     private fun getNSTag(tags: String?, tag: String): List<String>? {
