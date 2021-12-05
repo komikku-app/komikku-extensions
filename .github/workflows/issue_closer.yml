@@ -32,13 +32,13 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(mangago|mangafox|hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|heroscan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw).*",
+                "regex": ".*(mangago|mangafox|hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|heroscan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai).*",
                 "ignoreCase": true,
                 "message": "{match} will not be added back as it is too difficult to maintain. Read #3475 for more information"
               },
               {
                 "type": "both",
-                "regex": ".*(teamx|tqneplus|manga\\s*disk|komiktap|gourmet\\s*scans|manga\\s*crimson|mangawow|voidscans|hikari\\s*scans|mangagegecesi|piedpiperfb|knightnoscanlations|ahstudios|mangagecesi|nartag|xxx\\s*yaoi|yaoi\\s*fan\\s*clube).*",
+                "regex": ".*(teamx|tqneplus|manga\\s*disk|komiktap|gourmet\\s*scans|manga\\s*crimson|mangawow|voidscans|hikari\\s*scans|mangagegecesi|piedpiperfb|knightnoscanlations|ahstudios|mangagecesi|nartag|xxx\\s*yaoi|yaoi\\s*fan\\s*clube|luminous).*",
                 "ignoreCase": true,
                 "message": "{match} will not be added back as the Scanlator team has requested it to be removed. Read #3475 for more information"
               }
