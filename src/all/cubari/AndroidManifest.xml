@@ -16,13 +16,14 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
+                <data android:host="*.cubari.moe" />
+                <data android:host="cubari.moe" />
+
                 <data
-                    android:host="*cubari.moe"
                     android:pathPattern="/read/..*"
                     android:scheme="https" />
 
                 <data
-                    android:host="*cubari.moe"
                     android:pathPattern="/proxy/..*"
                     android:scheme="https" />
             </intent-filter>
@@ -32,8 +33,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
+                <data android:host="*.guya.moe" />
+                <data android:host="guya.moe" />
+
                 <data
-                    android:host="*guya.moe"
                     android:pathPattern="/proxy/..*"
                     android:scheme="https" />
             </intent-filter>
@@ -43,13 +46,14 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
+                <data android:host="*.imgur.com" />
+                <data android:host="imgur.com" />
+
                 <data
-                    android:host="*imgur.com"
                     android:pathPattern="/a/..*"
                     android:scheme="https" />
 
                 <data
-                    android:host="*imgur.com"
                     android:pathPattern="/gallery/..*"
                     android:scheme="https" />
             </intent-filter>

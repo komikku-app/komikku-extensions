@@ -13,12 +13,14 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
+                <data android:host="*.kuaikanmanhua.com" />
+                <data android:host="kuaikanmanhua.com" />
+
                 <data
                     android:host="m.kuaikanmanhua.com"
                     android:pathPattern="/mobile/..*"
                     android:scheme="https" />
                 <data
-                    android:host="*kuaikanmanhua.com"
                     android:pathPattern="/web/topic/..*"
                     android:scheme="https" />
 

@@ -13,12 +13,16 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
+                <data android:host="*.baozimh.com" />
+                <data android:host="baozimh.com" />
+
+                <data android:host="*.webmota.com" />
+                <data android:host="webmota.com" />
+
                 <data
-                    android:host="*baozimh.com"
                     android:pathPattern="/comic/..*"
                     android:scheme="https" />
                 <data
-                    android:host="*webmota.com"
                     android:pathPattern="/comic/chapter/..*"
                     android:scheme="https" />
 
