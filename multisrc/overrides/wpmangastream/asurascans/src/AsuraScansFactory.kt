@@ -33,7 +33,7 @@ abstract class AsuraScans(
 }
 
 class AsuraScansEn : AsuraScans("https://asurascans.com/", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
-    override val pageSelector = "div.rdminimal p noscript img"
+    override val pageSelector = "div.rdminimal > p > img"
 
     // Skip scriptPages
     override fun pageListParse(document: Document): List<Page> {
