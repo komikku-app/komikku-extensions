@@ -149,7 +149,7 @@ class LibManga : ConfigurableSource, HttpSource() {
     private fun popularMangaFromElement(el: JsonElement) = SManga.create().apply {
         val slug = el["slug"].string
         val cover = el["cover"].string
-        title = el["name"].string
+        title = if (titleLanguage.equals("rus")) el["rus_name"].string else el["name"].string
         thumbnail_url = "$COVER_URL/uploads/cover/$slug/cover/${cover}_250x350.jpg"
         url = "/$slug"
     }
@@ -190,7 +190,7 @@ class LibManga : ConfigurableSource, HttpSource() {
             else -> "☆☆☆☆☆"
         }
         val genres = document.select(".media-tags > a").map { it.text().capitalize() }
-        manga.title = document.select(".media-name__alt").text()
+        manga.title = if (titleLanguage.equals("rus")) document.select(".media-name__main").text() else document.select(".media-name__alt").text()
         manga.thumbnail_url = document.select(".media-sidebar__cover > img").attr("src")
         manga.author = body.select("div.media-info-list__title:contains(Автор) + div").text()
         manga.artist = body.select("div.media-info-list__title:contains(Художник) + div").text()
@@ -214,7 +214,8 @@ class LibManga : ConfigurableSource, HttpSource() {
         if (altSelector.isNotEmpty()) {
             altName = "Альтернативные названия:\n" + altSelector.map { it.text() }.joinToString(" / ") + "\n\n"
         }
-        manga.description = document.select(".media-name__main").text() + "\n" + ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" + altName + document.select(".media-description__text").text()
+        val mediaNameLanguage = if (titleLanguage.equals("rus")) document.select(".media-name__alt").text() else document.select(".media-name__main").text()
+        manga.description = mediaNameLanguage + "\n" + ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" + altName + document.select(".media-description__text").text()
         return manga
     }
 
@@ -780,10 +781,14 @@ class LibManga : ConfigurableSource, HttpSource() {
         private const val DOMAIN_PREF = "MangaLibDomain"
         private const val DOMAIN_PREF_Title = "Выбор домена"
 
+        private const val LANGUAGE_PREF = "MangaLibTitleLanguage"
+        private const val LANGUAGE_PREF_Title = "Выбор языка на обложке"
+
         private const val COVER_URL = "https://staticlib.me"
     }
 
     private var server: String? = preferences.getString(SERVER_PREF, null)
+    private var titleLanguage: String? = preferences.getString(LANGUAGE_PREF, null)
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val serverPref = ListPreference(screen.context).apply {
             key = SERVER_PREF
@@ -832,9 +837,24 @@ class LibManga : ConfigurableSource, HttpSource() {
                 }
             }
         }
+        val titleLanguagePref = ListPreference(screen.context).apply {
+            key = LANGUAGE_PREF
+            title = LANGUAGE_PREF_Title
+            entries = arrayOf("Транскрипция и английский", "Русский")
+            entryValues = arrayOf("eng", "rus")
+            summary = "%s"
+            setDefaultValue("eng")
+            setOnPreferenceChangeListener { _, newValue ->
+                titleLanguage = newValue.toString()
+                val warning = "Если язык обложки не изменился очистите базу данных в приложении (Настройки -> Дополнительно -> Очистить базу данных)"
+                Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
+                true
+            }
+        }
 
         screen.addPreference(domainPref)
         screen.addPreference(serverPref)
         screen.addPreference(sortingPref)
+        screen.addPreference(titleLanguagePref)
     }
 }
