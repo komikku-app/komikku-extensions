@@ -5,7 +5,7 @@ ext {
     extName = 'The Property of Hate'
     pkgNameSuffix = 'en.thepropertyofhate'
     extClass = '.ThePropertyOfHate'
-    extVersionCode = 3
+    extVersionCode = 4
 }
 
 apply from: "$rootDir/common.gradle"
