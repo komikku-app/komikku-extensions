@@ -63,6 +63,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
     override fun popularMangaRequest(page: Int): Request {
         val url = MDConstants.apiMangaUrl.toHttpUrl().newBuilder().apply {
             addQueryParameter("order[followedCount]", "desc")
+            addQueryParameter("availableTranslatedLanguage[]", dexLang)
             addQueryParameter("limit", MDConstants.mangaLimit.toString())
             addQueryParameter("offset", helper.getMangaListOffset(page))
             addQueryParameter("includes[]", MDConstants.coverArt)
