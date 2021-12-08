@@ -12,7 +12,6 @@ import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 
-/** @author Aria Moradi <aria.moradi007@gmail.com> */
 class ThePropertyOfHate : HttpSource() {
     override val name = "The Property of Hate"
 
