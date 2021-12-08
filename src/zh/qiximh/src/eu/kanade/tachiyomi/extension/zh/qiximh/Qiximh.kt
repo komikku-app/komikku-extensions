@@ -106,7 +106,7 @@ class Qiximh : HttpSource() {
                 thumbnail_url = targetObj["imgurl"]!!.jsonPrimitive.content
                 // Extension is wrongly adding the baseURL to the SManga.
                 // I kept it as it is to avoid user migrations.
-                url = "$baseUrl/${targetObj["id"]!!.jsonPrimitive.int}"
+                url = "$baseUrl/${targetObj["id"]!!.jsonPrimitive.int}/"
             }
         }
 
@@ -183,7 +183,7 @@ class Qiximh : HttpSource() {
                             thumbnail_url = targetObj["imgs"]!!.jsonPrimitive.content
                             // Extension is wrongly adding the baseURL to the SManga.
                             // I kept it as it is to avoid user migrations.
-                            url = "$baseUrl/${targetObj["id"]!!.jsonPrimitive.int}"
+                            url = "$baseUrl/${targetObj["id"]!!.jsonPrimitive.int}/"
                         }
                     }
 
@@ -237,7 +237,7 @@ class Qiximh : HttpSource() {
 
         return SManga.create().apply {
             title = document.select("h1.name").text()
-
+            thumbnail_url = document.select("div.comic_cover").attr("data-original")
             author = document.select(".author_name").text()
 
             description = arrayOf(
