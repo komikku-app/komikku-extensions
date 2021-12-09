@@ -89,6 +89,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Fug Manga", "https://fugmanga.net", "ar"),
         SingleLang("Fukushuu no Yuusha", "https://fny-scantrad.com", "fr", overrideVersionCode = 2),
         SingleLang("Furio Scans", "https://furioscans.com", "pt-BR", overrideVersionCode = 4),
+        SingleLang("GalaxyDegenScans", "https://gdstmp.site", "en", overrideVersionCode = 3),
         SingleLang("Gatemanga", "https://gatemanga.com", "ar"),
         SingleLang("Gemanga", "https://gemanga.com", "ar"),
         SingleLang("Glory Scans", "https://gloryscan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
