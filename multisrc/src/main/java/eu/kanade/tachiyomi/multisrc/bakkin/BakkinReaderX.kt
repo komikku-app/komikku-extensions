@@ -106,7 +106,7 @@ abstract class BakkinReaderX(
                     chapter_number = idx.toFloat()
                     date_upload = 0L
                 }
-            }
+            }.reversed()
         }
 
     override fun fetchPageList(chapter: SChapter) =
