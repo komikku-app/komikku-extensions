@@ -51,7 +51,7 @@ class Pufei : ParsedHttpSource() {
     override val baseUrl = "http://m.pufei8.com"
     override val lang = "zh"
     override val supportsLatest = true
-    val imageServer = "http://res.img.youzipi.net/"
+    val imageServer = "http://res.img.shengda0769.com/"
 
     override val client: OkHttpClient
         get() = network.client.newBuilder()

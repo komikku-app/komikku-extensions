@@ -5,7 +5,7 @@ ext {
     extName = 'Pufei'
     pkgNameSuffix = 'zh.pufei'
     extClass = '.Pufei'
-    extVersionCode = 7
+    extVersionCode = 8
 }
 
 apply from: "$rootDir/common.gradle"
