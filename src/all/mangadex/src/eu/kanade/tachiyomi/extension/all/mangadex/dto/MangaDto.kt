@@ -31,6 +31,7 @@ data class RelationshipDto(
 data class IncludesAttributesDto(
     val name: String? = null,
     val fileName: String? = null,
+    val username: String? = null
 )
 
 @Serializable

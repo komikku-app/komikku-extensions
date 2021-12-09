@@ -43,7 +43,7 @@ class MangaDexHelper() {
      * get chapters for manga (aka manga/$id/feed endpoint)
      */
     fun getChapterEndpoint(mangaId: String, offset: Int, langCode: String) =
-        "${MDConstants.apiMangaUrl}/$mangaId/feed?includes[]=${MDConstants.scanlator}&limit=500&offset=$offset&translatedLanguage[]=$langCode&order[volume]=desc&order[chapter]=desc"
+        "${MDConstants.apiMangaUrl}/$mangaId/feed?includes[]=${MDConstants.scanlator}&includes[]=${MDConstants.uploader}&limit=500&offset=$offset&translatedLanguage[]=$langCode&order[volume]=desc&order[chapter]=desc"
 
     /**
      * Check if the manga url is a valid uuid
@@ -276,10 +276,19 @@ class MangaDexHelper() {
                     MDConstants.scanlator,
                     true
                 )
-            }.mapNotNull { it.attributes!!.name }
+            }.filterNot { it.id == MDConstants.legacyNoGroupId } // 'no group' left over from MDv3
+                .mapNotNull { it.attributes!!.name }
                 .joinToString(" & ")
-                .replace("no group", "No Group")
-                .ifEmpty { "No Group" }
+                .ifEmpty {
+                    // fall back to uploader name if no group
+                    val users = chapterDataDto.relationships.filter { relationshipDto ->
+                        relationshipDto.type.equals(
+                            MDConstants.uploader,
+                            true
+                        )
+                    }.mapNotNull { it.attributes!!.username }
+                    users.joinToString(" & ", if (users.isNotEmpty()) "Uploaded by " else "")
+                }.ifEmpty { "No Group" } // "No Group" as final resort
 
             val chapterName = mutableListOf<String>()
             // Build chapter name

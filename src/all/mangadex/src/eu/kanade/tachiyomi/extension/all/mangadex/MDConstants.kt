@@ -15,8 +15,10 @@ object MDConstants {
     const val manga = "manga"
     const val coverArt = "cover_art"
     const val scanlator = "scanlation_group"
+    const val uploader = "user"
     const val author = "author"
     const val artist = "artist"
+    const val legacyNoGroupId = "00e03853-1b96-4f41-9542-c71b8692033b"
 
     const val cdnUrl = "https://uploads.mangadex.org"
     const val apiUrl = "https://api.mangadex.org"
