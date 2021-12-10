@@ -5,7 +5,7 @@ ext {
     extName = 'ComX'
     pkgNameSuffix = 'ru.comx'
     extClass = '.ComX'
-    extVersionCode = 10
+    extVersionCode = 11
 }
 
 dependencies {
