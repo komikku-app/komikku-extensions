@@ -2,13 +2,23 @@ package eu.kanade.tachiyomi.multisrc.mangadventure
 
 import eu.kanade.tachiyomi.source.model.Filter
 
+internal interface UriFilter {
+    val param: String
+
+    override fun toString(): String
+}
+
 /** Filter representing the name of an author. */
-internal class Author : Filter.Text("Author") {
+internal class Author : Filter.Text("Author"), UriFilter {
+    override val param = "author"
+
     override fun toString() = state
 }
 
 /** Filter representing the name of an artist. */
-internal class Artist : Filter.Text("Artist") {
+internal class Artist : Filter.Text("Artist"), UriFilter {
+    override val param = "artist"
+
     override fun toString() = state
 }
 
@@ -19,7 +29,9 @@ internal class Artist : Filter.Text("Artist") {
  */
 internal class SortOrder(
     private val labels: Array<String>
-) : Filter.Sort("Sort", values, null) {
+) : Filter.Sort("Sort", values, null), UriFilter {
+    override val param = "sort"
+
     override fun toString() = when (state?.ascending) {
         null -> ""
         true -> labels[state!!.index]
@@ -28,7 +40,9 @@ internal class SortOrder(
 
     companion object {
         /** The available sort order values. */
-        private val values = arrayOf("title", "latest_upload", "chapter_count")
+        private val values = arrayOf(
+            "title", "views", "latest_upload", "chapter_count"
+        )
     }
 }
 
@@ -39,7 +53,9 @@ internal class SortOrder(
  */
 internal class Status(
     statuses: Array<String>
-) : Filter.Select<String>("Status", statuses) {
+) : Filter.Select<String>("Status", statuses), UriFilter {
+    override val param = "status"
+
     override fun toString() = values[state]
 }
 
@@ -57,7 +73,9 @@ internal class Category(name: String) : Filter.TriState(name)
  */
 internal class CategoryList(
     categories: List<String>
-) : Filter.Group<Category>("Categories", categories.map(::Category)) {
+) : Filter.Group<Category>("Categories", categories.map(::Category)), UriFilter {
+    override val param = "categories"
+
     override fun toString() = state.filterNot { it.isIgnored() }
         .joinToString(",") { if (it.isIncluded()) it.name else "-" + it.name }
 }

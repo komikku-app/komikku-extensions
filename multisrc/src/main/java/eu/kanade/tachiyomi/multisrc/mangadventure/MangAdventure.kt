@@ -29,7 +29,9 @@ abstract class MangAdventure(
     protected open val statuses = arrayOf("Any", "Completed", "Ongoing")
 
     /** The site's sort order labels that correspond to [SortOrder.values]. */
-    protected open val orders = arrayOf("Title", "Latest upload", "Chapter count")
+    protected open val orders = arrayOf(
+        "Title", "Views", "Latest upload", "Chapter count"
+    )
 
     /** A user agent representing Tachiyomi. */
     private val userAgent = "Mozilla/5.0 " +
@@ -61,7 +63,7 @@ abstract class MangAdventure(
     override fun popularMangaRequest(page: Int) =
         apiUri.buildUpon().appendEncodedPath("series").run {
             appendQueryParameter("page", page.toString())
-            appendQueryParameter("sort", "-chapter_count")
+            appendQueryParameter("sort", "-views")
             GET(toString(), headers)
         }
 
@@ -72,15 +74,8 @@ abstract class MangAdventure(
             } else {
                 appendQueryParameter("page", page.toString())
                 appendQueryParameter("title", query)
-                filters.forEach {
-                    when (it) {
-                        is Author -> appendQueryParameter("author", it.toString())
-                        is Artist -> appendQueryParameter("artist", it.toString())
-                        is Status -> appendQueryParameter("status", it.toString())
-                        is SortOrder -> appendQueryParameter("sort", it.toString())
-                        is CategoryList -> appendQueryParameter("categories", it.toString())
-                        else -> Unit
-                    }
+                filters.filterIsInstance<UriFilter>().forEach {
+                    appendQueryParameter(it.param, it.toString())
                 }
             }
             GET(toString(), headers)
@@ -96,6 +91,7 @@ abstract class MangAdventure(
     override fun pageListRequest(chapter: SChapter) =
         apiUri.buildUpon().appendEncodedPath("pages").run {
             val (slug, vol, num) = chapter.components
+            appendQueryParameter("track", "true")
             appendQueryParameter("series", slug)
             appendQueryParameter("volume", vol)
             appendQueryParameter("number", num)
@@ -176,11 +172,15 @@ abstract class MangAdventure(
             url = series.url
             title = series.title
             thumbnail_url = series.cover
-            description = series.description
+            description = series.description?.plus(
+                series.aliases?.joinToString("\n", "\n\nAlternative titles:\n")
+            )
             author = series.authors?.joinToString()
             artist = series.artists?.joinToString()
             genre = series.categories?.joinToString()
-            status = when (series.completed) {
+            status = if (series.licensed == true) {
+                SManga.LICENSED
+            } else when (series.completed) {
                 true -> SManga.COMPLETED
                 false -> SManga.ONGOING
                 null -> SManga.UNKNOWN

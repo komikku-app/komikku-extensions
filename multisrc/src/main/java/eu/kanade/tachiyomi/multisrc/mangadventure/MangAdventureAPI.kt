@@ -56,6 +56,8 @@ internal data class Series(
     val cover: String?,
     val description: String? = null,
     val completed: Boolean? = null,
+    val licensed: Boolean? = null,
+    val aliases: List<String>? = null,
     val authors: List<String>? = null,
     val artists: List<String>? = null,
     val categories: List<String>? = null
