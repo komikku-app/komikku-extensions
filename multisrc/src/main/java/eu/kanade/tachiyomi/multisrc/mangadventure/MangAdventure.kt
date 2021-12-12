@@ -172,9 +172,13 @@ abstract class MangAdventure(
             url = series.url
             title = series.title
             thumbnail_url = series.cover
-            description = series.description?.plus(
-                series.aliases?.joinToString("\n", "\n\nAlternative titles:\n")
-            )
+            description = buildString {
+                series.description?.let(::append)
+                series.aliases.let {
+                    if (!it.isNullOrEmpty())
+                        it.joinTo(this, "\n", "\n\nAlternative titles:\n")
+                }
+            }
             author = series.authors?.joinToString()
             artist = series.artists?.joinToString()
             genre = series.categories?.joinToString()

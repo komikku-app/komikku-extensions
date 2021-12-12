@@ -29,18 +29,18 @@ internal class Artist : Filter.Text("Artist"), UriFilter {
  */
 internal class SortOrder(
     private val labels: Array<String>
-) : Filter.Sort("Sort", values, null), UriFilter {
+) : Filter.Sort("Sort", labels, null), UriFilter {
     override val param = "sort"
 
     override fun toString() = when (state?.ascending) {
         null -> ""
-        true -> labels[state!!.index]
-        false -> "-" + labels[state!!.index]
+        true -> sorts[state!!.index]
+        false -> "-" + sorts[state!!.index]
     }
 
     companion object {
         /** The available sort order values. */
-        private val values = arrayOf(
+        private val sorts = arrayOf(
             "title", "views", "latest_upload", "chapter_count"
         )
     }
