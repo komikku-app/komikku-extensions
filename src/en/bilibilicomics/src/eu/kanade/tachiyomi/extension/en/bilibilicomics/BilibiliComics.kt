@@ -55,7 +55,7 @@ class BilibiliComics : HttpSource() {
         val requestPayload = buildJsonObject {
             put("area_id", -1)
             put("is_finish", -1)
-            put("is_free", 1)
+            put("is_free", -1)
             put("order", 0)
             put("page_num", page)
             put("page_size", POPULAR_PER_PAGE)
@@ -99,7 +99,7 @@ class BilibiliComics : HttpSource() {
         val requestPayload = buildJsonObject {
             put("area_id", -1)
             put("is_finish", -1)
-            put("is_free", 1)
+            put("is_free", -1)
             put("order", 1)
             put("page_num", page)
             put("page_size", POPULAR_PER_PAGE)
@@ -161,7 +161,7 @@ class BilibiliComics : HttpSource() {
         val jsonPayload = buildJsonObject {
             put("area_id", -1)
             put("is_finish", status)
-            put("is_free", 1)
+            put("is_free", -1)
             put("order", order)
             put("page_num", page)
             put("page_size", pageSize)
@@ -272,6 +272,11 @@ class BilibiliComics : HttpSource() {
         description = comic.classicLines
         thumbnail_url = comic.verticalCover
         url = "/detail/mc" + comic.id
+
+        if (comic.episodeList.any { episode -> episode.payMode == 1 && episode.payGold > 0 }) {
+            description += "\n\nThis series have paid chapters that were filtered out from the " +
+                "chapter list. Use the BILIBILI website or the official app to read them for now."
+        }
     }
 
     // Chapters are available in the same url of the manga details.
@@ -284,7 +289,7 @@ class BilibiliComics : HttpSource() {
             return emptyList()
 
         return result.data!!.episodeList
-            .filterNot { episode -> episode.isLocked }
+            .filter { episode -> episode.payMode == 0 && episode.payGold == 0 }
             .map { ep -> chapterFromObject(ep, result.data.id) }
     }
 
@@ -297,7 +302,10 @@ class BilibiliComics : HttpSource() {
     override fun pageListRequest(chapter: SChapter): Request {
         val chapterId = chapter.url.substringAfterLast("/").toInt()
 
-        val jsonPayload = buildJsonObject { put("ep_id", chapterId) }
+        val jsonPayload = buildJsonObject {
+            put("credential", "")
+            put("ep_id", chapterId)
+        }
         val requestBody = jsonPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
 
         val newHeaders = headersBuilder()
@@ -412,6 +420,8 @@ class BilibiliComics : HttpSource() {
         const val PREFIX_ID_SEARCH = "id:"
         private val ID_SEARCH_PATTERN = "^id:(mc)?(\\d+)$".toRegex()
 
-        private val DATE_FORMATTER by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH) }
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
+        }
     }
 }
