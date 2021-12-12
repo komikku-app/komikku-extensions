@@ -200,7 +200,7 @@ abstract class MMRCMS(
     }
     private fun latestUpdatesSelector() = "div.mangalist div.manga-item"
     private fun latestUpdatesNextPageSelector() = "a[rel=next]"
-    private fun latestUpdatesFromElement(element: Element, urlSelector: String): SManga? {
+    protected open fun latestUpdatesFromElement(element: Element, urlSelector: String): SManga? {
         return element.select(urlSelector).first().let { titleElement ->
             if (titleElement.text() in latestTitles) {
                 null
@@ -215,7 +215,7 @@ abstract class MMRCMS(
         }
     }
     private fun gridLatestUpdatesSelector() = "div.mangalist div.manga-item, div.grid-manga tr"
-    private fun gridLatestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
+    protected open fun gridLatestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
         element.select("a.chart-title").let {
             setUrlWithoutDomain(it.attr("href"))
             title = it.text()
@@ -223,7 +223,7 @@ abstract class MMRCMS(
         thumbnail_url = element.select("img").attr("abs:src")
     }
 
-    private fun internalMangaParse(response: Response): MangasPage {
+    protected open fun internalMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
 
         val internalMangaSelector = when (name) {
