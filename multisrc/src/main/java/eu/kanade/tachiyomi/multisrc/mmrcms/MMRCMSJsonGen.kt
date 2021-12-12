@@ -3,8 +3,10 @@ package eu.kanade.tachiyomi.multisrc.mmrcms
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.os.Build
-import com.google.gson.Gson
 import eu.kanade.tachiyomi.multisrc.mmrcms.MMRCMSSources.Companion.sourceList
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
@@ -24,7 +26,6 @@ import javax.net.ssl.X509TrustManager
  *
  * CMS: https://getcyberworks.com/product/manga-reader-cms/
  */
-
 class MMRCMSJsonGen {
     // private var preRunTotal: String
 
@@ -40,18 +41,12 @@ class MMRCMSJsonGen {
         val formattedDate = dateTime.format(DateTimeFormatter.RFC_1123_DATE_TIME)
         buffer.append("package eu.kanade.tachiyomi.multisrc.mmrcms")
         buffer.append("\n\n// GENERATED FILE, DO NOT MODIFY!\n// Generated $formattedDate\n\n")
-        buffer.append("class SourceData() {\n")
-        buffer.append("    companion object {\n")
-        buffer.append("        fun giveMetaData(url:String): String{\n")
-        buffer.append("            return when (url) {\n")
+        buffer.append("object SourceData {\n")
+        buffer.append("    fun giveMetaData(url: String) = when (url) {\n")
         var number = 1
         sources.forEach {
+            println("Generating ${it.name}")
             try {
-                val map = mutableMapOf<String, Any>()
-                map["name"] = it.name
-                map["base_url"] = it.baseUrl
-                map["supports_latest"] = supportsLatest(it.baseUrl)
-
                 val advancedSearchDocument = getDocument("${it.baseUrl}/advanced-search", false)
 
                 var parseCategories = mutableListOf<Map<String, String>>()
@@ -76,35 +71,35 @@ class MMRCMSJsonGen {
                 if (parseCategories.isEmpty()) {
                     parseCategories = parseCategories(mangaListDocument)
                 }
-                map["item_url"] = "$itemUrl/"
-                map["categories"] = parseCategories
+
                 val tags = parseTags(mangaListDocument)
-                map["tags"] = "null"
-                if (tags.size in 1..49) {
-                    map["tags"] = tags
-                }
+
+                val source = SourceDataModel(
+                    name = it.name,
+                    base_url = it.baseUrl,
+                    supports_latest = supportsLatest(it.baseUrl),
+                    item_url = "$itemUrl/",
+                    categories = parseCategories,
+                    tags = if (tags.size in 1..49) tags else null,
+                )
 
                 if (!itemUrl.startsWith(it.baseUrl)) println("**Note: ${it.name} URL does not match! Check for changes: \n ${it.baseUrl} vs $itemUrl")
 
-                val toJson = Gson().toJson(map)
-
-                buffer.append("                \"${it.baseUrl}\" -> \"\"\"$toJson\"\"\"\n")
+                buffer.append("        \"${it.baseUrl}\" -> \"\"\"${Json.encodeToString(source)}\"\"\"\n")
                 number++
             } catch (e: Exception) {
                 println("error generating source ${it.name} ${e.printStackTrace()}")
             }
         }
 
-        buffer.append("                else -> \"\"\n")
-        buffer.append("            }\n")
-        buffer.append("        }\n")
+        buffer.append("        else -> \"\"\n")
         buffer.append("    }\n")
         buffer.append("}\n")
         // println("Pre-run sources: $preRunTotal")
         println("Post-run sources: ${number - 1}")
-        val writer = PrintWriter(relativePath)
-        writer.write(buffer.toString())
-        writer.close()
+        PrintWriter(relativePath).use {
+            it.write(buffer.toString())
+        }
     }
 
     private fun getDocument(url: String, printStackTrace: Boolean = true): Document? {
@@ -139,20 +134,14 @@ class MMRCMSJsonGen {
         return null
     }
 
-    private fun parseTags(mangaListDocument: Document): MutableList<Map<String, String>> {
+    private fun parseTags(mangaListDocument: Document): List<Map<String, String>> {
         val elements = mangaListDocument.select("div.tag-links a")
-
-        if (elements.isEmpty()) {
-            return mutableListOf()
+        return elements.map {
+            mapOf(
+                "id" to it.attr("href").substringAfterLast("/"),
+                "name" to it.text(),
+            )
         }
-        val array = mutableListOf<Map<String, String>>()
-        elements.forEach {
-            val map = mutableMapOf<String, String>()
-            map["id"] = it.attr("href").substringAfterLast("/")
-            map["name"] = it.text()
-            array.add(map)
-        }
-        return array
     }
 
     private fun getItemUrl(document: Document?, url: String): String {
@@ -169,24 +158,18 @@ class MMRCMSJsonGen {
     }
 
     private fun parseCategories(document: Document): MutableList<Map<String, String>> {
-        val array = mutableListOf<Map<String, String>>()
         val elements = document.select("select[name^=categories] option, a.category")
-        if (elements.size == 0) {
-            return mutableListOf()
-        }
-        var id = 1
-        elements.forEach {
-            val map = mutableMapOf<String, String>()
-            map["id"] = id.toString()
-            map["name"] = it.text()
-            array.add(map)
-            id++
-        }
-        return array
+        return elements.mapIndexed { index, element ->
+            mapOf(
+                "id" to (index + 1).toString(),
+                "name" to element.text(),
+            )
+        }.toMutableList()
     }
 
     @Throws(Exception::class)
     private fun getOkHttpClient(): OkHttpClient {
+        // Create all-trusting host name verifier
         val trustAllCerts = arrayOf<TrustManager>(
             object : X509TrustManager {
                 @SuppressLint("TrustAllX509TrustManager")
@@ -206,13 +189,10 @@ class MMRCMSJsonGen {
         )
 
         // Install the all-trusting trust manager
-
-        val sc = SSLContext.getInstance("SSL")
-        sc.init(null, trustAllCerts, java.security.SecureRandom())
+        val sc = SSLContext.getInstance("SSL").apply {
+            init(null, trustAllCerts, java.security.SecureRandom())
+        }
         val sslSocketFactory = sc.socketFactory
-
-        // Create all-trusting host name verifier
-        // Install the all-trusting host verifier
 
         return OkHttpClient.Builder()
             .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
@@ -222,6 +202,16 @@ class MMRCMSJsonGen {
             .writeTimeout(1, TimeUnit.MINUTES)
             .build()
     }
+
+    @Serializable
+    private data class SourceDataModel(
+        val name: String,
+        val base_url: String,
+        val supports_latest: Boolean,
+        val item_url: String,
+        val categories: List<Map<String, String>>,
+        val tags: List<Map<String, String>>? = null,
+    )
 
     companion object {
         val sources = sourceList

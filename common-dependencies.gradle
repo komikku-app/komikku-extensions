@@ -10,7 +10,6 @@ dependencies {
     compileOnly 'com.squareup.okhttp3:okhttp:4.9.1'
     compileOnly 'io.reactivex:rxjava:1.3.8'
     compileOnly 'org.jsoup:jsoup:1.13.1'
-    compileOnly 'com.google.code.gson:gson:2.8.6'
     compileOnly 'org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.2.0'
     compileOnly 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.0'
 }

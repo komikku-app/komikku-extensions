@@ -79,11 +79,7 @@ abstract class MMRCMS(
     override val supportsLatest = jsonObject["supports_latest"]!!.jsonPrimitive.boolean
     open val itemUrl = jsonObject["item_url"]!!.jsonPrimitive.content
     open val categoryMappings = mapToPairs(jsonObject["categories"]!!.jsonArray)
-    open var tagMappings = if (jsonObject["tags"] is JsonArray) {
-        mapToPairs(jsonObject["tags"]!!.jsonArray)
-    } else {
-        emptyList()
-    }
+    open var tagMappings = jsonObject["tags"]?.jsonArray?.let { mapToPairs(it) } ?: emptyList()
 
     /**
      * Map an array of JSON objects to pairs. Each JSON object must have
