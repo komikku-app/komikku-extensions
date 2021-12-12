@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.es.kumanga
 
 import android.util.Base64
-import com.github.salomonbrys.kotson.jsonObject
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.Filter

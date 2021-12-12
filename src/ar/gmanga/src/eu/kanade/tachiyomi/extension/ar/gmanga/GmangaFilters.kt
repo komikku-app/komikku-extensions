@@ -1,14 +1,16 @@
 package eu.kanade.tachiyomi.extension.ar.gmanga
 
 import android.annotation.SuppressLint
-import com.github.salomonbrys.kotson.addAll
-import com.github.salomonbrys.kotson.addProperty
-import com.google.gson.JsonArray
-import com.google.gson.JsonNull
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
-import java.lang.Exception
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
@@ -35,139 +37,90 @@ class GmangaFilters() {
             val dateRangeFilter = filters.findInstance<DateRangeFilter>()!!
             val categoryFilter = filters.findInstance<CategoryFilter>()!!
 
-            return JsonObject().apply {
-
+            return buildJsonObject {
                 oneShotFilter.state.first().let {
                     when {
-                        it.isIncluded() -> addProperty("oneshot", true)
-                        it.isExcluded() -> addProperty("oneshot", false)
-                        else -> addProperty("oneshot", JsonNull.INSTANCE)
+                        it.isIncluded() -> put("oneshot", true)
+                        it.isExcluded() -> put("oneshot", false)
+                        else -> put("oneshot", JsonNull)
                     }
                 }
 
-                addProperty("title", query)
-                addProperty("page", page)
-                addProperty(
-                    "manga_types",
-                    JsonObject().apply {
-
-                        addProperty(
-                            "include",
-                            JsonArray().apply {
-                                addAll(mangaTypeFilter.state.filter { it.isIncluded() }.map { it.id })
-                            }
-                        )
-
-                        addProperty(
-                            "exclude",
-                            JsonArray().apply {
-                                addAll(mangaTypeFilter.state.filter { it.isExcluded() }.map { it.id })
-                            }
-                        )
+                put("title", query)
+                put("page", page)
+                putJsonObject("manga_types") {
+                    putJsonArray("include") {
+                        mangaTypeFilter.state.filter { it.isIncluded() }.map { it.id }.forEach { add(it) }
                     }
-                )
-                addProperty(
-                    "story_status",
-                    JsonObject().apply {
 
-                        addProperty(
-                            "include",
-                            JsonArray().apply {
-                                addAll(storyStatusFilter.state.filter { it.isIncluded() }.map { it.id })
-                            }
-                        )
-
-                        addProperty(
-                            "exclude",
-                            JsonArray().apply {
-                                addAll(storyStatusFilter.state.filter { it.isExcluded() }.map { it.id })
-                            }
-                        )
+                    putJsonArray("exclude") {
+                        mangaTypeFilter.state.filter { it.isExcluded() }.map { it.id }.forEach { add(it) }
                     }
-                )
-                addProperty(
-                    "translation_status",
-                    JsonObject().apply {
-
-                        addProperty(
-                            "include",
-                            JsonArray().apply {
-                                addAll(translationStatusFilter.state.filter { it.isIncluded() }.map { it.id })
-                            }
-                        )
-
-                        addProperty(
-                            "exclude",
-                            JsonArray().apply {
-                                addAll(translationStatusFilter.state.filter { it.isExcluded() }.map { it.id })
-                            }
-                        )
+                }
+                putJsonObject("story_status") {
+                    putJsonArray("include") {
+                        storyStatusFilter.state.filter { it.isIncluded() }.map { it.id }.forEach { add(it) }
                     }
-                )
-                addProperty(
-                    "categories",
-                    JsonObject().apply {
 
-                        addProperty(
-                            "include",
-                            JsonArray().apply {
-                                add(JsonNull.INSTANCE) // always included, maybe to avoid shifting index in the backend
-                                addAll(categoryFilter.state.filter { it.isIncluded() }.map { it.id })
-                            }
-                        )
-
-                        addProperty(
-                            "exclude",
-                            JsonArray().apply {
-                                addAll(categoryFilter.state.filter { it.isExcluded() }.map { it.id })
-                            }
-                        )
+                    putJsonArray("exclude") {
+                        storyStatusFilter.state.filter { it.isExcluded() }.map { it.id }.forEach { add(it) }
                     }
-                )
-                addProperty(
-                    "chapters",
-                    JsonObject().apply {
-
-                        addPropertyFromValidatingTextFilter(
-                            chapterCountFilter.state.first {
-                                it.id == FILTER_ID_MIN_CHAPTER_COUNT
-                            },
-                            "min",
-                            ERROR_INVALID_MIN_CHAPTER_COUNT,
-                            ""
-                        )
-
-                        addPropertyFromValidatingTextFilter(
-                            chapterCountFilter.state.first {
-                                it.id == FILTER_ID_MAX_CHAPTER_COUNT
-                            },
-                            "max",
-                            ERROR_INVALID_MAX_CHAPTER_COUNT,
-                            ""
-                        )
+                }
+                putJsonObject("translation_status") {
+                    putJsonArray("include") {
+                        translationStatusFilter.state.filter { it.isIncluded() }.map { it.id }.forEach { add(it) }
                     }
-                )
-                addProperty(
-                    "dates",
-                    JsonObject().apply {
 
-                        addPropertyFromValidatingTextFilter(
-                            dateRangeFilter.state.first {
-                                it.id == FILTER_ID_START_DATE
-                            },
-                            "start",
-                            ERROR_INVALID_START_DATE
-                        )
-
-                        addPropertyFromValidatingTextFilter(
-                            dateRangeFilter.state.first {
-                                it.id == FILTER_ID_END_DATE
-                            },
-                            "end",
-                            ERROR_INVALID_END_DATE
-                        )
+                    putJsonArray("exclude") {
+                        translationStatusFilter.state.filter { it.isExcluded() }.map { it.id }.forEach { add(it) }
                     }
-                )
+                }
+                putJsonObject("categories") {
+                    putJsonArray("include") {
+                        add(JsonNull) // always included, maybe to avoid shifting index in the backend
+                        categoryFilter.state.filter { it.isIncluded() }.map { it.id }.forEach { add(it) }
+                    }
+
+                    putJsonArray("exclude") {
+                        categoryFilter.state.filter { it.isExcluded() }.map { it.id }.forEach { add(it) }
+                    }
+                }
+                putJsonObject("chapters") {
+                    putFromValidatingTextFilter(
+                        chapterCountFilter.state.first {
+                            it.id == FILTER_ID_MIN_CHAPTER_COUNT
+                        },
+                        "min",
+                        ERROR_INVALID_MIN_CHAPTER_COUNT,
+                        ""
+                    )
+
+                    putFromValidatingTextFilter(
+                        chapterCountFilter.state.first {
+                            it.id == FILTER_ID_MAX_CHAPTER_COUNT
+                        },
+                        "max",
+                        ERROR_INVALID_MAX_CHAPTER_COUNT,
+                        ""
+                    )
+                }
+                putJsonObject("dates") {
+                    putFromValidatingTextFilter(
+                        dateRangeFilter.state.first {
+                            it.id == FILTER_ID_START_DATE
+                        },
+                        "start",
+                        ERROR_INVALID_START_DATE
+                    )
+
+                    putFromValidatingTextFilter(
+                        dateRangeFilter.state.first {
+                            it.id == FILTER_ID_END_DATE
+                        },
+                        "end",
+                        ERROR_INVALID_END_DATE
+                    )
+                }
             }
         }
 
@@ -298,7 +251,7 @@ class GmangaFilters() {
             }
         }
 
-        private fun JsonObject.addPropertyFromValidatingTextFilter(
+        private fun JsonObjectBuilder.putFromValidatingTextFilter(
             filter: ValidatingTextFilter,
             property: String,
             invalidErrorMessage: String,
@@ -307,9 +260,9 @@ class GmangaFilters() {
             filter.let {
                 when {
                     it.state == "" -> if (default == null) {
-                        addProperty(property, JsonNull.INSTANCE)
-                    } else addProperty(property, default)
-                    it.isValid() -> addProperty(property, it.state)
+                        put(property, JsonNull)
+                    } else put(property, default)
+                    it.isValid() -> put(property, it.state)
                     else -> throw Exception(invalidErrorMessage)
                 }
             }

@@ -1,9 +1,5 @@
 package eu.kanade.tachiyomi.extension.ru.comx
 
-import com.github.salomonbrys.kotson.get
-import com.github.salomonbrys.kotson.nullArray
-import com.github.salomonbrys.kotson.obj
-import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -15,6 +11,12 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -23,12 +25,16 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class ComX : ParsedHttpSource() {
+
+    private val json: Json by injectLazy()
+
     override val name = "Com-x"
 
     override val baseUrl = "https://com-x.life"
@@ -186,13 +192,13 @@ class ComX : ParsedHttpSource() {
             .substringBefore("</script>")
             .substringBeforeLast(";")
 
-        val data = JsonParser.parseString(dataStr).obj
-        val chaptersList = data["chapters"].nullArray
+        val data = json.decodeFromString<JsonObject>(dataStr)
+        val chaptersList = data["chapters"]?.jsonArray
         val chapters: List<SChapter>? = chaptersList?.map {
             val chapter = SChapter.create()
-            chapter.name = it["title"].asString
-            chapter.date_upload = parseDate(it["date"].asString)
-            chapter.setUrlWithoutDomain("/readcomix/" + data["news_id"] + "/" + it["id"] + ".html")
+            chapter.name = it.jsonObject["title"]!!.jsonPrimitive.content
+            chapter.date_upload = parseDate(it.jsonObject["date"]!!.jsonPrimitive.content)
+            chapter.setUrlWithoutDomain("/readcomix/" + data["news_id"] + "/" + it.jsonObject["id"]!!.jsonPrimitive.content + ".html")
             chapter
         }
         return chapters ?: emptyList()

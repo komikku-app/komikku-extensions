@@ -5,18 +5,6 @@ import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import com.github.salomonbrys.kotson.array
-import com.github.salomonbrys.kotson.get
-import com.github.salomonbrys.kotson.int
-import com.github.salomonbrys.kotson.nullArray
-import com.github.salomonbrys.kotson.nullInt
-import com.github.salomonbrys.kotson.nullString
-import com.github.salomonbrys.kotson.obj
-import com.github.salomonbrys.kotson.string
-import com.github.salomonbrys.kotson.toMap
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -30,6 +18,17 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -39,12 +38,15 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class LibManga : ConfigurableSource, HttpSource() {
 
+    private val json: Json by injectLazy()
+    
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_${id}_2", 0x0000)
     }
@@ -71,8 +73,6 @@ class LibManga : ConfigurableSource, HttpSource() {
         add("Accept", "image/webp,*/*;q=0.8")
         add("Referer", baseUrl)
     }
-
-    private val jsonParser = JsonParser()
 
     override fun latestUpdatesRequest(page: Int) = GET(baseUrl, headers)
 
@@ -135,21 +135,21 @@ class LibManga : ConfigurableSource, HttpSource() {
 
     override fun popularMangaParse(response: Response): MangasPage {
         val resBody = response.body!!.string()
-        val result = jsonParser.parse(resBody).obj
-        val items = result["items"]
-        val popularMangas = items["data"].nullArray?.map { popularMangaFromElement(it) }
+        val result = json.decodeFromString<JsonObject>(resBody)
+        val items = result["items"]!!.jsonObject
+        val popularMangas = items["data"]?.jsonArray?.map { popularMangaFromElement(it) }
 
         if (popularMangas != null) {
-            val hasNextPage = items["next_page_url"].nullString != null
+            val hasNextPage = items["next_page_url"]?.jsonPrimitive?.contentOrNull != null
             return MangasPage(popularMangas, hasNextPage)
         }
         return MangasPage(emptyList(), false)
     }
 
     private fun popularMangaFromElement(el: JsonElement) = SManga.create().apply {
-        val slug = el["slug"].string
-        val cover = el["cover"].string
-        title = if (titleLanguage.equals("rus")) el["rus_name"].string else el["name"].string
+        val slug = el.jsonObject["slug"]!!.jsonPrimitive.content
+        val cover = el.jsonObject["cover"]!!.jsonPrimitive.content
+        title = if (titleLanguage.equals("rus")) el.jsonObject["rus_name"]!!.jsonPrimitive.content else el.jsonObject["name"]!!.jsonPrimitive.content
         thumbnail_url = "$COVER_URL/uploads/cover/$slug/cover/${cover}_250x350.jpg"
         url = "/$slug"
     }
@@ -232,17 +232,17 @@ class LibManga : ConfigurableSource, HttpSource() {
             .substringBefore("window._SITE_COLOR_")
             .substringBeforeLast(";")
 
-        val data = jsonParser.parse(dataStr).obj
-        val chaptersList = data["chapters"]["list"].nullArray
-        val slug = data["manga"]["slug"].string
-        val branches = data["chapters"]["branches"].array.reversed()
+        val data = json.decodeFromString<JsonObject>(dataStr)
+        val chaptersList = data["chapters"]!!.jsonObject["list"]?.jsonArray
+        val slug = data["manga"]!!.jsonObject["slug"]!!.jsonPrimitive.content
+        val branches = data["chapters"]!!.jsonObject["branches"]!!.jsonArray.reversed()
         val sortingList = preferences.getString(SORTING_PREF, "ms_mixing")
 
         val chapters: List<SChapter>? = if (branches.isNotEmpty() && !sortingList.equals("ms_mixing")) {
             sortChaptersByTranslator(sortingList, chaptersList, slug, branches)
         } else {
             chaptersList
-                ?.filter { it["status"].nullInt != 2 }
+                ?.filter { it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
                 ?.map { chapterFromElement(it, sortingList, slug) }
         }
 
@@ -256,9 +256,9 @@ class LibManga : ConfigurableSource, HttpSource() {
             "ms_combining" -> {
                 val tempChaptersList = mutableListOf<SChapter>()
                 for (currentBranch in branches.withIndex()) {
-                    val teamId = branches[currentBranch.index]["id"].int
+                    val teamId = branches[currentBranch.index].jsonObject["id"]!!.jsonPrimitive.int
                     chapters = chaptersList
-                        ?.filter { it["branch_id"].nullInt == teamId && it["status"].nullInt != 2 }
+                        ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
                         ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
                     chapters?.let { tempChaptersList.addAll(it) }
                 }
@@ -267,26 +267,26 @@ class LibManga : ConfigurableSource, HttpSource() {
             "ms_largest" -> {
                 val sizesChaptersLists = mutableListOf<Int>()
                 for (currentBranch in branches.withIndex()) {
-                    val teamId = branches[currentBranch.index]["id"].int
+                    val teamId = branches[currentBranch.index].jsonObject["id"]!!.jsonPrimitive.int
                     val chapterSize = chaptersList
-                        ?.filter { it["branch_id"].nullInt == teamId }!!.size
+                        ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId }!!.size
                     sizesChaptersLists.add(chapterSize)
                 }
                 val max = sizesChaptersLists.indexOfFirst { it == sizesChaptersLists.maxOrNull() ?: 0 }
-                val teamId = branches[max]["id"].int
+                val teamId = branches[max].jsonObject["id"]!!.jsonPrimitive.int
 
                 chapters = chaptersList
-                    ?.filter { it["branch_id"].nullInt == teamId && it["status"].nullInt != 2 }
+                    ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
                     ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
             }
             "ms_active" -> {
                 for (currentBranch in branches.withIndex()) {
-                    val teams = branches[currentBranch.index]["teams"].array
+                    val teams = branches[currentBranch.index].jsonObject["teams"]!!.jsonArray
                     for (currentTeam in teams.withIndex()) {
-                        if (teams[currentTeam.index]["is_active"].int == 1) {
-                            val teamId = branches[currentBranch.index]["id"].int
+                        if (teams[currentTeam.index].jsonObject["is_active"]!!.jsonPrimitive.int == 1) {
+                            val teamId = branches[currentBranch.index].jsonObject["id"]!!.jsonPrimitive.int
                             chapters = chaptersList
-                                ?.filter { it["branch_id"].nullInt == teamId && it["status"].nullInt != 2 }
+                                ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
                                 ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
                             break
                         }
@@ -303,23 +303,23 @@ class LibManga : ConfigurableSource, HttpSource() {
     (chapterItem: JsonElement, sortingList: String?, slug: String, teamIdParam: Int? = null, branches: List<JsonElement>? = null): SChapter {
         val chapter = SChapter.create()
 
-        val volume = chapterItem["chapter_volume"].int
-        val number = chapterItem["chapter_number"].string
+        val volume = chapterItem.jsonObject["chapter_volume"]!!.jsonPrimitive.int
+        val number = chapterItem.jsonObject["chapter_number"]!!.jsonPrimitive.content
         val teamId = if (teamIdParam != null) "?bid=$teamIdParam" else ""
 
         val url = "$baseUrl/$slug/v$volume/c$number$teamId"
 
         chapter.setUrlWithoutDomain(url)
 
-        val nameChapter = chapterItem["chapter_name"].nullString
+        val nameChapter = chapterItem.jsonObject["chapter_name"]?.jsonPrimitive?.contentOrNull
         val fullNameChapter = "Том $volume. Глава $number"
 
         if (!sortingList.equals("ms_mixing")) {
-            chapter.scanlator = branches?.let { getScanlatorTeamName(it, chapterItem) } ?: chapterItem["username"].string
+            chapter.scanlator = branches?.let { getScanlatorTeamName(it, chapterItem) } ?: chapterItem.jsonObject["username"]!!.jsonPrimitive.content
         }
         chapter.name = if (nameChapter.isNullOrBlank()) fullNameChapter else "$fullNameChapter - $nameChapter"
         chapter.date_upload = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-            .parse(chapterItem["chapter_created_at"].string.substringBefore(" "))?.time ?: 0L
+            .parse(chapterItem.jsonObject["chapter_created_at"]!!.jsonPrimitive.content.substringBefore(" "))?.time ?: 0L
 
         return chapter
     }
@@ -327,15 +327,15 @@ class LibManga : ConfigurableSource, HttpSource() {
     private fun getScanlatorTeamName(branches: List<JsonElement>, chapterItem: JsonElement): String? {
         var scanlatorData: String? = null
         for (currentBranch in branches.withIndex()) {
-            val branch = branches[currentBranch.index]
-            val teams = branch["teams"].array
-            if (chapterItem["branch_id"].int == branch["id"].int) {
+            val branch = branches[currentBranch.index].jsonObject
+            val teams = branch["teams"]!!.jsonArray
+            if (chapterItem.jsonObject["branch_id"]!!.jsonPrimitive.int == branch["id"]!!.jsonPrimitive.int) {
                 for (currentTeam in teams.withIndex()) {
-                    val team = teams[currentTeam.index]
-                    val scanlatorId = chapterItem["chapter_scanlator_id"].int
-                    scanlatorData = if ((scanlatorId == team["id"].int) ||
-                        (scanlatorId == 0 && team["is_active"].int == 1)
-                    ) team["name"].string else branch["teams"][0]["name"].string
+                    val team = teams[currentTeam.index].jsonObject
+                    val scanlatorId = chapterItem.jsonObject["chapter_scanlator_id"]!!.jsonPrimitive.int
+                    scanlatorData = if ((scanlatorId == team.jsonObject["id"]!!.jsonPrimitive.int) ||
+                        (scanlatorId == 0 && team["is_active"]!!.jsonPrimitive.int == 1)
+                    ) team["name"]!!.jsonPrimitive.content else branch["teams"]!!.jsonArray[0].jsonObject["name"]!!.jsonPrimitive.content
                 }
             }
         }
@@ -371,11 +371,11 @@ class LibManga : ConfigurableSource, HttpSource() {
             .split(";")
             .first()
 
-        val chapInfoJson = jsonParser.parse(chapInfo).obj
-        val servers = chapInfoJson["servers"].asJsonObject.toMap()
-        val defaultServer: String = chapInfoJson["img"]["server"].string
+        val chapInfoJson = json.decodeFromString<JsonObject>(chapInfo)
+        val servers = chapInfoJson["servers"]!!.jsonObject.toMap()
+        val defaultServer: String = chapInfoJson["img"]!!.jsonObject["server"]!!.jsonPrimitive.content
         val autoServer = setOf("secondary", "fourth", defaultServer, "compress")
-        val imgUrl: String = chapInfoJson["img"]["url"].string
+        val imgUrl: String = chapInfoJson["img"]!!.jsonObject["url"]!!.jsonPrimitive.content
 
         val serverToUse = when (this.server) {
             null -> autoServer
@@ -392,15 +392,15 @@ class LibManga : ConfigurableSource, HttpSource() {
             .removePrefix("window.__pg = ")
             .removeSuffix(";")
 
-        val pagesJson = jsonParser.parse(pagesArr).array
+        val pagesJson = json.decodeFromString<JsonArray>(pagesArr)
         val pages = mutableListOf<Page>()
 
         pagesJson.forEach { page ->
             val keys = servers.keys.filter { serverToUse.indexOf(it) >= 0 }.sortedBy { serverToUse.indexOf(it) }
             val serversUrls = keys.map {
-                servers[it]?.string + imgUrl + page["u"].string
+                servers[it]?.jsonPrimitive?.contentOrNull + imgUrl + page.jsonObject["u"]!!.jsonPrimitive.content
             }.joinToString(separator = ",,") { it }
-            pages.add(Page(page["p"].int, serversUrls))
+            pages.add(Page(page.jsonObject["p"]!!.jsonPrimitive.int, serversUrls))
         }
 
         return pages
@@ -523,7 +523,7 @@ class LibManga : ConfigurableSource, HttpSource() {
             )
                 .execute().body!!.string()
 
-            val jsonList = jsonParser.parse(popup).array
+            val jsonList = json.decodeFromString<JsonArray>(popup)
             jsonList.forEach {
                 mangas.add(popularMangaFromElement(it))
             }

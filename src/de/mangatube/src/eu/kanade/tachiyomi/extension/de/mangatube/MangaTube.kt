@@ -1,10 +1,5 @@
 package eu.kanade.tachiyomi.extension.de.mangatube
 
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -14,14 +9,22 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -45,7 +48,7 @@ class MangaTube : ParsedHttpSource() {
 
     private val xhrHeaders: Headers = headersBuilder().add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8").build()
 
-    private val gson by lazy { Gson() }
+    private val json: Json by injectLazy()
 
     // Popular
 
@@ -59,21 +62,21 @@ class MangaTube : ParsedHttpSource() {
 
     override fun popularMangaRequest(page: Int): Request {
         val rbodyContent = "action=load_series_list_entries&parameter%5Bpage%5D=$page&parameter%5Bletter%5D=&parameter%5Bsortby%5D=popularity&parameter%5Border%5D=asc"
-        return POST("$baseUrl/ajax", xhrHeaders, RequestBody.create(null, rbodyContent))
+        return POST("$baseUrl/ajax", xhrHeaders, rbodyContent.toRequestBody(null))
     }
 
     // popular uses "success" as a key, search uses "suggestions"
     // for future reference: if adding filters, advanced search might use a different key
     private fun parseMangaFromJson(response: Response, hasNextPage: Boolean): MangasPage {
         var titleKey = "manga_title"
-        val mangas = gson.fromJson<JsonObject>(response.body!!.string())
-            .let { it["success"] ?: it["suggestions"].also { titleKey = "value" } }
-            .asJsonArray
+        val mangas = json.decodeFromString<JsonObject>(response.body!!.string())
+            .let { it["success"] ?: it["suggestions"].also { titleKey = "value" } }!!
+            .jsonArray
             .map { json ->
                 SManga.create().apply {
-                    title = json[titleKey].asString
-                    url = "/series/${json["manga_slug"].asString}"
-                    thumbnail_url = json["covers"][0]["img_name"].asString
+                    title = json.jsonObject[titleKey]!!.jsonPrimitive.content
+                    url = "/series/${json.jsonObject["manga_slug"]!!.jsonPrimitive.content}"
+                    thumbnail_url = json.jsonObject["covers"]!!.jsonArray[0].jsonObject["img_name"]!!.jsonPrimitive.content
                 }
             }
         return MangasPage(mangas, hasNextPage)
@@ -109,7 +112,7 @@ class MangaTube : ParsedHttpSource() {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val rbodyContent = "action=search_query&parameter%5Bquery%5D=$query"
-        return POST("$baseUrl/ajax", xhrHeaders, RequestBody.create(null, rbodyContent))
+        return POST("$baseUrl/ajax", xhrHeaders, rbodyContent.toRequestBody(null))
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
@@ -173,8 +176,8 @@ class MangaTube : ParsedHttpSource() {
         val jsonArray = Regex("""pages: (\[.*]),""").find(script)?.groupValues?.get(1)
             ?: throw Exception("Couldn't find JSON array")
 
-        return gson.fromJson<JsonArray>(jsonArray).mapIndexed { i, json ->
-            Page(i, "", imagePath + json.asJsonObject["file_name"].asString)
+        return json.decodeFromString<JsonArray>(jsonArray).mapIndexed { i, json ->
+            Page(i, "", imagePath + json.jsonObject["file_name"]!!.jsonPrimitive.content)
         }
     }
 

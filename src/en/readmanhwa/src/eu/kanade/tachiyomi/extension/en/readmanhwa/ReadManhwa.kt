@@ -2,14 +2,6 @@ package eu.kanade.tachiyomi.extension.en.readmanhwa
 
 import android.app.Application
 import android.content.SharedPreferences
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.github.salomonbrys.kotson.int
-import com.github.salomonbrys.kotson.nullString
-import com.github.salomonbrys.kotson.string
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -20,6 +12,15 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -28,6 +29,7 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -54,20 +56,20 @@ class ReadManhwa : ConfigurableSource, HttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val gson = Gson()
+    private val json: Json by injectLazy()
 
     private fun parseMangaFromJson(response: Response): MangasPage {
-        val jsonObject = gson.fromJson<JsonObject>(response.body!!.string())
+        val jsonObject = json.decodeFromString<JsonObject>(response.body!!.string())
 
-        val mangas = jsonObject["data"].asJsonArray.map { json ->
+        val mangas = jsonObject["data"]!!.jsonArray.map { json ->
             SManga.create().apply {
-                title = json["title"].string
-                thumbnail_url = json["image_url"].string
-                url = json["slug"].string
+                title = json.jsonObject["title"]!!.jsonPrimitive.content
+                thumbnail_url = json.jsonObject["image_url"]!!.jsonPrimitive.content
+                url = json.jsonObject["slug"]!!.jsonPrimitive.content
             }
         }
 
-        return MangasPage(mangas, jsonObject["current_page"].int < jsonObject["last_page"].int)
+        return MangasPage(mangas, jsonObject["current_page"]!!.jsonPrimitive.int < jsonObject["last_page"]!!.jsonPrimitive.int)
     }
     private fun getMangaUrl(url: String): String {
         return url.toHttpUrlOrNull()!!.newBuilder()
@@ -159,15 +161,15 @@ class ReadManhwa : ConfigurableSource, HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val jsonObject = gson.fromJson<JsonObject>(response.body!!.string())
+        val jsonObject = json.decodeFromString<JsonObject>(response.body!!.string())
 
         return SManga.create().apply {
-            description = jsonObject["description"].nullString
-            status = jsonObject["status"].nullString.toStatus()
-            thumbnail_url = jsonObject["image_url"].nullString
-            genre = try { jsonObject["tags"].asJsonArray.joinToString { it["name"].string } } catch (_: Exception) { null }
-            artist = try { jsonObject["artists"].asJsonArray.joinToString { it["name"].string } } catch (_: Exception) { null }
-            author = try { jsonObject["authors"].asJsonArray.joinToString { it["name"].string } } catch (_: Exception) { null }
+            description = jsonObject["description"]!!.jsonPrimitive.contentOrNull
+            status = jsonObject["status"]!!.jsonPrimitive.contentOrNull.toStatus()
+            thumbnail_url = jsonObject["image_url"]!!.jsonPrimitive.contentOrNull
+            genre = try { jsonObject["tags"]!!.jsonArray.joinToString { it.jsonObject["name"]!!.jsonPrimitive.content } } catch (_: Exception) { null }
+            artist = try { jsonObject["artists"]!!.jsonArray.joinToString { it.jsonObject["name"]!!.jsonPrimitive.content } } catch (_: Exception) { null }
+            author = try { jsonObject["authors"]!!.jsonArray.joinToString { it.jsonObject["name"]!!.jsonPrimitive.content } } catch (_: Exception) { null }
         }
     }
 
@@ -193,11 +195,11 @@ class ReadManhwa : ConfigurableSource, HttpSource() {
     }
 
     private fun chapterListParse(response: Response, titleSlug: String): List<SChapter> {
-        return gson.fromJson<JsonArray>(response.body!!.string()).map { json ->
+        return json.decodeFromString<JsonArray>(response.body!!.string()).map { json ->
             SChapter.create().apply {
-                name = json["name"].string
-                url = "$titleSlug/${json["slug"].string}"
-                date_upload = json["added_at"].string.let { dateString ->
+                name = json.jsonObject["name"]!!.jsonPrimitive.content
+                url = "$titleSlug/${json.jsonObject["slug"]!!.jsonPrimitive.content}"
+                date_upload = json.jsonObject["added_at"]!!.jsonPrimitive.content.let { dateString ->
                     if (dateString.contains("ago")) {
                         val trimmedDate = dateString.substringBefore(" ago").removeSuffix("s").split(" ")
                         val calendar = Calendar.getInstance()
@@ -225,8 +227,8 @@ class ReadManhwa : ConfigurableSource, HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        return gson.fromJson<JsonObject>(response.body!!.string())["images"].asJsonArray.mapIndexed { i, json ->
-            Page(i, "", json["source_url"].string)
+        return json.decodeFromString<JsonObject>(response.body!!.string())["images"]!!.jsonArray.mapIndexed { i, json ->
+            Page(i, "", json.jsonObject["source_url"]!!.jsonPrimitive.content)
         }
     }
 

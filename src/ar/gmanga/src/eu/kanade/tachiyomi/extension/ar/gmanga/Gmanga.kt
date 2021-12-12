@@ -1,13 +1,6 @@
 package eu.kanade.tachiyomi.extension.ar.gmanga
 
 import androidx.preference.PreferenceScreen
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.github.salomonbrys.kotson.nullString
-import com.github.salomonbrys.kotson.toJsonArray
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.extension.ar.gmanga.GmangaPreferences.Companion.PREF_CHAPTER_LISTING
 import eu.kanade.tachiyomi.extension.ar.gmanga.GmangaPreferences.Companion.PREF_CHAPTER_LISTING_SHOW_POPULAR
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
@@ -21,12 +14,24 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import uy.kohesive.injekt.injectLazy
 
 class Gmanga : ConfigurableSource, HttpSource() {
 
@@ -40,7 +45,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
 
     override val supportsLatest: Boolean = true
 
-    private val gson = Gson()
+    private val json: Json by injectLazy()
 
     private val preferences = GmangaPreferences(id)
 
@@ -67,18 +72,18 @@ class Gmanga : ConfigurableSource, HttpSource() {
 
         val chapters: List<JsonArray> = buildList {
             val allChapters: ArrayList<JsonArray> = ArrayList()
-            data["rows"][0]["rows"].asJsonArray.forEach { release ->
-                val chapter = data["rows"][2]["rows"].asJsonArray.filter { it[0] == release[4] }.toJsonArray()
-                chapter.asJsonArray.forEach { release.asJsonArray.addAll(it.asJsonArray) }
-                val team = data["rows"][1]["rows"].asJsonArray.filter { it[0] == release[5] }.toJsonArray()
-                team.asJsonArray.forEach { release.asJsonArray.addAll(it.asJsonArray) }
-                allChapters.add(release.asJsonArray)
+            data["rows"]!!.jsonArray[0].jsonObject["rows"]!!.jsonArray.forEach { release ->
+                val chapter = data["rows"]!!.jsonArray[2].jsonObject["rows"]!!.jsonArray.filter { it.jsonArray[0] == release.jsonArray[4] }
+                allChapters.addAll(chapter.map { it.jsonArray })
+                val team = data["rows"]!!.jsonArray[1].jsonObject["rows"]!!.jsonArray.filter { it.jsonArray[0] == release.jsonArray[5] }
+                allChapters.addAll(team.map { it.jsonArray })
+                allChapters.add(release.jsonArray)
             }
 
             when (preferences.getString(PREF_CHAPTER_LISTING)) {
                 PREF_CHAPTER_LISTING_SHOW_POPULAR -> addAll(
-                    allChapters.groupBy { it.asJsonArray[4].asFloat }
-                        .map { (_: Float, versions: List<JsonArray>) -> versions.maxByOrNull { it[5].asLong }!! }
+                    allChapters.groupBy { it.jsonArray[4].jsonPrimitive.float }
+                        .map { (_: Float, versions: List<JsonArray>) -> versions.maxByOrNull { it[5].jsonPrimitive.float }!! }
                 )
                 else -> addAll(allChapters)
             }
@@ -86,14 +91,14 @@ class Gmanga : ConfigurableSource, HttpSource() {
 
         return chapters.map {
             SChapter.create().apply {
-                chapter_number = it[8].asFloat
+                chapter_number = it[8].jsonPrimitive.float
 
-                val chapterName = it[10].asString.let { if (it.trim() != "") " - $it" else "" }
+                val chapterName = it[10].jsonPrimitive.content.let { if (it.trim() != "") " - $it" else "" }
 
                 url = "/r/${it[0]}"
                 name = "${chapter_number.let { if (it % 1 > 0) it else it.toInt() }}$chapterName"
-                date_upload = it[2].asLong * 1000
-                scanlator = it[13].asString
+                date_upload = it[2].jsonPrimitive.long * 1000
+                scanlator = it[13].jsonPrimitive.content
             }
         }
     }
@@ -101,16 +106,16 @@ class Gmanga : ConfigurableSource, HttpSource() {
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used")
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val data = gson.fromJson<JsonObject>(response.asJsoup().select(".js-react-on-rails-component").html())
+        val data = json.decodeFromString<JsonObject>(response.asJsoup().select(".js-react-on-rails-component").html())
         return MangasPage(
-            data["mangaDataAction"]["newMangas"].asJsonArray.map {
+            data["mangaDataAction"]!!.jsonObject["newMangas"]!!.jsonArray.map {
                 SManga.create().apply {
-                    url = "/mangas/${it["id"].asString}"
-                    title = it["title"].asString
+                    url = "/mangas/${it.jsonObject["id"]!!.jsonPrimitive.content}"
+                    title = it.jsonObject["title"]!!.jsonPrimitive.content
 
-                    thumbnail_url = it["cover"].nullString?.let { coverFileName ->
+                    thumbnail_url = it.jsonObject["cover"]!!.jsonPrimitive.contentOrNull?.let { coverFileName ->
                         val thumbnail = "medium_${coverFileName.substringBeforeLast(".")}.webp"
-                        "https://media.$domain/uploads/manga/cover/${it["id"].asString}/$thumbnail"
+                        "https://media.$domain/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
                     }
                 }
             },
@@ -123,27 +128,27 @@ class Gmanga : ConfigurableSource, HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val data = gson.fromJson<JsonObject>(response.asJsoup().select(".js-react-on-rails-component").html())
-        val mangaData = data["mangaDataAction"]["mangaData"].asJsonObject
+        val data = json.decodeFromString<JsonObject>(response.asJsoup().select(".js-react-on-rails-component").html())
+        val mangaData = data["mangaDataAction"]!!.jsonObject["mangaData"]!!.jsonObject
         return SManga.create().apply {
-            description = mangaData["summary"].nullString ?: ""
-            artist = mangaData["artists"].asJsonArray.joinToString(", ") { it.asJsonObject["name"].asString }
-            author = mangaData["authors"].asJsonArray.joinToString(", ") { it.asJsonObject["name"].asString }
-            genre = mangaData["categories"].asJsonArray.joinToString(", ") { it.asJsonObject["name"].asString }
+            description = mangaData["summary"]!!.jsonPrimitive.contentOrNull ?: ""
+            artist = mangaData["artists"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content }
+            author = mangaData["authors"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content }
+            genre = mangaData["categories"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content }
         }
     }
 
     override fun pageListParse(response: Response): List<Page> {
         val url = response.request.url.toString()
-        val data = gson.fromJson<JsonObject>(response.asJsoup().select(".js-react-on-rails-component").html())
-        val releaseData = data["readerDataAction"]["readerData"]["release"].asJsonObject
+        val data = json.decodeFromString<JsonObject>(response.asJsoup().select(".js-react-on-rails-component").html())
+        val releaseData = data["readerDataAction"]!!.jsonObject["readerData"]!!.jsonObject["release"]!!.jsonObject
 
-        val hasWebP = releaseData["webp_pages"].asJsonArray.size() > 0
-        return releaseData[if (hasWebP) "webp_pages" else "pages"].asJsonArray.map { it.asString }.mapIndexed { index, pageUri ->
+        val hasWebP = releaseData["webp_pages"]!!.jsonArray.size > 0
+        return releaseData[if (hasWebP) "webp_pages" else "pages"]!!.jsonArray.map { it.jsonPrimitive.content }.mapIndexed { index, pageUri ->
             Page(
                 index,
                 "$url#page_$index",
-                "https://media.$domain/uploads/releases/${releaseData["storage_key"].asString}/hq${if (hasWebP) "_webp" else ""}/$pageUri"
+                "https://media.$domain/uploads/releases/${releaseData["storage_key"]!!.jsonPrimitive.content}/hq${if (hasWebP) "_webp" else ""}/$pageUri"
             )
         }
     }
@@ -154,29 +159,29 @@ class Gmanga : ConfigurableSource, HttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage {
         val data = decryptResponse(response)
-        val mangas = data["mangas"].asJsonArray
+        val mangas = data["mangas"]!!.jsonArray
         return MangasPage(
-            mangas.asJsonArray.map {
+            mangas.jsonArray.map {
                 SManga.create().apply {
-                    url = "/mangas/${it["id"].asString}"
-                    title = it["title"].asString
-                    val thumbnail = "medium_${it["cover"].asString.substringBeforeLast(".")}.webp"
-                    thumbnail_url = "https://media.$domain/uploads/manga/cover/${it["id"].asString}/$thumbnail"
+                    url = "/mangas/${it.jsonObject["id"]!!.jsonPrimitive.content}"
+                    title = it.jsonObject["title"]!!.jsonPrimitive.content
+                    val thumbnail = "medium_${it.jsonObject["cover"]!!.jsonPrimitive.content.substringBeforeLast(".")}.webp"
+                    thumbnail_url = "https://media.$domain/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
                 }
             },
-            mangas.size() == 50
+            mangas.size == 50
         )
     }
 
     private fun decryptResponse(response: Response): JsonObject {
-        val encryptedData = gson.fromJson<JsonObject>(response.body!!.string())["data"].asString
+        val encryptedData = json.decodeFromString<JsonObject>(response.body!!.string())["data"]!!.jsonPrimitive.content
         val decryptedData = decrypt(encryptedData)
-        return gson.fromJson(decryptedData)
+        return json.decodeFromString(decryptedData)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         return GmangaFilters.buildSearchPayload(page, query, if (filters.isEmpty()) getFilterList() else filters).let {
-            val body = RequestBody.create(MEDIA_TYPE, it.toString())
+            val body = it.toString().toRequestBody(MEDIA_TYPE)
             POST("$baseUrl/api/mangas/search", headers, body)
         }
     }

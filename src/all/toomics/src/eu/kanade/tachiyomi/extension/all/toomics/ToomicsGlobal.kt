@@ -10,7 +10,7 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -73,7 +73,7 @@ abstract class ToomicsGlobal(
             .add("Content-Type", "application/x-www-form-urlencoded")
             .build()
 
-        val rbody = RequestBody.create(null, "toonData=$query&offset=0&limit=20")
+        val rbody = "toonData=$query&offset=0&limit=20".toRequestBody(null)
 
         return POST("$baseUrl/$siteLang/webtoon/ajax_search", newHeaders, rbody)
     }

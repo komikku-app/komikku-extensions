@@ -1,10 +1,5 @@
 package eu.kanade.tachiyomi.extension.ru.mangaonlinebiz
 
-import com.github.salomonbrys.kotson.float
-import com.github.salomonbrys.kotson.forEach
-import com.github.salomonbrys.kotson.string
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -13,15 +8,27 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class MangaOnlineBiz : ParsedHttpSource() {
+
+    private val json: Json by injectLazy()
+
     override val name = "MangaOnlineBiz"
 
     override val baseUrl = "https://manga-online.biz"
@@ -68,15 +75,14 @@ class MangaOnlineBiz : ParsedHttpSource() {
             return popularMangaParse(response)
         }
         val jsonData = response.body!!.string()
-        val json = JsonParser().parse(jsonData).asJsonObject
-        val results = json.getAsJsonArray("results")
+        val results = json.decodeFromString<JsonObject>(jsonData)["results"]!!.jsonArray
         val mangas = mutableListOf<SManga>()
         results.forEach {
-            val element = it.asJsonObject
+            val element = it.jsonObject
             val manga = SManga.create()
-            manga.setUrlWithoutDomain(element.get("url").string)
-            manga.title = element.get("title").string.split("/").first()
-            val image = element.get("image").string
+            manga.setUrlWithoutDomain(element["url"]!!.jsonPrimitive.content)
+            manga.title = element["title"]!!.jsonPrimitive.content.split("/").first()
+            val image = element["image"]!!.jsonPrimitive.content
             if (image.startsWith("http")) {
                 manga.thumbnail_url = image
             } else {
@@ -130,10 +136,9 @@ class MangaOnlineBiz : ParsedHttpSource() {
 
         val jsonData = html.split("App.Collection.MangaChapter(").last().split("]);").first() + "]"
         val mangaName = html.split("mangaName: '").last().split("' });").first()
-        val json = JsonParser().parse(jsonData).asJsonArray
         val chapterList = mutableListOf<SChapter>()
-        json.forEach {
-            chapterList.add(chapterFromElement(mangaName, it.asJsonObject))
+        json.decodeFromString<JsonArray>(jsonData).forEach {
+            chapterList.add(chapterFromElement(mangaName, it.jsonObject))
         }
         return chapterList
     }
@@ -142,22 +147,22 @@ class MangaOnlineBiz : ParsedHttpSource() {
 
     private fun chapterFromElement(mangaName: String, element: JsonObject): SChapter {
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain("/$mangaName/${element.get("volume").string}/${element.get("number").string})/1")
-        chapter.name = "Том ${element.get("volume").string} - Глава ${element.get("number").string} ${element.get("title").string}"
-        chapter.chapter_number = element.get("number").float
-        chapter.date_upload = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(element.get("date").string)?.time ?: 0L
+        chapter.setUrlWithoutDomain("/$mangaName/${element["volume"]!!.jsonPrimitive.content}/${element["number"]!!.jsonPrimitive.content})/1")
+        chapter.name = "Том ${element["volume"]!!.jsonPrimitive.content} - Глава ${element["number"]!!.jsonPrimitive.content} ${element["title"]!!.jsonPrimitive.content}"
+        chapter.chapter_number = element["number"]!!.jsonPrimitive.float
+        chapter.date_upload = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(element["date"]!!.jsonPrimitive.content)?.time ?: 0L
         return chapter
     }
 
     override fun pageListParse(response: Response): List<Page> {
         val html = response.body!!.string()
         val jsonData = html.split("new App.Router.Chapter(").last().split("});").first() + "}"
-        val json = JsonParser().parse(jsonData).asJsonObject
-        val cdnUrl = json.get("srcBaseUrl").string
-        val pages = json.get("pages").asJsonObject
+        val jsonObj = json.decodeFromString<JsonObject>(jsonData)
+        val cdnUrl = jsonObj["srcBaseUrl"]!!.jsonPrimitive.content
+        val pages = jsonObj["pages"]!!.jsonObject
         val resPages = mutableListOf<Page>()
-        pages.forEach { page, jsonElement ->
-            resPages.add(Page(page.toInt(), imageUrl = "$cdnUrl/${jsonElement.asJsonObject.get("src").string}"))
+        pages.entries.forEach { (page, jsonElement) ->
+            resPages.add(Page(page.toInt(), imageUrl = "$cdnUrl/${jsonElement.jsonObject["src"]!!.jsonPrimitive.content}"))
         }
         return resPages
     }

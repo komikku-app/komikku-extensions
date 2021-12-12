@@ -12,7 +12,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Request
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -131,7 +131,7 @@ class DoujinYang : ParsedHttpSource() {
         return POST(
             baseUrl + chapter.url,
             headersBuilder().add("Content-Type", "application/x-www-form-urlencoded").build(),
-            RequestBody.create(null, "info")
+            "info".toRequestBody(null)
         )
     }
 

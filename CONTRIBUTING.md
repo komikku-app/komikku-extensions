@@ -123,25 +123,26 @@ dependencies {
 
 #### Additional dependencies
 
-You may find yourself needing additional functionality and wanting to add more dependencies to your `build.gradle` file. Since extensions are run within the main Tachiyomi app, you can make use of [its dependencies](https://github.com/tachiyomiorg/tachiyomi/blob/master/app/build.gradle).
+You may find yourself needing additional functionality and wanting to add more dependencies to your `build.gradle` file. Since extensions are run within the main Tachiyomi app, you can make use of [its dependencies](https://github.com/tachiyomiorg/tachiyomi/blob/master/app/build.gradle.kts).
 
-For example, an extension that needs Gson could add the following:
+For example, an extension that needs coroutines, it could add the following:
 
 ```gradle
 dependencies {
-    compileOnly 'com.google.code.gson:gson:2.8.2'
+    compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2'
+    compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2'
 }
 ```
 
-(Note that Gson, and several other dependencies, are already exposed to all extensions via `common.gradle`.)
+(Note that several dependencies are already exposed to all extensions via `common-dependencies.gradle`.)
 
 Notice that we're using `compileOnly` instead of `implementation`, since the app already contains it. You could use `implementation` instead for a new dependency, or you prefer not to rely on whatever the main app has at the expense of app size.
 
-Note that using `compileOnly` restricts you to versions that must be compatible with those used in [Tachiyomi v0.8.5+](https://github.com/tachiyomiorg/tachiyomi/blob/82141cec6e612885fef4fa70092e29e99d60adbb/app/build.gradle#L104) for proper backwards compatibility.
+Note that using `compileOnly` restricts you to versions that must be compatible with those used in [Tachiyomi v0.10.12+](https://github.com/tachiyomiorg/tachiyomi/blob/v0.10.12/app/build.gradle.kts) for proper backwards compatibility.
 
 ### Extension main class
 
-The class which is refrenced and defined by `extClass` in `build.gradle`. This class should implement either `SourceFactory` or extend one of the `Source` implementations: `HttpSource` or `ParsedHttpSource`.
+The class which is referenced and defined by `extClass` in `build.gradle`. This class should implement either `SourceFactory` or extend one of the `Source` implementations: `HttpSource` or `ParsedHttpSource`.
 
 | Class | Description |
 | ----- | ----------- |

@@ -1,8 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.mangarockes
 
-import com.github.salomonbrys.kotson.fromJson
-import com.google.gson.Gson
-import com.google.gson.JsonArray
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -10,6 +7,11 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -18,6 +20,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -160,13 +163,13 @@ class MangaRockEs : ParsedHttpSource() {
 
     // Pages
 
-    private val gson by lazy { Gson() }
+    private val json: Json by injectLazy()
 
     override fun pageListParse(response: Response): List<Page> {
         val responseString = response.body!!.string()
         return Regex("""mangaData = (\[.*]);""", RegexOption.IGNORE_CASE).find(responseString)?.groupValues?.get(1)?.let { array ->
-            gson.fromJson<JsonArray>(array)
-                .mapIndexed { i, jsonElement -> Page(i, "", jsonElement.asJsonObject["url"].asString) }
+            json.decodeFromString<JsonArray>(array)
+                .mapIndexed { i, jsonElement -> Page(i, "", jsonElement.jsonObject["url"]!!.jsonPrimitive.content) }
         }
             ?: Regex("""getManga\(\d+, '(http.*)',""").findAll(responseString).toList()
                 .mapIndexed { i, mr -> Page(i, "", mr.groupValues[1]) }

@@ -5,13 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.CheckBoxPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import com.github.salomonbrys.kotson.addProperty
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.github.salomonbrys.kotson.set
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -22,6 +15,20 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,6 +36,7 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 
 abstract class Luscious(
@@ -44,7 +52,7 @@ abstract class Luscious(
 
     private val apiBaseUrl: String = "$baseUrl/graphql/nobatch/"
 
-    private val gson = Gson()
+    private val json: Json by injectLazy()
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -86,90 +94,91 @@ abstract class Luscious(
         val contentTypeFilter = filters.findInstance<ContentTypeSelectFilter>()!!
         val albumSizeFilter = filters.findInstance<AlbumSizeSelectFilter>()!!
         val restrictGenresFilter = filters.findInstance<RestrictGenresSelectFilter>()!!
-        return JsonObject().apply {
-            add(
-                "input",
-                JsonObject().apply {
-                    addProperty("display", sortByFilter.selected)
-                    addProperty("page", page)
-                    add(
-                        "filters",
-                        JsonArray().apply {
+        return buildJsonObject {
+            putJsonObject("input") {
+                put("display", sortByFilter.selected)
+                put("page", page)
+                putJsonArray("filters") {
+                    if (contentTypeFilter.selected != FILTER_VALUE_IGNORE)
+                        add(contentTypeFilter.toJsonObject("content_id"))
 
-                            if (contentTypeFilter.selected != FILTER_VALUE_IGNORE)
-                                add(contentTypeFilter.toJsonObject("content_id"))
+                    if (albumTypeFilter.selected != FILTER_VALUE_IGNORE)
+                        add(albumTypeFilter.toJsonObject("album_type"))
 
-                            if (albumTypeFilter.selected != FILTER_VALUE_IGNORE)
-                                add(albumTypeFilter.toJsonObject("album_type"))
+                    if (selectionFilter.selected != FILTER_VALUE_IGNORE)
+                        add(selectionFilter.toJsonObject("selection"))
 
-                            if (selectionFilter.selected != FILTER_VALUE_IGNORE)
-                                add(selectionFilter.toJsonObject("selection"))
+                    if (albumSizeFilter.selected != FILTER_VALUE_IGNORE)
+                        add(albumSizeFilter.toJsonObject("picture_count_rank"))
 
-                            if (albumSizeFilter.selected != FILTER_VALUE_IGNORE)
-                                add(albumSizeFilter.toJsonObject("picture_count_rank"))
+                    if (restrictGenresFilter.selected != FILTER_VALUE_IGNORE)
+                        add(restrictGenresFilter.toJsonObject("restrict_genres"))
 
-                            if (restrictGenresFilter.selected != FILTER_VALUE_IGNORE)
-                                add(restrictGenresFilter.toJsonObject("restrict_genres"))
-
-                            with(interestsFilter) {
-                                if (this.selected.isEmpty()) {
-                                    throw Exception("Please select an Interest")
-                                }
-                                add(this.toJsonObject("audience_ids"))
-                            }
-
-                            if (lusLang != FILTER_VALUE_IGNORE) {
-                                add(
-                                    languagesFilter.toJsonObject("language_ids").apply {
-                                        set("value", "+$lusLang${get("value").asString}")
-                                    }
-                                )
-                            }
-
-                            if (tagsFilter.state.isNotEmpty()) {
-                                val tags = "+${tagsFilter.state.toLowerCase()}".replace(" ", "_").replace("_,", "+").replace(",_", "+").replace(",", "+").replace("+-", "-").replace("-_", "-").trim()
-                                add(
-                                    JsonObject().apply {
-                                        addProperty("name", "tagged")
-                                        addProperty("value", tags)
-                                    }
-                                )
-                            }
-
-                            if (creatorFilter.state.isNotEmpty()) {
-                                add(
-                                    JsonObject().apply {
-                                        addProperty("name", "created_by_id")
-                                        addProperty("value", creatorFilter.state)
-                                    }
-                                )
-                            }
-
-                            if (favoriteFilter.state.isNotEmpty()) {
-                                add(
-                                    JsonObject().apply {
-                                        addProperty("name", "favorite_by_user_id")
-                                        addProperty("value", favoriteFilter.state)
-                                    }
-                                )
-                            }
-
-                            if (genreFilter.anyNotIgnored()) {
-                                add(genreFilter.toJsonObject("genre_ids"))
-                            }
-
-                            if (query != "") {
-                                add(
-                                    JsonObject().apply {
-                                        addProperty("name", "search_query")
-                                        addProperty("value", query)
-                                    }
-                                )
-                            }
+                    with(interestsFilter) {
+                        if (this.selected.isEmpty()) {
+                            throw Exception("Please select an Interest")
                         }
-                    )
+                        add(this.toJsonObject("audience_ids"))
+                    }
+
+                    if (lusLang != FILTER_VALUE_IGNORE) {
+                        val languageIds = languagesFilter.toJsonObject("language_ids")
+                        add(
+                            JsonObject(
+                                languageIds.toMutableMap().apply {
+                                    put(
+                                        "value",
+                                        JsonPrimitive ("+$lusLang${languageIds["value"]!!.jsonPrimitive.content}")
+                                    )
+                                }
+                            )
+                        )
+                    }
+
+                    if (tagsFilter.state.isNotEmpty()) {
+                        val tags = "+${tagsFilter.state.toLowerCase()}".replace(" ", "_")
+                            .replace("_,", "+").replace(",_", "+").replace(",", "+")
+                            .replace("+-", "-").replace("-_", "-").trim()
+                        add(
+                            buildJsonObject {
+                                put("name", "tagged")
+                                put("value", tags)
+                            }
+                        )
+                    }
+
+                    if (creatorFilter.state.isNotEmpty()) {
+                        add(
+                            buildJsonObject {
+                                put("name", "created_by_id")
+                                put("value", creatorFilter.state)
+                            }
+                        )
+                    }
+
+                    if (favoriteFilter.state.isNotEmpty()) {
+                        add(
+                            buildJsonObject {
+                                put("name", "favorite_by_user_id")
+                                put("value", favoriteFilter.state)
+                            }
+                        )
+                    }
+
+                    if (genreFilter.anyNotIgnored()) {
+                        add(genreFilter.toJsonObject("genre_ids"))
+                    }
+
+                    if (query != "") {
+                        add(
+                            buildJsonObject {
+                                put("name", "search_query")
+                                put("value", query)
+                            }
+                        )
+                    }
                 }
-            )
+            }
         }
     }
 
@@ -184,24 +193,24 @@ abstract class Luscious(
     }
 
     private fun parseAlbumListResponse(response: Response): MangasPage {
-        val data = gson.fromJson<JsonObject>(response.body!!.string())
-        with(data["data"]["album"]["list"]) {
+        val data = json.decodeFromString<JsonObject>(response.body!!.string())
+        with(data["data"]!!.jsonObject["album"]!!.jsonObject["list"]) {
             return MangasPage(
-                this["items"].asJsonArray.map {
+                this!!.jsonObject["items"]!!.jsonArray.map {
                     SManga.create().apply {
-                        url = it["url"].asString
-                        title = it["title"].asString
-                        thumbnail_url = it["cover"]["url"].asString
+                        url = it.jsonObject["url"]!!.jsonPrimitive.content
+                        title = it.jsonObject["title"]!!.jsonPrimitive.content
+                        thumbnail_url = it.jsonObject["cover"]!!.jsonObject["url"]!!.jsonPrimitive.content
                     }
                 },
-                this["info"]["has_next_page"].asBoolean
+                this.jsonObject["info"]!!.jsonObject["has_next_page"]!!.jsonPrimitive.boolean
             )
         }
     }
 
     private fun buildAlbumInfoRequestInput(id: String): JsonObject {
-        return JsonObject().apply {
-            addProperty("id", id)
+        return buildJsonObject {
+           put("id", id)
         }
     }
 
@@ -246,34 +255,34 @@ abstract class Luscious(
                 var nextPage = true
                 var page = 2
                 val id = response.request.url.queryParameter("variables").toString()
-                    .let { gson.fromJson<JsonObject>(it)["input"]["filters"].asJsonArray }
-                    .let { it.first { f -> f["name"].asString == "album_id" } }
-                    .let { it["value"].asString }
+                    .let { json.decodeFromString<JsonObject>(it)["input"]!!.jsonObject["filters"]!!.jsonArray }
+                    .let { it.first { f -> f.jsonObject["name"]!!.jsonPrimitive.content == "album_id" } }
+                    .let { it.jsonObject["value"]!!.jsonPrimitive.content }
 
-                var data = gson.fromJson<JsonObject>(response.body!!.string())
-                    .let { it["data"]["picture"]["list"].asJsonObject }
+                var data = json.decodeFromString<JsonObject>(response.body!!.string())
+                    .let { it.jsonObject["data"]!!.jsonObject["picture"]!!.jsonObject["list"]!!.jsonObject }
 
                 while (nextPage) {
-                    nextPage = data["info"]["has_next_page"].asBoolean
-                    data["items"].asJsonArray.map {
+                    nextPage = data["info"]!!.jsonObject["has_next_page"]!!.jsonPrimitive.boolean
+                    data["items"]!!.jsonArray.map {
                         val chapter = SChapter.create()
                         val url = when (getResolutionPref()) {
-                            "-1" -> it["url_to_original"].asString
-                            else -> it["thumbnails"][getResolutionPref()?.toInt()!!]["url"].asString
+                            "-1" -> it.jsonObject["url_to_original"]!!.jsonPrimitive.content
+                            else -> it.jsonObject["thumbnails"]!!.jsonObject[getResolutionPref()?.toInt()!!]!!.jsonObject["url"]!!.jsonPrimitive.content
                         }
                         when {
                             url.startsWith("//") -> chapter.url = "https:$url"
                             else -> chapter.url = url
                         }
-                        chapter.chapter_number = it["position"].asInt.toFloat()
-                        chapter.name = chapter.chapter_number.toInt().toString() + " - " + it["title"].asString
-                        chapter.date_upload = "${it["created"].asLong}000".toLong()
+                        chapter.chapter_number = it.jsonObject["position"]!!.jsonPrimitive.int.toFloat()
+                        chapter.name = chapter.chapter_number.toInt().toString() + " - " + it.jsonObject["title"]!!.jsonPrimitive.content
+                        chapter.date_upload = "${it.jsonObject["created"]!!.jsonPrimitive.long}000".toLong()
                         chapters.add(chapter)
                     }
                     if (nextPage) {
                         val newPage = client.newCall(GET(buildAlbumPicturesPageUrl(id, page))).execute()
-                        data = gson.fromJson<JsonObject>(newPage.body!!.string())
-                            .let { it["data"]["picture"]["list"].asJsonObject }
+                        data = json.decodeFromString<JsonObject>(newPage.body!!.string())
+                            .let { it["data"]!!.jsonObject["picture"]!!.jsonObject["list"]!!.jsonObject }
                     }
                     page++
                 }
@@ -288,25 +297,17 @@ abstract class Luscious(
     // Pages
 
     private fun buildAlbumPicturesRequestInput(id: String, page: Int): JsonObject {
-        return JsonObject().apply {
-            addProperty(
-                "input",
-                JsonObject().apply {
-                    addProperty(
-                        "filters",
-                        JsonArray().apply {
-                            add(
-                                JsonObject().apply {
-                                    addProperty("name", "album_id")
-                                    addProperty("value", id)
-                                }
-                            )
-                        }
-                    )
-                    addProperty("display", getSortPref())
-                    addProperty("page", page)
+        return buildJsonObject {
+            putJsonObject("input") {
+                putJsonArray("filters") {
+                    add(buildJsonObject {
+                        put("name", "album_id")
+                        put("value", id)
+                    })
                 }
-            )
+                put("display", getSortPref())
+                put("page", page)
+            }
         }
     }
 
@@ -324,20 +325,20 @@ abstract class Luscious(
         var nextPage = true
         var page = 2
         val id = response.request.url.queryParameter("variables").toString()
-            .let { gson.fromJson<JsonObject>(it)["input"]["filters"].asJsonArray }
-            .let { it.first { f -> f["name"].asString == "album_id" } }
-            .let { it["value"].asString }
+            .let { json.decodeFromString<JsonObject>(it)["input"]!!.jsonObject["filters"]!!.jsonArray }
+            .let { it.first { f -> f.jsonObject["name"]!!.jsonPrimitive.content == "album_id" } }
+            .let { it.jsonObject["value"]!!.jsonPrimitive.content }
 
-        var data = gson.fromJson<JsonObject>(response.body!!.string())
-            .let { it["data"]["picture"]["list"].asJsonObject }
+        var data = json.decodeFromString<JsonObject>(response.body!!.string())
+            .let { it["data"]!!.jsonObject["picture"]!!.jsonObject["list"]!!.jsonObject }
 
         while (nextPage) {
-            nextPage = data["info"]["has_next_page"].asBoolean
-            data["items"].asJsonArray.map {
-                val index = it["position"].asInt
+            nextPage = data["info"]!!.jsonObject["has_next_page"]!!.jsonPrimitive.boolean
+            data["items"]!!.jsonArray.map {
+                val index = it.jsonObject["position"]!!.jsonPrimitive.int
                 val url = when (getResolutionPref()) {
-                    "-1" -> it["url_to_original"].asString
-                    else -> it["thumbnails"][getResolutionPref()?.toInt()!!]["url"].asString
+                    "-1" -> it.jsonObject["url_to_original"]!!.jsonPrimitive.content
+                    else -> it.jsonObject["thumbnails"]!!.jsonObject[getResolutionPref()?.toInt()!!]!!.jsonObject["url"]!!.jsonPrimitive.content
                 }
                 when {
                     url.startsWith("//") -> pages.add(Page(index, "https:$url", "https:$url"))
@@ -346,8 +347,8 @@ abstract class Luscious(
             }
             if (nextPage) {
                 val newPage = client.newCall(GET(buildAlbumPicturesPageUrl(id, page))).execute()
-                data = gson.fromJson<JsonObject>(newPage.body!!.string())
-                    .let { it["data"]["picture"]["list"].asJsonObject }
+                data = json.decodeFromString<JsonObject>(newPage.body!!.string())
+                    .let { it["data"]!!.jsonObject["picture"]!!.jsonObject["list"]!!.jsonObject }
             }
             page++
         }
@@ -381,12 +382,12 @@ abstract class Luscious(
         return client.newCall(GET(page.url, headers))
             .asObservableSuccess()
             .map {
-                val data = gson.fromJson<JsonObject>(it.body!!.string()).let { data ->
-                    data["data"]["picture"]["list"].asJsonObject
+                val data = json.decodeFromString<JsonObject>(it.body!!.string()).let { data ->
+                    data["data"]!!.jsonObject["picture"]!!.jsonObject["list"]!!.jsonObject
                 }
                 when (getResolutionPref()) {
-                    "-1" -> data["items"].asJsonArray[page.index % 50].asJsonObject["url_to_original"].asString
-                    else -> data["items"].asJsonArray[page.index % 50].asJsonObject["thumbnails"][getResolutionPref()?.toInt()!!]["url"].asString
+                    "-1" -> data["items"]!!.jsonArray[page.index % 50].jsonObject["url_to_original"]!!.jsonPrimitive.content
+                    else -> data["items"]!!.jsonArray[page.index % 50].jsonObject["thumbnails"]!!.jsonObject[getResolutionPref()?.toInt()!!]!!.jsonObject["url"]!!.jsonPrimitive.content
                 }
             }
     }
@@ -405,32 +406,32 @@ abstract class Luscious(
     }
 
     private fun detailsParse(response: Response): SManga {
-        val data = gson.fromJson<JsonObject>(response.body!!.string())
-        with(data["data"]["album"]["get"]) {
+        val data = json.decodeFromString<JsonObject>(response.body!!.string())
+        with(data["data"]!!.jsonObject["album"]!!.jsonObject["get"]!!.jsonObject) {
             val manga = SManga.create()
-            manga.url = this["url"].asString
-            manga.title = this["title"].asString
-            manga.thumbnail_url = this["cover"]["url"].asString
+            manga.url = this["url"]!!.jsonPrimitive.content
+            manga.title = this["title"]!!.jsonPrimitive.content
+            manga.thumbnail_url = this["cover"]!!.jsonObject["url"]!!.jsonPrimitive.content
             manga.status = 0
-            manga.description = "${this["description"].asString}\n\nPictures: ${this["number_of_pictures"].asString}\nAnimated Pictures: ${this["number_of_animated_pictures"].asString}"
-            var genreList = this["language"]["title"].asString
-            for ((i, _) in this["labels"].asJsonArray.withIndex()) {
-                genreList = "$genreList, ${this["labels"][i].asString}"
+            manga.description = "${this["description"]!!.jsonPrimitive.content}\n\nPictures: ${this["number_of_pictures"]!!.jsonPrimitive.content}\nAnimated Pictures: ${this["number_of_animated_pictures"]!!.jsonPrimitive.content}"
+            var genreList = this["language"]!!.jsonObject["title"]!!.jsonPrimitive.content
+            for ((i, _) in this["labels"]!!.jsonArray.withIndex()) {
+                genreList = "$genreList, ${this["labels"]!!.jsonArray[i].jsonPrimitive.content}"
             }
-            for ((i, _) in this["genres"].asJsonArray.withIndex()) {
-                genreList = "$genreList, ${this["genres"][i]["title"].asString}"
+            for ((i, _) in this["genres"]!!.jsonArray.withIndex()) {
+                genreList = "$genreList, ${this["genres"]!!.jsonArray[i].jsonObject["title"]!!.jsonPrimitive.content}"
             }
-            for ((i, _) in this["audiences"].asJsonArray.withIndex()) {
-                genreList = "$genreList, ${this["audiences"][i]["title"].asString}"
+            for ((i, _) in this["audiences"]!!.jsonArray.withIndex()) {
+                genreList = "$genreList, ${this["audiences"]!!.jsonArray[i].jsonObject["title"]!!.jsonPrimitive.content}"
             }
-            for ((i, _) in this["tags"].asJsonArray.withIndex()) {
-                genreList = "$genreList, ${this["tags"][i]["text"].asString}"
-                if (this["tags"][i]["text"].asString.contains("Artist:")) {
-                    manga.artist = this["tags"][i]["text"].asString.substringAfter(":").trim()
+            for ((i, _) in this["tags"]!!.jsonArray.withIndex()) {
+                genreList = "$genreList, ${this["tags"]!!.jsonArray[i].jsonObject["text"]!!.jsonPrimitive.content}"
+                if (this["tags"]!!.jsonArray[i].jsonObject["text"]!!.jsonPrimitive.content.contains("Artist:")) {
+                    manga.artist = this["tags"]!!.jsonArray[i].jsonObject["text"]!!.jsonPrimitive.content.substringAfter(":").trim()
                     manga.author = manga.artist
                 }
             }
-            genreList = "$genreList, ${this["content"]["title"].asString}"
+            genreList = "$genreList, ${this["content"]!!.jsonObject["title"]!!.jsonPrimitive.content}"
             manga.genre = genreList
 
             return manga
@@ -483,9 +484,9 @@ abstract class Luscious(
 
     private fun Filter<*>.toJsonObject(key: String): JsonObject {
         val value = this.toString()
-        return JsonObject().apply {
-            addProperty("name", key)
-            addProperty("value", value)
+        return buildJsonObject {
+            put("name", key)
+            put("value", value)
         }
     }
 

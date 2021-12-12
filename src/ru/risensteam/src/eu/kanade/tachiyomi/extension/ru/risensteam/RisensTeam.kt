@@ -1,14 +1,5 @@
 package eu.kanade.tachiyomi.extension.ru.risensteam
 
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.github.salomonbrys.kotson.int
-import com.github.salomonbrys.kotson.nullString
-import com.github.salomonbrys.kotson.string
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -18,11 +9,22 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -39,7 +41,7 @@ class RisensTeam : HttpSource() {
 
     override val versionId: Int = 2
 
-    private val gson by lazy { Gson() }
+    private val json: Json by injectLazy()
 
     // Popular (source only returns manga sorted by latest)
 
@@ -49,16 +51,16 @@ class RisensTeam : HttpSource() {
 
     private fun mangaFromJson(json: JsonElement): SManga {
         return SManga.create().apply {
-            url = "${json["id"].int}/${json["furl"].string}"
-            title = json["title"].string
-            thumbnail_url = baseUrl + json["poster"].string
-            description = json["description"].nullString
-            status = try { if (json["active"].int == 1) SManga.ONGOING else SManga.UNKNOWN } catch (_: Exception) { SManga.UNKNOWN }
+            url = "${json.jsonObject["id"]!!.jsonPrimitive.int}/${json.jsonObject["furl"]!!.jsonPrimitive.content}"
+            title = json.jsonObject["title"]!!.jsonPrimitive.content
+            thumbnail_url = baseUrl + json.jsonObject["poster"]!!.jsonPrimitive.content
+            description = json.jsonObject["description"]!!.jsonPrimitive.contentOrNull
+            status = try { if (json.jsonObject["active"]!!.jsonPrimitive.int == 1) SManga.ONGOING else SManga.UNKNOWN } catch (_: Exception) { SManga.UNKNOWN }
         }
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val mangas = gson.fromJson<JsonArray>(response.body!!.string())
+        val mangas = json.decodeFromString<JsonArray>(response.body!!.string())
             .map { json -> mangaFromJson(json) }
 
         return MangasPage(mangas, false)
@@ -98,7 +100,7 @@ class RisensTeam : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        return mangaFromJson(gson.fromJson<JsonObject>(response.body!!.string()))
+        return mangaFromJson(json.decodeFromString<JsonObject>(response.body!!.string()))
     }
 
     // Chapters
@@ -106,11 +108,11 @@ class RisensTeam : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = apiMangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        return gson.fromJson<JsonObject>(response.body!!.string())["entities"].asJsonArray.map { json ->
+        return json.decodeFromString<JsonObject>(response.body!!.string())["entities"]!!.jsonArray.map { json ->
             SChapter.create().apply {
-                url = json["id"].int.toString()
-                name = listOfNotNull(json["label"].nullString, json["name"].nullString).joinToString(" - ")
-                date_upload = json["updated_at"].toDate()
+                url = json.jsonObject["id"]!!.jsonPrimitive.int.toString()
+                name = listOfNotNull(json.jsonObject["label"]!!.jsonPrimitive.contentOrNull, json.jsonObject["name"]!!.jsonPrimitive.contentOrNull).joinToString(" - ")
+                date_upload = json.jsonObject["updated_at"]!!.toDate()
             }
         }
     }
@@ -120,7 +122,7 @@ class RisensTeam : HttpSource() {
     }
 
     private fun JsonElement.toDate(): Long {
-        val date = this.nullString ?: return 0
+        val date = this.jsonPrimitive.contentOrNull ?: return 0
         return try {
             simpleDateFormat.parse(date)?.time ?: 0
         } catch (e: ParseException) {
@@ -135,8 +137,8 @@ class RisensTeam : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        return gson.fromJson<JsonArray>(response.body!!.string())
-            .mapIndexed { i, json -> Page(i, "", json.string) }
+        return json.decodeFromString<JsonArray>(response.body!!.string())
+            .mapIndexed { i, json -> Page(i, "", json.jsonPrimitive.content) }
     }
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used")
