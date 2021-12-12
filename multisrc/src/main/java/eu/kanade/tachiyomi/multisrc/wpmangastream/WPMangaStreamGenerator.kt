@@ -47,7 +47,6 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("The Apollo Team", "https://theapollo.team", "en"),
         SingleLang("Sekte Doujin", "https://sektedoujin.xyz", "id", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Phoenix Fansub", "https://phoenixfansub.com", "es", overrideVersionCode = 1),
-        SingleLang("Geass Scanlator", "https://geassscan.xyz", "pt-BR", overrideVersionCode = 2),
         SingleLang("Imagine Scan", "https://imaginescan.com.br", "pt-BR", isNsfw = true),
         SingleLang("Vapo Scan", "https://vaposcans.com", "pt-BR", overrideVersionCode = 2),
         SingleLang("Hakai Scan", "http://hakaiscan.xyz", "pt-BR", isNsfw = true),
