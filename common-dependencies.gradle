@@ -11,7 +11,6 @@ dependencies {
     compileOnly 'io.reactivex:rxjava:1.3.8'
     compileOnly 'org.jsoup:jsoup:1.13.1'
     compileOnly 'com.google.code.gson:gson:2.8.6'
-    compileOnly 'com.github.salomonbrys.kotson:kotson:2.5.0'
     compileOnly 'org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.2.0'
     compileOnly 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.0'
 }
