@@ -1,20 +1,22 @@
 package eu.kanade.tachiyomi.extension.en.mangalinkz
 
 import android.util.Base64
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.string
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -137,14 +139,14 @@ class MangaLinkz : ParsedHttpSource() {
 
     // Pages
 
-    private val gson by lazy { Gson() }
+    private val json: Json by injectLazy()
 
     override fun pageListParse(document: Document): List<Page> {
         val encoded = document.select("script:containsData(atob)").first().data()
             .substringAfter("atob(\"").substringBefore("\"")
         val decoded = Base64.decode(encoded, Base64.DEFAULT).toString(Charsets.UTF_8).removeSurrounding("[", "]")
 
-        return gson.fromJson<JsonObject>(decoded)["pages"].asJsonArray.mapIndexed { i, jsonElement -> Page(i, "", jsonElement.string) }
+        return json.decodeFromString<JsonObject>(decoded)["pages"]!!.jsonArray.mapIndexed { i, jsonElement -> Page(i, "", jsonElement.jsonPrimitive.content) }
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")

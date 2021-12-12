@@ -1,11 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.doujins
 
-import android.app.Application
-import android.content.SharedPreferences
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -15,11 +9,16 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -37,16 +36,12 @@ class Doujins : HttpSource() {
 
     override val supportsLatest: Boolean = true
 
-    private val gson = Gson()
-
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
+    private val json: Json by injectLazy()
 
     override fun chapterListParse(response: Response): List<SChapter> {
         return listOf(
             SChapter.create().apply {
-                var element = response.asJsoup()
+                val element = response.asJsoup()
                 name = "Chapter"
                 scanlator = element.select("div.folder-message:contains(Translated)").text().substringAfter("by:").trim()
                 setUrlWithoutDomain(response.request.url.toString())
@@ -68,14 +63,14 @@ class Doujins : HttpSource() {
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         return MangasPage(
-            gson.fromJson<JsonObject>(response.body!!.string())["folders"].asJsonArray.map {
+            json.decodeFromString<JsonObject>(response.body!!.string())["folders"]!!.jsonArray.map {
                 SManga.create().apply {
-                    setUrlWithoutDomain(it["link"].asString)
-                    title = it["name"].asString
-                    artist = it["artistList"].asString
+                    setUrlWithoutDomain(it.jsonObject["link"]!!.jsonPrimitive.content)
+                    title = it.jsonObject["name"]!!.jsonPrimitive.content
+                    artist = it.jsonObject["artistList"]!!.jsonPrimitive.content
                     author = artist
-                    genre = it["tags"].asJsonArray.joinToString(", ") { it["tag"].asString }
-                    thumbnail_url = it["thumbnail2"].asString
+                    genre = it.jsonObject["tags"]!!.jsonArray.joinToString(", ") { it.jsonObject["tag"]!!.jsonPrimitive.content }
+                    thumbnail_url = it.jsonObject["thumbnail2"]!!.jsonPrimitive.content
                 }
             },
             true

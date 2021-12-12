@@ -3,9 +3,6 @@ package eu.kanade.tachiyomi.extension.en.madokami
 import android.app.Application
 import android.content.SharedPreferences
 import android.text.InputType
-import com.github.salomonbrys.kotson.fromJson
-import com.google.gson.Gson
-import com.google.gson.JsonArray
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -13,6 +10,10 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Credentials
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -23,6 +24,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -36,7 +38,7 @@ class Madokami : ConfigurableSource, ParsedHttpSource() {
     override val lang = "en"
     override val supportsLatest = false
 
-    private val gson = Gson()
+    private val json: Json by injectLazy()
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.ENGLISH)
 
@@ -154,7 +156,7 @@ class Madokami : ConfigurableSource, ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val element = document.select("div#reader")
         val path = element.attr("data-path")
-        val files = gson.fromJson<JsonArray>(element.attr("data-files"))
+        val files = json.decodeFromString<JsonArray>(element.attr("data-files"))
         val pages = mutableListOf<Page>()
         for ((index, file) in files.withIndex()) {
             val url = HttpUrl.Builder()
@@ -162,7 +164,7 @@ class Madokami : ConfigurableSource, ParsedHttpSource() {
                 .host("manga.madokami.al")
                 .addPathSegments("reader/image")
                 .addEncodedQueryParameter("path", URLEncoder.encode(path, "UTF-8"))
-                .addEncodedQueryParameter("file", URLEncoder.encode(file.asString, "UTF-8"))
+                .addEncodedQueryParameter("file", URLEncoder.encode(file.jsonPrimitive.content, "UTF-8"))
                 .build()
                 .toUrl()
             pages.add(Page(index, url.toExternalForm(), url.toExternalForm()))

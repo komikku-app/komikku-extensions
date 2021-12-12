@@ -4,11 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.text.InputType
 import android.widget.Toast
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.google.gson.JsonSyntaxException
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -22,6 +17,13 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import info.debatty.java.stringsimilarity.JaroWinkler
 import info.debatty.java.stringsimilarity.Levenshtein
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import okhttp3.Dns
 import okhttp3.FormBody
 import okhttp3.Headers
@@ -33,6 +35,7 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 
 class Mango : ConfigurableSource, HttpSource() {
@@ -43,18 +46,18 @@ class Mango : ConfigurableSource, HttpSource() {
     // Our popular manga are just our library of manga
     override fun popularMangaParse(response: Response): MangasPage {
         val result = try {
-            gson.fromJson<JsonObject>(response.body!!.string())
-        } catch (e: JsonSyntaxException) {
+            json.decodeFromString<JsonObject>(response.body!!.string())
+        } catch (e: Exception) {
             apiCookies = ""
             throw Exception("Login Likely Failed. Try Refreshing.")
         }
-        val mangas = result["titles"].asJsonArray
+        val mangas = result["titles"]!!.jsonArray
         return MangasPage(
-            mangas.asJsonArray.map {
+            mangas.jsonArray.map {
                 SManga.create().apply {
-                    url = "/book/" + it["id"].asString
-                    title = it["display_name"].asString
-                    thumbnail_url = baseUrl + it["cover_url"].asString
+                    url = "/book/" + it.jsonObject["id"]!!.jsonPrimitive.content
+                    title = it.jsonObject["display_name"]!!.jsonPrimitive.content
+                    thumbnail_url = baseUrl + it.jsonObject["cover_url"]!!.jsonPrimitive.content
                 }
             },
             false
@@ -119,15 +122,15 @@ class Mango : ConfigurableSource, HttpSource() {
     // This will just return the same thing as the main library endpoint
     override fun mangaDetailsParse(response: Response): SManga {
         val result = try {
-            gson.fromJson<JsonObject>(response.body!!.string())
-        } catch (e: JsonSyntaxException) {
+            json.decodeFromString<JsonObject>(response.body!!.string())
+        } catch (e: Exception) {
             apiCookies = ""
             throw Exception("Login Likely Failed. Try Refreshing.")
         }
         return SManga.create().apply {
-            url = "/book/" + result["id"].asString
-            title = result["display_name"].asString
-            thumbnail_url = baseUrl + result["cover_url"].asString
+            url = "/book/" + result.jsonObject["id"]!!.jsonPrimitive.content
+            title = result.jsonObject["display_name"]!!.jsonPrimitive.content
+            thumbnail_url = baseUrl + result.jsonObject["cover_url"]!!.jsonPrimitive.content
         }
     }
 
@@ -137,8 +140,8 @@ class Mango : ConfigurableSource, HttpSource() {
     // The chapter url will contain how many pages the chapter contains for our page list endpoint
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = try {
-            gson.fromJson<JsonObject>(response.body!!.string())
-        } catch (e: JsonSyntaxException) {
+            json.decodeFromString<JsonObject>(response.body!!.string())
+        } catch (e: Exception) {
             apiCookies = ""
             throw Exception("Login Likely Failed. Try Refreshing.")
         }
@@ -148,17 +151,17 @@ class Mango : ConfigurableSource, HttpSource() {
     // Helper function for listing chapters and chapters in nested titles recursively
     private fun listChapters(titleObj: JsonObject): List<SChapter> {
         val chapters = mutableListOf<SChapter>()
-        val topChapters = titleObj.getAsJsonArray("entries")?.map { obj ->
+        val topChapters = titleObj["entries"]?.jsonArray?.map { obj ->
             SChapter.create().apply {
-                name = obj["display_name"].asString
+                name = obj.jsonObject["display_name"]!!.jsonPrimitive.content
                 url =
-                    "/page/${obj["title_id"].asString}/${obj["id"].asString}/${obj["pages"].asString}/"
-                date_upload = 1000L * obj["mtime"].asLong
+                    "/page/${obj.jsonObject["title_id"]!!.jsonPrimitive.content}/${obj.jsonObject["id"]!!.jsonPrimitive.content}/${obj.jsonObject["pages"]!!.jsonPrimitive.content}/"
+                date_upload = 1000L * obj.jsonObject["mtime"]!!.jsonPrimitive.long
             }
         }
-        val subChapters = titleObj.getAsJsonArray("titles")?.map { obj ->
-            val name = obj["display_name"].asString
-            listChapters(obj.asJsonObject).map { chp ->
+        val subChapters = titleObj["titles"]?.jsonArray?.map { obj ->
+            val name = obj.jsonObject["display_name"]!!.jsonPrimitive.content
+            listChapters(obj.jsonObject).map { chp ->
                 chp.name = "$name / ${chp.name}"
                 chp
             }
@@ -200,11 +203,11 @@ class Mango : ConfigurableSource, HttpSource() {
     override val lang = "en"
     override val supportsLatest = false
 
+    private val json: Json by injectLazy()
     override val baseUrl by lazy { getPrefBaseUrl() }
     private val port by lazy { getPrefPort() }
     private val username by lazy { getPrefUsername() }
     private val password by lazy { getPrefPassword() }
-    private val gson by lazy { Gson() }
     private var apiCookies: String = ""
 
     override fun headersBuilder(): Headers.Builder =

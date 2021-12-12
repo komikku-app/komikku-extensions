@@ -1,10 +1,5 @@
 package eu.kanade.tachiyomi.extension.zh.comico
 
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.google.gson.Gson
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -12,12 +7,19 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -33,7 +35,7 @@ abstract class Comico(
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    val gson = Gson()
+    val json: Json by injectLazy()
 
     // Popular
 
@@ -122,12 +124,12 @@ abstract class Comico(
         return POST("$baseUrl/api/getArticleList.nhn", chapterListHeaders, body)
     }
 
-    fun chapterFromJson(jsonElement: JsonElement): SChapter {
+    fun chapterFromJson(jsonObject: JsonObject): SChapter {
         val chapter = SChapter.create()
 
-        chapter.name = jsonElement["subtitle"].asString
-        chapter.setUrlWithoutDomain(jsonElement["articleDetailUrl"].asString)
-        chapter.date_upload = parseDate(jsonElement["date"].asString)
+        chapter.name = jsonObject["subtitle"]!!.jsonPrimitive.content
+        chapter.setUrlWithoutDomain(jsonObject["articleDetailUrl"]!!.jsonPrimitive.content)
+        chapter.date_upload = parseDate(jsonObject["date"]!!.jsonPrimitive.content)
 
         return chapter
     }
@@ -135,9 +137,14 @@ abstract class Comico(
     override fun chapterListParse(response: Response): List<SChapter> {
         val chapters = mutableListOf<SChapter>()
 
-        gson.fromJson<JsonObject>(response.body!!.string())["result"]["list"].asJsonArray.forEach {
-            if (it["freeFlg"].asString == "Y") chapters.add(chapterFromJson(it))
-        }
+        json.decodeFromString<JsonObject>(response.body!!.string())["result"]!!
+            .jsonObject["list"]!!
+            .jsonArray
+            .forEach {
+                if (it.jsonObject["freeFlg"]!!.jsonPrimitive.content == "Y") {
+                    chapters.add(chapterFromJson(it.jsonObject))
+                }
+            }
 
         return chapters.reversed()
     }

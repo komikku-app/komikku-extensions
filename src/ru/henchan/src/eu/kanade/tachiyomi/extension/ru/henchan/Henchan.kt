@@ -1,12 +1,6 @@
 package eu.kanade.tachiyomi.extension.ru.henchan
 
 import android.annotation.SuppressLint
-import com.github.salomonbrys.kotson.array
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.string
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
@@ -17,6 +11,12 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -24,6 +24,7 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -254,17 +255,17 @@ class Henchan : ParsedHttpSource() {
 
     override fun imageUrlParse(document: Document) = throw Exception("Not Used")
 
-    private val gson = Gson()
+    private val json: Json by injectLazy()
 
     private fun Document.parseJsonArray(): JsonArray {
         val imgScript = this.select("script:containsData(fullimg)").first().toString()
         val imgString = imgScript.substring(imgScript.indexOf('{'), imgScript.lastIndexOf('}') + 1).replace("&quot;", "\"")
-        return gson.fromJson<JsonObject>(imgString)["fullimg"].array
+        return json.decodeFromString<JsonObject>(imgString)["fullimg"]!!.jsonArray
     }
 
     override fun pageListParse(document: Document): List<Page> {
         return document.parseJsonArray().mapIndexed { index, imageUrl ->
-            Page(index, imageUrl = imageUrl.string.replace(".gif.webp", ".gif"))
+            Page(index, imageUrl = imageUrl.jsonPrimitive.content.replace(".gif.webp", ".gif"))
         }
     }
 

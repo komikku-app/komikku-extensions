@@ -1,9 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.multporn
 
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.google.gson.Gson
-import com.google.gson.JsonArray
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservable
@@ -16,6 +12,11 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -27,6 +28,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import rx.schedulers.Schedulers
+import uy.kohesive.injekt.injectLazy
 import java.util.Locale
 
 class Multporn : ParsedHttpSource() {
@@ -36,7 +38,7 @@ class Multporn : ParsedHttpSource() {
     override val baseUrl = "https://multporn.net"
     override val supportsLatest = true
 
-    private val gson = Gson()
+    private val json: Json by injectLazy()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", HEADER_USER_AGENT)
@@ -65,8 +67,8 @@ class Multporn : ParsedHttpSource() {
     override fun popularMangaRequest(page: Int) = buildPopularMangaRequest(page - 1)
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val html = gson.fromJson<JsonArray>(response.body!!.string())
-            .last { it["command"].asString == "insert" }.asJsonObject["data"].asString
+        val html = json.decodeFromString<JsonArray>(response.body!!.string())
+            .last { it.jsonObject["command"]!!.jsonPrimitive.content == "insert" }.jsonObject["data"]!!.jsonPrimitive.content
 
         return super.popularMangaParse(
             response.newBuilder()

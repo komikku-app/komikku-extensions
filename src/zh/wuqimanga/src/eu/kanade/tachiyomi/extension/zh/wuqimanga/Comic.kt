@@ -1,6 +1,8 @@
 package eu.kanade.tachiyomi.extension.zh.wuqimanga
 
-class Comic {
+import kotlinx.serialization.Serializable
 
+@Serializable
+class Comic {
     val fs: List<String?>? = listOf()
 }

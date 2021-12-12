@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.zh.wuqimanga
 
-import com.google.gson.Gson
 import com.squareup.duktape.Duktape
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -9,11 +8,14 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 
 class WuqiManga : ParsedHttpSource() {
 
@@ -137,7 +139,7 @@ class WuqiManga : ParsedHttpSource() {
         return chapters
     }
 
-    private val gson = Gson()
+    private val json: Json by injectLazy()
 
     override fun pageListParse(document: Document): List<Page> {
         val html = document.html()
@@ -147,7 +149,7 @@ class WuqiManga : ParsedHttpSource() {
         }
         val re2 = Regex("""\{.*\}""")
         val imgJsonStr = re2.find(result)?.groups?.get(0)?.value
-        val imageJson: Comic = gson.fromJson(imgJsonStr, Comic::class.java)
+        val imageJson: Comic = json.decodeFromString(imgJsonStr!!)
 
         return imageJson.fs!!.mapIndexed { i, imgStr ->
             val imgurl = "$imageServer$imgStr"

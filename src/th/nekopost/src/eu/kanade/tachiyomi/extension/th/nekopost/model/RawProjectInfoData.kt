@@ -1,7 +1,9 @@
 package eu.kanade.tachiyomi.extension.th.nekopost.model
 
 import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class RawProjectInfoData(
     @SerializedName("artist_name")
     val artistName: String,

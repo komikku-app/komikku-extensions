@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.zh.manhuagui
 
 import android.app.Application
 import android.content.SharedPreferences
-import com.google.gson.Gson
 import com.squareup.duktape.Duktape
 import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
@@ -22,6 +21,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Headers
@@ -37,6 +38,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -65,7 +67,7 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
 
     private val imageServer = arrayOf("https://i.hamreus.com", "https://cf.hamreus.com")
     private val mobileWebsiteUrl = "https://m.$baseHost"
-    private val gson = Gson()
+    private val json: Json by injectLazy()
     private val baseHttpUrl: HttpUrl = baseUrl.toHttpUrlOrNull()!!
 
     // Add rate limit to fix manga thumbnail load failure
@@ -388,7 +390,7 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
         }
 
         val imgJsonStr = re2.find(imgDecode)?.groups?.get(0)?.value
-        val imageJson: Comic = gson.fromJson(imgJsonStr, Comic::class.java)
+        val imageJson: Comic = json.decodeFromString(imgJsonStr!!)
 
         return imageJson.files!!.mapIndexed { i, imgStr ->
             val imgurl = "${imageServer[0]}${imageJson.path}$imgStr?cid=${imageJson.cid}&md5=${imageJson.sl?.md5}"

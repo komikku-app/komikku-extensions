@@ -1,13 +1,5 @@
 package eu.kanade.tachiyomi.extension.ca.fansubscat
 
-import com.github.salomonbrys.kotson.float
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.github.salomonbrys.kotson.long
-import com.github.salomonbrys.kotson.nullString
-import com.github.salomonbrys.kotson.string
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -17,12 +9,22 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 
 class FansubsCat : HttpSource() {
 
@@ -39,22 +41,22 @@ class FansubsCat : HttpSource() {
 
     override val client: OkHttpClient = network.client
 
-    private val gson = Gson()
+    private val json: Json by injectLazy()
 
     private val apiBaseUrl = "https://api.fansubs.cat"
 
     private fun parseMangaFromJson(response: Response): MangasPage {
-        val jsonObject = gson.fromJson<JsonObject>(response.body!!.string())
+        val jsonObject = json.decodeFromString<JsonObject>(response.body!!.string())
 
-        val mangas = jsonObject["result"].asJsonArray.map { json ->
+        val mangas = jsonObject["result"]!!.jsonArray.map { json ->
             SManga.create().apply {
-                url = json["slug"].string
-                title = json["name"].string
-                thumbnail_url = json["thumbnail_url"].string
-                author = json["author"].nullString
-                description = json["synopsis"].nullString
-                status = json["status"].string.toStatus()
-                genre = json["genres"].nullString
+                url = json.jsonObject["slug"]!!.jsonPrimitive.content
+                title = json.jsonObject["name"]!!.jsonPrimitive.content
+                thumbnail_url = json.jsonObject["thumbnail_url"]!!.jsonPrimitive.content
+                author = json.jsonObject["author"]!!.jsonPrimitive.contentOrNull
+                description = json.jsonObject["synopsis"]!!.jsonPrimitive.contentOrNull
+                status = json.jsonObject["status"]!!.jsonPrimitive.content.toStatus()
+                genre = json.jsonObject["genres"]!!.jsonPrimitive.contentOrNull
             }
         }
 
@@ -62,24 +64,24 @@ class FansubsCat : HttpSource() {
     }
 
     private fun parseChapterListFromJson(response: Response): List<SChapter> {
-        val jsonObject = gson.fromJson<JsonObject>(response.body!!.string())
+        val jsonObject = json.decodeFromString<JsonObject>(response.body!!.string())
 
-        return jsonObject["result"].asJsonArray.map { json ->
+        return jsonObject["result"]!!.jsonArray.map { json ->
             SChapter.create().apply {
-                url = json["id"].string
-                name = json["title"].string
-                chapter_number = json["number"].float
-                scanlator = json["fansub"].string
-                date_upload = json["created"].long
+                url = json.jsonObject["id"]!!.jsonPrimitive.content
+                name = json.jsonObject["title"]!!.jsonPrimitive.content
+                chapter_number = json.jsonObject["number"]!!.jsonPrimitive.float
+                scanlator = json.jsonObject["fansub"]!!.jsonPrimitive.content
+                date_upload = json.jsonObject["created"]!!.jsonPrimitive.long
             }
         }
     }
 
     private fun parsePageListFromJson(response: Response): List<Page> {
-        val jsonObject = gson.fromJson<JsonObject>(response.body!!.string())
+        val jsonObject = json.decodeFromString<JsonObject>(response.body!!.string())
 
-        return jsonObject["result"].asJsonArray.mapIndexed { i, it ->
-            Page(i, it["url"].asString, it["url"].asString)
+        return jsonObject["result"]!!.jsonArray.mapIndexed { i, it ->
+            Page(i, it.jsonObject["url"]!!.jsonPrimitive.content, it.jsonObject["url"]!!.jsonPrimitive.content)
         }
     }
 
@@ -124,16 +126,17 @@ class FansubsCat : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val jsonObject = gson.fromJson<JsonObject>(response.body!!.string())
+        val jsonObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val resultObject = jsonObject.jsonObject["result"]!!.jsonObject
 
         return SManga.create().apply {
-            url = jsonObject["result"]["slug"].string
-            title = jsonObject["result"]["name"].string
-            thumbnail_url = jsonObject["result"]["thumbnail_url"].string
-            author = jsonObject["result"]["author"].nullString
-            description = jsonObject["result"]["synopsis"].nullString
-            status = jsonObject["result"]["status"].string.toStatus()
-            genre = jsonObject["result"]["genres"].nullString
+            url = resultObject["slug"]!!.jsonPrimitive.content
+            title = resultObject["name"]!!.jsonPrimitive.content
+            thumbnail_url = resultObject["thumbnail_url"]!!.jsonPrimitive.content
+            author = resultObject["author"]!!.jsonPrimitive.contentOrNull
+            description = resultObject["synopsis"]!!.jsonPrimitive.contentOrNull
+            status = resultObject["status"]!!.jsonPrimitive.content.toStatus()
+            genre = resultObject["genres"]!!.jsonPrimitive.contentOrNull
         }
     }
 

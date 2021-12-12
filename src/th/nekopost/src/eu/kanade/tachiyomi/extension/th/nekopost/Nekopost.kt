@@ -1,9 +1,8 @@
 package eu.kanade.tachiyomi.extension.th.nekopost
 
-import com.google.gson.Gson
 import eu.kanade.tachiyomi.extension.th.nekopost.model.RawChapterInfo
 import eu.kanade.tachiyomi.extension.th.nekopost.model.RawProjectInfo
-import eu.kanade.tachiyomi.extension.th.nekopost.model.RawProjectNameList
+import eu.kanade.tachiyomi.extension.th.nekopost.model.RawProjectNameListItem
 import eu.kanade.tachiyomi.extension.th.nekopost.model.RawProjectSummaryList
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -13,6 +12,8 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -20,11 +21,12 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class Nekopost : ParsedHttpSource() {
-    private val gson: Gson = Gson()
+    private val json: Json by injectLazy()
     override val baseUrl: String = "https://www.nekopost.net/project"
 
     private val latestMangaEndpoint: String =
@@ -81,10 +83,10 @@ class Nekopost : ParsedHttpSource() {
             .map { response ->
                 val responseBody =
                     response.body ?: throw Error("Unable to fetch manga detail of ${manga.title}")
-                val projectInfo = gson.fromJson(responseBody.string(), RawProjectInfo::class.java)
+                val projectInfo: RawProjectInfo = json.decodeFromString(responseBody.string())
 
                 manga.apply {
-                    projectInfo.projectData.let {
+                    projectInfo.projectInfo.let {
                         url = it.npProjectId
                         title = it.npName
                         artist = it.artistName
@@ -95,7 +97,7 @@ class Nekopost : ParsedHttpSource() {
                     }
 
                     genre =
-                        projectInfo.projectCategoryUsed.map { it.npcName }.joinToString(", ")
+                        projectInfo.projectCategoryUsed.joinToString(", ") { it.npcName }
                 }
             }
     }
@@ -108,8 +110,7 @@ class Nekopost : ParsedHttpSource() {
                     val responseBody =
                         response.body
                             ?: throw Error("Unable to fetch manga detail of ${manga.title}")
-                    val projectInfo =
-                        gson.fromJson(responseBody.string(), RawProjectInfo::class.java)
+                    val projectInfo: RawProjectInfo = json.decodeFromString(responseBody.string())
 
                     projectInfo.projectChapterList.map { chapter ->
                         SChapter.create().apply {
@@ -137,8 +138,7 @@ class Nekopost : ParsedHttpSource() {
                 val responseBody =
                     response.body
                         ?: throw Error("Unable to fetch page list of chapter ${chapter.chapter_number}")
-                val chapterInfo =
-                    gson.fromJson(responseBody.string(), RawChapterInfo::class.java)
+                val chapterInfo: RawChapterInfo = json.decodeFromString(responseBody.string())
 
                 chapterInfo.pageItem.map { page ->
                     Page(
@@ -159,7 +159,7 @@ class Nekopost : ParsedHttpSource() {
 
     override fun popularMangaParse(response: Response): MangasPage {
         val responseBody = response.body ?: throw Error("Unable to fetch mangas")
-        val projectList = gson.fromJson(responseBody.string(), RawProjectSummaryList::class.java)
+        val projectList: RawProjectSummaryList = json.decodeFromString(responseBody.string())
 
         val mangaList: List<SManga> =
             projectList.listItem
@@ -200,8 +200,7 @@ class Nekopost : ParsedHttpSource() {
             .asObservableSuccess()
             .map { response ->
                 val responseBody = response.body ?: throw Error("Unable to fetch title list")
-                val projectList =
-                    gson.fromJson(responseBody.string(), RawProjectNameList::class.java)
+                val projectList: List<RawProjectNameListItem> = json.decodeFromString(responseBody.string())
 
                 val mangaList: List<SManga> = projectList.filter { project ->
                     Regex(

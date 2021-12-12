@@ -1,8 +1,5 @@
 package eu.kanade.tachiyomi.extension.zh.comico
 
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.get
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
@@ -10,6 +7,11 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
@@ -36,21 +38,24 @@ class ComicoChallenge : Comico("Comico Challenge", "/challenge", true) {
         val mangas = mutableListOf<SManga>()
         val body = response.body!!.string()
 
-        gson.fromJson<JsonObject>(body)["result"]["list"].asJsonArray.forEach {
-            val manga = SManga.create()
+        json.decodeFromString<JsonObject>(body)["result"]!!
+            .jsonObject["list"]!!
+            .jsonArray
+            .forEach {
+                val manga = SManga.create()
 
-            manga.thumbnail_url = it["img_url"].asString
-            manga.title = it["article_title"].asString
-            manga.author = it["author"].asString
-            manga.description = it["description"].asString
-            manga.url = it["article_url"].asString.substringAfter(urlModifier)
-            manga.status = if (it["is_end"].asString == "false") SManga.ONGOING else SManga.COMPLETED
+                manga.thumbnail_url = it.jsonObject["img_url"]!!.jsonPrimitive.content
+                manga.title = it.jsonObject["article_title"]!!.jsonPrimitive.content
+                manga.author = it.jsonObject["author"]!!.jsonPrimitive.content
+                manga.description = it.jsonObject["description"]!!.jsonPrimitive.content
+                manga.url = it.jsonObject["article_url"]!!.jsonPrimitive.content.substringAfter(urlModifier)
+                manga.status = if (it.jsonObject["is_end"]!!.jsonPrimitive.content == "false") SManga.ONGOING else SManga.COMPLETED
 
-            mangas.add(manga)
-        }
+                mangas.add(manga)
+            }
 
-        val lastPage = gson.fromJson<JsonObject>(body)["result"]["totalPageCnt"].asString
-        val currentPage = gson.fromJson<JsonObject>(body)["result"]["currentPageNo"].asString
+        val lastPage = json.decodeFromString<JsonObject>(body)["result"]!!.jsonObject["totalPageCnt"]!!.jsonPrimitive.content
+        val currentPage = json.decodeFromString<JsonObject>(body)["result"]!!.jsonObject["currentPageNo"]!!.jsonPrimitive.content
 
         return MangasPage(mangas, currentPage < lastPage)
     }
@@ -82,8 +87,12 @@ class ComicoChallenge : Comico("Comico Challenge", "/challenge", true) {
     override fun chapterListParse(response: Response): List<SChapter> {
         val chapters = mutableListOf<SChapter>()
 
-        gson.fromJson<JsonObject>(response.body!!.string())["result"]["list"].asJsonArray
-            .forEach { chapters.add(chapterFromJson(it)) }
+        json.decodeFromString<JsonObject>(response.body!!.string())["result"]!!
+            .jsonObject["list"]!!
+            .jsonArray
+            .forEach {
+                chapters.add(chapterFromJson(it.jsonObject))
+            }
 
         return chapters.reversed()
     }
