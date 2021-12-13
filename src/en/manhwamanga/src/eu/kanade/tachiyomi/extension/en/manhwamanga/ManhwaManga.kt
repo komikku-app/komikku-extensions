@@ -18,7 +18,7 @@ import org.jsoup.nodes.Element
 
 class ManhwaManga : ParsedHttpSource() {
     override val name = "ManhwaManga.net"
-    override val baseUrl = "https://manhwamanga.net"
+    override val baseUrl = "https://mwmanhwa.net"
     override val lang = "en"
     override val supportsLatest = true
 
