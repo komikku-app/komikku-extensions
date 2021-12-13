@@ -216,15 +216,28 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             return GET(url, headers, CacheControl.FORCE_NETWORK)
         }
 
-        val tempUrl = MDConstants.apiMangaUrl.toHttpUrl().newBuilder()
-
-        tempUrl.apply {
+        val tempUrl = MDConstants.apiMangaUrl.toHttpUrl().newBuilder().apply {
             addQueryParameter("limit", MDConstants.mangaLimit.toString())
             addQueryParameter("offset", (helper.getMangaListOffset(page)))
             addQueryParameter("includes[]", MDConstants.coverArt)
-            val actualQuery = query.replace(MDConstants.whitespaceRegex, " ")
-            if (actualQuery.isNotBlank()) {
-                addQueryParameter("title", actualQuery)
+        }
+
+        if (query.startsWith(MDConstants.prefixGrpSearch)) {
+            val groupID = query.removePrefix(MDConstants.prefixGrpSearch)
+            if (!helper.containsUuid(groupID)) {
+                throw Exception("Not a valid group ID")
+            }
+
+            tempUrl.apply {
+                addQueryParameter("group", groupID)
+            }
+        }
+        else {
+            tempUrl.apply {
+                val actualQuery = query.replace(MDConstants.whitespaceRegex, " ")
+                if (actualQuery.isNotBlank()) {
+                    addQueryParameter("title", actualQuery)
+                }
             }
         }
 
