@@ -1,3 +1,11 @@
+## 1.2.35
+
+Minimum Komga version required: `0.113.0`
+
+### Features
+
+* Display the Translators of a book in the scanlator chapter field
+
 ## 1.2.34
 
 Minimum Komga version required: `0.113.0`

@@ -215,6 +215,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
                 chapter_number = if (!response.fromReadList()) book.metadata.numberSort else index + 1F
                 name = "${if (!response.fromReadList()) "${book.metadata.number} - " else ""}${book.metadata.title} (${book.size})"
                 url = "$baseUrl/api/v1/books/${book.id}"
+                scanlator = book.metadata.authors.groupBy({ it.role }, { it.name })["translator"]?.joinToString()
                 date_upload = book.metadata.releaseDate?.let { parseDate(it) }
                     ?: parseDateTime(book.fileLastModified)
             }
