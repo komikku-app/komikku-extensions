@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.en.bilibilicomics
+package eu.kanade.tachiyomi.extension.all.bilibili
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
@@ -16,7 +16,7 @@ import kotlin.system.exitProcess
  * Main goal was to make it easier to open manga in Tachiyomi in spite of the DDoS blocking
  * the usual search screen from working.
  */
-class BilibiliComicsUrlActivity : Activity() {
+class BilibiliUrlActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +27,7 @@ class BilibiliComicsUrlActivity : Activity() {
 
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"
-                putExtra("query", BilibiliComics.PREFIX_ID_SEARCH + titleId)
+                putExtra("query", Bilibili.PREFIX_ID_SEARCH + titleId)
                 putExtra("filter", packageName)
             }
 
