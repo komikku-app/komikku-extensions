@@ -79,9 +79,7 @@ abstract class Bilibili(
 
     protected open val resolutionPrefTitle: String = "Chapter image resolution"
 
-    protected open val resolutionPrefEntries: Array<String> = arrayOf("Raw", "HD", "SD")
-
-    protected open val resolutionPrefEntryValues: Array<String> = arrayOf("@1200w.jpg", "@800w.jpg", "@600w_50q.jpg")
+    protected open val imagePrefTitle: String = "Chapter image format"
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -91,6 +89,9 @@ abstract class Bilibili(
 
     private val chapterImageResolution: String
         get() = preferences.getString("${RESOLUTION_PREF_KEY}_$lang", RESOLUTION_PREF_DEFAULT_VALUE)!!
+
+    private val chapterImageFormat: String
+        get() = preferences.getString("${IMAGE_FORMAT_PREF_KEY}_$lang", IMAGE_FORMAT_PREF_DEFAULT_VALUE)!!
 
     override fun popularMangaRequest(page: Int): Request {
         val requestPayload = buildJsonObject {
@@ -376,8 +377,10 @@ abstract class Bilibili(
         }
 
         val imageQuality = chapterImageResolution
+        val imageFormat = chapterImageFormat
 
-        val imageTokenRequest = imageTokenRequest(result.data!!.images.map { it.path + imageQuality })
+        val imageUrls = result.data!!.images.map { "${it.path}@$imageQuality.$imageFormat" }
+        val imageTokenRequest = imageTokenRequest(imageUrls)
         val imageTokenResponse = client.newCall(imageTokenRequest).execute()
         val imageTokenResult = imageTokenResponse.parseAs<List<BilibiliPageDto>>()
 
@@ -409,8 +412,8 @@ abstract class Bilibili(
         val resolutionPref = ListPreference(screen.context).apply {
             key = "${RESOLUTION_PREF_KEY}_$lang"
             title = resolutionPrefTitle
-            entries = resolutionPrefEntries
-            entryValues = resolutionPrefEntryValues
+            entries = RESOLUTION_PREF_ENTRIES
+            entryValues = RESOLUTION_PREF_ENTRY_VALUES
             setDefaultValue(RESOLUTION_PREF_DEFAULT_VALUE)
             summary = "%s"
 
@@ -425,7 +428,27 @@ abstract class Bilibili(
             }
         }
 
+        val imageFormatPref = ListPreference(screen.context).apply {
+            key = "${IMAGE_FORMAT_PREF_KEY}_$lang"
+            title = imagePrefTitle
+            entries = IMAGE_FORMAT_PREF_ENTRIES
+            entryValues = IMAGE_FORMAT_PREF_ENTRY_VALUES
+            setDefaultValue(IMAGE_FORMAT_PREF_DEFAULT_VALUE)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+
+                preferences.edit()
+                    .putString("${IMAGE_FORMAT_PREF_KEY}_$lang", entry)
+                    .commit()
+            }
+        }
+
         screen.addPreference(resolutionPref)
+        screen.addPreference(imageFormatPref)
     }
 
     abstract fun getAllGenres(): Array<BilibiliTag>
@@ -504,8 +527,15 @@ abstract class Bilibili(
         const val PREFIX_ID_SEARCH = "id:"
         private val ID_SEARCH_PATTERN = "^id:(mc)?(\\d+)$".toRegex()
 
-        private const val RESOLUTION_PREF_KEY = "imageResolution"
-        private const val RESOLUTION_PREF_DEFAULT_VALUE = ""
+        private const val RESOLUTION_PREF_KEY = "chapterImageResolution"
+        private val RESOLUTION_PREF_ENTRIES = arrayOf("Raw", "HD", "SD")
+        private val RESOLUTION_PREF_ENTRY_VALUES = arrayOf("1200w", "800w", "600w_50q")
+        private val RESOLUTION_PREF_DEFAULT_VALUE = RESOLUTION_PREF_ENTRY_VALUES[0]
+
+        private const val IMAGE_FORMAT_PREF_KEY = "chapterImageFormat"
+        private val IMAGE_FORMAT_PREF_ENTRIES = arrayOf("JPG", "WEBP", "PNG")
+        private val IMAGE_FORMAT_PREF_ENTRY_VALUES = arrayOf("jpg", "webp", "png")
+        private val IMAGE_FORMAT_PREF_DEFAULT_VALUE = IMAGE_FORMAT_PREF_ENTRY_VALUES[0]
 
         private const val THUMBNAIL_RESOLUTION = "@512w.jpg"
 

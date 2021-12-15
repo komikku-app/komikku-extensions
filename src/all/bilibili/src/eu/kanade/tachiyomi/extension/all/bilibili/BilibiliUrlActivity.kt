@@ -23,7 +23,7 @@ class BilibiliUrlActivity : Activity() {
 
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
-            val titleId = pathSegments[1]
+            val titleId = if (pathSegments.size == 3) pathSegments[2] else pathSegments[1]
 
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"

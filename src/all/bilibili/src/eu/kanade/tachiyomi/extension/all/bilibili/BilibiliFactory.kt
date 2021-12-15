@@ -57,6 +57,9 @@ class BilibiliManhua : Bilibili("哔哩哔哩漫画", "https://manga.bilibili.co
     // Machine translated, needs to be revisited.
     override val resolutionPrefTitle: String = "章节图像分辨率"
 
+    // Machine translated, needs to be revisited.
+    override val imagePrefTitle: String = "章节图像格式"
+
     override fun getAllStatus(): Array<String> = arrayOf("全部", "连载", "完结")
 
     override fun getAllSortOptions(): Array<String> = arrayOf("人气推荐", "更新时间", "追漫人数", "上架时间")
