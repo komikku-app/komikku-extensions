@@ -128,7 +128,7 @@ abstract class Luscious(
                                 languageIds.toMutableMap().apply {
                                     put(
                                         "value",
-                                        JsonPrimitive ("+$lusLang${languageIds["value"]!!.jsonPrimitive.content}")
+                                        JsonPrimitive("+$lusLang${languageIds["value"]!!.jsonPrimitive.content}")
                                     )
                                 }
                             )
@@ -210,7 +210,7 @@ abstract class Luscious(
 
     private fun buildAlbumInfoRequestInput(id: String): JsonObject {
         return buildJsonObject {
-           put("id", id)
+            put("id", id)
         }
     }
 
@@ -268,7 +268,7 @@ abstract class Luscious(
                         val chapter = SChapter.create()
                         val url = when (getResolutionPref()) {
                             "-1" -> it.jsonObject["url_to_original"]!!.jsonPrimitive.content
-                            else -> it.jsonObject["thumbnails"]!!.jsonObject[getResolutionPref()?.toInt()!!]!!.jsonObject["url"]!!.jsonPrimitive.content
+                            else -> it.jsonObject["thumbnails"]!!.jsonArray[getResolutionPref()?.toInt()!!].jsonObject["url"]!!.jsonPrimitive.content
                         }
                         when {
                             url.startsWith("//") -> chapter.url = "https:$url"
@@ -300,10 +300,12 @@ abstract class Luscious(
         return buildJsonObject {
             putJsonObject("input") {
                 putJsonArray("filters") {
-                    add(buildJsonObject {
-                        put("name", "album_id")
-                        put("value", id)
-                    })
+                    add(
+                        buildJsonObject {
+                            put("name", "album_id")
+                            put("value", id)
+                        }
+                    )
                 }
                 put("display", getSortPref())
                 put("page", page)
@@ -338,7 +340,7 @@ abstract class Luscious(
                 val index = it.jsonObject["position"]!!.jsonPrimitive.int
                 val url = when (getResolutionPref()) {
                     "-1" -> it.jsonObject["url_to_original"]!!.jsonPrimitive.content
-                    else -> it.jsonObject["thumbnails"]!!.jsonObject[getResolutionPref()?.toInt()!!]!!.jsonObject["url"]!!.jsonPrimitive.content
+                    else -> it.jsonObject["thumbnails"]!!.jsonArray[getResolutionPref()?.toInt()!!].jsonObject["url"]!!.jsonPrimitive.content
                 }
                 when {
                     url.startsWith("//") -> pages.add(Page(index, "https:$url", "https:$url"))
@@ -387,7 +389,7 @@ abstract class Luscious(
                 }
                 when (getResolutionPref()) {
                     "-1" -> data["items"]!!.jsonArray[page.index % 50].jsonObject["url_to_original"]!!.jsonPrimitive.content
-                    else -> data["items"]!!.jsonArray[page.index % 50].jsonObject["thumbnails"]!!.jsonObject[getResolutionPref()?.toInt()!!]!!.jsonObject["url"]!!.jsonPrimitive.content
+                    else -> data["items"]!!.jsonArray[page.index % 50].jsonObject["thumbnails"]!!.jsonArray[getResolutionPref()?.toInt()!!].jsonObject["url"]!!.jsonPrimitive.content
                 }
             }
     }
