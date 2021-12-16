@@ -59,7 +59,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Clover Manga", "https://clover-manga.com", "tr", overrideVersionCode = 2),
         SingleLang("Colored Manga", "https://coloredmanga.com", "en"),
         SingleLang("ComicKiba", "https://comickiba.com", "en", overrideVersionCode = 1),
-        SingleLang("Comicdom", "https://comicdom.org", "en", overrideVersionCode = 1),
+        SingleLang("Comicdom", "https://comicdom.org", "en", overrideVersionCode = 2),
         SingleLang("Comichub", "https://comichub.net", "en"),
         SingleLang("Comics Valley", "https://comicsvalley.com", "hi", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ComicsWorld", "https://comicsworld.in", "hi"),
