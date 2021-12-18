@@ -6,7 +6,7 @@ ext {
     extName = 'Fansubs.cat'
     pkgNameSuffix = 'ca.fansubscat'
     extClass = '.FansubsCat'
-    extVersionCode = 1
+    extVersionCode = 2
     isNsfw = true
 }
 

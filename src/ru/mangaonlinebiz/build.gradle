@@ -6,7 +6,7 @@ ext {
     extName = 'Mangaonlinebiz'
     pkgNameSuffix = 'ru.mangaonlinebiz'
     extClass = '.MangaOnlineBiz'
-    extVersionCode = 8
+    extVersionCode = 9
 }
 
 apply from: "$rootDir/common.gradle"

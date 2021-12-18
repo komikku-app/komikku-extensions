@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.rainofsnow'
     extClass = '.RainOfSnow'
     extVersionCode = 7
-    isNsfw = false
 }
 
 dependencies {
