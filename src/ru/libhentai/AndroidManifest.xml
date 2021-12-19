@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="eu.kanade.tachiyomi.extension">
+
+    <application>
+        <activity
+            android:name=".ru.libhentai.LibHentaiActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- LibHentaiActivity sites can be added here. -->
+                <data
+                    android:host="hentailib.me"
+                    android:pathPattern="/..*/v..*"
+                    android:scheme="https" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
