@@ -5,6 +5,8 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+internal const val UUID_QUERY = "uuid:"
+
 private const val ISO_DATE = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
 
 private val dateFormat = SimpleDateFormat(ISO_DATE, Locale.ROOT)

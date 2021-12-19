@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -15,6 +16,7 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 
+@ExperimentalSerializationApi
 open class MonochromeCMS(
     override val name: String,
     override val baseUrl: String,
@@ -38,24 +40,20 @@ open class MonochromeCMS(
         GET("$apiUrl/manga?limit=10&offset=${10 * (page - 1)}&title=$query", headers)
 
     override fun searchMangaParse(response: Response) =
-        response.decode<Results>().let { results ->
-            val mp = results.map {
-                SManga.create().apply {
-                    url = it.id
-                    title = it.title
-                    author = it.author
-                    artist = it.artist
-                    description = it.description
-                    thumbnail_url = apiUrl + it.cover
-                    status = when (it.status) {
-                        "ongoing", "hiatus" -> SManga.ONGOING
-                        "completed", "cancelled" -> SManga.COMPLETED
-                        else -> SManga.UNKNOWN
-                    }
-                }
-            }
-            MangasPage(mp, results.hasNext)
+        response.decode<Results>().let {
+            MangasPage(it.map(::mangaFromAPI), it.hasNext)
         }
+
+    override fun fetchSearchManga(
+        page: Int, query: String, filters: FilterList
+    ): Observable<MangasPage> {
+        if (!query.startsWith(UUID_QUERY))
+            return super.fetchSearchManga(page, query, filters)
+        val req = GET("$apiUrl/manga/${query.substringAfter(UUID_QUERY)}")
+        return client.newCall(req).asObservableSuccess().map {
+            MangasPage(listOf(mangaFromAPI(it.decode())), false)
+        }
+    }
 
     // Request the actual manga URL for the webview
     override fun mangaDetailsRequest(manga: SManga) =
@@ -87,6 +85,21 @@ open class MonochromeCMS(
         }
         return Observable.just(pages)
     }
+
+    private fun mangaFromAPI(manga: Manga) =
+        SManga.create().apply {
+            url = manga.id
+            title = manga.title
+            author = manga.author
+            artist = manga.artist
+            description = manga.description
+            thumbnail_url = apiUrl + manga.cover
+            status = when (manga.status) {
+                "ongoing", "hiatus" -> SManga.ONGOING
+                "completed", "cancelled" -> SManga.COMPLETED
+                else -> SManga.UNKNOWN
+            }
+        }
 
     private inline fun <reified T> Response.decode() =
         json.decodeFromString<T>(body!!.string())
