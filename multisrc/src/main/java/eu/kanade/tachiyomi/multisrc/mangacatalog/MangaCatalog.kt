@@ -101,11 +101,10 @@ abstract class MangaCatalog(
 
     // Pages
 
-    override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        document.select(".text-center img,.img_container img").forEach { img ->
-            add(Page(size, "", img.attr("src")))
+    override fun pageListParse(document: Document): List<Page> =
+        document.select(".js-pages-container img.js-page,.img_container img").mapIndexed { index, img ->
+            Page(index, "", img.attr("src"))
         }
-    }
 
     override fun imageUrlParse(document: Document): String = throw Exception("Not Used")
 }
