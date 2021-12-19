@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit
 class LibManga : ConfigurableSource, HttpSource() {
 
     private val json: Json by injectLazy()
-    
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_${id}_2", 0x0000)
     }
@@ -94,7 +94,7 @@ class LibManga : ConfigurableSource, HttpSource() {
 
         element.select("a").first().let { link ->
             manga.setUrlWithoutDomain(link.attr("href"))
-            manga.title = if (element.select(".updates__name_rus").isNullOrEmpty()) { element.select("h4").first().text() } else element.select(".updates__name_rus").first().text()
+            manga.title = if (titleLanguage.equals("rus") || element.select(".updates__name_rus").isNullOrEmpty()) { element.select("h4").first().text() } else element.select(".updates__name_rus").first().text()
         }
         return manga
     }
@@ -840,7 +840,7 @@ class LibManga : ConfigurableSource, HttpSource() {
         val titleLanguagePref = ListPreference(screen.context).apply {
             key = LANGUAGE_PREF
             title = LANGUAGE_PREF_Title
-            entries = arrayOf("Транскрипция и английский", "Русский")
+            entries = arrayOf("Английский (транскрипция)", "Русский")
             entryValues = arrayOf("eng", "rus")
             summary = "%s"
             setDefaultValue("eng")
