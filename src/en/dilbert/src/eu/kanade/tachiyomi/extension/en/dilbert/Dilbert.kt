@@ -70,7 +70,7 @@ class Dilbert : ParsedHttpSource() {
     override fun imageUrlParse(document: Document) = document.first(".img-comic").attr("src")!!
 
     private fun chapterListRequest(manga: SManga, page: Int) =
-        GET("$baseUrl/search_results?year=${manga.url}&page=$page", headers)
+        GET("$baseUrl/search_results?year=${manga.url}&page=$page&sort=date_desc", headers)
 
     private fun chapterListParse(manga: SManga, page: Int) =
         client.newCall(chapterListRequest(manga, page)).execute().run {
