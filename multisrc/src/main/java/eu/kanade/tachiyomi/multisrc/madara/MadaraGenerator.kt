@@ -392,7 +392,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Uyuyan Balik", "https://uyuyanbalik.com", "tr", overrideVersionCode = 1),
         SingleLang("Vanguard Bun", "https://vanguardbun.com", "en", overrideVersionCode = 1),
         SingleLang("Visbellum", "https://visbellum.com", "pt-BR", overrideVersionCode = 2),
-        SingleLang("Volkan Scans", "https://volkanscans.com", "en", overrideVersionCode = 1),
         SingleLang("Wakamics", "https://wakamics.net", "en"),
         SingleLang("Wakascan", "https://wakascan.com", "fr", overrideVersionCode = 1),
         SingleLang("War Queen Scan", "https://wqscan.com", "pt-BR", overrideVersionCode = 6),
