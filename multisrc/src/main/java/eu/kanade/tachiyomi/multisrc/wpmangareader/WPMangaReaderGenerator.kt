@@ -39,7 +39,6 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Shooting Star Scans", "https://shootingstarscans.com", "en", overrideVersionCode = 3),
         SingleLang("Azure Scans", "https://azuremanga.com", "en"),
         SingleLang("ReaperScans.fr (GS)", "https://reaperscans.fr", "fr", className = "ReaperScansFR", pkgName = "gsnation", overrideVersionCode = 2),
-        SingleLang("YugenMangas", "https://yugenmangas.com", "es"),
         SingleLang("Patatescans", "https://patatescans.com", "fr", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Fusion Scanlation", "https://fusionscanlation.com", "es", className = "FusionScanlation", overrideVersionCode = 1),
         SingleLang("Ace Scans", "https://acescans.xyz", "en", isNsfw = true, overrideVersionCode = 1),
