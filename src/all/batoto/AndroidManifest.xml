@@ -14,9 +14,22 @@ package="eu.kanade.tachiyomi.extension">
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
 
+            <data android:host="*.bato.to" />
+            <data android:host="bato.to" />
+            <data android:host="*.batotoo.com" />
+            <data android:host="batotoo.com" />
+            <data android:host="*.comiko.net" />
+            <data android:host="comiko.net" />
+            <data android:host="*.battwo.com" />
+            <data android:host="battwo.com" />
+            <data android:host="*.mangatoto.com" />
+            <data android:host="mangatoto.com" />
+
             <data
-                android:host="bato.to"
                 android:pathPattern="/series/..*"
+                android:scheme="https" />
+            <data
+                android:pathPattern="/subject-overview/..*"
                 android:scheme="https" />
         </intent-filter>
     </activity>

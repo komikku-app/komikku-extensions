@@ -15,7 +15,7 @@ class BatoToUrlActivity : Activity() {
         val pathSegments = intent?.data?.pathSegments
 
         if (host != null && pathSegments != null) {
-            val query = fromGuya(pathSegments)
+            val query = fromBatoTo(pathSegments)
 
             if (query == null) {
                 Log.e("BatoToUrlActivity", "Unable to parse URI from intent $intent")
@@ -40,7 +40,7 @@ class BatoToUrlActivity : Activity() {
         exitProcess(0)
     }
 
-    private fun fromGuya(pathSegments: MutableList<String>): String? {
+    private fun fromBatoTo(pathSegments: MutableList<String>): String? {
         return if (pathSegments.size >= 2) {
             val id = pathSegments[1]
             "ID:$id"

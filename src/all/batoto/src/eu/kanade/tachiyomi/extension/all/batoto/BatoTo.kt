@@ -1,8 +1,13 @@
 package eu.kanade.tachiyomi.extension.all.batoto
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import com.squareup.duktape.Duktape
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -22,6 +27,8 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -29,10 +36,43 @@ import java.util.concurrent.TimeUnit
 open class BatoTo(
     override val lang: String,
     private val siteLang: String
-) : ParsedHttpSource() {
+) : ConfigurableSource, ParsedHttpSource() {
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     override val name: String = "Bato.to"
-    override val baseUrl: String = "https://bato.to"
+    override val baseUrl: String = getResolutionPref()!!
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val mirrorPref = ListPreference(screen.context).apply {
+            key = "${MIRROR_PREF_KEY}_$lang"
+            title = MIRROR_PREF_TITLE
+            entries = MIRROR_PREF_ENTRIES
+            entryValues = MIRROR_PREF_ENTRY_VALUES
+            setDefaultValue(MIRROR_PREF_DEFAULT_VALUE)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString("${MIRROR_PREF_KEY}_$lang", entry).commit()
+            }
+        }
+        screen.addPreference(mirrorPref)
+    }
+
+    private fun getResolutionPref(): String? = preferences.getString("${MIRROR_PREF_KEY}_$lang", MIRROR_PREF_DEFAULT_VALUE)
+
+    companion object {
+        private const val MIRROR_PREF_KEY = "MIRROR"
+        private const val MIRROR_PREF_TITLE = "Mirror"
+        private val MIRROR_PREF_ENTRIES = arrayOf("Bato.to", "Batotoo.com", "Comiko.net", "Battwo.com", "Mangatoto.com")
+        private val MIRROR_PREF_ENTRY_VALUES = arrayOf("https://bato.to", "https://batotoo.com", "https://comiko.net", "https://battwo.com", "https://mangatoto.com")
+        private val MIRROR_PREF_DEFAULT_VALUE = MIRROR_PREF_ENTRY_VALUES[0]
+    }
 
     override val supportsLatest = true
     private val json: Json by injectLazy()
