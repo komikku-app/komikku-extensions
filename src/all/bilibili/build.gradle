@@ -6,7 +6,7 @@ ext {
     extName = 'BILIBILI'
     pkgNameSuffix = 'all.bilibili'
     extClass = '.BilibiliFactory'
-    extVersionCode = 2
+    extVersionCode = 3
 }
 
 dependencies {

@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.Headers
@@ -77,9 +76,11 @@ abstract class Bilibili(
         "were filtered out from the chapter list. Use the BILIBILI website or the official app " +
         "to read them for now."
 
-    protected open val resolutionPrefTitle: String = "Chapter image resolution"
+    protected open val imageQualityPrefTitle: String = "Chapter image quality"
 
-    protected open val imagePrefTitle: String = "Chapter image format"
+    protected open val imageQualityPrefEntries: Array<String> = arrayOf("Raw", "HD", "SD")
+
+    protected open val imageFormatPrefTitle: String = "Chapter image format"
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -87,8 +88,8 @@ abstract class Bilibili(
 
     private val json: Json by injectLazy()
 
-    private val chapterImageResolution: String
-        get() = preferences.getString("${RESOLUTION_PREF_KEY}_$lang", RESOLUTION_PREF_DEFAULT_VALUE)!!
+    private val chapterImageQuality: String
+        get() = preferences.getString("${IMAGE_QUALITY_PREF_KEY}_$lang", IMAGE_QUALITY_PREF_DEFAULT_VALUE)!!
 
     private val chapterImageFormat: String
         get() = preferences.getString("${IMAGE_FORMAT_PREF_KEY}_$lang", IMAGE_FORMAT_PREF_DEFAULT_VALUE)!!
@@ -342,7 +343,8 @@ abstract class Bilibili(
     }
 
     private fun chapterFromObject(episode: BilibiliEpisodeDto, comicId: Int): SChapter = SChapter.create().apply {
-        name = episodePrefix + episode.shortTitle + " - " + episode.title
+        name = episodePrefix + episode.shortTitle +
+            (if (episode.title.isNotBlank()) " - " + episode.title else "")
         date_upload = episode.publicationTime.substringBefore("T").toDate()
         url = "/mc$comicId/${episode.id}"
     }
@@ -376,7 +378,7 @@ abstract class Bilibili(
             return emptyList()
         }
 
-        val imageQuality = chapterImageResolution
+        val imageQuality = chapterImageQuality
         val imageFormat = chapterImageFormat
 
         val imageUrls = result.data!!.images.map { "${it.path}@$imageQuality.$imageFormat" }
@@ -409,12 +411,12 @@ abstract class Bilibili(
     override fun imageUrlParse(response: Response): String = ""
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val resolutionPref = ListPreference(screen.context).apply {
-            key = "${RESOLUTION_PREF_KEY}_$lang"
-            title = resolutionPrefTitle
-            entries = RESOLUTION_PREF_ENTRIES
-            entryValues = RESOLUTION_PREF_ENTRY_VALUES
-            setDefaultValue(RESOLUTION_PREF_DEFAULT_VALUE)
+        val imageQualityPref = ListPreference(screen.context).apply {
+            key = "${IMAGE_QUALITY_PREF_KEY}_$lang"
+            title = imageQualityPrefTitle
+            entries = imageQualityPrefEntries
+            entryValues = IMAGE_QUALITY_PREF_ENTRY_VALUES
+            setDefaultValue(IMAGE_QUALITY_PREF_DEFAULT_VALUE)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -423,14 +425,14 @@ abstract class Bilibili(
                 val entry = entryValues[index] as String
 
                 preferences.edit()
-                    .putString("${RESOLUTION_PREF_KEY}_$lang", entry)
+                    .putString("${IMAGE_QUALITY_PREF_KEY}_$lang", entry)
                     .commit()
             }
         }
 
         val imageFormatPref = ListPreference(screen.context).apply {
             key = "${IMAGE_FORMAT_PREF_KEY}_$lang"
-            title = imagePrefTitle
+            title = imageFormatPrefTitle
             entries = IMAGE_FORMAT_PREF_ENTRIES
             entryValues = IMAGE_FORMAT_PREF_ENTRY_VALUES
             setDefaultValue(IMAGE_FORMAT_PREF_DEFAULT_VALUE)
@@ -447,7 +449,7 @@ abstract class Bilibili(
             }
         }
 
-        screen.addPreference(resolutionPref)
+        screen.addPreference(imageQualityPref)
         screen.addPreference(imageFormatPref)
     }
 
@@ -527,10 +529,9 @@ abstract class Bilibili(
         const val PREFIX_ID_SEARCH = "id:"
         private val ID_SEARCH_PATTERN = "^id:(mc)?(\\d+)$".toRegex()
 
-        private const val RESOLUTION_PREF_KEY = "chapterImageResolution"
-        private val RESOLUTION_PREF_ENTRIES = arrayOf("Raw", "HD", "SD")
-        private val RESOLUTION_PREF_ENTRY_VALUES = arrayOf("1200w", "800w", "600w_50q")
-        private val RESOLUTION_PREF_DEFAULT_VALUE = RESOLUTION_PREF_ENTRY_VALUES[0]
+        private const val IMAGE_QUALITY_PREF_KEY = "chapterImageResolution"
+        private val IMAGE_QUALITY_PREF_ENTRY_VALUES = arrayOf("1200w", "800w", "600w_50q")
+        private val IMAGE_QUALITY_PREF_DEFAULT_VALUE = IMAGE_QUALITY_PREF_ENTRY_VALUES[0]
 
         private const val IMAGE_FORMAT_PREF_KEY = "chapterImageFormat"
         private val IMAGE_FORMAT_PREF_ENTRIES = arrayOf("JPG", "WEBP", "PNG")

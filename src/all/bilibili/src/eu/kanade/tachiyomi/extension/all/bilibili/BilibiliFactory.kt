@@ -6,7 +6,7 @@ import eu.kanade.tachiyomi.source.SourceFactory
 class BilibiliFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         BilibiliComics(),
-        BilibiliManhua()
+        BilibiliManga()
     )
 }
 
@@ -32,7 +32,7 @@ class BilibiliComics : Bilibili("BILIBILI COMICS", "https://www.bilibilicomics.c
     )
 }
 
-class BilibiliManhua : Bilibili("哔哩哔哩漫画", "https://manga.bilibili.com", "zh") {
+class BilibiliManga : Bilibili("哔哩哔哩漫画", "https://manga.bilibili.com", "zh") {
 
     override val statusLabel: String = "进度"
 
@@ -50,15 +50,14 @@ class BilibiliManhua : Bilibili("哔哩哔哩漫画", "https://manga.bilibili.co
 
     override val defaultLatestSort: Int = 1
 
-    // Machine translated, needs to be revisited.
-    override val hasPaidChaptersWarning: String = "本系列已付费章节从章节列表中过滤掉。 " +
-        "暂时使用哔哩哔哩网站或官方应用程序阅读它们。"
+    override val hasPaidChaptersWarning: String = "此漫画的付费章节已从章节列表中过滤，" +
+        "暂时请用网页端或官方app阅读。"
 
-    // Machine translated, needs to be revisited.
-    override val resolutionPrefTitle: String = "章节图像分辨率"
+    override val imageQualityPrefTitle: String = "章节图片质量"
 
-    // Machine translated, needs to be revisited.
-    override val imagePrefTitle: String = "章节图像格式"
+    override val imageQualityPrefEntries: Array<String> = arrayOf("原图", "高", "低")
+
+    override val imageFormatPrefTitle: String = "章节图片格式"
 
     override fun getAllStatus(): Array<String> = arrayOf("全部", "连载", "完结")
 
