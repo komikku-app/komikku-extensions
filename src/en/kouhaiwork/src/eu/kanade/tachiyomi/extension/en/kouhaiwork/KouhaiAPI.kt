@@ -5,6 +5,8 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+const val ID_QUERY = "id:"
+
 const val API_URL = "https://api.kouhai.work/v3"
 
 const val STORAGE_URL = "https://api.kouhai.work/storage/"

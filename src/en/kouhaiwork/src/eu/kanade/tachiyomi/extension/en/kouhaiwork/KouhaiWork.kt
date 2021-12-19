@@ -64,6 +64,23 @@ class KouhaiWork : HttpSource() {
             }
         }.let { MangasPage(it, false) }
 
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList) =
+        if (!query.startsWith(ID_QUERY)) {
+            super.fetchSearchManga(page, query, filters)
+        } else {
+            val id = query.substringAfter(ID_QUERY)
+            val req = GET("$API_URL/manga/get/$id", headers)
+            client.newCall(req).asObservableSuccess().map {
+                val series = it.decode<KouhaiSeries>()
+                val manga = SManga.create().apply {
+                    url = series.url
+                    title = series.title
+                    thumbnail_url = series.thumbnail
+                }
+                MangasPage(listOf(manga), false)
+            }!!
+        }
+
     // Request the actual manga URL for the webview
     override fun mangaDetailsRequest(manga: SManga) =
         GET("$baseUrl/series/${manga.url}", headers)
