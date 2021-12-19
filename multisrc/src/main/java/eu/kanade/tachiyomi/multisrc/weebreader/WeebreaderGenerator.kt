@@ -9,7 +9,7 @@ class WeebreaderGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Weebreader"
 
-    override val baseVersionCode: Int = 1
+    override val baseVersionCode = 2
 
     override val sources = listOf(
         SingleLang("Arang Scans", "https://arangscans.com", "en", overrideVersionCode = 10),
