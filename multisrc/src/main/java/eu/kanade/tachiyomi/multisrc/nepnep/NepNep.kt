@@ -284,7 +284,6 @@ abstract class NepNep(
     override fun chapterListParse(response: Response): List<SChapter> {
         val vmChapters = response.asJsoup().select("script:containsData(MainFunction)").first().data()
             .substringAfter("vm.Chapters = ").substringBefore(";")
-
         return json.parseToJsonElement(vmChapters).jsonArray.map { json ->
             val indexChapter = json.getString("Chapter")!!
             SChapter.create().apply {
@@ -303,8 +302,10 @@ abstract class NepNep(
 
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        val script = document.select("script:containsData(MainFunction)").first().data()
-        val curChapter = json.parseToJsonElement(script.substringAfter("vm.CurChapter = ").substringBefore(";")).jsonObject
+        val script = document.selectFirst("script:containsData(MainFunction)")?.data()
+            ?: client.newCall(GET(document.location().removeSuffix(".html"), headers))
+                .execute().asJsoup().selectFirst("script:containsData(MainFunction)").data()
+        val curChapter = json.parseToJsonElement(script!!.substringAfter("vm.CurChapter = ").substringBefore(";")).jsonObject
 
         val pageTotal = curChapter.getString("Page")!!.toInt()
 
