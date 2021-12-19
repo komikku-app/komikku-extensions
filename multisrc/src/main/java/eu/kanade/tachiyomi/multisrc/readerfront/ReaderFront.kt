@@ -113,9 +113,20 @@ abstract class ReaderFront(
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList) =
         client.newCall(popularMangaRequest(page)).asObservableSuccess().map { res ->
             popularMangaParse(res).let { mp ->
-                mp.copy(mp.mangas.filter { it.title.contains(query, true) })
+                when {
+                    query.isBlank() -> mp
+                    !query.startsWith(STUB_QUERY) -> mp.filter {
+                        it.title.contains(query, true)
+                    }
+                    else -> mp.filter {
+                        it.url == query.substringAfter(STUB_QUERY)
+                    }
+                }
             }
         }!!
+
+    private inline fun MangasPage.filter(predicate: (SManga) -> Boolean) =
+        copy(mangas.filter(predicate))
 
     private inline fun <reified T> Response.parse(name: String) =
         json.parseToJsonElement(body!!.string()).jsonObject.run {

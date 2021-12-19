@@ -3,6 +3,8 @@ package eu.kanade.tachiyomi.multisrc.readerfront
 private fun String.encodeUri() =
     android.net.Uri.encode(trimMargin())!!
 
+internal const val STUB_QUERY = "stub:"
+
 fun works(lang: Int, sort: String, order: String, page: Int, limit: Int) = """{
    |works(
    |    orderBy: "$order"
