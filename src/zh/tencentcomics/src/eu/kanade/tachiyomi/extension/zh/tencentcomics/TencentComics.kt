@@ -28,7 +28,7 @@ import kotlin.collections.ArrayList
 
 class TencentComics : ParsedHttpSource() {
 
-    override val name = "Tencent Comics (ac.qq.com)"
+    override val name = "腾讯动漫"
     // its easier to parse the mobile version of the website
     override val baseUrl = "https://m.ac.qq.com"
 
@@ -37,6 +37,8 @@ class TencentComics : ParsedHttpSource() {
     override val lang = "zh"
 
     override val supportsLatest = true
+    
+    override val id: Long = 6353436350537369479
 
     override val client: OkHttpClient = network.cloudflareClient
 
