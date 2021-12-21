@@ -597,7 +597,7 @@ abstract class Madara(
         return super.pageListRequest(chapter)
     }
 
-    open val pageListParseSelector = "div.page-break, li.blocks-gallery-item, .reading-content .text-left:not(:has(.blocks-gallery-item)) :has(>img)"
+    open val pageListParseSelector = "div.page-break, li.blocks-gallery-item, .reading-content .text-left:not(:has(.blocks-gallery-item)) img"
 
     override fun pageListParse(document: Document): List<Page> {
         countViews(document)
