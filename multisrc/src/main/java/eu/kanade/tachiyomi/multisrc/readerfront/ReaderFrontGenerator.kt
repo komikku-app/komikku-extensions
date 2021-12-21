@@ -13,7 +13,7 @@ class ReaderFrontGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         MultiLang("Ravens Scans", "https://ravens-scans.com", listOf("es", "en"), true),
-        SingleLang("Scylla Scans", "https://scyllascans.org", "en"),
+        SingleLang("Scylla Scans", "https://scyllascans.org", "en", overrideVersionCode = 1),
     )
 
     companion object {

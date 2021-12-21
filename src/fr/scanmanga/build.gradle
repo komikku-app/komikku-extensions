@@ -6,7 +6,7 @@ ext {
     extName = 'Scan-Manga'
     pkgNameSuffix = 'fr.scanmanga'
     extClass = '.ScanManga'
-    extVersionCode = 5
+    extVersionCode = 6
     isNsfw = true
 }
 

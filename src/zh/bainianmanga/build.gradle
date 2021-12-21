@@ -6,7 +6,7 @@ ext {
     extName = 'BainianManga'
     pkgNameSuffix = 'zh.bainianmanga'
     extClass = '.BainianManga'
-    extVersionCode = 3
+    extVersionCode = 4
 }
 
 apply from: "$rootDir/common.gradle"

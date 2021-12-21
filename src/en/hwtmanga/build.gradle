@@ -6,7 +6,7 @@ ext {
     extName = 'Hardworking Translations'
     pkgNameSuffix = 'en.hwtmanga'
     extClass = '.HWTManga'
-    extVersionCode = 1
+    extVersionCode = 2
     isNsfw = true
 }
 

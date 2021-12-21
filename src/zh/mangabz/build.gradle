@@ -1,3 +1,4 @@
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
@@ -5,7 +6,7 @@ ext {
     extName = 'Mangabz'
     pkgNameSuffix = 'zh.mangabz'
     extClass = '.Mangabz'
-    extVersionCode = 1
+    extVersionCode = 2
 }
 
 dependencies {

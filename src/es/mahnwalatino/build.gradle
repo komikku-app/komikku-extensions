@@ -5,7 +5,7 @@ ext {
     extName = 'Manhwa-Latino'
     pkgNameSuffix = 'es.manhwalatino'
     extClass = '.ManhwaLatino'
-    extVersionCode = 14
+    extVersionCode = 15
     isNsfw = true
 }
 

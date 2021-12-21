@@ -8,7 +8,7 @@ class MonochromeGenerator : ThemeSourceGenerator {
 
     override val themeClass = "MonochromeCMS"
 
-    override val baseVersionCode = 2
+    override val baseVersionCode = 3
 
     override val sources = listOf(
         SingleLang("Monochrome Scans", "https://manga.d34d.one", "en"),

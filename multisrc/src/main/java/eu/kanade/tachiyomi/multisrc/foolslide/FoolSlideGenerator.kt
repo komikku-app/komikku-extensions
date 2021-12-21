@@ -34,7 +34,7 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("Kirishima Fansub", "https://www.kirishimafansub.net", "es"),
         SingleLang("Baixar Hentai", "https://leitura.baixarhentai.net", "pt-BR", isNsfw = true, overrideVersionCode = 3),
         MultiLang("HNI-Scantrad", "https://hni-scantrad.com", listOf("fr", "en"), className = "HNIScantradFactory", pkgName = "hniscantrad", overrideVersionCode = 1),
-        SingleLang("QuegnaReader", "http://pignaquegna.altervista.org", "it"),
+        SingleLang("QuegnaReader", "http://pignaquegna.altervista.org", "it", overrideVersionCode = 1),
         SingleLang("NIFTeam", "http://read-nifteam.info", "it"),
         SingleLang("TuttoAnimeManga", "https://tuttoanimemanga.net", "it"),
         SingleLang("Tortuga Ceviri", "http://tortugaceviri.com", "tr", overrideVersionCode = 1),

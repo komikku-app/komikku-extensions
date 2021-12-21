@@ -5,8 +5,7 @@ ext {
     extName = 'Yimmh'
     pkgNameSuffix = 'zh.yimmh'
     extClass = '.Yimmh'
-    extVersionCode = 2
+    extVersionCode = 3
 }
 
 apply from: "$rootDir/common.gradle"
-
