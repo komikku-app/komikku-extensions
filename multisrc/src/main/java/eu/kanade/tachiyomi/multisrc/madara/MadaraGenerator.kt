@@ -319,6 +319,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("OTksScanlator", "https://otkscanlator.xyz", "pt-BR", isNsfw = true, className = "OtksScanlator"),
         SingleLang("Paean Scans", "https://paeanscans.com", "en", overrideVersionCode = 1),
         SingleLang("Painful Nightz Scan", "https://painfulnightzscan.com", "en"),
+        SingleLang("Petrotechsociety", "https://www.petrotechsociety.org", "en", isNsfw = true),
         SingleLang("Platinum Crown", "https://platinumscans.com", "en", overrideVersionCode = 1),
         SingleLang("Pojok Manga", "https://pojokmanga.com", "id", overrideVersionCode = 3),
         SingleLang("PoManga", "https://pomanga.com", "en"),
