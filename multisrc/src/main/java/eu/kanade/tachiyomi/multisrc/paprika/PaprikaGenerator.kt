@@ -16,7 +16,7 @@ class PaprikaGenerator : ThemeSourceGenerator {
         SingleLang("ReadMangaFox", "http://readmangafox.xyz", "en"),
 //            SingleLang("MangaZuki.xyz", "http://mangazuki.xyz", "en", className = "MangaZuki"),
 //            SingleLang("MangaTensei", "http://www.mangatensei.com", "en"),
-        SingleLang("MangaNelos.com", "http://manganelos.com", "en", className = "MangaNelosCom"),
+        SingleLang("MangaNelos.com", "http://manganelos.com", "en", className = "MangaNelosCom", overrideVersionCode = 1),
         SingleLang("MangaDogs.fun", "http://mangadogs.fun", "en", className = "MangaDogsFun"),
         SingleLang("MangaHere.today", "http://mangahere.today", "en", className = "MangaHereToday"),
     )

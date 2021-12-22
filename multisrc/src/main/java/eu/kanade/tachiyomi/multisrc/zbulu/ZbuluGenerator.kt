@@ -13,9 +13,9 @@ class ZbuluGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("HolyManga", "https://w15.holymanga.net", "en", overrideVersionCode = 1),
-        SingleLang("My Toon", "https://mytoon.net", "en"),
+        SingleLang("My Toon", "https://mytoon.net", "en", overrideVersionCode = 1),
         SingleLang("Koo Manga", "https://ww9.koomanga.com", "en", overrideVersionCode = 1),
-        SingleLang("Bulu Manga", "https://ww8.bulumanga.net", "en"),
+        SingleLang("Bulu Manga", "https://ww8.bulumanga.net", "en", overrideVersionCode = 1),
         SingleLang("BeeManga", "https://ww1.beemanga.com", "en")
     )
 

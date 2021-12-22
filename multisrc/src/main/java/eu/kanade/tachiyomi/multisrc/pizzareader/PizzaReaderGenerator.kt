@@ -10,7 +10,7 @@ class PizzaReaderGenerator : ThemeSourceGenerator {
 
     override val themeClass = "PizzaReader"
 
-    override val baseVersionCode: Int = 1
+    override val baseVersionCode: Int = 2
 
     override val sources = listOf(
         SingleLang("Phoenix Scans", "https://www.phoenixscans.com", "it", className = "PhoenixScans", overrideVersionCode = 4),
