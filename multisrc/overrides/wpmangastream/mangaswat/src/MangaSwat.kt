@@ -12,7 +12,7 @@ import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class MangaSwat : WPMangaStream("MangaSwat", "https://mangaswat.com", "ar", SimpleDateFormat("yyyy-MM-dd", Locale.US)) {
+class MangaSwat : WPMangaStream("MangaSwat", "https://swatmanga.co", "ar", SimpleDateFormat("yyyy-MM-dd", Locale.US)) {
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
@@ -32,8 +32,8 @@ class MangaSwat : WPMangaStream("MangaSwat", "https://mangaswat.com", "ar", Simp
             document.select("div.bigcontent").firstOrNull()?.let { infoElement ->
                 genre = infoElement.select("span:contains(التصنيف) a").joinToString { it.text() }
                 status = parseStatus(infoElement.select("span:contains(الحالة)").firstOrNull()?.ownText())
-                author = infoElement.select("span:contains(الناشر) i").firstOrNull()?.ownText()
-                artist = author
+                author = infoElement.select("span:contains(المؤلف)").firstOrNull()?.ownText()
+                artist = infoElement.select("span:contains(الناشر) i").firstOrNull()?.ownText()
                 description = infoElement.select("div.desc").text()
                 thumbnail_url = infoElement.select("img").imgAttr()
 
