@@ -1,3 +1,11 @@
+## 1.2.36
+
+Minimum Komga version required: `0.113.0`
+
+### Features
+
+* Don't request conversion for JPEG XL images
+
 ## 1.2.35
 
 Minimum Komga version required: `0.113.0`

@@ -590,7 +590,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
         private const val PASSWORD_TITLE = "Password"
         private const val PASSWORD_DEFAULT = ""
 
-        private val supportedImageTypes = listOf("image/jpeg", "image/png", "image/gif", "image/webp")
+        private val supportedImageTypes = listOf("image/jpeg", "image/png", "image/gif", "image/webp", "image/jxl")
 
         private const val TYPE_SERIES = "Series"
         private const val TYPE_READLISTS = "Read lists"
