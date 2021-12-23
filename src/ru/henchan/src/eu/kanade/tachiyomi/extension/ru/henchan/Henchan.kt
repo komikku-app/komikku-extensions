@@ -11,12 +11,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -24,7 +18,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import uy.kohesive.injekt.injectLazy
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -35,8 +28,6 @@ class Henchan : ParsedHttpSource() {
     override val name = "Henchan"
 
     override val baseUrl = "https://hentaichan.live"
-
-    private val exhentaiBaseUrl = "http://exhentai-dono.me"
 
     override val lang = "ru"
 
@@ -246,28 +237,30 @@ class Henchan : ParsedHttpSource() {
 
     override fun pageListRequest(chapter: SChapter): Request {
         val url = if (chapter.url.contains("/manga/")) {
-            exhentaiBaseUrl + chapter.url.replace("/manga/", "/online/") + "?development_access=true"
+            baseUrl + chapter.url.replace("/manga/", "/online/")
         } else {
             baseUrl + chapter.url
         }
         return GET(url, Headers.Builder().add("Accept", "image/webp,image/apng").build())
     }
+    override fun pageListParse(response: Response): List<Page> {
+        val html = response.body!!.string()
+        val prefix = "fullimg\": ["
+        val beginIndex = html.indexOf(prefix) + prefix.length
+        val endIndex = html.indexOf("]", beginIndex)
+        val trimmedHtml = html.substring(beginIndex, endIndex)
+            .replace("\"", "")
+            .replace("\'", "")
 
-    override fun imageUrlParse(document: Document) = throw Exception("Not Used")
-
-    private val json: Json by injectLazy()
-
-    private fun Document.parseJsonArray(): JsonArray {
-        val imgScript = this.select("script:containsData(fullimg)").first().toString()
-        val imgString = imgScript.substring(imgScript.indexOf('{'), imgScript.lastIndexOf('}') + 1).replace("&quot;", "\"")
-        return json.decodeFromString<JsonObject>(imgString)["fullimg"]!!.jsonArray
+        val pageUrls = trimmedHtml.split(", ")
+        return pageUrls.mapIndexed { i, url -> Page(i, "", url) }
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.parseJsonArray().mapIndexed { index, imageUrl ->
-            Page(index, imageUrl = imageUrl.jsonPrimitive.content.replace(".gif.webp", ".gif"))
-        }
+        throw Exception("Not used")
     }
+
+    override fun imageUrlParse(document: Document) = ""
 
     private class Genre(val id: String, @SuppressLint("DefaultLocale") name: String = id.replace('_', ' ').capitalize()) : Filter.TriState(name)
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Тэги", genres)
