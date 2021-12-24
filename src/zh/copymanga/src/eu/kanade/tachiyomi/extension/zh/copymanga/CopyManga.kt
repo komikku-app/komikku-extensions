@@ -43,13 +43,15 @@ class CopyManga : ConfigurableSource, HttpSource() {
     override val supportsLatest = true
     private val popularLatestPageSize = 50 // default
     private val searchPageSize = 12 // default
-    private val mainlandCdn1Url = "https://1767566263.rsc.cdn77.org"
-    private val mainlandCdn2Url = "https://1025857477.rsc.cdn77.org"
+    private val mainlandCdn1Url = "https://mirror277.mangafuna.xyz"
+    private val mainlandCdn2Url = "https://mirror77.mangafuna.xyz"
     private val overseasCdn1Url = "https://mirror2.mangafunc.fun"
     private val overseasCdn2Url = "https://mirror.mangafunc.fun"
 
-    val replaceToMirror2 = Regex("1767566263\\.rsc\\.cdn77\\.org")
-    val replaceToMirror = Regex("1025857477\\.rsc\\.cdn77\\.org")
+    val replaceToMirror2 = Regex("mirror277\\.mangafuna\\.xyz\\:12001")
+    val replaceToMirror = Regex("mirror77\\.mangafuna\\.xyz\\:12001")
+    // val replaceToMirror2 = Regex("1767566263\\.rsc\\.cdn77\\.org")
+    // val replaceToMirror = Regex("1025857477\\.rsc\\.cdn77\\.org")
 
     private val CONNECT_PERMITS = 1
     private val CONNECT_PERIOD = 2L
@@ -158,8 +160,8 @@ class CopyManga : ConfigurableSource, HttpSource() {
             title = _title
             var picture = document.select("div.comicParticulars-title-left img").first().attr("data-src")
             if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
-                picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun")
-                picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun")
+                picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun:443")
+                picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun:443")
             }
             thumbnail_url = picture
             description = document.select("div.comicParticulars-synopsis p.intro").first().text().trim()
@@ -237,8 +239,8 @@ class CopyManga : ConfigurableSource, HttpSource() {
         for (i in 0 until pageArray.length()) {
             var page = pageArray.getJSONObject(i).getString("url")
             if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
-                page = replaceToMirror2.replace(page, "mirror2.mangafunc.fun")
-                page = replaceToMirror.replace(page, "mirror.mangafunc.fun")
+                page = replaceToMirror2.replace(page, "mirror2.mangafunc.fun:443")
+                page = replaceToMirror.replace(page, "mirror.mangafunc.fun:443")
             }
             ret.add(Page(i, "", page))
         }
@@ -379,8 +381,8 @@ class CopyManga : ConfigurableSource, HttpSource() {
                     title = _title
                     var picture = obj.getString("cover")
                     if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
-                        picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun")
-                        picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun")
+                        picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun:443")
+                        picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun:443")
                     }
                     thumbnail_url = picture
                     author = Array<String?>(authorArray.length()) { i -> authorArray.getJSONObject(i).getString("name") }.joinToString(", ")
@@ -398,8 +400,8 @@ class CopyManga : ConfigurableSource, HttpSource() {
         element.select("div.exemptComicItem-img > a > img").first().let {
             var picture = it.attr("data-src")
             if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
-                picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun")
-                picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun")
+                picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun:443")
+                picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun:443")
             }
             manga.thumbnail_url = picture
         }
