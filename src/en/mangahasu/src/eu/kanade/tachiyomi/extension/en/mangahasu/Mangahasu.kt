@@ -87,6 +87,24 @@ class Mangahasu : ParsedHttpSource() {
                         }
                     }
                 }
+                is OrderByFilter -> {
+                    filter.state?.let {
+                        var sortId = it.index
+
+                        // Increment for consistency
+                        when (sortId) {
+                            1 -> sortId += 1
+                            2 -> sortId += 2
+                        }
+
+                        val value = if (it.ascending) "${(sortId + 1)}" else "$sortId"
+
+                        url.addQueryParameter("orderby", value)
+                    }
+                }
+                else -> {
+                    // ignore
+                }
             }
         }
         return GET(url.toString(), headers)
@@ -108,7 +126,8 @@ class Mangahasu : ParsedHttpSource() {
         manga.artist = isUpdating(infoElement.select(".info")[1].text())
         manga.genre = isUpdating(infoElement.select(".info")[3].text())
         manga.status = parseStatus(infoElement.select(".info")[4].text())
-        manga.description = document.select("div.content-info:has(h3:contains(summary)) div").first()?.text()
+        manga.description =
+            document.select("div.content-info:has(h3:contains(summary)) div").first()?.text()
         manga.thumbnail_url = document.select("div.info-img img").attr("src")
         return manga
     }
@@ -153,7 +172,7 @@ class Mangahasu : ParsedHttpSource() {
         // Some images are place holders on new chapters.
 
         val pageList = document.select("div.img img")
-            .mapIndexed { i, el ->
+            .mapIndexed { _, el ->
                 val pageNumber = el.attr("class").substringAfter("page").toInt()
                 Page(pageNumber, "", el.attr("src"))
             }
@@ -193,6 +212,7 @@ class Mangahasu : ParsedHttpSource() {
     override fun getFilterList() = FilterList(
         AuthorFilter(),
         ArtistFilter(),
+        OrderByFilter(),
         StatusFilter(),
         TypeFilter(),
         GenreFilter(getGenreList())
@@ -217,6 +237,16 @@ class Mangahasu : ParsedHttpSource() {
         )
     )
 
+    private class OrderByFilter : Filter.Sort(
+        "Order By",
+        arrayOf(
+            "Updated",
+            "Views",
+            "Subscribers",
+        ),
+        Selection(0, false)
+    )
+
     private class StatusFilter : UriPartFilter(
         "Status",
         arrayOf(
@@ -228,6 +258,7 @@ class Mangahasu : ParsedHttpSource() {
 
     private class Genre(name: String, val id: String) : Filter.TriState(name)
     private class GenreFilter(genres: List<Genre>) : Filter.Group<Genre>("Genres", genres)
+
     private fun getGenreList() = listOf(
         Genre("4-koma", "46"),
         Genre("Action", "1"),
