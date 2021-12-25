@@ -142,17 +142,14 @@ class MangaDexHelper() {
     /**
      * get the md@home url
      */
-    fun getMdAtHomeUrl(
+    private fun getMdAtHomeUrl(
         tokenRequestUrl: String,
         client: OkHttpClient,
         headers: Headers,
         cacheControl: CacheControl,
     ): String {
-        if (cacheControl == CacheControl.FORCE_NETWORK) {
-            tokenTracker[tokenRequestUrl] = Date().time
-        }
         val response =
-            client.newCall(GET(tokenRequestUrl, headers, cacheControl)).execute()
+            client.newCall(mdAtHomeRequest(tokenRequestUrl, headers, cacheControl)).execute()
 
         // This check is for the error that causes pages to fail to load.
         // It should never be entered, but in case it is, we retry the request.
@@ -162,6 +159,21 @@ class MangaDexHelper() {
         }
 
         return json.decodeFromString<AtHomeDto>(response.body!!.string()).baseUrl
+    }
+
+    /**
+     * create an md at home Request
+     */
+    fun mdAtHomeRequest(
+        tokenRequestUrl: String,
+        headers: Headers,
+        cacheControl: CacheControl
+    ): Request {
+        if (cacheControl == CacheControl.FORCE_NETWORK) {
+            tokenTracker[tokenRequestUrl] = Date().time
+        }
+
+        return GET(tokenRequestUrl, headers, cacheControl)
     }
 
     /**
@@ -314,7 +326,7 @@ class MangaDexHelper() {
                 }
             }
 
-            if (attr.externalUrl != null && attr.data.isEmpty()) {
+            if (attr.externalUrl != null) {
                 return null
             }
 

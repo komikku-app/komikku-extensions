@@ -8,6 +8,7 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AggregateDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.AtHomeDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterListDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDto
@@ -231,8 +232,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             tempUrl.apply {
                 addQueryParameter("group", groupID)
             }
-        }
-        else {
+        } else {
             tempUrl.apply {
                 val actualQuery = query.replace(MDConstants.whitespaceRegex, " ")
                 if (actualQuery.isNotBlank()) {
@@ -375,40 +375,33 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
         if (!helper.containsUuid(chapter.url)) {
             throw Exception("Migrate this manga from MangaDex to MangaDex to update it")
         }
-        return GET(MDConstants.apiUrl + chapter.url, headers, CacheControl.FORCE_NETWORK)
+        val chapterId = chapter.url.substringAfter("/chapter/")
+        val usingStandardHTTPS =
+            preferences.getBoolean(MDConstants.getStandardHttpsPreferenceKey(dexLang), false)
+        val atHomeRequestUrl = if (usingStandardHTTPS) {
+            "${MDConstants.apiUrl}/at-home/server/$chapterId?forcePort443=true"
+        } else {
+            "${MDConstants.apiUrl}/at-home/server/$chapterId"
+        }
+
+        return helper.mdAtHomeRequest(atHomeRequestUrl, headers, CacheControl.FORCE_NETWORK)
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        if (response.isSuccessful.not()) {
-            throw Exception("HTTP ${response.code}")
-        }
-        if (response.code == 204) {
-            return emptyList()
-        }
-        val chapterDto = helper.json.decodeFromString<ChapterDto>(response.body!!.string()).data
-        val usingStandardHTTPS =
-            preferences.getBoolean(MDConstants.getStandardHttpsPreferenceKey(dexLang), false)
-
-        val atHomeRequestUrl = if (usingStandardHTTPS) {
-            "${MDConstants.apiUrl}/at-home/server/${chapterDto.id}?forcePort443=true"
-        } else {
-            "${MDConstants.apiUrl}/at-home/server/${chapterDto.id}"
-        }
-
-        val host =
-            helper.getMdAtHomeUrl(atHomeRequestUrl, client, headers, CacheControl.FORCE_NETWORK)
-
+        val atHomeRequestUrl = response.request.url
+        val atHomeDto = helper.json.decodeFromString<AtHomeDto>(response.body!!.string())
+        val host = atHomeDto.baseUrl
         val usingDataSaver =
             preferences.getBoolean(MDConstants.getDataSaverPreferenceKey(dexLang), false)
 
         // have to add the time, and url to the page because pages timeout within 30mins now
         val now = Date().time
 
-        val hash = chapterDto.attributes.hash
+        val hash = atHomeDto.chapter.hash
         val pageSuffix = if (usingDataSaver) {
-            chapterDto.attributes.dataSaver.map { "/data-saver/$hash/$it" }
+            atHomeDto.chapter.dataSaver.map { "/data-saver/$hash/$it" }
         } else {
-            chapterDto.attributes.data.map { "/data/$hash/$it" }
+            atHomeDto.chapter.data.map { "/data/$hash/$it" }
         }
 
         return pageSuffix.mapIndexed { index, imgUrl ->

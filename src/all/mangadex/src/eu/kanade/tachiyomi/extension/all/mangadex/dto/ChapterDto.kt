@@ -30,8 +30,5 @@ data class ChapterAttributesDto(
     val volume: String?,
     val chapter: String?,
     val publishAt: String,
-    val data: List<String>,
-    val dataSaver: List<String>,
-    val hash: String,
     val externalUrl: String?,
 )
