@@ -1,15 +1,11 @@
 package eu.kanade.tachiyomi.extension.all.asurascans
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
-import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
-import okhttp3.OkHttpClient
 import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class AsuraScansFactory : SourceFactory {
     override fun createSources() = listOf(
@@ -18,21 +14,7 @@ class AsuraScansFactory : SourceFactory {
     )
 }
 
-abstract class AsuraScans(
-    override val baseUrl: String,
-    override val lang: String,
-    dateFormat: SimpleDateFormat
-) : WPMangaStream("Asura Scans", baseUrl, lang, dateFormat) {
-    private val rateLimitInterceptor = RateLimitInterceptor(1, 3, TimeUnit.SECONDS)
-
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(rateLimitInterceptor)
-        .build()
-}
-
-class AsuraScansEn : AsuraScans("https://asurascans.com/", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
+class AsuraScansEn : AsuraScans("https://asurascans.com", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
     override val pageSelector = "div.rdminimal > p > img"
 
     // Skip scriptPages
@@ -43,7 +25,7 @@ class AsuraScansEn : AsuraScans("https://asurascans.com/", "en", SimpleDateForma
     }
 }
 
-class AsuraScansTr : AsuraScans("https://tr.asurascans.com/", "tr", SimpleDateFormat("MMM d, yyyy", Locale("tr"))) {
+class AsuraScansTr : AsuraScans("https://tr.asurascans.com", "tr", SimpleDateFormat("MMM d, yyyy", Locale("tr"))) {
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
             document.select("div.bigcontent").firstOrNull()?.let { infoElement ->
