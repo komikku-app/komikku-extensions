@@ -40,6 +40,7 @@ open class AsuraScans(
         .addInterceptor(RateLimitInterceptor(1, 3, TimeUnit.SECONDS))
         .build()
 
+    // Permanent Url for Manga/Chapter End
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
         return super.fetchPopularManga(page).tempUrlToPermIfNeeded()
     }
@@ -62,7 +63,7 @@ open class AsuraScans(
     }
 
     private fun SManga.tempUrlToPermIfNeeded(): SManga {
-        val turnTempUrlToPerm = preferences.getBoolean(getPermanentMangaUrlPreferenceKey(), false)
+        val turnTempUrlToPerm = preferences.getBoolean(getPermanentMangaUrlPreferenceKey(), true)
         if (!turnTempUrlToPerm) return this
 
         val sMangaTitleFirstWord = this.title.split(" ")[0]
@@ -73,20 +74,20 @@ open class AsuraScans(
     }
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        manga.tempUrlToPermIfNeeded()
-        return super.fetchChapterList(manga).map { sChapterList ->
-            sChapterList.map { it.tempUrlToPermIfNeeded(manga) }
+        val sManga = manga.tempUrlToPermIfNeeded()
+        return super.fetchChapterList(sManga).map { sChapterList ->
+            sChapterList.map { it.tempUrlToPermIfNeeded(sManga) }
         }
     }
 
     private fun SChapter.tempUrlToPermIfNeeded(manga: SManga): SChapter {
-        val turnTempUrlToPerm = preferences.getBoolean(getPermanentChapterUrlPreferenceKey(), false)
+        val turnTempUrlToPerm = preferences.getBoolean(getPermanentChapterUrlPreferenceKey(), true)
         if (!turnTempUrlToPerm) return this
 
         val sChapterNameFirstWord = this.name.split(" ")[0]
         val sMangaTitleFirstWord = manga.title.split(" ")[0]
         if (
-            !this.url.contains("/$sChapterNameFirstWord", ignoreCase = true) ||
+            !this.url.contains("/$sChapterNameFirstWord", ignoreCase = true) &&
             !this.url.contains("/$sMangaTitleFirstWord", ignoreCase = true)
         ) {
             this.url = this.url.replaceFirst(TEMP_TO_PERM_URL_REGEX, "$1")
