@@ -112,6 +112,8 @@ class MangaDexHelper() {
         val USE_CACHE = CacheControl.Builder()
             .maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS)
             .build()
+
+        private const val BILIBILI_URL = "bilibilicomics.com"
     }
 
     // Check the token map to see if the md@home host is still valid
@@ -326,7 +328,17 @@ class MangaDexHelper() {
                 }
             }
 
-            if (attr.externalUrl != null) {
+            if (!attr.externalUrl.isNullOrEmpty() && !attr.externalUrl.contains(BILIBILI_URL)) {
+                return null
+            }
+
+            // Bilibili special check. If it's a Bilibili chapter and the
+            // publishAt date is < now, it can be read on MD.
+            if (
+                !attr.externalUrl.isNullOrEmpty() &&
+                attr.externalUrl.contains(BILIBILI_URL) &&
+                parseDate(attr.publishAt) >= Date().time
+            ) {
                 return null
             }
 

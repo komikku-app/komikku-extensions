@@ -241,7 +241,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             }
         }
 
-        val finalUrl = helper.mdFilters.addFiltersToUrl(tempUrl, filters)
+        val finalUrl = helper.mdFilters.addFiltersToUrl(tempUrl, filters, dexLang)
 
         return GET(finalUrl, headers, CacheControl.FORCE_NETWORK)
     }

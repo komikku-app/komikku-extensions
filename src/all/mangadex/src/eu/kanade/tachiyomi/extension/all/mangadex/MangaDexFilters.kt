@@ -19,6 +19,7 @@ class MangaDexFilters {
             TagList(getTags()),
             TagInclusionMode(),
             TagExclusionMode(),
+            HasAvailableChaptersFilter(),
         )
     }
 
@@ -200,7 +201,9 @@ class MangaDexFilters {
 
     class SortFilter(sortables: Array<String>) : Filter.Sort("Sort", sortables, Selection(2, false))
 
-    internal fun addFiltersToUrl(url: HttpUrl.Builder, filters: FilterList): String {
+    private class HasAvailableChaptersFilter : Filter.CheckBox("Has available chapters")
+
+    internal fun addFiltersToUrl(url: HttpUrl.Builder, filters: FilterList, dexLang: String): String {
         url.apply {
             // add filters
             filters.forEach { filter ->
@@ -286,6 +289,12 @@ class MangaDexFilters {
                             "excludedTagsMode",
                             filter.values[filter.state].toUpperCase(Locale.US)
                         )
+                    }
+                    is HasAvailableChaptersFilter -> {
+                        if (filter.state) {
+                            addQueryParameter("hasAvailableChapters", "true")
+                            addQueryParameter("availableTranslatedLanguage[]", dexLang)
+                        }
                     }
                 }
             }
