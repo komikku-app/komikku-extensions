@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 class LiebeSchneeHiver : WPMangaStream(
     "Liebe Schnee Hiver",
-    "https://www.liebeschneehiver.com",
+    "https://lshistoria.com",
     "tr",
     SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("tr"))
 ) {
