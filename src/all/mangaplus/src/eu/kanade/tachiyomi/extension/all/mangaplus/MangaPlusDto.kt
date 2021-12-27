@@ -59,9 +59,34 @@ data class TitleDetailView(
     @ProtoNumber(8) val nonAppearanceInfo: String = "",
     @ProtoNumber(9) val firstChapterList: List<Chapter> = emptyList(),
     @ProtoNumber(10) val lastChapterList: List<Chapter> = emptyList(),
-    @ProtoNumber(14) val isSimulReleased: Boolean = true,
+    @ProtoNumber(14) val isSimulReleased: Boolean = false,
     @ProtoNumber(17) val chaptersDescending: Boolean = true
-)
+) {
+    private val isWebtoon: Boolean
+        get() = firstChapterList.all(Chapter::isVerticalOnly) &&
+            lastChapterList.all(Chapter::isVerticalOnly)
+
+    private val isOneShot: Boolean
+        get() = chapterCount == 1 && firstChapterList.firstOrNull()
+            ?.name?.equals("one-shot", true) == true
+
+    private val chapterCount: Int
+        get() = firstChapterList.size + lastChapterList.size
+
+    private val isReEdition: Boolean
+        get() = viewingPeriodDescription.contains(MangaPlus.REEDITION_REGEX)
+
+    val isCompleted: Boolean
+        get() = nonAppearanceInfo.contains(MangaPlus.COMPLETED_REGEX) || isOneShot
+
+    val genres: List<String>
+        get() = listOf(
+            if (isSimulReleased && !isReEdition) "Simulrelease" else "",
+            if (isOneShot) "One-shot" else "",
+            if (isReEdition) "Re-edition" else "",
+            if (isWebtoon) "Webtoon" else ""
+        )
+}
 
 @Serializable
 data class MangaViewer(@ProtoNumber(1) val pages: List<MangaPlusPage> = emptyList())
@@ -123,7 +148,8 @@ data class Chapter(
     @ProtoNumber(3) val name: String,
     @ProtoNumber(4) val subTitle: String? = null,
     @ProtoNumber(6) val startTimeStamp: Int,
-    @ProtoNumber(7) val endTimeStamp: Int
+    @ProtoNumber(7) val endTimeStamp: Int,
+    @ProtoNumber(9) val isVerticalOnly: Boolean = false
 )
 
 @Serializable

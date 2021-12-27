@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
+import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -29,7 +30,6 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 
 abstract class MangaPlus(
     override val lang: String,
@@ -37,11 +37,11 @@ abstract class MangaPlus(
     private val langCode: Language
 ) : HttpSource(), ConfigurableSource {
 
-    override val name = "MANGA Plus by SHUEISHA"
+    final override val name = "MANGA Plus by SHUEISHA"
 
-    override val baseUrl = "https://mangaplus.shueisha.co.jp"
+    final override val baseUrl = "https://mangaplus.shueisha.co.jp"
 
-    override val supportsLatest = true
+    final override val supportsLatest = true
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Origin", baseUrl)
@@ -52,18 +52,19 @@ abstract class MangaPlus(
     override val client: OkHttpClient = network.client.newBuilder()
         .addInterceptor(::imageIntercept)
         .addInterceptor(::thumbnailIntercept)
-        .addInterceptor(RateLimitInterceptor(2, 1, TimeUnit.SECONDS))
+        .addInterceptor(SpecificHostRateLimitInterceptor(API_URL.toHttpUrl(), 1))
+        .addInterceptor(SpecificHostRateLimitInterceptor(baseUrl.toHttpUrl(), 2))
         .build()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val imageResolution: String
-        get() = preferences.getString("${RESOLUTION_PREF_KEY}_$lang", RESOLUTION_PREF_DEFAULT_VALUE)!!
+    private val imageQuality: String
+        get() = preferences.getString("${QUALITY_PREF_KEY}_$lang", QUALITY_PREF_DEFAULT_VALUE)!!
 
-    private val splitImages: String
-        get() = if (preferences.getBoolean("${SPLIT_PREF_KEY}_$lang", SPLIT_PREF_DEFAULT_VALUE)) "yes" else "no"
+    private val splitImages: Boolean
+        get() = preferences.getBoolean("${SPLIT_PREF_KEY}_$lang", SPLIT_PREF_DEFAULT_VALUE)
 
     private var titleList: List<Title>? = null
 
@@ -118,9 +119,9 @@ abstract class MangaPlus(
         }
 
         val mangas = result.success.webHomeViewV3!!.groups
-            .flatMap { it.titleGroups }
-            .flatMap { it.titles }
-            .map { it.title }
+            .flatMap(UpdatedTitleV2Group::titleGroups)
+            .flatMap(OriginalTitleGroup::titles)
+            .map(UpdatedTitle::title)
             .filter { it.language == langCode }
             .map {
                 SManga.create().apply {
@@ -129,7 +130,7 @@ abstract class MangaPlus(
                     url = "#/titles/${it.titleId}"
                 }
             }
-            .distinctBy { it.title }
+            .distinctBy(SManga::title)
 
         return MangasPage(mangas, false)
     }
@@ -141,7 +142,10 @@ abstract class MangaPlus(
                     return@map it
                 }
 
-                val filteredResult = it.mangas.filter { m -> m.title.contains(query, true) }
+                val filteredResult = it.mangas.filter { manga ->
+                    manga.title.contains(query, true)
+                }
+
                 MangasPage(filteredResult, it.hasNextPage)
             }
     }
@@ -181,7 +185,7 @@ abstract class MangaPlus(
         }
 
         titleList = result.success.allTitlesViewV2!!.allTitlesGroup
-            .flatMap { it.titles }
+            .flatMap(AllTitlesGroup::titles)
             .filter { it.language == langCode }
 
         val mangas = titleList!!.map {
@@ -227,13 +231,13 @@ abstract class MangaPlus(
 
         val details = result.success.titleDetailView!!
         val title = details.title
-        val isCompleted = details.nonAppearanceInfo.contains(COMPLETE_REGEX)
 
         return SManga.create().apply {
             author = title.author.replace(" / ", ", ")
             artist = author
             description = details.overview + "\n\n" + details.viewingPeriodDescription
-            status = if (isCompleted) SManga.COMPLETED else SManga.ONGOING
+            status = if (details.isCompleted) SManga.COMPLETED else SManga.ONGOING
+            genre = details.genres.filter(String::isNotEmpty).joinToString()
             thumbnail_url = title.portraitImageUrl
         }
     }
@@ -256,7 +260,6 @@ abstract class MangaPlus(
             .map {
                 SChapter.create().apply {
                     name = "${it.name} - ${it.subTitle}"
-                    scanlator = "Shueisha"
                     date_upload = 1000L * it.startTimeStamp
                     url = "#/viewer/${it.chapterId}"
                     chapter_number = it.name.substringAfter("#").toFloatOrNull() ?: -1f
@@ -273,8 +276,8 @@ abstract class MangaPlus(
 
         val url = "$API_URL/manga_viewer".toHttpUrlOrNull()!!.newBuilder()
             .addQueryParameter("chapter_id", chapterId)
-            .addQueryParameter("split", splitImages)
-            .addQueryParameter("img_quality", imageResolution)
+            .addQueryParameter("split", if (splitImages) "yes" else "no")
+            .addQueryParameter("img_quality", imageQuality)
             .toString()
 
         return GET(url, newHeaders)
@@ -289,10 +292,11 @@ abstract class MangaPlus(
         val referer = response.request.header("Referer")!!
 
         return result.success.mangaViewer!!.pages
-            .mapNotNull { it.page }
+            .mapNotNull(MangaPlusPage::page)
             .mapIndexed { i, page ->
-                val encryptionKey = if (page.encryptionKey == null) "" else "&encryptionKey=${page.encryptionKey}"
-                Page(i, referer, "${page.imageUrl}$encryptionKey")
+                val encryptionKey = if (page.encryptionKey == null) "" else
+                    "&encryptionKey=${page.encryptionKey}"
+                Page(i, referer, page.imageUrl + encryptionKey)
             }
     }
 
@@ -310,12 +314,12 @@ abstract class MangaPlus(
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val resolutionPref = ListPreference(screen.context).apply {
-            key = "${RESOLUTION_PREF_KEY}_$lang"
-            title = RESOLUTION_PREF_TITLE
-            entries = RESOLUTION_PREF_ENTRIES
-            entryValues = RESOLUTION_PREF_ENTRY_VALUES
-            setDefaultValue(RESOLUTION_PREF_DEFAULT_VALUE)
+        val qualityPref = ListPreference(screen.context).apply {
+            key = "${QUALITY_PREF_KEY}_$lang"
+            title = QUALITY_PREF_TITLE
+            entries = QUALITY_PREF_ENTRIES
+            entryValues = QUALITY_PREF_ENTRY_VALUES
+            setDefaultValue(QUALITY_PREF_DEFAULT_VALUE)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -324,7 +328,7 @@ abstract class MangaPlus(
                 val entry = entryValues[index] as String
 
                 preferences.edit()
-                    .putString("${RESOLUTION_PREF_KEY}_$lang", entry)
+                    .putString("${QUALITY_PREF_KEY}_$lang", entry)
                     .commit()
             }
         }
@@ -344,7 +348,7 @@ abstract class MangaPlus(
             }
         }
 
-        screen.addPreference(resolutionPref)
+        screen.addPreference(qualityPref)
         screen.addPreference(splitPref)
     }
 
@@ -375,23 +379,15 @@ abstract class MangaPlus(
             .build()
     }
 
-    private fun decodeImage(encryptionKey: String, image: ByteArray): ByteArray {
-        val keyStream = HEX_GROUP
-            .findAll(encryptionKey)
-            .toList()
-            .map { it.groupValues[1].toInt(16) }
+    private fun decodeImage(encryptionKey: String, imageBytes: ByteArray): ByteArray {
+        val keyStream = encryptionKey
+            .chunked(2)
+            .map { it.toInt(16) }
 
-        val content = image
-            .map { it.toInt() }
-            .toMutableList()
-
-        val blockSizeInBytes = keyStream.size
-
-        for ((i, value) in content.iterator().withIndex()) {
-            content[i] = value xor keyStream[i % blockSizeInBytes]
-        }
-
-        return ByteArray(content.size) { pos -> content[pos].toByte() }
+        return imageBytes
+            .mapIndexed { i, byte -> byte.toInt() xor keyStream[i % keyStream.size] }
+            .map(Int::toByte)
+            .toByteArray()
     }
 
     private fun thumbnailIntercept(chain: Interceptor.Chain): Response {
@@ -422,29 +418,28 @@ abstract class MangaPlus(
             else -> englishPopup
         }
 
-    private fun Response.asProto(): MangaPlusResponse {
-        return ProtoBuf.decodeFromByteArray(body!!.bytes())
+    private fun Response.asProto(): MangaPlusResponse = use {
+        ProtoBuf.decodeFromByteArray(body!!.bytes())
     }
 
     companion object {
         private const val API_URL = "https://jumpg-webapi.tokyo-cdn.com/api"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.3"
 
-        private val HEX_GROUP = "(.{1,2})".toRegex()
-
-        private const val RESOLUTION_PREF_KEY = "imageResolution"
-        private const val RESOLUTION_PREF_TITLE = "Image resolution"
-        private val RESOLUTION_PREF_ENTRIES = arrayOf("Low resolution", "Medium resolution", "High resolution")
-        private val RESOLUTION_PREF_ENTRY_VALUES = arrayOf("low", "high", "super_high")
-        private val RESOLUTION_PREF_DEFAULT_VALUE = RESOLUTION_PREF_ENTRY_VALUES[2]
+        private const val QUALITY_PREF_KEY = "imageResolution"
+        private const val QUALITY_PREF_TITLE = "Image quality"
+        private val QUALITY_PREF_ENTRIES = arrayOf("Low", "Medium", "High")
+        private val QUALITY_PREF_ENTRY_VALUES = arrayOf("low", "high", "super_high")
+        private val QUALITY_PREF_DEFAULT_VALUE = QUALITY_PREF_ENTRY_VALUES[2]
 
         private const val SPLIT_PREF_KEY = "splitImage"
         private const val SPLIT_PREF_TITLE = "Split double pages"
         private const val SPLIT_PREF_SUMMARY = "Only a few titles supports disabling this setting."
         private const val SPLIT_PREF_DEFAULT_VALUE = true
 
-        private val COMPLETE_REGEX = "completado|complete".toRegex()
+        val COMPLETED_REGEX = "completado|complete|completo".toRegex()
+        val REEDITION_REGEX = "revival|remasterizada".toRegex()
 
         private const val TITLE_THUMBNAIL_PATH = "title_thumbnail_portrait_list"
 
