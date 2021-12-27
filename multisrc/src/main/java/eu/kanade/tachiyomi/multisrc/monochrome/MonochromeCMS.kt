@@ -45,7 +45,9 @@ open class MonochromeCMS(
         }
 
     override fun fetchSearchManga(
-        page: Int, query: String, filters: FilterList
+        page: Int,
+        query: String,
+        filters: FilterList
     ): Observable<MangasPage> {
         if (!query.startsWith(UUID_QUERY))
             return super.fetchSearchManga(page, query, filters)
