@@ -148,6 +148,7 @@ class Mangahasu : ParsedHttpSource() {
         val urlElement = element.select("a").first()
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
+        urlElement.select("span.name-manga").remove()
         chapter.name = urlElement.text()
 
         chapter.date_upload = element.select(".date-updated").last()?.text()?.let {
