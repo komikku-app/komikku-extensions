@@ -18,7 +18,7 @@ import java.util.Locale
 class DoujinDesu : ParsedHttpSource() {
     // Information : DoujinDesu use EastManga WordPress Theme
     override val name = "Doujindesu"
-    override val baseUrl = "https://doujindesu.id"
+    override val baseUrl = "https://doujindesu.xxx"
     override val lang = "id"
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
