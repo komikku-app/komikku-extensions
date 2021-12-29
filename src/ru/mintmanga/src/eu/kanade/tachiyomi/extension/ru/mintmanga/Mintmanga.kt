@@ -184,8 +184,8 @@ class Mintmanga : ConfigurableSource, ParsedHttpSource() {
 
     private fun parseStatus(element: String): Int = when {
         element.contains("Запрещена публикация произведения по копирайту") || element.contains("ЗАПРЕЩЕНА К ПУБЛИКАЦИИ НА ТЕРРИТОРИИ РФ!") -> SManga.LICENSED
-        element.contains("<b>Сингл</b>") || element.contains("<b>Перевод:</b> завершен") -> SManga.COMPLETED
         element.contains("<b>Перевод:</b> продолжается") -> SManga.ONGOING
+        element.contains("<b>Сингл</b>") || element.contains("<b>Перевод:</b> завер") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
