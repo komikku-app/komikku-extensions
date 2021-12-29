@@ -31,26 +31,4 @@ class DarkYueRealm : Madara(
     override fun chapterListRequest(manga: SManga): Request {
         return GET(baseUrl + manga.url.removePrefix("/web"), headers)
     }
-
-    // [...document.querySelectorAll('input[name="genre[]"]')]
-    //   .map(x => `Genre("${document.querySelector('label[for=' + x.id + ']').innerHTML.trim()}", "${x.value}")`)
-    //   .join(',\n')
-    override fun getGenreList(): List<Genre> = listOf(
-        Genre("Ação", "acao"),
-        Genre("Aventura", "aventura"),
-        Genre("Comédia", "comedia"),
-        Genre("Drama", "drama"),
-        Genre("Ecchi", "ecchi"),
-        Genre("Escolar", "escolar"),
-        Genre("Fantasia", "fantasia"),
-        Genre("Harém", "harem"),
-        Genre("Isekai", "isekai"),
-        Genre("Romance", "romance"),
-        Genre("School Life", "school-life"),
-        Genre("Seinen", "seinen"),
-        Genre("Shounen", "shounen"),
-        Genre("Slice of Life", "slice-of-life"),
-        Genre("Sobrenatural", "sobrenatural"),
-        Genre("Vida Escolar", "vida-escolar")
-    )
 }

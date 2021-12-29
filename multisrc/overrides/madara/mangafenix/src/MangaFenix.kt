@@ -16,23 +16,4 @@ class MangaFenix : Madara(
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(RateLimitInterceptor(1))
         .build()
-
-    override fun getGenreList(): List<Genre> = listOf(
-        Genre("Accion", "accion"),
-        Genre("Artes Marciales", "artes-marciales"),
-        Genre("Aventuras", "aventuras"),
-        Genre("Ciencia Ficción", "ciencia-ficcion"),
-        Genre("Comédia", "comedia"),
-        Genre("Cultivacion", "cultivacion"),
-        Genre("Drama", "drama"),
-        Genre("Fantasia", "fantasia"),
-        Genre("Haren", "haren"),
-        Genre("Manhua", "manhua"),
-        Genre("Puto Amo", "puto-amo"),
-        Genre("Reencarnacion", "reencarnacion"),
-        Genre("Romance", "romance"),
-        Genre("Seinen", "seinen"),
-        Genre("Shounen", "shounen"),
-        Genre("Terror", "terror"),
-    )
 }

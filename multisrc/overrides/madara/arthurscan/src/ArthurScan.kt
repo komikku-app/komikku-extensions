@@ -23,32 +23,4 @@ class ArthurScan : Madara(
     override val useNewChapterEndpoint = true
 
     override fun popularMangaSelector() = "div.page-item-detail.manga"
-
-    // [...document.querySelectorAll('div.genres li a')]
-    //     .map(x => `Genre("${x.innerText.slice(1, -4).trim()}", "${x.href.replace(/.*-genre\/(.*)\//, '$1')}")`)
-    //     .join(',\n')
-    override fun getGenreList(): List<Genre> = listOf(
-        Genre("Ação", "acao"),
-        Genre("Artes Marciais", "artes-marciais"),
-        Genre("Aventura", "aventura"),
-        Genre("Comédia", "comedia"),
-        Genre("Drama", "drama"),
-        Genre("Fantasia", "fantasia"),
-        Genre("Harém", "harem"),
-        Genre("Histórico", "historico"),
-        Genre("Manhua", "manhua"),
-        Genre("Manhwa", "manhwa"),
-        Genre("Mistério", "misterio"),
-        Genre("Reencarnação", "reencarnacao"),
-        Genre("Romance", "romance"),
-        Genre("Sci-fi", "sci-fi"),
-        Genre("Seinen", "seinen"),
-        Genre("Shounen", "shounen"),
-        Genre("Slice of Life", "slice-of-life"),
-        Genre("Sobrenatural", "sobrenatural"),
-        Genre("Vida Escolar", "vida-escolar"),
-        Genre("Web Comic", "web-comic"),
-        Genre("Web Novel", "web-novel"),
-        Genre("Webtoon", "webtoon")
-    )
 }

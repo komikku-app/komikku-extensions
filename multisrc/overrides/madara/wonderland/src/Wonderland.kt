@@ -19,25 +19,4 @@ class Wonderland : Madara(
         .build()
 
     override val popularMangaUrlSelector = "div.post-title a:not([target])"
-
-    // [...document.querySelectorAll('div.genres li a')]
-    //     .map(x => `Genre("${x.innerText.slice(1, -4)}", "${x.href.replace(/.*-genre\/(.*)\//, '$1')}")`)
-    //     .join(',\n')
-    override fun getGenreList(): List<Genre> = listOf(
-        Genre("Ação", "acao"),
-        Genre("Comédia", "comedia"),
-        Genre("Drama", "drama"),
-        Genre("Ecchi", "ecchi"),
-        Genre("Fantasia ", "fantasia"),
-        Genre("Histórico", "historico"),
-        Genre("Horror", "horror"),
-        Genre("Josei", "josei"),
-        Genre("Mistério", "misterio"),
-        Genre("Psicológico", "psicologico"),
-        Genre("Romance", "romance"),
-        Genre("Shoujo", "shoujo"),
-        Genre("Slice Of Life", "slice-of-life"),
-        Genre("Smut", "smut"),
-        Genre("Sobrenatural", "sobrenatural")
-    )
 }

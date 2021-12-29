@@ -58,6 +58,7 @@ class DoujinHentai : Madara("DoujinHentai", "https://doujinhentai.net", "es", Si
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
     override fun chapterListSelector() = "ul.main.version-chap > li.wp-manga-chapter:not(:last-child)" // removing empty li
     override val pageListParseSelector = "div#all > img.img-responsive"
+    
     override fun getFilterList() = FilterList(
         Filter.Header("Solo funciona si la consulta está en blanco"),
         GenreSelectFilter()
