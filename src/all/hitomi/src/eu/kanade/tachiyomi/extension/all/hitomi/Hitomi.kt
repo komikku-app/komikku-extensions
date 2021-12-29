@@ -43,6 +43,8 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
 
     private val json: Json by injectLazy()
 
+    private var gg: String? = null
+
     // Popular
 
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
@@ -360,18 +362,28 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
             // https://ltn.hitomi.la/reader.js
             // function make_image_element()
             val secondSubdomain = if (jsonElement.haswebp == 0 && jsonElement.hasavif == 0 || !hitomiAlwaysWebp()) "b" else "a"
-            Page(i, "", "https://${firstSubdomainFromGalleryId(hashPath2)}$secondSubdomain.hitomi.la/$path/$hashPath1/$hashPath2/$hash.$ext")
+            Page(i, "", buildImageUrl(path, hashPath1, hashPath2, hash, ext, secondSubdomain))
         }
     }
 
-    // https://ltn.hitomi.la/common.js
-    // function subdomain_from_url()
-    // Change g's if statement from !isNaN(g)
-    private fun firstSubdomainFromGalleryId(pathSegment: String): Char {
-        var o = 0
-        val g = pathSegment.toInt(16)
-        if (g < 0x7c) o = 1
-        return (97 + o).toChar()
+    private fun buildImageUrl(path: String, hashPath1: String, hashPath2: String, hash: String, ext: String, secondSubdomain: String): String {
+        if (gg.isNullOrEmpty()) {
+            val response = client.newCall(GET("$LTN_BASE_URL/gg.js")).execute()
+            gg = response.body!!.string()
+        }
+
+        val g = (hashPath1 + hashPath2).toInt(16)
+
+        val b = Regex("""b:\s*'(.+)\/'""").find(gg!!)?.groupValues!![1]
+
+        val m = Regex("case\\s*$g\\s*:\\s*o\\s*=\\s*(.+?)\\s*;").find(gg!!)?.groupValues!![1]
+
+        var firstSubdomain = "a"
+        if (m == "1") {
+            firstSubdomain = "b"
+        }
+
+        return "https://$firstSubdomain$secondSubdomain.hitomi.la/$path/$b/$g/$hash.$ext"
     }
 
     override fun imageRequest(page: Page): Request {
