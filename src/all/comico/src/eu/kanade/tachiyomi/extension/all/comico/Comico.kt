@@ -143,7 +143,7 @@ open class Comico(
                 name = it.name + if (it.isAvailable) "" else LOCK
                 date_upload = dateFormat.parse(it.publishedAt)?.time ?: 0L
             }
-        }
+        }.reversed()
     }
 
     override fun pageListParse(response: Response) =
