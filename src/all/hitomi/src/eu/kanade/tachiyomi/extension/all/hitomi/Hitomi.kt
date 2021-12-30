@@ -376,7 +376,10 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
 
         val b = Regex("""b:\s*'(.+)\/'""").find(gg!!)?.groupValues!![1]
 
-        val m = Regex("case\\s*$g\\s*:\\s*o\\s*=\\s*(.+?)\\s*;").find(gg!!)?.groupValues!![1]
+        var m = Regex("case\\s*$g\\s*:\\s*o\\s*=\\s*(.+?)\\s*;").find(gg!!)?.groupValues?.get(1)
+        if (m.isNullOrEmpty()) {
+            m = Regex("g\\s*===\\s*$g\\s*\\)\\s*\\{\\s*o\\s*=\\s*(.+?)\\s*;").find(gg!!)?.groupValues?.get(1)
+        }
 
         var firstSubdomain = "a"
         if (m == "1") {
