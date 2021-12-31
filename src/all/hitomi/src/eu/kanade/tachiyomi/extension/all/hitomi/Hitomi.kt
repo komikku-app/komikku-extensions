@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.all.hitomi
 
 import android.app.Application
 import android.content.SharedPreferences
+import com.squareup.duktape.Duktape
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -353,40 +354,45 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
         val str = response.body!!.string()
         val json = json.decodeFromString<HitomiChapterDto>(str.removePrefix("var galleryinfo = "))
         return json.files.mapIndexed { i, jsonElement ->
-            val hash = jsonElement.hash
-            val ext = if (jsonElement.haswebp == 0 || !hitomiAlwaysWebp()) jsonElement.name.split('.').last() else "webp"
-            val path = if (jsonElement.haswebp == 0 || !hitomiAlwaysWebp()) "images" else "webp"
-            val hashPath1 = hash.takeLast(1)
-            val hashPath2 = hash.takeLast(3).take(2)
-
             // https://ltn.hitomi.la/reader.js
             // function make_image_element()
-            val secondSubdomain = if (jsonElement.haswebp == 0 && jsonElement.hasavif == 0 || !hitomiAlwaysWebp()) "b" else "a"
-            Page(i, "", buildImageUrl(path, hashPath1, hashPath2, hash, ext, secondSubdomain))
+            val hash = jsonElement.hash
+            var ext = jsonElement.name.split('.').last()
+            var path = "images"
+            var secondSubdomain = "b"
+            if (hitomiAlwaysWebp() && jsonElement.haswebp == 1) {
+                path = "webp"
+                ext = "webp"
+                secondSubdomain = "a"
+            }
+            if (hitomiAlwaysAvif() && jsonElement.hasavif == 1) {
+                path = "avif"
+                ext = "avif"
+                secondSubdomain = "a"
+            }
+            
+            Page(i, "", buildImageUrl(path, hash, ext, secondSubdomain))
         }
     }
 
-    private fun buildImageUrl(path: String, hashPath1: String, hashPath2: String, hash: String, ext: String, secondSubdomain: String): String {
+    private fun buildImageUrl(path: String, hash: String, ext: String, secondSubdomain: String): String {
         if (gg.isNullOrEmpty()) {
             val response = client.newCall(GET("$LTN_BASE_URL/gg.js")).execute()
             gg = response.body!!.string()
         }
 
-        val g = (hashPath1 + hashPath2).toInt(16)
-
-        val b = Regex("""b:\s*'(.+)\/'""").find(gg!!)?.groupValues!![1]
-
-        var m = Regex("case\\s*$g\\s*:\\s*o\\s*=\\s*(.+?)\\s*;").find(gg!!)?.groupValues?.get(1)
-        if (m.isNullOrEmpty()) {
-            m = Regex("g\\s*===\\s*$g\\s*\\)\\s*\\{\\s*o\\s*=\\s*(.+?)\\s*;").find(gg!!)?.groupValues?.get(1)
-        }
+        val duktape = Duktape.create()
+        val b = duktape.evaluate(gg + """gg.b;""") as String
+        val s = duktape.evaluate(gg + """gg.s("""" + hash + """");""") as String
+        val m = duktape.evaluate(gg + """gg.m(""" + s + """).toString();""") as String
+        duktape.close()
 
         var firstSubdomain = "a"
         if (m == "1") {
             firstSubdomain = "b"
         }
 
-        return "https://$firstSubdomain$secondSubdomain.hitomi.la/$path/$b/$g/$hash.$ext"
+        return "https://$firstSubdomain$secondSubdomain.hitomi.la/$path/$b$s/$hash.$ext"
     }
 
     override fun imageRequest(page: Page): Request {
@@ -433,6 +439,11 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
         private const val WEBP_PREF_SUMMARY = "Download webp pages instead of jpeg (when available)"
         private const val WEBP_PREF_DEFAULT_VALUE = true
 
+        private const val AVIF_PREF_KEY = "HITOMI_AVIF"
+        private const val AVIF_PREF_TITLE = "Avif pages"
+        private const val AVIF_PREF_SUMMARY = "Download avif pages instead of jpeg or webp (when available)"
+        private const val AVIF_PREF_DEFAULT_VALUE = true
+
         private const val COVER_PREF_KEY = "HITOMI_COVERS"
         private const val COVER_PREF_TITLE = "Use HQ covers"
         private const val COVER_PREF_SUMMARY = "See HQ covers while browsing"
@@ -458,6 +469,18 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
             }
         }
 
+        val avifPref = AndroidXCheckBoxPreference(screen.context).apply {
+            key = "${AVIF_PREF_KEY}_$lang"
+            title = AVIF_PREF_TITLE
+            summary = AVIF_PREF_SUMMARY
+            setDefaultValue(AVIF_PREF_DEFAULT_VALUE)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+                preferences.edit().putBoolean("${AVIF_PREF_KEY}_$lang", checkValue).commit()
+            }
+        }
+
         val coverPref = AndroidXCheckBoxPreference(screen.context).apply {
             key = "${COVER_PREF_KEY}_$lang"
             title = COVER_PREF_TITLE
@@ -471,9 +494,11 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
         }
 
         screen.addPreference(webpPref)
+        screen.addPreference(avifPref)
         screen.addPreference(coverPref)
     }
 
     private fun hitomiAlwaysWebp(): Boolean = preferences.getBoolean("${WEBP_PREF_KEY}_$lang", WEBP_PREF_DEFAULT_VALUE)
+    private fun hitomiAlwaysAvif(): Boolean = preferences.getBoolean("${AVIF_PREF_KEY}_$lang", AVIF_PREF_DEFAULT_VALUE)
     private fun useHqThumbPref(): Boolean = preferences.getBoolean("${COVER_PREF_KEY}_$lang", COVER_PREF_DEFAULT_VALUE)
 }
