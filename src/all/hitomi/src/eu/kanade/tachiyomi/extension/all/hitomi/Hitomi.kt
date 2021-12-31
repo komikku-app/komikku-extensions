@@ -351,9 +351,16 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
     }
 
     override fun pageListParse(response: Response): List<Page> {
+        if (gg.isNullOrEmpty()) {
+            val response = client.newCall(GET("$LTN_BASE_URL/gg.js")).execute()
+            gg = response.body!!.string()
+        }
+        val duktape = Duktape.create()
+        duktape.evaluate(gg)
+
         val str = response.body!!.string()
         val json = json.decodeFromString<HitomiChapterDto>(str.removePrefix("var galleryinfo = "))
-        return json.files.mapIndexed { i, jsonElement ->
+        val pages = json.files.mapIndexed { i, jsonElement ->
             // https://ltn.hitomi.la/reader.js
             // function make_image_element()
             val hash = jsonElement.hash
@@ -370,29 +377,20 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
                 ext = "avif"
                 secondSubdomain = "a"
             }
-            
-            Page(i, "", buildImageUrl(path, hash, ext, secondSubdomain))
-        }
-    }
 
-    private fun buildImageUrl(path: String, hash: String, ext: String, secondSubdomain: String): String {
-        if (gg.isNullOrEmpty()) {
-            val response = client.newCall(GET("$LTN_BASE_URL/gg.js")).execute()
-            gg = response.body!!.string()
-        }
+            val b = duktape.evaluate("gg.b;") as String
+            val s = duktape.evaluate("gg.s(\"$hash\");") as String
+            val m = duktape.evaluate("gg.m($s).toString();") as String
 
-        val duktape = Duktape.create()
-        val b = duktape.evaluate(gg + """gg.b;""") as String
-        val s = duktape.evaluate(gg + """gg.s("""" + hash + """");""") as String
-        val m = duktape.evaluate(gg + """gg.m(""" + s + """).toString();""") as String
+            var firstSubdomain = "a"
+            if (m == "1") {
+                firstSubdomain = "b"
+            }
+
+            Page(i, "", "https://$firstSubdomain$secondSubdomain.hitomi.la/$path/$b$s/$hash.$ext")
+        }
         duktape.close()
-
-        var firstSubdomain = "a"
-        if (m == "1") {
-            firstSubdomain = "b"
-        }
-
-        return "https://$firstSubdomain$secondSubdomain.hitomi.la/$path/$b$s/$hash.$ext"
+        return pages
     }
 
     override fun imageRequest(page: Page): Request {
