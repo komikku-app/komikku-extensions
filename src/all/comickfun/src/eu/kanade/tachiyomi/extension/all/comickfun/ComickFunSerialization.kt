@@ -161,7 +161,7 @@ class SChapterDeserializer : KSerializer<SChapter> {
                         "vol" -> vol = decodeNullableSerializableElement(descriptor, index, serializer())
                         "chap" -> {
                             chap = decodeNullableSerializableElement(descriptor, index, serializer())
-                            chapter_number = chap?.toFloat() ?: -1f
+                            chapter_number = chap?.substringBefore('-')?.toFloatOrNull() ?: -1f
                         }
                         "hid" -> hid = decodeStringElement(descriptor, index)
                         "iso639_1" -> iso639_1 = decodeStringElement(descriptor, index)
