@@ -107,17 +107,22 @@ class DigitalTeam : ParsedHttpSource() {
             } ?: 0
     }
 
-    private fun getXhrPages(script_content: String, title: String): String {
+    private fun getXhrPages(script_content: String, title: String, external: Boolean): String {
         val infoManga = script_content.substringAfter("m='").substringBefore("'")
         val infoChapter = script_content.substringAfter("ch='").substringBefore("'")
         val infoChSub = script_content.substringAfter("chs='").substringBefore("'")
 
-        val formBody = FormBody.Builder()
+        val formBodyBuilder = FormBody.Builder()
             .add("info[manga]", infoManga)
             .add("info[chapter]", infoChapter)
             .add("info[ch_sub]", infoChSub)
             .add("info[title]", title)
-            .build()
+
+        if (external) {
+            formBodyBuilder.add("info[external]", "1")
+        }
+
+        val formBody = formBodyBuilder.build()
 
         val xhrHeaders = headersBuilder()
             .add("Content-Length", formBody.contentLength().toString())
@@ -139,18 +144,32 @@ class DigitalTeam : ParsedHttpSource() {
             .substringAfter("current_page=")
             .substringBefore(";")
         val title = document.select("title").first().text()
+        val external = document.select("script[src*='jq_rext.js']").isNotEmpty()
 
-        val xhrPages = getXhrPages(scriptContent, title)
+        val xhrPages = getXhrPages(scriptContent, title, external)
         val jsonResult = json.parseToJsonElement(xhrPages).jsonArray
 
-        val imageData = jsonResult[0].jsonArray
-        val imagePath = jsonResult[2].jsonPrimitive.content
+        val imageDatas = jsonResult[0].jsonArray
+        if (external) {
+            val imageBases = jsonResult[1].jsonArray
 
-        return jsonResult[1].jsonArray.mapIndexed { i, jsonEl ->
-            val imageUrl = "$baseUrl/reader$imagePath" +
-                imageData[i].jsonObject["name"]!!.jsonPrimitive.content +
-                jsonEl.jsonPrimitive.content +
-                imageData[i].jsonObject["ex"]!!.jsonPrimitive.content
+            return imageDatas.zip(imageBases).mapIndexed { i, (imageData, imageBase) ->
+                val imageUrl = imageBase.jsonPrimitive.content +
+                    imageData.jsonObject["name"]!!.jsonPrimitive.content +
+                    imageData.jsonObject["ex"]!!.jsonPrimitive.content
+
+                Page(i, "", imageUrl)
+            }
+        }
+
+        val imageSuffixes = jsonResult[1].jsonArray
+        val imageBase = jsonResult[2].jsonPrimitive.content
+
+        return imageDatas.zip(imageSuffixes).mapIndexed { i, (imageData, imageSuffix) ->
+            val imageUrl = "$baseUrl/reader$imageBase" +
+                imageData.jsonObject["name"]!!.jsonPrimitive.content +
+                imageSuffix.jsonPrimitive.content +
+                imageData.jsonObject["ex"]!!.jsonPrimitive.content
 
             Page(i, "", imageUrl)
         }

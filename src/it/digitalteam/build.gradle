@@ -6,7 +6,7 @@ ext {
     extName = 'DigitalTeam'
     pkgNameSuffix = 'it.digitalteam'
     extClass = '.DigitalTeam'
-    extVersionCode = 2
+    extVersionCode = 3
 }
 
 apply from: "$rootDir/common.gradle"
