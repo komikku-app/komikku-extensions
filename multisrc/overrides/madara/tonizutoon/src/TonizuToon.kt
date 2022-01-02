@@ -10,4 +10,3 @@ class TonizuToon : Madara(
     "tr",
     SimpleDateFormat("MMMMM d, yyyy", Locale("tr"))
 )
-

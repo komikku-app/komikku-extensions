@@ -7,15 +7,15 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class GeassScanlator : Madara(
-    "Geass Scanlator",
+class OkamishiScans : Madara(
+    "Okamishi Scans",
     "https://geassscan.net",
     "pt-BR",
     SimpleDateFormat("yyyy-MM-dd", Locale("pt", "BR"))
 ) {
 
-    // Website changed from WpMangaStream to Madara (again).
-    override val versionId: Int = 2
+    // The scanlator changed their name.
+    override val id: Long = 1228448816486487111
 
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))

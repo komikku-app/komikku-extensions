@@ -10,4 +10,3 @@ class TiempoDeWebeo : Madara(
     "es",
     SimpleDateFormat("dd/MM/yyyy", Locale("es"))
 )
-

@@ -18,4 +18,3 @@ class KitsuneNiji : Madara(
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 }
-
