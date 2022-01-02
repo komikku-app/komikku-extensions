@@ -127,7 +127,7 @@ class MangaRockEs : ParsedHttpSource() {
                 }
             }
             genre = document.select("div.tags a").joinToString { it.text() }
-            description = document.select("div.full.summary p").filterNot { it.text().isNullOrEmpty() }.joinToString("\n")
+            description = document.select("div.full.summary p").joinToString("\n") { it.text() }.trim()
         }
     }
 
