@@ -29,6 +29,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("AZManhwa", "https://azmanhwa.net", "en"),
         SingleLang("Adonis Fansub", "https://manga.adonisfansub.com", "tr", overrideVersionCode = 1),
         SingleLang("Agent of Change Translations", "https://aoc.moe", "en", overrideVersionCode = 1),
+        SingleLang("Aiin Scan", "https://aiinscan.xyz", "pt-BR"),
         SingleLang("AkuManga", "https://akumanga.com", "ar", overrideVersionCode = 1),
         SingleLang("AllPornComic", "https://allporncomic.com", "en", isNsfw = true),
         SingleLang("Anime Center Scan", "https://animecenterscan.com", "pt-BR", isNsfw = true),
