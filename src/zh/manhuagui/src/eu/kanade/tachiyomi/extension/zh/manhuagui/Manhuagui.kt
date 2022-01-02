@@ -393,7 +393,7 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
         val imageJson: Comic = json.decodeFromString(imgJsonStr!!)
 
         return imageJson.files!!.mapIndexed { i, imgStr ->
-            val imgurl = "${imageServer[0]}${imageJson.path}$imgStr?cid=${imageJson.cid}&md5=${imageJson.sl?.md5}"
+            val imgurl = "${imageServer[0]}${imageJson.path}$imgStr?e=${imageJson.sl?.e}&m=${imageJson.sl?.m}"
             Page(i, "", imgurl)
         }
     }
