@@ -37,7 +37,7 @@ class TencentComics : ParsedHttpSource() {
     override val lang = "zh"
 
     override val supportsLatest = true
-    
+
     override val id: Long = 6353436350537369479
 
     override val client: OkHttpClient = network.cloudflareClient

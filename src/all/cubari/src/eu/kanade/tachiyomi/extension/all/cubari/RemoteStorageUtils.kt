@@ -10,7 +10,7 @@ import android.webkit.WebViewClient
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.IOException
@@ -72,9 +72,7 @@ class RemoteStorageUtils {
 
                 webview.webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, url: String) {
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-                            view.evaluateJavascript(jsScript) {}
-                        }
+                        view.evaluateJavascript(jsScript) {}
                         if (transparent) {
                             latch.countDown()
                         }
@@ -94,7 +92,7 @@ class RemoteStorageUtils {
             return if (transparent) {
                 response
             } else {
-                response.newBuilder().body(ResponseBody.create(response.body?.contentType(), jsInterface.payload)).build()
+                response.newBuilder().body(jsInterface.payload.toResponseBody(response.body?.contentType())).build()
             }
         }
     }

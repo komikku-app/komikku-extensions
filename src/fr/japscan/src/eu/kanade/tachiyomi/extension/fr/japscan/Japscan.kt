@@ -1,13 +1,11 @@
 package eu.kanade.tachiyomi.extension.fr.japscan
 
 import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.app.Application
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.net.Uri
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -377,7 +375,6 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
                     webview.settings.domStorageEnabled = true
                     webview.settings.userAgentString = webview.settings.userAgentString.replace("Mobile", "eliboM").replace("Android", "diordnA")
                     webview.webViewClient = object : WebViewClient() {
-                        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
                         override fun shouldInterceptRequest(
                             view: WebView,
                             request: WebResourceRequest

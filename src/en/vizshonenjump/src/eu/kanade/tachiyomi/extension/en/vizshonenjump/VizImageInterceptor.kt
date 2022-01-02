@@ -9,7 +9,7 @@ import com.drew.metadata.exif.ExifSubIFDDirectory
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Response
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -23,7 +23,7 @@ class VizImageInterceptor : Interceptor {
             return response
 
         val image = decodeImage(response.body!!.byteStream())
-        val body = ResponseBody.create(MEDIA_TYPE, image)
+        val body = image.toResponseBody(MEDIA_TYPE)
         return response.newBuilder()
             .body(body)
             .build()

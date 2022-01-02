@@ -19,6 +19,7 @@ import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+// TODO: remove after new stable release
 class CloudflareWafInterceptor(private val cookieDomain: String) : Interceptor {
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }

@@ -499,15 +499,15 @@ class MangaDoom : HttpSource() {
         private fun generateFilterContent(): List<Pair<String, String>>? {
             fun responseToGenreFilterContentPair(genreResponse: Response):
                 List<Pair<String, String>> {
-                    val document = genreResponse.asJsoup()
+                val document = genreResponse.asJsoup()
 
-                    return document.select("ul.manga-cat > li").map {
-                        Pair(
-                            it.select("span.fa").first().attr("data-id"),
-                            it.ownText()
-                        )
-                    }
+                return document.select("ul.manga-cat > li").map {
+                    Pair(
+                        it.select("span.fa").first().attr("data-id"),
+                        it.ownText()
+                    )
                 }
+            }
 
             val genreResponse = client
                 .newCall(
