@@ -301,7 +301,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("ManyToonClub", "https://manytoon.club", "ko", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Mark Scans", "https://markscans.online", "pt-BR", overrideVersionCode = 3),
         SingleLang("Mhmanga", "https://mhmanga.com", "en"),
-        SingleLang("Midnight Mess Scans", "https://midnightmess.org", "en", isNsfw = true, overrideVersionCode = 5),
+        SingleLang("Midnight Mess Scans", "https://midnightmess.org", "en", isNsfw = true, overrideVersionCode = 6),
         SingleLang("Milftoon", "https://milftoon.xxx", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("MiniTwo Scan", "https://minitwoscan.com", "pt-BR"),
         SingleLang("Mirad Scanlator", "https://miradscanlator.site", "pt-BR", overrideVersionCode = 1),

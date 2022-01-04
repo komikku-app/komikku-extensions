@@ -7,6 +7,8 @@ import java.util.Locale
 
 class MidnightMessScans : Madara("Midnight Mess Scans", "https://midnightmess.org", "en") {
 
+    override fun popularMangaSelector() = "div.page-item-detail:not(:has(a[href*='mangadex.org']))"
+
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         with(document) {
