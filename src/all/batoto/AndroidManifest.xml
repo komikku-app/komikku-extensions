@@ -24,6 +24,8 @@ package="eu.kanade.tachiyomi.extension">
             <data android:host="battwo.com" />
             <data android:host="*.mangatoto.com" />
             <data android:host="mangatoto.com" />
+            <data android:host="*.mycdhands.com" />
+            <data android:host="mycdhands.com" />
 
             <data
                 android:pathPattern="/series/..*"
