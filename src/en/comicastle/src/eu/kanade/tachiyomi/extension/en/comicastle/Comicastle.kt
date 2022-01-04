@@ -35,7 +35,7 @@ class Comicastle : ParsedHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private fun pageSegments(page: Int): String = if (page > 1) "/index/${(page - 1) * 30}" else ""
+    private fun pageSegments(page: Int): String = if (page > 1) "/index/${(page - 1) * 42}" else ""
 
     // Popular
 
@@ -43,13 +43,13 @@ class Comicastle : ParsedHttpSource() {
         return GET("$baseUrl/library/popular/desc" + pageSegments(page), headers)
     }
 
-    override fun popularMangaSelector() = "div.col-lg-2"
+    override fun popularMangaSelector() = "div.shadow-sm"
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
             title = element.select("p").text()
             setUrlWithoutDomain(element.select("a").first().attr("href"))
-            thumbnail_url = element.select("img").attr("abs:src")
+            thumbnail_url = element.select("img").attr("data-src")
         }
     }
 
@@ -81,7 +81,10 @@ class Comicastle : ParsedHttpSource() {
                 rBody = filter.toRequestBody()
             }
 
-        if (rBody == null) rBody = createRequestBody(query)
+        if (rBody == null) {
+            url.addPathSegment("result")
+            rBody = createRequestBody(query)
+        }
 
         return POST(url.toString(), headers, rBody!!)
     }
@@ -96,15 +99,15 @@ class Comicastle : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            with(document.select("div.card-body > div.mb-5")) {
-                thumbnail_url = select("img").attr("abs:src")
-                val publisher = select("p:contains(Publisher) button")
+            with(document.select("div.card-body > div.mb-2")) {
+                thumbnail_url = select("img").attr("data-src")
+                val publisher = select("p:contains(Publisher) + div button")
                     .firstOrNull()?.let { "Publisher: ${it.text()}\n" }
-                description = publisher + select("h5:contains(Description) + p").text()
-                author = select("p:contains(Writer) button").joinToString { it.text() }
-                artist = select("p:contains(Artist) button").joinToString { it.text() }
+                description = publisher + select("#comic-desc").text()
+                author = select("thead:contains(Writer) + tbody button").joinToString { it.text() }
+                artist = select("thead:contains(Artist) + tbody button").joinToString { it.text() }
                 status = select("p span.mr-1 strong").text().toStatus()
-                genre = select("p:contains(Genre) button").joinToString { it.text() }
+                genre = select("p:contains(Genre) ~ div button").joinToString { it.text() }
             }
         }
     }
@@ -121,7 +124,7 @@ class Comicastle : ParsedHttpSource() {
         return super.chapterListParse(response).reversed()
     }
 
-    override fun chapterListSelector() = "table tr a"
+    override fun chapterListSelector() = "div.card-body > .table-responsive tr a"
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
@@ -162,4 +165,4 @@ class Comicastle : ParsedHttpSource() {
 }
 
 private fun createRequestBody(value: String) =
-    ("search=" + URLEncoder.encode(value, "UTF-8")).toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull())
+    ("submit=Submit&search=" + URLEncoder.encode(value, "UTF-8")).toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull())
