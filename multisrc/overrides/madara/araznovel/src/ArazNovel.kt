@@ -16,7 +16,7 @@ class ArazNovel : Madara("ArazNovel", "https://www.araznovel.com", "tr", SimpleD
         val document = response.asJsoup()
         val mangaId = document.select("div#manga-chapters-holder").attr("data-id")
 
-        val xhrRequest = xhrChaptersRequest(mangaId)
+        val xhrRequest = oldXhrChaptersRequest(mangaId)
         val xhrResponse = client.newCall(xhrRequest).execute()
 
         return xhrResponse.asJsoup().let { xhrDocument ->
