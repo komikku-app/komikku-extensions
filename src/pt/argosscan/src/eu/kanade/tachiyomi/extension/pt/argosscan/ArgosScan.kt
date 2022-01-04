@@ -16,7 +16,9 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
@@ -83,14 +85,13 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = response.parseAs<ArgosResponseDto<ArgosProjectListDto>>()
 
-        if (result["errors"] != null) {
+        if (result.data == null) {
             throw Exception(REQUEST_ERROR)
         }
 
-        val projectList = result["data"]!!.jsonObject["getProjects"]!!
-            .let { json.decodeFromJsonElement<ArgosProjectListDto>(it) }
+        val projectList = result.data["getProjects"]!!
 
         val mangaList = projectList.projects
             .map(::genericMangaFromObject)
@@ -155,36 +156,32 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     }
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = response.parseAs<ArgosResponseDto<ArgosProjectDto>>()
 
-        if (result["errors"] != null) {
+        if (result.data == null) {
             throw Exception(REQUEST_ERROR)
         }
 
-        val project = result["data"]!!.jsonObject["project"]!!.jsonObject
-            .let { json.decodeFromJsonElement<ArgosProjectDto>(it) }
+        val project = result.data["project"]!!
 
         title = project.name!!
         thumbnail_url = "$baseUrl/images/${project.id}/${project.cover!!}"
         description = project.description.orEmpty()
-        author = project.authors.orEmpty().joinToString(", ")
+        author = project.authors.orEmpty().joinToString()
         status = SManga.ONGOING
-        genre = project.tags.orEmpty().joinToString(", ") { it.name }
+        genre = project.tags.orEmpty().sortedBy(ArgosTagDto::name).joinToString { it.name }
     }
 
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsApiRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = response.parseAs<ArgosResponseDto<ArgosProjectDto>>()
 
-        if (result["errors"] != null) {
+        if (result.data == null) {
             throw Exception(REQUEST_ERROR)
         }
 
-        val project = result["data"]!!.jsonObject["project"]!!.jsonObject
-            .let { json.decodeFromJsonElement<ArgosProjectDto>(it) }
-
-        return project.chapters.map(::chapterFromObject)
+        return result.data["project"]!!.chapters.map(::chapterFromObject)
     }
 
     private fun chapterFromObject(chapter: ArgosChapterDto): SChapter = SChapter.create().apply {
@@ -211,7 +208,7 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = response.parseAs<JsonElement>().jsonObject
 
         if (result["errors"] != null) {
             throw Exception(REQUEST_ERROR)
@@ -343,6 +340,10 @@ class ArgosScan : HttpSource(), ConfigurableSource {
             .build()
 
         return POST(GRAPHQL_URL, newHeaders, body)
+    }
+
+    private inline fun <reified T> Response.parseAs(): T = use {
+        json.decodeFromString(it.body?.string().orEmpty())
     }
 
     private fun String.toDate(): Long {

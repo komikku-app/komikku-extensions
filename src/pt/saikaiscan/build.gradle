@@ -6,7 +6,7 @@ ext {
     extName = 'Saikai Scan'
     pkgNameSuffix = 'pt.saikaiscan'
     extClass = '.SaikaiScan'
-    extVersionCode = 7
+    extVersionCode = 8
 }
 
 dependencies {

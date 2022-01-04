@@ -1,9 +1,8 @@
 package eu.kanade.tachiyomi.extension.pt.saikaiscan
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
+import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -20,10 +19,8 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class SaikaiScan : HttpSource() {
 
@@ -36,7 +33,8 @@ class SaikaiScan : HttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .addInterceptor(SpecificHostRateLimitInterceptor(API_URL.toHttpUrl(), 1, 2))
+        .addInterceptor(SpecificHostRateLimitInterceptor(IMAGE_SERVER_URL.toHttpUrl(), 1, 1))
         .build()
 
     private val json: Json by injectLazy()
@@ -63,7 +61,7 @@ class SaikaiScan : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<SaikaiScanPaginatedStoriesDto>(response.body!!.string())
+        val result = response.parseAs<SaikaiScanPaginatedStoriesDto>()
 
         val mangaList = result.data!!.map(::popularMangaFromObject)
         val hasNextPage = result.meta!!.currentPage < result.meta.lastPage
@@ -170,7 +168,7 @@ class SaikaiScan : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val result = json.decodeFromString<SaikaiScanPaginatedStoriesDto>(response.body!!.string())
+        val result = response.parseAs<SaikaiScanPaginatedStoriesDto>()
         val story = result.data!![0]
 
         title = story.title
@@ -202,13 +200,13 @@ class SaikaiScan : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = json.decodeFromString<SaikaiScanPaginatedStoriesDto>(response.body!!.string())
+        val result = response.parseAs<SaikaiScanPaginatedStoriesDto>()
         val story = result.data!![0]
 
         return story.releases
             .filter { it.isActive == 1 }
             .map { chapterFromObject(it, story.slug) }
-            .sortedByDescending { it.chapter_number }
+            .sortedByDescending(SChapter::chapter_number)
     }
 
     private fun chapterFromObject(obj: SaikaiScanReleaseDto, storySlug: String): SChapter =
@@ -216,7 +214,7 @@ class SaikaiScan : HttpSource() {
             name = "Capítulo ${obj.chapter}" +
                 (if (obj.title.isNullOrEmpty().not()) " - ${obj.title}" else "")
             chapter_number = obj.chapter.toFloatOrNull() ?: -1f
-            date_upload = obj.publishedAt.substringBefore(" ").toDate()
+            date_upload = obj.publishedAt.toDate()
             scanlator = this@SaikaiScan.name
             url = "/ler/comics/$storySlug/${obj.id}/${obj.slug}"
         }
@@ -238,7 +236,7 @@ class SaikaiScan : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = json.decodeFromString<SaikaiScanReleaseResultDto>(response.body!!.string())
+        val result = response.parseAs<SaikaiScanReleaseResultDto>()
 
         return result.data!!.releaseImages.mapIndexed { i, obj ->
             Page(i, "", "$IMAGE_SERVER_URL/${obj.image}")
@@ -256,43 +254,6 @@ class SaikaiScan : HttpSource() {
 
         return GET(page.imageUrl!!, imageHeaders)
     }
-
-    private class Genre(title: String, val id: Int) : Filter.CheckBox(title)
-
-    private class GenreFilter(genres: List<Genre>) : Filter.Group<Genre>("Gêneros", genres)
-
-    private data class Country(val name: String, val id: Int) {
-        override fun toString(): String = name
-    }
-
-    private open class EnhancedSelect<T>(name: String, values: Array<T>) : Filter.Select<T>(name, values) {
-        val selected: T
-            get() = values[state]
-    }
-
-    private class CountryFilter(countries: List<Country>) : EnhancedSelect<Country>(
-        "Nacionalidade",
-        countries.toTypedArray()
-    )
-
-    private data class Status(val name: String, val id: Int) {
-        override fun toString(): String = name
-    }
-
-    private class StatusFilter(statuses: List<Status>) : EnhancedSelect<Status>(
-        "Status",
-        statuses.toTypedArray()
-    )
-
-    private data class SortProperty(val name: String, val slug: String) {
-        override fun toString(): String = name
-    }
-
-    private class SortByFilter(val sortProperties: List<SortProperty>) : Filter.Sort(
-        "Ordenar por",
-        sortProperties.map { it.name }.toTypedArray(),
-        Selection(2, ascending = false)
-    )
 
     // fetch('https://api.saikai.com.br/api/genres')
     //     .then(res => res.json())
@@ -382,12 +343,13 @@ class SaikaiScan : HttpSource() {
         GenreFilter(getGenreList())
     )
 
+    private inline fun <reified T> Response.parseAs(): T = use {
+        json.decodeFromString(it.body?.string().orEmpty())
+    }
+
     private fun String.toDate(): Long {
-        return try {
-            DATE_FORMATTER.parse(this)?.time ?: 0L
-        } catch (e: ParseException) {
-            0L
-        }
+        return runCatching { DATE_FORMATTER.parse(this)?.time }
+            .getOrNull() ?: 0L
     }
 
     private fun String.toStatus(): Int = when (this) {
@@ -403,7 +365,9 @@ class SaikaiScan : HttpSource() {
         private const val COMIC_FORMAT_ID = "2"
         private const val PER_PAGE = "12"
 
-        private val DATE_FORMATTER = SimpleDateFormat("yyyy-MM-dd", Locale("pt", "BR"))
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale("pt", "BR"))
+        }
 
         private const val API_URL = "https://api.saikai.com.br"
         private const val IMAGE_SERVER_URL = "https://s3-alpha.saikai.com.br"

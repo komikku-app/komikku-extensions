@@ -12,12 +12,18 @@ data class HipercoolBookDto(
     val synopsis: String? = null,
     val tags: List<HipercoolTagDto> = emptyList(),
     val title: String
-)
+) {
+    val fixedTags: Map<String, List<String>>
+        get() = tags
+            .groupBy(HipercoolTagDto::slug, HipercoolTagDto::values)
+            .mapValues { it.value.flatten().map(HipercoolTagDto::label) }
+}
 
 @Serializable
 data class HipercoolTagDto(
     val label: String,
-    val values: List<HipercoolTagDto> = emptyList()
+    val values: List<HipercoolTagDto> = emptyList(),
+    val slug: String
 )
 
 @Serializable
@@ -27,4 +33,12 @@ data class HipercoolChapterDto(
     @SerialName("publishied_at") val publishedAt: String,
     val slug: String,
     val title: String
+)
+
+@Serializable
+data class HipercoolSearchDto(
+    val start: Int,
+    val count: Int,
+    val text: String,
+    val type: String
 )
