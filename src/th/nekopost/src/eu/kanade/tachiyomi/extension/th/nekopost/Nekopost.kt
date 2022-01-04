@@ -141,9 +141,10 @@ class Nekopost : ParsedHttpSource() {
                 val chapterInfo: RawChapterInfo = json.decodeFromString(responseBody.string())
 
                 chapterInfo.pageItem.map { page ->
+                    val fileName = page.fileName ?: page.pageName
                     Page(
                         index = page.pageNo,
-                        imageUrl = "$fileHost/collectManga/${chapterInfo.projectId}/${chapterInfo.chapterId}/${page.fileName}",
+                        imageUrl = "$fileHost/collectManga/${chapterInfo.projectId}/${chapterInfo.chapterId}/$fileName",
                     )
                 }
             }
