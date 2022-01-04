@@ -58,24 +58,24 @@ import kotlin.math.absoluteValue
 import kotlin.random.Random
 class Remanga : ConfigurableSource, HttpSource() {
 
+    override val name = "Remanga"
+
+    override val lang = "ru"
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override val name = "Remanga"
-
     private val baseOrig: String = "https://api.remanga.org"
     private val baseMirr: String = "https://api.xn--80aaig9ahr.xn--c1avg" // https://реманга.орг
-    private var domain: String? = preferences.getString(DOMAIN_PREF, baseOrig)
+    private val domain: String? = preferences.getString(DOMAIN_PREF, baseOrig)
     override val baseUrl = domain.toString()
-
-    override val lang = "ru"
 
     override val supportsLatest = true
 
     private var token: String = ""
 
-    protected open val userAgentRandomizer = " ${Random.nextInt().absoluteValue}"
+    private val userAgentRandomizer = " ${Random.nextInt().absoluteValue}"
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/78.0$userAgentRandomizer")
