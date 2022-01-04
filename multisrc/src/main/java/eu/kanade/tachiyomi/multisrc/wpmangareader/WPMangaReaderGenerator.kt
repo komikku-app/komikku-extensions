@@ -45,6 +45,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Silence Scan", "https://silencescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 5),
         SingleLang("YANP Fansub", "https://yanpfansub.com", "pt-BR", isNsfw = true),
         SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 6),
+        SingleLang("Ozul Scans", "https://ozulscans.com", "ar"),
     )
 
     companion object {
