@@ -238,8 +238,7 @@ class NicovideoSeiga : HttpSource() {
         val decryptedImage = decryptImage(key, encryptedImage)
 
         // Construct a new response
-        val contentType = response.header("Content-Type", "image/${getImageType(decryptedImage)}")
-        val body = decryptedImage.toResponseBody(contentType!!.toMediaTypeOrNull())
+        val body = decryptedImage.toResponseBody("image/${getImageType(decryptedImage)}".toMediaTypeOrNull())
         return response.newBuilder().body(body).build()
     }
 
@@ -272,11 +271,11 @@ class NicovideoSeiga : HttpSource() {
      * This is also how Nicovideo does it
      */
     private fun getImageType(image: ByteArray): String {
-        return if (image[0].toInt() == 0xff && image[1].toInt() == 0xd8 && image[image.size - 2].toInt() == 0xff && image[image.size - 1].toInt() == 0xd9) {
+        return if (image[0].toInt() == -1 && image[1].toInt() == -40 && image[image.size - 2].toInt() == -1 && image[image.size - 1].toInt() == -39) {
             "jpeg"
-        } else if (image[0].toInt() == 0x89 && image[1].toInt() == 0x50 && image[2].toInt() == 0x4e && image[3].toInt() == 0x47) {
+        } else if (image[0].toInt() == -119 && image[1].toInt() == 80 && image[2].toInt() == 78 && image[3].toInt() == 71) {
             "png"
-        } else if (image[0].toInt() == 0x47 && image[1].toInt() == 0x49 && image[2].toInt() == 0x46 && image[3].toInt() == 0x38) {
+        } else if (image[0].toInt() == 71 && image[1].toInt() == 73 && image[2].toInt() == 70 && image[3].toInt() == 56) {
             "gif"
         } else {
             // It defaults to null in the site, but it's a webp image
