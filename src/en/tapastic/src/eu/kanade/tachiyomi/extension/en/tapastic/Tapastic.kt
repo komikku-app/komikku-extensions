@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.en.tapastic
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.net.Uri
 import android.webkit.CookieManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
@@ -35,6 +36,7 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.math.ceil
 
 class Tapastic : ConfigurableSource, ParsedHttpSource() {
 
@@ -129,10 +131,24 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
             }
         }
         screen.addPreference(lockPref)
+
+        val authorsNotesPref = SwitchPreferenceCompat(screen.context).apply {
+            key = SHOW_AUTHORS_NOTES_KEY
+            title = "Show author's notes"
+            summary = "Enable to see the author's notes at the end of chapters (if they're there)."
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+                preferences.edit().putBoolean(SHOW_AUTHORS_NOTES_KEY, checkValue).commit()
+            }
+        }
+        screen.addPreference(authorsNotesPref)
     }
 
     private fun showLockedChapterPref() = preferences.getBoolean(CHAPTER_VIS_PREF_KEY, false)
     private fun showLockPref() = preferences.getBoolean(SHOW_LOCK_PREF_KEY, false)
+    private fun showAuthorsNotesPref() = preferences.getBoolean(SHOW_AUTHORS_NOTES_KEY, false)
 
     // Popular
 
@@ -279,10 +295,48 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
 
     // Pages
 
+    private fun wordwrap(t: String, lineWidth: Int) = buildString {
+        val text = t.replace("\n", "\n ")
+        var charCount = 0
+        text.split(" ").forEach { w ->
+            if (w.contains("\n")) {
+                charCount = 0
+            }
+            if (charCount > lineWidth) {
+                append("\n")
+                charCount = 0
+            } else {
+                append("$w ")
+            }
+            charCount += w.length + 1
+        }
+    }
+
+    private fun toImage(t: String, fontSize: Int, bold: Boolean = false): String {
+        val text = wordwrap(t.replace("&amp;", "&").replace("\\s*<br>\\s*".toRegex(), "\n"), 65)
+        val imgHeight = (text.lines().size + 2) * fontSize * 1.3
+        return "https://placehold.jp/" + fontSize + "/ffffff/000000/1500x" + ceil(imgHeight).toInt() + ".png?" +
+            "css=%7B%22text-align%22%3A%22%20left%22%2C%22padding-left%22%3A%22%203%25%22" + (if (bold) "%2C%22font-weight%22%3A%22%20600%22" else "") + "%7D&" +
+            "text=" + Uri.encode(text)
+    }
+
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("img.content__img").mapIndexed { i, img ->
+        var pages = document.select("img.content__img").mapIndexed { i, img ->
             Page(i, "", img.let { if (it.hasAttr("data-src")) it.attr("abs:data-src") else it.attr("abs:src") })
         }
+
+        if (showAuthorsNotesPref()) {
+            val episodeStory = document.select("p.js-episode-story").html()
+            if (episodeStory.isNotEmpty()) {
+                val creator = document.select("a.name.js-fb-tracking")[0].text()
+                val creatorImage = toImage("Author's Notes from $creator", 43, true)
+                pages = pages + Page(pages.size, "", creatorImage)
+
+                val storyImage = toImage(episodeStory, 42)
+                pages = pages + Page(pages.size, "", storyImage)
+            }
+        }
+        return pages
     }
 
     override fun imageUrlParse(document: Document) =
@@ -431,5 +485,6 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
     companion object {
         private const val CHAPTER_VIS_PREF_KEY = "lockedChapterVisibility"
         private const val SHOW_LOCK_PREF_KEY = "showChapterLock"
+        private const val SHOW_AUTHORS_NOTES_KEY = "showAuthorsNotes"
     }
 }
