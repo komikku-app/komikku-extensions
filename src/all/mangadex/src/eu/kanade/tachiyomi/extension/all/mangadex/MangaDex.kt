@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
@@ -173,6 +174,10 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
                 MDConstants.getContentRatingPrefKey(dexLang),
                 MDConstants.contentRatingPrefDefaults
             )?.forEach { addQueryParameter("contentRating[]", it) }
+            preferences.getString(
+                MDConstants.getBlockedGroupsPrefKey(dexLang),
+                MDConstants.blockedGroupsPrefDefaults
+            )?.split(",")?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedGroups[]", it.trim()) }
         }.build().toString()
         return GET(url, headers, CacheControl.FORCE_NETWORK)
     }
@@ -325,6 +330,10 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             addQueryParameter("contentRating[]", "suggestive")
             addQueryParameter("contentRating[]", "erotica")
             addQueryParameter("contentRating[]", "pornographic")
+            preferences.getString(
+                MDConstants.getBlockedGroupsPrefKey(dexLang),
+                MDConstants.blockedGroupsPrefDefaults
+            )?.split(",")?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedGroups[]", it.trim()) }
         }.build().toString()
         return GET(url, headers = headers, cache = CacheControl.FORCE_NETWORK)
     }
@@ -501,11 +510,31 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             }
         }
 
+        val blockedGroupsPref = EditTextPreference(screen.context).apply {
+            key = MDConstants.getBlockedGroupsPrefKey(dexLang)
+            title = "Block Groups by UUID"
+            summary = "Chapters from blocked groups will not show up in Latest or Manga feed.\n" +
+                "Enter as a Comma-separated list of group UUIDs"
+            setDefaultValue(MDConstants.blockedGroupsPrefDefaults)
+            setOnPreferenceChangeListener { _, newValue ->
+                val groupsBlocked = newValue.toString()
+                    .split(",")
+                    .map { it.trim() }
+                    .filter { helper.containsUuid(it) }
+                    .joinToString(separator = ", ")
+
+                preferences.edit()
+                    .putString(MDConstants.getBlockedGroupsPrefKey(dexLang), groupsBlocked)
+                    .commit()
+            }
+        }
+
         screen.addPreference(coverQualityPref)
         screen.addPreference(dataSaverPref)
         screen.addPreference(standardHttpsPortPref)
         screen.addPreference(contentRatingPref)
         screen.addPreference(originalLanguagePref)
+        screen.addPreference(blockedGroupsPref)
     }
 
     override fun getFilterList(): FilterList =
