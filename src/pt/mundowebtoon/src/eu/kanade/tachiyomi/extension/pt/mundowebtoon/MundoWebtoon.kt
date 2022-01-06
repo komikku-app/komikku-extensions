@@ -84,7 +84,7 @@ class MundoWebtoon : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("span.andro_product-title").text().withoutLanguage()
-        thumbnail_url = element.select("div.andro_product-thumb img").attr("abs:src")
+        thumbnail_url = element.select("div.andro_product-thumb img").attr("abs:data-src")
         setUrlWithoutDomain(element.select("div.andro_product-thumb > a").attr("abs:href"))
     }
 
