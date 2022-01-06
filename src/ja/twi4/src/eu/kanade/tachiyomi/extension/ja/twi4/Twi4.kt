@@ -9,10 +9,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
@@ -26,7 +22,6 @@ class Twi4 : HttpSource() {
     override val lang: String = "ja"
     override val name: String = "Twi4"
     override val supportsLatest: Boolean = false
-    private val validPageTest: Regex = Regex("/comics/twi4/[a-z]+/works/\\d{4}\\.[0-9a-f]{32}\\.jpg")
     private val application: Application by injectLazy()
 
     private fun getUrlDomain(): String = baseUrl.substring(0, 22)
@@ -163,43 +158,10 @@ class Twi4 : HttpSource() {
         // There should only be 1 article in the document
         val page = doc.select("article.comic:first-child")
         val ret = mutableListOf<Page>()
-        // The imageurl is supposed to look like this /comic/twi4/comicName/works/pageNumber.suffix.jpg
-        // The noscript page broke the image links in a few mangas and they don't come with the suffix
-        // In this case we need to request an index file and obtain the file suffix
-        val imageUrl: String
-        if (validPageTest.matches(page.select("div > div > p > img").attr("src")))
-            imageUrl = getUrlDomain() + page.select("div > div > p > img").attr("src")
-        else {
-            val requestUrl = response.request.url.toUrl().toString()
-            val chapterNum = requestUrl.substringAfterLast("/").take(4).toInt()
-            // The index file contains everything about each image. Usually we can find the file name directly from the document
-            // This is a failsafe
-            val indexResponse = client.newCall(
-                GET(
-                    requestUrl.substringBeforeLast("/") + "/index.js",
-                    getChromeHeaders()
-                )
-            ).execute()
-            if (!indexResponse.isSuccessful)
-                throw Exception("Failed to find pages!")
-            // We got a JS file that looks very much like a JSON object
-            // A few string manipulation and we can parse the whole thing as JSON!
-            val re = Regex("([A-z]+):")
-            var index = indexResponse.body?.string()?.substringAfter("=")?.dropLast(1)
-            index = index?.let { re.replace(it, "\"$1\":") }
-            indexResponse.close()
-            val indexElement = index?.let { Json.parseToJsonElement(it) }
-            var suffix: String? = null
-            if (indexElement != null) {
-                // Each entry in the Items array corresponds to 1 chapter/page
-                suffix = indexElement.jsonObject["Items"]?.jsonArray?.get(chapterNum - 1)?.jsonObject?.get("Suffix")?.jsonPrimitive?.content
-            }
-            imageUrl = getUrlDomain() + page.select("div > div > p > img").attr("src").dropLast(4) + suffix + ".jpg"
-        }
         ret.add(
             Page(
                 index = page.select("header > div > h3 > span.number").text().toInt(),
-                imageUrl = imageUrl
+                imageUrl = getUrlDomain() + page.select("div > div > p > img").attr("src")
             )
         )
         return ret

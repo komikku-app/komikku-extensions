@@ -6,7 +6,7 @@ ext {
     extName = 'Twi4'
     pkgNameSuffix = 'ja.twi4'
     extClass = '.Twi4'
-    extVersionCode = 1
+    extVersionCode = 2
 }
 
 apply from: "$rootDir/common.gradle"
