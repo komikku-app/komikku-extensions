@@ -116,6 +116,8 @@ open class BatoTo(
     override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        val utilsFilter = filters.findInstance<UtilsFilter>()!!
+        val letterFilter = filters.findInstance<LetterFilter>()!!
         return when {
             query.startsWith("ID:") -> {
                 val id = query.substringAfter("ID:")
@@ -124,11 +126,25 @@ open class BatoTo(
                         queryIDParse(response, id)
                     }
             }
+            query.isNotBlank() && letterFilter.state != 0 -> {
+                val url = "$baseUrl/search?word=$query&page=$page&mode=letter"
+                client.newCall(GET(url, headers)).asObservableSuccess()
+                    .map { response ->
+                        queryParse(response)
+                    }
+            }
             query.isNotBlank() -> {
                 val url = "$baseUrl/search?word=$query&page=$page"
                 client.newCall(GET(url, headers)).asObservableSuccess()
                     .map { response ->
                         queryParse(response)
+                    }
+            }
+            utilsFilter.state != 0 -> {
+                val url = "$baseUrl/_utils/comic-list?type=${utilsFilter.selected}"
+                client.newCall(GET(url, headers)).asObservableSuccess()
+                    .map { response ->
+                        queryUtilsParse(response)
                     }
             }
             else -> {
@@ -205,6 +221,21 @@ open class BatoTo(
         return MangasPage(mangas, nextPage)
     }
 
+    private fun queryUtilsParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+        val mangas = document.select("tbody > tr")
+            .map { element -> searchUtilsFromElement(element) }
+        return MangasPage(mangas, false)
+    }
+
+    private fun searchUtilsFromElement(element: Element): SManga {
+        val manga = SManga.create()
+        manga.setUrlWithoutDomain(element.select("td a").attr("href"))
+        manga.title = element.select("td a").text().removeEntities()
+        manga.thumbnail_url = element.select("img").attr("abs:src")
+        return manga
+    }
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = throw UnsupportedOperationException("Not used")
     override fun searchMangaSelector() = throw UnsupportedOperationException("Not used")
     override fun searchMangaFromElement(element: Element) = throw UnsupportedOperationException("Not used")
@@ -226,7 +257,7 @@ open class BatoTo(
         manga.artist = infoElement.select("div.attr-item:contains(author) a:last-child").text()
         manga.status = parseStatus(status)
         manga.genre = infoElement.select(".attr-item b:contains(genres) + span ").joinToString { it.text() }
-        manga.description = infoElement.select("div.limit-html").text()
+        manga.description = infoElement.select("div.limit-html").text() + "\n\n" + infoElement.select(".episode-list > .alert-warning").text()
         manga.thumbnail_url = document.select("div.attr-cover img")
             .attr("abs:src")
         return manga
@@ -372,7 +403,7 @@ open class BatoTo(
     private fun String.removeEntities(): String = Parser.unescapeEntities(this, true)
 
     override fun getFilterList() = FilterList(
-        // LetterFilter(),
+        LetterFilter(getLetterFilter(), 0),
         Filter.Header("NOTE: Ignored if using text search!"),
         Filter.Separator(),
         SortFilter(getSortFilter(), 5),
@@ -383,6 +414,9 @@ open class BatoTo(
         MinChapterTextFilter(),
         MaxChapterTextFilter(),
         ReverseSortFilter(),
+        Filter.Separator(),
+        Filter.Header("NOTE: Filters below are incompatible with any other filters!"),
+        UtilsFilter(getUtilsFilter(), 0),
     )
 
     class SelectFilterOption(val name: String, val value: String)
@@ -417,8 +451,13 @@ open class BatoTo(
     class MinChapterTextFilter : TextFilter("Min. Chapters")
     class MaxChapterTextFilter : TextFilter("Max. Chapters")
     class LangGroupFilter(options: List<CheckboxFilterOption>) : CheckboxGroupFilter("Languages", options)
-    class LetterFilter(default: Boolean = false) : Filter.CheckBox("Letter matching mode (Slow)", default)
+    class LetterFilter(options: List<SelectFilterOption>, default: Int) : SelectFilter("Letter matching mode (Slow)", options, default)
+    class UtilsFilter(options: List<SelectFilterOption>, default: Int) : SelectFilter("Utils comic list", options, default)
 
+    private fun getLetterFilter() = listOf(
+        SelectFilterOption("Disabled", "disabled"),
+        SelectFilterOption("Enabled", "enabled"),
+    )
     private fun getSortFilter() = listOf(
         SelectFilterOption("Z-A", "title"),
         SelectFilterOption("Last Updated", "update"),
@@ -429,6 +468,22 @@ open class BatoTo(
         SelectFilterOption("Most Views 7 days", "views_w"),
         SelectFilterOption("Most Views 24 hours", "views_d"),
         SelectFilterOption("Most Views 60 minutes", "views_h"),
+    )
+
+    private fun getUtilsFilter() = listOf(
+        SelectFilterOption("None", ""),
+        SelectFilterOption("Comics: I Created", "i-created"),
+        SelectFilterOption("Comics: I Modified", "i-modified"),
+        SelectFilterOption("Comics: I Uploaded", "i-uploaded"),
+        SelectFilterOption("Comics: Authorized to me", "i-authorized"),
+        SelectFilterOption("Comics: Draft Status", "status-draft"),
+        SelectFilterOption("Comics: Hidden Status", "status-hidden"),
+        SelectFilterOption("Ongoing and Not updated in 30-60 days", "not-updated-30-60"),
+        SelectFilterOption("Ongoing and Not updated in 60-90 days", "not-updated-60-90"),
+        SelectFilterOption("Ongoing and Not updated in 90-180 days", "not-updated-90-180"),
+        SelectFilterOption("Ongoing and Not updated in 180-360 days", "not-updated-180-360"),
+        SelectFilterOption("Ongoing and Not updated in 360-1000 days", "not-updated-360-1000"),
+        SelectFilterOption("Ongoing and Not updated more than 1000 days", "not-updated-1000"),
     )
 
     private fun getStatusFilter() = listOf(
