@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.fr.mangakawaii
 
 import android.net.Uri
-import android.util.Base64
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -50,6 +49,10 @@ class MangaKawaii : ParsedHttpSource() {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
                 "Chrome/8$userAgentRandomizer1.0.4$userAgentRandomizer3.1$userAgentRandomizer2 Safari/537.36"
         )
+        .add(
+            "Accept-Language",
+            lang
+        )
 
     // Popular
     override fun popularMangaRequest(page: Int) = GET(baseUrl, headers)
@@ -78,7 +81,7 @@ class MangaKawaii : ParsedHttpSource() {
             .appendQueryParameter("search_type", "manga")
         return GET(uri.toString(), headers)
     }
-    override fun searchMangaSelector() = "h1 + ul a[href*=manga]"
+    override fun searchMangaSelector() = "h2 + ul a[href*=manga]"
     override fun searchMangaNextPageSelector(): String? = null
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("a").text().trim()
@@ -105,23 +108,28 @@ class MangaKawaii : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter = throw Exception("Not used")
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        var widgetDocument = document
-        val widgetPageListUrl = Regex("""['"](/arrilot/load-widget.*?)['"]""").find(document.toString())?.groupValues?.get(1)
-        if (widgetPageListUrl != null) {
-            widgetDocument = client.newCall(GET("$baseUrl$widgetPageListUrl", headers)).execute().asJsoup()
-        }
 
-        return widgetDocument.select("tr[class*=volume-]:has(td)").map {
-            SChapter.create().apply {
-                url = it.select("td.table__chapter").select("a").attr("href")
-                name = it.select("td.table__chapter").select("span").text().trim()
-                chapter_number = it.select("td.table__chapter").select("span").text().substringAfter("Chapitre").replace(Regex("""[,-]"""), ".").trim().toFloatOrNull()
-                    ?: -1F
-                date_upload = it.select("td.table__date").firstOrNull()?.text()?.let { parseDate(it) }
-                    ?: 0
-                scanlator = document.select("[itemprop=translator] a").joinToString { it.text().replace(Regex("""[\[\]]"""), "") }
+        var mangaDocument = document
+        val visibleChapters = document.select(".table__chapter>a")
+        if (!visibleChapters.isEmpty()) {
+            // There is chapters, but the complete list isn't displayed here
+            // To avoid getting the whole list, let's instead go to a manga page to get the list of links
+            val someChapter = visibleChapters[0].attr("href")
+
+            mangaDocument = client.newCall(GET("$baseUrl$someChapter", headers)).execute().asJsoup()
+
+            return mangaDocument.select("#dropdownMenuOffset+ul li").mapIndexed { i, it ->
+                SChapter.create().apply {
+                    url = it.select("a").attr("href").replace(baseUrl, "")
+                    chapter_number = i.toFloat()
+                    name = it.select("a").text()
+                    date_upload = 0
+                    scanlator = ""
+                }
             }
         }
+
+        return mutableListOf<SChapter>()
     }
 
     private fun parseDate(date: String): Long {
@@ -130,29 +138,25 @@ class MangaKawaii : ParsedHttpSource() {
 
     // Pages
     override fun pageListParse(document: Document): List<Page> {
-        val selectorEncoded1 = "Wkdim" + "gsai" + "mgWQyV2lkMm" + "xrS2img" + "ppZDFoY" + "kd4ZElHaW" +
-            "RsdimgFp6cHVi" + "M1FvVzNOeVl5" + "bimgzlpZG" + "lkWjJsbVhT" + "a3imgNJQzVq" + "YjI1MFlpZFd" +
-            "saWR1WlhJdFi" + "mgpteDFhV1FnTGi" + "mg5KdmlkZHlC" + "a2FYWimgTZiaW" + "imgRtOTBL" + "QzV0ZUMxaim" +
-            "gGRYUnZpZEtT" + "QTZibTki" + "mgwS0imgRwdm" + "JteGlkimgNU" + "xXTm9hV3himgr" + "aWRLU0JwYldjNm" + "JtOTBpZEti" +
-            "mgGdHpp" + "ZGNtTXFQimg" + "V2RwWml" + "kbDBw"
-        val selectorEncoded2 = String(Base64.decode(selectorEncoded1.replace("img", ""), Base64.DEFAULT))
-        val selectorDecoded = String(Base64.decode(selectorEncoded2.replace("id", ""), Base64.DEFAULT))
-        val elements = document.select(selectorDecoded)
+        val chapterSlug = Regex("""var chapter_slug = "([^"]*)";""").find(document.toString())?.groupValues?.get(1)
+        val mangaSlug = Regex("""var oeuvre_slug = "([^"]*)";""").find(document.toString())?.groupValues?.get(1)
 
         val pages = mutableListOf<Page>()
-        var j = 0
-        for (i in 0 until elements.count()) {
-            if (elements[i].attr("src").trim().startsWith(cdnUrl)) {
-                pages.add(Page(j, document.location(), elements[i].attr("src").trim()))
-                ++j
-            }
+        Regex(""""page_image":"([^"]*)"""").findAll(document.toString())?.asIterable().mapIndexed { i, it ->
+            pages.add(
+                Page(
+                    i,
+                    cdnUrl + "/uploads/manga/" + mangaSlug + "/chapters_fr/" + chapterSlug + "/" + it?.groupValues?.get(1),
+                    cdnUrl + "/uploads/manga/" + mangaSlug + "/chapters_fr/" + chapterSlug + "/" + it?.groupValues?.get(1)
+                )
+            )
         }
         return pages
     }
     override fun imageUrlParse(document: Document): String = throw Exception("Not used")
     override fun imageRequest(page: Page): Request {
         val imgHeaders = headersBuilder().apply {
-            add("Referer", page.url)
+            add("Referer", baseUrl)
         }.build()
         return GET(page.imageUrl!!, imgHeaders)
     }
