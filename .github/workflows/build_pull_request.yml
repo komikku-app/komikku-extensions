@@ -48,7 +48,7 @@ jobs:
           CI_MULTISRC: "true"
           CI_MATRIX_LANG: ${{ matrix.lang }}
         with:
-          arguments: assembleRelease
+          arguments: assembleDebug
 
   build_individual:
     name: Build individual modules
@@ -77,4 +77,4 @@ jobs:
           CI_MULTISRC: "false"
           CI_MATRIX_LANG: ${{ matrix.lang }}
         with:
-          arguments: assembleRelease
+          arguments: assembleDebug

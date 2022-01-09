@@ -3,12 +3,6 @@ apply plugin: 'org.jmailen.kotlinter'
 android {
     compileSdkVersion AndroidConfig.compileSdk
 
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-    }
-
     sourceSets {
         main {
             manifest.srcFile "AndroidManifest.xml"
@@ -36,6 +30,22 @@ android {
                 extFactory: project.ext.properties.getOrDefault("extFactory", ""),
                 nsfw: project.ext.properties.getOrDefault("isNsfw", false) ? 1 : 0,
         ]
+    }
+
+    signingConfigs {
+        release {
+            storeFile rootProject.file("signingkey.jks")
+            storePassword System.getenv("KEY_STORE_PASSWORD")
+            keyAlias System.getenv("ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
     }
 
     dependenciesInfo {
