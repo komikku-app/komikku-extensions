@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 class SheaManga : WPMangaStream(
     "Shea Manga",
-    "https://sheamanga.my.id",
+    "http://sheamanga.my.id",
     "id",
     dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id"))
 ) {
