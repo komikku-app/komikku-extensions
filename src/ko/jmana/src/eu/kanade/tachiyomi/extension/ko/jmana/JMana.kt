@@ -136,7 +136,7 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         // <img class="comicdetail" style="width:auto;min-width:auto;margin:auto;display:block"
         // data-src="https://img6.xyz.futbol/comics/jdrive01/202005/하야테처럼/하야테처럼! 1화/2d206674-93f5-4991-9420-6d63e2a00010.jpg">
-        val pages = document.select("div.pdf-wrap img.comicdetail")
+        val pages = document.select("div.pdf-wrap img.lazy")
             .groupBy { img ->
                 val imageUrl = getImageUrl(img)
                 extractChapterName(imageUrl)
