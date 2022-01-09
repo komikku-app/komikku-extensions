@@ -17,6 +17,7 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -47,7 +48,7 @@ class MundoWebtoon : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("h6.andro_product-title small").text().withoutLanguage()
-        thumbnail_url = element.select("div.andro_product-thumb img").attr("abs:data-src")
+        thumbnail_url = element.select("div.andro_product-thumb img").srcAttr()
         setUrlWithoutDomain(element.select("div.andro_product-thumb > a").attr("abs:href"))
     }
 
@@ -62,7 +63,7 @@ class MundoWebtoon : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("h5.andro_product-title").text().withoutLanguage()
-        thumbnail_url = element.select("div.andro_product-thumb img").attr("abs:src")
+        thumbnail_url = element.select("div.andro_product-thumb img").srcAttr()
         setUrlWithoutDomain(element.select("div.andro_product-thumb > a").attr("abs:href"))
     }
 
@@ -84,7 +85,7 @@ class MundoWebtoon : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("span.andro_product-title").text().withoutLanguage()
-        thumbnail_url = element.select("div.andro_product-thumb img").attr("abs:data-src")
+        thumbnail_url = element.select("div.andro_product-thumb img").srcAttr()
         setUrlWithoutDomain(element.select("div.andro_product-thumb > a").attr("abs:href"))
     }
 
@@ -111,7 +112,7 @@ class MundoWebtoon : ParsedHttpSource() {
         status = infoElement.select("div.BlDataItem:contains(Status) a").firstOrNull()
             ?.text()?.toStatus() ?: SManga.UNKNOWN
         description = infoElement.select("div.andro_product-excerpt").text()
-        thumbnail_url = document.select("div.andro_product-single-thumb img").attr("abs:src")
+        thumbnail_url = document.select("div.andro_product-single-thumb img").srcAttr()
     }
 
     override fun chapterListSelector() = "div#CapitulosLista div.CapitulosListaItem"
@@ -160,6 +161,9 @@ class MundoWebtoon : ParsedHttpSource() {
 
         return GET(page.imageUrl!!, newHeaders)
     }
+
+    private fun Elements.srcAttr(): String =
+        attr(if (hasAttr("data-src")) "data-src" else "src")
 
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(trim())?. time }
