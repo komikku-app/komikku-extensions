@@ -36,12 +36,12 @@ open class FlameScans(
     mangaUrlDirectory: String,
     dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
 ) : WPMangaReader(
-        "Flame Scans",
-        baseUrl,
-        lang,
-        mangaUrlDirectory = mangaUrlDirectory,
-        dateFormat = dateFormat
-    ),
+    "Flame Scans",
+    baseUrl,
+    lang,
+    mangaUrlDirectory = mangaUrlDirectory,
+    dateFormat = dateFormat
+),
     ConfigurableSource {
 
     private val preferences: SharedPreferences by lazy {

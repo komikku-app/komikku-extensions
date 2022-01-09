@@ -23,11 +23,11 @@ open class AsuraScans(
     override val lang: String,
     dateFormat: SimpleDateFormat
 ) : WPMangaStream(
-        "Asura Scans",
-        baseUrl,
-        lang,
-        dateFormat
-    ),
+    "Asura Scans",
+    baseUrl,
+    lang,
+    dateFormat
+),
     ConfigurableSource {
 
     private val preferences: SharedPreferences by lazy {
