@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.en.manhwa18
 import eu.kanade.tachiyomi.multisrc.fmreader.FMReader
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.asJsoup
@@ -16,6 +17,16 @@ import java.util.Locale
 class Manhwa18 : FMReader("Manhwa18", "https://manhwa18.com", "en") {
     override val requestPath = "tim-kiem"
 
+    override val popularSort = "sort=top"
+
+    override fun popularMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+
+        val mangas = document.select(popularMangaSelector()).map { popularMangaFromElement(it) }
+
+        return MangasPage(mangas, document.select(".pagination_wrap .disabled").text() != "Bottom")
+    }
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = "$baseUrl/$requestPath?".toHttpUrlOrNull()!!.newBuilder()
             .addQueryParameter("q", query)
@@ -23,7 +34,7 @@ class Manhwa18 : FMReader("Manhwa18", "https://manhwa18.com", "en") {
         return GET(url.toString(), headers)
     }
     override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/$requestPath?listType=pagination&page=$page&sort=new&sort_type=DESC", headers)
+        GET("$baseUrl/$requestPath?listType=pagination&page=$page&sort=update&sort_type=DESC", headers)
 
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
@@ -66,8 +77,8 @@ class Manhwa18 : FMReader("Manhwa18", "https://manhwa18.com", "en") {
                 name = element.attr("title")
                 date_upload =
                     SimpleDateFormat("dd/MM/yyyy", Locale.US).parse(
-                    element.select(".chapter-time").text().substringAfter(" - ")
-                )?.time ?: 0L
+                        element.select(".chapter-time").text().substringAfter(" - ")
+                    )?.time ?: 0L
                 chapter_number = element.attr("time").substringAfterLast(' ').toFloatOrNull() ?: -1f
             }
         }
