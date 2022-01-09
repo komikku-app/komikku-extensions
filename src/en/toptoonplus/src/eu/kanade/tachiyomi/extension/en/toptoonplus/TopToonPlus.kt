@@ -4,9 +4,9 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.text.InputType
 import android.util.Base64
-import androidx.preference.CheckBoxPreference
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -36,7 +36,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -81,6 +80,7 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
     private val deviceId: String by lazy { UUID.randomUUID().toString() }
 
     private var token: String? = null
+
     private var userMature: Boolean = false
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
@@ -97,7 +97,7 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<TopToonResult<TopToonRanking>>(response.body!!.string())
+        val result = response.parseAs<TopToonRanking>()
 
         if (result.data == null) {
             return MangasPage(emptyList(), hasNextPage = false)
@@ -110,7 +110,7 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
 
     private fun popularMangaFromObject(comic: TopToonComic) = SManga.create().apply {
         title = comic.information?.title.orEmpty()
-        thumbnail_url = comic.thumbnailImage?.jpeg?.firstOrNull()?.path.orEmpty()
+        thumbnail_url = comic.firstAvailableThumbnail
         url = "/comic/${comic.comicId}"
     }
 
@@ -124,7 +124,7 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<TopToonResult<TopToonDaily>>(response.body!!.string())
+        val result = response.parseAs<TopToonDaily>()
 
         if (result.data == null) {
             return MangasPage(emptyList(), hasNextPage = false)
@@ -161,7 +161,7 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
             return popularMangaParse(response)
         }
 
-        val result = json.decodeFromString<TopToonResult<List<TopToonComic>>>(response.body!!.string())
+        val result = response.parseAs<List<TopToonComic>>()
 
         if (result.data == null) {
             return MangasPage(emptyList(), hasNextPage = false)
@@ -203,7 +203,7 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
     }
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val result = json.decodeFromString<TopToonResult<TopToonDetails>>(response.body!!.string())
+        val result = response.parseAs<TopToonDetails>()
 
         if (result.data == null) {
             throw Exception(COULD_NOT_PARSE_RESPONSE)
@@ -212,23 +212,23 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
         val comic = result.data.comic!!
 
         title = comic.information?.title.orEmpty()
-        thumbnail_url = comic.thumbnailImage?.jpeg?.firstOrNull()?.path.orEmpty()
+        thumbnail_url = comic.firstAvailableThumbnail
         description = comic.information?.description
-        status = SManga.ONGOING
-        author = comic.author.joinToString(", ") { it.trim() }
+        genre = comic.genres
+        status = if (result.data.isCompleted) SManga.COMPLETED else SManga.ONGOING
+        author = comic.author.joinToString { it.trim() }
     }
 
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsApiRequest(manga.url)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = json.decodeFromString<TopToonResult<TopToonDetails>>(response.body!!.string())
+        val result = response.parseAs<TopToonDetails>()
 
         if (result.data == null) {
             throw Exception(COULD_NOT_PARSE_RESPONSE)
         }
 
-        return result.data.episode
-            .filter { episode -> episode.information?.payType == 0 }
+        return result.data.availableEpisodes
             .map(::chapterFromObject)
             .reversed()
     }
@@ -266,7 +266,7 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = json.decodeFromString<TopToonResult<TopToonUsableEpisode>>(response.body!!.string())
+        val result = response.parseAs<TopToonUsableEpisode>()
 
         if (result.data == null) {
             throw Exception(COULD_NOT_PARSE_RESPONSE)
@@ -274,17 +274,32 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
 
         val usableEpisode = result.data
 
-        if (usableEpisode.isFree.not() ||
-            usableEpisode.episodePrice?.payType != 0 ||
-            usableEpisode.purchaseMethod.firstOrNull() != "FREE_EPISODE"
-        ) {
+        if (usableEpisode.isFree.not() && usableEpisode.isOwn.not()) {
             throw Exception(CHAPTER_NOT_FREE)
         }
 
-        return usableEpisode.episode!!.contentImage?.jpeg.orEmpty()
-            .mapIndexed { i, page ->
-                Page(i, baseUrl, page.path)
-            }
+        val viewerRequest = viewerRequest(usableEpisode.comicId, usableEpisode.episodeId)
+        val viewerResponse = client.newCall(viewerRequest).execute()
+        val viewerResult = viewerResponse.parseAs<TopToonDetails>()
+
+        return viewerResult.data!!.episode
+            .find { episode -> episode.episodeId == usableEpisode.episodeId }
+            .let { episode -> episode?.contentImage?.jpeg.orEmpty() }
+            .mapIndexed { i, page -> Page(i, baseUrl, page.path) }
+    }
+
+    private fun viewerRequest(comicId: Int, episodeId: Int): Request {
+        val newHeaders = headersBuilder()
+            .add("Accept", ACCEPT_JSON)
+            .add("X-Api-Key", API_KEY)
+            .build()
+
+        val apiUrl = "$API_URL/api/v1/page/viewer".toHttpUrl().newBuilder()
+            .addQueryParameter("comicId", comicId.toString())
+            .addQueryParameter("episodeId", episodeId.toString())
+            .toString()
+
+        return GET(apiUrl, newHeaders)
     }
 
     override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
@@ -307,6 +322,10 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
             setDefaultValue("")
             summary = EMAIL_PREF_SUMMARY
             dialogTitle = EMAIL_PREF_TITLE
+
+            setOnBindEditTextListener {
+                it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            }
 
             setOnPreferenceChangeListener { _, newValue ->
                 token = null
@@ -337,7 +356,7 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
             }
         }
 
-        val maturePref = CheckBoxPreference(screen.context).apply {
+        val maturePref = SwitchPreferenceCompat(screen.context).apply {
             key = MATURE_PREF_KEY
             title = MATURE_PREF_TITLE
             setDefaultValue(MATURE_PREF_DEFAULT)
@@ -377,11 +396,13 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
             }
 
             val newRequest = chain.request().newBuilder()
-                .removeHeader("Token")
-                .addHeader("Token", token.orEmpty().ifEmpty { "null" })
-                .build()
 
-            return chain.proceed(newRequest)
+            if (token.orEmpty().isNotEmpty()) {
+                newRequest.removeHeader("Token")
+                    .addHeader("Token", token!!)
+            }
+
+            return chain.proceed(newRequest.build())
         }
 
         return chain.proceed(chain.request())
@@ -413,7 +434,7 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
             throw IOException(COULD_NOT_LOGIN)
         }
 
-        val result = json.decodeFromString<TopToonResult<TopToonAuth>>(response.body!!.string())
+        val result = response.parseAs<TopToonAuth>()
 
         if (result.data == null) {
             throw IOException(COULD_NOT_LOGIN)
@@ -443,16 +464,18 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
         return POST("$API_URL/users/setUser", newHeaders, requestBody, CacheControl.FORCE_NETWORK)
     }
 
+    private inline fun <reified T> Response.parseAs(): TopToonResult<T> = use {
+        json.decodeFromString(it.body?.string().orEmpty())
+    }
+
     private fun String.toDate(): Long {
-        return try {
-            DATE_FORMATTER.parse(this)?.time ?: 0L
-        } catch (e: ParseException) {
-            0L
-        }
+        return runCatching { DATE_FORMATTER.parse(this)?.time }
+            .getOrNull() ?: 0L
     }
 
     companion object {
         private const val API_URL = "https://api.toptoonplus.com"
+
         private val API_KEY by lazy {
             Base64.decode("U1VQRVJDT09MQVBJS0VZMjAyMSNAIyg=", Base64.DEFAULT)
                 .toString(charset("UTF-8"))
@@ -480,6 +503,8 @@ class TopToonPlus : HttpSource(), ConfigurableSource {
         private const val MATURE_PREF_SUMMARY = "This setting only takes effect if you are signed in."
         private const val MATURE_PREF_DEFAULT = false
 
-        private val DATE_FORMATTER by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH) }
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
+        }
     }
 }

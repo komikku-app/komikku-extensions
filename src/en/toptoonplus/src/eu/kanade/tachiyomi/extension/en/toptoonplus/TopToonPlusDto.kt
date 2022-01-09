@@ -22,13 +22,26 @@ data class TopToonDaily(
 data class TopToonDetails(
     val comic: TopToonComic? = null,
     val episode: List<TopToonEpisode> = emptyList()
-)
+) {
+    val availableEpisodes: List<TopToonEpisode>
+        get() = episode.filter { it.information?.payType == 0 || it.isPurchased == 1 }
+
+    val isCompleted: Boolean
+        get() = episode.lastOrNull()?.information
+            ?.let {
+                it.title.contains("[End]", true) ||
+                    it.subTitle.contains("[End]", true)
+            } ?: false
+}
 
 @Serializable
 data class TopToonUsableEpisode(
+    val comicId: Int = 0,
     val episode: TopToonEpisode? = null,
+    val episodeId: Int = 0,
     val episodePrice: TopToonEpisodePrice? = null,
     val isFree: Boolean = false,
+    val isOwn: Boolean = false,
     val needLogin: Boolean = false,
     val purchaseMethod: List<String> = emptyList()
 )
@@ -42,9 +55,22 @@ data class TopToonEpisodePrice(
 data class TopToonComic(
     val author: List<String> = emptyList(),
     val comicId: Int = -1,
+    val hashtags: List<String> = emptyList(),
     val information: TopToonComicInfo? = null,
     val thumbnailImage: TopToonComicPoster? = null,
-)
+    val titleVerticalThumbnail: TopToonComicPoster? = null
+) {
+    val firstAvailableThumbnail: String
+        get() = titleVerticalThumbnail?.jpeg?.firstOrNull()?.path
+            ?: thumbnailImage!!.jpeg.firstOrNull()?.path.orEmpty()
+
+    val genres: String
+        get() = hashtags
+            .flatMap { it.split("&") }
+            .map(String::trim)
+            .sorted()
+            .joinToString()
+}
 
 @Serializable
 data class TopToonComicInfo(
@@ -69,6 +95,7 @@ data class TopToonEpisode(
     val contentImage: TopToonComicPoster? = null,
     val episodeId: Int = -1,
     val information: TopToonEpisodeInfo? = null,
+    val isPurchased: Int = 0,
     val order: Int = -1
 )
 
