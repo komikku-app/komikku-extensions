@@ -54,7 +54,8 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Fênix Scanlator", "https://fenixscanlator.xyz", "pt-BR", className = "FenixScanlator", overrideVersionCode = 2),
         SingleLang("Phantom Scans", "https://phantomscans.com", "en", overrideVersionCode = 1),
         SingleLang("Omega Scans", "https://omegascans.org", "en", isNsfw = true),
-        SingleLang("Geass Hentai", "https://geassscan.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 2)
+        SingleLang("Geass Hentai", "https://geassscan.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 2),
+        SingleLang("TukangKomik", "https://tukangkomik.com", "id"),
     )
 
     companion object {
