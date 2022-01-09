@@ -1,6 +1,12 @@
 package eu.kanade.tachiyomi.multisrc.webtoons
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.net.Uri
+import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter.Header
 import eu.kanade.tachiyomi.source.model.Filter.Select
 import eu.kanade.tachiyomi.source.model.Filter.Separator
@@ -25,11 +31,14 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.ceil
 
 open class Webtoons(
     override val name: String,
@@ -38,7 +47,7 @@ open class Webtoons(
     open val langCode: String = lang,
     open val localeForCookie: String = lang,
     private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.ENGLISH)
-) : ParsedHttpSource() {
+) : ConfigurableSource, ParsedHttpSource() {
 
     override val supportsLatest = true
 
@@ -86,12 +95,33 @@ open class Webtoons(
 
     override fun latestUpdatesSelector() = "div#dailyList > $day li > a"
 
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Referer", "https://www.webtoons.com/$langCode/")
 
     protected val mobileHeaders: Headers = super.headersBuilder()
         .add("Referer", "https://m.webtoons.com")
         .build()
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val authorsNotesPref = SwitchPreferenceCompat(screen.context).apply {
+            key = SHOW_AUTHORS_NOTES_KEY
+            title = "Show author's notes"
+            summary = "Enable to see the author's notes at the end of chapters (if they're there)."
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+                preferences.edit().putBoolean(SHOW_AUTHORS_NOTES_KEY, checkValue).commit()
+            }
+        }
+        screen.addPreference(authorsNotesPref)
+    }
+
+    private fun showAuthorsNotesPref() = preferences.getBoolean(SHOW_AUTHORS_NOTES_KEY, false)
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/$langCode/dailySchedule", headers)
 
@@ -261,8 +291,48 @@ open class Webtoons(
 
     override fun chapterListRequest(manga: SManga) = GET("https://m.webtoons.com" + manga.url, mobileHeaders)
 
+    private fun wordwrap(t: String, lineWidth: Int) = buildString {
+        // TODO: Split off into library file or something, because Tapastic is using the exact same wordwrap and toImage functions
+        //  src/en/tapastic/src/eu/kanade/tachiyomi/extension/en/tapastic/Tapastic.kt
+        val text = t.replace("\n", "\n ")
+        var charCount = 0
+        text.split(" ").forEach { w ->
+            if (w.contains("\n")) {
+                charCount = 0
+            }
+            if (charCount > lineWidth) {
+                append("\n")
+                charCount = 0
+            }
+            append("$w ")
+            charCount += w.length + 1
+        }
+    }
+
+    private fun toImage(t: String, fontSize: Int, bold: Boolean = false): String {
+        val text = wordwrap(t.replace("&amp;", "&").replace("\\s*<br>\\s*".toRegex(), "\n"), 65)
+        val imgHeight = (text.lines().size + 2) * fontSize * 1.3
+        return "https://placehold.jp/" + fontSize + "/ffffff/000000/1500x" + ceil(imgHeight).toInt() + ".png?" +
+            "css=%7B%22text-align%22%3A%22%20left%22%2C%22padding-left%22%3A%22%203%25%22" + (if (bold) "%2C%22font-weight%22%3A%22%20600%22" else "") + "%7D&" +
+            "text=" + Uri.encode(text)
+    }
+
     override fun pageListParse(document: Document): List<Page> {
-        val pages = document.select("div#_imageList > img").mapIndexed { i, element -> Page(i, "", element.attr("data-url")) }
+        var pages = document.select("div#_imageList > img").mapIndexed { i, element -> Page(i, "", element.attr("data-url")) }
+
+        if (showAuthorsNotesPref()) {
+            val note = document.select("div.creator_note > p").text()
+
+            if (note.isNotEmpty()) {
+                val noteImage = toImage(note, 42)
+
+                val creator = document.select("div.creator_note > h2").html().replace("<span>Creator</span>", "").trim()
+                val creatorImage = toImage("Author's Notes from $creator", 43, true)
+
+                pages = pages + Page(pages.size, "", creatorImage)
+                pages = pages + Page(pages.size, "", noteImage)
+            }
+        }
 
         if (pages.isNotEmpty()) { return pages }
 
@@ -287,5 +357,6 @@ open class Webtoons(
 
     companion object {
         const val URL_SEARCH_PREFIX = "url:"
+        private const val SHOW_AUTHORS_NOTES_KEY = "showAuthorsNotes"
     }
 }

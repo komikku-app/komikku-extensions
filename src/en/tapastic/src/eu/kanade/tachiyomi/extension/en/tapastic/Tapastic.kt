@@ -295,6 +295,8 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
 
     // Pages
 
+    // TODO: Split off into library file or something, because Webtoons is using the exact same wordwrap and toImage functions
+    //  multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/webtoons/Webtoons.kt
     private fun wordwrap(t: String, lineWidth: Int) = buildString {
         val text = t.replace("\n", "\n ")
         var charCount = 0
@@ -305,9 +307,8 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
             if (charCount > lineWidth) {
                 append("\n")
                 charCount = 0
-            } else {
-                append("$w ")
             }
+            append("$w ")
             charCount += w.length + 1
         }
     }
@@ -327,12 +328,14 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
 
         if (showAuthorsNotesPref()) {
             val episodeStory = document.select("p.js-episode-story").html()
+
             if (episodeStory.isNotEmpty()) {
+                val storyImage = toImage(episodeStory, 42)
+
                 val creator = document.select("a.name.js-fb-tracking")[0].text()
                 val creatorImage = toImage("Author's Notes from $creator", 43, true)
-                pages = pages + Page(pages.size, "", creatorImage)
 
-                val storyImage = toImage(episodeStory, 42)
+                pages = pages + Page(pages.size, "", creatorImage)
                 pages = pages + Page(pages.size, "", storyImage)
             }
         }
