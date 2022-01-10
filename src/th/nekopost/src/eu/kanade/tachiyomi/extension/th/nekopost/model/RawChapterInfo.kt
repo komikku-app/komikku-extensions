@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 data class RawChapterInfo(
     val chapterId: Int,
     val chapterNo: String,
-    val pageCount: Int,
     val pageItem: List<RawPageItem>,
     val projectId: String
 )

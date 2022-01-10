@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class RawProjectCategory(
-    @SerialName("npc_name")
-    val npcName: String,
-    @SerialName("npc_name_link")
-    val npcNameLink: String
+    @SerialName("cateName")
+    val categoryName: String,
+    @SerialName("cateLink")
+    val categoryLink: String
 )

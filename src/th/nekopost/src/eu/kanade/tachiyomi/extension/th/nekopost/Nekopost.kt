@@ -27,12 +27,12 @@ import java.util.Locale
 
 class Nekopost : ParsedHttpSource() {
     private val json: Json by injectLazy()
-    override val baseUrl: String = "https://www.nekopost.net/project"
+    override val baseUrl: String = "https://www.nekopost.net/manga/"
 
     private val latestMangaEndpoint: String =
-        "https://tuner.nekopost.net/ApiTest/getLatestChapterOffset/m"
+        "https://uatapi.nekopost.net/frontAPI/getLatestChapter/m"
     private val projectDataEndpoint: String =
-        "https://tuner.nekopost.net/ApiTest/getProjectDetailFull"
+        "https://uatapi.nekopost.net/frontAPI/getProjectInfo"
     private val fileHost: String = "https://fs.nekopost.net"
 
     override val client: OkHttpClient = network.cloudflareClient
@@ -87,17 +87,20 @@ class Nekopost : ParsedHttpSource() {
 
                 manga.apply {
                     projectInfo.projectInfo.let {
-                        url = it.npProjectId
-                        title = it.npName
+                        url = it.projectId
+                        title = it.projectName
                         artist = it.artistName
                         author = it.authorName
-                        description = it.npInfo
-                        status = getStatus(it.npStatus)
+                        description = it.info
+                        status = getStatus(it.status)
                         initialized = true
                     }
 
-                    genre =
-                        projectInfo.projectCategoryUsed.joinToString(", ") { it.npcName }
+                    genre = if (projectInfo.projectCategoryUsed != null) {
+                        projectInfo.projectCategoryUsed.joinToString(", ") { it.categoryName }
+                    } else {
+                        ""
+                    }
                 }
             }
     }
@@ -112,17 +115,24 @@ class Nekopost : ParsedHttpSource() {
                             ?: throw Error("Unable to fetch manga detail of ${manga.title}")
                     val projectInfo: RawProjectInfo = json.decodeFromString(responseBody.string())
 
-                    projectInfo.projectChapterList.map { chapter ->
+                    manga.status = getStatus(projectInfo.projectInfo.status)
+
+                    if (manga.status == SManga.LICENSED) {
+                        throw Exception("Licensed - No chapter to show")
+                    }
+
+                    projectInfo.projectChapterList!!.map { chapter ->
                         SChapter.create().apply {
-                            url = "${manga.url}/${chapter.ncChapterId}/${chapter.ncDataFile}"
-                            name = chapter.ncChapterName
+                            url =
+                                "${manga.url}/${chapter.chapterId}/${manga.url}_${chapter.chapterId}.json"
+                            name = chapter.chapterName
                             date_upload = SimpleDateFormat(
                                 "yyyy-MM-dd HH:mm:ss",
                                 Locale("th")
-                            ).parse(chapter.ncCreatedDate)?.time
+                            ).parse(chapter.createDate)?.time
                                 ?: 0L
-                            chapter_number = chapter.ncChapterNo.toFloat()
-                            scanlator = chapter.cuDisplayname
+                            chapter_number = chapter.chapterNo.toFloat()
+                            scanlator = chapter.providerName
                         }
                     }
                 }
@@ -141,10 +151,14 @@ class Nekopost : ParsedHttpSource() {
                 val chapterInfo: RawChapterInfo = json.decodeFromString(responseBody.string())
 
                 chapterInfo.pageItem.map { page ->
-                    val fileName = page.fileName ?: page.pageName
+                    val imgUrl: String = if (page.pageName != null) {
+                        "$fileHost/collectManga/${chapterInfo.projectId}/${chapterInfo.chapterId}/${page.pageName}"
+                    } else {
+                        "$fileHost/collectManga/${chapterInfo.projectId}/${chapterInfo.chapterId}/${page.fileName}"
+                    }
                     Page(
                         index = page.pageNo,
-                        imageUrl = "$fileHost/collectManga/${chapterInfo.projectId}/${chapterInfo.chapterId}/$fileName",
+                        imageUrl = imgUrl
                     )
                 }
             }
@@ -163,14 +177,14 @@ class Nekopost : ParsedHttpSource() {
         val projectList: RawProjectSummaryList = json.decodeFromString(responseBody.string())
 
         val mangaList: List<SManga> =
-            projectList.listItem
-                ?.filter { !existingProject.contains(it.npProjectId) }
+            projectList.listChapter
+                ?.filter { !existingProject.contains(it.projectId) }
                 ?.map {
                     SManga.create().apply {
-                        url = it.npProjectId
-                        title = it.npName
+                        url = it.projectId
+                        title = it.projectName
                         thumbnail_url =
-                            "$fileHost/collectManga/${it.npProjectId}/${it.npProjectId}_cover.jpg"
+                            "$fileHost/collectManga/${it.projectId}/${it.projectId}_cover.jpg"
                         initialized = false
                         status = 0
                     }
@@ -201,7 +215,8 @@ class Nekopost : ParsedHttpSource() {
             .asObservableSuccess()
             .map { response ->
                 val responseBody = response.body ?: throw Error("Unable to fetch title list")
-                val projectList: List<RawProjectNameListItem> = json.decodeFromString(responseBody.string())
+                val projectList: List<RawProjectNameListItem> =
+                    json.decodeFromString(responseBody.string())
 
                 val mangaList: List<SManga> = projectList.filter { project ->
                     Regex(
