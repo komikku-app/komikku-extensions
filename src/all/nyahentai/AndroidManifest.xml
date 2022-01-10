@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+package="eu.kanade.tachiyomi.extension">
+
+<application>
+    <activity
+        android:name=".all.nyahentai.NyaHentaiUrlActivity"
+        android:excludeFromRecents="true"
+        android:exported="true"
+        android:theme="@android:style/Theme.NoDisplay">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+
+            <data android:host="*.nyahentai.com" />
+            <data android:host="nyahentai.com" />
+            <data android:host="*.nyahentai.site" />
+            <data android:host="nyahentai.site" />
+            <data android:host="*.nyahentai.me" />
+            <data android:host="nyahentai.me" />
+            <data android:host="*.nyahentai.fun" />
+            <data android:host="nyahentai.fun" />
+            <data android:host="*.nyahentai.club" />
+            <data android:host="nyahentai.club" />
+            <data android:host="*.nyahentai2.com" />
+            <data android:host="nyahentai2.com" />
+            <data android:host="*.nyahentai.co" />
+            <data android:host="nyahentai.co" />
+            <data android:host="*.nyahentai3.com" />
+            <data android:host="nyahentai3.com" />
+            <data android:host="*.cathentai.com" />
+            <data android:host="cathentai.com" />
+            <data android:host="*.doghentai.com" />
+            <data android:host="doghentai.com" />
+            <data android:host="*.bughentai.com" />
+            <data android:host="bughentai.com" />
+            <data android:host="*.qqhentai.com" />
+            <data android:host="qqhentai.com" />
+            <data android:host="*.foxhentai.com" />
+            <data android:host="foxhentai.com" />
+            <data android:host="*.ddhentai.com" />
+            <data android:host="ddhentai.com" />
+
+            <data
+                android:pathPattern="/g/..*"
+                android:scheme="https" />
+        </intent-filter>
+    </activity>
+</application>
+</manifest>
