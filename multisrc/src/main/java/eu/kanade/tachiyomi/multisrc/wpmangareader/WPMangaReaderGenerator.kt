@@ -32,7 +32,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Manhua Raw", "https://manhuaraw.com", "en"),
         SingleLang("TurkToon", "https://turktoon.com", "tr"),
         SingleLang("Gecenin Lordu", "https://geceninlordu.com", "tr", overrideVersionCode = 1),
-        SingleLang("PMScans", "http://www.pmscans.com", "en", overrideVersionCode = 1),
+        SingleLang("PMScans", "http://www.rackusreader.org", "en", overrideVersionCode = 2),
         SingleLang("Realm Scans", "https://realmscans.com", "en", overrideVersionCode = 2),
         SingleLang("Skull Scans", "https://www.skullscans.com", "en", overrideVersionCode = 1),
         SingleLang("Shimada Scans", "https://shimadascans.com", "en"),
