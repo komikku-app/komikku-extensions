@@ -1,3 +1,4 @@
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
@@ -5,7 +6,7 @@ ext {
     extName = 'WieManga'
     pkgNameSuffix = 'de.wiemanga'
     extClass = '.WieManga'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 apply from: "$rootDir/common.gradle"

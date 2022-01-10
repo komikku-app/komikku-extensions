@@ -1,11 +1,11 @@
-apply plugin: 'com.android.application'
+ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
     extName = 'Real Life Comics'
     pkgNameSuffix = 'en.reallifecomics'
     extClass = '.RealLifeComics'
-    extVersionCode = 1
+    extVersionCode = 2
 }
 
 dependencies {
