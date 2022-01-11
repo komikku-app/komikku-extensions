@@ -25,6 +25,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -143,9 +144,6 @@ open class BatoTo(
     override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        val utilsFilter = filters.findInstance<UtilsFilter>()!!
-        val letterFilter = filters.findInstance<LetterFilter>()!!
-        val historyFilter = filters.findInstance<HistoryFilter>()!!
         return when {
             query.startsWith("ID:") -> {
                 val id = query.substringAfter("ID:")
@@ -154,79 +152,87 @@ open class BatoTo(
                         queryIDParse(response, id)
                     }
             }
-            query.isNotBlank() && letterFilter.state != 0 -> {
-                val url = "$baseUrl/search?word=$query&page=$page&mode=letter"
-                client.newCall(GET(url, headers)).asObservableSuccess()
-                    .map { response ->
-                        queryParse(response)
-                    }
-            }
             query.isNotBlank() -> {
-                val url = "$baseUrl/search?word=$query&page=$page"
-                client.newCall(GET(url, headers)).asObservableSuccess()
+                val url = "$baseUrl/search".toHttpUrl().newBuilder()
+                    .addQueryParameter("word", query)
+                    .addQueryParameter("page", page.toString())
+                filters.forEach { filter ->
+                    when (filter) {
+                        is LetterFilter -> {
+                            if (filter.state == 1) {
+                                url.addQueryParameter("mode", "letter")
+                            }
+                        }
+                    }
+                }
+                client.newCall(GET(url.build().toString(), headers)).asObservableSuccess()
                     .map { response ->
                         queryParse(response)
-                    }
-            }
-            utilsFilter.state != 0 -> {
-                val url = "$baseUrl/_utils/comic-list?type=${utilsFilter.selected}"
-                client.newCall(GET(url, headers)).asObservableSuccess()
-                    .map { response ->
-                        queryUtilsParse(response)
-                    }
-            }
-            historyFilter.state != 0 -> {
-                val url = "$baseUrl/ajax.my.${historyFilter.selected}.paging"
-                client.newCall(POST(url, headers, formBuilder().build())).asObservableSuccess()
-                    .map { response ->
-                        queryHistoryParse(response)
                     }
             }
             else -> {
-                val sortFilter = filters.findInstance<SortFilter>()!!
-                val reverseSortFilter = filters.findInstance<ReverseSortFilter>()!!
-                val statusFilter = filters.findInstance<StatusFilter>()!!
-                val langFilter = filters.findInstance<LangGroupFilter>()!!
-                val originFilter = filters.findInstance<OriginGroupFilter>()!!
-                val genreFilter = filters.findInstance<GenreGroupFilter>()!!
-                val minChapterFilter = filters.findInstance<MinChapterTextFilter>()!!
-                val maxChapterFilter = filters.findInstance<MaxChapterTextFilter>()!!
                 val url = "$baseUrl/browse".toHttpUrlOrNull()!!.newBuilder()
+                var min = ""
+                var max= ""
+                filters.forEach { filter ->
+                    when (filter) {
+                        is UtilsFilter -> {
+                            if (filter.state != 0) {
+                                val filterUrl = "$baseUrl/_utils/comic-list?type=${filter.selected}"
+                                return client.newCall(GET(filterUrl, headers)).asObservableSuccess()
+                                    .map { response ->
+                                        queryUtilsParse(response)
+                                    }
+                            }
+                        }
+                        is HistoryFilter -> {
+                            if (filter.state != 0) {
+                                val filterUrl = "$baseUrl/ajax.my.${filter.selected}.paging"
+                                return client.newCall(POST(filterUrl, headers, formBuilder().build())).asObservableSuccess()
+                                    .map { response ->
+                                        queryHistoryParse(response)
+                                    }
+                            }
+                        }
+                        is LangGroupFilter -> {
+                            if (filter.selected.isEmpty()) {
+                                url.addQueryParameter("langs", siteLang)
+                            } else {
+                                val selection = "${filter.selected.joinToString(",")},$siteLang"
+                                url.addQueryParameter("langs", selection)
+                            }
+                        }
+                        is GenreGroupFilter -> {
+                            with(filter) {
+                                url.addQueryParameter(
+                                    "genres", included.joinToString(",") + "|" + excluded.joinToString(",")
+                                )
+                            }
+                        }
+                        is StatusFilter -> url.addQueryParameter("release", filter.selected)
+                        is SortFilter -> {
+                            if (filter.state != null) {
+                                val sort = getSortFilter()[filter.state!!.index].value
+                                val value = when (filter.state!!.ascending) {
+                                    true -> "az"
+                                    false -> "za"
+                                }
+                                url.addQueryParameter("sort", "$sort.$value")
+                            }
+                        }
+                        is OriginGroupFilter -> {
+                            if (filter.selected.isNotEmpty()) {
+                                url.addQueryParameter("origs", filter.selected.joinToString(","))
+                            }
+                        }
+                        is MinChapterTextFilter -> min = filter.state
+                        is MaxChapterTextFilter -> max = filter.state
+                    }
+                }
                 url.addQueryParameter("page", page.toString())
 
-                with(langFilter) {
-                    if (this.selected.isEmpty()) {
-                        url.addQueryParameter("langs", siteLang)
-                    } else {
-                        val selection = "${this.selected.joinToString(",")},$siteLang"
-                        url.addQueryParameter("langs", selection)
-                    }
-                }
-
-                with(genreFilter) {
-                    url.addQueryParameter(
-                        "genres", included.joinToString(",") + "|" + excluded.joinToString(",")
-                    )
-                }
-
-                with(statusFilter) {
-                    url.addQueryParameter("release", this.selected)
-                }
-
-                with(sortFilter) {
-                    if (reverseSortFilter.state) {
-                        url.addQueryParameter("sort", "${this.selected}.az")
-                    } else {
-                        url.addQueryParameter("sort", "${this.selected}.za")
-                    }
-                }
-
-                if (originFilter.selected.isNotEmpty()) {
-                    url.addQueryParameter("origs", originFilter.selected.joinToString(","))
-                }
-
-                if (maxChapterFilter.state.isNotEmpty() or minChapterFilter.state.isNotEmpty()) {
-                    url.addQueryParameter("chapters", minChapterFilter.state + "-" + maxChapterFilter.state)
+                if (max.isNotEmpty() or min.isNotEmpty()) {
+                    url.addQueryParameter("chapters", "$min-$max")
                 }
 
                 client.newCall(GET(url.build().toString(), headers)).asObservableSuccess()
@@ -500,14 +506,13 @@ open class BatoTo(
         Filter.Separator(),
         Filter.Header("NOTE: Ignored if using text search!"),
         Filter.Separator(),
-        SortFilter(getSortFilter(), 5),
+        SortFilter(getSortFilter().map { it.name }.toTypedArray()),
         StatusFilter(getStatusFilter(), 0),
         GenreGroupFilter(getGenreFilter()),
         OriginGroupFilter(getOrginFilter()),
         LangGroupFilter(getLangFilter()),
         MinChapterTextFilter(),
         MaxChapterTextFilter(),
-        ReverseSortFilter(),
         Filter.Separator(),
         Filter.Header("NOTE: Filters below are incompatible with any other filters!"),
         Filter.Header("NOTE: Login Required!"),
@@ -515,7 +520,6 @@ open class BatoTo(
         UtilsFilter(getUtilsFilter(), 0),
         HistoryFilter(getHistoryFilter(), 0),
     )
-
     class SelectFilterOption(val name: String, val value: String)
     class CheckboxFilterOption(val value: String, name: String, default: Boolean = false) : Filter.CheckBox(name, default)
     class TriStateFilterOption(val value: String, name: String, default: Int = 0) : Filter.TriState(name, default)
@@ -540,8 +544,7 @@ open class BatoTo(
 
     abstract class TextFilter(name: String) : Filter.Text(name)
 
-    class SortFilter(options: List<SelectFilterOption>, default: Int) : SelectFilter("Sort By", options, default)
-    class ReverseSortFilter(default: Boolean = false) : Filter.CheckBox("Revers Sort", default)
+    class SortFilter(sortables: Array<String>) : Filter.Sort("Sort", sortables, Selection(5, false))
     class StatusFilter(options: List<SelectFilterOption>, default: Int) : SelectFilter("Status", options, default)
     class OriginGroupFilter(options: List<CheckboxFilterOption>) : CheckboxGroupFilter("Origin", options)
     class GenreGroupFilter(options: List<TriStateFilterOption>) : TriStateGroupFilter("Genre", options)
@@ -927,6 +930,4 @@ open class BatoTo(
         CheckboxFilterOption("eu", "Basque"),
         CheckboxFilterOption("pt-PT", "Portuguese (Portugal)"),
     ).filterNot { it.value == siteLang }
-
-    private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T
 }
