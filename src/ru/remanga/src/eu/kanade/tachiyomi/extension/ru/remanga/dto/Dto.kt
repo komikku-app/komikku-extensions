@@ -27,6 +27,10 @@ data class LibraryDto(
     val dir: String,
     val img: ImgDto
 )
+@Serializable
+data class MyLibraryDto(
+    val title: LibraryDto
+)
 
 @Serializable
 data class StatusDto(
@@ -109,5 +113,6 @@ data class ChunksPageDto(
 
 @Serializable
 data class UserDto(
+    val id: Long,
     val access_token: String
 )

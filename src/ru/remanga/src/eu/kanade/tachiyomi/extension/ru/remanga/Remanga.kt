@@ -5,6 +5,7 @@ import BranchesDto
 import ChunksPageDto
 import LibraryDto
 import MangaDetDto
+import MyLibraryDto
 import PageDto
 import PageWrapperDto
 import SeriesWrapperDto
@@ -115,10 +116,11 @@ class Remanga : ConfigurableSource, HttpSource() {
         val body = jsonObject.toString().toRequestBody(MEDIA_TYPE)
         val response = chain.proceed(POST("$baseUrl/api/users/login/", headers, body))
         if (response.code >= 400) {
-            throw Exception("Failed to login")
+            throw Exception("Не удалось войти")
         }
-        val user = json.decodeFromString<SeriesWrapperDto<UserDto>>(response.body!!.string())
-        return user.content.access_token
+        val user = json.decodeFromString<SeriesWrapperDto<UserDto>>(response.body!!.string()).content
+        USER_ID = user.id.toString()
+        return user.access_token
     }
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/api/search/catalog/?ordering=-rating&count=$count&page=$page", headers)
@@ -130,11 +132,19 @@ class Remanga : ConfigurableSource, HttpSource() {
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val page = json.decodeFromString<PageWrapperDto<LibraryDto>>(response.body!!.string())
-        val mangas = page.content.map {
-            it.toSManga()
+        if (response.request.url.toString().contains("bookmarks")) {
+            val page = json.decodeFromString<PageWrapperDto<MyLibraryDto>>(response.body!!.string())
+            val mangas = page.content.map {
+                it.title.toSManga()
+            }
+            return MangasPage(mangas, page.props.page < page.props.total_pages)
+        } else {
+            val page = json.decodeFromString<PageWrapperDto<LibraryDto>>(response.body!!.string())
+            val mangas = page.content.map {
+                it.toSManga()
+            }
+            return MangasPage(mangas, page.props.page < page.props.total_pages)
         }
-        return MangasPage(mangas, page.props.page < page.props.total_pages)
     }
 
     private fun LibraryDto.toSManga(): SManga =
@@ -193,6 +203,16 @@ class Remanga : ConfigurableSource, HttpSource() {
                 is GenreList -> filter.state.forEach { genre ->
                     if (genre.state != Filter.TriState.STATE_IGNORE) {
                         url.addQueryParameter(if (genre.isIncluded()) "genres" else "exclude_genres", genre.id)
+                    }
+                }
+                is MyList -> {
+                    if (filter.state > 0) {
+                        if (USER_ID == "") {
+                            throw Exception("Пользователь не найден")
+                        }
+                        val TypeQ = getMyList()[filter.state].id
+                        val UserProfileUrl = "$baseUrl/api/users/$USER_ID/bookmarks/?type=$TypeQ&page=$page".toHttpUrlOrNull()!!.newBuilder()
+                        return GET(UserProfileUrl.toString(), headers)
                     }
                 }
             }
@@ -427,7 +447,8 @@ class Remanga : ConfigurableSource, HttpSource() {
         CategoryList(getCategoryList()),
         TypeList(getTypeList()),
         StatusList(getStatusList()),
-        AgeList(getAgeList())
+        AgeList(getAgeList()),
+        MyList(MyStatus)
     )
 
     private class OrderBy : Filter.Sort(
@@ -607,6 +628,21 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("юри", "41"),
         SearchFilter("яой", "43")
     )
+    private class MyList(favorites: Array<String>) : Filter.Select<String>("Мои списки (только)", favorites)
+    private data class MyListUnit(val name: String, val id: String)
+    private val MyStatus = getMyList().map {
+        it.name
+    }.toTypedArray()
+
+    private fun getMyList() = listOf(
+        MyListUnit("Каталог", "-"),
+        MyListUnit("Читаю", "0"),
+        MyListUnit("Буду читать", "1"),
+        MyListUnit("Прочитано", "2"),
+        MyListUnit("Отложено", "4"),
+        MyListUnit("Брошено ", "3"),
+        MyListUnit("Не интересно ", "5")
+    )
 
     private fun androidx.preference.PreferenceScreen.editTextPreference(title: String, default: String, value: String, isPassword: Boolean = false): androidx.preference.EditTextPreference {
         return androidx.preference.EditTextPreference(context).apply {
@@ -679,6 +715,8 @@ class Remanga : ConfigurableSource, HttpSource() {
     private val password by lazy { getPrefPassword() }
 
     companion object {
+        private var USER_ID = ""
+
         private val MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
 
         private const val USERNAME_TITLE = "Username"
