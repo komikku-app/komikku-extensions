@@ -500,6 +500,11 @@ class LibManga : ConfigurableSource, HttpSource() {
                         url.addQueryParameter(if (tag.isIncluded()) "tags[include][]" else "tags[exclude][]", tag.id)
                     }
                 }
+                is MyList -> filter.state.forEach { favorite ->
+                    if (favorite.state != Filter.TriState.STATE_IGNORE) {
+                        url.addQueryParameter(if (favorite.isIncluded()) "bookmarks[include][]" else "bookmarks[exclude][]", favorite.id)
+                    }
+                }
             }
         }
         return POST(url.toString(), catalogHeaders())
@@ -550,6 +555,7 @@ class LibManga : ConfigurableSource, HttpSource() {
     private class GenreList(genres: List<SearchFilter>) : Filter.Group<SearchFilter>("Жанры", genres)
     private class TagList(tags: List<SearchFilter>) : Filter.Group<SearchFilter>("Теги", tags)
     private class AgeList(ages: List<CheckFilter>) : Filter.Group<CheckFilter>("Возрастное ограничение", ages)
+    private class MyList(favorites: List<SearchFilter>) : Filter.Group<SearchFilter>("Мои списки", favorites)
 
     override fun getFilterList() = FilterList(
         OrderBy(),
@@ -559,7 +565,8 @@ class LibManga : ConfigurableSource, HttpSource() {
         TagList(getTagList()),
         StatusList(getStatusList()),
         StatusTitleList(getStatusTitleList()),
-        AgeList(getAgeList())
+        AgeList(getAgeList()),
+        MyList(getMyList())
     )
 
     private class OrderBy : Filter.Sort(
@@ -770,6 +777,13 @@ class LibManga : ConfigurableSource, HttpSource() {
         CheckFilter("18+", "2")
     )
 
+    private fun getMyList() = listOf(
+        SearchFilter("Читаю", "1"),
+        SearchFilter("В планах", "2"),
+        SearchFilter("Брошено", "3"),
+        SearchFilter("Прочитано", "4"),
+        SearchFilter("Любимые", "5")
+    )
     companion object {
         const val PREFIX_SLUG_SEARCH = "slug:"
         private const val SERVER_PREF = "MangaLibImageServer"
