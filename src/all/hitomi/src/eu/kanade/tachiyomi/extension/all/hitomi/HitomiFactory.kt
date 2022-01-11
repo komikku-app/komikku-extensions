@@ -9,7 +9,7 @@ class HitomiFactory : SourceFactory {
 }
 
 private val languageList = listOf(
-    Pair("other", "all"), // all languages
+    Pair("all", "all"), // all languages
     Pair("id", "indonesian"),
     Pair("ca", "catalan"),
     Pair("ceb", "cebuano"),

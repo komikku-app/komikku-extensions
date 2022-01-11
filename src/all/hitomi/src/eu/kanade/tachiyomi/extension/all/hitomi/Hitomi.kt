@@ -40,6 +40,8 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
 
     override val name = if (nozomiLang == "all") "Hitomi.la unfiltered" else "Hitomi.la"
 
+    override val id by lazy { if (lang == "all") 2703068117101782422 else super.id }
+
     override val baseUrl = BASE_URL
 
     private val json: Json by injectLazy()

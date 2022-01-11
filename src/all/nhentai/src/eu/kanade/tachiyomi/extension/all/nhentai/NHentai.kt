@@ -37,6 +37,8 @@ open class NHentai(
 
     final override val baseUrl = "https://nhentai.net"
 
+    override val id by lazy { if (lang == "all") 7309872737163460316 else super.id }
+
     override val name = "NHentai"
 
     override val supportsLatest = true
