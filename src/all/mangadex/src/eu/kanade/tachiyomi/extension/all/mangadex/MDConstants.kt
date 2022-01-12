@@ -90,4 +90,9 @@ object MDConstants {
     fun getBlockedGroupsPrefKey(dexLang: String): String {
         return "${blockedGroupsPref}_$dexLang"
     }
+
+    private const val blockedUploaderPref = "blockedUploader"
+    fun getBlockedUploaderPrefKey(dexLang: String): String {
+        return "${blockedUploaderPref}_$dexLang"
+    }
 }

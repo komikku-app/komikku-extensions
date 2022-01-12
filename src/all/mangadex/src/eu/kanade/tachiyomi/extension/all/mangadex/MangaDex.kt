@@ -177,7 +177,11 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             preferences.getString(
                 MDConstants.getBlockedGroupsPrefKey(dexLang),
                 MDConstants.blockedGroupsPrefDefaults
-            )?.split(",")?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedGroups[]", it.trim()) }
+            )?.split(",")?.sorted()?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedGroups[]", it.trim()) }
+            preferences.getString(
+                MDConstants.getBlockedUploaderPrefKey(dexLang),
+                ""
+            )?.split(", ")?.sorted()?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedUploaders[]", it.trim()) }
         }.build().toString()
         return GET(url, headers, CacheControl.FORCE_NETWORK)
     }
@@ -333,7 +337,11 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             preferences.getString(
                 MDConstants.getBlockedGroupsPrefKey(dexLang),
                 MDConstants.blockedGroupsPrefDefaults
-            )?.split(",")?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedGroups[]", it.trim()) }
+            )?.split(",")?.sorted()?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedGroups[]", it.trim()) }
+            preferences.getString(
+                MDConstants.getBlockedUploaderPrefKey(dexLang),
+                ""
+            )?.split(",")?.sorted()?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedUploaders[]", it.trim()) }
         }.build().toString()
         return GET(url, headers = headers, cache = CacheControl.FORCE_NETWORK)
     }
@@ -529,12 +537,31 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             }
         }
 
+        val blockedUploaderPref = EditTextPreference(screen.context).apply {
+            key = MDConstants.getBlockedUploaderPrefKey(dexLang)
+            title = "Block Uploader by UUID"
+            summary = "Chapters from blocked users will not show up in Latest or Manga feed.\n" +
+                "Enter as a Comma-separated list of uploader UUIDs"
+            setOnPreferenceChangeListener { _, newValue ->
+                val uploaderBlocked = newValue.toString()
+                    .split(",")
+                    .map { it.trim() }
+                    .filter { helper.containsUuid(it) }
+                    .joinToString(separator = ", ")
+
+                preferences.edit()
+                    .putString(MDConstants.getBlockedUploaderPrefKey(dexLang), uploaderBlocked)
+                    .commit()
+            }
+        }
+
         screen.addPreference(coverQualityPref)
         screen.addPreference(dataSaverPref)
         screen.addPreference(standardHttpsPortPref)
         screen.addPreference(contentRatingPref)
         screen.addPreference(originalLanguagePref)
         screen.addPreference(blockedGroupsPref)
+        screen.addPreference(blockedUploaderPref)
     }
 
     override fun getFilterList(): FilterList =
