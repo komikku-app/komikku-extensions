@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.mangaowl
 
+import android.util.Base64
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -147,17 +148,24 @@ class MangaOwl : ParsedHttpSource() {
     // Only selects chapter elements with links, since sometimes chapter lists have unlinked chapters
     override fun chapterListSelector() = "div.table-chapter-list ul li:has(a)"
 
-    override fun chapterFromElement(element: Element): SChapter {
-        val chapter = SChapter.create()
-        element.select("a").let {
-            // They replace some URLs with a different host getting a path of domain.com/reader/reader/, fix to make usable on baseUrl
-            chapter.setUrlWithoutDomain(it.attr("data-href").replace("/reader/reader/", "/reader/"))
-            chapter.name = it.select("label").first().text()
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val document = response.asJsoup()
+        val trRegex = "window\\['tr'] = '([^']*)';".toRegex(RegexOption.IGNORE_CASE)
+        val trElement = document.getElementsByTag("script").find { trRegex.find(it.data()) != null } ?: error("tr not found")
+        val tr = trRegex.find(trElement.data())!!.groups[1]!!.value
+        val s = Base64.encodeToString(baseUrl.toByteArray(), Base64.NO_PADDING)
+        return document.select(chapterListSelector()).map { element ->
+            SChapter.create().apply {
+                element.select("a").let {
+                    url = "${it.attr("data-href")}?tr=$tr&s=$s"
+                    name = it.select("label").first().text()
+                }
+                date_upload = parseChapterDate(element.select("small:last-of-type").text())
+            }
         }
-        chapter.date_upload = parseChapterDate(element.select("small:last-of-type").text())
-
-        return chapter
     }
+
+    override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException("Not used")
 
     companion object {
         val dateFormat by lazy {
@@ -174,6 +182,7 @@ class MangaOwl : ParsedHttpSource() {
     }
 
     // Pages
+    override fun pageListRequest(chapter: SChapter) = GET(chapter.url, headers) // url already complete
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select("div.item img.owl-lazy").mapIndexed { i, img ->
