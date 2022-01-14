@@ -32,7 +32,7 @@ class ManhuaID : ParsedHttpSource() {
     // popular
     override fun popularMangaSelector() = "a:has(img.card-img)"
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/popular/$page", headers)
+    override fun popularMangaRequest(page: Int) = GET("$baseUrl/index.php/project?page_project=$page", headers)
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
         setUrlWithoutDomain(element.attr("href"))
@@ -45,7 +45,7 @@ class ManhuaID : ParsedHttpSource() {
     // latest
     override fun latestUpdatesSelector() = popularMangaSelector()
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/latest/$page", headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/index.php/project?page_project=$page", headers)
 
     override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
 
