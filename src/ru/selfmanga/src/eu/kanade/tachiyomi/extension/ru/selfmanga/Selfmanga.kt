@@ -98,7 +98,7 @@ class Selfmanga : ParsedHttpSource() {
         manga.title = document.select("h1.names .name").text()
         manga.author = infoElement.select("span.elem_author").first()?.text()
         manga.genre = infoElement.select("span.elem_genre").text().replace(" ,", ",")
-        manga.description = document.select("div.manga-description").text()
+        manga.description = document.select("div#tab-description  .manga-description").text()
         manga.status = parseStatus(infoElement.html())
         manga.thumbnail_url = infoElement.select("img").attr("data-full")
         return manga
