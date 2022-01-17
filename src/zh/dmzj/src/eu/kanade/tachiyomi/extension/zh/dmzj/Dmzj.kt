@@ -406,7 +406,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
         val ret = ArrayList<Page>(arr.length())
         for (i in 0 until arr.length()) {
             // Seems image urls from webpage api and api.m.dmzj.com may be URL encoded multiple times
-            val url = URLDecoder.decode(URLDecoder.decode(arr.getString(i), "UTF-8"), "UTF-8")
+            val url = Uri.decode(Uri.decode(arr.getString(i)))
                 .replace("http:", "https:")
                 .replace("dmzj1.com", "dmzj.com")
             ret.add(Page(i, "", url))
@@ -416,7 +416,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
 
     private fun String.encoded(): String {
         return this.chunked(1)
-            .joinToString("") { if (it in setOf("%", " ", "+", "#")) URLEncoder.encode(it, "UTF-8") else it }
+            .joinToString("") { if (it in setOf("%", " ", "+", "#")) Uri.encode(it) else it }
             .let { if (it.endsWith(".jp")) "${it}g" else it }
     }
 
