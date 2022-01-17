@@ -156,10 +156,13 @@ class MangaOnlineBiz : ParsedHttpSource() {
 
     override fun pageListParse(response: Response): List<Page> {
         val html = response.body!!.string()
-        val jsonData = html.split("new App.Router.Chapter(").last().split("});").first() + "}"
-        val jsonObj = json.decodeFromString<JsonObject>(jsonData)
-        val cdnUrl = jsonObj["srcBaseUrl"]!!.jsonPrimitive.content
-        val pages = jsonObj["pages"]!!.jsonObject
+        val rawPages = html.split("'pages': ").last().split(",\n").first()
+        val jsonPages = json.decodeFromString<JsonObject>(rawPages)
+        val pages = jsonPages.jsonObject
+
+        val rawCdnUrl = html.split("'srcBaseUrl': ").last().split(",\n").first()
+        val cdnUrl = rawCdnUrl.replace("'", "")
+
         val resPages = mutableListOf<Page>()
         pages.entries.forEach { (page, jsonElement) ->
             resPages.add(Page(page.toInt(), imageUrl = "$cdnUrl/${jsonElement.jsonObject["src"]!!.jsonPrimitive.content}"))
