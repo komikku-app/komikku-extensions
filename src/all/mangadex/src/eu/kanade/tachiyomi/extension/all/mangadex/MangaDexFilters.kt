@@ -68,7 +68,7 @@ class MangaDexFilters {
         Status("Ongoing"),
         Status("Completed"),
         Status("Hiatus"),
-        Status("Abandoned"),
+        Status("Cancelled"),
     )
 
     private class ContentRating(name: String) : Filter.CheckBox(name)

@@ -174,9 +174,11 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
                 MDConstants.getContentRatingPrefKey(dexLang),
                 MDConstants.contentRatingPrefDefaults
             )?.forEach { addQueryParameter("contentRating[]", it) }
+            MDConstants.defaultBlockedGroups.forEach {
+                addQueryParameter("excludedGroups[]", it)
+            }
             preferences.getString(
-                MDConstants.getBlockedGroupsPrefKey(dexLang),
-                MDConstants.blockedGroupsPrefDefaults
+                MDConstants.getBlockedGroupsPrefKey(dexLang), ""
             )?.split(",")?.sorted()?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedGroups[]", it.trim()) }
             preferences.getString(
                 MDConstants.getBlockedUploaderPrefKey(dexLang),
@@ -335,8 +337,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             addQueryParameter("contentRating[]", "erotica")
             addQueryParameter("contentRating[]", "pornographic")
             preferences.getString(
-                MDConstants.getBlockedGroupsPrefKey(dexLang),
-                MDConstants.blockedGroupsPrefDefaults
+                MDConstants.getBlockedGroupsPrefKey(dexLang), ""
             )?.split(",")?.sorted()?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedGroups[]", it.trim()) }
             preferences.getString(
                 MDConstants.getBlockedUploaderPrefKey(dexLang),
@@ -523,7 +524,6 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             title = "Block Groups by UUID"
             summary = "Chapters from blocked groups will not show up in Latest or Manga feed.\n" +
                 "Enter as a Comma-separated list of group UUIDs"
-            setDefaultValue(MDConstants.blockedGroupsPrefDefaults)
             setOnPreferenceChangeListener { _, newValue ->
                 val groupsBlocked = newValue.toString()
                     .split(",")

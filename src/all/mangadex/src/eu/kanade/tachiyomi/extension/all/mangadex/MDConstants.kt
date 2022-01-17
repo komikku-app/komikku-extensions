@@ -81,12 +81,13 @@ object MDConstants {
         return "${originalLanguagePref}_$dexLang"
     }
 
-    private const val blockedGroupsPref = "blockedGroups"
     private const val groupMangaPlus = "4f1de6a2-f0c5-4ac5-bce5-02c7dbb67deb"
     private const val groupComikey = "8d8ecf83-8d42-4f8c-add8-60963f9f28d9"
     private const val groupBilibili = "06a9fecb-b608-4f19-b93c-7caab06b7f44"
     private const val groupAzuki = "5fed0576-8b94-4f9a-b6a7-08eecd69800d"
-    const val blockedGroupsPrefDefaults = "$groupMangaPlus, $groupComikey, $groupBilibili, $groupAzuki"
+    private const val groupMangaHot = "319c1b10-cbd0-4f55-a46e-c4ee17e65139"
+    val defaultBlockedGroups = setOf(groupMangaPlus, groupComikey, groupBilibili, groupAzuki, groupMangaHot)
+    private const val blockedGroupsPref = "blockedGroups"
     fun getBlockedGroupsPrefKey(dexLang: String): String {
         return "${blockedGroupsPref}_$dexLang"
     }
