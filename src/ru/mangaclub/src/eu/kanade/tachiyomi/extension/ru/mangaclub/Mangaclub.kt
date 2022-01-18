@@ -33,7 +33,7 @@ class Mangaclub : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         thumbnail_url = element.select("img").attr("abs:src")
         element.select(".title > a").apply {
-            title = this.text().substringBefore("/").trim()
+            title = this.text().trim()
             setUrlWithoutDomain(this.attr("abs:href"))
         }
     }
@@ -77,7 +77,7 @@ class Mangaclub : ParsedHttpSource() {
     // Details
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         thumbnail_url = document.select("div.image img").attr("abs:src")
-        title = document.select(".title").text().substringBefore("/").trim()
+        title = document.select("div.info>div>strong").text().trim()
         author = document.select("a[href*=author]").text().trim()
         artist = author
         status = when (document.select("a[href*=status_translation]")?.first()?.text()) {
