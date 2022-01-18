@@ -5,12 +5,17 @@ import eu.kanade.tachiyomi.source.SourceFactory
 
 class BilibiliFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
-        BilibiliComics(),
+        BilibiliComicsEn(),
+        BilibiliComicsCn(),
+        BilibiliComicsId(),
         BilibiliManga()
     )
 }
 
-class BilibiliComics : Bilibili("BILIBILI COMICS", "https://www.bilibilicomics.com", "en") {
+abstract class BilibiliComics(lang: String) :
+    Bilibili("BILIBILI COMICS", "https://www.bilibilicomics.com", lang)
+
+class BilibiliComicsEn : BilibiliComics("en") {
 
     override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
         BilibiliTag("All", -1),
@@ -32,32 +37,66 @@ class BilibiliComics : Bilibili("BILIBILI COMICS", "https://www.bilibilicomics.c
     )
 }
 
-class BilibiliManga : Bilibili("哔哩哔哩漫画", "https://manga.bilibili.com", "zh") {
+class BilibiliComicsCn : BilibiliComics("zh-Hans") {
 
-    override val statusLabel: String = "进度"
+    override fun getAllSortOptions(): Array<String> = arrayOf("为你推荐", "人气推荐", "更新时间")
 
-    override val sortLabel: String = "排序"
+    override fun getAllStatus(): Array<String> = arrayOf("全部", "连载中", "已完结")
 
-    override val genreLabel: String = "题材"
+    override fun getAllPrices(): Array<String> = arrayOf("全部", "免费", "付费")
 
-    override val areaLabel: String = "地区"
+    override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
+        BilibiliTag("全部", -1),
+        BilibiliTag("校园", 18),
+        BilibiliTag("都市", 9),
+        BilibiliTag("耽美", 3),
+        BilibiliTag("少女", 20),
+        BilibiliTag("恋爱", 13),
+        BilibiliTag("奇幻", 11),
+        BilibiliTag("热血", 19),
+        BilibiliTag("冒险", 22),
+        BilibiliTag("古风", 12),
+        BilibiliTag("百合", 16),
+        BilibiliTag("玄幻", 30),
+        BilibiliTag("悬疑", 41),
+        BilibiliTag("科幻", 8)
+    )
+}
 
-    override val priceLabel: String = "收费"
+class BilibiliComicsId : BilibiliComics("id") {
 
-    override val episodePrefix: String = ""
+    override fun getAllSortOptions(): Array<String> = arrayOf("Kamu Mungkin Suka", "Populer", "Terbaru")
+
+    override fun getAllStatus(): Array<String> = arrayOf("Semua", "Berlangsung", "Tamat")
+
+    override fun getAllPrices(): Array<String> = arrayOf("Semua", "Bebas", "Dibayar")
+
+    override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
+        BilibiliTag("Semua", -1),
+        BilibiliTag("Aksi", 19),
+        BilibiliTag("Fantasi Timur", 30),
+        BilibiliTag("Fantasi", 11),
+        BilibiliTag("Historis", 12),
+        BilibiliTag("Horror", 23),
+        BilibiliTag("Kampus", 18),
+        BilibiliTag("Komedi", 14),
+        BilibiliTag("Menegangkan", 41),
+        BilibiliTag("Remaja", 20),
+        BilibiliTag("Romantis", 13)
+    )
+}
+
+class BilibiliManga : Bilibili(
+    "哔哩哔哩漫画",
+    "https://manga.bilibili.com",
+    "zh-Hans"
+) {
+
+    override val id: Long = 3561131545129718586
 
     override val defaultPopularSort: Int = 0
 
     override val defaultLatestSort: Int = 1
-
-    override val hasPaidChaptersWarning: String = "此漫画的付费章节已从章节列表中过滤，" +
-        "暂时请用网页端或官方app阅读。"
-
-    override val imageQualityPrefTitle: String = "章节图片质量"
-
-    override val imageQualityPrefEntries: Array<String> = arrayOf("原图", "高", "低")
-
-    override val imageFormatPrefTitle: String = "章节图片格式"
 
     override fun getAllStatus(): Array<String> = arrayOf("全部", "连载", "完结")
 
