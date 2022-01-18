@@ -228,7 +228,7 @@ class Newbie : HttpSource() {
         }
     }
     override fun chapterListRequest(manga: SManga): Request {
-        return GET(API_URL + "/projects/" + manga.url + "/chapters?reverse=true&size=1000000", headers)
+        return GET(API_URL + "/branches/" + manga.url + "/chapters?reverse=true&size=1000000", headers)
     }
 
     @TargetApi(Build.VERSION_CODES.N)
