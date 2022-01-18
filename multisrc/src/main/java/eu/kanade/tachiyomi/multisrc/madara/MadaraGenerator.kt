@@ -115,7 +115,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Hizomanga", "https://hizomanga.com", "ar", overrideVersionCode = 1),
         SingleLang("Hscans", "https://hscans.com", "en", overrideVersionCode = 1),
         SingleLang("Hunter Fansub", "https://hunterfansub.com", "es", overrideVersionCode = 1),
-        SingleLang("Hunters Scan", "https://huntersscan.tk", "pt-BR", isNsfw = true),
+        SingleLang("Hunters Scan", "https://huntersscan.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Ichirin No Hana Yuri", "https://ichirinnohanayuri.com.br", "pt-BR", overrideVersionCode = 3),
         SingleLang("Ikifeng", "https://ikifeng.com", "es", isNsfw = true),
         SingleLang("Immortal Updates", "https://immortalupdates.com", "en", overrideVersionCode = 2),

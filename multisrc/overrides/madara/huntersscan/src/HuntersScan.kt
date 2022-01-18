@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 class HuntersScan : Madara(
     "Hunters Scan",
-    "https://huntersscan.tk",
+    "https://huntersscan.xyz",
     "pt-BR",
     SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
 ) {
@@ -17,4 +17,6 @@ class HuntersScan : Madara(
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
+        
+    override val altName: String = "Nome alternativo: "
 }
