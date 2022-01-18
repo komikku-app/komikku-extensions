@@ -24,6 +24,8 @@ class OkamishiScans : Madara(
     override val useNewChapterEndpoint: Boolean = true
 
     override val altName: String = "Nome alternativo: "
+    
+    override val mangaDetailsSelectorTitle: String = "div.post-title h1"
 
     // Tags are full of garbage, so remove them.
     override val mangaDetailsSelectorTag: String = ""
