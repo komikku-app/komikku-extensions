@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.ru.newbie
 
 import BookDto
+import BranchesDto
 import LibraryDto
 import MangaDetDto
 import PageDto
@@ -35,6 +36,7 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
 class Newbie : HttpSource() {
     override val name = "Newbie"
 
@@ -43,6 +45,8 @@ class Newbie : HttpSource() {
     override val lang = "ru"
 
     override val supportsLatest = true
+
+    private var branches = mutableMapOf<String, List<BranchesDto>>()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", "Tachiyomi")
@@ -189,6 +193,7 @@ class Newbie : HttpSource() {
     private fun titleDetailsRequest(manga: SManga): Request {
         return GET(API_URL + "/projects/" + manga.url, headers)
     }
+
     // Workaround to allow "Open in browser" use the real URL.
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         return client.newCall(titleDetailsRequest(manga))
@@ -197,12 +202,14 @@ class Newbie : HttpSource() {
                 mangaDetailsParse(response).apply { initialized = true }
             }
     }
+
     override fun mangaDetailsRequest(manga: SManga): Request {
         return GET(baseUrl + "/p/" + manga.url, headers)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
         val series = json.decodeFromString<MangaDetDto>(response.body!!.string())
+        branches[series.title.en] = series.branches
         return series.toSManga()
     }
 
@@ -215,9 +222,39 @@ class Newbie : HttpSource() {
         return chapterName
     }
 
+    private fun mangaBranches(manga: SManga): List<BranchesDto> {
+        val response = client.newCall(titleDetailsRequest(manga)).execute()
+        val series = json.decodeFromString<MangaDetDto>(response.body!!.string())
+        branches[series.title.en] = series.branches
+        return series.branches
+    }
+
+    private fun selector(b: BranchesDto): Boolean = b.is_default
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+        val branch = branches.getOrElse(manga.title) { mangaBranches(manga) }
+        return when {
+            branch.isEmpty() -> {
+                return Observable.just(listOf())
+            }
+            manga.status == SManga.LICENSED -> {
+                Observable.error(Exception("Лицензировано - Нет глав"))
+            }
+            else -> {
+                val branchId = branch.first { selector(it) }.id
+                client.newCall(chapterListRequest(branchId))
+                    .asObservableSuccess()
+                    .map { response ->
+                        chapterListParse(response)
+                    }
+            }
+        }
+    }
+
     override fun chapterListParse(response: Response): List<SChapter> {
-        val chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body!!.string())
-        return chapters.items.filter { it.is_available == true }.map { chapter ->
+        val body = response.body!!.string()
+        val chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(body)
+
+        return chapters.items.filter { it.is_available }.map { chapter ->
             SChapter.create().apply {
                 chapter_number = chapter.number
                 name = chapterName(chapter)
@@ -227,8 +264,12 @@ class Newbie : HttpSource() {
             }
         }
     }
-    override fun chapterListRequest(manga: SManga): Request {
-        return GET(API_URL + "/branches/" + manga.url + "/chapters?reverse=true&size=1000000", headers)
+    override fun chapterListRequest(manga: SManga): Request = throw NotImplementedError("Unused")
+    private fun chapterListRequest(branch: Long): Request {
+        return GET(
+            "$API_URL/branches/$branch/chapters?reverse=true&size=1000000",
+            headers
+        )
     }
 
     @TargetApi(Build.VERSION_CODES.N)
@@ -247,6 +288,7 @@ class Newbie : HttpSource() {
         }
         return result
     }
+
     override fun pageListParse(response: Response): List<Page> = throw Exception("Not used")
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
         return client.newCall(pageListRequest(chapter))
@@ -255,6 +297,7 @@ class Newbie : HttpSource() {
                 pageListParse(response, chapter)
             }
     }
+
     override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
 
     override fun imageUrlRequest(page: Page): Request = throw NotImplementedError("Unused")
@@ -352,9 +395,11 @@ class Newbie : HttpSource() {
         CheckFilter("юри", "16"),
         CheckFilter("яой", "32"),
     )
+
     companion object {
         private const val API_URL = "https://api.newmanga.org/v2"
         private const val IMAGE_URL = "https://storage.newmanga.org"
     }
+
     private val json: Json by injectLazy()
 }

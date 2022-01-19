@@ -2,21 +2,21 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TagsDto(
-    val id: Int,
     val title: TitleDto
 )
 
 @Serializable
 data class BranchesDto(
     val id: Long,
-    val count_chapters: Int
+    val is_default: Boolean
 )
+
 @Serializable
 data class ImgsDto(
     val large: String,
     val small: String,
-    val thumbnail: String
 )
+
 @Serializable
 data class ImgDto(
     val srcset: ImgsDto,
@@ -47,13 +47,13 @@ data class MangaDetDto(
     val author: AuthorDto?,
     val artist: AuthorDto?,
     val description: String,
-    val release_date: String,
     val image: ImgDto,
     val genres: List<TagsDto>,
     val type: String,
     val status: String,
     val rating: Float,
-    val adult: String?
+    val adult: String?,
+    val branches: List<BranchesDto>,
 )
 
 @Serializable

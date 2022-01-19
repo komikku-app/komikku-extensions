@@ -6,7 +6,7 @@ ext {
     extName = 'Newbie'
     pkgNameSuffix = 'ru.newbie'
     extClass = '.Newbie'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 dependencies {
