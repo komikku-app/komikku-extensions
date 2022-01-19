@@ -17,6 +17,6 @@ class HuntersScan : Madara(
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
-        
+
     override val altName: String = "Nome alternativo: "
 }

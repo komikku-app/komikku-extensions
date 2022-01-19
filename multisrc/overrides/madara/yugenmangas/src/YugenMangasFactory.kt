@@ -53,4 +53,3 @@ class YugenMangasBr : YugenMangas(
 
     override val useNewChapterEndpoint: Boolean = true
 }
-
