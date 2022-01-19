@@ -209,8 +209,8 @@ abstract class WPMangaStream(
         return SManga.create().apply {
             document.select("div.bigcontent, div.animefull, div.main-info").firstOrNull()?.let { infoElement ->
                 status = parseStatus(infoElement.select("span:contains(Status:), .imptdt:contains(Status) i").firstOrNull()?.ownText())
-                author = infoElement.select("span:contains(Author:), span:contains(Pengarang:), .fmed b:contains(Author)+span, .imptdt:contains(Author) i").firstOrNull()?.ownText()
-                artist = infoElement.select(".fmed b:contains(Artist)+span, .imptdt:contains(Artist) i").firstOrNull()?.ownText()
+                author = isEmptyPlaceholder(infoElement.select("span:contains(Author:), span:contains(Pengarang:), .fmed b:contains(Author)+span, .imptdt:contains(Author) i").firstOrNull()?.ownText())
+                artist = isEmptyPlaceholder(infoElement.select(".fmed b:contains(Artist)+span, .imptdt:contains(Artist) i").firstOrNull()?.ownText())
                 description = infoElement.select("div.desc p, div.entry-content p").joinToString("\n") { it.text() }
                 thumbnail_url = infoElement.select("div.thumb img").imgAttr()
 
@@ -249,6 +249,10 @@ abstract class WPMangaStream(
         listOf("ongoing", "publishing").any { it.contains(element, ignoreCase = true) } -> SManga.ONGOING
         listOf("completed").any { it.contains(element, ignoreCase = true) } -> SManga.COMPLETED
         else -> SManga.UNKNOWN
+    }
+
+    private fun isEmptyPlaceholder(string: String?): String? {
+        return if (string == "-" || string == "N/A") "" else string
     }
 
     override fun chapterListSelector() = "div.bxcl ul li, div.cl ul li, ul li:has(div.chbox):has(div.eph-num)"
