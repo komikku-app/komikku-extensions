@@ -140,7 +140,11 @@ class Remanga : ConfigurableSource, HttpSource() {
             return MangasPage(mangas, page.props.page < page.props.total_pages)
         } else {
             val page = json.decodeFromString<PageWrapperDto<LibraryDto>>(response.body!!.string())
-            val mangas = page.content.map {
+            var content = page.content
+            if (preferences.getBoolean(isLib_PREF, false)) {
+                content = content.filter { it.bookmark_type.isNullOrEmpty() }
+            }
+            val mangas = content.map {
                 it.toSManga()
             }
             return MangasPage(mangas, page.props.page < page.props.total_pages)
@@ -628,7 +632,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("юри", "41"),
         SearchFilter("яой", "43")
     )
-    private class MyList(favorites: Array<String>) : Filter.Select<String>("Мои списки (только)", favorites)
+    private class MyList(favorites: Array<String>) : Filter.Select<String>("Закладки (только)", favorites)
     private data class MyListUnit(val name: String, val id: String)
     private val MyStatus = getMyList().map {
         it.name
@@ -701,8 +705,20 @@ class Remanga : ConfigurableSource, HttpSource() {
                 preferences.edit().putBoolean(key, checkValue).commit()
             }
         }
+        val bookmarksHide = androidx.preference.CheckBoxPreference(screen.context).apply {
+            key = isLib_PREF
+            title = isLib_PREF_Title
+            summary = "Скрывает мангу находящуюся в закладках пользователя на сайте."
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+                preferences.edit().putBoolean(key, checkValue).commit()
+            }
+        }
         screen.addPreference(domainPref)
         screen.addPreference(paidChapterShow)
+        screen.addPreference(bookmarksHide)
         screen.addPreference(screen.editTextPreference(USERNAME_TITLE, USERNAME_DEFAULT, username))
         screen.addPreference(screen.editTextPreference(PASSWORD_TITLE, PASSWORD_DEFAULT, password, true))
     }
@@ -731,5 +747,8 @@ class Remanga : ConfigurableSource, HttpSource() {
 
         private const val PAID_PREF = "PaidChapter"
         private const val PAID_PREF_Title = "Показывать платные главы"
+
+        private const val isLib_PREF = "LibBookmarks"
+        private const val isLib_PREF_Title = "Скрыть «Закладки»"
     }
 }
