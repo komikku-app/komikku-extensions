@@ -2,6 +2,8 @@ name: PR build check
 
 on:
   pull_request:
+    paths-ignore:
+      - '**.md'
 
 jobs:
   check_wrapper:
