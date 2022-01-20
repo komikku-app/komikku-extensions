@@ -337,6 +337,7 @@ class HentaiVN : ParsedHttpSource() {
         Genre("Vampire", "107"),
         Genre("Vanilla", "208"),
         Genre("Virgin", "95"),
+        Genre("Webtoon", "270"),
         Genre("X-ray", "94"),
         Genre("Yandere", "112"),
         Genre("Yaoi", "96"),
