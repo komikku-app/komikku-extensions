@@ -39,14 +39,15 @@ data class Series(
     private val name_genre: String,
     private val name_author: String,
     @N("thumbnail_story") val cover: String,
-    private val content_story: String
+    private val content_story: String? = null
 ) {
     val url by lazy {
         "$slug_story?id=$id_story"
     }
 
     val description by lazy {
-        Jsoup.parse(content_story).text().takeIf { "Updating" !in it }
+        content_story?.let(Jsoup::parse)?.text()
+            ?.takeIf { "Updating" !in it }
     }
 
     val genres by lazy {
