@@ -48,12 +48,10 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Phoenix Fansub", "https://phoenixfansub.com", "es", overrideVersionCode = 2),
         SingleLang("Imagine Scan", "https://imaginescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Vapo Scan", "https://vaposcans.com", "pt-BR", overrideVersionCode = 3),
-        SingleLang("Hakai Scan", "http://hakaiscan.xyz", "pt-BR", isNsfw = true),
         SingleLang("Snudae Scans", "https://snudaescans.com", "en", isNsfw = true, className = "BatotoScans", overrideVersionCode = 1),
         SingleLang("Random Scans", "https://randomscans.xyz", "en"),
         SingleLang("Phantom Scans", "https://phantomscans.com", "en", overrideVersionCode = 1),
         SingleLang("Omega Scans", "https://omegascans.org", "en", isNsfw = true),
-        SingleLang("Geass Hentai", "https://geassscan.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("TukangKomik", "https://tukangkomik.com", "id"),
         SingleLang("Komiksay", "https://komiksay.com", "id"),
     )
