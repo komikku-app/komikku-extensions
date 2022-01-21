@@ -190,6 +190,7 @@ class MangaDexHelper() {
             val titleMap = mangaDataDto.attributes.title.asMdMap()
             val dirtyTitle = titleMap[lang]
                 ?: titleMap["en"]
+                ?: titleMap["ja-ro"]
                 ?: mangaDataDto.attributes.altTitles.jsonArray
                     .find {
                         val altTitle = it.asMdMap()
@@ -348,4 +349,18 @@ class MangaDexHelper() {
             throw(e)
         }
     }
+
+    fun titleToSlug(title: String) = title.trim()
+        .toLowerCase(Locale.US)
+        .replace("[^a-z0-9]+".toRegex(), "-")
+        .replace("-+$".toRegex(), "")
+        .split("-")
+        .reduce { accumulator, element ->
+            val currentSlug = "$accumulator-$element"
+            if (currentSlug.length > 100) {
+                accumulator
+            } else {
+                currentSlug
+            }
+        }
 }

@@ -272,7 +272,10 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
 
     override fun mangaDetailsRequest(manga: SManga): Request {
         // remove once redirect for /manga is fixed
-        return GET("${baseUrl}${manga.url.replace("manga", "title")}", headers)
+        val title = manga.title
+        val url = "${baseUrl}${manga.url.replace("manga", "title")}"
+        val shareUrl = "$url/" + helper.titleToSlug(title)
+        return GET(shareUrl, headers)
     }
 
     /**
