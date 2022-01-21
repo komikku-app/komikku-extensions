@@ -5,8 +5,8 @@ apply plugin: 'kotlinx-serialization'
 ext {
     extName = 'Genkan.io'
     pkgNameSuffix = "all.genkanio"
-    extClass = '.GenkanIO'
-    extVersionCode = 3
+    extClass = '.GenkanIOFactory'
+    extVersionCode = 4
 }
 
 apply from: "$rootDir/common.gradle"

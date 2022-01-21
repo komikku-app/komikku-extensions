@@ -35,8 +35,7 @@ import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 
-open class GenkanIO : ParsedHttpSource() {
-    override val lang = "all"
+open class GenkanIO(override val lang: String) : ParsedHttpSource() {
     final override val name = "Genkan.io"
     final override val baseUrl = "https://genkan.io"
     final override val supportsLatest = false
@@ -288,12 +287,22 @@ open class GenkanIO : ParsedHttpSource() {
             name = if (isTitleBlank(nameElem.text())) "Chapter ${numElem.text()}" else "Ch. ${numElem.text()}: ${nameElem.text()}"
             url = urlElem.select("a").attr("href").substringAfter(baseUrl)
             date_upload = parseRelativeDate(releasedElem.text())
-            scanlator = "${groupElem.text()} - ${languageElem.text()}"
+            scanlator = groupElem.text()
             chapter_number = numElem.text().toFloat()
         }
     }
 
-    override fun chapterListSelector() = "tbody > tr"
+    override fun chapterListSelector() = when (lang) {
+        "ar" -> "tbody > tr:contains(Arabic)"
+        "en" -> "tbody > tr:contains(English)"
+        "fr" -> "tbody > tr:contains(French)"
+        "pl" -> "tbody > tr:contains(Polish)"
+        "pt-BR" -> "tbody > tr:contains(Portuguese)"
+        "ru" -> "tbody > tr:contains(Russian)"
+        "es" -> "tbody > tr:contains(Spanish)"
+        "tr" -> "tbody > tr:contains(Turkish)"
+        else -> "tbody > tr"
+    }
     private fun chapterListNextPageSelector() = "a[rel=next]"
 
     // manga
