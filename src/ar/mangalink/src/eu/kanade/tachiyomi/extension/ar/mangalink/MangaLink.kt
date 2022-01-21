@@ -28,7 +28,7 @@ class MangaLink : ConfigurableSource, ParsedHttpSource() {
 
     override val name = "MangaLink"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://mangalink.cc")!! }
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "http://135.181.209.99")!! }
 
     override val lang = "ar"
 
@@ -50,7 +50,7 @@ class MangaLink : ConfigurableSource, ParsedHttpSource() {
                 setUrlWithoutDomain(it.attr("href"))
                 title = it.text()
             }
-            thumbnail_url = element.select("img").attr("abs:data-src")
+            // thumbnail_url = "http://135.181.209.99" + element.select("img").attr("abs:data-src")
         }
     }
 
@@ -119,7 +119,7 @@ class MangaLink : ConfigurableSource, ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select("div#content img").mapIndexed { i, img ->
-            Page(i, "", img.attr("abs:data-src"))
+            Page(i, "", img.attr("abs:data-src").replace("https://mangalink.cc", "http://135.181.209.99"))
         }
     }
 
@@ -152,9 +152,9 @@ class MangaLink : ConfigurableSource, ParsedHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Preferred domain"
-            entries = arrayOf("mangalink.cc", "mangalink.org")
-            entryValues = arrayOf("https://mangalink.cc", "https://mangalink.org")
-            setDefaultValue("https://mangalink.cc")
+            entries = arrayOf("135.181.209.99", "mangalink.org")
+            entryValues = arrayOf("http://135.181.209.99", "https://mangalink.org")
+            setDefaultValue("http://135.181.209.99")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
