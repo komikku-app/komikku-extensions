@@ -309,7 +309,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Momo no Hana Scan", "https://momonohanascan.com", "pt-BR", className = "MomoNoHanaScan", overrideVersionCode = 1),
         SingleLang("Mortals Groove", "https://mortalsgroove.com", "en", overrideVersionCode = 1),
         SingleLang("Muctau", "https://muctau.com", "en", overrideVersionCode = 1),
-        SingleLang("MyKomiks", "https://mykomiks.fun", "en", overrideVersionCode = 1),
+        SingleLang("MyKomiks", "https://mykomiks.fun", "en", overrideVersionCode = 2),
         SingleLang("Mystical Merries", "https://mysticalmerries.com", "en", overrideVersionCode = 2),
         SingleLang("NeatManga", "https://neatmanga.com", "en", overrideVersionCode = 2),
         SingleLang("NekoBreaker Scan", "https://nekobreakerscan.com", "pt-BR", overrideVersionCode = 1),

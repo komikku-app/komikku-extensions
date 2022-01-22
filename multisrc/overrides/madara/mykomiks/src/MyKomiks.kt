@@ -4,5 +4,4 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 
 class MyKomiks : Madara("MyKomiks", "https://mykomiks.fun", "en") {
     override val mangaSubString = "komiks"
-    override val useNewChapterEndpoint: Boolean = true
 }
