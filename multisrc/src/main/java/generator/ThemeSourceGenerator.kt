@@ -131,10 +131,31 @@ ${placeholders.map { "${" ".repeat(28)}${it.key}: \"${it.value}\""}.joinToString
                 writeAndroidManifest(projectAndroidManifestFile, manifestOverridePath, defaultAndroidManifestPath)
 
                 writeSourceClasses(projectSrcPath, srcOverridePath, source, themePkg, themeClass)
+                copyThemeReadmes(userDir, themePkg, projectRootPath)
+
                 copyThemeClasses(userDir, themePkg, projectRootPath)
 
                 copyResFiles(resOverridePath, defaultResPath, source, projectRootPath)
             }
+        }
+
+        private fun copyThemeReadmes(userDir: String, themePkg: String, projectRootPath: String) {
+            val sourcePath = "$userDir/multisrc/src/main/java/${themeSuffix(themePkg, "/")}"
+            val sourceFile = File(sourcePath)
+            val destinationPath = "$projectRootPath"
+
+            val destinationFile = File(destinationPath)
+            destinationFile.mkdirs()
+
+            sourceFile.list()!!
+                .filter { it.endsWith("README.md") || it.endsWith("CHANGELOG.md") }
+                .forEach {
+                    Files.copy(
+                        File("$sourcePath/$it").toPath(),
+                        File("$destinationPath/$it").toPath(),
+                        StandardCopyOption.REPLACE_EXISTING
+                    )
+                }
         }
 
         private fun copyThemeClasses(userDir: String, themePkg: String, projectRootPath: String) {

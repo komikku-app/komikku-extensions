@@ -9,7 +9,7 @@ class MangaBoxGenerator : ThemeSourceGenerator {
 
     override val themeClass = "MangaBox"
 
-    override val baseVersionCode: Int = 4
+    override val baseVersionCode: Int = 5
 
     override val sources = listOf(
         SingleLang("Mangakakalot", "https://mangakakalot.com", "en", overrideVersionCode = 3),

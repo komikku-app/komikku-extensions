@@ -21,6 +21,8 @@ for APK in ${APKS[@]}; do
     VCODE=$(echo $PACKAGE | grep -Po "versionCode='\K[^']+")
     VNAME=$(echo $PACKAGE | grep -Po "versionName='\K[^']+")
     NSFW=$(echo $BADGING | grep -Po "tachiyomi.extension.nsfw' value='\K[^']+")
+    HASREADME=$(echo $BADGING | grep -Po "tachiyomi.extension.hasReadme' value='\K[^']+")
+    HASCHANGELOG=$(echo $BADGING | grep -Po "tachiyomi.extension.hasChangelog' value='\K[^']+")
 
     APPLICATION=$(echo "$BADGING" | grep application:)
     LABEL=$(echo $APPLICATION | grep -Po "label='\K[^']+")
@@ -51,8 +53,10 @@ for APK in ${APKS[@]}; do
         --argjson code $VCODE \
         --arg version "$VNAME" \
         --argjson nsfw $NSFW \
+        --argjson hasReadme $HASREADME \
+        --argjson hasChangelog $HASCHANGELOG \
         --argjson sources "$SOURCE_INFO" \
-        '{name:$name, pkg:$pkg, apk:$apk, lang:$lang, code:$code, version:$version, nsfw:$nsfw, sources:$sources}'
+        '{name:$name, pkg:$pkg, apk:$apk, lang:$lang, code:$code, version:$version, nsfw:$nsfw, hasReadme:$hasReadme, hasChangelog:$hasChangelog, sources:$sources}'
 
 done | jq -sr '[.[]]' > index.json
 
