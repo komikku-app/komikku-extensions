@@ -34,7 +34,7 @@ class Kiryuu : WPMangaReader("Kiryuu", "https://kiryuu.id", "id") {
         )
 
         title = document.selectFirst(".thumb img").attr("title")
-        thumbnail_url = document.select(".thumb img").attr("abs:data-lazy-src")
+        thumbnail_url = document.select(".thumb img").attr("src")
         description = document.select(".desc, .entry-content[itemprop=description]").joinToString("\n") { it.text() }
 
         // add series type(manga/manhwa/manhua/other) thinggy to genre

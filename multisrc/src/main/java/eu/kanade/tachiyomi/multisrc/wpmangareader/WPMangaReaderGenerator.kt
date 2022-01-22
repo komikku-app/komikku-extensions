@@ -19,7 +19,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("BeastScans", "https://beastscans.com", "en"),
         SingleLang("iiMANGA", "https://iimanga.com", "ar"),
         SingleLang("Magus Manga", "https://magusmanga.com", "ar"),
-        SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 4),
+        SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 5),
         SingleLang("KomikMama", "https://komikmama.net", "id"),
         SingleLang("MangaKita", "https://mangakita.net", "id", overrideVersionCode = 1),
         SingleLang("Gabut Scans", "https://gabutscans.com", "id"),
