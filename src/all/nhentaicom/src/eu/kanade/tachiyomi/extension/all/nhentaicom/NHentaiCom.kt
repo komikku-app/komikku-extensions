@@ -30,6 +30,7 @@ class NHentaiCom(override val lang: String) : HttpSource() {
 
     override val id = when (lang) {
         "en" -> 5591830863732393712
+        "cs" -> 1144495813995437124
         else -> super.id
     }
 
@@ -47,7 +48,7 @@ class NHentaiCom(override val lang: String) : HttpSource() {
             "zh" -> "2"
             "ja" -> "3"
             "other" -> "4"
-            "cz" -> "5"
+            "cs" -> "5"
             "ar" -> "6"
             "sk" -> "7"
             "eo" -> "8"

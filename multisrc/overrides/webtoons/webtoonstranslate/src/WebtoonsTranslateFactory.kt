@@ -41,10 +41,10 @@ class WebtoonsTranslateFactory : SourceFactory {
     )
 }
 class WebtoonsTranslateEN : WebtoonsTranslate("Webtoons.com Translations", "https://translate.webtoons.com", "en", "ENG")
-class WebtoonsTranslateZH_CMN : WebtoonsTranslate("Webtoons.com Translations", "https://translate.webtoons.com", "zh-hans", "CMN") {
+class WebtoonsTranslateZH_CMN : WebtoonsTranslate("Webtoons.com Translations", "https://translate.webtoons.com", "zh-Hans", "CMN") {
     override val id: Long = 5196522547754842244
 }
-class WebtoonsTranslateZH_CMY : WebtoonsTranslate("Webtoons.com Translations", "https://translate.webtoons.com", "zh-hant", "CMT") {
+class WebtoonsTranslateZH_CMY : WebtoonsTranslate("Webtoons.com Translations", "https://translate.webtoons.com", "zh-Hant", "CMT") {
     override val id: Long = 1016181401146312893
 }
 class WebtoonsTranslateTH : WebtoonsTranslate("Webtoons.com Translations", "https://translate.webtoons.com", "th", "THA")

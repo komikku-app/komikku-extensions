@@ -44,7 +44,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 open class BatoTo(
-    override val lang: String,
+    final override val lang: String,
     private val siteLang: String
 ) : ConfigurableSource, ParsedHttpSource() {
 
@@ -54,6 +54,12 @@ open class BatoTo(
 
     override val name: String = "Bato.to"
     override val baseUrl: String = getMirrorPref()!!
+    override val id: Long = when(lang){
+        "zh-Hans" -> 2818874445640189582
+        "zh-Hant" -> 38886079663327225
+        "ro-MD" -> 8871355786189601023
+        else -> super.id
+    }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val mirrorPref = ListPreference(screen.context).apply {

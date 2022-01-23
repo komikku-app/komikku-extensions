@@ -5,7 +5,7 @@ ext {
     extName = 'nHentai.com (unoriginal)'
     pkgNameSuffix = 'all.nhentaicom'
     extClass = '.NHentaiComFactory'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = true
 }
 

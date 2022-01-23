@@ -33,7 +33,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 open class MangaPark(
-    override val lang: String,
+    final override val lang: String,
     private val siteLang: String
 ) : ParsedHttpSource() {
 
@@ -42,6 +42,13 @@ open class MangaPark(
     override val baseUrl: String = "https://v35.mangapark.net" // temporary url change to keep the ext working after update return to https://mangapark.net or https://v36.mangapark.net at later date
 
     override val supportsLatest = true
+    
+    override val id: Long = when(lang){
+        "zh-Hans" -> 6306867705763005424
+        "zh-Hant" -> 4563855043528673539
+        "ro-MD" -> 7298853649198357919
+        else -> super.id
+    }
 
     private val json: Json by injectLazy()
 
