@@ -32,7 +32,7 @@ class Mangaclub : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         thumbnail_url = element.select("div.content-block>.image>picture>img").attr("abs:src")
         element.select("div.content-title>.title>a").apply {
-            title = this.text().trim()
+            title = this.text().replace("\\'", "'").trim()
             setUrlWithoutDomain(this.attr("abs:href"))
         }
     }
@@ -107,7 +107,7 @@ class Mangaclub : ParsedHttpSource() {
     // Details
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         thumbnail_url = document.select("div.content-block>.image>picture>img").attr("abs:src")
-        title = document.select("div.info>div>strong").text().trim()
+        title = document.select("div.info>div>strong").text().replace("\\'", "'").trim()
         author = document.select("div.info>div>a[href*=author]").text().trim()
         artist = author
         status = when (document.select("div.info>div>a[href*=status_translation]").text().trim()) {
@@ -115,7 +115,7 @@ class Mangaclub : ParsedHttpSource() {
             "Завершен" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
-        description = document.select("div.description").text().trim()
+        description = document.select("div.description>p").text().trim()
         genre = document.select("div.info>div>a[href*=tags]").joinToString(", ") { it.text() }
     }
 
@@ -123,7 +123,7 @@ class Mangaclub : ParsedHttpSource() {
     override fun chapterListSelector(): String = "div.chapters>.chapter-item"
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         val chapterLink = element.select("div.item-left>a")
-        name = chapterLink.text().trim()
+        name = chapterLink.text().replace(",", ".").trim()
         chapter_number = name.substringAfter("Глава").trim().toFloat()
         setUrlWithoutDomain(chapterLink.attr("abs:href"))
         date_upload = element.select("div.item-right>.date").text().trim().let {
