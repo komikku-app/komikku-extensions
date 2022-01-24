@@ -24,6 +24,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -64,6 +65,9 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     }
 
     private var token: String? = null
+
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .add("Token", "")
 
     private fun genericMangaFromObject(project: ArgosProjectDto): SManga = SManga.create().apply {
         title = project.name!!
