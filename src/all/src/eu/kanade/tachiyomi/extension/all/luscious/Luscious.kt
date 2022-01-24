@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.multisrc.luscious
+package eu.kanade.tachiyomi.extension.all.luscious
 
 import android.app.Application
 import android.content.SharedPreferences
@@ -30,9 +30,12 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -40,21 +43,37 @@ import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 
 abstract class Luscious(
-    override val name: String,
-    override val baseUrl: String,
     final override val lang: String
 ) : ConfigurableSource, HttpSource() {
 
-    // Based on Luscious single source extension form https://github.com/tachiyomiorg/tachiyomi-extensions/commit/aacf56d0c0ddb173372aac69d798ae998f178377
-    // with modification to make it support multisrc
-
     override val supportsLatest: Boolean = true
+    override val name: String = "Luscious"
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    override val baseUrl: String = getMirrorPref()!!
 
     private val apiBaseUrl: String = "$baseUrl/graphql/nobatch/"
 
     private val json: Json by injectLazy()
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient
+        get() = network.cloudflareClient.newBuilder()
+            .addNetworkInterceptor(rewriteOctetStream)
+            .build()
+
+    private val rewriteOctetStream: Interceptor = Interceptor { chain ->
+        val originalResponse: Response = chain.proceed(chain.request())
+        if (originalResponse.headers("Content-Type").contains("application/octet-stream") && originalResponse.request.url.toString().contains(".webp")) {
+            val orgBody = originalResponse.body!!.bytes()
+            val newBody = orgBody.toResponseBody("image/webp".toMediaTypeOrNull())
+            originalResponse.newBuilder()
+                .body(newBody)
+                .build()
+        } else originalResponse
+    }
 
     private val lusLang: String = toLusLang(lang)
 
@@ -73,10 +92,6 @@ abstract class Luscious(
             "th" -> "101"
             else -> "99"
         }
-    }
-
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     // Common
@@ -820,6 +835,12 @@ abstract class Luscious(
         private val SORT_PREF_ENTRIES = arrayOf("Position", "Date", "Rating")
         private val SORT_PREF_ENTRY_VALUES = arrayOf("position", "date_newest", "rating_all_time")
         private val SORT_PREF_DEFAULT_VALUE = SORT_PREF_ENTRY_VALUES[0]
+
+        private const val MIRROR_PREF_KEY = "MIRROR"
+        private const val MIRROR_PREF_TITLE = "Mirror"
+        private val MIRROR_PREF_ENTRIES = arrayOf("Guest", "API", "Members")
+        private val MIRROR_PREF_ENTRY_VALUES = arrayOf("https://www.luscious.net", "https://api.luscious.net", "https://members.luscious.net")
+        private val MIRROR_PREF_DEFAULT_VALUE = MIRROR_PREF_ENTRY_VALUES[0]
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -864,12 +885,29 @@ abstract class Luscious(
                 preferences.edit().putBoolean("${MERGE_CHAPTER_PREF_KEY}_$lang", checkValue).commit()
             }
         }
+        val mirrorPref = ListPreference(screen.context).apply {
+            key = "${MIRROR_PREF_KEY}_$lang"
+            title = MIRROR_PREF_TITLE
+            entries = MIRROR_PREF_ENTRIES
+            entryValues = MIRROR_PREF_ENTRY_VALUES
+            setDefaultValue(MIRROR_PREF_DEFAULT_VALUE)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString("${MIRROR_PREF_KEY}_$lang", entry).commit()
+            }
+        }
         screen.addPreference(resolutionPref)
         screen.addPreference(sortPref)
         screen.addPreference(mergeChapterPref)
+        screen.addPreference(mirrorPref)
     }
 
     private fun getMergeChapterPref(): Boolean = preferences.getBoolean("${MERGE_CHAPTER_PREF_KEY}_$lang", MERGE_CHAPTER_PREF_DEFAULT_VALUE)
     private fun getResolutionPref(): String? = preferences.getString("${RESOLUTION_PREF_KEY}_$lang", RESOLUTION_PREF_DEFAULT_VALUE)
     private fun getSortPref(): String? = preferences.getString("${SORT_PREF_KEY}_$lang", SORT_PREF_DEFAULT_VALUE)
+    private fun getMirrorPref(): String? = preferences.getString("${MIRROR_PREF_KEY}_$lang", MIRROR_PREF_DEFAULT_VALUE)
 }
