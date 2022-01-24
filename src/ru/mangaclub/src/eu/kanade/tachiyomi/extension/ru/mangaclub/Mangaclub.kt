@@ -32,7 +32,7 @@ class Mangaclub : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         thumbnail_url = element.select("div.content-block>.image>picture>img").attr("abs:src")
         element.select("div.content-title>.title>a").apply {
-            title = this.text().replace("\\'", "'").trim()
+            title = this.text().replace("\\'", "'").substringBefore("/").trim()
             setUrlWithoutDomain(this.attr("abs:href"))
         }
     }
@@ -100,22 +100,24 @@ class Mangaclub : ParsedHttpSource() {
         }
         return GET(url, headers)
     }
+
     override fun searchMangaNextPageSelector(): String = popularMangaNextPageSelector()
     override fun searchMangaSelector(): String = popularMangaSelector()
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
     // Details
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
+        val licensedStatus = document.select("div.fullstory").text().contains("Данное произведение лицензировано на территории РФ. Главы удалены.")
         thumbnail_url = document.select("div.content-block>.image>picture>img").attr("abs:src")
-        title = document.select("div.info>div>strong").text().replace("\\'", "'").trim()
+        title = document.select("div.info>div>strong").text().replace("\\'", "'").substringBefore("/").trim()
         author = document.select("div.info>div>a[href*=author]").text().trim()
         artist = author
         status = when (document.select("div.info>div>a[href*=status_translation]").text().trim()) {
-            "Продолжается" -> SManga.ONGOING
-            "Завершен" -> SManga.COMPLETED
+            "Продолжается" -> if (licensedStatus) SManga.LICENSED else SManga.ONGOING
+            "Завершен" -> if (licensedStatus) SManga.LICENSED else SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
-        description = document.select("div.description>p").text().trim()
+        description = document.select("div.description").text().substringBefore("Связанная манга:").trim()
         genre = document.select("div.info>div>a[href*=tags]").joinToString(", ") { it.text() }
     }
 
@@ -137,6 +139,7 @@ class Mangaclub : ParsedHttpSource() {
             add(Page(it.attr("data-p").toInt(), "", "${baseUrl.replace("//", "//img.")}/${it.attr("data-i")}"))
         }
     }
+
     override fun imageUrlParse(document: Document): String = ""
 
     // Filters
@@ -148,6 +151,7 @@ class Mangaclub : ParsedHttpSource() {
         "Статус",
         arrayOf("Не выбрано", "Завершен", "Продолжается", "Заморожено/Заброшено")
     )
+
     private class OrderBy : Filter.Sort(
         "Сортировка",
         arrayOf("По дате добавления", "По дате обновления", "В алфавитном порядке", "По количеству комментариев", "По количеству просмотров", "По рейтингу"),
