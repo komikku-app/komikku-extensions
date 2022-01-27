@@ -5,7 +5,7 @@ ext {
     extName = 'Gufeng Manhua'
     pkgNameSuffix = 'zh.gufengmh'
     extClass = '.Gufengmh'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 
