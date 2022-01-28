@@ -6,7 +6,7 @@ ext {
     extName = 'Bato.to'
     pkgNameSuffix = 'all.batoto'
     extClass = '.BatoToFactory'
-    extVersionCode = 21
+    extVersionCode = 22
     isNsfw = true
 }
 
