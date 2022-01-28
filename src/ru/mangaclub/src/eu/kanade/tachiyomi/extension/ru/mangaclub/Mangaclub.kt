@@ -32,7 +32,7 @@ class Mangaclub : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         thumbnail_url = element.select("div.content-block>.image>picture>img").attr("abs:src")
         element.select("div.content-title>.title>a").apply {
-            title = this.text().replace("\\'", "'").substringBefore("/").trim()
+            title = this.text().replace("\\'", "'").trim()
             setUrlWithoutDomain(this.attr("abs:href"))
         }
     }
@@ -59,35 +59,21 @@ class Mangaclub : ParsedHttpSource() {
             return POST("$url/index.php?do=search", searchHeaders, formBody)
         } else {
             url += "/f"
-            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+            for (filter in if (filters.isEmpty()) getFilterList() else filters) {
                 when (filter) {
                     is GenreList -> {
                         val genresIDs = mutableListOf<String>()
-                        filter.state.forEach { genre ->
-                            if (genre.state) {
-                                genresIDs += genre.id
-                            }
-                        }
-                        if (genresIDs.isNotEmpty()) {
-                            url += "/n.l.tags=${genresIDs.joinToString(",")}"
-                        }
+                        filter.state.forEach { genre -> if (genre.state) genresIDs += genre.id }
+                        if (genresIDs.isNotEmpty()) url += "/n.l.tags=${genresIDs.joinToString(",")}"
                     }
                     is CategoryList -> {
                         val categoriesIDs = mutableListOf<String>()
-                        filter.state.forEach { category ->
-                            if (category.state) {
-                                categoriesIDs += category.id
-                            }
-                        }
-                        if (categoriesIDs.isNotEmpty()) {
-                            url += "/o.cat=${categoriesIDs.joinToString(",")}"
-                        }
+                        filter.state.forEach { category -> if (category.state) categoriesIDs += category.id }
+                        if (categoriesIDs.isNotEmpty()) url += "/o.cat=${categoriesIDs.joinToString(",")}"
                     }
                     is Status -> {
                         val statusID = arrayOf("Не выбрано", "Завершен", "Продолжается", "Заморожено/Заброшено")[filter.state]
-                        if (filter.state > 0) {
-                            url += "/status_translation=$statusID"
-                        }
+                        if (filter.state > 0) url += "/status_translation=$statusID"
                     }
                     is OrderBy -> {
                         val orderState = if (filter.state!!.ascending) "asc" else "desc"
@@ -100,7 +86,6 @@ class Mangaclub : ParsedHttpSource() {
         }
         return GET(url, headers)
     }
-
     override fun searchMangaNextPageSelector(): String = popularMangaNextPageSelector()
     override fun searchMangaSelector(): String = popularMangaSelector()
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
@@ -109,7 +94,7 @@ class Mangaclub : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val licensedStatus = document.select("div.fullstory").text().contains("Данное произведение лицензировано на территории РФ. Главы удалены.")
         thumbnail_url = document.select("div.content-block>.image>picture>img").attr("abs:src")
-        title = document.select("div.info>div>strong").text().replace("\\'", "'").substringBefore("/").trim()
+        title = document.select("div.info>div>strong").text().replace("\\'", "'").trim()
         author = document.select("div.info>div>a[href*=author]").text().trim()
         artist = author
         status = when (document.select("div.info>div>a[href*=status_translation]").text().trim()) {
@@ -139,7 +124,6 @@ class Mangaclub : ParsedHttpSource() {
             add(Page(it.attr("data-p").toInt(), "", "${baseUrl.replace("//", "//img.")}/${it.attr("data-i")}"))
         }
     }
-
     override fun imageUrlParse(document: Document): String = ""
 
     // Filters
@@ -155,7 +139,7 @@ class Mangaclub : ParsedHttpSource() {
     private class OrderBy : Filter.Sort(
         "Сортировка",
         arrayOf("По дате добавления", "По дате обновления", "В алфавитном порядке", "По количеству комментариев", "По количеству просмотров", "По рейтингу"),
-        Selection(0, false)
+        Selection(5, false)
     )
 
     override fun getFilterList() = FilterList(
