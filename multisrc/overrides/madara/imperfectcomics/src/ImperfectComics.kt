@@ -19,34 +19,40 @@ import org.jsoup.nodes.Document
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.text.SimpleDateFormat
+import java.util.concurrent.TimeUnit
 
 class ImperfectComics : Madara("Imperfect Comics", "https://imperfectcomic.com", "en", SimpleDateFormat("yyyy-MM-dd")) {
 
     override val useNewChapterEndpoint: Boolean = true
 
-    override val client: OkHttpClient = super.client.newBuilder()
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
         .addInterceptor(::imageIntercept)
         .build()
 
     override fun pageListParse(document: Document): List<Page> {
         val mangaId = document.select("#manga-reading-nav-head").attr("data-id")
         val chapterId = document.select("#wp-manga-current-chap").attr("data-id")
-        val mangaRegex = """data-id=\"$mangaId\"(?:.|\n)*?(?=\})""".toRegex()
-        val chapterRegex = """data-id=\"$chapterId\"(?:.|\n)*?(?=\})""".toRegex()
+        val mangaRegex = """div\[data-id=\"$mangaId\"(?:.|\n)*?(?=\})""".toRegex()
+        val chapterRegex = """input\[data-id=\"$chapterId\"(?:.|\n)*?(?=\})""".toRegex()
         val css = document.selectFirst("#wp-custom-css").html()
-        val props = mangaRegex.find(css).let { mId ->
-            mId?.value ?: chapterRegex.find(css).let { cId ->
-                cId?.value ?: ""
+
+        //Checking for chapter first to handle mirrored manga with specific un-mirrored chapters
+        val props = chapterRegex.find(css).let { cId ->
+            cId?.value ?: mangaRegex.find(css).let { mId ->
+                mId?.value ?: ""
             }
         }
 
         countViews(document)
 
         return document.select(pageListParseSelector).mapIndexed { index, element ->
-            val imageUrl = element.selectFirst("img")?.absUrl("src")!!
-                .toHttpUrlOrNull()!!.newBuilder()
+            val imageUrl = element.selectFirst("img")?.let {
+                it.absUrl(if (it.hasAttr("data-src")) "data-src" else "src")
+            }!!.toHttpUrlOrNull()!!.newBuilder()
 
-            if (props.contains("transform"))
+            if (props.contains("transform: scaleX(-1)"))
                 imageUrl.addQueryParameter("mirror", "1")
             if (props.contains("invert"))
                 imageUrl.addQueryParameter("invert", "1")
