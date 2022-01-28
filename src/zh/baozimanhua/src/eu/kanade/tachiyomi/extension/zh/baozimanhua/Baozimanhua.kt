@@ -104,7 +104,7 @@ class Baozimanhua : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val pages = document.select("div.comic-contain > amp-img").mapIndexed() { index, element ->
+        val pages = document.select("section.comic-contain > amp-img").mapIndexed() { index, element ->
             Page(index, imageUrl = element.attr("src").trim())
         }
         return pages
