@@ -350,8 +350,8 @@ abstract class Madara(
                 manga.status = when (it.text()) {
                     // I don't know what's the corresponding for COMPLETED and LICENSED
                     // There's no support for "Canceled" or "On Hold"
-                    "Completed", "Completo", "Concluído", "Concluido", "Terminé" -> SManga.COMPLETED
-                    "OnGoing", "Продолжается", "Updating", "Em Lançamento", "Em andamento", "Em Andamento", "En cours", "Ativo", "Lançando" -> SManga.ONGOING
+                    "Completed", "Completo", "Concluído", "Concluido", "Terminé", "Hoàn Thành" -> SManga.COMPLETED
+                    "OnGoing", "Продолжается", "Updating", "Em Lançamento", "Em andamento", "Em Andamento", "En cours", "Ativo", "Lançando", "Đang Tiến Hành", "Devam Ediyor", "Devam ediyor", "In Corso", "In Arrivo" -> SManga.ONGOING
                     else -> SManga.UNKNOWN
                 }
             }
@@ -396,7 +396,7 @@ abstract class Madara(
     open val mangaDetailsSelectorAuthor = "div.author-content > a"
     open val mangaDetailsSelectorArtist = "div.artist-content > a"
     open val mangaDetailsSelectorStatus = "div.summary-content"
-    open val mangaDetailsSelectorDescription = "div.description-summary div.summary__content"
+    open val mangaDetailsSelectorDescription = "div.description-summary div.summary__content, div.summary_content div.post-content_item > h5 + div, div.summary_content div.manga-excerpt"
     open val mangaDetailsSelectorThumbnail = "div.summary_image img"
     open val mangaDetailsSelectorGenre = "div.genres-content a"
     open val mangaDetailsSelectorTag = "div.tags-content a"
@@ -509,9 +509,9 @@ abstract class Madara(
             }
             // Dates can be part of a "new" graphic or plain text
             // Added "title" alternative
-            chapter.date_upload = select("img").firstOrNull()?.attr("alt")?.let { parseRelativeDate(it) }
+            chapter.date_upload = select("img:not(.thumb)").firstOrNull()?.attr("alt")?.let { parseRelativeDate(it) }
                 ?: select("span a").firstOrNull()?.attr("title")?.let { parseRelativeDate(it) }
-                ?: parseChapterDate(select("span.chapter-release-date i").firstOrNull()?.text())
+                ?: parseChapterDate(select("span.chapter-release-date").firstOrNull()?.text())
         }
 
         return chapter
@@ -529,19 +529,8 @@ abstract class Madara(
         }
 
         return when {
-            date.endsWith(" ago", ignoreCase = true) -> {
-                parseRelativeDate(date)
-            }
-            // Handle translated 'ago' in Portuguese.
-            date.endsWith(" atrás", ignoreCase = true) -> {
-                parseRelativeDate(date)
-            }
-            // Handle translated 'ago' in Turkish.
-            date.endsWith(" önce", ignoreCase = true) -> {
-                parseRelativeDate(date)
-            }
             // Handle 'yesterday' and 'today', using midnight
-            date.startsWith("year", ignoreCase = true) -> {
+            WordSet("yesterday", "يوم واحد").startsWith(date) -> {
                 Calendar.getInstance().apply {
                     add(Calendar.DAY_OF_MONTH, -1) // yesterday
                     set(Calendar.HOUR_OF_DAY, 0)
@@ -550,13 +539,25 @@ abstract class Madara(
                     set(Calendar.MILLISECOND, 0)
                 }.timeInMillis
             }
-            date.startsWith("today", ignoreCase = true) -> {
+            WordSet("today").startsWith(date) -> {
                 Calendar.getInstance().apply {
                     set(Calendar.HOUR_OF_DAY, 0)
                     set(Calendar.MINUTE, 0)
                     set(Calendar.SECOND, 0)
                     set(Calendar.MILLISECOND, 0)
                 }.timeInMillis
+            }
+            WordSet("يومين").startsWith(date) -> {
+                Calendar.getInstance().apply {
+                    add(Calendar.DAY_OF_MONTH, -2) // day before yesterday
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+            }
+            WordSet("ago", "atrás", "önce", "قبل").endsWith(date) -> {
+                parseRelativeDate(date)
             }
             date.contains(Regex("""\d(st|nd|rd|th)""")) -> {
                 // Clean date (e.g. 5th December 2019 to 5 December 2019) before parsing it
@@ -580,10 +581,11 @@ abstract class Madara(
         val cal = Calendar.getInstance()
 
         return when {
-            WordSet("hari", "gün", "jour", "día", "dia", "day", "วัน").anyWordIn(date) -> cal.apply { add(Calendar.DAY_OF_MONTH, -number) }.timeInMillis
-            WordSet("jam", "saat", "heure", "hora", "hour", "ชั่วโมง").anyWordIn(date) -> cal.apply { add(Calendar.HOUR, -number) }.timeInMillis
-            WordSet("menit", "dakika", "min", "minute", "minuto", "นาที").anyWordIn(date) -> cal.apply { add(Calendar.MINUTE, -number) }.timeInMillis
+            WordSet("hari", "gün", "jour", "día", "dia", "day", "วัน", "ngày", "giorni", "أيام").anyWordIn(date) -> cal.apply { add(Calendar.DAY_OF_MONTH, -number) }.timeInMillis
+            WordSet("jam", "saat", "heure", "hora", "hour", "ชั่วโมง", "giờ", "ore", "ساعة").anyWordIn(date) -> cal.apply { add(Calendar.HOUR, -number) }.timeInMillis
+            WordSet("menit", "dakika", "min", "minute", "minuto", "นาที", "دقائق").anyWordIn(date) -> cal.apply { add(Calendar.MINUTE, -number) }.timeInMillis
             WordSet("detik", "segundo", "second", "วินาที").anyWordIn(date) -> cal.apply { add(Calendar.SECOND, -number) }.timeInMillis
+            WordSet("week").anyWordIn(date) -> cal.apply { add(Calendar.DAY_OF_MONTH, -number*7) }.timeInMillis
             WordSet("month").anyWordIn(date) -> cal.apply { add(Calendar.MONTH, -number) }.timeInMillis
             WordSet("year").anyWordIn(date) -> cal.apply { add(Calendar.YEAR, -number) }.timeInMillis
             else -> 0
@@ -680,4 +682,8 @@ abstract class Madara(
     }
 }
 
-class WordSet(private vararg val words: String) { fun anyWordIn(dateString: String): Boolean = words.any { dateString.contains(it, ignoreCase = true) } }
+class WordSet(private vararg val words: String) {
+    fun anyWordIn(dateString: String): Boolean = words.any { dateString.contains(it, ignoreCase = true) }
+    fun startsWith(dateString: String): Boolean =words.any { dateString.startsWith(it, ignoreCase = true) }
+    fun endsWith(dateString: String): Boolean =words.any { dateString.endsWith(it, ignoreCase = true) }
+}
