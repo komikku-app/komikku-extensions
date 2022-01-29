@@ -125,7 +125,9 @@ abstract class Bilibili(
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val json: Json by injectLazy()
+    protected val json: Json by injectLazy()
+
+    protected open val signedIn: Boolean = false
 
     private val chapterImageQuality: String
         get() = preferences.getString("${IMAGE_QUALITY_PREF_KEY}_$lang", IMAGE_QUALITY_PREF_DEFAULT_VALUE)!!
@@ -146,18 +148,12 @@ abstract class Bilibili(
         }
         val requestBody = requestPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
 
-        val newHeaders = headersBuilder()
-            .add("Content-Length", requestBody.contentLength().toString())
-            .add("Content-Type", requestBody.contentType().toString())
-            .build()
-
-        val apiUrl = "$baseUrl/$BASE_API_ENDPOINT/ClassPage".toHttpUrl().newBuilder()
-            .addQueryParameter("device", "pc")
-            .addQueryParameter("platform", "web")
-            .addLanguageParameters()
+        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/ClassPage".toHttpUrl()
+            .newBuilder()
+            .addCommonParameters()
             .toString()
 
-        return POST(apiUrl, newHeaders, requestBody)
+        return POST(apiUrl, headers, requestBody)
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
@@ -192,18 +188,12 @@ abstract class Bilibili(
         }
         val requestBody = requestPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
 
-        val newHeaders = headersBuilder()
-            .add("Content-Length", requestBody.contentLength().toString())
-            .add("Content-Type", requestBody.contentType().toString())
-            .build()
-
-        val apiUrl = "$baseUrl/$BASE_API_ENDPOINT/ClassPage".toHttpUrl().newBuilder()
-            .addQueryParameter("device", "pc")
-            .addQueryParameter("platform", "web")
-            .addLanguageParameters()
+        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/ClassPage".toHttpUrl()
+            .newBuilder()
+            .addCommonParameters()
             .toString()
 
-        return POST(apiUrl, newHeaders, requestBody)
+        return POST(apiUrl, headers, requestBody)
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
@@ -273,16 +263,12 @@ abstract class Bilibili(
                 .toString()
 
         val newHeaders = headersBuilder()
-            .add("Content-Length", requestBody.contentLength().toString())
-            .add("Content-Type", requestBody.contentType().toString())
             .set("Referer", refererUrl)
             .build()
 
-        val apiUrl = "$baseUrl/$BASE_API_ENDPOINT/".toHttpUrl().newBuilder()
+        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/".toHttpUrl().newBuilder()
             .addPathSegment(if (query.isBlank()) "ClassPage" else "Search")
-            .addQueryParameter("device", "pc")
-            .addQueryParameter("platform", "web")
-            .addLanguageParameters()
+            .addCommonParameters()
             .toString()
 
         return POST(apiUrl, newHeaders, requestBody)
@@ -343,15 +329,12 @@ abstract class Bilibili(
         val requestBody = jsonPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
 
         val newHeaders = headersBuilder()
-            .add("Content-Length", requestBody.contentLength().toString())
-            .add("Content-Type", requestBody.contentType().toString())
             .set("Referer", baseUrl + mangaUrl)
             .build()
 
-        val apiUrl = "$baseUrl/$BASE_API_ENDPOINT/ComicDetail".toHttpUrl().newBuilder()
-            .addQueryParameter("device", "pc")
-            .addQueryParameter("platform", "web")
-            .addLanguageParameters()
+        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/ComicDetail".toHttpUrl()
+            .newBuilder()
+            .addCommonParameters()
             .toString()
 
         return POST(apiUrl, newHeaders, requestBody)
@@ -369,7 +352,7 @@ abstract class Bilibili(
         thumbnail_url = comic.verticalCover + THUMBNAIL_RESOLUTION
         url = "/detail/mc" + comic.id
 
-        if (comic.episodeList.any { episode -> episode.payMode == 1 && episode.payGold > 0 }) {
+        if (comic.hasPaidChapters && !signedIn) {
             description += "\n\n$hasPaidChaptersWarning"
         }
     }
@@ -380,46 +363,49 @@ abstract class Bilibili(
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.parseAs<BilibiliComicDto>()
 
-        if (result.code != 0)
+        if (result.code != 0) {
             return emptyList()
+        }
 
         return result.data!!.episodeList
             .filter { episode -> episode.payMode == 0 && episode.payGold == 0 }
             .map { ep -> chapterFromObject(ep, result.data.id) }
     }
 
-    private fun chapterFromObject(episode: BilibiliEpisodeDto, comicId: Int): SChapter = SChapter.create().apply {
+    protected fun chapterFromObject(episode: BilibiliEpisodeDto, comicId: Int): SChapter = SChapter.create().apply {
         name = episodePrefix + episode.shortTitle +
             (if (episode.title.isNotBlank()) " - " + episode.title else "")
         date_upload = episode.publicationTime.substringBefore("T").toDate()
         url = "/mc$comicId/${episode.id}"
     }
 
-    override fun pageListRequest(chapter: SChapter): Request {
-        val chapterId = chapter.url.substringAfterLast("/").toInt()
+    override fun pageListRequest(chapter: SChapter): Request =
+        imageIndexRequest(chapter.url, "")
+
+    override fun pageListParse(response: Response): List<Page> = imageIndexParse(response)
+
+    protected fun imageIndexRequest(chapterUrl: String, credential: String): Request {
+        val chapterId = chapterUrl.substringAfterLast("/").toInt()
 
         val jsonPayload = buildJsonObject {
-            put("credential", "")
+            put("credential", credential)
             put("ep_id", chapterId)
         }
         val requestBody = jsonPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
 
         val newHeaders = headersBuilder()
-            .add("Content-Length", requestBody.contentLength().toString())
-            .add("Content-Type", requestBody.contentType().toString())
-            .set("Referer", baseUrl + chapter.url)
+            .set("Referer", baseUrl + chapterUrl)
             .build()
 
-        val apiUrl = "$baseUrl/$BASE_API_ENDPOINT/GetImageIndex".toHttpUrl().newBuilder()
-            .addQueryParameter("device", "pc")
-            .addQueryParameter("platform", "web")
-            .addLanguageParameters()
+        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/GetImageIndex".toHttpUrl()
+            .newBuilder()
+            .addCommonParameters()
             .toString()
 
         return POST(apiUrl, newHeaders, requestBody)
     }
 
-    override fun pageListParse(response: Response): List<Page> {
+    protected fun imageIndexParse(response: Response): List<Page> {
         val result = response.parseAs<BilibiliReader>()
 
         if (result.code != 0) {
@@ -444,18 +430,12 @@ abstract class Bilibili(
         }
         val requestBody = jsonPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
 
-        val newHeaders = headersBuilder()
-            .add("Content-Length", requestBody.contentLength().toString())
-            .add("Content-Type", requestBody.contentType().toString())
-            .build()
-
-        val apiUrl = "$baseUrl/$BASE_API_ENDPOINT/ImageToken".toHttpUrl().newBuilder()
-            .addQueryParameter("device", "pc")
-            .addQueryParameter("platform", "web")
-            .addLanguageParameters()
+        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/ImageToken".toHttpUrl()
+            .newBuilder()
+            .addCommonParameters()
             .toString()
 
-        return POST(apiUrl, newHeaders, requestBody)
+        return POST(apiUrl, headers, requestBody)
     }
 
     override fun imageUrlParse(response: Response): String = ""
@@ -554,16 +534,19 @@ abstract class Bilibili(
         return response
     }
 
-    private fun HttpUrl.Builder.addLanguageParameters(): HttpUrl.Builder = let {
+    protected fun HttpUrl.Builder.addCommonParameters(): HttpUrl.Builder = let {
         if (name == "BILIBILI COMICS") {
             addQueryParameter("lang", apiLang)
             addQueryParameter("sys_lang", apiLang)
         }
 
+        addQueryParameter("device", "pc")
+        addQueryParameter("platform", "web")
+
         return@let it
     }
 
-    private inline fun <reified T> Response.parseAs(): BilibiliResultDto<T> = use {
+    protected inline fun <reified T> Response.parseAs(): BilibiliResultDto<T> = use {
         json.decodeFromString(it.body?.string().orEmpty())
     }
 
@@ -576,11 +559,12 @@ abstract class Bilibili(
         private const val CDN_URL = "https://manga.hdslb.com"
         private const val COVER_CDN_URL = "https://i0.hdslb.com"
 
-        private const val BASE_API_ENDPOINT = "twirp/comic.v1.Comic"
+        const val BASE_API_COMIC_ENDPOINT = "twirp/comic.v1.Comic"
+        const val BASE_API_USER_ENDPOINT = "twirp/comic.v1.User"
 
         private const val ACCEPT_JSON = "application/json, text/plain, */*"
 
-        private val JSON_MEDIA_TYPE = "application/json;charset=UTF-8".toMediaType()
+        val JSON_MEDIA_TYPE = "application/json;charset=UTF-8".toMediaType()
 
         private const val POPULAR_PER_PAGE = 18
         private const val SEARCH_PER_PAGE = 9

@@ -12,9 +12,6 @@ class BilibiliFactory : SourceFactory {
     )
 }
 
-abstract class BilibiliComics(lang: String) :
-    Bilibili("BILIBILI COMICS", "https://www.bilibilicomics.com", lang)
-
 class BilibiliComicsEn : BilibiliComics("en") {
 
     override fun getAllGenres(): Array<BilibiliTag> = arrayOf(

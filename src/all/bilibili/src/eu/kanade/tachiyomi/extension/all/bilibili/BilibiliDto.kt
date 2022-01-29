@@ -27,7 +27,10 @@ data class BilibiliComicDto(
     val styles: List<String> = emptyList(),
     val title: String,
     @SerialName("vertical_cover") val verticalCover: String = ""
-)
+) {
+    val hasPaidChapters: Boolean
+        get() = episodeList.any { episode -> episode.payMode == 1 && episode.payGold > 0 }
+}
 
 @Serializable
 data class BilibiliEpisodeDto(
@@ -53,4 +56,38 @@ data class BilibiliImageDto(
 data class BilibiliPageDto(
     val token: String,
     val url: String
+)
+
+@Serializable
+data class BilibiliAccessTokenCookie(
+    val accessToken: String,
+    val refreshToken: String
+)
+
+@Serializable
+data class BilibiliAccessToken(
+    @SerialName("access_token") val accessToken: String,
+    @SerialName("refresh_token") val refreshToken: String
+)
+
+@Serializable
+data class BilibiliUserEpisodes(
+    @SerialName("unlocked_eps") val unlockedEpisodes: List<BilibiliUnlockedEpisode>? = emptyList()
+)
+
+@Serializable
+data class BilibiliUnlockedEpisode(
+    @SerialName("ep_id") val id: Int = 0
+)
+
+@Serializable
+data class BilibiliGetCredential(
+    @SerialName("comic_id") val comicId: Int,
+    @SerialName("ep_id") val episodeId: Int,
+    val type: Int
+)
+
+@Serializable
+data class BilibiliCredential(
+    val credential: String
 )
