@@ -7,10 +7,12 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class REManga : ParsedHttpSource() {
 
@@ -24,40 +26,38 @@ class REManga : ParsedHttpSource() {
 
     // Popular
 
-    override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/manga-list/")
-    }
+    override fun popularMangaRequest(page: Int): Request =
+        GET("$baseUrl/manga-list/?title=&order=popular&status=&type=")
 
     override fun popularMangaSelector() = "article.animpost"
 
-    override fun popularMangaFromElement(element: Element): SManga {
-        return SManga.create().apply {
-            element.select("a").let {
-                setUrlWithoutDomain(it.attr("href"))
-                thumbnail_url = element.select("img").attr("abs:src")
-                title = element.select("img").attr("title")
+    override fun popularMangaFromElement(element: Element): SManga =
+        SManga.create().apply {
+            setUrlWithoutDomain(element.select("a").attr("abs:href"))
+            element.select("img").let {
+                thumbnail_url = it.attr("abs:src")
+                title = it.attr("title")
             }
         }
-    }
 
     override fun popularMangaNextPageSelector(): String? = null
 
     // Latest
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET(baseUrl)
-    }
+    override fun latestUpdatesRequest(page: Int): Request =
+        GET("$baseUrl/manga-list/?title=&order=update&status=&type=")
 
     override fun latestUpdatesSelector() = popularMangaSelector()
 
     override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
 
-    override fun latestUpdatesNextPageSelector(): String? = null
+    override fun latestUpdatesNextPageSelector(): String? = popularMangaNextPageSelector()
 
     // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/manga-list/?title=$query".toHttpUrlOrNull()!!.newBuilder()
+        val url = "$baseUrl/manga-list/?".toHttpUrl().newBuilder()
+            .addQueryParameter("title", query)
         filters.forEach { filter ->
             when (filter) {
                 is SortFilter -> url.addQueryParameter("order", filter.toUriPart())
@@ -77,9 +77,10 @@ class REManga : ParsedHttpSource() {
                         .filter { it.state != Filter.TriState.STATE_IGNORE }
                         .forEach { url.addQueryParameter("years[]", it.id) }
                 }
+                else -> {}
             }
         }
-        return GET(url.build().toString(), headers)
+        return GET(url.toString(), headers)
     }
 
     override fun searchMangaSelector() = popularMangaSelector()
@@ -108,12 +109,23 @@ class REManga : ParsedHttpSource() {
 
     // Chapters
 
-    override fun chapterListSelector() = "li"
+    override fun chapterListSelector() = ".lsteps li"
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
-            name = element.select("div.epsright span.eps > a > chapter").text()
-            setUrlWithoutDomain(element.select("div.epsright span.eps a").attr("abs:href"))
+            setUrlWithoutDomain(element.select("a").first()!!.attr("abs:href"))
+
+            val chNum = element.select(".eps > a").first()!!.text()
+            val chTitle = element.select(".lchx > a").first()!!.text()
+
+            name = when {
+                chTitle.startsWith("الفصل ") -> chTitle
+                else -> "الفصل $chNum - $chTitle"
+            }
+
+            element.select(".date").first()?.text()?.let { date ->
+                date_upload = DATE_FORMATTER.parse(date)?.time ?: 0L
+            }
         }
     }
 
@@ -236,5 +248,11 @@ class REManga : ParsedHttpSource() {
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String?, String>>) :
         Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray()) {
         fun toUriPart() = vals[state].first
+    }
+
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("MMM d, yyy", Locale("ar"))
+        }
     }
 }
