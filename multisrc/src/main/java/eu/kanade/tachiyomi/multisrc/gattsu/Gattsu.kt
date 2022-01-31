@@ -42,7 +42,10 @@ abstract class Gattsu(
 
     override fun popularMangaNextPageSelector(): String? = latestUpdatesNextPageSelector()
 
-    override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl, headers)
+    override fun latestUpdatesRequest(page: Int): Request {
+        val path = if (page == 1) "" else "page/$page"
+        return GET("$baseUrl/$path", headers)
+    }
 
     override fun latestUpdatesSelector() = "div.meio div.lista ul li a[href^=$baseUrl]"
 
@@ -52,7 +55,7 @@ abstract class Gattsu(
         setUrlWithoutDomain(element.attr("href"))
     }
 
-    override fun latestUpdatesNextPageSelector(): String? = null
+    override fun latestUpdatesNextPageSelector(): String = "ul.paginacao li.next > a"
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val searchUrl = "$baseUrl/page/$page/".toHttpUrlOrNull()!!.newBuilder()
@@ -67,7 +70,7 @@ abstract class Gattsu(
 
     override fun searchMangaFromElement(element: Element): SManga = latestUpdatesFromElement(element)
 
-    override fun searchMangaNextPageSelector() = "ul.paginacao li.next > a"
+    override fun searchMangaNextPageSelector(): String = latestUpdatesNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val postBox = document.select("div.meio div.post-box").first()!!

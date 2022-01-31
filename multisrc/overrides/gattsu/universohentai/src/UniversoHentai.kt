@@ -29,8 +29,6 @@ class UniversoHentai : Gattsu(
         setUrlWithoutDomain(element.attr("href"))
     }
 
-    override fun latestUpdatesNextPageSelector() = searchMangaNextPageSelector()
-
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val postBox = document.selectFirst(chapterListSelector())!!
 

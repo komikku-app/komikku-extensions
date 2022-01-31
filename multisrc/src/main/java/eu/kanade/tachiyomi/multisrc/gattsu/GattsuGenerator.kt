@@ -9,7 +9,7 @@ class GattsuGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Gattsu"
 
-    override val baseVersionCode: Int = 2
+    override val baseVersionCode: Int = 3
 
     override val sources = listOf(
         SingleLang("Hentai Season", "https://hentaiseason.com", "pt-BR", isNsfw = true),
