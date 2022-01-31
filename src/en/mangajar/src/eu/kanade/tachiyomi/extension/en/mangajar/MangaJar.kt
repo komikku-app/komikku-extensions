@@ -51,7 +51,7 @@ class MangaJar : ParsedHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/manga?sortBy=last_chapter_at&page=$page")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/manga?sortBy=-last_chapter_at&page=$page")
 
     override fun latestUpdatesSelector() = popularMangaSelector()
 
