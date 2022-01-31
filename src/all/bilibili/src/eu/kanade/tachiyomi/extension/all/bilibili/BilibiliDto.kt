@@ -61,7 +61,8 @@ data class BilibiliPageDto(
 @Serializable
 data class BilibiliAccessTokenCookie(
     val accessToken: String,
-    val refreshToken: String
+    val refreshToken: String,
+    val area: String
 )
 
 @Serializable

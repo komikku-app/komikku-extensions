@@ -29,6 +29,12 @@ abstract class BilibiliComics(lang: String) : Bilibili(
     override val signedIn: Boolean
         get() = accessTokenCookie != null
 
+    private val globalApiSubDomain: String
+        get() = GLOBAL_API_SUBDOMAINS[(accessTokenCookie?.area?.toIntOrNull() ?: 1) - 1]
+
+    private val globalApiBaseUrl: String
+        get() = "https://$globalApiSubDomain.bilibilicomics.com"
+
     private var accessTokenCookie: BilibiliAccessTokenCookie? = null
 
     override fun chapterListParse(response: Response): List<SChapter> {
@@ -64,7 +70,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
             .set("Referer", baseUrl)
             .build()
 
-        val apiUrl = "$GLOBAL_API_URL/$GLOBAL_BASE_API_COMIC_ENDPOINT/GetUserEpisodes".toHttpUrl()
+        val apiUrl = "$globalApiBaseUrl/$GLOBAL_BASE_API_COMIC_ENDPOINT/GetUserEpisodes".toHttpUrl()
             .newBuilder()
             .addCommonParameters()
             .toString()
@@ -74,7 +80,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
 
     private fun userEpisodesParse(response: Response): List<Int> {
         if (!response.isSuccessful) {
-            throw Exception("HTTP error ${response.code}")
+            return emptyList()
         }
 
         val result = response.parseAs<BilibiliUserEpisodes>()
@@ -103,7 +109,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
             .set("Referer", baseUrl + chapter.url)
             .build()
 
-        val apiUrl = "$GLOBAL_API_URL/$GLOBAL_BASE_API_USER_ENDPOINT/GetCredential".toHttpUrl()
+        val apiUrl = "$globalApiBaseUrl/$GLOBAL_BASE_API_USER_ENDPOINT/GetCredential".toHttpUrl()
             .newBuilder()
             .addCommonParameters()
             .toString()
@@ -117,7 +123,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
         }
 
         if (!response.isSuccessful) {
-            throw Exception("HTTP error ${response.code}")
+            throw Exception(FAILED_TO_GET_CREDENTIAL)
         }
 
         val result = response.parseAs<BilibiliCredential>()
@@ -137,7 +143,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
         var request = chain.request()
         val requestUrl = request.url.toString()
 
-        if (!requestUrl.startsWith(baseUrl) && !requestUrl.startsWith(GLOBAL_API_URL)) {
+        if (!requestUrl.contains("bilibilicomics.com")) {
             return chain.proceed(request)
         }
 
@@ -170,7 +176,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
             )
             val refreshTokenResponse = chain.proceed(refreshTokenRequest)
 
-            accessTokenCookie = refreshTokenParse(refreshTokenResponse) ?: accessTokenCookie
+            accessTokenCookie = refreshTokenParse(refreshTokenResponse)
 
             request = request.newBuilder()
                 .header("Authorization", "Bearer ${accessTokenCookie!!.accessToken}")
@@ -190,7 +196,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
             .set("Referer", baseUrl)
             .build()
 
-        val apiUrl = "$GLOBAL_API_URL/$GLOBAL_BASE_API_USER_ENDPOINT/RefreshToken".toHttpUrl()
+        val apiUrl = "$globalApiBaseUrl/$GLOBAL_BASE_API_USER_ENDPOINT/RefreshToken".toHttpUrl()
             .newBuilder()
             .addCommonParameters()
             .toString()
@@ -198,7 +204,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
         return POST(apiUrl, newHeaders, requestBody)
     }
 
-    private fun refreshTokenParse(response: Response): BilibiliAccessTokenCookie? {
+    private fun refreshTokenParse(response: Response): BilibiliAccessTokenCookie {
         if (!response.isSuccessful) {
             throw IOException(FAILED_TO_REFRESH_TOKEN)
         }
@@ -206,14 +212,15 @@ abstract class BilibiliComics(lang: String) : Bilibili(
         val result = response.parseAs<BilibiliAccessToken>()
 
         if (result.code != 0) {
-            return null
+            throw IOException(FAILED_TO_REFRESH_TOKEN)
         }
 
         val accessToken = result.data!!
 
         return BilibiliAccessTokenCookie(
             accessToken.accessToken,
-            accessToken.refreshToken
+            accessToken.refreshToken,
+            accessTokenCookie!!.area
         )
     }
 
@@ -229,11 +236,13 @@ abstract class BilibiliComics(lang: String) : Bilibili(
     companion object {
         private const val ACCESS_TOKEN_COOKIE_NAME = "access_token"
 
-        private const val GLOBAL_API_URL = "https://us-user.bilibilicomics.com"
+        private val GLOBAL_API_SUBDOMAINS = arrayOf("us-user", "sg-user")
         private const val GLOBAL_BASE_API_USER_ENDPOINT = "twirp/global.v1.User"
         private const val GLOBAL_BASE_API_COMIC_ENDPOINT = "twirp/comic.v1.User"
 
         private const val FAILED_TO_REFRESH_TOKEN =
             "Failed to refresh the token. Open the WebView to fix this error."
+        private const val FAILED_TO_GET_CREDENTIAL =
+            "Failed to get the credential to read the chapter."
     }
 }
