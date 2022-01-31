@@ -29,7 +29,6 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("Iskultrip Scans", "https://maryfaye.net", "en"),
         SingleLang("Anata no Motokare", "https://motokare.xyz", "en", className = "AnataNoMotokare"),
         SingleLang("Yuri-ism", "https://www.yuri-ism.net", "en", className = "YuriIsm"),
-        SingleLang("LupiTeam", "https://lupiteam.net", "it", overrideVersionCode = 1),
         SingleLang("Zandy no Fansub", "https://zandynofansub.aishiteru.org", "en"),
         SingleLang("Kirishima Fansub", "https://www.kirishimafansub.net", "es"),
         SingleLang("Baixar Hentai", "https://leitura.baixarhentai.net", "pt-BR", isNsfw = true, overrideVersionCode = 3),
