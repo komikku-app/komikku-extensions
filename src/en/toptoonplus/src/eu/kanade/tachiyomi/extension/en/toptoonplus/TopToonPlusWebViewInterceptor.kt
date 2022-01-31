@@ -28,7 +28,7 @@ class TopToonPlusWebViewInterceptor(
     private val headers: Headers
 ) : Interceptor {
 
-    private val handler = Handler(Looper.getMainLooper())
+    private val handler by lazy { Handler(Looper.getMainLooper()) }
 
     private val windowKey: String by lazy {
         UUID.randomUUID().toString().replace("-", "")
