@@ -91,7 +91,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
 
         element.select("a").first().let { link ->
             manga.setUrlWithoutDomain(link.attr("href"))
-            manga.title = if (titleLanguage.equals("rus") || element.select(".updates__name_rus").isNullOrEmpty()) { element.select("h4").first().text() } else element.select(".updates__name_rus").first().text()
+            manga.title = if (preferences.getString(LANGUAGE_PREF, "rus").equals("rus") || element.select(".updates__name_rus").isNullOrEmpty()) { element.select("h4").first().text() } else element.select(".updates__name_rus").first().text()
         }
         return manga
     }
@@ -146,7 +146,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
     private fun popularMangaFromElement(el: JsonElement) = SManga.create().apply {
         val slug = el.jsonObject["slug"]!!.jsonPrimitive.content
         val cover = el.jsonObject["cover"]!!.jsonPrimitive.content
-        title = if (titleLanguage.equals("rus")) el.jsonObject["rus_name"]!!.jsonPrimitive.content else el.jsonObject["name"]!!.jsonPrimitive.content
+        title = if (preferences.getString(LANGUAGE_PREF, "rus").equals("rus")) el.jsonObject["rus_name"]!!.jsonPrimitive.content else el.jsonObject["name"]!!.jsonPrimitive.content
         thumbnail_url = "$COVER_URL/huploads/cover/$slug/cover/${cover}_250x350.jpg"
         url = "/$slug"
     }
@@ -187,7 +187,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
             else -> "☆☆☆☆☆"
         }
         val genres = document.select(".media-tags > a").map { it.text().capitalize() }
-        manga.title = if (titleLanguage.equals("rus")) document.select(".media-name__main").text() else document.select(".media-name__alt").text()
+        manga.title = if (preferences.getString(LANGUAGE_PREF, "rus").equals("rus")) document.select(".media-name__main").text() else document.select(".media-name__alt").text()
         manga.thumbnail_url = document.select(".media-sidebar__cover > img").attr("src")
         manga.author = body.select("div.media-info-list__title:contains(Автор) + div").text()
         manga.artist = body.select("div.media-info-list__title:contains(Художник) + div").text()
@@ -211,7 +211,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
         if (altSelector.isNotEmpty()) {
             altName = "Альтернативные названия:\n" + altSelector.map { it.text() }.joinToString(" / ") + "\n\n"
         }
-        val mediaNameLanguage = if (titleLanguage.equals("rus")) document.select(".media-name__alt").text() else document.select(".media-name__main").text()
+        val mediaNameLanguage = if (preferences.getString(LANGUAGE_PREF, "rus").equals("rus")) document.select(".media-name__alt").text() else document.select(".media-name__main").text()
         manga.description = mediaNameLanguage + "\n" + ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" + altName + document.select(".media-description__text").text()
         return manga
     }
@@ -851,7 +851,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
     }
 
     private var server: String? = preferences.getString(SERVER_PREF, null)
-    private var titleLanguage: String? = preferences.getString(LANGUAGE_PREF, null)
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val serverPref = ListPreference(screen.context).apply {
             key = SERVER_PREF
@@ -889,10 +888,10 @@ class LibHentai : ConfigurableSource, HttpSource() {
             summary = "%s"
             setDefaultValue("eng")
             setOnPreferenceChangeListener { _, newValue ->
-                titleLanguage = newValue.toString()
+                val titleLanguage = preferences.edit().putString(LANGUAGE_PREF, newValue as String).commit()
                 val warning = "Если язык обложки не изменился очистите базу данных в приложении (Настройки -> Дополнительно -> Очистить базу данных)"
                 Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
-                true
+                titleLanguage
             }
         }
         screen.addPreference(serverPref)
