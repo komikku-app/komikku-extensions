@@ -42,10 +42,12 @@ class DbMFactory : SourceFactory {
         DbMultiverseDA_DK(),
         DbMultiverseCO_FR(),
         DbMultiverseBR_FR(),
-        DbMultiverseXX_VE()
+        DbMultiverseXX_VE(),
+        DbMultiverseXX_LMO()
     )
 }
 
+class DbMultiverseEN : DbMultiverse("en", "en")
 class DbMultiverseFR : DbMultiverse("fr", "fr")
 class DbMultiverseJP : DbMultiverse("ja", "jp")
 class DbMultiverseCN : DbMultiverse("zh", "cn")
@@ -81,3 +83,4 @@ class DbMultiverseDA_DK : DbMultiverse("da", "da_DK")
 class DbMultiverseCO_FR : DbMultiverse("co", "co_FR")
 class DbMultiverseBR_FR : DbMultiverse("br", "br_FR")
 class DbMultiverseXX_VE : DbMultiverse("vec", "xx_VE")
+class DbMultiverseXX_LMO : DbMultiverse("lmo", "xx_LMO")

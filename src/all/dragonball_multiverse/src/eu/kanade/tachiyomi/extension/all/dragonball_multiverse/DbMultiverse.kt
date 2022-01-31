@@ -24,13 +24,13 @@ abstract class DbMultiverse(override val lang: String, private val internalLang:
         val chapter = SChapter.create()
         val href = element.attr("href")
         chapter.setUrlWithoutDomain("/$internalLang/$href")
-        chapter.name = href.substringBefore(".html").replace("-", " ")
+        chapter.name = "Page " + element.text()
 
         return chapter
     }
 
-    override fun chapterListSelector(): String = ".cadrelect.chapters p a[href*=-]"
-
+    override fun chapterListSelector(): String = ".cadrelect.chapter p a[href*=-]"
+    
     override fun chapterListParse(response: Response): List<SChapter> {
         return super.chapterListParse(response).reversed()
     }
