@@ -43,7 +43,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Fusion Scanlation", "https://fusionscanlation.com", "es", className = "FusionScanlation", overrideVersionCode = 2),
         SingleLang("Ace Scans", "https://acescans.xyz", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Silence Scan", "https://silencescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 5),
-        SingleLang("YANP Fansub", "https://yanpfansub.com", "pt-BR", isNsfw = true),
+        SingleLang("YANP Fansub", "https://melhorcasal.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 7),
         SingleLang("Ozul Scans", "https://ozulscans.com", "ar"),
         SingleLang("Tsundoku Traduções", "https://tsundokutraducoes.com.br", "pt-BR", className = "TsundokuTraducoes", overrideVersionCode = 8)

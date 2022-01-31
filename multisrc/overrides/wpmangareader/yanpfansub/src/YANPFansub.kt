@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 class YANPFansub : WPMangaReader(
     "YANP Fansub",
-    "https://yanpfansub.com",
+    "https://melhorcasal.com",
     "pt-BR",
     dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
 ) {
