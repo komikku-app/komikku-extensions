@@ -9,6 +9,10 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -16,6 +20,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -30,6 +35,8 @@ class BlogTruyen : ParsedHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val json: Json by injectLazy()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", baseUrl)
 
@@ -170,6 +177,18 @@ class BlogTruyen : ParsedHttpSource() {
         document.select("article#content > img").forEachIndexed { i, e ->
             pages.add(Page(i, pageUrl, e.attr("src")))
         }
+
+        // Some chapters use js script to render images
+        val script = document.select("article#content > script").lastOrNull()
+        if (script != null && script.data().contains("listImageCaption")) {
+            val imagesStr = script.data().split(";")[0].split("=").last().trim()
+            val imageArr = json.parseToJsonElement(imagesStr).jsonArray
+            for (image in imageArr) {
+                val imageUrl = image.jsonObject["url"]!!.jsonPrimitive.content
+                pages.add(Page(pages.size, pageUrl, imageUrl))
+            }
+        }
+
         return pages
     }
 
