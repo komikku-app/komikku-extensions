@@ -41,7 +41,7 @@ abstract class MangaRaw(
 
     override fun popularMangaNextPageSelector() = ".next.page-numbers"
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/newmanga/page/$page", headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/$page", headers)
 
     override fun latestUpdatesSelector() = popularMangaSelector()
 
