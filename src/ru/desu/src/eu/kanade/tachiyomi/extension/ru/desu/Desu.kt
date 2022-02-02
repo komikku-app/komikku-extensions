@@ -118,7 +118,7 @@ class Desu : HttpSource() {
         status = when (obj["status"]!!.jsonPrimitive.content) {
             "ongoing" -> SManga.ONGOING
             "released" -> SManga.COMPLETED
-            "copyright" -> SManga.LICENSED
+            //  "copyright" -> SManga.LICENSED  Hides available chapters!
             else -> SManga.UNKNOWN
         }
     }
