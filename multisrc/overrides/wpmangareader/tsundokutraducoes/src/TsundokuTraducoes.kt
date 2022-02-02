@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 class TsundokuTraducoes : WPMangaReader(
     "Tsundoku Traduções",
-    "https://tsundokutraducoes.com.br",
+    "https://tsundoku.com.br",
     "pt-BR",
     dateFormat = SimpleDateFormat("MMMMM d, yyyy", Locale("pt", "BR"))
 ) {
