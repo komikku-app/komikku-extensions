@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="MadThemeGenerator" type="JetRunConfigurationType" nameIsGenerated="true">
+        <module name="tachiyomi-extensions.multisrc" />
+        <option name="VM_PARAMETERS" value="" />
+        <option name="PROGRAM_PARAMETERS" value="" />
+        <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+        <option name="ALTERNATIVE_JRE_PATH" />
+        <option name="PASS_PARENT_ENVS" value="true" />
+        <option name="MAIN_CLASS_NAME" value="eu.kanade.tachiyomi.multisrc.madtheme.MadThemeGenerator" />
+        <option name="WORKING_DIRECTORY" value="" />
+        <method v="2">
+            <option name="Make" enabled="true" />
+            <option name="Gradle.BeforeRunTask" enabled="true" tasks="ktFormat" externalProjectPath="$PROJECT_DIR$/multisrc" vmOptions="" scriptParameters="" />
+            <option name="Gradle.BeforeRunTask" enabled="true" tasks="ktLint" externalProjectPath="$PROJECT_DIR$/multisrc" vmOptions="" scriptParameters="" />
+        </method>
+    </configuration>
+</component>
