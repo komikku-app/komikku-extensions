@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Digital Comic Museum'
+    pkgNameSuffix = 'en.digitalcomicmuseum'
+    extClass = '.DigitalComicMuseum'
+    extVersionCode = 1
+}
+
+dependencies {
+    implementation project(':lib-ratelimit')
+}
+
+apply from: "$rootDir/common.gradle"
