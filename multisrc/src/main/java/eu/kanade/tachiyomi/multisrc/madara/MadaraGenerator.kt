@@ -28,7 +28,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("24hRomance", "https://24hromance.com", "en", className = "Romance24h"),
         SingleLang("365Manga", "https://365manga.com", "en", className = "ThreeSixtyFiveManga", overrideVersionCode = 1),
         SingleLang("8Muses Comics", "https://8muses.love/", "en", isNsfw = true, className = "EightMusesComics"),
-        SingleLang("AYATOON", "https://ayatoon.com", "tr", overrideVersionCode = 1),
         SingleLang("AZManhwa", "https://azmanhwa.net", "en"),
         SingleLang("Adonis Fansub", "https://manga.adonisfansub.com", "tr", overrideVersionCode = 1),
         SingleLang("Agent of Change Translations", "https://aoc.moe", "en", overrideVersionCode = 1),
