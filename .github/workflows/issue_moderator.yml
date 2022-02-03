@@ -12,3 +12,5 @@ jobs:
         uses: tachiyomiorg/issue-moderator-action@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          duplicate-check-enabled: true
+          duplicate-check-label: Source request
