@@ -16,12 +16,10 @@ import android.annotation.TargetApi
 import android.app.Application
 import android.content.SharedPreferences
 import android.os.Build
-import android.text.InputType
 import android.widget.Toast
 import androidx.preference.ListPreference
 import eu.kanade.tachiyomi.lib.dataimage.DataImageInterceptor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -36,27 +34,26 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.put
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.Jsoup
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.absoluteValue
 import kotlin.random.Random
+
 class Remanga : ConfigurableSource, HttpSource() {
 
     override val name = "Remanga"
@@ -69,12 +66,12 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     private val baseOrig: String = "https://api.remanga.org"
     private val baseMirr: String = "https://api.xn--80aaig9ahr.xn--c1avg" // https://реманга.орг
+    private val baseCookieUrl: HttpUrl = "https://remanga.org".toHttpUrl()
     private val domain: String? = preferences.getString(DOMAIN_PREF, baseOrig)
+
     override val baseUrl = domain.toString()
 
     override val supportsLatest = true
-
-    private var token: String = ""
 
     private val userAgentRandomizer = " ${Random.nextInt().absoluteValue}"
 
@@ -85,15 +82,17 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     private fun authIntercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        if (username.isEmpty() or password.isEmpty()) {
-            return chain.proceed(request)
-        }
 
-        if (token.isEmpty()) {
-            token = this.login(chain, username, password)
-        }
+        val cookies = client.cookieJar.loadForRequest(baseCookieUrl)
+        val authCookie = cookies
+            .firstOrNull { cookie -> cookie.name == USER_COOKIE_NAME }
+            ?.let { cookie -> URLDecoder.decode(cookie.value, "UTF-8") }
+            ?.let { jsonString -> json.decodeFromString<UserDto>(jsonString) }
+            ?: return chain.proceed(request)
+
+        USER_ID = authCookie.id.toString()
         val authRequest = request.newBuilder()
-            .addHeader("Authorization", "bearer $token")
+            .addHeader("Authorization", "bearer ${authCookie.access_token}")
             .build()
         return chain.proceed(authRequest)
     }
@@ -107,21 +106,6 @@ class Remanga : ConfigurableSource, HttpSource() {
     private val count = 30
 
     private var branches = mutableMapOf<String, List<BranchesDto>>()
-
-    private fun login(chain: Interceptor.Chain, username: String, password: String): String {
-        val jsonObject = buildJsonObject {
-            put("user", username)
-            put("password", password)
-        }
-        val body = jsonObject.toString().toRequestBody(MEDIA_TYPE)
-        val response = chain.proceed(POST("$baseUrl/api/users/login/", headers, body))
-        if (response.code >= 400) {
-            throw Exception("Не удалось войти")
-        }
-        val user = json.decodeFromString<SeriesWrapperDto<UserDto>>(response.body!!.string()).content
-        USER_ID = user.id.toString()
-        return user.access_token
-    }
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/api/search/catalog/?ordering=-rating&count=$count&page=$page", headers)
 
@@ -173,9 +157,9 @@ class Remanga : ConfigurableSource, HttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var url = "$baseUrl/api/search/catalog/?page=$page".toHttpUrlOrNull()!!.newBuilder()
+        var url = "$baseUrl/api/search/catalog/?page=$page".toHttpUrl().newBuilder()
         if (query.isNotEmpty()) {
-            url = "$baseUrl/api/search/?page=$page".toHttpUrlOrNull()!!.newBuilder()
+            url = "$baseUrl/api/search/?page=$page".toHttpUrl().newBuilder()
             url.addQueryParameter("query", query)
         }
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
@@ -215,7 +199,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                             throw Exception("Пользователь не найден")
                         }
                         val TypeQ = getMyList()[filter.state].id
-                        val UserProfileUrl = "$baseUrl/api/users/$USER_ID/bookmarks/?type=$TypeQ&page=$page".toHttpUrlOrNull()!!.newBuilder()
+                        val UserProfileUrl = "$baseUrl/api/users/$USER_ID/bookmarks/?type=$TypeQ&page=$page".toHttpUrl().newBuilder()
                         return GET(UserProfileUrl.toString(), headers)
                     }
                 }
@@ -648,32 +632,6 @@ class Remanga : ConfigurableSource, HttpSource() {
         MyListUnit("Не интересно ", "5")
     )
 
-    private fun androidx.preference.PreferenceScreen.editTextPreference(title: String, default: String, value: String, isPassword: Boolean = false): androidx.preference.EditTextPreference {
-        return androidx.preference.EditTextPreference(context).apply {
-            key = title
-            this.title = title
-            summary = value
-            this.setDefaultValue(default)
-            dialogTitle = title
-
-            if (isPassword) {
-                if (value.isNotBlank()) { summary = "*****" }
-                setOnBindEditTextListener {
-                    it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                }
-            }
-            setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val res = preferences.edit().putString(title, newValue as String).commit()
-                    Toast.makeText(context, "Перезапустите Tachiyomi, чтобы применить новую настройку.", Toast.LENGTH_LONG).show()
-                    res
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
-            }
-        }
-    }
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
         val domainPref = ListPreference(screen.context).apply {
             key = DOMAIN_PREF
@@ -719,26 +677,14 @@ class Remanga : ConfigurableSource, HttpSource() {
         screen.addPreference(domainPref)
         screen.addPreference(paidChapterShow)
         screen.addPreference(bookmarksHide)
-        screen.addPreference(screen.editTextPreference(USERNAME_TITLE, USERNAME_DEFAULT, username))
-        screen.addPreference(screen.editTextPreference(PASSWORD_TITLE, PASSWORD_DEFAULT, password, true))
     }
 
-    private fun getPrefUsername(): String = preferences.getString(USERNAME_TITLE, USERNAME_DEFAULT)!!
-    private fun getPrefPassword(): String = preferences.getString(PASSWORD_TITLE, PASSWORD_DEFAULT)!!
-
     private val json: Json by injectLazy()
-    private val username by lazy { getPrefUsername() }
-    private val password by lazy { getPrefPassword() }
 
     companion object {
         private var USER_ID = ""
 
-        private val MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
-
-        private const val USERNAME_TITLE = "Username"
-        private const val USERNAME_DEFAULT = ""
-        private const val PASSWORD_TITLE = "Password"
-        private const val PASSWORD_DEFAULT = ""
+        private const val USER_COOKIE_NAME = "user"
 
         const val PREFIX_SLUG_SEARCH = "slug:"
 
