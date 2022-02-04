@@ -109,6 +109,10 @@ class MangaDexHelper() {
             .build()
 
         val markdownLinksRegex = "\\[([^]]+)\\]\\(([^)]+)\\)".toRegex()
+
+        val titleSpecialCharactersRegex = "[^a-z0-9]+".toRegex()
+
+        val trailingHyphenRegex = "-+$".toRegex()
     }
 
     // Check the token map to see if the md@home host is still valid
@@ -349,8 +353,8 @@ class MangaDexHelper() {
 
     fun titleToSlug(title: String) = title.trim()
         .toLowerCase(Locale.US)
-        .replace("[^a-z0-9]+".toRegex(), "-")
-        .replace("-+$".toRegex(), "")
+        .replace(titleSpecialCharactersRegex, "-")
+        .replace(trailingHyphenRegex, "")
         .split("-")
         .reduce { accumulator, element ->
             val currentSlug = "$accumulator-$element"
