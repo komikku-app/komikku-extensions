@@ -39,10 +39,12 @@ class GmangaFilters() {
 
             return buildJsonObject {
                 oneShotFilter.state.first().let {
-                    when {
-                        it.isIncluded() -> put("oneshot", true)
-                        it.isExcluded() -> put("oneshot", false)
-                        else -> put("oneshot", JsonNull)
+                    putJsonObject("oneshot") {
+                        when {
+                            it.isIncluded() -> put("value", true)
+                            it.isExcluded() -> put("value", false)
+                            else -> put("value", JsonNull)
+                        }
                     }
                 }
 

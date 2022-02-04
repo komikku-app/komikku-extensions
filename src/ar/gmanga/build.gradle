@@ -6,7 +6,7 @@ ext {
     extName = 'GMANGA'
     pkgNameSuffix = 'ar.gmanga'
     extClass = '.Gmanga'
-    extVersionCode = 8
+    extVersionCode = 9
 }
 
 dependencies {
