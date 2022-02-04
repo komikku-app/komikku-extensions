@@ -38,7 +38,9 @@ import java.util.Date
 import java.util.Locale
 
 class Newbie : HttpSource() {
-    override val name = "Newbie"
+    override val name = "NewManga(Newbie)"
+
+    override val id: Long = 8033757373676218584
 
     override val baseUrl = "https://newmanga.org"
 
@@ -82,7 +84,7 @@ class Newbie : HttpSource() {
         val mangas = page.items.map {
             it.toSManga()
         }
-        return MangasPage(mangas, mangas.size == count)
+        return MangasPage(mangas, mangas.isNotEmpty())
     }
 
     private fun LibraryDto.toSManga(): SManga {
@@ -160,6 +162,12 @@ class Newbie : HttpSource() {
             else -> type
         }
     }
+    private fun parseAge(adult: String): String {
+        return when (adult) {
+            "" -> "0+"
+            else -> "$adult+"
+        }
+    }
 
     private fun MangaDetDto.toSManga(): SManga {
         val ratingValue = DecimalFormat("#,###.##").format(rating * 2).replace(",", ".").toFloat()
@@ -185,7 +193,7 @@ class Newbie : HttpSource() {
             author = o.author?.name
             artist = o.artist?.name
             description = o.title.ru + "\n" + ratingStar + " " + ratingValue + "\n" + Jsoup.parse(o.description).text()
-            genre = genres.joinToString { it.title.ru.capitalize() } + ", " + parseType(type) + ", " + "$adult+"
+            genre = parseType(type) + ", " + adult?.let { parseAge(it) } + ", " + genres.joinToString { it.title.ru.capitalize() }
             status = parseStatus(o.status)
         }
     }
