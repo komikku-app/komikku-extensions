@@ -34,7 +34,6 @@ abstract class MadTheme(
 
     override fun headersBuilder() = Headers.Builder().apply {
         add("Referer", "$baseUrl/")
-        add("User-Agent", "Tachiyomi " + System.getProperty("http.agent"))
     }
 
     private val json: Json by injectLazy()
