@@ -1,3 +1,9 @@
+## 1.2.19
+
+### Change
+
+* `Original` image resolution is now default
+
 ## 1.2.18
 
 ### Features

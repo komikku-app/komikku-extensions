@@ -828,7 +828,7 @@ abstract class Luscious(
         private const val RESOLUTION_PREF_TITLE = "Image resolution"
         private val RESOLUTION_PREF_ENTRIES = arrayOf("Low", "Medium", "High", "Original")
         private val RESOLUTION_PREF_ENTRY_VALUES = arrayOf("2", "1", "0", "-1")
-        private val RESOLUTION_PREF_DEFAULT_VALUE = RESOLUTION_PREF_ENTRY_VALUES[2]
+        private val RESOLUTION_PREF_DEFAULT_VALUE = RESOLUTION_PREF_ENTRY_VALUES[3]
 
         private const val SORT_PREF_KEY = "SORT"
         private const val SORT_PREF_TITLE = "Page Sort"

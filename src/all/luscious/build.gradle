@@ -6,7 +6,7 @@ ext {
     extName = 'Luscious'
     pkgNameSuffix = 'all.luscious'
     extClass = '.LusciousFactory'
-    extVersionCode = 18
+    extVersionCode = 19
     isNsfw = true
 }
 

@@ -20,4 +20,7 @@ Features that require login only work when the mirror is changed to the Members 
 #### Where did the other Luscious extensions go?
 They are now mirror options in the Luscious extension.
 
+#### Why are the animated images not loading?
+For some `.gif` files when Luscious is resizing them they get turned in to `.jpg` files. Change your Image resolution to `Original`.
+
 [Uncomment this if needed]: <> (## Guides)
