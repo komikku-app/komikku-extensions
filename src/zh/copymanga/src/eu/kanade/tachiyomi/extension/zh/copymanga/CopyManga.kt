@@ -38,7 +38,7 @@ import javax.net.ssl.X509TrustManager
 class CopyManga : ConfigurableSource, HttpSource() {
 
     override val name = "拷贝漫画"
-    override val baseUrl = "https://www.copymanga.com"
+    override val baseUrl = "https://www.copymanga.org"
     override val lang = "zh"
     override val supportsLatest = true
     private val popularLatestPageSize = 50 // default
