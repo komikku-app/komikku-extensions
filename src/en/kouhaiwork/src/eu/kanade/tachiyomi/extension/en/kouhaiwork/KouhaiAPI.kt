@@ -34,7 +34,7 @@ data class KouhaiSeries(
 data class KouhaiSeriesDetails(
     val synopsis: String,
     val status: String,
-    val alternative_titles: List<String>,
+    val alternative_titles: List<String>? = null,
     val artists: List<KouhaiTag>? = null,
     val authors: List<KouhaiTag>? = null,
     val genres: List<KouhaiTag>? = null,
@@ -48,8 +48,9 @@ data class KouhaiSeriesDetails(
 
     override fun toString() = buildString {
         append(synopsis)
-        append("\n\nAlternative Names:\n")
-        alternative_titles.joinTo(this, "\n")
+        alternative_titles?.joinTo(
+            this, "\n", "\n\nAlternative Names:\n"
+        )
     }
 }
 
@@ -69,10 +70,12 @@ data class KouhaiChapter(
     }
 
     override fun toString() = buildString {
-        volume?.let { append("[Vol. $it] ") }
+        volume?.let {
+            append("[Vol. ").append(it).append("] ")
+        }
         append("Chapter ")
         append(decimalFormat.format(number))
-        name?.let { append(" - $it") }
+        name?.let { append(" - ").append(it) }
     }
 }
 
