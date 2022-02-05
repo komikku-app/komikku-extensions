@@ -6,7 +6,7 @@ ext {
     extName = 'TOPTOON+'
     pkgNameSuffix = 'en.toptoonplus'
     extClass = '.TopToonPlus'
-    extVersionCode = 3
+    extVersionCode = 4
     isNsfw = true
 }
 

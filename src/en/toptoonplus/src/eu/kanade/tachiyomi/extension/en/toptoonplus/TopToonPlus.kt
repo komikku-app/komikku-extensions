@@ -19,12 +19,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
-import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class TopToonPlus : HttpSource() {
@@ -38,7 +36,8 @@ class TopToonPlus : HttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.client.newBuilder()
-        .addInterceptor(TopToonPlusWebViewInterceptor(baseUrl, headersBuilder().build()))
+        .addInterceptor(TopToonPlusTokenInterceptor(baseUrl, headersBuilder().build()))
+        .addInterceptor(TopToonPlusViewerInterceptor(baseUrl, headersBuilder().build()))
         .addInterceptor(RateLimitInterceptor(2, 1, TimeUnit.SECONDS))
         .build()
 
@@ -49,8 +48,6 @@ class TopToonPlus : HttpSource() {
             .getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, Locale.US)!!
             .toUpperCase(Locale.US)
 
-    private val deviceId: String by lazy { UUID.randomUUID().toString() }
-
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Origin", baseUrl)
         .add("Referer", "$baseUrl/")
@@ -58,6 +55,7 @@ class TopToonPlus : HttpSource() {
     override fun popularMangaRequest(page: Int): Request {
         val newHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
+            .add("Language", lang)
             .add("UA", "web")
             .add("X-Api-Key", API_KEY)
             .build()
@@ -86,6 +84,7 @@ class TopToonPlus : HttpSource() {
     override fun latestUpdatesRequest(page: Int): Request {
         val newHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
+            .add("Language", lang)
             .add("UA", "web")
             .add("X-Api-Key", API_KEY)
             .build()
@@ -156,6 +155,7 @@ class TopToonPlus : HttpSource() {
     private fun mangaDetailsApiRequest(mangaUrl: String): Request {
         val newHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
+            .add("Language", lang)
             .add("UA", "web")
             .add("X-Api-Key", API_KEY)
             .build()
@@ -216,7 +216,7 @@ class TopToonPlus : HttpSource() {
     override fun pageListRequest(chapter: SChapter): Request {
         val newHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
-            .add("Language", "en")
+            .add("Language", lang)
             .add("UA", "web")
             .add("X-Api-Key", API_KEY)
             .build()
@@ -251,6 +251,11 @@ class TopToonPlus : HttpSource() {
 
         val viewerRequest = viewerRequest(usableEpisode.comicId, usableEpisode.episodeId)
         val viewerResponse = client.newCall(viewerRequest).execute()
+
+        if (!viewerResponse.isSuccessful) {
+            throw Exception(COULD_NOT_GET_CHAPTER_IMAGES)
+        }
+
         val viewerResult = viewerResponse.parseAs<TopToonDetails>()
 
         return viewerResult.data!!.episode
@@ -262,6 +267,7 @@ class TopToonPlus : HttpSource() {
     private fun viewerRequest(comicId: Int, episodeId: Int): Request {
         val newHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
+            .add("Language", lang)
             .add("UA", "web")
             .add("X-Api-Key", API_KEY)
             .build()
@@ -308,6 +314,7 @@ class TopToonPlus : HttpSource() {
         private const val ACCEPT_IMAGE = "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
 
         private const val COULD_NOT_PARSE_RESPONSE = "Could not parse the API response."
+        private const val COULD_NOT_GET_CHAPTER_IMAGES = "Could not get the chapter images."
         private const val CHAPTER_NOT_FREE = "This chapter is not free to read."
 
         private val DATE_FORMATTER by lazy {
