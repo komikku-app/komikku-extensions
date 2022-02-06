@@ -56,7 +56,6 @@ class MMRCMSSources {
             SourceData.Single("Komik Manga", "https://adm.komikmanga.com", "id"),
             SourceData.Single("Mangazuki Raws", "https://raws.mangazuki.co", "ko", overrideVersionCode = 1),
             SourceData.Single("Mangazuki", "https://mangazuki.co", "en", overrideVersionCode = 1),
-            SourceData.Single("Remangas", "https://remangas.top", "pt-BR", overrideVersionCode = 3),
             SourceData.Single("AnimaRegia", "https://animaregia.net", "pt-BR", overrideVersionCode = 4),
             SourceData.Single("MangaVadisi", "http://manga-v2.mangavadisi.org", "tr", overrideVersionCode = 1),
             SourceData.Single("MangaID", "https://mangaid.click", "id", overrideVersionCode = 1),

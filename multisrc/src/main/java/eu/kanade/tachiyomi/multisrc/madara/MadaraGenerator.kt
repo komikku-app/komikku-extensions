@@ -363,6 +363,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("ReadAdult", "https://readadult.net", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ReadManhua", "https://readmanhua.net", "en", overrideVersionCode = 2),
         SingleLang("Readers Point", "https://readers-point.space", "en"),
+        SingleLang("Remangas", "https://remangas.net", "pt-BR"),
         SingleLang("Remoscans", "https://remoscans.xyz", "en"),
         SingleLang("Renascence Scans (Renascans)", "https://new.renascans.com", "en", className = "RenaScans", overrideVersionCode = 1),
         SingleLang("Reset Scans", "https://reset-scans.com", "en", overrideVersionCode = 5),
