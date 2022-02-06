@@ -4,4 +4,4 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class YonaBar : Madara("YonaBar", "https://yonabar.com", "ar", SimpleDateFormat("yyyy-MM-dd", Locale("ar")))
+class YonaBar : Madara("YonaBar", "https://yonabar.net", "ar", SimpleDateFormat("yyyy-MM-dd", Locale("ar")))

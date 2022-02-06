@@ -450,7 +450,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Yaoi.mobi", "https://yaoi.mobi", "en", isNsfw = true, className = "YaoiManga", pkgName = "yaoimanga", overrideVersionCode = 4),
         SingleLang("YaoiScan", "https://yaoiscan.com", "en", isNsfw = true),
         SingleLang("YaoiToon", "https://yaoitoon.com", "en", isNsfw = true),
-        SingleLang("YonaBar", "https://yonabar.com", "ar", isNsfw = true),
+        SingleLang("YonaBar", "https://yonabar.net", "ar", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Yuri Verso", "https://yuri.live", "pt-BR", overrideVersionCode = 3),
         SingleLang("Zinmanga", "https://zinmanga.com", "en"),
         SingleLang("Zinmanhwa", "https://zinmanhwa.com", "en"),
