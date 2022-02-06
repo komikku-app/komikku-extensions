@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.SChapter
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
@@ -49,7 +50,10 @@ class YugenMangasBr : YugenMangas(
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
-    override val altName: String = "Nome alternativo: "
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .add("Referer", baseUrl)
+
+    override val altName: String = "Nomes alternativos: "
 
     override val useNewChapterEndpoint: Boolean = true
 }
