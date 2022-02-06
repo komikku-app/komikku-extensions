@@ -9,6 +9,10 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
@@ -23,6 +27,11 @@ class Twi4 : HttpSource() {
     override val name: String = "Twi4"
     override val supportsLatest: Boolean = false
     private val application: Application by injectLazy()
+    private val validPageTest: Regex = Regex("/comics/twi4/\\w+/works/\\d{4}\\.[0-9a-f]{32}\\.jpg")
+
+    companion object Constants {
+        const val SEARCH_PREFIX_SLUG = "SLUG:"
+    }
 
     private fun getUrlDomain(): String = baseUrl.substring(0, 22)
 
@@ -80,6 +89,16 @@ class Twi4 : HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val document = Jsoup.parse(response.body?.string())
         return SManga.create().apply {
+            // We need to get the title and thumbnail again.
+            // This is only needed if you search by slug, as we have no information about the them.
+            // Interestingly the page body has no mention of the title at all. It only exists in <title>
+            val titleRegex = Regex("『(.+)』.+ \\| ツイ４ \\| 最前線")
+            val match = titleRegex.matchEntire(document.title())
+            title = match?.groups?.get(1)?.value.toString()
+            // Twi4 uses the exact same thumbnail at both the main page and manga details
+            thumbnail_url =
+                getUrlDomain() + document.select("#introduction > header > div > h2 > img")
+                    .attr("src")
             description =
                 document.select("#introduction > div > div > p").text()
             // Determine who are the authors and artists
@@ -158,10 +177,45 @@ class Twi4 : HttpSource() {
         // There should only be 1 article in the document
         val page = doc.select("article.comic:first-child")
         val ret = mutableListOf<Page>()
+        // The image url *in most cases* supposed to look like this /comic/twi4/comicName/works/pageNumber.suffix.jpg
+        // The noscript page broke the image links in a few mangas and they don't come with the suffix
+        // In this case we need to request an index file and obtain the file suffix
+        var imageUrl: String = getUrlDomain() + page.select("div > div > p > img").attr("src")
+        if (!validPageTest.matches(page.select("div > div > p > img").attr("src"))) {
+            val requestUrl = response.request.url.toUrl().toString()
+            val chapterNum = requestUrl.substringAfterLast("/").take(4).toInt()
+            // The index file contains everything about each image. Usually we can find the file name directly from the document
+            // This is a failsafe
+            val indexResponse = client.newCall(
+                GET(
+                    requestUrl.substringBeforeLast("/") + "/index.js",
+                    getChromeHeaders()
+                )
+            ).execute()
+            if (!indexResponse.isSuccessful)
+                throw Exception("Failed to find pages!")
+            // We got a JS file that looks very much like a JSON object
+            // A few string manipulation and we can parse the whole thing as JSON!
+            val re = Regex("([A-z]+):")
+            var index = indexResponse.body?.string()?.substringAfter("=")?.dropLast(1)
+            index = index?.let { re.replace(it, "\"$1\":") }
+            indexResponse.close()
+            val indexElement = index?.let { Json.parseToJsonElement(it) }
+            var suffix: String? = null
+            if (indexElement != null) {
+                // Each entry in the Items array corresponds to 1 chapter/page
+                suffix = indexElement.jsonObject["Items"]?.jsonArray?.get(chapterNum - 1)?.jsonObject?.get("Suffix")?.jsonPrimitive?.content
+            }
+            // Twi4's image links are a bit of a mess
+            // Because in very rare cases, the image filename *doesn't* come with a suffix
+            // So only attach the suffix if there is one
+            if (suffix != null)
+                imageUrl = getUrlDomain() + page.select("div > div > p > img").attr("src").dropLast(4) + suffix + ".jpg"
+        }
         ret.add(
             Page(
                 index = page.select("header > div > h3 > span.number").text().toInt(),
-                imageUrl = getUrlDomain() + page.select("div > div > p > img").attr("src")
+                imageUrl = imageUrl
             )
         )
         return ret
@@ -173,12 +227,34 @@ class Twi4 : HttpSource() {
         page: Int,
         query: String,
         filters: FilterList
-    ): Observable<MangasPage> = fetchPopularManga(page).map { mp ->
-        mp.copy(
-            mp.mangas.filter {
-                it.title.contains(query, true)
-            }
-        )
+    ): Observable<MangasPage> {
+        if (query.startsWith(SEARCH_PREFIX_SLUG)) {
+            val slug = query.drop(SEARCH_PREFIX_SLUG.length)
+            // Explicitly ignore anything that ends with .html or starts with zadankai
+            // These will include the completed manga page, about page and zadankai submissions
+            // For reasons to exclude zadankai, see parsePopularMangaRequest()
+
+            // There will still be some urls that would accidentally activate the intent (like the news page),
+            // but there's no way to avoid it.
+            if (slug.endsWith("html") || slug.startsWith("zadankai"))
+                return Observable.just(MangasPage(listOf(), false))
+            return client.newCall(GET(baseUrl + slug))
+                .asObservableSuccess()
+                .map { response -> searchMangaSlug(response, slug) }
+        }
+        return fetchPopularManga(page).map { mp ->
+            mp.copy(
+                mp.mangas.filter {
+                    it.title.contains(query, true)
+                }
+            )
+        }
+    }
+
+    private fun searchMangaSlug(response: Response, slug: String): MangasPage {
+        val details = mangaDetailsParse(response)
+        details.setUrlWithoutDomain(baseUrl + slug)
+        return MangasPage(listOf(details), false)
     }
 
     // All these functions are unused
