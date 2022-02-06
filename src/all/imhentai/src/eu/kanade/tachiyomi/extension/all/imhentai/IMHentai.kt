@@ -9,11 +9,8 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -172,36 +169,10 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
 
     // Chapters
 
-    private fun buildPageListRequest(document: Document): Request {
-        val formBuilder = FormBody.Builder()
-            .add("type", "2")
-            .add("visible_pages", "0")
-        // Extracts form data from webpage
-        document.select("div.gallery_divider ~ input[type=hidden]").forEach { element ->
-            val keys = listOf(
-                Pair("server", "load_server"),
-                Pair("u_id", "gallery_id"),
-                Pair("g_id", "load_id"),
-                Pair("img_dir", "load_dir"),
-                Pair("total_pages", "load_pages")
-            )
-            for (key in keys) {
-                if (key.second == element.attr("id")) {
-                    formBuilder.add(key.first, element.attr("value"))
-                }
-            }
-        }
-        return Request.Builder()
-            .url("https://imhentai.xxx/inc/thumbs_loader.php")
-            .headers(pageLoadHeaders)
-            .post(formBuilder.build())
-            .build()
-    }
-
     override fun chapterListParse(response: Response): List<SChapter> {
         return listOf(
             SChapter.create().apply {
-                setUrlWithoutDomain(response.request.url.toString())
+                setUrlWithoutDomain(response.request.url.toString().replace("gallery", "view") + "1")
                 name = "Chapter"
                 chapter_number = 1f
             }
@@ -216,44 +187,37 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
 
     private val json: Json by injectLazy()
 
-    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
-        val gifPages = mutableListOf<Int>()
-        return client.newCall(GET("$baseUrl${chapter.url}"))
-            .asObservableSuccess()
-            .concatMap {
-                val document = it.asJsoup()
-                getGifPages(document, gifPages)
-                client.newCall(buildPageListRequest(document))
-                    .asObservableSuccess()
-            }.map { response ->
-                apiPageListParse(response.asJsoup(), gifPages)
+    override fun pageListParse(document: Document): List<Page> {
+        val image_dir = document.select("#image_dir").`val`()
+        val gallery_id = document.select("#gallery_id").`val`()
+        val u_id = document.select("#u_id").`val`().toInt()
+
+        val random_server = when (u_id) {
+            in 1..274825 -> "m1.imhentai.xxx"
+            in 274826..403818 -> "m2.imhentai.xxx"
+            in 403819..527143 -> "m3.imhentai.xxx"
+            in 527144..632481 -> "m4.imhentai.xxx"
+            else -> "m5.imhentai.xxx"
+        }
+
+        val images = json.parseToJsonElement(
+            document.selectFirst("script:containsData(var g_th)").data()
+                .substringAfter("$.parseJSON('").substringBefore("');").trim()
+        ).jsonObject
+        val pages = mutableListOf<Page>()
+
+        for (image in images) {
+            val iext = image.value.toString().replace("\"", "").split(",")[0]
+            val iext_pr = when (iext) {
+                "p" -> "png"
+                "b" -> "bmp"
+                "g" -> "gif"
+                else -> "jpg"
             }
-    }
-
-    private fun getGifPages(document: Document, gifPages: MutableList<Int>) {
-        val imageFormats = document.selectFirst("script:containsData(var g_th)").data()
-            .substringAfter("$.parseJSON('").substringBefore("');").trim()
-        json.parseToJsonElement(imageFormats).jsonObject.forEach { pair ->
-            val isGif = pair.value.jsonPrimitive.content.startsWith("g")
-            if (isGif) gifPages.add(pair.key.toInt())
+            pages.add(Page(image.key.toInt() - 1, "", "https://$random_server/$image_dir/$gallery_id/${image.key}.$iext_pr"))
         }
+        return pages
     }
-
-    private fun apiPageListParse(document: Document, gifs: List<Int>): List<Page> {
-        return document.select("a").mapIndexed { i, element ->
-            Page(
-                i,
-                element.attr("href"),
-                if (gifs.any { page -> page == i + 1 }) {
-                    element.select("img.lazy.preloader").attr("data-src").replace("t.jpg", ".gif")
-                } else {
-                    element.select("img.lazy.preloader").attr("data-src").replace("t.", ".")
-                }
-            )
-        }
-    }
-
-    override fun pageListParse(document: Document): List<Page> = throw UnsupportedOperationException("Not used")
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
 
