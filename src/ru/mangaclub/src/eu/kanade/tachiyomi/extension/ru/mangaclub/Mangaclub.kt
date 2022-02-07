@@ -27,12 +27,12 @@ class Mangaclub : ParsedHttpSource() {
 
     // Popular
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/f/sort=rating/order=desc/page/$page/", headers)
-    override fun popularMangaNextPageSelector(): String = "div.pagination-list>a>.icon-right-open"
+    override fun popularMangaNextPageSelector(): String = "div.pagination-list i.icon-right-open"
     override fun popularMangaSelector(): String = "div.shortstory"
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        thumbnail_url = element.select("div.content-block>.image>picture>img").attr("abs:src")
-        element.select("div.content-title>.title>a").apply {
-            title = this.text().replace("\\'", "'").trim()
+        thumbnail_url = element.select("div.content-block div.image img").attr("abs:src")
+        element.select("div.content-title h4.title a").apply {
+            title = this.text().replace("\\'", "'").substringBefore("/").trim()
             setUrlWithoutDomain(this.attr("abs:href"))
         }
     }
@@ -47,16 +47,15 @@ class Mangaclub : ParsedHttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var url = baseUrl
         if (query.isNotEmpty()) {
-            val formBody = FormBody.Builder()
+            val formData = FormBody.Builder()
                 .add("do", "search")
                 .add("subaction", "search")
                 .add("search_start", "$page")
                 .add("full_search", "0")
-                .add("result_from", "${((page - 1) * 8 + 1)}")
-                .add("story", query)
-                .build()
-            val searchHeaders = headers.newBuilder().add("Content-Type", "application/x-www-form-urlencoded").build()
-            return POST("$url/index.php?do=search", searchHeaders, formBody)
+                .add("result_from", "${((page - 1) * 8) + 1}")
+                .add("story", query).build()
+            val requestHeaders = headers.newBuilder().add("Content-Type", "application/x-www-form-urlencoded").build()
+            return POST("$url/index.php?do=search", requestHeaders, formData)
         } else {
             url += "/f"
             for (filter in if (filters.isEmpty()) getFilterList() else filters) {
@@ -86,6 +85,7 @@ class Mangaclub : ParsedHttpSource() {
         }
         return GET(url, headers)
     }
+
     override fun searchMangaNextPageSelector(): String = popularMangaNextPageSelector()
     override fun searchMangaSelector(): String = popularMangaSelector()
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
@@ -93,34 +93,32 @@ class Mangaclub : ParsedHttpSource() {
     // Details
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val licensedStatus = document.select("div.fullstory").text().contains("Данное произведение лицензировано на территории РФ. Главы удалены.")
-        thumbnail_url = document.select("div.content-block>.image>picture>img").attr("abs:src")
-        title = document.select("div.info>div>strong").text().replace("\\'", "'").trim()
-        author = document.select("div.info>div>a[href*=author]").text().trim()
+        thumbnail_url = document.select("div.image img").attr("abs:src")
+        title = document.select("div.info strong").text().replace("\\'", "'").substringBefore("/").trim()
+        author = document.select("div.info a[href*=author]").text().trim()
         artist = author
-        status = when (document.select("div.info>div>a[href*=status_translation]").text().trim()) {
+        status = when (document.select("div.info a[href*=status_translation]").text().trim()) {
             "Продолжается" -> if (licensedStatus) SManga.LICENSED else SManga.ONGOING
             "Завершен" -> if (licensedStatus) SManga.LICENSED else SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
-        description = document.select("div.description").text().substringBefore("Связанная манга:").trim()
-        genre = document.select("div.info>div>a[href*=tags]").joinToString(", ") { it.text() }
+        description = if (document.hasAttr("div.description p")) document.select("div.description p").text().trim() else document.select("div.description").text().trim()
+        genre = document.select("div.info a[href*=tags]").joinToString(", ") { it.text() }
     }
 
     // Chapters
-    override fun chapterListSelector(): String = "div.chapters>.chapter-item"
+    override fun chapterListSelector(): String = "div.chapters div.chapter-item"
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        val chapterLink = element.select("div.item-left>a")
+        val chapterLink = element.select("div.chapter-item div.item-left a")
         name = chapterLink.text().replace(",", ".").trim()
         chapter_number = name.substringAfter("Глава").trim().toFloat()
+        date_upload = element.select("div.chapter-item div.item-right div.date").text().trim().let { SimpleDateFormat("dd.MM.yyyy", Locale.ROOT).parse(it)?.time ?: 0L }
         setUrlWithoutDomain(chapterLink.attr("abs:href"))
-        date_upload = element.select("div.item-right>.date").text().trim().let {
-            SimpleDateFormat("dd.MM.yyyy", Locale.US).parse(it)?.time ?: 0
-        }
     }
 
     // Pages
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        document.select("div.manga-lines-page>a").forEach {
+        document.select("div.manga-lines-page a").forEach {
             add(Page(it.attr("data-p").toInt(), "", "${baseUrl.replace("//", "//img.")}/${it.attr("data-i")}"))
         }
     }
