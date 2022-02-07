@@ -1,10 +1,8 @@
-package eu.kanade.tachiyomi.extension.en.mangakalotfun
+package eu.kanade.tachiyomi.extension.en.mangakakalotfun
 
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.mangahub.MangaHub
 import okhttp3.OkHttpClient
-import java.text.SimpleDateFormat
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class MangakakalotFun : MangaHub(
