@@ -23,6 +23,7 @@ class FMReaderGenerator : ThemeSourceGenerator {
         MultiLang("Manhwa18.net", "https://manhwa18.net", listOf("en", "ko"), className = "Manhwa18NetFactory", isNsfw = true),
         SingleLang("WeLoveManga", "https://weloma.net", "ja", pkgName = "rawlh", overrideVersionCode = 3),
         SingleLang("Say Truyen", "https://saytruyen.net", "vi", overrideVersionCode = 2),
+        SingleLang("ManhuaRock", "https://manhuarock.net", "vi", overrideVersionCode = 1),
         SingleLang("KSGroupScans", "https://ksgroupscans.com", "en", overrideVersionCode = 1),
         // Sites that went down
         // SingleLang("18LHPlus", "https://18lhplus.com", "en", className = "EighteenLHPlus"),
