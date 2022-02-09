@@ -11,7 +11,7 @@ class TsuminoUtils {
             val artists = document.select("#Artist a")
 
             artists.forEach {
-                stringBuilder.append(it.text())
+                stringBuilder.append(it.attr("data-define"))
 
                 if (it != artists.last())
                     stringBuilder.append(", ")
@@ -25,7 +25,7 @@ class TsuminoUtils {
             val groups = document.select("#Group a")
 
             groups.forEach {
-                stringBuilder.append(it.text())
+                stringBuilder.append(it.attr("data-define"))
 
                 if (it != groups.last())
                     stringBuilder.append(", ")
@@ -47,7 +47,7 @@ class TsuminoUtils {
                 stringBuilder.append("Parodies: ")
 
                 parodies.forEach {
-                    stringBuilder.append(it.text())
+                    stringBuilder.append(it.attr("data-define"))
 
                     if (it != parodies.last())
                         stringBuilder.append(", ")
@@ -59,7 +59,7 @@ class TsuminoUtils {
                 stringBuilder.append("Characters: ")
 
                 characters.forEach {
-                    stringBuilder.append(it.text())
+                    stringBuilder.append(it.attr("data-define"))
 
                     if (it != characters.last())
                         stringBuilder.append(", ")
@@ -92,6 +92,27 @@ class TsuminoUtils {
             }
             chapterList.add(chapter)
             return chapterList
+        }
+
+        fun cfDecodeEmails(document: Document) {
+            document.select(".__cf_email__")!!
+                .map { it to cfDecodeEmail(it.attr("data-cfemail")) }
+                .forEach { (element, plaintext) -> element.text(plaintext) }
+        }
+
+        fun cfDecodeEmail(encoded: String): String {
+            val encodedList = encoded
+                .chunked(2)
+                .map { it.toIntOrNull(16) }
+
+            val key = encodedList
+                .firstOrNull()
+                ?: return ""
+
+            return encodedList
+                .drop(1)
+                .mapNotNull { it?.xor(key)?.toChar() }
+                .joinToString("")
         }
     }
 }

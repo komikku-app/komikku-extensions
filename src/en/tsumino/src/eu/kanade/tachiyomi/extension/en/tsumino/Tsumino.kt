@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.tsumino
 
+import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.cfDecodeEmails
 import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.getArtists
 import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.getChapter
 import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.getCollection
@@ -160,13 +161,13 @@ class Tsumino : HttpSource() {
         val document = response.asJsoup()
         val infoElement = document.select("div.book-page-container")
         return SManga.create().apply {
-            title = infoElement.select("#Title").text()
+            title = document.select("meta[property=og:title]").first()!!.attr("content")
             artist = getArtists(document)
             author = artist
             status = SManga.COMPLETED
             thumbnail_url = infoElement.select("img").attr("src")
             description = getDesc(document)
-            genre = document.select("#Tag a").joinToString { it.text() }
+            genre = document.select("#Tag a").joinToString { it.attr("data-define") }
         }
     }
 
@@ -174,6 +175,8 @@ class Tsumino : HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
+        cfDecodeEmails(document)
+
         val collection = document.select(".book-collection-table a")
         return if (collection.isNotEmpty()) {
             getCollection(document, ".book-collection-table a")
