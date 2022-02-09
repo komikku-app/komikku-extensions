@@ -10,7 +10,7 @@ class MangaBuddy : MadTheme(
     "https://mangabuddy.com",
     "en"
 ) {
-    override val client: OkHttpClient = super.client.newBuilder()
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 }
