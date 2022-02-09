@@ -349,14 +349,15 @@ class CopyManga : ConfigurableSource, HttpSource() {
     private fun parseSearchMangaWithFilterOrPopularOrLatestResponse(response: Response): MangasPage {
         val document = response.asJsoup()
 
-        val mangas = document.select("div.exemptComicList div.exemptComicItem").map { element ->
-            mangaFromPage(element)
-        }
+        val mangas = document.select("div.exemptComicList div.exemptComic-box").first().attr("list")
+
+        val comicArray = JSONArray(mangas)
 
         // There is always a next pager, so use itemCount to check. XD
-        val hasNextPage = mangas.size == popularLatestPageSize
+        val hasNextPage = comicArray.length() == popularLatestPageSize
+        val ret = mangaListFromJsonArray(comicArray)
 
-        return MangasPage(mangas, hasNextPage)
+        return MangasPage(ret, hasNextPage)
     }
 
     private fun parseSearchMangaResponseAsJson(response: Response): MangasPage {
@@ -368,7 +369,14 @@ class CopyManga : ConfigurableSource, HttpSource() {
             return MangasPage(listOf(), false)
         }
 
+        val ret = mangaListFromJsonArray(comicArray)
+
+        return MangasPage(ret, comicArray.length() == searchPageSize)
+    }
+
+    private fun mangaListFromJsonArray(comicArray: JSONArray): ArrayList<SManga> {
         val ret = ArrayList<SManga>(comicArray.length())
+
         for (i in 0 until comicArray.length()) {
             val obj = comicArray.getJSONObject(i)
             val authorArray = obj.getJSONArray("author")
@@ -392,28 +400,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
             )
         }
 
-        return MangasPage(ret, comicArray.length() == searchPageSize)
-    }
-
-    private fun mangaFromPage(element: Element): SManga {
-        val manga = SManga.create()
-        element.select("div.exemptComicItem-img > a > img").first().let {
-            var picture = it.attr("data-src")
-            if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
-                picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun:443")
-                picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun:443")
-            }
-            manga.thumbnail_url = picture
-        }
-        element.select("div.exemptComicItem-txt > a").first().let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-            var _title: String = it.select("p").first().text().trim()
-            if (preferences.getBoolean(SHOW_Simplified_Chinese_TITLE_PREF, false)) {
-                _title = ChineseUtils.toSimplified(_title)
-            }
-            manga.title = _title
-        }
-        return manga
+        return ret
     }
 
     private fun fillChapters(chapterGroup: JSONObject, retChapter: ArrayList<SChapter>, comicPathWord: String?) {
