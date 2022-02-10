@@ -41,6 +41,8 @@ abstract class MangaHub(
 
     protected abstract val serverId: String
 
+    protected open val cdnHost = " https://img.mghubcdn.com/".toHttpUrl()
+
     // Popular
     override fun popularMangaRequest(page: Int): Request =
         GET("$baseUrl/popular/page/$page", headers)
@@ -367,7 +369,7 @@ data class ChapterInnerDto(
     val manga: MangaInnerDto,
     @SerialName("mangaID") val mangaId: Int,
     val noAd: Boolean,
-    val number: Int,
+    val number: Float,
     val pages: String,
     val slug: String,
     val title: String
