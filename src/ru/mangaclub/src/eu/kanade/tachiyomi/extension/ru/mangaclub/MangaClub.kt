@@ -16,7 +16,7 @@ import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class Mangaclub : ParsedHttpSource() {
+class MangaClub : ParsedHttpSource() {
 
     // Info
     override val name: String = "MangaClub"
@@ -54,7 +54,8 @@ class Mangaclub : ParsedHttpSource() {
                 .add("full_search", "0")
                 .add("result_from", "${((page - 1) * 8) + 1}")
                 .add("story", query).build()
-            val requestHeaders = headers.newBuilder().add("Content-Type", "application/x-www-form-urlencoded").build()
+            val requestHeaders = headers.newBuilder()
+                .add("Content-Type", "application/x-www-form-urlencoded").build()
             return POST("$url/index.php?do=search", requestHeaders, formData)
         } else {
             url += "/f"
@@ -85,7 +86,6 @@ class Mangaclub : ParsedHttpSource() {
         }
         return GET(url, headers)
     }
-
     override fun searchMangaNextPageSelector(): String = popularMangaNextPageSelector()
     override fun searchMangaSelector(): String = popularMangaSelector()
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
@@ -95,24 +95,27 @@ class Mangaclub : ParsedHttpSource() {
         val licensedStatus = document.select("div.fullstory").text().contains("Данное произведение лицензировано на территории РФ. Главы удалены.")
         thumbnail_url = document.select("div.image img").attr("abs:src")
         title = document.select("div.info strong").text().replace("\\'", "'").substringBefore("/").trim()
-        author = document.select("div.info a[href*=author]").text().trim()
+        author = document.select("div.info a[href*=author]").joinToString(", ") { it.text().trim() }
         artist = author
         status = when (document.select("div.info a[href*=status_translation]").text().trim()) {
             "Продолжается" -> if (licensedStatus) SManga.LICENSED else SManga.ONGOING
             "Завершен" -> if (licensedStatus) SManga.LICENSED else SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
-        description = if (document.hasAttr("div.description p")) document.select("div.description p").text().trim() else document.select("div.description").text().trim()
-        genre = document.select("div.info a[href*=tags]").joinToString(", ") { it.text() }
+        description = "Читайте описание через WebView"
+        genre = document.select("div.info a[href*=tags]").joinToString(", ") {
+            it.text().replaceFirst(it.text().first(), it.text().first().toUpperCase()).trim()
+        }
     }
 
     // Chapters
+    private val dateParse = SimpleDateFormat("dd.MM.yyyy", Locale.ROOT)
     override fun chapterListSelector(): String = "div.chapters div.chapter-item"
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         val chapterLink = element.select("div.chapter-item div.item-left a")
         name = chapterLink.text().replace(",", ".").trim()
         chapter_number = name.substringAfter("Глава").trim().toFloat()
-        date_upload = element.select("div.chapter-item div.item-right div.date").text().trim().let { SimpleDateFormat("dd.MM.yyyy", Locale.ROOT).parse(it)?.time ?: 0L }
+        date_upload = element.select("div.chapter-item div.item-right div.date").text().trim().let { dateParse.parse(it)?.time ?: 0L }
         setUrlWithoutDomain(chapterLink.attr("abs:href"))
     }
 
@@ -133,7 +136,6 @@ class Mangaclub : ParsedHttpSource() {
         "Статус",
         arrayOf("Не выбрано", "Завершен", "Продолжается", "Заморожено/Заброшено")
     )
-
     private class OrderBy : Filter.Sort(
         "Сортировка",
         arrayOf("По дате добавления", "По дате обновления", "В алфавитном порядке", "По количеству комментариев", "По количеству просмотров", "По рейтингу"),

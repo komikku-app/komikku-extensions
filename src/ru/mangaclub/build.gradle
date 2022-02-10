@@ -4,8 +4,8 @@ apply plugin: 'kotlin-android'
 ext {
     extName = 'MangaClub'
     pkgNameSuffix = 'ru.mangaclub'
-    extClass = '.Mangaclub'
-    extVersionCode = 9
+    extClass = '.MangaClub'
+    extVersionCode = 10
 }
 
 apply from: "$rootDir/common.gradle"
