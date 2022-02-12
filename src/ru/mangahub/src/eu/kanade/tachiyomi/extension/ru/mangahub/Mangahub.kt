@@ -77,12 +77,16 @@ open class Mangahub : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector(): String? = popularMangaNextPageSelector()
 
+    override fun chapterListRequest(manga: SManga): Request {
+        return GET(baseUrl + manga.url + "/chapters", headers)
+    }
+
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
-        manga.author = document.select("a[itemprop]")?.text()
-        manga.genre = document.select("div.tag").text().replace(" ", ", ")
+        manga.author = document.select("div.detail-attr:contains(Автор) div:gt(0)")?.text() // TODO: Add "Сценарист" and "Художник"
+        manga.genre = document.select(".tags").text().replace(" ", ", ")
         manga.description = document.select("div.markdown-style").text()
-        manga.status = parseStatus(document.select("div.sticky-top span.status-label").toString())
+        manga.status = parseStatus(document.select("div.detail-attr:contains(перевод):eq(0)").toString())
         manga.thumbnail_url = document.select("img.cover-detail").attr("src")
         return manga
     }
