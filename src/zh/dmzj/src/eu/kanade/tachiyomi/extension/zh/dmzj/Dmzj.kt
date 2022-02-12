@@ -5,8 +5,10 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Base64
 import androidx.preference.ListPreference
+import androidx.preference.Preference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.extension.zh.dmzj.protobuf.ComicDetailResponse
+import eu.kanade.tachiyomi.extension.zh.dmzj.utils.HttpGetFailoverInterceptor
 import eu.kanade.tachiyomi.extension.zh.dmzj.utils.RSA
 import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
@@ -33,8 +35,6 @@ import org.json.JSONObject
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.net.URLDecoder
-import java.net.URLEncoder
 
 /**
  * Dmzj source
@@ -52,7 +52,8 @@ class Dmzj : ConfigurableSource, HttpSource() {
     private val apiUrl = "https://api.dmzj.com"
     private val oldPageListApiUrl = "https://api.m.dmzj.com"
     private val webviewPageListApiUrl = "https://m.dmzj.com/chapinfo"
-    private val imageCDNUrl = "https://images.muwai.com"
+    private val imageCDNUrl = "https://images.dmzj.com"
+    private val imageSmallCDNUrl = "https://imgsmall.dmzj.com"
 
     private fun cleanUrl(url: String) = if (url.startsWith("//"))
         "https:$url"
@@ -62,6 +63,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private val httpGetFailoverInterceptor = HttpGetFailoverInterceptor()
     private val v3apiRateLimitInterceptor = SpecificHostRateLimitInterceptor(
         v3apiUrl.toHttpUrlOrNull()!!,
         preferences.getString(API_RATELIMIT_PREF, "5")!!.toInt()
@@ -78,12 +80,18 @@ class Dmzj : ConfigurableSource, HttpSource() {
         imageCDNUrl.toHttpUrlOrNull()!!,
         preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt()
     )
+    private val imageSmallCDNRateLimitInterceptor = SpecificHostRateLimitInterceptor(
+        imageSmallCDNUrl.toHttpUrlOrNull()!!,
+        preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt()
+    )
 
     override val client: OkHttpClient = network.client.newBuilder()
+        .addInterceptor(httpGetFailoverInterceptor)
         .addNetworkInterceptor(apiRateLimitInterceptor)
         .addNetworkInterceptor(v3apiRateLimitInterceptor)
         .addNetworkInterceptor(v4apiRateLimitInterceptor)
         .addNetworkInterceptor(imageCDNRateLimitInterceptor)
+        .addNetworkInterceptor(imageSmallCDNRateLimitInterceptor)
         .build()
 
     override fun headersBuilder() = Headers.Builder().apply {
@@ -363,11 +371,11 @@ class Dmzj : ConfigurableSource, HttpSource() {
         return try {
             // webpage api
             val response = client.newCall(GET("$webviewPageListApiUrl/${chapter.url}.html", headers)).execute()
-            Observable.just(pageListParse(response))
+            Observable.just(pageListParse(response, chapter))
         } catch (e: Exception) {
             // api.m.dmzj.com
             val response = client.newCall(GET("$oldPageListApiUrl/comic/chapter/${chapter.url}.html", headers)).execute()
-            Observable.just(pageListParse(response))
+            Observable.just(pageListParse(response, chapter))
         } catch (e: Exception) {
             // v3api
             val response = client.newCall(
@@ -376,13 +384,17 @@ class Dmzj : ConfigurableSource, HttpSource() {
                     headers
                 )
             ).execute()
-            Observable.just(pageListParse(response))
+            Observable.just(pageListParse(response, chapter))
         } catch (e: Exception) {
             Observable.error(e)
         }
     }
 
     override fun pageListParse(response: Response): List<Page> {
+        return pageListParse(response, null)
+    }
+
+    private fun pageListParse(response: Response, chapter: SChapter?): List<Page> {
         val requestUrl = response.request.url.toString()
         val responseBody = response.body!!.string()
         val arr = if (
@@ -406,10 +418,21 @@ class Dmzj : ConfigurableSource, HttpSource() {
         val ret = ArrayList<Page>(arr.length())
         for (i in 0 until arr.length()) {
             // Seems image urls from webpage api and api.m.dmzj.com may be URL encoded multiple times
-            val url = Uri.decode(Uri.decode(arr.getString(i)))
+            val imageUrl = Uri.decode(Uri.decode(arr.getString(i)))
                 .replace("http:", "https:")
                 .replace("dmzj1.com", "dmzj.com")
-            ret.add(Page(i, "", url))
+            // Use url to store lo-res image url
+            val url = if (chapter != null && chapter.url != "") {
+                // imageUrl be like: https://image.dmzj.com/m/manga_name/chapter_name/file_name.jpg
+                // Path node before manga_name is the initial letter of pinyin of the manga name,
+                // which is also used for small images.
+                val imgUrl = imageUrl.toHttpUrlOrNull()
+                if (imgUrl != null) {
+                    val initial = imgUrl.encodedPath.trim('/').substringBefore('/')
+                    "$imageSmallCDNUrl/$initial/${chapter.url}/$i.jpg"
+                } else ""
+            } else ""
+            ret.add(Page(i, url, imageUrl))
         }
         return ret
     }
@@ -421,7 +444,13 @@ class Dmzj : ConfigurableSource, HttpSource() {
     }
 
     override fun imageRequest(page: Page): Request {
-        return GET(page.imageUrl!!.encoded(), headers)
+        return when (preferences.getString(IMAGE_SOURCE_PREF, "")) {
+            ImageSource.ORIG_RES_ONLY.name -> GET(page.imageUrl!!.encoded(), headers)
+            ImageSource.LOW_RES_ONLY.name -> GET(page.url, headers)
+            else -> GET(page.imageUrl!!.encoded(), headers).newBuilder()
+                .addHeader(HttpGetFailoverInterceptor.RETRY_WITH_HEADER, page.url)
+                .build()
+        }
     }
 
     // Unused, we can get image urls directly from the chapter page
@@ -542,15 +571,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
             entryValues = ENTRIES_ARRAY
 
             setDefaultValue("5")
-            setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val setting = preferences.edit().putString(API_RATELIMIT_PREF, newValue as String).commit()
-                    setting
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
-            }
+            setOnPreferenceChangeListener(onStringPreferenceChangeListener(API_RATELIMIT_PREF))
         }
 
         val imgCDNRateLimitPreference = ListPreference(screen.context).apply {
@@ -561,19 +582,41 @@ class Dmzj : ConfigurableSource, HttpSource() {
             entryValues = ENTRIES_ARRAY
 
             setDefaultValue("5")
-            setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val setting = preferences.edit().putString(IMAGE_CDN_RATELIMIT_PREF, newValue as String).commit()
-                    setting
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
-            }
+            setOnPreferenceChangeListener(onStringPreferenceChangeListener(IMAGE_CDN_RATELIMIT_PREF))
+        }
+
+        val imgSourcePreference = ListPreference(screen.context).apply {
+            key = IMAGE_SOURCE_PREF
+            title = IMAGE_SOURCE_PREF_TITLE
+            summary = IMAGE_SOURCE_PREF_SUMMARY
+            entries = enumValues<ImageSource>().map { "${it.desc} (${it.name})" }.toTypedArray()
+            entryValues = enumValues<ImageSource>().map { it.name }.toTypedArray()
+
+            setDefaultValue(ImageSource.PREFER_ORIG_RES.name)
+            setOnPreferenceChangeListener(onStringPreferenceChangeListener(IMAGE_SOURCE_PREF))
         }
 
         screen.addPreference(apiRateLimitPreference)
         screen.addPreference(imgCDNRateLimitPreference)
+        screen.addPreference(imgSourcePreference)
+    }
+
+    private fun onStringPreferenceChangeListener(key: String): Preference.OnPreferenceChangeListener {
+        return Preference.OnPreferenceChangeListener { _, newValue ->
+            try {
+                val setting = preferences.edit().putString(key, newValue as String).commit()
+                setting
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
+            }
+        }
+    }
+
+    private enum class ImageSource(val desc: String) {
+        PREFER_ORIG_RES("优先标清"), // "Prefer Original Resolution"
+        ORIG_RES_ONLY("只用标清"), // "Original Resolution Only"
+        LOW_RES_ONLY("只用低清"), // "Low Resolution Only"
     }
 
     companion object {
@@ -584,6 +627,10 @@ class Dmzj : ConfigurableSource, HttpSource() {
         private const val IMAGE_CDN_RATELIMIT_PREF = "imgCDNRatelimitPreference"
         private const val IMAGE_CDN_RATELIMIT_PREF_TITLE = "图片CDN每秒连接数限制" // "Ratelimit permits per second for image CDN"
         private const val IMAGE_CDN_RATELIMIT_PREF_SUMMARY = "此值影响加载图片时发起连接请求的数量。调低此值可能减小图片加载错误的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s" // "This value affects network request amount for loading image. Lower this value may reduce the chance to get error when loading image, but loading speed will be slower too. Tachiyomi restart required. Current value: %s"
+
+        private const val IMAGE_SOURCE_PREF = "imageSourcePreference"
+        private const val IMAGE_SOURCE_PREF_TITLE = "图源偏好" // "Image source preference"
+        private const val IMAGE_SOURCE_PREF_SUMMARY = "此值影响图片的加载来源。可以选择只用标清图源，只用低清图源，或优先尝试标清图源再回退到低清图源。部分漫画章节可能只能在低清图源下观看。不需要重启软件。\n当前值：%s" // "This value affects image load source. You can choose to use original resolution image source only, or use low resolution image source only, or try original resolution image source before fallback to low resolution image source. Some manga chapters may only be available from low resolution image source. Tachiyomi restart not required. Current value: %s"
 
         private val extractComicIdFromWebpageRegex = Regex("""addSubscribe\((\d+)\)""")
         private val checkComicIdIsNumericalRegex = Regex("""^\d+$""")
