@@ -8,6 +8,7 @@ import okhttp3.Response
 class MagicalTranslatorsFactory : SourceFactory {
     override fun createSources() = listOf(
         MagicalTranslatorsEN(),
+        MagicalTranslatorsES(),
         MagicalTranslatorsPL(),
     )
 }
@@ -35,7 +36,13 @@ abstract class MagicalTranslatorsCommon(lang: String) :
 
 class MagicalTranslatorsEN : MagicalTranslatorsCommon("en") {
     override fun filterMangasPage(mangasPage: MangasPage): MangasPage = mangasPage.copy(
-        mangas = mangasPage.mangas.filterNot { it.url.endsWith("-PL") }
+        mangas = mangasPage.mangas.filterNot { it.url.endsWith("-ES") || it.url.endsWith("-PL") }
+    )
+}
+
+class MagicalTranslatorsES : MagicalTranslatorsCommon("es") {
+    override fun filterMangasPage(mangasPage: MangasPage): MangasPage = mangasPage.copy(
+        mangas = mangasPage.mangas.filter { it.url.endsWith("-ES") }
     )
 }
 

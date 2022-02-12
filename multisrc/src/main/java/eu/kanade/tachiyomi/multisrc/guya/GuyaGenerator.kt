@@ -16,7 +16,8 @@ class GuyaGenerator : ThemeSourceGenerator {
         SingleLang("Guya", "https://guya.moe", "en", overrideVersionCode = 18),
         SingleLang("Danke fürs Lesen", "https://danke.moe", "en", className = "DankeFursLesen"),
         SingleLang("Hachirumi", "https://hachirumi.com", "en", isNsfw = true),
-        MultiLang("Magical Translators", "https://mahoushoujobu.com", listOf("en", "pl")),
+        MultiLang("Magical Translators", "https://mahoushoujobu.com", listOf("en", "es", "pl"),
+                  overrideVersionCode = 1),
     )
     companion object {
         @JvmStatic
