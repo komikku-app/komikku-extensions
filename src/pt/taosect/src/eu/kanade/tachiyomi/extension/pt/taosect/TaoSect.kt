@@ -72,7 +72,8 @@ class TaoSect : HttpSource() {
 
         val projectList = result.map(::popularMangaFromObject)
 
-        val currentPage = response.request.url.queryParameter("page")!!.toInt()
+        val currentPage = response.request.url.queryParameter("page")
+            .orEmpty().toIntOrNull() ?: 1
         val lastPage = response.headers["X-Wp-TotalPages"]!!.toInt()
         val hasNextPage = currentPage < lastPage
 
@@ -139,6 +140,10 @@ class TaoSect : HttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        if (query.startsWith(SLUG_PREFIX_SEARCH) && query.removePrefix(SLUG_PREFIX_SEARCH).isNotBlank()) {
+            return mangaDetailsApiRequest(query.removePrefix(SLUG_PREFIX_SEARCH))
+        }
+
         val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
             .addQueryParameter("page", page.toString())
             .addQueryParameter("per_page", PROJECTS_PER_PAGE.toString())
@@ -226,22 +231,22 @@ class TaoSect : HttpSource() {
 
     // Workaround to allow "Open in browser" use the real URL.
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(mangaDetailsApiRequest(manga))
+        return client.newCall(mangaDetailsApiRequest(manga.url))
             .asObservableSuccess()
             .map { response ->
                 mangaDetailsParse(response).apply { initialized = true }
             }
     }
 
-    private fun mangaDetailsApiRequest(manga: SManga): Request {
-        val projectSlug = manga.url
+    private fun mangaDetailsApiRequest(mangaUrl: String): Request {
+        val projectSlug = mangaUrl
             .substringAfterLast("projeto/")
             .substringBefore("/")
 
         val apiUrl = "$baseUrl/$API_BASE_PATH/projetos".toHttpUrl().newBuilder()
             .addQueryParameter("per_page", "1")
             .addQueryParameter("slug", projectSlug)
-            .addQueryParameter("_fields", "title,informacoes,content,thumbnail")
+            .addQueryParameter("_fields", "title,informacoes,content,thumbnail,link")
             .toString()
 
         return GET(apiUrl, apiHeaders)
@@ -289,7 +294,7 @@ class TaoSect : HttpSource() {
         val result = response.parseAs<List<TaoSectChapterDto>>()
 
         if (result.isNullOrEmpty()) {
-            throw Exception(PROJECT_NOT_FOUND)
+            throw Exception(CHAPTERS_NOT_FOUND)
         }
 
         // Count the project views, requested by the scanlator.
@@ -488,11 +493,14 @@ class TaoSect : HttpSource() {
         private const val ACCEPT_JSON = "application/json"
         private val USER_AGENT = "Tachiyomi " + System.getProperty("http.agent")
 
+        const val SLUG_PREFIX_SEARCH = "slug:"
+
         private const val API_BASE_PATH = "wp-json/wp/v2"
         private const val PROJECTS_PER_PAGE = 18
         private const val DEFAULT_ORDERBY = 3
         private const val DEFAULT_FIELDS = "title,thumbnail,link"
         private const val PROJECT_NOT_FOUND = "Projeto não encontrado."
+        private const val CHAPTERS_NOT_FOUND = "Capítulos não encontrados."
         private const val EXCEEDED_GOOGLE_DRIVE_VIEW_LIMIT = "Limite de visualizações atingido " +
             "no Google Drive. Aguarde com que o limite seja reestabelecido."
 
