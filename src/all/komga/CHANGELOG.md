@@ -1,3 +1,11 @@
+## 1.2.39
+
+Minimum Komga version required: `0.151.0`
+
+### Features
+
+* Prepend series name in front of books within readlists
+
 ## 1.2.38
 
 Minimum Komga version required: `0.113.0`

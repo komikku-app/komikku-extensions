@@ -60,6 +60,7 @@ data class BookMetadataAggregationDto(
 data class BookDto(
     val id: String,
     val seriesId: String,
+    val seriesTitle: String,
     val name: String,
     val number: Float,
     val created: String?,
