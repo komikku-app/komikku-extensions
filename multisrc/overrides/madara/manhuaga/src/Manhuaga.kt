@@ -2,9 +2,12 @@ package eu.kanade.tachiyomi.extension.en.manhuaga
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 
 class Manhuaga : Madara("Manhuaga", "https://manhuaga.com", "en") {
-    override val client: OkHttpClient = super.client.newBuilder()
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
         .addInterceptor { chain ->
             val originalRequest = chain.request()
             chain.proceed(originalRequest).let { response ->
