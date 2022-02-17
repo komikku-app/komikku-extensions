@@ -8,6 +8,7 @@ import MangaDetDto
 import MyLibraryDto
 import PageDto
 import PageWrapperDto
+import PublisherDto
 import SeriesWrapperDto
 import TagsDto
 import UserDto
@@ -219,10 +220,10 @@ class Remanga : ConfigurableSource, HttpSource() {
         }
     }
 
-    private fun parseType(type: TagsDto): TagsDto {
+    private fun parseType(type: TagsDto): String {
         return when (type.name) {
-            "Западный комикс" -> TagsDto(type.id, "Комикс")
-            else -> type
+            "Западный комикс" -> "Комикс"
+            else -> type.name
         }
     }
     private fun parseAge(age_limit: Int): String {
@@ -259,7 +260,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 altName = "Альтернативные названия:\n" + another_name + "\n\n"
             }
             this.description = rus_name + "\n" + ratingStar + " " + ratingValue + " (голосов: " + count_rating + ")\n" + altName + Jsoup.parse(o.description).text()
-            genre = (genres + categories + parseType(type)).joinToString { it.name } + ", " + parseAge(age_limit)
+            genre = parseType(type) + ", " + parseAge(age_limit) + ", " + (genres + categories).joinToString { it.name }
             status = parseStatus(o.status.id)
         }
     }
@@ -317,19 +318,28 @@ class Remanga : ConfigurableSource, HttpSource() {
                 Observable.error(Exception("Лицензировано - Нет глав"))
             }
             else -> {
-                val branchId = branch.maxByOrNull { selector(it) }!!.id
-                client.newCall(chapterListRequest(branchId))
-                    .asObservableSuccess()
-                    .map { response ->
-                        chapterListParse(response)
-                    }
+                val selectedBranch = branch.maxByOrNull { selector(it) }!!
+                return (1..(selectedBranch.count_chapters / 100 + 1)).map {
+                    val response = chapterListRequest(selectedBranch.id, it)
+                    chapterListParse(response, selectedBranch.publishers)
+                }.let { Observable.just(it.flatten()) }
             }
         }
     }
 
-    private fun chapterListRequest(branch: Long): Request {
-        return GET("$baseUrl/api/titles/chapters/?branch_id=$branch", headers)
-    }
+    private fun chapterListRequest(branch: Long, page: Number): Response =
+        client.newCall(
+            GET(
+                "$baseUrl/api/titles/chapters/?branch_id=$branch&page=$page&count=100",
+                headers
+            )
+        ).execute().run {
+            if (!isSuccessful) {
+                close()
+                throw Exception("HTTP error $code")
+            }
+            this
+        }
 
     @SuppressLint("DefaultLocale")
     private fun chapterName(book: BookDto): String {
@@ -340,7 +350,8 @@ class Remanga : ConfigurableSource, HttpSource() {
         return chapterName
     }
 
-    override fun chapterListParse(response: Response): List<SChapter> {
+    override fun chapterListParse(response: Response): List<SChapter> = throw NotImplementedError("Unused")
+    private fun chapterListParse(response: Response, publishers: List<PublisherDto>): List<SChapter> {
         var chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body!!.string()).content
         if (!preferences.getBoolean(PAID_PREF, false)) {
             chapters = chapters.filter { !it.is_paid or (it.is_bought == true) }
@@ -351,8 +362,8 @@ class Remanga : ConfigurableSource, HttpSource() {
                 name = chapterName(chapter)
                 url = "/api/titles/chapters/${chapter.id}"
                 date_upload = parseDate(chapter.upload_date)
-                scanlator = if (chapter.publishers.isNotEmpty()) {
-                    chapter.publishers.joinToString { it.name }
+                scanlator = if (publishers.isNotEmpty()) {
+                    publishers.joinToString { it.name }
                 } else null
             }
         }
