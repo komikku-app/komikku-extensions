@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.zh.yimmh
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
@@ -11,11 +12,16 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 class Yimmh : ParsedHttpSource() {
     override val name: String = "忆漫"
@@ -24,13 +30,34 @@ class Yimmh : ParsedHttpSource() {
     override val baseUrl: String = "https://m.yimmh.com"
     override fun headersBuilder() = Headers.Builder()
         .add("User-Agent", "Mozilla/5.0 (Android 11; Mobile; rv:83.0) Gecko/83.0 Firefox/83.0")
+    override val client: OkHttpClient = getUnsafeOkHttpClient()
 
-    private fun toHttp(url: String): String {
-        // Images from https://*.yemancomic.com do not load
-        // because of certificate issue, so switch to http.
-        return if (url.startsWith("https")) {
-            "http" + url.substring(5)
-        } else url
+    // Trusted all certificates
+    private fun getUnsafeOkHttpClient(): OkHttpClient {
+        // Create a trust manager that does not validate certificate chains
+        val trustAllCerts = arrayOf<TrustManager>(
+            @SuppressLint("CustomX509TrustManager")
+            object : X509TrustManager {
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                }
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                }
+
+                override fun getAcceptedIssuers() = arrayOf<X509Certificate>()
+            }
+        )
+
+        // Install the all-trusting trust manager
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+        // Create an ssl socket factory with our all-trusting manager
+        val sslSocketFactory = sslContext.socketFactory
+
+        return OkHttpClient.Builder()
+            .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
+            .hostnameVerifier { _, _ -> true }.build()
     }
 
     // Popular
@@ -41,7 +68,7 @@ class Yimmh : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("p.rank-list-info-right-title").text()
         setUrlWithoutDomain(element.attr("abs:href"))
-        thumbnail_url = toHttp(element.select("img").attr("abs:data-original"))
+        thumbnail_url = element.select("img").attr("abs:data-original")
     }
 
     // Latest
@@ -60,7 +87,7 @@ class Yimmh : ParsedHttpSource() {
                 SManga.create().apply {
                     title = book.getString("book_name")
                     url = "/book/${book.getString("unique_id")}"
-                    thumbnail_url = toHttp(book.getString("cover_url"))
+                    thumbnail_url = book.getString("cover_url")
                 }
             )
         }
@@ -104,14 +131,14 @@ class Yimmh : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("p.book-list-info-title").text()
         setUrlWithoutDomain(element.select("a").attr("abs:href"))
-        thumbnail_url = toHttp(element.select("img").attr("abs:data-original"))
+        thumbnail_url = element.select("img").attr("abs:data-original")
     }
 
     // Details
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         title = document.select("p.detail-main-info-title").text()
-        thumbnail_url = toHttp(document.select("div.detail-main-cover > img").attr("abs:data-original"))
+        thumbnail_url = document.select("div.detail-main-cover > img").attr("abs:data-original")
         author = document.select("p.detail-main-info-author:contains(作者：) > a").text()
         artist = author
         genre = document.select("p.detail-main-info-class > span").eachText().joinToString(", ")
@@ -141,7 +168,7 @@ class Yimmh : ParsedHttpSource() {
         while (true) {
             val images = page.select("div#cp_img > img.lazy")
             images.forEach {
-                add(Page(size, "", toHttp(it.attr("abs:data-src"))))
+                add(Page(size, "", it.attr("abs:data-src")))
             }
             val nextPage = page.select("a.view-bottom-bar-item:contains(下一页)").attr("href")
             if (nextPage.isNullOrEmpty()) {
