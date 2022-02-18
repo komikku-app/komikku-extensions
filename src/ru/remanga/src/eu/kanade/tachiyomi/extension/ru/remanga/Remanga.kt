@@ -122,6 +122,7 @@ class Remanga : ConfigurableSource, HttpSource() {
             val mangas = page.content.map {
                 it.title.toSManga()
             }
+
             return MangasPage(mangas, page.props.page < page.props.total_pages)
         } else {
             val page = json.decodeFromString<PageWrapperDto<LibraryDto>>(response.body!!.string())
@@ -139,7 +140,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     private fun LibraryDto.toSManga(): SManga =
         SManga.create().apply {
             // Do not change the title name to ensure work with a multilingual catalog!
-            title = en_name
+            title = if (isEng.equals("rus")) rus_name else en_name
             url = "/api/titles/$dir/"
             thumbnail_url = if (img.high.isNotEmpty()) {
                 baseUrl + img.high
@@ -186,6 +187,9 @@ class Remanga : ConfigurableSource, HttpSource() {
                 }
                 is AgeList -> filter.state.forEach { age ->
                     if (age.state) {
+                        if ((age.id == "2") and (USER_ID == "")) {
+                            throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
+                        }
                         url.addQueryParameter("age_limit", age.id)
                     }
                 }
@@ -197,7 +201,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 is MyList -> {
                     if (filter.state > 0) {
                         if (USER_ID == "") {
-                            throw Exception("Пользователь не найден")
+                            throw Exception("Пользователь не найден, необходима авторизация через WebView")
                         }
                         val TypeQ = getMyList()[filter.state].id
                         val UserProfileUrl = "$baseUrl/api/users/$USER_ID/bookmarks/?type=$TypeQ&page=$page".toHttpUrl().newBuilder()
@@ -252,14 +256,15 @@ class Remanga : ConfigurableSource, HttpSource() {
         val o = this
         return SManga.create().apply {
             // Do not change the title name to ensure work with a multilingual catalog!
-            title = en_name
+            title = if (isEng.equals("rus")) rus_name else en_name
             url = "/api/titles/$dir/"
             thumbnail_url = baseUrl + img.high
             var altName = ""
             if (another_name.isNotEmpty()) {
                 altName = "Альтернативные названия:\n" + another_name + "\n\n"
             }
-            this.description = rus_name + "\n" + ratingStar + " " + ratingValue + " (голосов: " + count_rating + ")\n" + altName + Jsoup.parse(o.description).text()
+            val mediaNameLanguage = if (isEng.equals("rus")) en_name else rus_name
+            this.description = mediaNameLanguage + "\n" + ratingStar + " " + ratingValue + " (голосов: " + count_rating + ")\n" + altName + Jsoup.parse(o.description).text()
             genre = parseType(type) + ", " + parseAge(age_limit) + ", " + (genres + categories).joinToString { it.name }
             status = parseStatus(o.status.id)
         }
@@ -279,7 +284,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 }
             }
             .map { response ->
-                (if (warnLogin) manga.apply { description = "Авторизуйтесь для просмотра списка глав" } else mangaDetailsParse(response))
+                (if (warnLogin) manga.apply { description = "Для просмотра 18+ контента необходима авторизация через WebView" } else mangaDetailsParse(response))
                     .apply {
                         initialized = true
                     }
@@ -642,7 +647,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         MyListUnit("Брошено ", "3"),
         MyListUnit("Не интересно ", "5")
     )
-
+    private var isEng: String? = preferences.getString(LANGUAGE_PREF, "eng")
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
         val domainPref = ListPreference(screen.context).apply {
             key = DOMAIN_PREF
@@ -661,6 +666,20 @@ class Remanga : ConfigurableSource, HttpSource() {
                     e.printStackTrace()
                     false
                 }
+            }
+        }
+        val titleLanguagePref = ListPreference(screen.context).apply {
+            key = LANGUAGE_PREF
+            title = LANGUAGE_PREF_Title
+            entries = arrayOf("Английский", "Русский")
+            entryValues = arrayOf("eng", "rus")
+            summary = "%s"
+            setDefaultValue("eng")
+            setOnPreferenceChangeListener { _, newValue ->
+                val titleLanguage = preferences.edit().putString(LANGUAGE_PREF, newValue as String).commit()
+                val warning = "Если язык обложки не изменился очистите базу данных в приложении (Настройки -> Дополнительно -> Очистить базу данных)"
+                Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
+                titleLanguage
             }
         }
         val paidChapterShow = androidx.preference.CheckBoxPreference(screen.context).apply {
@@ -686,6 +705,7 @@ class Remanga : ConfigurableSource, HttpSource() {
             }
         }
         screen.addPreference(domainPref)
+        screen.addPreference(titleLanguagePref)
         screen.addPreference(paidChapterShow)
         screen.addPreference(bookmarksHide)
     }
@@ -701,6 +721,9 @@ class Remanga : ConfigurableSource, HttpSource() {
 
         private const val DOMAIN_PREF = "REMangaDomain"
         private const val DOMAIN_PREF_Title = "Выбор домена"
+
+        private const val LANGUAGE_PREF = "ReMangaTitleLanguage"
+        private const val LANGUAGE_PREF_Title = "Выбор языка на обложке"
 
         private const val PAID_PREF = "PaidChapter"
         private const val PAID_PREF_Title = "Показывать платные главы"
