@@ -254,7 +254,7 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
 
     // 查询漫画状态和类别信息
     private fun selectDetailsStatusAndGenre(document: Document, index: Int): String {
-        var status = "2"
+        var status = "0"
         var genre = ""
         if (document.select("span[itemprop=genre] a").size == 0) {
             return if (index == 1) {
@@ -268,6 +268,9 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
             when (val vote: String = value.select("a").text()) {
                 "連載中" -> {
                     status = "1"
+                }
+                "完結" -> {
+                    status = "2"
                 }
                 else -> {
                     genre = "$genre$vote "
