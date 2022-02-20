@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -44,7 +45,11 @@ class HentaiHere : ParsedHttpSource() {
         searchMangaNextPageSelector()
 
     // Search
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override fun fetchSearchManga(
+        page: Int,
+        query: String,
+        filters: FilterList
+    ): Observable<MangasPage> {
         return if (query.startsWith(PREFIX_ID_SEARCH)) {
             val id = query.removePrefix(PREFIX_ID_SEARCH)
             client.newCall(searchMangaByIdRequest(id))
@@ -78,27 +83,32 @@ class HentaiHere : ParsedHttpSource() {
         val alphabetItem = alphabetFilterList[alphabetIndex]
         val alphabet = if (alphabetIndex != 0) "/${alphabetItem.first}" else ""
 
-        return when {
+        val url = when {
             // query + sort_min ~ /search?s=ore&sort=most-popular
             query.isNotBlank() -> {
-                GET("$baseUrl/search?s=$query&sort=$sortMin&page=$page")
+                "$baseUrl/search".toHttpUrl().newBuilder().apply {
+                    addQueryParameter("s", query)
+                    addQueryParameter("sort", sortMin)
+                    addQueryParameter("page", page.toString())
+                }.toString()
             }
             // category + sort_min + alphabet (optional) ~ /search/t34/newest/a
             categoryFilter.state != 0 -> {
                 val category = categoryFilterList[categoryFilter.state].first
-                GET("$baseUrl/search/$category/$sortMin$alphabet?page=$page")
+                "$baseUrl/search/$category/$sortMin$alphabet?page=$page"
             }
             // status + alphabet  (optional) ~ /directory/ongoing/a
             statusFilter.state != 0 -> {
                 val status = statusFilterList[statusFilter.state].first
-                GET("$baseUrl/directory/$status$alphabet?page=$page")
+                "$baseUrl/directory/$status$alphabet?page=$page"
             }
             // sort + alphabet (optional) ~ /directory/staff-pick/a
             else -> {
                 val sort = sortItem.first
-                GET("$baseUrl/directory/$sort$alphabet?page=$page")
+                "$baseUrl/directory/$sort$alphabet?page=$page"
             }
         }
+        return GET(url, headers)
     }
 
     override fun searchMangaSelector() = ".item"
@@ -138,24 +148,32 @@ class HentaiHere : ParsedHttpSource() {
         searchMangaNextPageSelector()
 
     // Details
-    override fun mangaDetailsParse(document: Document): SManga {
-        val genres = document.select("#info > div:nth-child(10) > a")
-        val licensed = genres.find { it.text() == "Licensed" }
+    override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
+        val categories = document.select("#info .text-info:contains(Cat) ~ a")
+        val contents = document.select("#info .text-info:contains(Content:) ~ a")
+        val licensed = categories.find { it.text() == "Licensed" }
 
-        return SManga.create().apply {
-            title = document.select("*[itemprop='name']").text().trim()
-            author = document.select("#info > div:nth-child(9) > a").text()
-            description = document.select("#info > div:last-child").text()
-                .substringAfter("Brief Summary:")
-                .trim()
-            genre = genres.joinToString(", ") { it.text() }
-            status = if (licensed != null) {
-                SManga.LICENSED
-            } else {
-                document.select("#info > div:nth-child(4) > a").text().trim().toStatus()
-            }
-            thumbnail_url = document.select("#cover img").attr("src")
+        title = document.select("*[itemprop='name']").first()!!.text()
+        author = document.select("#info .text-info:contains(Artist:) ~ a")
+            .joinToString { it.text() }
+
+        description = document.select("#info > div:has(> .text-info:contains(Brief Summary:))")
+            .first()
+            ?.ownText()
+        if (description == "Nothing yet!") { description = "" }
+
+        genre = (categories + contents).joinToString { it.text() }
+        status = when (licensed) {
+            null -> document.select("#info .text-info:contains(Status:) ~ a")
+                .first()
+                ?.text()
+                ?.toStatus()
+                ?: SManga.UNKNOWN
+            else -> SManga.LICENSED
         }
+        thumbnail_url = document.select("#cover img")
+            .first()!!
+            .attr("src")
     }
 
     // Chapters
