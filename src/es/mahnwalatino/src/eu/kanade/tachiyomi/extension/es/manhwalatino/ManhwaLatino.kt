@@ -28,7 +28,7 @@ class ManhwaLatino : ParsedHttpSource() {
     /**
      * Base url of the website without the trailing slash, like: http://mysite.com
      */
-    override val baseUrl = "https://manhwa-latino.com"
+    override val baseUrl = "https://manhwa-es.com"
 
     /**
      * Header for Request

@@ -75,7 +75,7 @@ class ManhwaLatinoSiteParser(
         manga.url =
             getUrlWithoutDomain(element.select(MLConstants.latestUpdatesSelectorUrl).first().attr("abs:href"))
         manga.title = element.select(MLConstants.latestUpdatesSelectorTitle).text().trim()
-        manga.thumbnail_url = element.select(MLConstants.latestUpdatesSelectorThumbnailUrl).attr("abs:src").replace("//", "/")
+        manga.thumbnail_url = element.select(MLConstants.latestUpdatesSelectorThumbnailUrl).attr("abs:data-src").replace("//", "/")
         return manga
     }
 
