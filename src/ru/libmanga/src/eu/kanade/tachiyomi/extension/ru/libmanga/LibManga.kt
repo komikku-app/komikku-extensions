@@ -156,9 +156,6 @@ class LibManga : ConfigurableSource, HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
 
-        if (document.select("body[data-page=home]").isNotEmpty())
-            throw Exception("Can't open manga. Try log in via WebView")
-
         val manga = SManga.create()
 
         val body = document.select("div.media-info-list").first()
@@ -193,8 +190,7 @@ class LibManga : ConfigurableSource, HttpSource() {
         manga.thumbnail_url = document.select(".media-sidebar__cover > img").attr("src")
         manga.author = body.select("div.media-info-list__title:contains(Автор) + div").text()
         manga.artist = body.select("div.media-info-list__title:contains(Художник) + div").text()
-        manga.status = if (document.html().contains("Манга удалена по просьбе правообладателей") ||
-            document.html().contains("Данный тайтл лицензирован на территории РФ.")
+        manga.status = if (document.html().contains("paper empty section")
         ) {
             SManga.LICENSED
         } else
@@ -220,9 +216,8 @@ class LibManga : ConfigurableSource, HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        if (document.html().contains("Манга удалена по просьбе правообладателей") ||
-            document.html().contains("Данный тайтл лицензирован на территории РФ.")
-        ) {
+        val redirect = document.html()
+        if (redirect.contains("paper empty section")) {
             return emptyList()
         }
         val dataStr = document
@@ -355,8 +350,6 @@ class LibManga : ConfigurableSource, HttpSource() {
         if (!redirect.contains("window.__info")) {
             if (redirect.contains("hold-transition login-page")) {
                 throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
-            } else if (redirect.contains("header__logo")) {
-                throw Exception("Лицензировано - Главы не доступны")
             }
         }
 

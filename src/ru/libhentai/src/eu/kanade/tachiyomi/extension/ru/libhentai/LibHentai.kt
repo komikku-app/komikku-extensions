@@ -57,12 +57,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(RateLimitInterceptor(3))
-        .build()
-
     override val baseUrl = "https://hentailib.me"
 
     override fun headersBuilder() = Headers.Builder().apply {
@@ -70,6 +64,22 @@ class LibHentai : ConfigurableSource, HttpSource() {
         add("Referer", baseUrl)
     }
 
+    private val authClient = network.cloudflareClient
+
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .addNetworkInterceptor(RateLimitInterceptor(3))
+        .addInterceptor { chain ->
+            val originalRequest = chain.request()
+            if (originalRequest.url.toString().contains(baseUrl))
+                if (!authClient.newCall(GET(baseUrl, headers))
+                    .execute().body!!.string().contains("header-right-menu__avatar")
+                )
+                    throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
+            return@addInterceptor chain.proceed(originalRequest)
+        }
+        .build()
     override fun latestUpdatesRequest(page: Int) = GET(baseUrl, headers)
 
     private val latestUpdatesSelector = "div.updates__item"
@@ -153,9 +163,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
 
-        if (document.select("body[data-page=home]").isNotEmpty())
-            throw Exception("Can't open manga. Try log in via WebView")
-
         val manga = SManga.create()
 
         val body = document.select("div.media-info-list").first()
@@ -190,8 +197,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
         manga.thumbnail_url = document.select(".media-sidebar__cover > img").attr("src")
         manga.author = body.select("div.media-info-list__title:contains(Автор) + div").text()
         manga.artist = body.select("div.media-info-list__title:contains(Художник) + div").text()
-        manga.status = if (document.html().contains("Манга удалена по просьбе правообладателей") ||
-            document.html().contains("Данный тайтл лицензирован на территории РФ.")
+        manga.status = if (document.html().contains("paper empty section")
         ) {
             SManga.LICENSED
         } else
@@ -217,9 +223,8 @@ class LibHentai : ConfigurableSource, HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        if (document.html().contains("Манга удалена по просьбе правообладателей") ||
-            document.html().contains("Данный тайтл лицензирован на территории РФ.")
-        ) {
+        val redirect = document.html()
+        if (redirect.contains("paper empty section")) {
             return emptyList()
         }
         val dataStr = document
@@ -352,8 +357,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
         if (!redirect.contains("window.__info")) {
             if (redirect.contains("hold-transition login-page")) {
                 throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
-            } else if (redirect.contains("header__logo")) {
-                throw Exception("Лицензировано - Главы не доступны")
             }
         }
 
