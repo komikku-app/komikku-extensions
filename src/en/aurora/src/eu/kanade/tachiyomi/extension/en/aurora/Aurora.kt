@@ -148,13 +148,13 @@ class Aurora : HttpSource() {
         val chapterArchiveUrl = "$baseUrl/archive/"
 
         val chapterOverviewDoc = client.newCall(GET(chapterArchiveUrl, headers)).execute().asJsoup()
-        val chapterBlockElements = chapterOverviewDoc.select(".blocks-gallery-item")
+        val chapterBlockElements = chapterOverviewDoc.select(".wp-block-image")
         val mangasFromChapters = chapterBlockElements
             .mapIndexed { chapterIndex, chapter ->
-                val chapterOverviewLink = chapter.selectFirst(".blocks-gallery-item__caption a")
+                val chapterOverviewLink = chapter.selectFirst("a")
                 val chapterOverviewUrl = chapterOverviewLink.attr("href")
                 val chapterTitle = "$name - ${chapterOverviewLink.text()}"
-                val chapterThumbnail = chapter.selectFirst("figure img").attr("src")
+                val chapterThumbnail = chapter.selectFirst("img").attr("src")
 
                 SManga.create().apply {
                     setUrlWithoutDomain(chapterOverviewUrl)
@@ -190,16 +190,9 @@ class Aurora : HttpSource() {
 
     override fun popularMangaRequest(page: Int): Request = throw Exception("Not used")
 
-    override fun fetchSearchManga(
-        page: Int,
-        query: String,
-        filters: FilterList
-    ): Observable<MangasPage> {
-        return Observable.just(generateAuroraMangasPage())
-    }
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = throw Exception("Not used")
 
     override fun searchMangaParse(response: Response): MangasPage = throw Exception("Not used")
 
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request =
-        throw Exception("Not used")
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = throw Exception("Not used")
 }
