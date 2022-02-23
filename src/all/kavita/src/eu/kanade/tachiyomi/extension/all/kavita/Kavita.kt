@@ -10,7 +10,6 @@ import androidx.preference.MultiSelectListPreference
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.extension.all.kavita.dto.AuthenticationDto
 import eu.kanade.tachiyomi.extension.all.kavita.dto.ChapterDto
-import eu.kanade.tachiyomi.extension.all.kavita.dto.KavitaComicsSearch
 import eu.kanade.tachiyomi.extension.all.kavita.dto.MangaFormat
 import eu.kanade.tachiyomi.extension.all.kavita.dto.MetadataAgeRatings
 import eu.kanade.tachiyomi.extension.all.kavita.dto.MetadataCollections
@@ -22,8 +21,11 @@ import eu.kanade.tachiyomi.extension.all.kavita.dto.MetadataPeople
 import eu.kanade.tachiyomi.extension.all.kavita.dto.MetadataPubStatus
 import eu.kanade.tachiyomi.extension.all.kavita.dto.MetadataTag
 import eu.kanade.tachiyomi.extension.all.kavita.dto.PersonRole
+import eu.kanade.tachiyomi.extension.all.kavita.dto.SearchResultsDto
 import eu.kanade.tachiyomi.extension.all.kavita.dto.SeriesDto
 import eu.kanade.tachiyomi.extension.all.kavita.dto.SeriesMetadataDto
+import eu.kanade.tachiyomi.extension.all.kavita.dto.SeriesSearchDto
+import eu.kanade.tachiyomi.extension.all.kavita.dto.ServerInfoDto
 import eu.kanade.tachiyomi.extension.all.kavita.dto.VolumeDto
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -44,6 +46,8 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -56,9 +60,32 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
+import java.net.ConnectException
 import java.security.MessageDigest
 
-class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
+class Kavita(private val suffix: String = "") : ConfigurableSource, HttpSource() {
+    class CompareChapters {
+        companion object : Comparator<SChapter> {
+            override fun compare(a: SChapter, b: SChapter): Int {
+                if (a.chapter_number < 1.0 && b.chapter_number < 1.0) {
+                    // Both are volumes, multiply by 100 and do normal sort
+                    return if ((a.chapter_number * 100) < (b.chapter_number * 100)) {
+                        1
+                    } else -1
+                } else {
+                    if (a.chapter_number < 1.0 && b.chapter_number >= 1.0) {
+                        // A is volume, b is not. A should sort first
+                        return 1
+                    } else if (a.chapter_number >= 1.0 && b.chapter_number < 1.0) {
+                        return -1
+                    }
+                }
+                if (a.chapter_number < b.chapter_number) return 1
+                if (a.chapter_number > b.chapter_number) return -1
+                return 0
+            }
+        }
+    }
 
     override val id by lazy {
         val key = "${"kavita_$suffix"}/all/$versionId"
@@ -75,13 +102,19 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
     override val baseUrl by lazy { getPrefBaseUrl() }
     private val address by lazy { getPrefAddress() } // Address for the Kavita OPDS url. Should be http(s)://host:(port)/api/opds/api-key
     private var jwtToken = "" // * JWT Token for authentication with the server. Stored in memory.
-    private val LOG_TAG = "extension.all.kavita_${preferences.getString(KavitaConstants.customSourceNamePref,suffix)!!.replace(' ','_')}"
+    private val LOG_TAG = """extension.all.kavita_${"[$suffix]_" + preferences.getString(KavitaConstants.customSourceNamePref,"[$suffix]")!!.replace(' ','_')}"""
     private var isLoged = false // Used to know if login was correct and not send login requests anymore
 
     private val json: Json by injectLazy()
     private val helper = KavitaHelper()
     private inline fun <reified T> Response.parseAs(): T =
         use {
+            if (it.peekBody(Long.MAX_VALUE).string().isEmpty()) {
+                throw EmptyRequestBody(
+                    "Body of the response is empty. RequestUrl=${it.request.url}\nPlease check your kavita instance is up to date",
+                    Throwable("Empty Body of the response is empty. RequestUrl=${it.request.url}\n Please check your kavita instance is up to date")
+                )
+            }
             json.decodeFromString(it.body?.string().orEmpty())
         }
     private inline fun <reified T : Enum<T>> safeValueOf(type: String): T {
@@ -143,8 +176,8 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
                     if (filter.state != null) {
                         toFilter.sorting = filter.state!!.index + 1
                         toFilter.sorting_asc = filter.state!!.ascending
-                        // disabled till the search api is stable
-                        // isFilterOn = true
+                        // Disabled until search is stable
+//                        isFilterOn = false
                     }
                 }
                 is StatusFilterGroup -> {
@@ -165,6 +198,7 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
                 }
                 is UserRating -> {
                     toFilter.userRating = filter.state
+                    isFilterOn = true
                 }
                 is TagFilterGroup -> {
                     filter.state.forEach { content ->
@@ -305,13 +339,18 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
                         }
                     }
                 }
+                else -> isFilterOn = false
             }
         }
 
-        if (isFilterOn || query.isEmpty()) {
+        if (query.isEmpty()) {
+            isFilterOn = true
             return popularMangaRequest(page)
         } else {
-            return GET("$apiUrl/Library/search?queryString=$query", headers)
+            isFilterOn = false
+            val url = "$apiUrl/Library/search".toHttpUrl().newBuilder()
+                .addQueryParameter("queryString", query)
+            return GET(url.toString(), headers)
         }
     }
 
@@ -322,13 +361,13 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
             if (response.request.url.toString().contains("api/series/all"))
                 return popularMangaParse(response)
 
-            val result = response.parseAs<List<KavitaComicsSearch>>()
+            val result = response.parseAs<SearchResultsDto>().series
             val mangaList = result.map(::searchMangaFromObject)
             return MangasPage(mangaList, false)
         }
     }
 
-    private fun searchMangaFromObject(obj: KavitaComicsSearch): SManga = SManga.create().apply {
+    private fun searchMangaFromObject(obj: SeriesSearchDto): SManga = SManga.create().apply {
         title = obj.name
         thumbnail_url = "$apiUrl/Image/series-cover?seriesId=${obj.seriesId}"
         description = "None"
@@ -363,23 +402,25 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
         val result = response.parseAs<SeriesMetadataDto>()
 
         val existingSeries = series.find { dto -> dto.id == result.seriesId }
-
+        Log.d("[Kavita]", "old manga url:")
         if (existingSeries != null) {
             val manga = helper.createSeriesDto(existingSeries, apiUrl)
+            manga.url = "$apiUrl/Series/${result.seriesId}"
             manga.artist = result.coverArtists.joinToString { it.name }
             manga.description = result.summary
             manga.author = result.writers.joinToString { it.name }
             manga.genre = result.genres.joinToString { it.title }
+            manga.thumbnail_url = "$apiUrl/image/series-cover?seriesId=${result.seriesId}"
 
             return manga
         }
 
         return SManga.create().apply {
             url = "$apiUrl/Series/${result.seriesId}"
-            artist = result.coverArtists.joinToString { ", " }
-            author = result.writers.joinToString { ", " }
-            genre = result.genres.joinToString { ", " }
-            thumbnail_url = "$apiUrl/image/series-cover?seriesId=${result.seriesId}"
+            artist = result.coverArtists.joinToString { it.name }
+            description = result.summary
+            author = result.writers.joinToString { it.name }
+            genre = result.genres.joinToString { it.title }
         }
     }
 
@@ -394,6 +435,7 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
     private fun chapterFromObject(obj: ChapterDto): SChapter = SChapter.create().apply {
         url = obj.id.toString()
         if (obj.number == "0" && obj.isSpecial) {
+            // This is a special. Chapter name is special name
             name = obj.range
         } else {
             val cleanedName = obj.title.replaceFirst("^0+(?!$)".toRegex(), "")
@@ -401,7 +443,7 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
         }
         date_upload = helper.parseDate(obj.created)
         chapter_number = obj.number.toFloat()
-        scanlator = obj.pages.toString()
+        scanlator = "${obj.pages} pages"
     }
 
     private fun chapterFromVolume(obj: ChapterDto, volume: VolumeDto): SChapter =
@@ -409,25 +451,31 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
             // If there are multiple chapters to this volume, then prefix with Volume number
             if (volume.chapters.isNotEmpty() && obj.number != "0") {
                 name = "Volume ${volume.number} Chapter ${obj.number}"
+                chapter_number = obj.number.toFloat()
             } else if (obj.number == "0") {
                 // This chapter is solely on volume
                 if (volume.number == 0) {
                     // Treat as special
                     if (obj.range == "") {
                         name = "Chapter 0"
+                        chapter_number = obj.number.toFloat()
                     } else {
                         name = obj.range
+                        chapter_number = obj.number.toFloat()
                     }
                 } else {
                     name = "Volume ${volume.number}"
+//                    val newVolNumber: Float = (volume.number / 100).toFloat()
+//                    chapter_number = newVolNumber.toString().padStart(3, '0').toFloat()
+                    chapter_number = volume.number.toFloat() / 100
                 }
             } else {
                 name = "Unhandled Else Volume ${volume.number}"
             }
             url = obj.id.toString()
             date_upload = helper.parseDate(obj.created)
-            chapter_number = obj.number.toFloat()
-            scanlator = "${obj.pages}"
+
+            scanlator = "${obj.pages} pages"
         }
     override fun chapterListParse(response: Response): List<SChapter> {
         try {
@@ -448,7 +496,8 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
                     }
                 }
             }
-            allChapterList.reverse()
+
+            allChapterList.sortWith(CompareChapters)
             return allChapterList
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Unhandled exception parsing chapters. Send logs to kavita devs", e)
@@ -465,7 +514,7 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
         val chapterId = chapter.url
-        val numPages = chapter.scanlator?.toInt()
+        val numPages = chapter.scanlator?.replace(" pages", "")?.toInt()
         val numPages2 = "$numPages".toInt() - 1
         val pages = mutableListOf<Page>()
         for (i in 0..numPages2) {
@@ -797,8 +846,18 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
     class LoginErrorException(message: String? = null, cause: Throwable? = null) : Exception(message, cause) {
         constructor(cause: Throwable) : this(null, cause)
     }
+    class OpdsurlExistsInPref(message: String? = null, cause: Throwable? = null) : Exception(message, cause) {
+        constructor(cause: Throwable) : this(null, cause)
+    }
+    class EmptyRequestBody(message: String? = null, cause: Throwable? = null) : Exception(message, cause) {
+        constructor(cause: Throwable) : this(null, cause)
+    }
+    class LoadingFilterFailed(message: String? = null, cause: Throwable? = null) : Exception(message, cause) {
+        constructor(cause: Throwable) : this(null, cause)
+    }
+
     override fun headersBuilder(): Headers.Builder {
-        if (jwtToken.isEmpty()) throw LoginErrorException("403 Error\nOPDS address got modified or is incorrect")
+        if (jwtToken.isEmpty()) throw LoginErrorException("401 Error\nOPDS address got modified or is incorrect")
         return Headers.Builder()
             .add("User-Agent", "Tachiyomi Kavita v${BuildConfig.VERSION_NAME}")
             .add("Content-Type", "application/json")
@@ -833,13 +892,8 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
                 "readStatus",
                 buildJsonObject {
                     if (filter.readStatus.isNotEmpty()) {
-                        filter.readStatus.forEach { status ->
-                            if (status in listOf("notRead", "inProgress", "read")) {
-                                put(status, JsonPrimitive(true))
-                            } else {
-                                put(status, JsonPrimitive(false))
-                            }
-                        }
+                        filter.readStatusList
+                            .forEach { status -> put(status, JsonPrimitive(status in filter.readStatus)) }
                     } else {
                         put("notRead", JsonPrimitive(true))
                         put("inProgress", JsonPrimitive(true))
@@ -882,7 +936,6 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
             "",
             "The OPDS url copied from User Settings. This should include address and the api key on end."
         )
-
         val enabledFiltersPref = MultiSelectListPreference(screen.context).apply {
             key = KavitaConstants.toggledFiltersPref
             title = "Default filters shown"
@@ -915,7 +968,6 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
                 res
             }
         }
-
         screen.addPreference(customSourceNamePref)
         screen.addPreference(opdsAddressPref)
         screen.addPreference(enabledFiltersPref)
@@ -944,6 +996,19 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
             }
             setOnPreferenceChangeListener { _, newValue ->
                 try {
+                    val opdsUrlInPref = opdsUrlInPreferences(newValue.toString()) // We don't allow hot have multiple sources with same ip or domain
+                    if (opdsUrlInPref.isNotEmpty()) {
+                        // TODO("Add option to allow multiple sources with same url at the cost of tracking")
+                        preferences.edit().putString(title, "").apply()
+
+                        Toast.makeText(
+                            context,
+                            "URL exists in a different source -> $opdsUrlInPref",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        throw OpdsurlExistsInPref("Url exists in a different source -> $opdsUrlInPref")
+                    }
+
                     val res = preferences.edit().putString(title, newValue as String).commit()
                     Toast.makeText(
                         context,
@@ -953,15 +1018,17 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
                     setupLogin(newValue)
                     Log.v(LOG_TAG, "[Preferences] Successfully modified OPDS URL")
                     res
+                } catch (e: OpdsurlExistsInPref) {
+                    Log.e(LOG_TAG, "Url exists in a different sourcce")
+                    false
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(LOG_TAG, "Unrecognised error", e)
                     false
                 }
             }
         }
     }
 
-    // private fun getPrefapiKey(): String = preferences.getString("APIKEY", "")!!
     private fun getPrefBaseUrl(): String = preferences.getString("BASEURL", "")!!
     private fun getPrefApiUrl(): String = preferences.getString("APIURL", "")!!
     private fun getPrefKey(key: String): String = preferences.getString(key, "")!!
@@ -984,23 +1051,48 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
     /**
      * LOGIN
      **/
+
+    private fun opdsUrlInPreferences(url: String): String {
+        fun getCleanedApiUrl(url: String): String = "${url.split("/api/").first()}/api"
+        /**Used to check if a url already exists in preference in any source
+         * This is a limitation needed for tracking.**/
+        for (sourceId in 1..3) { // There's 3 sources so 3 preferences to check
+            val sourceSuffixID by lazy {
+                val key = "${"kavita_$sourceId"}/all/1" // Hardcoded versionID to 1
+                val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
+                (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }
+                    .reduce(Long::or) and Long.MAX_VALUE
+            }
+            val preferences: SharedPreferences by lazy {
+                Injekt.get<Application>().getSharedPreferences("source_$sourceSuffixID", 0x0000)
+            }
+            val prefApiUrl = preferences.getString("APIURL", "")!!
+
+            if (prefApiUrl.isNotEmpty()) {
+                if (prefApiUrl == getCleanedApiUrl(url)) {
+                    if (sourceId.toString() != suffix) {
+                        return preferences.getString(KavitaConstants.customSourceNamePref, sourceId.toString())!!
+                    }
+                }
+            }
+        }
+        return ""
+    }
+
     private fun setupLogin(addressFromPreference: String = "") {
         Log.v(LOG_TAG, "[Setup Login] Starting setup")
-        val validaddress = if (address.isEmpty()) addressFromPreference else address
-        val tokens = validaddress.split("/api/opds/")
+        val validAddress = address.ifEmpty { addressFromPreference }
+        val tokens = validAddress.split("/api/opds/")
         val apiKey = tokens[1]
         val baseUrlSetup = tokens[0].replace("\n", "\\n")
 
-        if (!baseUrlSetup.startsWith("http")) {
-            try {
-                throw Exception("""Url does not start with "http/s" but with ${baseUrlSetup.split("://")[0]} """)
-            } catch (e: Exception) {
-                throw Exception("""Malformed Url: $baseUrlSetup""")
-            }
+        if (baseUrlSetup.toHttpUrlOrNull() == null) {
+            Log.e(LOG_TAG, "Invalid URL $baseUrlSetup")
+            throw Exception("""Invalid URL: $baseUrlSetup""")
         }
-        preferences.edit().putString("BASEURL", baseUrlSetup).commit()
-        preferences.edit().putString("APIKEY", apiKey).commit()
-        preferences.edit().putString("APIURL", "$baseUrlSetup/api").commit()
+        preferences.edit().putString("BASEURL", baseUrlSetup).apply()
+        preferences.edit().putString("APIKEY", apiKey).apply()
+        preferences.edit().putString("APIURL", "$baseUrlSetup/api").apply()
         Log.v(LOG_TAG, "[Setup Login] Setup successful")
     }
 
@@ -1020,6 +1112,8 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
             setupLoginHeaders().build(), "{}".toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
         )
         client.newCall(request).execute().use {
+            val peekbody = it.peekBody(Long.MAX_VALUE).toString()
+
             if (it.code == 200) {
                 try {
                     jwtToken = it.parseAs<AuthenticationDto>().token
@@ -1029,8 +1123,13 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
                     throw IOException("Please check your kavita version.\nv0.5+ is required for the extension to work properly")
                 }
             } else {
-                Log.e(LOG_TAG, "[LOGIN] login failed. Authentication was not successful -> Code: ${it.code}.Response message: ${it.message} Response body: ${it.body!!}.")
-                throw LoginErrorException("[LOGIN] login failed. Authentication was not successful")
+                if (it.code == 500) {
+                    Log.e(LOG_TAG, "[LOGIN] login failed. There was some error -> Code: ${it.code}.Response message: ${it.message} Response body: $peekbody.")
+                    throw LoginErrorException("[LOGIN] login failed. Something went wrong")
+                } else {
+                    Log.e(LOG_TAG, "[LOGIN] login failed. Authentication was not successful -> Code: ${it.code}.Response message: ${it.message} Response body: $peekbody.")
+                    throw LoginErrorException("[LOGIN] login failed. Something went wrong")
+                }
             }
         }
         Log.v(LOG_TAG, "[Login] Login successful")
@@ -1040,69 +1139,66 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
         if (apiUrl.isNotBlank()) {
             Single.fromCallable {
                 // Login
-                var loginSuccesful = false
-                try {
-                    doLogin()
-                    loginSuccesful = true
-                } catch (e: LoginErrorException) {
-                    Log.e(LOG_TAG, "Init login failed: $e")
+                doLogin()
+                try { // Get current version
+                    val requestUrl = "$apiUrl/Server/server-info"
+                    val serverInfoDto = client.newCall(GET(requestUrl, headersBuilder().build()))
+                        .execute()
+                        .parseAs<ServerInfoDto>()
+                    Log.e(
+                        LOG_TAG,
+                        "Extension version: code=${BuildConfig.VERSION_CODE}  name=${BuildConfig.VERSION_NAME}" +
+                            " - - Kavita version: ${serverInfoDto.kavitaVersion}"
+                    ) // this is not a real error. Using this so it gets printed in dump logs if there's any error
+                } catch (e: EmptyRequestBody) {
+                    Log.e(LOG_TAG, "Extension version: code=${BuildConfig.VERSION_CODE} - name=${BuildConfig.VERSION_NAME}")
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "Tachiyomi version: code=${BuildConfig.VERSION_CODE} - name=${BuildConfig.VERSION_NAME}", e)
                 }
-                if (loginSuccesful) { // doing this check to not clutter LOGS
+                try { // Load Filters
                     // Genres
                     Log.v(LOG_TAG, "[Filter] Fetching filters ")
-                    try {
-                        client.newCall(GET("$apiUrl/Metadata/genres", headersBuilder().build()))
-                            .execute().use { response ->
-                                genresListMeta = try {
-                                    val responseBody = response.body
-                                    if (responseBody != null) {
-                                        responseBody.use { json.decodeFromString(it.string()) }
-                                    } else {
-                                        Log.e(
-                                            LOG_TAG,
-                                            "[Filter] Error decoding JSON for genres filter: response body is null. Response code: ${response.code}"
-                                        )
-                                        emptyList()
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e(LOG_TAG, "[Filter] Error decoding JSON for genres filter -> ${response.body!!}", e)
+                    client.newCall(GET("$apiUrl/Metadata/genres", headersBuilder().build()))
+                        .execute().use { response ->
+
+                            genresListMeta = try {
+                                val responseBody = response.body
+                                if (responseBody != null) {
+                                    responseBody.use { json.decodeFromString(it.string()) }
+                                } else {
+                                    Log.e(
+                                        LOG_TAG,
+                                        "[Filter] Error decoding JSON for genres filter: response body is null. Response code: ${response.code}"
+                                    )
                                     emptyList()
                                 }
+                            } catch (e: Exception) {
+                                Log.e(LOG_TAG, "[Filter] Error decoding JSON for genres filter -> ${response.body!!}", e)
+                                emptyList()
                             }
-                    } catch (e: Exception) {
-                        Log.e(LOG_TAG, "[Filter] Error loading genres for filters", e)
-                    }
+                        }
                     // tagsListMeta
-                    try {
-                        client.newCall(GET("$apiUrl/Metadata/tags", headersBuilder().build()))
-                            .execute().use { response ->
-                                tagsListMeta = try {
-                                    val responseBody = response.body
-                                    if (responseBody != null) {
-                                        responseBody.use { json.decodeFromString(it.string()) }
-                                    } else {
-                                        Log.e(
-                                            LOG_TAG,
-                                            "[Filter] Error decoding JSON for tagsList filter: response body is null. Response code: ${response.code}"
-                                        )
-                                        emptyList()
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e(LOG_TAG, "[Filter] Error decoding JSON for tagsList filter", e)
+                    client.newCall(GET("$apiUrl/Metadata/tags", headersBuilder().build()))
+                        .execute().use { response ->
+                            tagsListMeta = try {
+                                val responseBody = response.body
+                                if (responseBody != null) {
+                                    responseBody.use { json.decodeFromString(it.string()) }
+                                } else {
+                                    Log.e(
+                                        LOG_TAG,
+                                        "[Filter] Error decoding JSON for tagsList filter: response body is null. Response code: ${response.code}"
+                                    )
                                     emptyList()
                                 }
+                            } catch (e: Exception) {
+                                Log.e(LOG_TAG, "[Filter] Error decoding JSON for tagsList filter", e)
+                                emptyList()
                             }
-                    } catch (e: Exception) {
-                        Log.e(LOG_TAG, "[Filter] Error loading tagsList for filters", e)
-                    }
+                        }
                     // age-ratings
-                    try {
-                        client.newCall(
-                            GET(
-                                "$apiUrl/Metadata/age-ratings",
-                                headersBuilder().build()
-                            )
-                        ).execute().use { response ->
+                    client.newCall(GET("$apiUrl/Metadata/age-ratings", headersBuilder().build()))
+                        .execute().use { response ->
                             ageRatingsListMeta = try {
                                 val responseBody = response.body
                                 if (responseBody != null) {
@@ -1123,153 +1219,141 @@ class Kavita(suffix: String = "") : ConfigurableSource, HttpSource() {
                                 emptyList()
                             }
                         }
-                    } catch (e: Exception) {
-                        Log.e(LOG_TAG, "[Filter] Error loading age-ratings for age-ratings", e)
-                    }
                     // collectionsListMeta
-                    try {
-                        client.newCall(GET("$apiUrl/Collection", headersBuilder().build()))
-                            .execute().use { response ->
-                                collectionsListMeta = try {
-                                    val responseBody = response.body
-                                    if (responseBody != null) {
-                                        responseBody.use { json.decodeFromString(it.string()) }
-                                    } else {
-                                        Log.e(
-                                            LOG_TAG,
-                                            "[Filter] Error decoding JSON for collectionsListMeta filter: response body is null. Response code: ${response.code}"
-                                        )
-                                        emptyList()
-                                    }
-                                } catch (e: Exception) {
+                    client.newCall(GET("$apiUrl/Collection", headersBuilder().build()))
+                        .execute().use { response ->
+                            collectionsListMeta = try {
+                                val responseBody = response.body
+                                if (responseBody != null) {
+                                    responseBody.use { json.decodeFromString(it.string()) }
+                                } else {
                                     Log.e(
                                         LOG_TAG,
-                                        "[Filter] Error decoding JSON for collectionsListMeta filter",
-                                        e
+                                        "[Filter] Error decoding JSON for collectionsListMeta filter: response body is null. Response code: ${response.code}"
                                     )
                                     emptyList()
                                 }
+                            } catch (e: Exception) {
+                                Log.e(
+                                    LOG_TAG,
+                                    "[Filter] Error decoding JSON for collectionsListMeta filter",
+                                    e
+                                )
+                                emptyList()
                             }
-                    } catch (e: Exception) {
-                        Log.e(LOG_TAG, "[Filter] Error loading collectionsListMeta for collectionsListMeta", e)
-                    }
+                        }
                     // languagesListMeta
-                    try {
-                        client.newCall(GET("$apiUrl/Metadata/languages", headersBuilder().build()))
-                            .execute().use { response ->
-                                languagesListMeta = try {
-                                    val responseBody = response.body
-                                    if (responseBody != null) {
-                                        responseBody.use { json.decodeFromString(it.string()) }
-                                    } else {
-                                        Log.e(
-                                            LOG_TAG,
-                                            "[Filter] Error decoding JSON for languagesListMeta filter: response body is null. Response code: ${response.code}"
-                                        )
-                                        emptyList()
-                                    }
-                                } catch (e: Exception) {
+                    client.newCall(GET("$apiUrl/Metadata/languages", headersBuilder().build()))
+                        .execute().use { response ->
+                            languagesListMeta = try {
+                                val responseBody = response.body
+                                if (responseBody != null) {
+                                    responseBody.use { json.decodeFromString(it.string()) }
+                                } else {
                                     Log.e(
                                         LOG_TAG,
-                                        "[Filter] Error decoding JSON for languagesListMeta filter",
-                                        e
+                                        "[Filter] Error decoding JSON for languagesListMeta filter: response body is null. Response code: ${response.code}"
                                     )
                                     emptyList()
                                 }
+                            } catch (e: Exception) {
+                                Log.e(
+                                    LOG_TAG,
+                                    "[Filter] Error decoding JSON for languagesListMeta filter",
+                                    e
+                                )
+                                emptyList()
                             }
-                    } catch (e: Exception) {
-                        Log.e(LOG_TAG, "[Filter] Error loading languagesListMeta for languagesListMeta", e)
-                    }
+                        }
                     // libraries
-                    try {
-                        client.newCall(GET("$apiUrl/Library", headersBuilder().build())).execute()
-                            .use { response ->
-                                libraryListMeta = try {
-                                    val responseBody = response.body
-                                    if (responseBody != null) {
-                                        responseBody.use { json.decodeFromString(it.string()) }
-                                    } else {
-                                        Log.e(
-                                            LOG_TAG,
-                                            "[Filter] Error decoding JSON for libraries filter: response body is null. Response code: ${response.code}"
-                                        )
-                                        emptyList()
-                                    }
-                                } catch (e: Exception) {
+                    client.newCall(GET("$apiUrl/Library", headersBuilder().build()))
+                        .execute().use { response ->
+                            libraryListMeta = try {
+                                val responseBody = response.body
+                                if (responseBody != null) {
+                                    responseBody.use { json.decodeFromString(it.string()) }
+                                } else {
                                     Log.e(
                                         LOG_TAG,
-                                        "[Filter] Error decoding JSON for libraries filter",
-                                        e
+                                        "[Filter] Error decoding JSON for libraries filter: response body is null. Response code: ${response.code}"
                                     )
                                     emptyList()
                                 }
+                            } catch (e: Exception) {
+                                Log.e(
+                                    LOG_TAG,
+                                    "[Filter] Error decoding JSON for libraries filter",
+                                    e
+                                )
+                                emptyList()
                             }
-                    } catch (e: Exception) {
-                        Log.e(LOG_TAG, "[Filter] Error loading libraries for languagesListMeta", e)
-                    }
+                        }
                     // peopleListMeta
-                    try {
-                        client.newCall(GET("$apiUrl/Metadata/people", headersBuilder().build()))
-                            .execute().use { response ->
-                                peopleListMeta = try {
-                                    val responseBody = response.body
-                                    if (responseBody != null) {
-                                        responseBody.use { json.decodeFromString(it.string()) }
-                                    } else {
-                                        Log.e(
-                                            LOG_TAG,
-                                            "error while decoding JSON for peopleListMeta filter: response body is null. Response code: ${response.code}"
-                                        )
-                                        emptyList()
-                                    }
-                                } catch (e: Exception) {
+                    client.newCall(GET("$apiUrl/Metadata/people", headersBuilder().build()))
+                        .execute().use { response ->
+                            peopleListMeta = try {
+                                val responseBody = response.body
+                                if (responseBody != null) {
+                                    responseBody.use { json.decodeFromString(it.string()) }
+                                } else {
                                     Log.e(
                                         LOG_TAG,
-                                        "error while decoding JSON for peopleListMeta filter",
-                                        e
+                                        "error while decoding JSON for peopleListMeta filter: response body is null. Response code: ${response.code}"
                                     )
                                     emptyList()
                                 }
+                            } catch (e: Exception) {
+                                Log.e(
+                                    LOG_TAG,
+                                    "error while decoding JSON for peopleListMeta filter",
+                                    e
+                                )
+                                emptyList()
                             }
-                    } catch (e: Exception) {
-                        Log.e(LOG_TAG, "[Filter] Error loading tagsList for peopleListMeta", e)
-                    }
-                    try {
-                        client.newCall(GET("$apiUrl/Metadata/publication-status", headersBuilder().build()))
-                            .execute().use { response ->
-                                pubStatusListMeta = try {
-                                    val responseBody = response.body
-                                    if (responseBody != null) {
-                                        responseBody.use { json.decodeFromString(it.string()) }
-                                    } else {
-                                        Log.e(
-                                            LOG_TAG,
-                                            "error while decoding JSON for publicationStatusListMeta filter: response body is null. Response code: ${response.code}"
-                                        )
-                                        emptyList()
-                                    }
-                                } catch (e: Exception) {
+                        }
+                    client.newCall(GET("$apiUrl/Metadata/publication-status", headersBuilder().build()))
+                        .execute().use { response ->
+                            pubStatusListMeta = try {
+                                val responseBody = response.body
+                                if (responseBody != null) {
+                                    responseBody.use { json.decodeFromString(it.string()) }
+                                } else {
                                     Log.e(
                                         LOG_TAG,
-                                        "error while decoding JSON for publicationStatusListMeta filter",
-                                        e
+                                        "error while decoding JSON for publicationStatusListMeta filter: response body is null. Response code: ${response.code}"
                                     )
                                     emptyList()
                                 }
+                            } catch (e: Exception) {
+                                Log.e(
+                                    LOG_TAG,
+                                    "error while decoding JSON for publicationStatusListMeta filter",
+                                    e
+                                )
+                                emptyList()
                             }
-                    } catch (e: Exception) {
-                        Log.e(LOG_TAG, "[Filter] Error loading tagsList for peopleListMeta", e)
-                    }
-
+                        }
                     Log.v(LOG_TAG, "[Filter] Successfully loaded metadata tags from server")
+                } catch (e: Exception) {
+                    throw LoadingFilterFailed("Failed Loading Filters", e.cause)
                 }
-                Log.v(LOG_TAG, "Successfully ended init")
             }
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .subscribe(
                     {},
                     { tr ->
+                        /**
+                         * Avoid polluting logs with traces of exception
+                         * **/
+                        if (tr is EmptyRequestBody || tr is LoginErrorException) {
+                            Log.e(LOG_TAG, "error while doing initial calls\n${tr.cause}")
+                            return@subscribe
+                        }
+                        if (tr is ConnectException) { // avoid polluting logs with traces of exception
+                            Log.e(LOG_TAG, "Error while doing initial calls\n${tr.cause}")
+                            return@subscribe
+                        }
                         Log.e(LOG_TAG, "error while doing initial calls", tr)
                     }
                 )

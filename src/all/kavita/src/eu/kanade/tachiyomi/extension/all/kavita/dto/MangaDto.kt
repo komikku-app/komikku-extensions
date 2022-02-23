@@ -98,7 +98,12 @@ data class ChapterDto(
 )
 
 @Serializable
-data class KavitaComicsSearch(
+data class SearchResultsDto(
+    val series: List<SeriesSearchDto>
+)
+
+@Serializable
+data class SeriesSearchDto(
     val seriesId: Int,
     val name: String,
     val originalName: String,

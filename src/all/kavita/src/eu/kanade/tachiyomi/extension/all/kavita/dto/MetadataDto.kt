@@ -51,6 +51,7 @@ data class MetadataPayload(
     var sorting: Int = 1,
     var sorting_asc: Boolean = true,
     var readStatus: ArrayList<String> = arrayListOf< String>(),
+    val readStatusList: List<String> = listOf("notRead", "inProgress", "read"),
     var genres: ArrayList<Int> = arrayListOf<Int>(),
     var tags: ArrayList<Int> = arrayListOf<Int>(),
     var ageRating: ArrayList<Int> = arrayListOf<Int>(),

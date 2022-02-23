@@ -12,7 +12,7 @@ Table of Content
 
 Don't find the question you are look for go check out our general FAQs and Guides over at [Extension FAQ](https://tachiyomi.org/help/faq/#extensions) or [Getting Started](https://tachiyomi.org/help/guides/getting-started/#installation)
 
-Kavita also has a documentation about the Tachiyomi Kavita extension at the [Kavita wiki](https://wiki.kavitareader.com/en/guides/plugins-and-3rd-party-scripts/tachiyomi).
+Kavita also has a documentation about the Tachiyomi Kavita extension at the [Kavita wiki](https://wiki.kavitareader.com/en/guides/misc/tachiyomi).
 
 ## FAQ
 

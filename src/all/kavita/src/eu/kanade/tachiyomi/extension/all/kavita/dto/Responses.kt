@@ -16,3 +16,12 @@ data class PaginationInfo(
     val totalItems: Int,
     val totalPages: Int
 )
+@Serializable
+data class ServerInfoDto(
+    val installId: String,
+    val os: String,
+    val isDocker: Boolean,
+    val dotnetVersion: String,
+    val kavitaVersion: String,
+    val numOfCores: Int
+)
