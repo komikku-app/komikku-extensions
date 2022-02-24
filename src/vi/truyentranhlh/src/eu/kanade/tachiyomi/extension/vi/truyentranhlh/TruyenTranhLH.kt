@@ -115,9 +115,11 @@ class TruyenTranhLH : ParsedHttpSource() {
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("div#chapter-content img").mapIndexed { i, img ->
-            Page(i, "", img.attr("abs:data-src"))
-        }
+        return document.select("div#chapter-content img")
+            .filterNot { imgEl -> imgEl.attr("abs:data-src").isNullOrEmpty() }
+            .mapIndexed { i, img ->
+                Page(i, "", img.attr("abs:data-src"))
+            }
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
