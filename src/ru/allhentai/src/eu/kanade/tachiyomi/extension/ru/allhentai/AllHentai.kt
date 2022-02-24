@@ -181,7 +181,7 @@ class AllHentai : ConfigurableSource, ParsedHttpSource() {
         val urlText = urlElement.text()
 
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(urlElement.attr("href") + "?mtr=1")
+        chapter.setUrlWithoutDomain(urlElement.attr("href"))
 
         var translators = ""
         val translatorElement = urlElement.attr("title")
@@ -220,20 +220,23 @@ class AllHentai : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun prepareNewChapter(chapter: SChapter, manga: SManga) {
+        val urlChapterNumber = Regex("${manga.url}/vol([0-9])/")
         val basic = Regex("""\s*([0-9]+)(\s-\s)([0-9]+)\s*""")
         val extra = Regex("""\s*([0-9]+\sЭкстра)\s*""")
         val single = Regex("""\s*Сингл\s*""")
         when {
             basic.containsMatchIn(chapter.name) -> {
-                basic.find(chapter.name)?.let {
-                    val number = it.groups[3]?.value!!
-                    chapter.chapter_number = number.toFloat()
-                }
+                chapter.chapter_number = chapter.url.split(urlChapterNumber)[1].toFloat()
             }
-            extra.containsMatchIn(chapter.name) -> // Extra chapters doesn't contain chapter number
-                chapter.chapter_number = -2f
-            single.containsMatchIn(chapter.name) -> // Oneshoots, doujinshi and other mangas with one chapter
-                chapter.chapter_number = 1f
+            extra.containsMatchIn(chapter.name) -> {
+                chapter.chapter_number = chapter.url.split(urlChapterNumber)[1].toFloat()
+                chapter.name = chapter.name.replaceFirst(" ", " - " + chapter.chapter_number.toString() + " ")
+            }
+
+            single.containsMatchIn(chapter.name) -> {
+                chapter.chapter_number = chapter.url.split(urlChapterNumber)[1].toFloat()
+                chapter.name = chapter.chapter_number.toString() + " " + chapter.name
+            }
         }
     }
 
