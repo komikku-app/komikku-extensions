@@ -35,7 +35,7 @@ import uy.kohesive.injekt.injectLazy
 
 class Gmanga : ConfigurableSource, HttpSource() {
 
-    private val domain: String = "gmanga.me"
+    private val domain: String = "gmanga.org"
 
     override val baseUrl: String = "https://$domain"
 
@@ -109,7 +109,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
 
                     thumbnail_url = it.jsonObject["cover"]!!.jsonPrimitive.contentOrNull?.let { coverFileName ->
                         val thumbnail = "medium_${coverFileName.substringBeforeLast(".")}.webp"
-                        "https://media.$domain/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
+                        "https://media.gmanga.me/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
                     }
                 }
             },
@@ -142,7 +142,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
             Page(
                 index,
                 "$url#page_$index",
-                "https://media.$domain/uploads/releases/${releaseData["storage_key"]!!.jsonPrimitive.content}/hq${if (hasWebP) "_webp" else ""}/$pageUri"
+                "https://media.gmanga.me/uploads/releases/${releaseData["storage_key"]!!.jsonPrimitive.content}/hq${if (hasWebP) "_webp" else ""}/$pageUri"
             )
         }
     }
@@ -160,7 +160,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
                     url = "/mangas/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                     title = it.jsonObject["title"]!!.jsonPrimitive.content
                     val thumbnail = "medium_${it.jsonObject["cover"]!!.jsonPrimitive.content.substringBeforeLast(".")}.webp"
-                    thumbnail_url = "https://media.$domain/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
+                    thumbnail_url = "https://media.gmanga.me/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
                 }
             },
             mangas.size == 50
