@@ -47,7 +47,15 @@ class Readmanga : ConfigurableSource, ParsedHttpSource() {
     private val rateLimitInterceptor = RateLimitInterceptor(2)
 
     override val client: OkHttpClient = network.client.newBuilder()
-        .addNetworkInterceptor(rateLimitInterceptor).build()
+        .addNetworkInterceptor(rateLimitInterceptor)
+        .addInterceptor { chain ->
+            val originalRequest = chain.request()
+            val response = chain.proceed(originalRequest)
+            if (originalRequest.url.toString().contains("internal/redirect") or (response.code == 301))
+                throw Exception("Манга переехала на другой адрес/ссылку!")
+            response
+        }
+        .build()
 
     private var uagent: String = preferences.getString(UAGENT_TITLE, UAGENT_DEFAULT)!!
     override fun headersBuilder() = Headers.Builder().apply {
@@ -143,7 +151,7 @@ class Readmanga : ConfigurableSource, ParsedHttpSource() {
         }
 
         val ratingValue = infoElement.select(".col-sm-7 .rating-block").attr("data-score").toFloat() * 2
-        val ratingValueOver = infoElement.select(".info-icon").attr("data-content").substringAfter("Относительно остальных произведений: <b>").substringBefore("/5</b>").replace(",", ".").toFloat() * 2
+        val ratingValueOver = infoElement.select(".info-icon").attr("data-content").substringBeforeLast("/5</b><br/>").substringAfterLast(": <b>").replace(",", ".").toFloat() * 2
         val ratingVotes = infoElement.select(".col-sm-7 .user-rating meta[itemprop=\"ratingCount\"]").attr("content")
         val ratingStar = when {
             ratingValue > 9.5 -> "★★★★★"
@@ -211,10 +219,11 @@ class Readmanga : ConfigurableSource, ParsedHttpSource() {
 
     private fun chapterFromElement(element: Element, manga: SManga): SChapter {
         val urlElement = element.select("a").first()
+        val chapterInf = element.select(".item-data").first()
         val urlText = urlElement.text()
 
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(urlElement.attr("href"))
+        chapter.setUrlWithoutDomain(urlElement.attr("href") + "?mtr=true") // mtr is 18+ skip
 
         var translators = ""
         val translatorElement = urlElement.attr("title")
@@ -238,6 +247,8 @@ class Readmanga : ConfigurableSource, ParsedHttpSource() {
             chapter.name = chapter.name.substringAfter("…").trim()
         }
 
+        chapter.chapter_number = chapterInf.attr("num").toFloat() / 10
+
         chapter.date_upload = element.select("td.d-none").last()?.text()?.let {
             try {
                 SimpleDateFormat("dd.MM.yy", Locale.US).parse(it)?.time ?: 0L
@@ -253,21 +264,14 @@ class Readmanga : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun prepareNewChapter(chapter: SChapter, manga: SManga) {
-        val urlChapterNumber = Regex("${manga.url}/vol([0-9])/")
-        val basic = Regex("""\s*([0-9]+)(\s-\s)([0-9]+)\s*""")
         val extra = Regex("""\s*([0-9]+\sЭкстра)\s*""")
         val single = Regex("""\s*Сингл\s*""")
         when {
-            basic.containsMatchIn(chapter.name) -> {
-                chapter.chapter_number = chapter.url.split(urlChapterNumber)[1].toFloat()
-            }
             extra.containsMatchIn(chapter.name) -> {
-                chapter.chapter_number = chapter.url.split(urlChapterNumber)[1].toFloat()
                 chapter.name = chapter.name.replaceFirst(" ", " - " + chapter.chapter_number.toString() + " ")
             }
 
             single.containsMatchIn(chapter.name) -> {
-                chapter.chapter_number = chapter.url.split(urlChapterNumber)[1].toFloat()
                 chapter.name = chapter.chapter_number.toString() + " " + chapter.name
             }
         }
