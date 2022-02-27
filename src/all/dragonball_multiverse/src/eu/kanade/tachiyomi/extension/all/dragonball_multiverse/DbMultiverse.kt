@@ -30,7 +30,7 @@ abstract class DbMultiverse(override val lang: String, private val internalLang:
     }
 
     override fun chapterListSelector(): String = ".cadrelect.chapter p a[href*=-]"
-    
+
     override fun chapterListParse(response: Response): List<SChapter> {
         return super.chapterListParse(response).reversed()
     }

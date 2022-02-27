@@ -54,7 +54,7 @@ open class BatoTo(
 
     override val name: String = "Bato.to"
     override val baseUrl: String = getMirrorPref()!!
-    override val id: Long = when(lang){
+    override val id: Long = when (lang) {
         "zh-Hans" -> 2818874445640189582
         "zh-Hant" -> 38886079663327225
         "ro-MD" -> 8871355786189601023
@@ -179,7 +179,7 @@ open class BatoTo(
             else -> {
                 val url = "$baseUrl/browse".toHttpUrlOrNull()!!.newBuilder()
                 var min = ""
-                var max= ""
+                var max = ""
                 filters.forEach { filter ->
                     when (filter) {
                         is UtilsFilter -> {
