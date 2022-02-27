@@ -25,6 +25,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.text.DecimalFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -48,10 +49,10 @@ class Readmanga : ConfigurableSource, ParsedHttpSource() {
 
     override val client: OkHttpClient = network.client.newBuilder()
         .addNetworkInterceptor(rateLimitInterceptor)
-        .addInterceptor { chain ->
+        .addNetworkInterceptor { chain ->
             val originalRequest = chain.request()
             val response = chain.proceed(originalRequest)
-            if (originalRequest.url.toString().contains("internal/redirect") or (response.code == 301))
+            if (originalRequest.url.toString().contains(baseUrl) and (originalRequest.url.toString().contains("internal/redirect") or (response.code == 301)))
                 throw Exception("Манга переехала на другой адрес/ссылку!")
             response
         }
@@ -268,11 +269,13 @@ class Readmanga : ConfigurableSource, ParsedHttpSource() {
         val single = Regex("""\s*Сингл\s*""")
         when {
             extra.containsMatchIn(chapter.name) -> {
-                chapter.name = chapter.name.replaceFirst(" ", " - " + chapter.chapter_number.toString() + " ")
+                if (chapter.name.substringAfter("Экстра").trim().isEmpty())
+                    chapter.name = chapter.name.replaceFirst(" ", " - " + DecimalFormat("#,###.##").format(chapter.chapter_number).replace(",", ".") + " ")
             }
 
             single.containsMatchIn(chapter.name) -> {
-                chapter.name = chapter.chapter_number.toString() + " " + chapter.name
+                if (chapter.name.substringAfter("Сингл").trim().isEmpty())
+                    chapter.name = DecimalFormat("#,###.##").format(chapter.chapter_number).replace(",", ".") + " " + chapter.name
             }
         }
     }

@@ -15,6 +15,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.text.DecimalFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -34,10 +35,10 @@ class Selfmanga : ParsedHttpSource() {
 
     override val client: OkHttpClient = network.client.newBuilder()
         .addNetworkInterceptor(rateLimitInterceptor)
-        .addInterceptor { chain ->
+        .addNetworkInterceptor { chain ->
             val originalRequest = chain.request()
             val response = chain.proceed(originalRequest)
-            if (originalRequest.url.toString().contains("internal/redirect") or (response.code == 301))
+            if (originalRequest.url.toString().contains(baseUrl) and (originalRequest.url.toString().contains("internal/redirect") or (response.code == 301)))
                 throw Exception("Манга переехала на другой адрес/ссылку!")
             response
         }
@@ -151,11 +152,13 @@ class Selfmanga : ParsedHttpSource() {
         val single = Regex("""\s*Сингл\s*""")
         when {
             extra.containsMatchIn(chapter.name) -> {
-                chapter.name = chapter.name.replaceFirst(" ", " - " + chapter.chapter_number.toString() + " ")
+                if (chapter.name.substringAfter("Экстра").trim().isEmpty())
+                    chapter.name = chapter.name.replaceFirst(" ", " - " + DecimalFormat("#,###.##").format(chapter.chapter_number).replace(",", ".") + " ")
             }
 
             single.containsMatchIn(chapter.name) -> {
-                chapter.name = chapter.chapter_number.toString() + " " + chapter.name
+                if (chapter.name.substringAfter("Сингл").trim().isEmpty())
+                    chapter.name = DecimalFormat("#,###.##").format(chapter.chapter_number).replace(",", ".") + " " + chapter.name
             }
         }
     }
