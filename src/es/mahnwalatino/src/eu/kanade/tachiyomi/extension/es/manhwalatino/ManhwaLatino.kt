@@ -17,6 +17,7 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.util.concurrent.TimeUnit
 
 class ManhwaLatino : ParsedHttpSource() {
 
@@ -36,14 +37,17 @@ class ManhwaLatino : ParsedHttpSource() {
     override fun headersBuilder() = Headers.Builder().add("Referer", "$baseUrl")
 
     /**
-     * Http Client
+     * Http Client with Cloudflare
      */
-    override val client: OkHttpClient = network.client.newBuilder().build()
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     /**
-     * Parser for Mainsite or Genre Site
+     * Parser for The WebSite
      */
-    val manhwaLatinoSiteParser = ManhwaLatinoSiteParser(baseUrl, client, headers)
+    private val manhwaLatinoSiteParser = ManhwaLatinoSiteParser(baseUrl, client, headers)
 
     /**
      * An ISO 639-1 compliant language code (two letters in lower case).
