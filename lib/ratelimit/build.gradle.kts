@@ -17,6 +17,6 @@ repositories {
 }
 
 dependencies {
-    compileOnly(Dependencies.kotlin.stdlib)
-    compileOnly(Dependencies.okhttp)
+    compileOnly(libs.kotlin.stdlib)
+    compileOnly(libs.okhttp)
 }

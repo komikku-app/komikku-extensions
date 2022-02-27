@@ -108,7 +108,7 @@ Extensions rely on [extensions-lib](https://github.com/tachiyomiorg/extensions-l
 
 ```gradle
 dependencies {
-    implementation project(':lib-ratelimit')
+    implementation(project(':lib-ratelimit'))
 }
 ```
 
@@ -118,7 +118,7 @@ dependencies {
 
 ```gradle
 dependencies {
-    implementation project(':lib-dataimage')
+    implementation(project(':lib-dataimage'))
 }
 ```
 
@@ -130,12 +130,12 @@ For example, an extension that needs coroutines, it could add the following:
 
 ```gradle
 dependencies {
-    compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2'
-    compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2'
+    compileOnly(libs.bundles.coroutines)
 }
 ```
 
-(Note that several dependencies are already exposed to all extensions via `common-dependencies.gradle`.)
+> Note that several dependencies are already exposed to all extensions via Gradle version catalog.
+> To view which are available view `libs.versions.toml` under the `gradle` folder
 
 Notice that we're using `compileOnly` instead of `implementation`, since the app already contains it. You could use `implementation` instead for a new dependency, or you prefer not to rely on whatever the main app has at the expense of app size.
 
