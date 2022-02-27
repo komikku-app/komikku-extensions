@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(libs.kotlin.stdlib)
-    compileOnly(libs.okhttp)
-    compileOnly(libs.jsoup)
+    compileOnly(Dependencies.kotlin.stdlib)
+    compileOnly(Dependencies.okhttp)
+    compileOnly(Dependencies.jsoup)
 }

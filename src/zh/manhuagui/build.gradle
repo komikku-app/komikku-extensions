@@ -10,7 +10,8 @@ ext {
 }
 
 dependencies {
-    compileOnly libs.bundles.coroutines
+    compileOnly "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    compileOnly "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
     implementation project(':lib-ratelimit')
 }
 
