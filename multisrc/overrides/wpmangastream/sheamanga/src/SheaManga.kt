@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.id.sheamanga
 
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
+import okhttp3.Dns
 import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -19,6 +20,7 @@ class SheaManga : WPMangaStream(
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .addNetworkInterceptor(rateLimitInterceptor)
+        .dns(Dns.SYSTEM)
         .build()
 
     override val hasProjectPage = true
