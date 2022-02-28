@@ -191,7 +191,7 @@ abstract class WPMangaReader(
         }
     }
 
-    open val seriesTypeSelector = "span:contains(Type) a, .imptdt:contains(Type) a, a[href*=type\\=], .infotable tr:contains(Type) td:last-child"
+    open val seriesTypeSelector = "span:contains(Type) a, .imptdt:contains(Type) :last-child, a[href*=type\\=], .infotable tr:contains(Type) td:last-child"
     open val altNameSelector = ".alternative, .seriestualt"
     open val altName = "Alternative Name" + ": "
 
