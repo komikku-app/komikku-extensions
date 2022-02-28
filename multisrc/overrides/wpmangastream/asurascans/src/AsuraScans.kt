@@ -9,7 +9,6 @@ import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.OkHttpClient
 import rx.Observable
@@ -73,28 +72,6 @@ open class AsuraScans(
         return this
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val sManga = manga.tempUrlToPermIfNeeded()
-        return super.fetchChapterList(sManga).map { sChapterList ->
-            sChapterList.map { it.tempUrlToPermIfNeeded(sManga) }
-        }
-    }
-
-    private fun SChapter.tempUrlToPermIfNeeded(manga: SManga): SChapter {
-        val turnTempUrlToPerm = preferences.getBoolean(getPermanentChapterUrlPreferenceKey(), true)
-        if (!turnTempUrlToPerm) return this
-
-        val sChapterNameFirstWord = this.name.split(" ")[0]
-        val sMangaTitleFirstWord = manga.title.split(" ")[0]
-        if (
-            !this.url.contains("/$sChapterNameFirstWord", ignoreCase = true) &&
-            !this.url.contains("/$sMangaTitleFirstWord", ignoreCase = true)
-        ) {
-            this.url = this.url.replaceFirst(TEMP_TO_PERM_URL_REGEX, "$1")
-        }
-        return this
-    }
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val permanentMangaUrlPref = SwitchPreferenceCompat(screen.context).apply {
             key = getPermanentMangaUrlPreferenceKey()
@@ -109,29 +86,11 @@ open class AsuraScans(
                     .commit()
             }
         }
-        val permanentChapterUrlPref = SwitchPreferenceCompat(screen.context).apply {
-            key = getPermanentChapterUrlPreferenceKey()
-            title = PREF_PERM_CHAPTER_URL_TITLE
-            summary = PREF_PERM_CHAPTER_URL_SUMMARY
-            setDefaultValue(true)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit()
-                    .putBoolean(getPermanentChapterUrlPreferenceKey(), checkValue)
-                    .commit()
-            }
-        }
         screen.addPreference(permanentMangaUrlPref)
-        screen.addPreference(permanentChapterUrlPref)
     }
 
     private fun getPermanentMangaUrlPreferenceKey(): String {
         return PREF_PERM_MANGA_URL_KEY_PREFIX + lang
-    }
-
-    private fun getPermanentChapterUrlPreferenceKey(): String {
-        return PREF_PERM_CHAPTER_URL_KEY_PREFIX + lang
     }
     // Permanent Url for Manga/Chapter End
 
@@ -139,10 +98,6 @@ open class AsuraScans(
         private const val PREF_PERM_MANGA_URL_KEY_PREFIX = "pref_permanent_manga_url_"
         private const val PREF_PERM_MANGA_URL_TITLE = "Permanent Manga URL"
         private const val PREF_PERM_MANGA_URL_SUMMARY = "Turns all manga urls into permanent ones."
-
-        private const val PREF_PERM_CHAPTER_URL_KEY_PREFIX = "pref_permanent_chapter_url"
-        private const val PREF_PERM_CHAPTER_URL_TITLE = "Permanent Chapter URL"
-        private const val PREF_PERM_CHAPTER_URL_SUMMARY = "Turns all chapter urls into permanent one."
 
         private val TEMP_TO_PERM_URL_REGEX = Regex("""(/)\d+-""")
     }
