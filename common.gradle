@@ -88,9 +88,9 @@ repositories {
 }
 
 dependencies {
-    implementation project(":core")
+    implementation(project(":core"))
+    compileOnly(libs.bundles.common)
 }
-apply from: "$rootDir/common-dependencies.gradle"
 
 preBuild.dependsOn(lintKotlin)
 lintKotlin.dependsOn(formatKotlin)

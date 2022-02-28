@@ -1,3 +1,5 @@
+enableFeaturePreview("VERSION_CATALOGS")
+
 include(":core")
 
 include(":lib-ratelimit")

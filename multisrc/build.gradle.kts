@@ -20,18 +20,19 @@ repositories {
     mavenCentral()
 }
 
-// dependencies
-apply("$rootDir/common-dependencies.gradle")
+dependencies {
+    compileOnly(libs.bundles.common)
+}
 
 tasks {
     val generateExtensions by registering {
         doLast {
             val isWindows = System.getProperty("os.name").toString().toLowerCase().contains("win")
             var classPath = (configurations.debugCompileOnly.get().asFileTree.toList() +
-                listOf(
+                    listOf(
                         configurations.androidApis.get().asFileTree.first().absolutePath, // android.jar path
                         "$projectDir/build/intermediates/aar_main_jar/debug/classes.jar" // jar made from this module
-                ))
+                    ))
                 .joinToString(if (isWindows) ";" else ":")
 
             var javaPath = "${System.getProperty("java.home")}/bin/java"
