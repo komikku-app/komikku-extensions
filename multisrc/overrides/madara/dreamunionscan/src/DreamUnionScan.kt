@@ -22,10 +22,6 @@ class DreamUnionScan : Madara(
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
-    override val altName: String = "Nome alternativo: "
-
-    override fun popularMangaSelector() = "div.page-item-detail.manga"
-
     private fun authWarningIntercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
 

@@ -20,11 +20,9 @@ class YugenMangasFactory : SourceFactory {
 
 abstract class YugenMangas(
     override val baseUrl: String,
-    override val lang: String,
+    lang: String,
     dateFormat: SimpleDateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale.US)
 ) : Madara("YugenMangas", baseUrl, lang, dateFormat) {
-
-    override fun popularMangaSelector() = "div.page-item-detail.manga"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = element.selectFirst("a")!!.ownText()
@@ -52,8 +50,6 @@ class YugenMangasBr : YugenMangas(
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
-
-    override val altName: String = "Nomes alternativos: "
 
     override val useNewChapterEndpoint: Boolean = true
 }

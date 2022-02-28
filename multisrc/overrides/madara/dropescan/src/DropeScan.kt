@@ -22,8 +22,6 @@ class DropeScan : Madara(
 
     override val useNewChapterEndpoint = true
 
-    override val altName = "Nome alternativo: "
-
     override fun popularMangaRequest(page: Int): Request =
         GET("$baseUrl/manga/page/$page/?m_orderby=views", headers)
 

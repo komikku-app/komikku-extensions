@@ -38,7 +38,7 @@ class ImperfectComics : Madara("Imperfect Comics", "https://imperfectcomic.com",
         val chapterRegex = """input\[data-id=\"$chapterId\"(?:.|\n)*?(?=\})""".toRegex()
         val css = document.selectFirst("#wp-custom-css").html()
 
-        //Checking for chapter first to handle mirrored manga with specific un-mirrored chapters
+        // Checking for chapter first to handle mirrored manga with specific un-mirrored chapters
         val props = chapterRegex.find(css).let { cId ->
             cId?.value ?: mangaRegex.find(css).let { mId ->
                 mId?.value ?: ""

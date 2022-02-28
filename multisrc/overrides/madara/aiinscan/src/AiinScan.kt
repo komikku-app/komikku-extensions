@@ -19,8 +19,4 @@ class AiinScan : Madara(
         .build()
 
     override val useNewChapterEndpoint: Boolean = true
-
-    override val altName: String = "Nome alternativo: "
-
-    override fun popularMangaSelector() = "div.page-item-detail.manga"
 }

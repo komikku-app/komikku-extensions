@@ -19,11 +19,9 @@ class ReaperScansFactory : SourceFactory {
 
 abstract class ReaperScans(
     override val baseUrl: String,
-    override val lang: String,
+    lang: String,
     dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
 ) : Madara("Reaper Scans", baseUrl, lang, dateFormat) {
-
-    override fun popularMangaSelector() = "div.page-item-detail.manga"
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
@@ -52,8 +50,6 @@ class ReaperScansBr : ReaperScans("https://reaperscans.com.br", "pt-BR", SimpleD
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
-
-    override val altName: String = "Nome alternativo: "
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()

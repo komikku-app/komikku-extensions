@@ -21,8 +21,6 @@ class SweetTimeScan : Madara(
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
-    override fun popularMangaSelector() = "div.page-item-detail.manga"
-
     // The source has novels in text format, so we need to filter them.
     override fun searchMangaParse(response: Response): MangasPage {
         val mangaPage = super.searchMangaParse(response)

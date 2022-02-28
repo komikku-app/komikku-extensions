@@ -29,7 +29,7 @@ class Manhwa18CcALL : Manhwa18Cc("Manhwa18.cc", "https://manhwa18.cc", "all")
 abstract class Manhwa18Cc(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    lang: String
 ) : Madara(name, baseUrl, lang) {
 
     override fun popularMangaSelector() = "div.manga-item"

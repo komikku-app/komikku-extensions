@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.extension.en.mangatoday
 import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.mangahub.MangaHub
 import okhttp3.OkHttpClient
-import java.util.concurrent.TimeUnit
 
 class MangaToday : MangaHub(
     "MangaToday",

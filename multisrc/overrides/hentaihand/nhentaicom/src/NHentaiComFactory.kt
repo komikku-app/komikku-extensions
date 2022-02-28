@@ -47,7 +47,7 @@ class NHentaiComFactory : SourceFactory {
 abstract class NHentaiComCommon(
     override val lang: String,
     hhLangId: List<Int> = emptyList(),
-    //altLangId: Int? = null
+    // altLangId: Int? = null
 ) : HentaiHand("nHentai.com (unoriginal)", "https://nhentai.com", lang, false, hhLangId) {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .addInterceptor { authIntercept(it) }

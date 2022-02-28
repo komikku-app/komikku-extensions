@@ -20,8 +20,6 @@ class StageComics : Madara(
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
-    override fun popularMangaSelector() = "div.page-item-detail.manga"
-
     override fun chapterFromElement(element: Element): SChapter {
         val parsedChapter = super.chapterFromElement(element)
 

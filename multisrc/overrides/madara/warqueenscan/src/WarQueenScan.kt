@@ -20,6 +20,4 @@ class WarQueenScan : Madara(
         .readTimeout(1, TimeUnit.MINUTES)
         .writeTimeout(1, TimeUnit.MINUTES)
         .build()
-
-    override fun popularMangaSelector() = "div.page-item-detail.manga"
 }

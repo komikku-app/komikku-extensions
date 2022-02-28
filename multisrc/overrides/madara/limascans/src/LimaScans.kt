@@ -21,10 +21,6 @@ class LimaScans : Madara(
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
-    override val altName: String = "Nome alternativo: "
-
-    override fun popularMangaSelector() = "div.page-item-detail.manga"
-
     override fun mangaDetailsRequest(manga: SManga): Request {
         return GET(baseUrl + manga.url.removePrefix("/v2"), headers)
     }

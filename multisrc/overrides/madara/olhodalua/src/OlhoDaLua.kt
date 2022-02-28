@@ -18,9 +18,5 @@ class OlhoDaLua : Madara(
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
 
-    override val altName = "Nome alternativo: "
-
     override val useNewChapterEndpoint = true
-
-    override fun popularMangaSelector() = "div.page-item-detail.manga"
 }

@@ -44,8 +44,6 @@ class NeoxScanlator :
 
     override val altNameSelector = ".post-content_item:contains(Alternativo) .summary-content"
 
-    override val altName = "Nome alternativo: "
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -58,9 +56,6 @@ class NeoxScanlator :
         .add("Accept", ACCEPT)
         .add("Accept-Language", ACCEPT_LANGUAGE)
         .add("Referer", REFERER)
-
-    // Filter the novels in pure text format.
-    override fun popularMangaSelector() = "div.page-item-detail.manga"
 
     override fun searchMangaParse(response: Response): MangasPage {
         val mangaPage = super.searchMangaParse(response)
