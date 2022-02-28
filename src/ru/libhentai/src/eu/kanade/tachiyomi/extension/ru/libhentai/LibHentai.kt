@@ -31,9 +31,12 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
@@ -63,13 +66,25 @@ class LibHentai : ConfigurableSource, HttpSource() {
         add("Accept", "image/webp,*/*;q=0.8")
         add("Referer", baseUrl)
     }
-
+    private fun imageContentTypeIntercept(chain: Interceptor.Chain): Response {
+        val originalRequest = chain.request()
+        val response = chain.proceed(originalRequest)
+        val urlRequest = originalRequest.url.toString()
+        val possibleType = urlRequest.substringAfterLast("/").split(".")
+        return if (!urlRequest.contains(baseUrl) and (possibleType.size == 2)) {
+            val realType = possibleType[1]
+            val image = response.body?.byteString()?.toResponseBody("image/$realType".toMediaType())
+            response.newBuilder().body(image).build()
+        } else
+            response
+    }
     private val authClient = network.cloudflareClient
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .addNetworkInterceptor(RateLimitInterceptor(3))
+        .addInterceptor { imageContentTypeIntercept(it) }
         .addInterceptor { chain ->
             val originalRequest = chain.request()
             if (originalRequest.url.toString().contains(baseUrl))
