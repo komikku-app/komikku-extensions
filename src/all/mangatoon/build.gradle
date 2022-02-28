@@ -2,10 +2,14 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'Mangatoon (Limited)'
+    extName = 'MangaToon (Limited)'
     pkgNameSuffix = 'all.mangatoon'
     extClass = '.MangaToonFactory'
-    extVersionCode = 2
+    extVersionCode = 3
+}
+
+dependencies {
+    implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"
