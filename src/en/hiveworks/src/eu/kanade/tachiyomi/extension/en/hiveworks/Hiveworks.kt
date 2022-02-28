@@ -189,8 +189,12 @@ class Hiveworks : ParsedHttpSource() {
     override fun chapterListSelector() = "select[name=comic] option"
     override fun chapterListRequest(manga: SManga): Request {
         val uri = Uri.parse(manga.url).buildUpon()
-            .appendPath("comic")
-            .appendPath("archive")
+        if ("sssscomic" in uri.toString()) {
+            uri.appendQueryParameter("id", "archive") // sssscomic uses query string in url
+        } else {
+            uri.appendPath("comic")
+            uri.appendPath("archive")
+        }
         return GET(uri.toString(), headers)
     }
 
@@ -198,6 +202,7 @@ class Hiveworks : ParsedHttpSource() {
         val url = response.request.url.toString()
         when {
             "witchycomic" in url -> return witchyChapterListParse(response)
+            "sssscomic" in url -> return ssssChapterListParse(response)
         }
         val document = response.asJsoup()
         val baseUrl = document.select("div script").html().substringAfter("href='").substringBefore("'")
@@ -243,6 +248,14 @@ class Hiveworks : ParsedHttpSource() {
             "smbc-comics" in url -> {
                 pages.add(Page(pages.size, "", document.select("div#aftercomic img").attr("src")))
                 pages.add(Page(pages.size, "", smbcTextHandler(document)))
+            }
+        }
+        // sssscomic doesn't use standard Hiveworks image locations
+        when {
+            "sssscomic" in url -> {
+                val urlPath = document.select("img.comicnormal").attr("src")
+                val urlimg = response.request.url.resolve("../../$urlPath").toString()
+                pages.add(Page(pages.size, "", urlimg))
             }
         }
 
@@ -409,6 +422,36 @@ class Hiveworks : ParsedHttpSource() {
             chapters.add(chapter)
         }
         chapters.retainAll { it.url.contains("page-") }
+        chapters.reverse()
+        return chapters
+    }
+
+    /**
+     * Gets the chapter list for sssscomic - based on work by roblabla for witchycomic
+     *
+     */
+    private fun ssssChapterListParse(response: Response): List<SChapter> {
+        val document = response.asJsoup()
+        // Gets the adventure div's
+        val advDiv = document.select("div[id^=adv]")
+        val chapters = mutableListOf<SChapter>()
+        // Iterate through the Div's
+        for (i in 1 until advDiv.size + 1) {
+            val elements = document.select("#adv${i}Div a")
+            if (elements.isNullOrEmpty()) throw Exception("This comic has a unsupported chapter list")
+            for (c in 0 until elements.size) {
+                val chapter = SChapter.create()
+                // Adventure No. and Page No. for chapter name
+                chapter.name = "Adventure $i - Page ${elements[c].text()}"
+                // Uses relative paths so need to combine the initial host with the path
+                val urlPath = elements[c].attr("href")
+                chapter.url = response.request.url.resolve("../../$urlPath").toString()
+                // use system time as the date of the chapters are per page and takes to long to pull each one.
+                chapter.date_upload = System.currentTimeMillis()
+                chapters.add(chapter)
+            }
+        }
+        chapters.retainAll { it.url.contains("page") }
         chapters.reverse()
         return chapters
     }
