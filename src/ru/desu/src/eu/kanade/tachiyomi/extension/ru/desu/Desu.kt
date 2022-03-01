@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.float
 import kotlinx.serialization.json.floatOrNull
 import kotlinx.serialization.json.int
@@ -23,6 +24,7 @@ import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.text.DecimalFormat
 
 class Desu : HttpSource() {
     override val name = "Desu"
@@ -91,7 +93,7 @@ class Desu : HttpSource() {
 
         var altName = ""
 
-        if (obj["synonyms"]?.jsonPrimitive?.content.orEmpty().isNotEmpty()) {
+        if (obj["synonyms"]!!.jsonPrimitive.contentOrNull != null) {
             altName = "Альтернативные названия:\n" +
                 obj["synonyms"]!!.jsonPrimitive.content
                     .replace("|", " / ") +
@@ -202,15 +204,11 @@ class Desu : HttpSource() {
         return obj["chapters"]!!.jsonObject["list"]!!.jsonArray.map {
             val chapterObj = it.jsonObject
             val ch = chapterObj["ch"]!!.jsonPrimitive.float
-            val fullNumStr = "${chapterObj["vol"]!!.jsonPrimitive.int} . Глава $ch"
-            val title = chapterObj["title"]?.jsonPrimitive?.content.orEmpty()
+            val fullNumStr = "${chapterObj["vol"]!!.jsonPrimitive.int}. Глава " + DecimalFormat("#,###.##").format(ch).replace(",", ".")
+            val title = chapterObj["title"]!!.jsonPrimitive.contentOrNull ?: ""
 
             SChapter.create().apply {
-                name = if (title.isEmpty()) {
-                    fullNumStr
-                } else {
-                    "$fullNumStr: $title"
-                }
+                name = "$fullNumStr $title"
                 url = "/$cid/chapter/${chapterObj["id"]!!.jsonPrimitive.int}"
                 chapter_number = ch
                 date_upload = chapterObj["date"]!!.jsonPrimitive.long * 1000L
