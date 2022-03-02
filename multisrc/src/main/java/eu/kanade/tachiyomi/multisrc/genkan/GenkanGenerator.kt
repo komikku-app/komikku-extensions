@@ -9,7 +9,7 @@ class GenkanGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Genkan"
 
-    override val baseVersionCode: Int = 2
+    override val baseVersionCode: Int = 3
 
     override val sources = listOf(
         SingleLang("Hunlight Scans", "https://hunlight-scans.info", "en"),

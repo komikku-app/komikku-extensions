@@ -96,13 +96,16 @@ open class Genkan(
             .let { if (it.startsWith("http")) it else baseUrl + it }
     }
 
-    override fun mangaDetailsParse(document: Document): SManga {
-        return SManga.create().apply {
-            title = document.select("div#content h5").first().text()
-            description = document.select("div.col-lg-9").text().substringAfter("Description ").substringBefore(" Volume")
-            thumbnail_url = styleToUrl(document.select("div.media a").first())
-        }
+    protected var countryOfOriginSelector = ".card.mt-2 .list-item:contains(Country of Origin) .no-wrap"
+    override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        title = document.select("div#content h5").first().text()
+        description = document.select("div.col-lg-9").text().substringAfter("Description ").substringBefore(" Volume")
+        thumbnail_url = styleToUrl(document.select("div.media a").first())
+        genre = listOfNotNull(
+            document.selectFirst(countryOfOriginSelector)?.let { countryOfOriginToSeriesType(it.text())}
+        ).joinToString()
     }
+
 
     override fun chapterListSelector() = "div.col-lg-9 div.flex"
 
@@ -135,6 +138,13 @@ open class Genkan(
         } else {
             dateFormat.parse(string)?.time ?: 0
         }
+    }
+
+    private fun countryOfOriginToSeriesType(country: String) = when (country) {
+        "South Korea" -> "Manhwa"
+        "Japan" -> "Manga"
+        "China" -> "Manhua"
+        else -> null
     }
 
     // Subtract relative date (e.g. posted 3 days ago)
