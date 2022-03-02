@@ -60,7 +60,7 @@ class Newbie : HttpSource() {
         }
 
         val response = chain.proceed(chain.request())
-        val image = response.body?.byteString()?.toResponseBody("image/webp".toMediaType())
+        val image = response.body?.byteString()?.toResponseBody("image/*".toMediaType())
         return response.newBuilder().body(image).build()
     }
 
@@ -291,7 +291,10 @@ class Newbie : HttpSource() {
         val result = mutableListOf<Page>()
         pages.forEach { page ->
             (1..page.slices!!).map { i ->
-                result.add(Page(result.size, "", API_URL + chapter.url + "/${page.id}?slice=$i"))
+                val imageUrlCall = API_URL + chapter.url + "/${page.id}?slice=$i"
+                val bodyLength = client.newCall(GET(imageUrlCall, headers)).execute().body!!.contentLength()
+                if (bodyLength > 320)
+                    result.add(Page(result.size, "", imageUrlCall))
             }
         }
         return result
