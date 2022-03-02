@@ -59,7 +59,7 @@ class MangaSwat : WPMangaStream("MangaSwat", "https://swatmanga.co", "ar", Simpl
     override fun pageListParse(document: Document): List<Page> {
         return document.select(pageSelector)
             .filterNot { it.attr("src").isNullOrEmpty() }
-            .mapIndexed { i, img -> Page(i, "", img.attr("data-src")) }
+            .mapIndexed { i, img -> Page(i, "", img.attr("src")) }
     }
 
     override fun getFilterList() = FilterList(
