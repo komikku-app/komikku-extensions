@@ -154,7 +154,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("KlikManga", "https://klikmanga.id", "id", overrideVersionCode = 2),
         SingleLang("Kokomanga", "https://kokomanga.com", "en"),
         SingleLang("Kun Manga", "https://kunmanga.com", "en", overrideVersionCode = 1),
-        SingleLang("LHTranslation", "https://lhtranslation.net", "en"),
+        SingleLang("LHTranslation", "https://lhtranslation.net", "en", overrideVersionCode = 1),
         SingleLang("Lara Manga", "https://laramanga.com", "en"),
         SingleLang("Latest Manga", "https://latestmanga.net", "en", overrideVersionCode = 1),
         SingleLang("Levelerscans", "https://levelerscans.xyz", "en", overrideVersionCode = 1),
