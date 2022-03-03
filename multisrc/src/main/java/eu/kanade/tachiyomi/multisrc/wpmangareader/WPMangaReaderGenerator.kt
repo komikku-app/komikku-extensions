@@ -50,6 +50,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Ozul Scans", "https://ozulscans.com", "ar"),
         SingleLang("Tsundoku Traduções", "https://tsundoku.com.br", "pt-BR", className = "TsundokuTraducoes", overrideVersionCode = 9),
         SingleLang("Komik Lab", "https://komiklab.com", "id"),
+        SingleLang("Arcane scan", "https://arcanescan.fr", "fr"),
     )
 
     companion object {
