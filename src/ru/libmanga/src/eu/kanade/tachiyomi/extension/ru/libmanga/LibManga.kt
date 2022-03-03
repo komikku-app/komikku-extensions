@@ -322,9 +322,8 @@ class LibManga : ConfigurableSource, HttpSource() {
 
         val nameChapter = chapterItem.jsonObject["chapter_name"]?.jsonPrimitive?.contentOrNull
         val fullNameChapter = "Том $volume. Глава $number"
-
         if (!sortingList.equals("ms_mixing")) {
-            chapter.scanlator = branches?.let { getScanlatorTeamName(it, chapterItem) } ?: chapterItem.jsonObject["username"]!!.jsonPrimitive.content
+            chapter.scanlator = branches?.let { getScanlatorTeamName(it, chapterItem) }
         }
         chapter.name = if (nameChapter.isNullOrBlank()) fullNameChapter else "$fullNameChapter - $nameChapter"
         chapter.date_upload = SimpleDateFormat("yyyy-MM-dd", Locale.US)
