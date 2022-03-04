@@ -8,7 +8,6 @@ import MangaDetDto
 import MyLibraryDto
 import PageDto
 import PageWrapperDto
-import PublisherDto
 import SeriesWrapperDto
 import TagsDto
 import UserDto
@@ -19,7 +18,6 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.widget.Toast
 import androidx.preference.ListPreference
-import eu.kanade.tachiyomi.lib.dataimage.DataImageInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -37,12 +35,13 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import okhttp3.Headers
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.Jsoup
 import rx.Observable
 import uy.kohesive.injekt.Injekt
@@ -67,7 +66,6 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     private val baseOrig: String = "https://api.remanga.org"
     private val baseMirr: String = "https://api.xn--80aaig9ahr.xn--c1avg" // https://реманга.орг
-    private val baseCookieUrl: HttpUrl = "https://remanga.org".toHttpUrl()
     private val domain: String? = preferences.getString(DOMAIN_PREF, baseOrig)
 
     override val baseUrl = domain.toString()
@@ -84,7 +82,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     private fun authIntercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
 
-        val cookies = client.cookieJar.loadForRequest(baseCookieUrl)
+        val cookies = client.cookieJar.loadForRequest(baseUrl.replace("api.", "").toHttpUrl())
         val authCookie = cookies
             .firstOrNull { cookie -> cookie.name == USER_COOKIE_NAME }
             ?.let { cookie -> URLDecoder.decode(cookie.value, "UTF-8") }
@@ -97,10 +95,21 @@ class Remanga : ConfigurableSource, HttpSource() {
             .build()
         return chain.proceed(authRequest)
     }
-
+    private fun imageContentTypeIntercept(chain: Interceptor.Chain): Response {
+        val originalRequest = chain.request()
+        val response = chain.proceed(originalRequest)
+        val urlRequest = originalRequest.url.toString()
+        val possibleType = urlRequest.substringAfterLast("/").split(".")
+        return if (urlRequest.contains("/images/") and (possibleType.size == 2)) {
+            val realType = possibleType[1]
+            val image = response.body?.byteString()?.toResponseBody("image/$realType".toMediaType())
+            response.newBuilder().body(image).build()
+        } else
+            response
+    }
     override val client: OkHttpClient =
         network.client.newBuilder()
-            .addInterceptor(DataImageInterceptor())
+            .addInterceptor { imageContentTypeIntercept(it) }
             .addInterceptor { authIntercept(it) }
             .build()
 
@@ -326,7 +335,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 val selectedBranch = branch.maxByOrNull { selector(it) }!!
                 return (1..(selectedBranch.count_chapters / 100 + 1)).map {
                     val response = chapterListRequest(selectedBranch.id, it)
-                    chapterListParse(response, selectedBranch.publishers)
+                    chapterListParse(response)
                 }.let { Observable.just(it.flatten()) }
             }
         }
@@ -355,8 +364,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         return chapterName
     }
 
-    override fun chapterListParse(response: Response): List<SChapter> = throw NotImplementedError("Unused")
-    private fun chapterListParse(response: Response, publishers: List<PublisherDto>): List<SChapter> {
+    override fun chapterListParse(response: Response): List<SChapter> {
         var chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body!!.string()).content
         if (!preferences.getBoolean(PAID_PREF, false)) {
             chapters = chapters.filter { !it.is_paid or (it.is_bought == true) }
@@ -367,8 +375,8 @@ class Remanga : ConfigurableSource, HttpSource() {
                 name = chapterName(chapter)
                 url = "/api/titles/chapters/${chapter.id}"
                 date_upload = parseDate(chapter.upload_date)
-                scanlator = if (publishers.isNotEmpty()) {
-                    publishers.joinToString { it.name }
+                scanlator = if (chapter.publishers.isNotEmpty()) {
+                    chapter.publishers.joinToString { it.name }
                 } else null
             }
         }

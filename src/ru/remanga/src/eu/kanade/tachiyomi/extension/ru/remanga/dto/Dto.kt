@@ -9,8 +9,7 @@ data class TagsDto(
 @Serializable
 data class BranchesDto(
     val id: Long,
-    val count_chapters: Int,
-    val publishers: List<PublisherDto>
+    val count_chapters: Int
 )
 
 @Serializable
@@ -91,7 +90,8 @@ data class BookDto(
     val name: String,
     val upload_date: String,
     val is_paid: Boolean,
-    val is_bought: Boolean?
+    val is_bought: Boolean?,
+    val publishers: List<PublisherDto>
 )
 
 @Serializable
