@@ -89,6 +89,7 @@ class WayManga : ParsedHttpSource() {
         val chapter = SChapter.create()
         element.select("div.col-5").first().let {
             chapter.name = it.text()
+            chapter.chapter_number = it.text().substringBefore(" глава").substringAfter("том ").toFloat()
         }
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         chapter.date_upload = element.select("div.col-5:eq(1)").text().toDate()
