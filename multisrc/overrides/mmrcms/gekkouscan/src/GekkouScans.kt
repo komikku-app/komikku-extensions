@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 class GekkouScans : MMRCMS(
     "Gekkou Scans",
-    "https://gekkouscans.com.br",
+    "https://gekkou.com.br",
     "pt-BR"
 ) {
 
