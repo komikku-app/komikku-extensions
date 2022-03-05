@@ -562,7 +562,7 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
         // Please also update AndroidManifest
         private val SITE_ENTRIES_ARRAY = arrayOf(
             DEFAULT_SITE, "18comic.org",
-            "jmcomic4.cc", "jmcomic5.cc", "jmcomic5.cc"
+            "jmcomic8.cc", "jmcomic9.cc", "jmcomic9.cc"
         )
     }
 }
