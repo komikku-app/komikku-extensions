@@ -219,7 +219,7 @@ class Mintmanga : ConfigurableSource, ParsedHttpSource() {
 
     private fun chapterFromElement(element: Element, manga: SManga): SChapter {
         val urlElement = element.select("a").first()
-        val chapterInf = element.select(".item-data").first()
+        val chapterInf = element.select("td.item-title").first()
         val urlText = urlElement.text()
 
         val chapter = SChapter.create()
@@ -247,7 +247,7 @@ class Mintmanga : ConfigurableSource, ParsedHttpSource() {
             chapter.name = chapter.name.substringAfter("…").trim()
         }
 
-        chapter.chapter_number = chapterInf.attr("num").toFloat() / 10
+        chapter.chapter_number = chapterInf.attr("data-num").toFloat() / 10
 
         chapter.date_upload = element.select("td.d-none").last()?.text()?.let {
             try {
