@@ -1,0 +1,33 @@
+name: Source removal request
+description: Scanlators can request their site to be removed
+labels: [Meta request]
+body:
+
+  - type: input
+    id: link
+    attributes:
+      label: Source link
+      placeholder: |
+        Example: "https://notrealscans.org"
+    validations:
+      required: true
+
+  - type: textarea
+    id: other-details
+    attributes:
+      label: Other details
+      placeholder: |
+        Additional details and attachments.
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Acknowledgements
+      description: Your request will be denied if you don't meet these requirements.
+      options:
+        - label: Proof of ownership/intent to remove sent to a Tachiyomi Discord server mod via DM
+          required: true
+        - label: Site only hosts their own scanlated content and not content stolen from other scanlators or official releases (i.e., an aggregator)
+          required: true
+        - label: Site is not infested with user-hostile ads
+          required: true
