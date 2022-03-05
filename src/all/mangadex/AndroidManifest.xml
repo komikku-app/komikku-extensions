@@ -28,6 +28,12 @@
                 <data
                     android:pathPattern="/group/..*"
                     android:scheme="https" />
+                <data
+                    android:pathPattern="/author/..*"
+                    android:scheme="https" />
+                <data
+                    android:pathPattern="/user/..*"
+                    android:scheme="https" />
             </intent-filter>
         </activity>
     </application>

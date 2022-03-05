@@ -35,6 +35,8 @@ object MDConstants {
     const val prefixIdSearch = "id:"
     const val prefixChSearch = "ch:"
     const val prefixGrpSearch = "grp:"
+    const val prefixAuthSearch = "author:"
+    const val prefixUsrSearch = "usr:"
 
     const val coverQualityPref = "thumbnailQuality"
 

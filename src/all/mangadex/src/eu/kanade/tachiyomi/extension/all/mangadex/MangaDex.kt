@@ -196,6 +196,11 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
                 super.fetchSearchManga(page, MDConstants.prefixIdSearch + manga_id, filters)
             }
         }
+        if (query.startsWith(MDConstants.prefixUsrSearch)) {
+            return client.newCall(searchMangaUploaderRequest(page, query.removePrefix(MDConstants.prefixUsrSearch)))
+                .asObservableSuccess()
+                .map { latestUpdatesParse(it) }
+        }
         return super.fetchSearchManga(page, query, filters)
     }
 
@@ -215,39 +220,52 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        if (query.startsWith(MDConstants.prefixIdSearch)) {
-            val url = MDConstants.apiMangaUrl.toHttpUrlOrNull()!!.newBuilder().apply {
-                addQueryParameter("ids[]", query.removePrefix(MDConstants.prefixIdSearch))
-                addQueryParameter("includes[]", MDConstants.coverArt)
-                addQueryParameter("contentRating[]", "safe")
-                addQueryParameter("contentRating[]", "suggestive")
-                addQueryParameter("contentRating[]", "erotica")
-                addQueryParameter("contentRating[]", "pornographic")
-            }.build().toString()
-
-            return GET(url, headers, CacheControl.FORCE_NETWORK)
-        }
-
         val tempUrl = MDConstants.apiMangaUrl.toHttpUrl().newBuilder().apply {
             addQueryParameter("limit", MDConstants.mangaLimit.toString())
             addQueryParameter("offset", (helper.getMangaListOffset(page)))
             addQueryParameter("includes[]", MDConstants.coverArt)
         }
 
-        if (query.startsWith(MDConstants.prefixGrpSearch)) {
-            val groupID = query.removePrefix(MDConstants.prefixGrpSearch)
-            if (!helper.containsUuid(groupID)) {
-                throw Exception("Not a valid group ID")
-            }
+        when {
+            query.startsWith(MDConstants.prefixIdSearch) -> {
+                val url = MDConstants.apiMangaUrl.toHttpUrlOrNull()!!.newBuilder().apply {
+                    addQueryParameter("ids[]", query.removePrefix(MDConstants.prefixIdSearch))
+                    addQueryParameter("includes[]", MDConstants.coverArt)
+                    addQueryParameter("contentRating[]", "safe")
+                    addQueryParameter("contentRating[]", "suggestive")
+                    addQueryParameter("contentRating[]", "erotica")
+                    addQueryParameter("contentRating[]", "pornographic")
+                }.build().toString()
 
-            tempUrl.apply {
-                addQueryParameter("group", groupID)
+                return GET(url, headers, CacheControl.FORCE_NETWORK)
             }
-        } else {
-            tempUrl.apply {
-                val actualQuery = query.replace(MDConstants.whitespaceRegex, " ")
-                if (actualQuery.isNotBlank()) {
-                    addQueryParameter("title", actualQuery)
+            query.startsWith(MDConstants.prefixGrpSearch) -> {
+                val groupID = query.removePrefix(MDConstants.prefixGrpSearch)
+                if (!helper.containsUuid(groupID)) {
+                    throw Exception("Not a valid group ID")
+                }
+
+                tempUrl.apply {
+                    addQueryParameter("group", groupID)
+                }
+            }
+            query.startsWith(MDConstants.prefixAuthSearch) -> {
+                val authorID = query.removePrefix(MDConstants.prefixAuthSearch)
+                if (!helper.containsUuid(authorID)) {
+                    throw Exception("Not a valid author ID")
+                }
+
+                tempUrl.apply {
+                    addQueryParameter("authors[]", authorID)
+                    addQueryParameter("artists[]", authorID)
+                }
+            }
+            else -> {
+                tempUrl.apply {
+                    val actualQuery = query.replace(MDConstants.whitespaceRegex, " ")
+                    if (actualQuery.isNotBlank()) {
+                        addQueryParameter("title", actualQuery)
+                    }
                 }
             }
         }
@@ -258,6 +276,42 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
     }
 
     override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
+
+    private fun searchMangaUploaderRequest(page: Int, uploader: String): Request {
+        val url = MDConstants.apiChapterUrl.toHttpUrlOrNull()!!.newBuilder().apply {
+            addQueryParameter("offset", helper.getLatestChapterOffset(page))
+            addQueryParameter("limit", MDConstants.latestChapterLimit.toString())
+            addQueryParameter("translatedLanguage[]", dexLang)
+            addQueryParameter("order[publishAt]", "desc")
+            addQueryParameter("includeFutureUpdates", "0")
+            addQueryParameter("uploader", uploader)
+            preferences.getStringSet(
+                MDConstants.getOriginalLanguagePrefKey(dexLang),
+                setOf()
+            )?.forEach {
+                addQueryParameter("originalLanguage[]", it)
+                // dex has zh and zh-hk for chinese manhua
+                if (it == MDConstants.originalLanguagePrefValChinese) {
+                    addQueryParameter("originalLanguage[]", MDConstants.originalLanguagePrefValChineseHk)
+                }
+            }
+            preferences.getStringSet(
+                MDConstants.getContentRatingPrefKey(dexLang),
+                MDConstants.contentRatingPrefDefaults
+            )?.forEach { addQueryParameter("contentRating[]", it) }
+            MDConstants.defaultBlockedGroups.forEach {
+                addQueryParameter("excludedGroups[]", it)
+            }
+            preferences.getString(
+                MDConstants.getBlockedGroupsPrefKey(dexLang), ""
+            )?.split(",")?.sorted()?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedGroups[]", it.trim()) }
+            preferences.getString(
+                MDConstants.getBlockedUploaderPrefKey(dexLang),
+                ""
+            )?.split(", ")?.sorted()?.forEach { if (it.isNotEmpty()) addQueryParameter("excludedUploaders[]", it.trim()) }
+        }.build().toString()
+        return GET(url, headers, CacheControl.FORCE_NETWORK)
+    }
 
     // Manga Details section
 

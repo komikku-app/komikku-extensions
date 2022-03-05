@@ -29,6 +29,8 @@ class MangadexUrlActivity : Activity() {
                     when {
                         equals("chapter") -> putExtra("query", "${MDConstants.prefixChSearch}$titleid")
                         equals("group") -> putExtra("query", "${MDConstants.prefixGrpSearch}$titleid")
+                        equals("user") -> putExtra("query", "${MDConstants.prefixUsrSearch}$titleid")
+                        equals("author") -> putExtra("query", "${MDConstants.prefixAuthSearch}$titleid")
                         else -> putExtra("query", "${MDConstants.prefixIdSearch}$titleid")
                     }
                 }
