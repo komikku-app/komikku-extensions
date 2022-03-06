@@ -124,7 +124,7 @@ class Selfmanga : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter {
         val urlElement = element.select("a").first()
-        val chapterInf = element.select(".item-data").first()
+        val chapterInf = element.select("td.item-title").first()
         val urlText = urlElement.text()
 
         val chapter = SChapter.create()
@@ -135,7 +135,7 @@ class Selfmanga : ParsedHttpSource() {
             chapter.name = urlText
         }
 
-        chapter.chapter_number = chapterInf.attr("num").toFloat() / 10
+        chapter.chapter_number = chapterInf.attr("data-num").toFloat() / 10
 
         chapter.date_upload = element.select("td.hidden-xxs").last()?.text()?.let {
             try {
