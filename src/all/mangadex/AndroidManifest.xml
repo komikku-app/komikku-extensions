@@ -15,25 +15,15 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:host="mangadex.org" />
+                <data android:scheme="https" />
 
-                <data
-                    android:pathPattern="/title/..*"
-                    android:scheme="https" />
-                <data
-                    android:pathPattern="/manga/..*"
-                    android:scheme="https" />
-                <data
-                    android:pathPattern="/chapter/..*"
-                    android:scheme="https" />
-                <data
-                    android:pathPattern="/group/..*"
-                    android:scheme="https" />
-                <data
-                    android:pathPattern="/author/..*"
-                    android:scheme="https" />
-                <data
-                    android:pathPattern="/user/..*"
-                    android:scheme="https" />
+                <data android:pathPattern="/title/..*" />
+                <data android:pathPattern="/manga/..*" />
+                <data android:pathPattern="/chapter/..*" />
+                <data android:pathPattern="/group/..*" />
+                <data android:pathPattern="/author/..*" />
+                <data android:pathPattern="/user/..*" />
+                <data android:pathPattern="/list/..*" />
             </intent-filter>
         </activity>
     </application>

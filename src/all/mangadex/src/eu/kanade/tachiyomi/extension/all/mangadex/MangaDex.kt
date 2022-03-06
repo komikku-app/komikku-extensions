@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.extension.all.mangadex.dto.AggregateDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AtHomeDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterListDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.ListDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaListDto
 import eu.kanade.tachiyomi.network.GET
@@ -191,17 +192,22 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
     // SEARCH section
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        if (query.startsWith(MDConstants.prefixChSearch)) {
-            return getMangaIdFromChapterId(query.removePrefix(MDConstants.prefixChSearch)).flatMap { manga_id ->
-                super.fetchSearchManga(page, MDConstants.prefixIdSearch + manga_id, filters)
-            }
+        when {
+            query.startsWith(MDConstants.prefixChSearch) ->
+                return getMangaIdFromChapterId(query.removePrefix(MDConstants.prefixChSearch)).flatMap { manga_id ->
+                    super.fetchSearchManga(page, MDConstants.prefixIdSearch + manga_id, filters)
+                }
+            query.startsWith(MDConstants.prefixUsrSearch) ->
+                return client.newCall(searchMangaUploaderRequest(page, query.removePrefix(MDConstants.prefixUsrSearch)))
+                    .asObservableSuccess()
+                    .map { latestUpdatesParse(it) }
+            query.startsWith(MDConstants.prefixListSearch) ->
+                return client.newCall(GET(MDConstants.apiListUrl + "/" + query.removePrefix(MDConstants.prefixListSearch), headers, CacheControl.FORCE_NETWORK))
+                    .asObservableSuccess()
+                    .map { searchMangaListRequest(it, page) }
+            else ->
+                return super.fetchSearchManga(page, query, filters)
         }
-        if (query.startsWith(MDConstants.prefixUsrSearch)) {
-            return client.newCall(searchMangaUploaderRequest(page, query.removePrefix(MDConstants.prefixUsrSearch)))
-                .asObservableSuccess()
-                .map { latestUpdatesParse(it) }
-        }
-        return super.fetchSearchManga(page, query, filters)
     }
 
     private fun getMangaIdFromChapterId(id: String): Observable<String> {
@@ -276,6 +282,54 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
     }
 
     override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
+
+    private fun searchMangaListRequest(response: Response, page: Int): MangasPage {
+        if (response.isSuccessful.not()) {
+            throw Exception("HTTP ${response.code}")
+        }
+
+        val listDto = helper.json.decodeFromString<ListDto>(response.body!!.string())
+        val listDtoFiltered = listDto.data.relationships.filter { it.type != "Manga" }
+        val amount = listDtoFiltered.count()
+        if (amount < 1){
+            throw Exception("No Manga in List")
+        }
+        val minIndex = (page - 1) * MDConstants.mangaLimit
+
+        val url = MDConstants.apiMangaUrl.toHttpUrl().newBuilder().apply {
+            addQueryParameter("limit", MDConstants.mangaLimit.toString())
+            addQueryParameter("offset", "0")
+            addQueryParameter("includes[]", MDConstants.coverArt)
+        }
+        listDtoFiltered.forEachIndexed() { index, relationshipDto ->
+            if (index >= minIndex && index < (minIndex + MDConstants.mangaLimit)) {
+                url.addQueryParameter("ids[]", relationshipDto.id)
+            }
+        }
+
+        val request = client.newCall(GET(url.build().toString(), headers, CacheControl.FORCE_NETWORK))
+        val mangaList = searchMangaListParse(request.execute())
+        return MangasPage(mangaList, amount.toFloat() / MDConstants.mangaLimit - (page.toFloat() - 1) > 1)
+    }
+
+    private fun searchMangaListParse(response: Response): List<SManga> {
+        if (response.isSuccessful.not()) {
+            throw Exception("HTTP ${response.code}")
+        }
+
+        val mangaListDto = helper.json.decodeFromString<MangaListDto>(response.body!!.string())
+
+        val coverSuffix = preferences.getString(MDConstants.getCoverQualityPreferenceKey(dexLang), "")
+
+        val mangaList = mangaListDto.data.map { mangaDataDto ->
+            val fileName = mangaDataDto.relationships.firstOrNull { relationshipDto ->
+                relationshipDto.type.equals(MDConstants.coverArt, true)
+            }?.attributes?.fileName
+            helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
+        }
+
+        return mangaList
+    }
 
     private fun searchMangaUploaderRequest(page: Int, uploader: String): Request {
         val url = MDConstants.apiChapterUrl.toHttpUrlOrNull()!!.newBuilder().apply {
