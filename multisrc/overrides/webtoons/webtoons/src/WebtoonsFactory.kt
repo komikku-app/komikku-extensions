@@ -15,6 +15,7 @@ class WebtoonsFactory : SourceFactory {
         WebtoonsES(),
         WebtoonsFR(),
         WebtoonsZH(),
+        WebtoonsDE(),
     )
 }
 class WebtoonsEN : Webtoons("Webtoons.com", "https://www.webtoons.com", "en")
@@ -51,4 +52,8 @@ class WebtoonsES : Webtoons("Webtoons.com", "https://www.webtoons.com", "es") {
     }
 }
 class WebtoonsFR : Webtoons("Webtoons.com", "https://www.webtoons.com", "fr", dateFormat = SimpleDateFormat("d MMM yyyy", Locale.FRENCH))
-class WebtoonsZH : Webtoons("Webtoons.com", "https://www.webtoons.com", "zh", "zh-hant", "zh_TW", SimpleDateFormat("yyyy/MM/dd", Locale.TRADITIONAL_CHINESE))
+class WebtoonsZH : Webtoons("Webtoons.com", "https://www.webtoons.com", "zh-Hant", "zh-hant", "zh_TW", SimpleDateFormat("yyyy/MM/dd", Locale.TRADITIONAL_CHINESE)) {
+    // Due to lang code getting more specific
+    override val id: Long = 2959982438613576472
+}
+class WebtoonsDE : Webtoons("Webtoons.com", "https://www.webtoons.com", "de", dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN))
