@@ -51,10 +51,8 @@ class WayManga : ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("img").first().attr("src")
-        element.select("a").first().let {
+        element.select("div.col-6 a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
-        }
-        element.select("div.col-6").first().let {
             manga.title = it.text()
         }
         return manga
