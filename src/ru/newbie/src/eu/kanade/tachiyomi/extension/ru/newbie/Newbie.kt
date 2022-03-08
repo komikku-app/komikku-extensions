@@ -291,10 +291,7 @@ class Newbie : HttpSource() {
         val result = mutableListOf<Page>()
         pages.forEach { page ->
             (1..page.slices!!).map { i ->
-                val imageUrlCall = API_URL + chapter.url + "/${page.id}?slice=$i"
-                val bodyLength = client.newCall(GET(imageUrlCall, headers)).execute().body!!.contentLength()
-                if (bodyLength > 320)
-                    result.add(Page(result.size, "", imageUrlCall))
+                result.add(Page(result.size, API_URL + chapter.url + "/${page.id}?slice=$i"))
             }
         }
         return result
@@ -309,7 +306,13 @@ class Newbie : HttpSource() {
             }
     }
 
-    override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
+    override fun fetchImageUrl(page: Page): Observable<String> {
+        val bodyLength = client.newCall(GET(page.url, headers)).execute().body!!.contentLength()
+        return if (bodyLength > 320)
+            Observable.just(page.url)
+        else
+            Observable.just("$baseUrl/error-page/img/logo-fullsize.png")
+    }
 
     override fun imageUrlRequest(page: Page): Request = throw NotImplementedError("Unused")
 
