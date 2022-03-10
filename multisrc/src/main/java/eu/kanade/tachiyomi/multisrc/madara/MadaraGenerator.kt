@@ -436,7 +436,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("WD Scans (Wicked Dragon Scans)", "https://wdscans.com", "en", className = "WDScans"),
         SingleLang("Wakamics", "https://wakamics.net", "en"),
         SingleLang("Wakascan", "https://wakascan.com", "fr", overrideVersionCode = 1),
-        SingleLang("Walpurgis Scan", "https://walpurgiscan.it", "it", overrideVersionCode = 1),
+        SingleLang("Walpurgi Scan", "https://walpurgiscan.altervista.org", "it", overrideVersionCode = 2, className = "WalpurgisScan", pkgName = "walpurgisscan"),
         SingleLang("War Queen Scan", "https://wqscan.com", "pt-BR", overrideVersionCode = 6),
         SingleLang("WebNovel", "https://webnovel.live", "en", className = "WebNovelLive", overrideVersionCode = 3),
         SingleLang("WebToon18", "http://webtoon18.net", "en", isNsfw = true, overrideVersionCode = 2),
