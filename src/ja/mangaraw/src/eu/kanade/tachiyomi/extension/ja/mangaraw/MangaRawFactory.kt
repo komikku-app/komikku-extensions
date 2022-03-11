@@ -1,14 +1,13 @@
 package eu.kanade.tachiyomi.extension.ja.mangaraw
 
+import eu.kanade.tachiyomi.extension.ja.mangaraw.sources.Comick
+import eu.kanade.tachiyomi.extension.ja.mangaraw.sources.MangaPro
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 
 class MangaRawFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
-        Manga1000(),
-        Manga1001()
+        Comick(),
+        MangaPro()
     )
 }
-
-class Manga1000 : MangaRaw("Manga1000", "https://manga1000.com")
-class Manga1001 : MangaRaw("Manga1001", "https://manga1001.com")

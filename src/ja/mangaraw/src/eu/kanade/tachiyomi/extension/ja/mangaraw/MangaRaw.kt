@@ -7,29 +7,27 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Headers
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
+import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 abstract class MangaRaw(
     override val name: String,
-    override val baseUrl: String
+    override val baseUrl: String,
 ) : ParsedHttpSource() {
+
+    protected open val imageSelector = ".wp-block-image > img"
 
     override val lang = "ja"
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .protocols(listOf(Protocol.HTTP_1_1))
-        .build()
-
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder().add("Referer", baseUrl)
     }
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/seachlist/page/$page/?cat=-1", headers)
+    override fun popularMangaRequest(page: Int): Request =
+        GET("$baseUrl/seachlist/page/$page/?cat=-1", headers)
 
     override fun popularMangaSelector() = "article"
 
@@ -49,7 +47,8 @@ abstract class MangaRaw(
 
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = GET("$baseUrl/page/$page/?s=$query", headers)
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
+        GET("$baseUrl/page/$page/?s=$query", headers)
 
     override fun searchMangaSelector() = popularMangaSelector()
 
@@ -58,8 +57,10 @@ abstract class MangaRaw(
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        genre = document.select("p.has-text-color:has(strong) a").joinToString { it.text() }
-        description = document.select("p.has-text-color:not(:has(strong))").first().text()
+        // All manga details are located in the same <p> tag
+        // So here are some jank way of extracting them
+        description = document.select("#main > article > div > div > div > div > p").html()
+            .substringAfterLast("<br>")
         thumbnail_url = document.select(".wp-block-image img").attr("abs:src")
     }
 
@@ -71,13 +72,14 @@ abstract class MangaRaw(
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select(".wp-block-image > img").mapIndexed { i, element ->
+        return document.select(imageSelector).mapIndexed { i, element ->
             val attribute = if (element.hasAttr("data-src")) "data-src" else "src"
             Page(i, "", element.attr(attribute))
         }
     }
 
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
+    override fun imageUrlParse(document: Document): String =
+        throw UnsupportedOperationException("Not Used")
 
     override fun getFilterList() = FilterList()
 }
