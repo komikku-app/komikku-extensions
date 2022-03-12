@@ -14,8 +14,10 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -34,9 +36,11 @@ class Tappytoon(override val lang: String) : HttpSource() {
         if (res.isSuccessful) {
             if (mime != "application/octet-stream")
                 return@addInterceptor res
-            // Fix Content-Type header
-            return@addInterceptor res.newBuilder()
-                .header("Content-Type", "image/jpeg").build()
+            // Fix image content type
+            val type = IMG_CONTENT_TYPE.toMediaType()
+            val body = res.body!!.bytes().toResponseBody(type)
+            return@addInterceptor res.newBuilder().body(body)
+                .header("Content-Type", IMG_CONTENT_TYPE).build()
         }
         // Throw JSON error if available
         if (mime == "application/json") {
@@ -199,6 +203,8 @@ class Tappytoon(override val lang: String) : HttpSource() {
         throw UnsupportedOperationException("Not used")
 
     companion object {
+        private const val IMG_CONTENT_TYPE = "image/jpeg"
+
         private val apiUrl = "https://api-global.tappytoon.com".toHttpUrl()
 
         private val genres = mapOf(
