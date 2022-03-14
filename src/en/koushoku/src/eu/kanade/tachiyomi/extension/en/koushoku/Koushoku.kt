@@ -18,6 +18,7 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.net.URL
 
 class Koushoku : ParsedHttpSource() {
     companion object {
@@ -45,7 +46,7 @@ class Koushoku : ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = SManga.create().apply {
         setUrlWithoutDomain(element.select("a").attr("href"))
         title = element.select(".title").text()
-        thumbnail_url = "$baseUrl${element.select(thumbnailSelector).attr("src")}"
+        thumbnail_url = element.select(thumbnailSelector).attr("src")
     }
 
     private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/archive/$id", headers)
@@ -99,7 +100,7 @@ class Koushoku : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         title = document.select(".metadata .title").text()
-        thumbnail_url = "$baseUrl${document.select(thumbnailSelector).attr("src")}"
+        thumbnail_url = document.select(thumbnailSelector).attr("src")
         artist = document.select(".metadata .artists a, .metadata .circles a")
             .joinToString { it.text() }
         author = artist
@@ -139,8 +140,11 @@ class Koushoku : ParsedHttpSource() {
         if (id.isNullOrEmpty())
             throw UnsupportedOperationException("Error: Unknown archive id")
 
+        val url = URL(document.selectFirst(".page img").attr("src"))
+        val origin = "${url.protocol}://${url.host}"
+
         return (1..totalPages).map {
-            Page(it, "", "$baseUrl/data/$id/$it.jpg")
+            Page(it, "", "$origin/data/$id/$it.jpg")
         }
     }
 
