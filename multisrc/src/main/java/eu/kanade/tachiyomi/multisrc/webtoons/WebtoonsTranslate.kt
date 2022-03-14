@@ -165,8 +165,9 @@ open class WebtoonsTranslate(
     override fun pageListParse(document: Document): List<Page> = throw Exception("Not used")
 
     override fun chapterListRequest(manga: SManga): Request {
-        val titleNo = manga.url.toHttpUrlOrNull()!!
-            .queryParameter("titleNo")
+        val mangaUrl = manga.url.toHttpUrlOrNull()!!
+        val titleNo = mangaUrl.queryParameter("titleNo")
+        val teamVersion = mangaUrl.queryParameter("teamVersion")
         val chapterListUrl = apiBaseUrl
             .resolve("/lineWebtoon/ctrans/translatedEpisodes_jsonp.json")!!
             .newBuilder()
@@ -174,6 +175,7 @@ open class WebtoonsTranslate(
             .addQueryParameter("languageCode", translateLangCode)
             .addQueryParameter("offset", "0")
             .addQueryParameter("limit", "10000")
+            .addQueryParameter("teamVersion", teamVersion)
             .toString()
         return GET(chapterListUrl, mobileHeaders)
     }
