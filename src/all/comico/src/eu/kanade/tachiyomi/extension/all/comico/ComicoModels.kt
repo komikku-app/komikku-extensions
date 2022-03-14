@@ -7,12 +7,12 @@ data class ContentInfo(
     val id: Int,
     val name: String,
     val description: String,
-    val authors: List<Author>,
-    val genres: List<Genre>,
     val original: Boolean,
     val exclusive: Boolean,
     val mature: Boolean,
     val status: String? = null,
+    val genres: List<Genre>? = null,
+    val authors: List<Author>? = null,
     private val thumbnails: List<Thumbnail>,
 ) {
     val cover: String

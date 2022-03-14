@@ -99,7 +99,7 @@ open class Comico(
         GET(apiUrl + chapter.url, apiHeaders)
 
     override fun imageRequest(page: Page) =
-        GET(page.imageUrl!!.also { android.util.Log.w("URL", it) }, imgHeaders)
+        GET(page.imageUrl!!, imgHeaders)
 
     override fun latestUpdatesParse(response: Response) =
         popularMangaParse(response)
@@ -117,10 +117,10 @@ open class Comico(
                     "completed" -> SManga.COMPLETED
                     else -> SManga.ONGOING
                 }
-                author = it.authors.filter { it.isAuthor }.joinToString()
-                artist = it.authors.filter { it.isArtist }.joinToString()
+                author = it.authors?.filter { it.isAuthor }?.joinToString()
+                artist = it.authors?.filter { it.isArtist }?.joinToString()
                 genre = buildString {
-                    it.genres.joinTo(this)
+                    it.genres?.joinTo(this)
                     if (it.mature) append(", Mature")
                     if (it.original) append(", Original")
                     if (it.exclusive) append(", Exclusive")
