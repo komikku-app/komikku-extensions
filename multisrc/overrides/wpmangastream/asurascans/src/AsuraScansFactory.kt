@@ -14,7 +14,7 @@ class AsuraScansFactory : SourceFactory {
     )
 }
 
-class AsuraScansEn : AsuraScans("https://asurascans.com", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
+class AsuraScansEn : AsuraScans("https://www.asurascans.com", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
     override val pageSelector = "div.rdminimal > p > img"
 
     // Skip scriptPages

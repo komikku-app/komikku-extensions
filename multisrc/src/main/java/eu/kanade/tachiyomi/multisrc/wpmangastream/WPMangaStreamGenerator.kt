@@ -13,7 +13,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 13
 
     override val sources = listOf(
-        MultiLang("Asura Scans", "https://www.asurascans.com", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 11),
+        MultiLang("Asura Scans", "https://www.asurascans.com", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 12),
         SingleLang("Boosei", "https://boosei.com", "id", overrideVersionCode = 1),
         SingleLang("GURU Komik", "https://gurukomik.com", "id"),
         SingleLang("GoGoManga", "https://gogomanga.org", "en"),
