@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-
 class WebtoonTR : Madara(
     "Webtoon TR",
     "https://webtoon-tr.com",

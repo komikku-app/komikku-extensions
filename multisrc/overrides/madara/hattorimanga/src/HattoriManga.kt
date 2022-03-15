@@ -6,7 +6,6 @@ import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-
 class HattoriManga : Madara(
     "Hattori Manga",
     "https://hattorimanga.com",

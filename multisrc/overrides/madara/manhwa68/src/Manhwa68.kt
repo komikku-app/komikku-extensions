@@ -9,4 +9,8 @@ class Manhwa68 : Madara(
     "https://manhwa68.com",
     "en",
     dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
-)
+) {
+
+    // The website does not flag the content, so we just use the old selector.
+    override fun popularMangaSelector() = "div.page-item-detail:not(:has(a[href*='bilibilicomics.com']))"
+}

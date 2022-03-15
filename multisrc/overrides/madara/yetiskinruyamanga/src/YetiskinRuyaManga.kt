@@ -6,7 +6,6 @@ import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-
 class YetiskinRuyaManga : Madara(
     "Yetişkin Rüya Manga",
     "https://yetiskin.ruyamanga.com",

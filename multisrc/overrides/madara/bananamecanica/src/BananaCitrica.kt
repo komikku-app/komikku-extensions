@@ -20,5 +20,4 @@ class BananaCitrica : Madara(
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
         .build()
-
 }
