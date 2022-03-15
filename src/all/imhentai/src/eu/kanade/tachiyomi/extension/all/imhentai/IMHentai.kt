@@ -197,7 +197,8 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
             in 274826..403818 -> "m2.imhentai.xxx"
             in 403819..527143 -> "m3.imhentai.xxx"
             in 527144..632481 -> "m4.imhentai.xxx"
-            else -> "m5.imhentai.xxx"
+            in 632482..816010 -> "m5.imhentai.xxx"
+            else -> "m6.imhentai.xxx"
         }
 
         val images = json.parseToJsonElement(
