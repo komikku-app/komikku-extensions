@@ -36,7 +36,6 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("QuegnaReader", "http://pignaquegna.altervista.org", "it", overrideVersionCode = 1),
         SingleLang("NIFTeam", "http://read-nifteam.info", "it"),
         SingleLang("TuttoAnimeManga", "https://tuttoanimemanga.net", "it"),
-        SingleLang("Tortuga Ceviri", "http://tortugaceviri.com", "tr", overrideVersionCode = 1),
         SingleLang("Rama", "https://www.ramareader.it", "it"),
         SingleLang("Mabushimajo", "http://mabushimajo.com", "tr"),
         SingleLang("Hyakuro", "https://hyakuro.com", "en"),
