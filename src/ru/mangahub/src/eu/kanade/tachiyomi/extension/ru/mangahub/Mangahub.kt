@@ -78,7 +78,7 @@ open class Mangahub : ParsedHttpSource() {
     override fun searchMangaNextPageSelector(): String? = popularMangaNextPageSelector()
 
     override fun chapterListRequest(manga: SManga): Request {
-        return GET(baseUrl + manga.url + "/chapters", headers)
+        return GET(baseUrl + ("/chapters/" + manga.url.removePrefix("/title/")), headers)
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
