@@ -170,7 +170,11 @@ class LibHentai : ConfigurableSource, HttpSource() {
     private fun popularMangaFromElement(el: JsonElement) = SManga.create().apply {
         val slug = el.jsonObject["slug"]!!.jsonPrimitive.content
         val cover = el.jsonObject["cover"]!!.jsonPrimitive.content
-        title = if (isEng.equals("rus")) el.jsonObject["rus_name"]!!.jsonPrimitive.content else el.jsonObject["name"]!!.jsonPrimitive.content
+        title = when {
+            isEng.equals("rus") && el.jsonObject["rus_name"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> el.jsonObject["rus_name"]!!.jsonPrimitive.content
+            isEng.equals("eng") && el.jsonObject["eng_name"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> el.jsonObject["eng_name"]!!.jsonPrimitive.content
+            else -> el.jsonObject["name"]!!.jsonPrimitive.content
+        }
         thumbnail_url = "$COVER_URL/huploads/cover/$slug/cover/${cover}_250x350.jpg"
         url = "/$slug"
     }
@@ -900,7 +904,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
         val titleLanguagePref = ListPreference(screen.context).apply {
             key = LANGUAGE_PREF
             title = LANGUAGE_PREF_Title
-            entries = arrayOf("Английский (транскрипция)", "Русский")
+            entries = arrayOf("Английский", "Русский")
             entryValues = arrayOf("eng", "rus")
             summary = "%s"
             setDefaultValue("eng")
