@@ -38,7 +38,7 @@ class MangaRawClub : ParsedHttpSource() {
     }
 
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/browse/?results=$page&filter=views", headers)
+        return GET("$baseUrl/browse-comics/?results=$page&filter=views", headers)
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
@@ -162,7 +162,7 @@ class MangaRawClub : ParsedHttpSource() {
             return GET("$baseUrl/search/?search=$query", headers)
 
         // Filter search
-        val url = "$baseUrl/browse/".toHttpUrlOrNull()!!.newBuilder()
+        val url = "$baseUrl/browse-comics/".toHttpUrlOrNull()!!.newBuilder()
         val requestBody = FormBody.Builder()
         url.addQueryParameter("results", page.toString())
 
