@@ -22,7 +22,7 @@ class TruyenQQ : ParsedHttpSource() {
 
     override val lang: String = "vi"
 
-    override val baseUrl: String = "https://truyenqqtop.com"
+    override val baseUrl: String = "http://truyenqqpro.com"
 
     override val supportsLatest: Boolean = true
 
@@ -37,16 +37,20 @@ class TruyenQQ : ParsedHttpSource() {
         return super.headersBuilder().add("Referer", baseUrl)
     }
 
+    private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.US)
+
+    private val floatPattern = Regex("""\d+(?:\.\d+)?""")
+
     // Popular
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/top-thang/trang-$page.html", headers)
     }
-    override fun popularMangaNextPageSelector(): String = "a.pagination-link:contains(›)"
-    override fun popularMangaSelector(): String = "div.story-item"
+    override fun popularMangaNextPageSelector(): String = ".page_redirect > a:last-child > p:not(.active)"
+    override fun popularMangaSelector(): String = "ul.grid > li"
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         setUrlWithoutDomain(element.select("a").first().attr("abs:href"))
-        thumbnail_url = element.select("img.story-cover").attr("abs:src")
-        title = element.select(".title-book a").text()
+        thumbnail_url = element.select("img.lazy-image").attr("abs:data-src")
+        title = element.select("h3 a").text()
     }
 
     // Latest
@@ -72,16 +76,17 @@ class TruyenQQ : ParsedHttpSource() {
     // Details
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
+        val info = document.selectFirst(".list-info")
         title = document.select("h1").text()
-        author = document.select(".info-item:eq(1)").text().substringAfter(":").trim()
+        author = info.select(".org").joinToString { it.text() }
         artist = author
         val glist = document.select(".list01 li").map { it.text() }
-        genre = glist.joinToString(", ")
+        genre = glist.joinToString()
         description = document.select(".story-detail-info").text()
-        thumbnail_url = document.select("div.left img").attr("src")
-        status = when (document.select(".info-item:eq(2)").text().substringAfter(":").trim()) {
+        thumbnail_url = document.select("img[itemprop=image]").attr("abs:src")
+        status = when (info.select(".status > p:last-child").text()) {
             "Đang Cập Nhật" -> SManga.ONGOING
-            // "" -> SManga.COMPLETED
+            "Hoàn Thành" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
     }
@@ -92,11 +97,11 @@ class TruyenQQ : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         setUrlWithoutDomain(element.select("a").attr("abs:href"))
         name = element.select("a").text().trim()
-        date_upload = parseDate(element.select("div.text-right").text())
-        chapter_number = name.substringAfter("Chương").trim().toFloat()
+        date_upload = parseDate(element.select(".time-chap").text())
+        chapter_number = floatPattern.find(name)?.value?.toFloatOrNull() ?: -1f
     }
     private fun parseDate(date: String): Long {
-        return SimpleDateFormat("dd/MM/yyyy", Locale.US).parse(date)?.time ?: 0L
+        return dateFormat.parse(date)?.time ?: 0L
     }
 
     // Pages
