@@ -5,7 +5,7 @@ ext {
     extName = 'Latis Books'
     pkgNameSuffix = 'en.latisbooks'
     extClass = '.Latisbooks'
-    extVersionCode = 3
+    extVersionCode = 4
     isNsfw = true
 }
 

@@ -122,7 +122,7 @@ class Latisbooks : HttpSource() {
 
         // Handle multiple images per page (e.g. Page 23+24)
         val pages = blocks.select("img.thumb-image")
-            .mapIndexed { i, it -> Page(i, it.attr("abs:data-src")) }
+            .mapIndexed { i, it -> Page(i, "", it.attr("abs:data-src")) }
             .toMutableList()
 
         val numImages = pages.size
@@ -133,7 +133,7 @@ class Latisbooks : HttpSource() {
                 .map { it.select("div.sqs-block-content").first() }
                 // Some pages have empty html blocks (e.g. Page 1), so ignore them
                 .filter { it.childrenSize() > 0 }
-                .mapIndexed { i, it -> Page(i + numImages, wordWrap(it.text()).image()) }
+                .mapIndexed { i, it -> Page(i + numImages, "", wordWrap(it.text()).image()) }
                 .toList()
         )
 
