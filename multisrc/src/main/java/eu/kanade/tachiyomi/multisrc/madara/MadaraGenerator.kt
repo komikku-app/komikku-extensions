@@ -447,7 +447,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("WebtoonUK", "https://webtoon.uk", "en", overrideVersionCode = 2),
         SingleLang("WebtoonXYZ", "https://www.webtoon.xyz", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("WebtoonsTOP", "https://webtoons.top", "en", isNsfw = true),
-        SingleLang("Winter Scan", "https://winterscan.com.br", "pt-BR", overrideVersionCode = 3),
+        SingleLang("Winter Scan", "https://winterscan.com", "pt-BR", overrideVersionCode = 4),
         SingleLang("Wonderland", "https://landwebtoons.site", "pt-BR", overrideVersionCode = 3),
         SingleLang("WoopRead", "https://woopread.com", "en", overrideVersionCode = 1),
         SingleLang("WuxiaWorld", "https://wuxiaworld.site", "en", overrideVersionCode = 1),
