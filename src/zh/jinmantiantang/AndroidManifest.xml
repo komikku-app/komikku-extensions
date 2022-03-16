@@ -23,15 +23,15 @@
                     android:pathPattern="/album/..*"
                     android:scheme="https" />
                 <data
-                    android:host="jmcomic5.cc"
-                    android:pathPattern="/album/..*"
-                    android:scheme="https" />
-                <data
-                    android:host="jmcomic8.cc"
-                    android:pathPattern="/album/..*"
-                    android:scheme="https" />
-                <data
                     android:host="jmcomic9.cc"
+                    android:pathPattern="/album/..*"
+                    android:scheme="https" />
+                <data
+                    android:host="jmcomic.mobi"
+                    android:pathPattern="/album/..*"
+                    android:scheme="https" />
+                <data
+                    android:host="jmcomic1.mobi"
                     android:pathPattern="/album/..*"
                     android:scheme="https" />
             </intent-filter>
