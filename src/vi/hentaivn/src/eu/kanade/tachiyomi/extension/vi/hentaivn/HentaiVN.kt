@@ -44,7 +44,9 @@ class HentaiVN : ParsedHttpSource() {
         }
         .build()
 
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", baseUrl)
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+        .add("Referer", baseUrl)
+        .add("Cookie", "view4=1") // Get popular manga
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
 
@@ -67,7 +69,12 @@ class HentaiVN : ParsedHttpSource() {
         }
     }
 
-    override fun chapterListSelector() = ".page-info > table.listing > tbody > tr"
+    override fun chapterListSelector() = "table.listing > tbody > tr"
+
+    override fun chapterListRequest(manga: SManga): Request {
+        val mangaId = manga.url.substringAfterLast("/").substringBefore('-')
+        return GET("https://hentaivn.moe/list-showchapter.php?idchapshow=$mangaId", headers)
+    }
 
     override fun imageUrlParse(document: Document) = ""
 
@@ -121,7 +128,7 @@ class HentaiVN : ParsedHttpSource() {
     override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/tieu-diem.html?page=$page", headers)
+        return GET("$baseUrl/danh-sach.html?page=$page", headers)
     }
 
     override fun popularMangaSelector() = latestUpdatesSelector()
@@ -206,13 +213,18 @@ class HentaiVN : ParsedHttpSource() {
         Genre("Ảnh động", "131"),
         Genre("Animal", "127"),
         Genre("Animal girl", "22"),
-        Genre("Artist", "115"),
+        Genre("Áo Dài", "279"),
+        Genre("Apron", "277"),
+        Genre("Artist CG", "115"),
+        Genre("Based Game", "130"),
+        Genre("BBM", "257"),
         Genre("BBW", "251"),
         Genre("BDSM", "24"),
         Genre("Bestiality", "25"),
         Genre("Big Ass", "133"),
         Genre("Big Boobs", "23"),
         Genre("Big Penis", "32"),
+        Genre("Blackmail", "267"),
         Genre("Bloomers", "27"),
         Genre("BlowJobs", "28"),
         Genre("Body Swap", "29"),
@@ -228,19 +240,25 @@ class HentaiVN : ParsedHttpSource() {
         Genre("Che nhiều", "129"),
         Genre("Cheating", "34"),
         Genre("Chikan", "35"),
+        Genre("Chinese Dress", "271"),
         Genre("Có che", "100"),
         Genre("Comedy", "36"),
         Genre("Comic", "120"),
         Genre("Condom", "210"),
         Genre("Cosplay", "38"),
         Genre("Cousin", "2"),
+        Genre("Crotch Tattoo", "275"),
+        Genre("Cunnilingus", "269"),
         Genre("Dark Skin", "40"),
+        Genre("Daughter", "262"),
+        Genre("Deepthroat", "268"),
         Genre("Demon", "132"),
         Genre("DemonGirl", "212"),
         Genre("Devil", "104"),
         Genre("DevilGirl", "105"),
         Genre("Dirty", "253"),
         Genre("Dirty Old Man", "41"),
+        Genre("DogGirl", "260"),
         Genre("Double Penetration", "42"),
         Genre("Doujinshi", "44"),
         Genre("Drama", "4"),
@@ -254,15 +272,16 @@ class HentaiVN : ParsedHttpSource() {
         Genre("Femdom", "47"),
         Genre("Fingering", "48"),
         Genre("Footjob", "108"),
+        Genre("Foxgirls", "259"),
         Genre("Full Color", "37"),
         Genre("Furry", "202"),
         Genre("Futanari", "50"),
-        Genre("Game", "130"),
         Genre("GangBang", "51"),
         Genre("Garter Belts", "206"),
         Genre("Gender Bender", "52"),
         Genre("Ghost", "106"),
         Genre("Glasses", "56"),
+        Genre("Gothic Lolita", "264"),
         Genre("Group", "53"),
         Genre("Guro", "55"),
         Genre("Hairy", "247"),
@@ -277,16 +296,21 @@ class HentaiVN : ParsedHttpSource() {
         Genre("Imouto", "244"),
         Genre("Incest", "62"),
         Genre("Insect (Côn Trùng)", "26"),
+        Genre("Isekai", "280"),
         Genre("Không che", "99"),
         Genre("Kimono", "110"),
-        Genre("Loli", "63"),
+        Genre("Kuudere", "265"),
+        Genre("Lolicon", "63"),
         Genre("Maids", "64"),
+        Genre("Manhua", "273"),
         Genre("Manhwa", "114"),
+        Genre("Masturbation", "65"),
         Genre("Mature", "119"),
         Genre("Miko", "124"),
         Genre("Milf", "126"),
         Genre("Mind Break", "121"),
         Genre("Mind Control", "113"),
+        Genre("Mizugi", "263"),
         Genre("Monster", "66"),
         Genre("Monstergirl", "67"),
         Genre("Mother", "103"),
@@ -294,6 +318,7 @@ class HentaiVN : ParsedHttpSource() {
         Genre("Netori", "1"),
         Genre("Non-hen", "201"),
         Genre("NTR", "68"),
+        Genre("Nun", "272"),
         Genre("Nurse", "69"),
         Genre("Old Man", "211"),
         Genre("Oneshot", "71"),
@@ -301,8 +326,10 @@ class HentaiVN : ParsedHttpSource() {
         Genre("Osananajimi", "209"),
         Genre("Paizuri", "72"),
         Genre("Pantyhose", "204"),
+        Genre("Ponytail", "276"),
         Genre("Pregnant", "73"),
         Genre("Rape", "98"),
+        Genre("Rimjob", "258"),
         Genre("Romance", "117"),
         Genre("Ryona", "207"),
         Genre("Scat", "134"),
@@ -319,11 +346,13 @@ class HentaiVN : ParsedHttpSource() {
         Genre("Slave", "82"),
         Genre("Sleeping", "213"),
         Genre("Small Boobs", "84"),
+        Genre("Son", "278"),
         Genre("Sports", "83"),
         Genre("Stockings", "81"),
         Genre("Supernatural", "85"),
         Genre("Sweating", "250"),
         Genre("Swimsuit", "86"),
+        Genre("Tall Girl", "266"),
         Genre("Teacher", "91"),
         Genre("Tentacles", "89"),
         Genre("Time Stop", "109"),
@@ -331,9 +360,10 @@ class HentaiVN : ParsedHttpSource() {
         Genre("Tracksuit", "252"),
         Genre("Transformation", "256"),
         Genre("Trap", "92"),
+        Genre("Truyện Việt", "274"),
         Genre("Tsundere", "111"),
-        Genre("Tự sướng", "65"),
         Genre("Twins", "93"),
+        Genre("Twintails", "261"),
         Genre("Vampire", "107"),
         Genre("Vanilla", "208"),
         Genre("Virgin", "95"),
