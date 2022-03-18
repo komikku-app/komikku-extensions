@@ -54,6 +54,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Vapo Scan", "https://vaposcans.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("West Manga", "https://westmanga.info", "id", overrideVersionCode = 1),
         SingleLang("xCaliBR Scans", "https://xcalibrscans.com", "en", overrideVersionCode = 3),
+        SingleLang("Shadow Mangas", "https://shadowmangas.com", "es"),
     )
 
     companion object {
