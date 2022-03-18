@@ -21,27 +21,24 @@ abstract class ReaperScans(
     override val baseUrl: String,
     lang: String,
     dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
-) : Madara("Reaper Scans", baseUrl, lang, dateFormat) {
+) : Madara("Reaper Scans", baseUrl, lang, dateFormat)
+
+class ReaperScansEn : ReaperScans("https://reaperscans.com", "en", SimpleDateFormat("MMM dd,yyyy", Locale.US)) {
+    override val versionId = 2
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-
         with(element) {
             select(chapterUrlSelector).first()?.let { urlElement ->
                 chapter.url = urlElement.attr("abs:href").let {
                     it.substringBefore("?style=paged") + if (!it.endsWith(chapterUrlSuffix)) chapterUrlSuffix else ""
                 }
-                chapter.name = urlElement.select("p.chapter-manhwa-title").firstOrNull()?.ownText().toString()
+                chapter.name = urlElement.select("p.chapter-manhwa-title").firstOrNull()?.text().toString()
             }
-            chapter.date_upload = select("span.chapter-release-date i").firstOrNull()?.text().let { parseChapterDate(it) }
+            chapter.date_upload = select("span.chapter-release-date > i").firstOrNull()?.text().let { parseChapterDate(it) }
         }
-
         return chapter
     }
-}
-
-class ReaperScansEn : ReaperScans("https://reaperscans.com", "en") {
-    override val versionId = 2
 }
 
 class ReaperScansBr : ReaperScans("https://reaperscans.com.br", "pt-BR", SimpleDateFormat("dd/MM/yyyy", Locale.US)) {
