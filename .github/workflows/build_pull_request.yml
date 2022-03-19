@@ -43,7 +43,7 @@ jobs:
           CI_MULTISRC: "true"
         with:
           arguments: :multisrc:generateExtensions
-          cache-read-only: true
+          cache-disabled: true
 
       - name: Build "${{ matrix.lang }}" extensions
         uses: gradle/gradle-command-action@v2
@@ -52,7 +52,7 @@ jobs:
           CI_MATRIX_LANG: ${{ matrix.lang }}
         with:
           arguments: assembleDebug
-          cache-read-only: true
+          cache-disabled: true
 
   build_individual:
     name: Build individual modules
@@ -82,4 +82,4 @@ jobs:
           CI_MATRIX_LANG: ${{ matrix.lang }}
         with:
           arguments: assembleDebug
-          cache-read-only: true
+          cache-disabled: true
