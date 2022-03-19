@@ -291,7 +291,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
         val listDto = helper.json.decodeFromString<ListDto>(response.body!!.string())
         val listDtoFiltered = listDto.data.relationships.filter { it.type != "Manga" }
         val amount = listDtoFiltered.count()
-        if (amount < 1){
+        if (amount < 1) {
             throw Exception("No Manga in List")
         }
         val minIndex = (page - 1) * MDConstants.mangaLimit

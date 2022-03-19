@@ -4,8 +4,6 @@ import android.util.Log
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.Response
-import okhttp3.internal.closeQuietly
-import java.lang.Exception
 
 /**
  * An OkHttp interceptor that will switch to a failover address and retry when an HTTP GET request
@@ -45,7 +43,11 @@ class HttpGetFailoverInterceptor : Interceptor {
             } catch (e: Exception) {
                 Log.d(LOG_TAG, "[HttpGetFailoverInterceptor] failed with exception, next: $retry", e)
             }
-            response?.closeQuietly()
+            try {
+                response?.close()
+            } catch (_: Exception) {
+                // Ignore exceptions
+            }
             request = request.newBuilder().url(retry).build()
         }
         return chain.proceed(request)
