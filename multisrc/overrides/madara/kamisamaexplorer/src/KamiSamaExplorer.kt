@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 class KamiSamaExplorer : Madara(
     "Kami Sama Explorer",
-    "https://kamisama.com.br",
+    "https://leitor.kamisama.com.br",
     "pt-BR",
     SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR"))
 ) {
