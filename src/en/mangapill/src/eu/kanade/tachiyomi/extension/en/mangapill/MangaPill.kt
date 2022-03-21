@@ -29,25 +29,21 @@ class MangaPill : ParsedHttpSource() {
     }
 
     override fun popularMangaSelector() = latestUpdatesSelector()
-    override fun latestUpdatesSelector() = ".flex.bg-card.p-2.rounded"
-    override fun searchMangaSelector() = ".my-3.grid.justify-between.gap-3.grid-cols-2 > div"
+    override fun latestUpdatesSelector() = ".grid > div:not([class])"
+    override fun searchMangaSelector() = latestUpdatesSelector()
 
     override fun popularMangaFromElement(element: Element): SManga = latestUpdatesFromElement(element)
 
-    override fun latestUpdatesFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        manga.thumbnail_url = element.select("img").attr("data-src")
-        val url = element.select("a").first().attr("href")
-        manga.setUrlWithoutDomain(url.substringBeforeLast("/").replace("chapters", "manga").substringBeforeLast("-") + "/" + url.substringAfterLast("/").substringBefore("-chapter"))
-        manga.title = element.select("a > div:first-child").text().trim()
-        return manga
+    override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
+        thumbnail_url = element.selectFirst("img")!!.attr("data-src")
+        setUrlWithoutDomain(element.selectFirst("a[href^='/manga/']")!!.attr("href"))
+        title = element.selectFirst("a:not(:first-child) > div")?.text() ?: ""
     }
 
     override fun searchMangaFromElement(element: Element) = SManga.create().apply {
-        thumbnail_url = element.select("img").attr("data-src")
-        url = element.select("a").first().attr("href")
-        setUrlWithoutDomain(url.substringBeforeLast("/").replace("chapters", "manga").substringBeforeLast("-") + "/" + url.substringAfterLast("/").substringBefore("-chapter"))
-        title = element.select("div > a").text().trim()
+        thumbnail_url = element.selectFirst("img")!!.attr("data-src")
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        title = element.selectFirst("div[class] > a")?.text() ?: ""
     }
 
     override fun popularMangaNextPageSelector() = null
