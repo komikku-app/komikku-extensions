@@ -5,7 +5,7 @@ ext {
     extName = 'IMHentai'
     pkgNameSuffix = 'all.imhentai'
     extClass = '.IMHentaiFactory'
-    extVersionCode = 5
+    extVersionCode = 6
     isNsfw = true
 }
 

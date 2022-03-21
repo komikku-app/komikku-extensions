@@ -16,11 +16,13 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.io.IOException
 
 class IMHentai(override val lang: String, private val imhLang: String) : ParsedHttpSource() {
 
@@ -34,6 +36,23 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+        .newBuilder()
+        .addInterceptor(
+            fun(chain): Response {
+                val response = chain.proceed(chain.request())
+                val responseContentType = response.body!!.contentType()
+                val responseString = response.body!!.string()
+
+                if (responseString.contains("Overload... Please use the advanced search")) {
+                    response.close()
+                    throw IOException("IMHentai search is overloaded try again later")
+                }
+                
+                return response.newBuilder()
+                    .body(responseString.toResponseBody(responseContentType))
+                    .build()
+            }
+        ).build()
 
     // Popular
 
