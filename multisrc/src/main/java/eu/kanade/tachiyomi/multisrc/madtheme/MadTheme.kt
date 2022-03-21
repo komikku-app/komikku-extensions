@@ -74,6 +74,7 @@ abstract class MadTheme(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = "$baseUrl/search".toHttpUrl().newBuilder()
             .addQueryParameter("q", query)
+            .addQueryParameter("page", page.toString())
 
         filters.forEach { filter ->
             when (filter) {
@@ -192,7 +193,8 @@ abstract class MadTheme(
             }
         }
 
-        val allCDN = listOf(CDN_URL) + CDN_URL_ALT
+        // Disabling alt CDNs until fallback can be implemented
+        val allCDN = listOf(CDN_URL) // + CDN_URL_ALT
         return chImages.mapIndexed { index, img ->
             Page(index, "", allCDN.random() + CDN_PATH + img)
         }
