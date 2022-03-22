@@ -10,12 +10,13 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.net.URLDecoder
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -36,6 +37,14 @@ class MangaOwl : ParsedHttpSource() {
         .readTimeout(1, TimeUnit.MINUTES)
         .writeTimeout(1, TimeUnit.MINUTES)
         .build()
+
+    private val trPattern = "window\\['tr'] = '([^']*)';".toRegex(RegexOption.IGNORE_CASE)
+
+    private fun getTr(document: Document): String {
+        val trElement = document.getElementsByTag("script").find { trPattern.find(it.data()) != null } ?: error("tr not found")
+        val tr = trPattern.find(trElement.data())!!.groups[1]!!.value
+        return URLDecoder.decode(tr, "utf-8")
+    }
 
     // Popular
 
@@ -86,7 +95,7 @@ class MangaOwl : ParsedHttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search/$page".toHttpUrlOrNull()!!.newBuilder()
+        val url = "$baseUrl/search/$page".toHttpUrl().newBuilder()
         url.addQueryParameter("search", query)
 
         filters.forEach { filter ->
@@ -150,14 +159,16 @@ class MangaOwl : ParsedHttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val trRegex = "window\\['tr'] = '([^']*)';".toRegex(RegexOption.IGNORE_CASE)
-        val trElement = document.getElementsByTag("script").find { trRegex.find(it.data()) != null } ?: error("tr not found")
-        val tr = trRegex.find(trElement.data())!!.groups[1]!!.value
+        TR = getTr(document)
         val s = Base64.encodeToString(baseUrl.toByteArray(), Base64.NO_PADDING)
         return document.select(chapterListSelector()).map { element ->
             SChapter.create().apply {
                 element.select("a").let {
-                    url = "${it.attr("data-href")}?tr=$tr&s=$s"
+                    url = it.attr("data-href")
+                        .toHttpUrl().newBuilder()
+                        .addQueryParameter("tr", TR)
+                        .addQueryParameter("s", s)
+                        .toString()
                     name = it.select("label").first().text()
                 }
                 date_upload = parseChapterDate(element.select("small:last-of-type").text())
@@ -171,6 +182,7 @@ class MangaOwl : ParsedHttpSource() {
         val dateFormat by lazy {
             SimpleDateFormat("MM/dd/yyyy", Locale.US)
         }
+        var TR: String? = null
     }
 
     private fun parseChapterDate(string: String): Long {
@@ -182,11 +194,25 @@ class MangaOwl : ParsedHttpSource() {
     }
 
     // Pages
-    override fun pageListRequest(chapter: SChapter) = GET(chapter.url, headers) // url already complete
+    override fun pageListRequest(chapter: SChapter): Request {
+        if (TR == null) {
+            val document = client.newCall(GET(baseUrl)).execute().asJsoup()
+            TR = getTr(document)
+        }
+
+        val url = chapter.url.toHttpUrl().newBuilder()
+            .removeAllQueryParameters("tr")
+            .addQueryParameter("tr", TR)
+
+        return GET(url.toString(), headers)
+    }
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select("div.item img.owl-lazy").mapIndexed { i, img ->
             Page(i, "", img.attr("abs:data-src"))
+        }.ifEmpty {
+            TR = null
+            listOf()
         }
     }
 
