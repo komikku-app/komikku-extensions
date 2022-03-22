@@ -89,7 +89,7 @@ class ComX : ParsedHttpSource() {
         manga.thumbnail_url = baseUrl + element.select("img").first().attr("src")
         element.select(".readed__title a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.text()
+            manga.title = it.text().split(" / ").first()
         }
         return manga
     }
@@ -109,7 +109,7 @@ class ComX : ParsedHttpSource() {
         manga.thumbnail_url = baseUrl + element.select("img").first().attr("src")
         element.select("a.latest__title").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.text()
+            manga.title = it.text().split(" / ").first()
         }
         return manga
     }
@@ -164,6 +164,7 @@ class ComX : ParsedHttpSource() {
         val infoElement = document.select("div.page__grid").first()
 
         val manga = SManga.create()
+        manga.title = infoElement.select(".page__title-original").text()
         manga.author = infoElement.select(".page__list li:eq(1)").text()
         manga.genre = infoElement.select(".page__tags a").joinToString { it.text() }
         manga.status = parseStatus(infoElement.select(".page__list li:eq(2)").text())
@@ -171,8 +172,8 @@ class ComX : ParsedHttpSource() {
         manga.description = infoElement.select(".page__text ").text()
 
         val src = infoElement.select(".img-wide img").attr("src")
-        if (src.contains(baseUrl.substringAfter("://"))) {
-            manga.thumbnail_url = "http:" + src
+        if (src.contains("://")) {
+            manga.thumbnail_url = src
         } else {
             manga.thumbnail_url = baseUrl + src
         }
