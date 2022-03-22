@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -26,11 +25,6 @@ import java.io.IOException
 
 class IMHentai(override val lang: String, private val imhLang: String) : ParsedHttpSource() {
 
-    private val pageLoadHeaders: Headers = Headers.Builder().apply {
-        add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-        add("X-Requested-With", "XMLHttpRequest")
-    }.build()
-
     override val baseUrl: String = "https://imhentai.xxx"
     override val name: String = "IMHentai"
     override val supportsLatest = true
@@ -40,6 +34,8 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
         .addInterceptor(
             fun(chain): Response {
                 val response = chain.proceed(chain.request())
+                if (!response.headers("Content-Type").toString().contains("text/html")) return response
+
                 val responseContentType = response.body!!.contentType()
                 val responseString = response.body!!.string()
 
@@ -47,7 +43,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
                     response.close()
                     throw IOException("IMHentai search is overloaded try again later")
                 }
-                
+
                 return response.newBuilder()
                     .body(responseString.toResponseBody(responseContentType))
                     .build()
