@@ -164,7 +164,7 @@ class ComX : ParsedHttpSource() {
         val infoElement = document.select("div.page__grid").first()
 
         val manga = SManga.create()
-        manga.title = infoElement.select(".page__title-original").text()
+        manga.title = infoElement.select(".page__title-original").text().split(" | ").first()
         manga.author = infoElement.select(".page__list li:eq(1)").text()
         manga.genre = infoElement.select(".page__tags a").joinToString { it.text() }
         manga.status = parseStatus(infoElement.select(".page__list li:eq(2)").text())
