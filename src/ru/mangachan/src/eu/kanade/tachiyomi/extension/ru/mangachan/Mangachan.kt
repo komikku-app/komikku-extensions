@@ -122,7 +122,7 @@ class Mangachan : ParsedHttpSource() {
         manga.thumbnail_url = element.select("div.manga_images img").first().attr("src")
         element.select("h2 > a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.text()
+            manga.title = it.attr("title")
         }
         return manga
     }
@@ -131,7 +131,7 @@ class Mangachan : ParsedHttpSource() {
         val manga = SManga.create()
         element.select("a:nth-child(1)").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.text()
+            manga.title = it.attr("title")
         }
         return manga
     }
@@ -184,10 +184,11 @@ class Mangachan : ParsedHttpSource() {
             "манга"
         }
         val manga = SManga.create()
+        manga.title = document.select("title").text().substringBefore(" »")
         manga.author = infoElement.select("tr:eq(2) > td:eq(1)").text()
         manga.genre = infoElement.select("tr:eq(5) > td:eq(1)").text().split(",").plusElement(category).joinToString { it.trim() }
         manga.status = parseStatus(infoElement.select("tr:eq(4) > td:eq(1)").text())
-        manga.description = descElement.textNodes().first().text()
+        manga.description = descElement.textNodes().first().text().trim()
         manga.thumbnail_url = imgElement.attr("src")
         return manga
     }

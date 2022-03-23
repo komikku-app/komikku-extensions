@@ -106,7 +106,7 @@ class Henchan : ParsedHttpSource() {
 
         val urlElem = element.select("h2 > a").first()
         manga.setUrlWithoutDomain(urlElem.attr("href"))
-        manga.title = urlElem.text()
+        manga.title = urlElem.attr("title")
 
         return manga
     }
@@ -125,9 +125,10 @@ class Henchan : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
+        manga.title = document.select("title").text().substringBefore(" »")
         manga.author = document.select(".row .item2 h2")[1].text()
         manga.genre = document.select(".sidetag > a:eq(2)").joinToString { it.text() }
-        manga.description = document.select("#description").text()
+        manga.description = document.select("#description").text().trim()
         manga.thumbnail_url = document.select("img#cover").attr("abs:src").getHQThumbnail()
         return manga
     }
