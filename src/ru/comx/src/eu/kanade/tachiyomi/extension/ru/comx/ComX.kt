@@ -49,6 +49,13 @@ class ComX : ParsedHttpSource() {
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .addNetworkInterceptor(RateLimitInterceptor(3))
+        .addNetworkInterceptor { chain ->
+            val originalRequest = chain.request()
+            val response = chain.proceed(originalRequest)
+            if (originalRequest.url.toString().contains(baseUrl) and (response.code == 404))
+                throw Exception("HTTP error ${response.code}. Возможно Antibot, попробуйте пройти капчу в WebView")
+            response
+        }
         .cookieJar(object : CookieJar {
             override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) =
                 cookies.filter { it.matches(url) }.forEach {
@@ -79,8 +86,6 @@ class ComX : ParsedHttpSource() {
         val mangas = document.select(popularMangaSelector()).map { element ->
             popularMangaFromElement(element)
         }
-        if (document.html().contains("Sorry, your request has been denied.")) throw UnsupportedOperationException("Error: Open in WebView and solve the Antirobot!")
-
         return MangasPage(mangas, document.select(".pagination__pages span").first().text().toInt() <= document.select(".pagination__pages a:last-child").first().text().toInt())
     }
 
@@ -99,8 +104,6 @@ class ComX : ParsedHttpSource() {
         val mangas = document.select(latestUpdatesSelector()).map { element ->
             latestUpdatesFromElement(element)
         }
-        if (document.html().contains("Sorry, your request has been denied.")) throw UnsupportedOperationException("Error: Open in WebView and solve the Antirobot!")
-
         return MangasPage(mangas, false)
     }
 
@@ -160,14 +163,13 @@ class ComX : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
     override fun mangaDetailsParse(document: Document): SManga {
-        if (document.html().contains("Sorry, your request has been denied.")) throw UnsupportedOperationException("Error: Open in WebView and solve the Antirobot!")
         val infoElement = document.select("div.page__grid").first()
 
         val manga = SManga.create()
         manga.title = infoElement.select(".page__title-original").text().split(" | ").first()
-        manga.author = infoElement.select(".page__list li:eq(1)").text()
+        manga.author = infoElement.select(".page__list li:contains(Издатель)").text()
         manga.genre = infoElement.select(".page__tags a").joinToString { it.text() }
-        manga.status = parseStatus(infoElement.select(".page__list li:eq(2)").text())
+        manga.status = parseStatus(infoElement.select(".page__list li:contains(Статус)").text())
 
         manga.description = infoElement.select(".page__text ").text()
 
@@ -196,7 +198,6 @@ class ComX : ParsedHttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        if (document.html().contains("Sorry, your request has been denied.")) throw UnsupportedOperationException("Error: Open in WebView and solve the Antirobot!")
         val dataStr = document
             .toString()
             .substringAfter("window.__DATA__ = ")
