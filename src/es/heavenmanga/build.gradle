@@ -5,7 +5,8 @@ ext {
     extName = 'HeavenManga'
     pkgNameSuffix = 'es.heavenmanga'
     extClass = '.HeavenManga'
-    extVersionCode = 5
+    extVersionCode = 6
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
