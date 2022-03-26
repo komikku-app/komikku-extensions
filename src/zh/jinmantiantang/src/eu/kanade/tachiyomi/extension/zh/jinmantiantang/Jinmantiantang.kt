@@ -312,13 +312,13 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
     // 漫画图片信息
     override fun pageListParse(document: Document): List<Page> {
         fun internalParse(document: Document, pages: MutableList<Page>): List<Page> {
-            val elements = document.select("div[style=text-align:center;][id*=0]")
+            val elements = document.select("div[class=center scramble-page][id*=0]")
             for (element in elements) {
                 pages.apply {
-                    if (element.select("div[style=text-align:center;][id*=0] img").attr("src").indexOf("blank.jpg") >= 0) {
-                        add(Page(size, "", element.select("div[style=text-align:center;][id*=0] img").attr("data-original").split("\\?")[0]))
+                    if (element.select("div[class=center scramble-page][id*=0] img").attr("src").indexOf("blank.jpg") >= 0) {
+                        add(Page(size, "", element.select("div[class=center scramble-page][id*=0] img").attr("data-original").split("\\?")[0]))
                     } else {
-                        add(Page(size, "", element.select("div[style=text-align:center;][id*=0] img").attr("src").split("\\?")[0]))
+                        add(Page(size, "", element.select("div[class=center scramble-page][id*=0] img").attr("src").split("\\?")[0]))
                     }
                 }
             }
