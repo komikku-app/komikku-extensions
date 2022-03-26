@@ -21,6 +21,7 @@ jobs:
     needs: check_wrapper
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         lang: [all, en, ar, ca, de, es, fr, id, it, ja, ko, pt, ru, th, tr, vi, zh, bg, hi, pl]
     steps:
@@ -59,6 +60,7 @@ jobs:
     needs: check_wrapper
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         lang: [all, en, ar, ca, de, es, fr, id, it, ja, ko, pt, ru, th, tr, vi, zh, bg, hi, pl]
     steps:
