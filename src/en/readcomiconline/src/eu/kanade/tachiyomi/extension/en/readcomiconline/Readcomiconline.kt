@@ -43,7 +43,7 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularMangaSelector() = "table.listing tr:has(a) td:nth-child(1) a"
+    override fun popularMangaSelector() = ".list-comic > .item > a:first-child"
 
     override fun latestUpdatesSelector() = popularMangaSelector()
 
@@ -57,8 +57,9 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            setUrlWithoutDomain(element.attr("href"))
+            setUrlWithoutDomain(element.attr("abs:href"))
             title = element.text()
+            thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
         }
     }
 
