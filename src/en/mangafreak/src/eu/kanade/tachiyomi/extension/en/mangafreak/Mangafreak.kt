@@ -26,6 +26,8 @@ class Mangafreak : ParsedHttpSource() {
 
     override val supportsLatest: Boolean = true
 
+    private val floatLetterPattern = Regex("""(\d+)(\.\d+|[a-i]+\b)?""")
+
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(1, TimeUnit.MINUTES)
         .readTimeout(1, TimeUnit.MINUTES)
@@ -122,7 +124,31 @@ class Mangafreak : ParsedHttpSource() {
     override fun chapterListSelector(): String = "div.manga_series_list tr:has(a)"
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = element.select("td:eq(0)").text()
-        chapter_number = name.substringAfter("Chapter ").substringBefore(" -").toFloat()
+
+        /*
+         * 123 -> 123
+         * 123.4 -> 123.4
+         * 123e -> 123.5 (a=1, b=2, ...)
+         * j-z is undefined, assume straight substitution
+         */
+        val match = floatLetterPattern.find(name)
+        chapter_number = if (match == null) {
+            -1f
+        } else {
+            if (match.groupValues[2].isEmpty() || match.groupValues[2][0] == '.') {
+                match.value.toFloat()
+            } else {
+                val sb = StringBuilder("0.")
+                for (x in match.groupValues[2]) {
+                    sb.append(x.toInt() - 'a'.toInt() + 1)
+                }
+                val p2 = sb.toString().toFloat()
+                val p1 = match.groupValues[1].toFloat()
+
+                p1 + p2
+            }
+        }
+
         setUrlWithoutDomain(element.select("a").attr("href"))
         date_upload = parseDate(element.select("td:eq(1)").text())
     }
