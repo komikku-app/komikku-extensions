@@ -133,9 +133,17 @@ class GoldenMangas : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val chapterImages = document.select("div.col-sm-12[id^='capitulos_images']").first()
+        val chapterImages = document
+            .select("div.col-sm-12[id^='capitulos_images']:has(img[pag])")
+            .firstOrNull()
 
-        return chapterImages.select("img[pag]")
+        val isNovel = document.select(".block_text_border").firstOrNull() !== null
+
+        if (chapterImages == null && isNovel) {
+            throw Exception(CHAPTER_IS_NOVEL_ERROR)
+        }
+
+        return chapterImages!!.select("img[pag]")
             .mapIndexed { i, element ->
                 Page(i, document.location(), element.attr("abs:src"))
             }
@@ -174,9 +182,12 @@ class GoldenMangas : ParsedHttpSource() {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7,es;q=0.6,gl;q=0.5"
         private const val REFERER = "https://google.com/"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36"
 
         private val FLAG_REGEX = "\\((Pt[-/]br|Scan)\\)".toRegex(RegexOption.IGNORE_CASE)
+
+        private const val CHAPTER_IS_NOVEL_ERROR =
+            "O capítulo é uma novel em formato de texto e não possui imagens."
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("(dd/MM/yyyy)", Locale.ENGLISH)
