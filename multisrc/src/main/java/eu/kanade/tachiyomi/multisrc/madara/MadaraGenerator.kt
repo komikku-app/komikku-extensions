@@ -34,6 +34,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Aiin Scan", "https://aiinscan.xyz", "pt-BR"),
         SingleLang("AiYuManga", "https://aiyumangascanlation.com", "es"),
         SingleLang("AkuManga", "https://akumanga.com", "ar", overrideVersionCode = 1),
+        SingleLang("Akuma no Tenshi", "https://akumanotenshi.com", "pt-BR", className = "AkumaNoTenshi"),
         SingleLang("AllPornComic", "https://allporncomic.com", "en", isNsfw = true),
         SingleLang("AllTopManga", "https://alltopmanga.com", "en", isNsfw = true),
         SingleLang("Anikiga", "https://anikiga.com", "tr"),
