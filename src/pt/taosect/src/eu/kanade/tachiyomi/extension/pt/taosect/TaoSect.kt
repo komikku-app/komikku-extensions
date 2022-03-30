@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -153,76 +152,8 @@ class TaoSect : HttpSource() {
             apiUrl.addQueryParameter("search", query)
         }
 
-        filters.forEach { filter ->
-            when (filter) {
-                is CountryFilter -> {
-                    filter.state
-                        .groupBy { it.state }
-                        .entries
-                        .forEach { entry ->
-                            val values = entry.value.joinToString(",") { it.id }
-
-                            if (entry.key == Filter.TriState.STATE_EXCLUDE) {
-                                apiUrl.addQueryParameter("paises_exclude", values)
-                            } else if (entry.key == Filter.TriState.STATE_INCLUDE) {
-                                apiUrl.addQueryParameter("paises", values)
-                            }
-                        }
-                }
-                is StatusFilter -> {
-                    filter.state
-                        .groupBy { it.state }
-                        .entries
-                        .forEach { entry ->
-                            val values = entry.value.joinToString(",") { it.id }
-
-                            if (entry.key == Filter.TriState.STATE_EXCLUDE) {
-                                apiUrl.addQueryParameter("situacao_exclude", values)
-                            } else if (entry.key == Filter.TriState.STATE_INCLUDE) {
-                                apiUrl.addQueryParameter("situacao", values)
-                            }
-                        }
-                }
-                is GenreFilter -> {
-                    filter.state
-                        .groupBy { it.state }
-                        .entries
-                        .forEach { entry ->
-                            val values = entry.value.joinToString(",") { it.id }
-
-                            if (entry.key == Filter.TriState.STATE_EXCLUDE) {
-                                apiUrl.addQueryParameter("generos_exclude", values)
-                            } else if (entry.key == Filter.TriState.STATE_INCLUDE) {
-                                apiUrl.addQueryParameter("generos", values)
-                            }
-                        }
-                }
-                is SortFilter -> {
-                    val orderBy = if (filter.state == null) SORT_LIST[DEFAULT_ORDERBY].id else
-                        SORT_LIST[filter.state!!.index].id
-                    val order = if (filter.state?.ascending == true) "asc" else "desc"
-
-                    apiUrl.addQueryParameter("order", order)
-                    apiUrl.addQueryParameter("orderby", orderBy)
-                }
-                is FeaturedFilter -> {
-                    if (query.isEmpty()) {
-                        if (filter.state == Filter.TriState.STATE_INCLUDE) {
-                            apiUrl.addQueryParameter("destaque", "1")
-                        } else if (filter.state == Filter.TriState.STATE_EXCLUDE) {
-                            apiUrl.addQueryParameter("destaque", "0")
-                        }
-                    }
-                }
-                is NsfwFilter -> {
-                    if (filter.state == Filter.TriState.STATE_INCLUDE) {
-                        apiUrl.addQueryParameter("mais_18", "1")
-                    } else if (filter.state == Filter.TriState.STATE_EXCLUDE) {
-                        apiUrl.addQueryParameter("mais_18", "0")
-                    }
-                }
-            }
-        }
+        filters.filterIsInstance<QueryParameterFilter>()
+            .forEach { it.toQueryParameter(apiUrl, query) }
 
         return GET(apiUrl.toString(), apiHeaders)
     }
@@ -405,28 +336,10 @@ class TaoSect : HttpSource() {
         CountryFilter(getCountryList()),
         StatusFilter(getStatusList()),
         GenreFilter(getGenreList()),
-        SortFilter(),
+        SortFilter(SORT_LIST, DEFAULT_ORDERBY),
         FeaturedFilter(),
         NsfwFilter()
     )
-
-    private class Tag(val id: String, name: String) : Filter.TriState(name)
-
-    private class CountryFilter(countries: List<Tag>) : Filter.Group<Tag>("País", countries)
-
-    private class StatusFilter(status: List<Tag>) : Filter.Group<Tag>("Status", status)
-
-    private class GenreFilter(genres: List<Tag>) : Filter.Group<Tag>("Gêneros", genres)
-
-    private class SortFilter : Filter.Sort(
-        "Ordem",
-        SORT_LIST.map { it.name }.toTypedArray(),
-        Selection(DEFAULT_ORDERBY, false)
-    )
-
-    private class FeaturedFilter : Filter.TriState("Mostrar destaques")
-
-    private class NsfwFilter : Filter.TriState("Mostrar conteúdo +18")
 
     private inline fun <reified T> Response.parseAs(): T = use {
         json.decodeFromString(it.body?.string().orEmpty())
