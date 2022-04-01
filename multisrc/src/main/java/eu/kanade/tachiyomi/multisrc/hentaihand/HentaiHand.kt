@@ -21,7 +21,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -84,7 +83,7 @@ abstract class HentaiHand(
             .addQueryParameter("sort", "popularity")
             .addQueryParameter("order", "desc")
             .addQueryParameter("duration", "all")
-        hhLangId.forEachIndexed() {index, it ->
+        hhLangId.forEachIndexed() { index, it ->
             url.addQueryParameter("languages[${-index - 1}]", it.toString())
         }
         // if (altLangId != null) url.addQueryParameter("languages", altLangId.toString())
@@ -101,7 +100,7 @@ abstract class HentaiHand(
             .addQueryParameter("sort", "uploaded_at")
             .addQueryParameter("order", "desc")
             .addQueryParameter("duration", "all")
-        hhLangId.forEachIndexed() {index, it ->
+        hhLangId.forEachIndexed() { index, it ->
             url.addQueryParameter("languages[${-index - 1}]", it.toString())
         }
         return GET(url.toString())
@@ -132,7 +131,7 @@ abstract class HentaiHand(
             .addQueryParameter("page", page.toString())
             .addQueryParameter("q", query)
 
-        hhLangId.forEachIndexed() {index, it ->
+        hhLangId.forEachIndexed() { index, it ->
             url.addQueryParameter("languages[${-index - 1}]", it.toString())
         }
 
@@ -150,7 +149,7 @@ abstract class HentaiHand(
                 is LookupFilter -> {
                     filter.state.split(",").map { it.trim() }.filter { it.isNotBlank() }.map {
                         lookupFilterId(it, filter.uri) ?: throw Exception("No ${filter.singularName} \"$it\" was found")
-                    }.forEachIndexed() {index, it ->
+                    }.forEachIndexed() { index, it ->
                         if (!(filter.uri == "languages" && hhLangId.contains(it)))
                             url.addQueryParameter(filter.uri + "[$index]", it.toString())
                     }
@@ -191,8 +190,6 @@ abstract class HentaiHand(
                 "canceled" -> SManga.COMPLETED
                 else -> SManga.COMPLETED
             }
-
-
 
             description = listOf(
                 Pair("Alternative Title", obj["alternative_title"]!!.jsonPrimitive.content),

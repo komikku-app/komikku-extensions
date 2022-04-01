@@ -1,9 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.simplyhentai
 
 import eu.kanade.tachiyomi.source.SourceFactory
-import kotlinx.serialization.ExperimentalSerializationApi
 
-@ExperimentalSerializationApi
 class SimplyHentaiFactory : SourceFactory {
     override fun createSources() = listOf(
         SimplyHentai("en"),

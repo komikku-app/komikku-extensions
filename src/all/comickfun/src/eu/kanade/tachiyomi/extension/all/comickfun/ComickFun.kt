@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -27,7 +26,6 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.UnsupportedOperationException
 
 const val SEARCH_PAGE_LIMIT = 100
 
@@ -37,7 +35,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     private val apiBase = "https://api.comick.fun"
     override val supportsLatest = true
 
-    @ExperimentalSerializationApi
     private val json: Json by lazy {
         Json(from = Injekt.get()) {
             serializersModule = SerializersModule {
@@ -47,7 +44,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         }
     }
 
-    @ExperimentalSerializationApi
     private val mangaIdCache = SMangaDeserializer.mangaIdCache
 
     final override fun headersBuilder() = Headers.Builder().apply {
@@ -90,7 +86,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     /**  Utils **/
 
     /** Returns an observable which emits a single value -> the manga's id **/
-    @ExperimentalSerializationApi
     private fun chapterId(manga: SManga): Observable<Int> {
         val mangaSlug = slug(manga)
         return mangaIdCache[mangaSlug]?.let { Observable.just(it) }
@@ -105,13 +100,11 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     /** Popular Manga **/
 
-    @ExperimentalSerializationApi
     override fun fetchPopularManga(page: Int) = fetchSearchManga(page, "", FilterList(emptyList()))
     override fun popularMangaRequest(page: Int) = throw UnsupportedOperationException("Not used")
     override fun popularMangaParse(response: Response) = throw UnsupportedOperationException("Not used")
 
     /** Latest Manga **/
-    @ExperimentalSerializationApi
     override fun latestUpdatesParse(response: Response): MangasPage {
         val noResults = MangasPage(emptyList(), false)
         if (response.code == 204)
@@ -129,7 +122,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         return GET("$url", headers)
     }
 
-    @ExperimentalSerializationApi
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (!query.startsWith(SLUG_SEARCH_PREFIX))
             return super.fetchSearchManga(page, query, filters)
@@ -157,7 +149,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         return GET("$url", headers)
     }
 
-    @ExperimentalSerializationApi
     override fun searchMangaParse(response: Response) = json.decodeFromString<List<SManga>>(response.body!!.string())
         .let { MangasPage(it, it.size == SEARCH_PAGE_LIMIT) }
 
@@ -168,7 +159,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     // Shenanigans to allow "open in webview" to show a webpage instead of JSON
-    @ExperimentalSerializationApi
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         return client.newCall(apiMangaDetailsRequest(manga))
             .asObservableSuccess()
@@ -177,7 +167,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
             }
     }
 
-    @ExperimentalSerializationApi
     override fun mangaDetailsParse(response: Response) = json.decodeFromString(
         deserializer = jsonFlatten<SManga>(objKey = "comic", "id", "title", "desc", "status", "country", "slug"),
         response.body!!.string()
@@ -188,7 +177,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     private fun chapterListRequest(page: Int, mangaId: Int) =
         GET("$apiBase/comic/$mangaId/chapter?page=$page&limit=$SEARCH_PAGE_LIMIT", headers)
 
-    @ExperimentalSerializationApi
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         return if (manga.status != SManga.LICENSED) {
             chapterId(manga).concatMap { id ->
@@ -213,7 +201,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         }
     }
 
-    @ExperimentalSerializationApi
     override fun chapterListParse(response: Response) = json.decodeFromString(
         deserializer = deepSelectDeserializer<List<SChapter>>("chapters"),
         response.body!!.string()
@@ -223,7 +210,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     override fun pageListRequest(chapter: SChapter) = GET("$apiBase/chapter/${hid(chapter)}", headers, CacheControl.FORCE_NETWORK)
 
-    @ExperimentalSerializationApi
     override fun pageListParse(response: Response) =
         json.decodeFromString(
             deserializer = deepSelectDeserializer<List<String>>("chapter", "images", tDeserializer = ListSerializer(deepSelectDeserializer("url"))),

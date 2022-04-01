@@ -4,7 +4,6 @@ import android.os.Build
 import android.text.Html
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -20,7 +19,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonTransformingSerializer
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.serializer
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import kotlin.math.pow
 import kotlin.math.truncate
@@ -40,7 +38,6 @@ import kotlin.math.truncate
  *
  * deepSelectDeserializer&lt;String&gt;("user", "name", "first") deserializes the above into "John"
  */
-@ExperimentalSerializationApi
 inline fun <reified T : Any> deepSelectDeserializer(vararg keys: String, tDeserializer: KSerializer<T> = serializer()): KSerializer<T> {
     val descriptors = keys.foldRight(listOf(tDeserializer.descriptor)) { x, acc ->
         acc + acc.last().let {
@@ -89,7 +86,6 @@ inline fun <reified T : Any> jsonFlatten(
     }
 }
 
-@ExperimentalSerializationApi
 inline fun <T> Decoder.decodeStructureByKnownName(descriptor: SerialDescriptor, decodeFn: CompositeDecoder.(Sequence<Pair<String, Int>>) -> T): T {
     return decodeStructure(descriptor) {
         decodeFn(
@@ -101,7 +97,6 @@ inline fun <T> Decoder.decodeStructureByKnownName(descriptor: SerialDescriptor, 
     }
 }
 
-@ExperimentalSerializationApi
 class SChapterDeserializer : KSerializer<SChapter> {
     override val descriptor = buildClassSerialDescriptor(SChapter::class.qualifiedName!!) {
         element<String>("chap")
@@ -144,7 +139,6 @@ class SChapterDeserializer : KSerializer<SChapter> {
         return formattedTitle.toString()
     }
 
-    @ExperimentalSerializationApi
     override fun deserialize(decoder: Decoder): SChapter {
         return SChapter.create().apply {
             var chap: String? = null
@@ -177,7 +171,6 @@ class SChapterDeserializer : KSerializer<SChapter> {
     override fun serialize(encoder: Encoder, value: SChapter) = throw UnsupportedOperationException("Unsupported")
 }
 
-@ExperimentalSerializationApi
 class SMangaDeserializer : KSerializer<SManga> {
     private fun cleanDesc(s: String) = (
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
@@ -204,7 +197,6 @@ class SMangaDeserializer : KSerializer<SManga> {
         element<String>("country", isOptional = true)
     }
 
-    @ExperimentalSerializationApi
     override fun deserialize(decoder: Decoder): SManga {
         return SManga.create().apply {
             var id: Int? = null

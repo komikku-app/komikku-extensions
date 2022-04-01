@@ -1,9 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.leagueoflegends
 
 import eu.kanade.tachiyomi.source.SourceFactory
-import kotlinx.serialization.ExperimentalSerializationApi
 
-@ExperimentalSerializationApi
 class LOLFactory : SourceFactory {
     override fun createSources() = listOf(
         LOLUniverse("en_us"),
