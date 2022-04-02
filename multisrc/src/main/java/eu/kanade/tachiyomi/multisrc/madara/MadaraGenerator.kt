@@ -91,6 +91,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Eromanhwas", "https://eromanhwas.com", "en"),
         SingleLang("Esomanga", "http://esomanga.com", "tr"),
         SingleLang("Eternal Scans", "https://eternalscans.com", "en"),
+        SingleLang("Estufa de Cristal", "https://scanestufadecristal.site", "pt-BR", className = "EstufaDeCristal"),
         SingleLang("FDM Scan", "https://fdmscan.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("FaeStorm", "https://faestormmanga.com", "tr"),
         SingleLang("FastManhwa", "https://fastmanhwa.net", "en", isNsfw = true, overrideVersionCode = 2),
