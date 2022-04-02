@@ -346,7 +346,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Okamishi Scans", "https://geassscan.net", "pt-BR", pkgName = "geassscanlator", overrideVersionCode = 5),
         SingleLang("Olho da Lua", "https://olhodalua.xyz", "pt-BR", className = "OlhoDaLua", overrideVersionCode = 2),
         SingleLang("Olympus Scanlation", "https://olympusscanlation.com", "es"),
-        SingleLang("Origami Orpheans", "https://origami-orpheans.com.br", "pt-BR", overrideVersionCode = 3),
         SingleLang("Ow Scan", "https://owscan.com", "pt-BR", overrideVersionCode = 1),
         SingleLang("Paean Scans", "https://paeanscans.com", "en", overrideVersionCode = 1),
         SingleLang("Painful Nightz Scan", "https://painfulnightz.com", "en", overrideVersionCode = 1),

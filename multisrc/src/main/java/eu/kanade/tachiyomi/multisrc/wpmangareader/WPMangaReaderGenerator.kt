@@ -51,7 +51,8 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Tsundoku Traduções", "https://tsundoku.com.br", "pt-BR", className = "TsundokuTraducoes", overrideVersionCode = 9),
         SingleLang("Komik Lab", "https://komiklab.com", "id"),
         SingleLang("Arcane scan", "https://arcanescan.fr", "fr"),
-        SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true)
+        SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true),
+        SingleLang("Origami Orpheans", "https://origami-orpheans.com.br", "pt-BR", overrideVersionCode = 9),
     )
 
     companion object {
