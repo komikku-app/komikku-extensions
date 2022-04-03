@@ -1,17 +1,14 @@
-package eu.kanade.tachiyomi.extension.en.firstkissmanga
+package eu.kanade.tachiyomi.extension.en.firstkissmangalove
 
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
-import okhttp3.Headers
 import java.util.concurrent.TimeUnit
 
-class FirstKissManga : Madara(
-    "1st Kiss",
-    "https://1stkissmanga.io",
+class FirstKissMangaLove : Madara(
+    "1st Kiss Manga.love",
+    "https://1stkissmanga.love",
     "en"
 ) {
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", baseUrl)
-
     private val rateLimitInterceptor = RateLimitInterceptor(1, 2, TimeUnit.SECONDS)
 
     override val client = network.cloudflareClient.newBuilder()
