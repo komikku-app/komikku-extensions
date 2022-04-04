@@ -17,7 +17,6 @@ import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -34,7 +33,10 @@ class MangaRawClub : ParsedHttpSource() {
         .build()
 
     companion object {
-        const val altName = "Alternative Name: "
+        private const val altName = "Alternative Name:"
+
+        private val DATE_FORMATTER by lazy { SimpleDateFormat("MMMMM dd, yyyy, h:mm a", Locale.ENGLISH) }
+        private val DATE_FORMATTER_2 by lazy { SimpleDateFormat("MMMMM dd, yyyy, h a", Locale.ENGLISH) }
     }
 
     override fun popularMangaRequest(page: Int): Request {
@@ -73,7 +75,7 @@ class MangaRawClub : ParsedHttpSource() {
 
         val otherTitle = document.select(".alternative-title").first()?.text() ?: ""
         if (otherTitle != "Updating")
-            description += "\n\n$altName$otherTitle"
+            description += "\n\n$altName $otherTitle"
         manga.description = description.trim()
 
         val genres = mutableListOf<String>()
@@ -111,27 +113,26 @@ class MangaRawClub : ParsedHttpSource() {
 
         val name = element.select(".chapter-title").text().removeSuffix("-eng-li")
         chapter.name = "Chapter $name"
+        val number = parseChapterNumber(name)
+        if (number != null)
+            chapter.chapter_number = number
         val date = parseChapterDate(element.select(".chapter-update").attr("datetime"))
-        if (date != null)
-            chapter.date_upload = date
+        chapter.date_upload = date
         return chapter
     }
 
-    private fun parseChapterDate(date: String): Long? {
-        if (date.isEmpty())
-            return null
+    private fun parseChapterDate(string: String): Long {
         // "April 21, 2021, 4:05 p.m."
-        val fdate = date.replace(".", "").replace("Sept", "Sep")
-        return try {
-            try {
-                SimpleDateFormat("MMMMM dd, yyyy, h:mm a", Locale.ENGLISH).parse(fdate)!!.time
-            } catch (e: ParseException) {
-                // because sometimes if it is exact hour it wont have minutes
-                SimpleDateFormat("MMMMM dd, yyyy, h a", Locale.ENGLISH).parse(fdate)!!.time
-            }
-        } catch (e: ParseException) {
-            null
-        }
+        val date = string.replace(".", "").replace("Sept", "Sep")
+        return runCatching { DATE_FORMATTER.parse(date)?.time }.getOrNull()
+            ?: runCatching { DATE_FORMATTER_2.parse(date)?.time }.getOrNull() ?: 0L
+    }
+
+    private fun parseChapterNumber(string: String): Float? {
+        if (string.isEmpty())
+            return null
+        return string.split("-")[0].toFloatOrNull()
+            ?: string.split(".")[0].toFloatOrNull()
     }
 
     override fun pageListParse(document: Document): List<Page> {
@@ -142,7 +143,7 @@ class MangaRawClub : ParsedHttpSource() {
         return pages
     }
 
-    override fun imageUrlParse(document: Document) = ""
+    override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         val request = searchMangaRequest(page, query, filters)
