@@ -14,18 +14,23 @@ class MangaPlusUrlActivity : Activity() {
 
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
-            val titleId = pathSegments[1]
+            val titleId = if (!pathSegments[1].equals("sns_share")) pathSegments[1] else
+                intent?.data?.getQueryParameter("title_id")
 
-            val mainIntent = Intent().apply {
-                action = "eu.kanade.tachiyomi.SEARCH"
-                putExtra("query", MangaPlus.PREFIX_ID_SEARCH + titleId)
-                putExtra("filter", packageName)
-            }
+            if (titleId != null) {
+                val mainIntent = Intent().apply {
+                    action = "eu.kanade.tachiyomi.SEARCH"
+                    putExtra("query", MangaPlus.PREFIX_ID_SEARCH + titleId)
+                    putExtra("filter", packageName)
+                }
 
-            try {
-                startActivity(mainIntent)
-            } catch (e: ActivityNotFoundException) {
-                Log.e("MangaPlusUrlActivity", e.toString())
+                try {
+                    startActivity(mainIntent)
+                } catch (e: ActivityNotFoundException) {
+                    Log.e("MangaPlusUrlActivity", e.toString())
+                }
+            } else {
+                Log.e("MangaPlusUrlActivity", "Missing title ID from the URL")
             }
         } else {
             Log.e("MangaPlusUrlActivity", "Could not parse URI from intent $intent")

@@ -1,66 +1,66 @@
 package eu.kanade.tachiyomi.extension.all.mangaplus
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 data class MangaPlusResponse(
-    @ProtoNumber(1) val success: SuccessResult? = null,
-    @ProtoNumber(2) val error: ErrorResult? = null
+    val success: SuccessResult? = null,
+    val error: ErrorResult? = null
 )
 
 @Serializable
 data class ErrorResult(
-    @ProtoNumber(2) val englishPopup: Popup,
-    @ProtoNumber(3) val spanishPopup: Popup
+    val englishPopup: Popup,
+    val spanishPopup: Popup
 )
 
 @Serializable
 data class Popup(
-    @ProtoNumber(1) val subject: String,
-    @ProtoNumber(2) val body: String
+    val subject: String,
+    val body: String
 )
 
 @Serializable
 data class SuccessResult(
-    @ProtoNumber(1) val isFeaturedUpdated: Boolean? = false,
-    @ProtoNumber(6) val titleRankingView: TitleRankingView? = null,
-    @ProtoNumber(8) val titleDetailView: TitleDetailView? = null,
-    @ProtoNumber(10) val mangaViewer: MangaViewer? = null,
-    @ProtoNumber(25) val allTitlesViewV2: AllTitlesViewV2? = null,
-    @ProtoNumber(31) val webHomeViewV3: WebHomeViewV3? = null
+    val isFeaturedUpdated: Boolean? = false,
+    val titleRankingView: TitleRankingView? = null,
+    val titleDetailView: TitleDetailView? = null,
+    val mangaViewer: MangaViewer? = null,
+    val allTitlesViewV2: AllTitlesViewV2? = null,
+    val webHomeViewV3: WebHomeViewV3? = null
 )
 
 @Serializable
-data class TitleRankingView(@ProtoNumber(1) val titles: List<Title> = emptyList())
+data class TitleRankingView(val titles: List<Title> = emptyList())
 
 @Serializable
 data class AllTitlesViewV2(
-    @ProtoNumber(1) val allTitlesGroup: List<AllTitlesGroup> = emptyList()
+    @SerialName("AllTitlesGroup") val allTitlesGroup: List<AllTitlesGroup> = emptyList()
 )
 
 @Serializable
 data class AllTitlesGroup(
-    @ProtoNumber(1) val theTitle: String,
-    @ProtoNumber(2) val titles: List<Title> = emptyList()
+    val theTitle: String,
+    val titles: List<Title> = emptyList()
 )
 
 @Serializable
-data class WebHomeViewV3(@ProtoNumber(2) val groups: List<UpdatedTitleV2Group> = emptyList())
+data class WebHomeViewV3(val groups: List<UpdatedTitleV2Group> = emptyList())
 
 @Serializable
 data class TitleDetailView(
-    @ProtoNumber(1) val title: Title,
-    @ProtoNumber(2) val titleImageUrl: String,
-    @ProtoNumber(3) val overview: String,
-    @ProtoNumber(4) val backgroundImageUrl: String,
-    @ProtoNumber(5) val nextTimeStamp: Int = 0,
-    @ProtoNumber(7) val viewingPeriodDescription: String = "",
-    @ProtoNumber(8) val nonAppearanceInfo: String = "",
-    @ProtoNumber(9) val firstChapterList: List<Chapter> = emptyList(),
-    @ProtoNumber(10) val lastChapterList: List<Chapter> = emptyList(),
-    @ProtoNumber(14) val isSimulReleased: Boolean = false,
-    @ProtoNumber(17) val chaptersDescending: Boolean = true
+    val title: Title,
+    val titleImageUrl: String,
+    val overview: String,
+    val backgroundImageUrl: String,
+    val nextTimeStamp: Int = 0,
+    val viewingPeriodDescription: String = "",
+    val nonAppearanceInfo: String = "",
+    val firstChapterList: List<Chapter> = emptyList(),
+    val lastChapterList: List<Chapter> = emptyList(),
+    val isSimulReleased: Boolean = false,
+    val chaptersDescending: Boolean = true
 ) {
     private val isWebtoon: Boolean
         get() = firstChapterList.all(Chapter::isVerticalOnly) &&
@@ -89,76 +89,62 @@ data class TitleDetailView(
 }
 
 @Serializable
-data class MangaViewer(@ProtoNumber(1) val pages: List<MangaPlusPage> = emptyList())
+data class MangaViewer(val pages: List<MangaPlusPage> = emptyList())
 
 @Serializable
 data class Title(
-    @ProtoNumber(1) val titleId: Int,
-    @ProtoNumber(2) val name: String,
-    @ProtoNumber(3) val author: String,
-    @ProtoNumber(4) val portraitImageUrl: String,
-    @ProtoNumber(5) val landscapeImageUrl: String,
-    @ProtoNumber(6) val viewCount: Int = 0,
-    @ProtoNumber(7) val language: Language? = Language.ENGLISH
+    val titleId: Int,
+    val name: String,
+    val author: String,
+    val portraitImageUrl: String,
+    val landscapeImageUrl: String,
+    val viewCount: Int = 0,
+    val language: Language? = Language.ENGLISH
 )
 
-@Serializable
-enum class Language(val id: Int) {
-    @ProtoNumber(0)
-    ENGLISH(0),
-
-    @ProtoNumber(1)
-    SPANISH(1),
-
-    @ProtoNumber(2)
-    FRENCH(2),
-
-    @ProtoNumber(3)
-    INDONESIAN(4),
-
-    @ProtoNumber(4)
-    PORTUGUESE_BR(4),
-
-    @ProtoNumber(5)
-    RUSSIAN(5),
-
-    @ProtoNumber(6)
-    THAI(6)
+enum class Language {
+    ENGLISH,
+    SPANISH,
+    FRENCH,
+    INDONESIAN,
+    PORTUGUESE_BR,
+    RUSSIAN,
+    THAI
 }
 
 @Serializable
 data class UpdatedTitleV2Group(
-    @ProtoNumber(1) val groupName: String,
-    @ProtoNumber(2) val titleGroups: List<OriginalTitleGroup> = emptyList()
+    val groupName: String,
+    val titleGroups: List<OriginalTitleGroup> = emptyList()
 )
 
 @Serializable
 data class OriginalTitleGroup(
-    @ProtoNumber(1) val theTitle: String,
-    @ProtoNumber(3) val titles: List<UpdatedTitle> = emptyList()
+    val theTitle: String,
+    val titles: List<UpdatedTitle> = emptyList()
 )
 
 @Serializable
-data class UpdatedTitle(@ProtoNumber(1) val title: Title)
+data class UpdatedTitle(val title: Title)
 
 @Serializable
 data class Chapter(
-    @ProtoNumber(1) val titleId: Int,
-    @ProtoNumber(2) val chapterId: Int,
-    @ProtoNumber(3) val name: String,
-    @ProtoNumber(4) val subTitle: String? = null,
-    @ProtoNumber(6) val startTimeStamp: Int,
-    @ProtoNumber(7) val endTimeStamp: Int,
-    @ProtoNumber(9) val isVerticalOnly: Boolean = false
+    val titleId: Int,
+    val chapterId: Int,
+    val name: String,
+    val subTitle: String? = null,
+    val startTimeStamp: Int,
+    val endTimeStamp: Int,
+    val isVerticalOnly: Boolean = false
 )
 
 @Serializable
-data class MangaPlusPage(@ProtoNumber(1) val page: MangaPage? = null)
+data class MangaPlusPage(val mangaPage: MangaPage? = null)
 
 @Serializable
 data class MangaPage(
-    @ProtoNumber(1) val imageUrl: String,
-    @ProtoNumber(2) val width: Int,
-    @ProtoNumber(3) val height: Int,
-    @ProtoNumber(5) val encryptionKey: String? = null
+    val imageUrl: String,
+    val width: Int,
+    val height: Int,
+    val encryptionKey: String? = null
 )
