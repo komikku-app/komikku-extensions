@@ -565,7 +565,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
         private const val IMAGE_CDN_RATELIMIT_PREF_SUMMARY = "Este valor afecta la cantidad de solicitudes de red para descargar imágenes. Reducir este valor puede disminuir errores al cargar imagenes, pero la velocidad de descarga será más lenta. Se requiere reiniciar Tachiyomi. \nValor actual: %s"
         private const val IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE = "10"
 
-        private val ENTRIES_ARRAY = (1..10).map { i -> i.toString() }.toTypedArray()
+        private val ENTRIES_ARRAY = arrayOf("1", "2", "3", "5", "6", "7", "8", "9", "10", "15", "20", "30", "40", "50", "100")
 
         const val PREFIX_ID_SEARCH = "id:"
         const val MANGA_URL_CHUNK = "gotobook"
