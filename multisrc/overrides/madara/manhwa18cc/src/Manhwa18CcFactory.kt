@@ -30,7 +30,9 @@ abstract class Manhwa18Cc(
     override val name: String,
     override val baseUrl: String,
     lang: String
-) : Madara(name, baseUrl, lang) {
+) : Madara(name, baseUrl, lang, fetchGenresOnInit = false) {
+
+    override val useLoadMoreSearch = false
 
     override fun popularMangaSelector() = "div.manga-item"
     override val popularMangaUrlSelector = "div.data > h3 > a"

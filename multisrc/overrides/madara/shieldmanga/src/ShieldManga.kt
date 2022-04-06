@@ -14,9 +14,9 @@ class ShieldManga : Madara("Shield Manga", "https://shieldmanga.io", "en") {
         .addNetworkInterceptor(rateLimitInterceptor)
         .build()
 
-    // The website does not flag the content, so we just use the old selector.
-    override fun popularMangaSelector() =
-        "div.page-item-detail:not(:has(a[href*='bilibilicomics.com']))"
+    // The website does not flag the content.
+    override val useLoadMoreSearch = false
+    override val filterNonMangaItems = false
 
     override fun chapterListSelector() = "li.wp-manga-hapter, .version-chap li"
 }

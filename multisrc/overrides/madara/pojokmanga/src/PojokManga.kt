@@ -9,7 +9,17 @@ import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class PojokManga : Madara("Pojok Manga", "https://pojokmanga.com", "id", SimpleDateFormat("MMM dd, yyyy", Locale.US)) {
+class PojokManga : Madara(
+    "Pojok Manga",
+    "https://pojokmanga.com",
+    "id",
+    SimpleDateFormat("MMM dd, yyyy", Locale.US)
+) {
+
+    override val useLoadMoreSearch = false
+
+    override val useNewChapterEndpoint = true
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var url = "$baseUrl/${searchPage(page)}".toHttpUrlOrNull()!!.newBuilder()
         url.addQueryParameter("s", query)
@@ -76,22 +86,16 @@ class PojokManga : Madara("Pojok Manga", "https://pojokmanga.com", "id", SimpleD
         )
     )
 
-    override fun getFilterList() = FilterList(
-        AuthorFilter(authorFilterTitle),
-        ArtistFilter(artistFilterTitle),
-        YearFilter(yearFilterTitle),
-        StatusFilter(statusFilterTitle, getStatusList()),
-        OrderByFilter(orderByFilterTitle, orderByFilterOptions.zip(orderByFilterOptionsValues)),
-        AdultContentFilter(adultContentFilterTitle, adultContentFilterOptions),
-        Filter.Separator(),
-        Filter.Header(genreFilterHeader),
-        GenreConditionFilter(genreConditionFilterTitle, genreConditionFilterOptions),
-        GenreList(genreFilterTitle, getGenreList()),
-        Filter.Separator(),
-        Filter.Header("NOTE: cant be used with other filter!"),
-        Filter.Header("$name Project List page"),
-        ProjectFilter(),
-    )
+    override fun getFilterList(): FilterList {
+        val filters = super.getFilterList().toMutableList()
 
-    override val useNewChapterEndpoint = true
+        filters += listOf(
+            Filter.Separator(),
+            Filter.Header("NOTE: cant be used with other filter!"),
+            Filter.Header("$name Project List page"),
+            ProjectFilter()
+        )
+
+        return FilterList(filters)
+    }
 }

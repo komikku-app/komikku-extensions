@@ -6,6 +6,16 @@ import eu.kanade.tachiyomi.source.model.FilterList
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class GeceninLordu : Madara("Gecenin Lordu", "https://geceninlordu.com/", "tr", SimpleDateFormat("dd MMM yyyy", Locale("tr"))) {
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = GET("$baseUrl/?s=$query&post_type=wp-manga")
+class GeceninLordu : Madara(
+    "Gecenin Lordu",
+    "https://geceninlordu.com/",
+    "tr",
+    SimpleDateFormat("dd MMM yyyy", Locale("tr")),
+    fetchGenresOnInit = false
+) {
+
+    override val useLoadMoreSearch = false
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
+        GET("$baseUrl/?s=$query&post_type=wp-manga")
 }

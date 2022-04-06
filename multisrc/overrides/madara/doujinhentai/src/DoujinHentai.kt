@@ -11,7 +11,16 @@ import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class DoujinHentai : Madara("DoujinHentai", "https://doujinhentai.net", "es", SimpleDateFormat("d MMM. yyyy", Locale.ENGLISH)) {
+class DoujinHentai : Madara(
+    "DoujinHentai",
+    "https://doujinhentai.net",
+    "es",
+    SimpleDateFormat("d MMM. yyyy", Locale.ENGLISH),
+    fetchGenresOnInit = false
+) {
+
+    override val useLoadMoreSearch = false
+
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/lista-manga-hentai?orderby=views&page=$page", headers)
     override fun popularMangaSelector() = "div.col-md-3 a"
     override fun popularMangaFromElement(element: Element): SManga {

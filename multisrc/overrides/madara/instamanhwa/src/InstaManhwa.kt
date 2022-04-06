@@ -18,9 +18,12 @@ class InstaManhwa : Madara(
     "InstaManhwa",
     "https://www.instamanhwa.com",
     "en",
-    SimpleDateFormat("dd MMMM, yyyy", Locale.US)
+    SimpleDateFormat("dd MMMM, yyyy", Locale.US),
+    fetchGenresOnInit = false
 ) {
+
     override val supportsLatest: Boolean = false
+    override val useLoadMoreSearch = false
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/latest?page=$page", headers)
 
@@ -56,9 +59,6 @@ class InstaManhwa : Madara(
             .build()
         return client.newCall(POST("$baseUrl/ajax", headers, body)).execute().asJsoup()
     }
-
-    // Not used
-    override fun getGenreList(): List<Genre> = emptyList()
 
     // Not used
     override fun getFilterList(): FilterList = FilterList()

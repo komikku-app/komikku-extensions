@@ -11,14 +11,11 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.source.ConfigurableSource
-import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -32,7 +29,7 @@ class NeoxScanlator :
         "Neox Scanlator",
         DEFAULT_BASE_URL,
         "pt-BR",
-        SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+        SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
     ),
     ConfigurableSource {
 
@@ -56,13 +53,6 @@ class NeoxScanlator :
         .add("Accept", ACCEPT)
         .add("Accept-Language", ACCEPT_LANGUAGE)
         .add("Referer", REFERER)
-
-    override fun searchMangaParse(response: Response): MangasPage {
-        val mangaPage = super.searchMangaParse(response)
-        val filteredResult = mangaPage.mangas.filter { it.title.contains(NOVEL_REGEX).not() }
-
-        return MangasPage(filteredResult, mangaPage.hasNextPage)
-    }
 
     // Sometimes the site changes the manga URL. This override will
     // add an error instead of the HTTP 404 to inform the user to
@@ -89,9 +79,6 @@ class NeoxScanlator :
 
         return GET(page.imageUrl!!, newHeaders)
     }
-
-    // Only status and order by filter work.
-    override fun getFilterList(): FilterList = FilterList(super.getFilterList().slice(3..4))
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val baseUrlPref = EditTextPreference(screen.context).apply {
@@ -136,7 +123,5 @@ class NeoxScanlator :
             "extensão, esta configuração será apagada."
 
         private const val RESTART_TACHIYOMI = "Reinicie o Tachiyomi para aplicar as configurações."
-
-        private val NOVEL_REGEX = "novel|livro".toRegex(RegexOption.IGNORE_CASE)
     }
 }
