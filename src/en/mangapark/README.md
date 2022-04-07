@@ -12,7 +12,7 @@ Don't find the question you are look for go check out our general FAQs and Guide
 ### How do I deal with duplicate chapters?
 To solve this issue, follow the below steps.
 
-1. Go to <NavigationText item="browse"/> → <NavigationText item="extensions"/>.
+1. Go to **Browse** → **Extensions**.
 1. Click on **MangaPark** extension and then **Chapter List Source**.
 1. Choose an option like **Smart list** or **Prioritize source**.
 1. Go back to **MangaPark**'s chapter list and refresh it.
