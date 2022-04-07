@@ -61,11 +61,31 @@ abstract class Madara(
      */
     protected open val filterNonMangaItems = true
 
+    /**
+     * Automatically fetched genres from the source to be used in the filters.
+     */
+    private var genresList: List<Genre> = emptyList()
+
+    /**
+     * Inner variable to control the genre fetching state.
+     */
+    private var fetchGenresFailed: Boolean = false
+
+    /**
+     * Inner variable to control how much tries the genres request was called.
+     */
+    private var fetchGenresCount: Int = 0
+
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/78.0$userAgentRandomizer")
         .add("Referer", baseUrl)
 
     // Popular Manga
+
+    override fun popularMangaParse(response: Response): MangasPage {
+        fetchGenres()
+        return super.popularMangaParse(response)
+    }
 
     // exclude/filter bilibili manga from list
     override fun popularMangaSelector() = "div.page-item-detail:not(:has(a[href*='bilibilicomics.com']))"
@@ -154,9 +174,9 @@ abstract class Madara(
      */
     open val useLoadMoreSearch = true
 
-    open fun searchFormBuilder(showOnlyManga: Boolean): FormBody.Builder = FormBody.Builder().apply {
+    open fun searchFormBuilder(page: Int, showOnlyManga: Boolean): FormBody.Builder = FormBody.Builder().apply {
         add("action", "madara_load_more")
-        add("page", "0")
+        add("page", (page - 1).toString())
         add("template", "madara-core/content/content-search")
         add("vars[paged]", "1")
         add("vars[template]", "archive")
@@ -164,7 +184,7 @@ abstract class Madara(
         add("vars[post_type]", "wp-manga")
         add("vars[post_status]", "publish")
         add("vars[manga_archives_item_layout]", "big_thumbnail")
-        add("vars[post_per_page]", "20")
+        add("vars[posts_per_page]", "20")
 
         if (filterNonMangaItems && showOnlyManga) {
             add("vars[meta_query][0][key]", "_wp_manga_chapter_type")
@@ -192,18 +212,6 @@ abstract class Madara(
             }
             .map { response ->
                 searchMangaParse(response)
-            }
-    }
-
-    protected open fun parseGenres(document: Document): List<Genre> {
-        return document.selectFirst("div.checkbox-group")
-            ?.select("div.checkbox")
-            .orEmpty()
-            .map { li ->
-                Genre(
-                    li.selectFirst("label").text(),
-                    li.selectFirst("input[type=checkbox]").`val`()
-                )
             }
     }
 
@@ -268,7 +276,7 @@ abstract class Madara(
         val showOnlyManga = filters.filterIsInstance<ShowOnlyMangaFilter>()
             .firstOrNull()?.state ?: true
 
-        val formBodyBuilder = searchFormBuilder(showOnlyManga).apply {
+        val formBodyBuilder = searchFormBuilder(page, showOnlyManga).apply {
             if (query.startsWith(URL_SEARCH_PREFIX)) {
                 add("vars[name]", query.removePrefix(URL_SEARCH_PREFIX))
 
@@ -513,8 +521,6 @@ abstract class Madara(
 
     protected class ShowOnlyMangaFilter(label: String) : Filter.CheckBox(label, true)
 
-    private var genresList: List<Genre> = emptyList()
-
     override fun getFilterList(): FilterList {
         val filters = mutableListOf(
             AuthorFilter(authorFilterTitle),
@@ -556,6 +562,11 @@ abstract class Madara(
 
     open class Tag(val id: String, name: String) : Filter.CheckBox(name)
 
+    override fun searchMangaParse(response: Response): MangasPage {
+        fetchGenres()
+        return super.searchMangaParse(response)
+    }
+
     override fun searchMangaSelector() = "div.c-tabs-item__content"
 
     override fun searchMangaFromElement(element: Element): SManga {
@@ -574,7 +585,10 @@ abstract class Madara(
         return manga
     }
 
-    override fun searchMangaNextPageSelector(): String? = "div.nav-previous, nav.navigation-ajax, a.nextpostslink"
+    override fun searchMangaNextPageSelector(): String? = when {
+        useLoadMoreSearch -> popularMangaNextPageSelector()
+        else -> "div.nav-previous, nav.navigation-ajax, a.nextpostslink"
+    }
 
     // Manga Details Parse
 
@@ -950,17 +964,50 @@ abstract class Madara(
         runCatching { client.newCall(request).execute().close() }
     }
 
-    init {
-        if (fetchGenresOnInit && genresList.isEmpty()) {
-            Single
-                .fromCallable {
-                    val genres = runCatching {
-                        client.newCall(GET("$baseUrl/?s=&post_type=wp-manga")).execute()
-                            .use { parseGenres(it.asJsoup()) }
-                    }
+    /**
+     * Fetch the genres from the source to be used in the filters.
+     */
+    protected open fun fetchGenres() {
+        if (fetchGenresCount <= 3 && (genresList.isEmpty() || fetchGenresFailed)) {
+            val genres = runCatching {
+                client.newCall(genresRequest()).execute()
+                    .use { parseGenres(it.asJsoup()) }
+            }
 
-                    genresList = genres.getOrNull().orEmpty()
-                }
+            fetchGenresFailed = genres.isFailure
+            genresList = genres.getOrNull().orEmpty()
+            fetchGenresCount++
+        }
+    }
+
+    /**
+     * The request to the search page (or another one) that have the genres list.
+     */
+    protected open fun genresRequest(): Request {
+        return GET("$baseUrl/?s=&post_type=wp-manga", headers)
+    }
+
+    /**
+     * Get the genres from the search page document.
+     *
+     * @param document The search page document
+     */
+    protected open fun parseGenres(document: Document): List<Genre> {
+        return document.selectFirst("div.checkbox-group")
+            ?.select("div.checkbox")
+            .orEmpty()
+            .map { li ->
+                Genre(
+                    li.selectFirst("label").text(),
+                    li.selectFirst("input[type=checkbox]").`val`()
+                )
+            }
+    }
+
+    init {
+        if (fetchGenresOnInit) {
+            Single
+                .fromCallable { fetchGenres() }
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .subscribe()
