@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.ja.mangaraw
+package eu.kanade.tachiyomi.multisrc.mangaraw
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -11,6 +11,9 @@ import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
+/**
+ * Common parsers of mangaraw sites, follow manga1001.top by default.
+ */
 abstract class MangaRaw(
     override val name: String,
     override val baseUrl: String,
@@ -26,26 +29,31 @@ abstract class MangaRaw(
         return super.headersBuilder().add("Referer", baseUrl)
     }
 
+    // manga1001 and mangapro support rank by catalog + year/week. all catalog + week by default.
     override fun popularMangaRequest(page: Int): Request =
-        GET("$baseUrl/seachlist/page/$page/?cat=-1", headers)
+        GET("$baseUrl/seachlist/page/$page/?cat=-1&stime=1", headers)
 
     override fun popularMangaSelector() = "article"
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
+        // FIXME: when manga has different domain, such as manga on '新刊コミック' page, this manga will cause "Too many follow-up requests: 21"
         setUrlWithoutDomain(element.select("a:has(img)").attr("href"))
-        title = element.select("img").attr("alt").substringBefore("(RAW – Free)").trim()
-        thumbnail_url = element.select("img").attr("abs:src")
+        title = element.select("img").attr("alt").substringBefore("(RAW").trim()
+        thumbnail_url = element.select("img").attr("data-src")
     }
 
     override fun popularMangaNextPageSelector() = ".next.page-numbers"
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/$page", headers)
+    // manga101 and mangapro have a '新刊コミック' page, but all manga under syosetu.top.
+    // visit these manga will cause "Too many follow-up requests: 21" and this make latest update complete unusable
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/newmanga/page/$page", headers)
 
     override fun latestUpdatesSelector() = popularMangaSelector()
 
     override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
 
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
+    // there's no next page button on latest manga page
+    override fun latestUpdatesNextPageSelector(): String? { return null }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
         GET("$baseUrl/page/$page/?s=$query", headers)
@@ -58,16 +66,13 @@ abstract class MangaRaw(
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         // All manga details are located in the same <p> tag
-        // So here are some jank way of extracting them
-        description = document.select("#main > article > div > div > div > div > p").html()
-            .substringAfterLast("<br>")
-        thumbnail_url = document.select(".wp-block-image img").attr("abs:src")
+        description = document.select(".entry-content > p").text()
     }
 
-    override fun chapterListSelector() = ".chapList a"
+    override fun chapterListSelector() = ".chaplist a"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
+        url = element.attr("href")
         name = element.text().trim()
     }
 
