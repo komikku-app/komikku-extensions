@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.en.readcomiconline
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Base64
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -128,15 +129,38 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
 
     override fun pageListRequest(chapter: SChapter) = GET(baseUrl + chapter.url + "&quality=${qualitypref()}", headers)
 
-    override fun pageListParse(response: Response): List<Page> {
-        return Regex("""lstImages\.push\("(http.*)"\)""").findAll(response.body!!.string())
-            .toList()
-            .mapIndexed { i, mr -> Page(i, "", mr.groupValues[1]) }
+    override fun pageListParse(document: Document): List<Page> {
+        val script = document.selectFirst("script:containsData(lstImages.push)")?.data()
+            ?: return emptyList()
+
+        return CHAPTER_IMAGES_REGEX.findAll(script).toList()
+            .mapIndexed { i, match -> Page(i, "", match.groupValues[1]) }
     }
 
-    override fun pageListParse(document: Document): List<Page> = throw UnsupportedOperationException("Not used")
+    override fun imageUrlParse(document: Document) = ""
 
-    override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
+    override fun imageRequest(page: Page): Request {
+        if (page.imageUrl!!.startsWith("https")) {
+            return super.imageRequest(page)
+        }
+
+        val scrambledUrl = page.imageUrl!!
+        val containsS0 = scrambledUrl.contains("=s0")
+        val imagePathResult = runCatching {
+            scrambledUrl
+                .substring(0, scrambledUrl.length - (if (containsS0) 3 else 6))
+                .let { it.substring(4, 21) + it.substring(24) }
+                .let { it.substring(0, it.length - 6) + it[it.length - 2] + it[it.length - 1] }
+                .let { Base64.decode(it, Base64.DEFAULT).toString(Charsets.UTF_8) }
+                .let { it.substring(0, 11) + it.substring(14) }
+                .let { it.substring(0, it.length - 2) + if (containsS0) "=s0" else "=s1600" }
+        }
+
+        val imagePath = imagePathResult.getOrNull()
+            ?: throw Exception("Failed to decrypt the image URL.")
+
+        return GET("https://2.bp.blogspot.com/$imagePath")
+    }
 
     private class Status : Filter.TriState("Completed")
     private class Genre(name: String) : Filter.TriState(name)
@@ -224,5 +248,7 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
     companion object {
         private const val QUALITY_PREF_Title = "Image Quality Selector"
         private const val QUALITY_PREF = "qualitypref"
+
+        private val CHAPTER_IMAGES_REGEX = "lstImages\\.push\\(\"(.*)\"\\)".toRegex()
     }
 }
