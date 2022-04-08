@@ -19,11 +19,11 @@ class InstaManhwa : Madara(
     "https://www.instamanhwa.com",
     "en",
     SimpleDateFormat("dd MMMM, yyyy", Locale.US),
-    fetchGenresOnInit = false
 ) {
 
     override val supportsLatest: Boolean = false
     override val useLoadMoreSearch = false
+    override val fetchGenres = false
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/latest?page=$page", headers)
 

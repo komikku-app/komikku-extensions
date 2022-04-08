@@ -10,11 +10,11 @@ class GeceninLordu : Madara(
     "Gecenin Lordu",
     "https://geceninlordu.com/",
     "tr",
-    SimpleDateFormat("dd MMM yyyy", Locale("tr")),
-    fetchGenresOnInit = false
+    SimpleDateFormat("dd MMM yyyy", Locale("tr"))
 ) {
 
     override val useLoadMoreSearch = false
+    override val fetchGenres = false
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
         GET("$baseUrl/?s=$query&post_type=wp-manga")

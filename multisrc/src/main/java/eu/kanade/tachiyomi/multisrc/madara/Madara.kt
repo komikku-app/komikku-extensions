@@ -24,8 +24,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import rx.Single
-import rx.schedulers.Schedulers
 import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -39,8 +37,7 @@ abstract class Madara(
     override val name: String,
     override val baseUrl: String,
     final override val lang: String,
-    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US),
-    protected val fetchGenresOnInit: Boolean = true
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -67,14 +64,19 @@ abstract class Madara(
     private var genresList: List<Genre> = emptyList()
 
     /**
-     * Inner variable to control the genre fetching state.
+     * Inner variable to control the genre fetching failed state.
      */
     private var fetchGenresFailed: Boolean = false
 
     /**
      * Inner variable to control how much tries the genres request was called.
      */
-    private var fetchGenresCount: Int = 0
+    private var fetchGenresAttempts: Int = 0
+
+    /**
+     * Disable it if you don't want the genres to be fetched.
+     */
+    protected open val fetchGenres: Boolean = true
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/78.0$userAgentRandomizer")
@@ -83,7 +85,7 @@ abstract class Madara(
     // Popular Manga
 
     override fun popularMangaParse(response: Response): MangasPage {
-        fetchGenres()
+        runCatching { fetchGenres() }
         return super.popularMangaParse(response)
     }
 
@@ -492,6 +494,11 @@ abstract class Madara(
         else -> "Genres"
     }
 
+    protected open val genresMissingWarning: String = when (lang) {
+        "pt-BR" -> "Aperte 'Redefinir' para tentar mostrar os gêneros"
+        else -> "Press 'Reset' to attempt to show the genres"
+    }
+
     protected open val showOnlyMangaEntriesLabel: String = when (lang) {
         "pt-BR" -> "Mostrar somente mangás"
         else -> "Show only manga entries"
@@ -546,6 +553,11 @@ abstract class Madara(
                 GenreConditionFilter(genreConditionFilterTitle, genreConditionFilterOptions),
                 GenreList(genreFilterTitle, genresList)
             )
+        } else if (fetchGenres) {
+            filters += listOf(
+                Filter.Separator(),
+                Filter.Header(genresMissingWarning)
+            )
         }
 
         return FilterList(filters)
@@ -563,7 +575,7 @@ abstract class Madara(
     open class Tag(val id: String, name: String) : Filter.CheckBox(name)
 
     override fun searchMangaParse(response: Response): MangasPage {
-        fetchGenres()
+        runCatching { fetchGenres() }
         return super.searchMangaParse(response)
     }
 
@@ -798,7 +810,7 @@ abstract class Madara(
             // Added "title" alternative
             chapter.date_upload = select("img:not(.thumb)").firstOrNull()?.attr("alt")?.let { parseRelativeDate(it) }
                 ?: select("span a").firstOrNull()?.attr("title")?.let { parseRelativeDate(it) }
-                ?: parseChapterDate(select("span.chapter-release-date").firstOrNull()?.text())
+                    ?: parseChapterDate(select("span.chapter-release-date").firstOrNull()?.text())
         }
 
         return chapter
@@ -968,7 +980,7 @@ abstract class Madara(
      * Fetch the genres from the source to be used in the filters.
      */
     protected open fun fetchGenres() {
-        if (fetchGenresCount <= 3 && (genresList.isEmpty() || fetchGenresFailed)) {
+        if (fetchGenres && fetchGenresAttempts <= 3 && (genresList.isEmpty() || fetchGenresFailed)) {
             val genres = runCatching {
                 client.newCall(genresRequest()).execute()
                     .use { parseGenres(it.asJsoup()) }
@@ -976,7 +988,7 @@ abstract class Madara(
 
             fetchGenresFailed = genres.isFailure
             genresList = genres.getOrNull().orEmpty()
-            fetchGenresCount++
+            fetchGenresAttempts++
         }
     }
 
@@ -984,7 +996,7 @@ abstract class Madara(
      * The request to the search page (or another one) that have the genres list.
      */
     protected open fun genresRequest(): Request {
-        return GET("$baseUrl/?s=&post_type=wp-manga", headers)
+        return GET("$baseUrl/?s=genre&post_type=wp-manga", headers)
     }
 
     /**
@@ -1002,16 +1014,6 @@ abstract class Madara(
                     li.selectFirst("input[type=checkbox]").`val`()
                 )
             }
-    }
-
-    init {
-        if (fetchGenresOnInit) {
-            Single
-                .fromCallable { fetchGenres() }
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
-                .subscribe()
-        }
     }
 
     companion object {
