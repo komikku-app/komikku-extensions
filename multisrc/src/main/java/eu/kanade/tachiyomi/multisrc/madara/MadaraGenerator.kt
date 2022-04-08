@@ -456,6 +456,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Yuri Verso", "https://yuri.live", "pt-BR", overrideVersionCode = 3),
         SingleLang("Zinmanga", "https://zinmanga.com", "en", overrideVersionCode = 1),
         SingleLang("Zinmanhwa", "https://zinmanhwa.com", "en"),
+        SingleLang("ZombieLand Saga Scans", "https://zombiland.com.br", "pt-BR", isNsfw = true),
         SingleLang("ZuttoManga", "https://zuttomanga.com", "en", overrideVersionCode = 1),
         SingleLang("hManhwa", "https://hmanhwa.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Çizgi Roman Arşivi", "https://cizgiromanarsivi.com", "tr", className = "CizgiRomanArsivi"),
