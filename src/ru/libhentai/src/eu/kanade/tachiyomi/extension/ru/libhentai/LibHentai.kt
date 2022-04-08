@@ -110,7 +110,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
     private fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
         element.select("div.cover").first().let { img ->
-            manga.thumbnail_url = img.attr("data-src").replace("_thumb", "_250x350")
+            manga.thumbnail_url = baseUrl + img.attr("data-src").replace("_thumb", "_250x350")
         }
 
         element.select("a").first().let { link ->
@@ -168,15 +168,13 @@ class LibHentai : ConfigurableSource, HttpSource() {
     }
 
     private fun popularMangaFromElement(el: JsonElement) = SManga.create().apply {
-        val slug = el.jsonObject["slug"]!!.jsonPrimitive.content
-        val cover = el.jsonObject["cover"]!!.jsonPrimitive.content
         title = when {
             isEng.equals("rus") && el.jsonObject["rus_name"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> el.jsonObject["rus_name"]!!.jsonPrimitive.content
             isEng.equals("eng") && el.jsonObject["eng_name"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> el.jsonObject["eng_name"]!!.jsonPrimitive.content
             else -> el.jsonObject["name"]!!.jsonPrimitive.content
         }
-        thumbnail_url = "$COVER_URL/huploads/cover/$slug/cover/${cover}_250x350.jpg"
-        url = "/$slug"
+        thumbnail_url = baseUrl + el.jsonObject["covers"]!!.jsonObject["default"]!!.jsonPrimitive.content
+        url = "/" + el.jsonObject["slug"]!!.jsonPrimitive.content
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
