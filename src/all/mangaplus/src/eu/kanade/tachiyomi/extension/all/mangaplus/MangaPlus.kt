@@ -82,8 +82,7 @@ abstract class MangaPlus(
     override fun popularMangaParse(response: Response): MangasPage {
         val result = response.asMangaPlusResponse()
 
-        if (result.success == null)
-            throw Exception(result.error!!.langPopup.body)
+        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
 
         titleList = result.success.titleRankingView!!.titles
             .filter { it.language == langCode }
@@ -110,8 +109,7 @@ abstract class MangaPlus(
     override fun latestUpdatesParse(response: Response): MangasPage {
         val result = response.asMangaPlusResponse()
 
-        if (result.success == null)
-            throw Exception(result.error!!.langPopup.body)
+        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
 
         // Fetch all titles to get newer thumbnail URLs in the interceptor.
         val popularResponse = client.newCall(popularMangaRequest(1)).execute()
@@ -169,23 +167,20 @@ abstract class MangaPlus(
     override fun searchMangaParse(response: Response): MangasPage {
         val result = response.asMangaPlusResponse()
 
-        if (result.success == null)
-            throw Exception(result.error!!.langPopup.body)
+        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
 
         if (result.success.titleDetailView != null) {
             val mangaPlusTitle = result.success.titleDetailView.title
+                .takeIf { it.language == langCode }
+                ?: return MangasPage(emptyList(), hasNextPage = false)
 
-            if (mangaPlusTitle.language == langCode) {
-                val manga = SManga.create().apply {
-                    title = mangaPlusTitle.name
-                    thumbnail_url = mangaPlusTitle.portraitImageUrl
-                    url = "#/titles/${mangaPlusTitle.titleId}"
-                }
-
-                return MangasPage(listOf(manga), hasNextPage = false)
+            val manga = SManga.create().apply {
+                title = mangaPlusTitle.name
+                thumbnail_url = mangaPlusTitle.portraitImageUrl
+                url = "#/titles/${mangaPlusTitle.titleId}"
             }
 
-            return MangasPage(emptyList(), hasNextPage = false)
+            return MangasPage(listOf(manga), hasNextPage = false)
         }
 
         titleList = result.success.allTitlesViewV2!!.allTitlesGroup
@@ -230,8 +225,7 @@ abstract class MangaPlus(
     override fun mangaDetailsParse(response: Response): SManga {
         val result = response.asMangaPlusResponse()
 
-        if (result.success == null)
-            throw Exception(result.error!!.langPopup.body)
+        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
 
         val details = result.success.titleDetailView!!
         val title = details.title
@@ -251,8 +245,7 @@ abstract class MangaPlus(
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.asMangaPlusResponse()
 
-        if (result.success == null)
-            throw Exception(result.error!!.langPopup.body)
+        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
 
         val titleDetailView = result.success.titleDetailView!!
 
@@ -291,8 +284,7 @@ abstract class MangaPlus(
     override fun pageListParse(response: Response): List<Page> {
         val result = response.asMangaPlusResponse()
 
-        if (result.success == null)
-            throw Exception(result.error!!.langPopup.body)
+        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
 
         val referer = response.request.header("Referer")!!
 
@@ -417,12 +409,6 @@ abstract class MangaPlus(
         return response
     }
 
-    private val ErrorResult.langPopup: Popup
-        get() = when (internalLang) {
-            "esp" -> spanishPopup
-            else -> englishPopup
-        }
-
     private fun Response.asMangaPlusResponse(): MangaPlusResponse = use {
         json.decodeFromString(body!!.string())
     }
@@ -430,7 +416,7 @@ abstract class MangaPlus(
     companion object {
         private const val API_URL = "https://jumpg-webapi.tokyo-cdn.com/api"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.3"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36"
 
         private const val QUALITY_PREF_KEY = "imageResolution"
         private const val QUALITY_PREF_TITLE = "Image quality"

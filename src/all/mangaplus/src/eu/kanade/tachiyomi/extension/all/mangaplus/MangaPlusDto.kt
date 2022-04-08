@@ -12,13 +12,18 @@ data class MangaPlusResponse(
 @Serializable
 data class ErrorResult(
     val englishPopup: Popup,
-    val spanishPopup: Popup
-)
+    val popups: List<Popup> = emptyList()
+) {
+
+    fun langPopup(lang: Language): Popup =
+        popups.firstOrNull { it.language == lang } ?: englishPopup
+}
 
 @Serializable
 data class Popup(
     val subject: String,
-    val body: String
+    val body: String,
+    val language: Language? = Language.ENGLISH
 )
 
 @Serializable
