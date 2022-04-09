@@ -29,7 +29,7 @@ class Yimmh : ParsedHttpSource() {
     override val supportsLatest: Boolean = true
     override val baseUrl: String = "https://m.yimmh.com"
     override fun headersBuilder() = Headers.Builder()
-        .add("User-Agent", "Mozilla/5.0 (Android 11; Mobile; rv:83.0) Gecko/83.0 Firefox/83.0")
+        .add("User-Agent", System.getProperty("http.agent")!!)
     override val client: OkHttpClient = getUnsafeOkHttpClient()
 
     // Trusted all certificates
