@@ -31,7 +31,11 @@ class HentaiFox : ParsedHttpSource() {
     // Popular
 
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/pag/$page/", headers)
+        return if (page == 2) {
+            GET("$baseUrl/page/$page/", headers)
+        } else {
+            GET("$baseUrl/pag/$page/", headers)
+        }
     }
 
     override fun popularMangaSelector() = "div.thumb"
