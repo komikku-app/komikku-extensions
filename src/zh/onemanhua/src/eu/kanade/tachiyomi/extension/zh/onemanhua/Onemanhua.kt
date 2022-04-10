@@ -22,6 +22,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
@@ -44,16 +45,19 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
         baseUrl.toHttpUrlOrNull()!!,
         preferences.getString(MAINSITE_RATEPERMITS_PREF, MAINSITE_RATEPERMITS_PREF_DEFAULT)!!.toInt(),
         preferences.getString(MAINSITE_RATEPERIOD_PREF, MAINSITE_RATEPERIOD_PREF_DEFAULT)!!.toLong(),
+        TimeUnit.MILLISECONDS,
     )
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .addNetworkInterceptor(mainSiteRateLimitInterceptor)
         .build()
+
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
 
     // Prepend with new decrypt keys (latest keys should appear at the start of the array)
-    private var decryptKey1Arr = arrayOf("fw122587mkertyui", "fw12558899ertyui")
-    private var decryptKey2Arr = arrayOf("fw125gjdi9ertyui")
+    private var decryptKeyCDATAArr = arrayOf("z3hhZ1EzYv5rtAPB")
+    private var decryptKeyEncCode1Arr = arrayOf("FqBrpwfMMfz6X3eK")
+    private var decryptKeyEncCode2Arr = arrayOf("X6bMxI06N5kAPGE3")
 
     // Common
     private var commonSelector = "li.fed-list-item"
@@ -85,6 +89,7 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
     // Filter
     private class StatusFilter : Filter.TriState("已完结")
     private class SortFilter : Filter.Select<String>("排序", arrayOf("更新日", "收录日", "日点击", "月点击"), 2)
+
     override fun getFilterList() = FilterList(
         SortFilter(),
         StatusFilter()
@@ -113,6 +118,7 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
             GET(url.toString(), headers)
         }
     }
+
     override fun searchMangaNextPageSelector() = commonNextPageSelector
     override fun searchMangaSelector() = "dl.fed-deta-info, $commonSelector"
     override fun searchMangaFromElement(element: Element): SManga {
@@ -140,8 +146,7 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
 
             status = when (
                 detailElements.firstOrNull {
-                    it.children().firstOrNull {
-                        it2 ->
+                    it.children().firstOrNull { it2 ->
                         it2.hasClass("fed-text-muted") && it2.ownText() == "状态"
                     } != null
                 }?.select("a")?.first()?.text()
@@ -152,15 +157,13 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
             }
 
             author = detailElements.firstOrNull {
-                it.children().firstOrNull {
-                    it2 ->
+                it.children().firstOrNull { it2 ->
                     it2.hasClass("fed-text-muted") && it2.ownText() == "作者"
                 } != null
             }?.select("a")?.first()?.text()
 
             genre = detailElements.firstOrNull {
-                it.children().firstOrNull {
-                    it2 ->
+                it.children().firstOrNull { it2 ->
                     it2.hasClass("fed-text-muted") && it2.ownText() == "类别"
                 } != null
             }?.select("a")?.joinToString { it.text() }
@@ -186,7 +189,7 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
         // 1. get C_DATA from HTML
         val encodedData = getEncodedMangaData(document)
         // 2. decrypt C_DATA
-        val decryptedData = decodeAndDecrypt("encodedData", encodedData, decryptKey1Arr)
+        val decryptedData = decodeAndDecrypt("encodedData", encodedData, decryptKeyCDATAArr)
 
         // 3. Extract values from C_DATA to formulate page urls
         val imgType = regexExtractStringValue(
@@ -241,7 +244,7 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
             "enc_code2:\"(.+?)\"",
             "Unable to match for enc_code2"
         )
-        val decryptedRelativePath = decodeAndDecrypt("encodedRelativePath", encodedRelativePath, decryptKey2Arr)
+        val decryptedRelativePath = decodeAndDecrypt("encodedRelativePath", encodedRelativePath, decryptKeyEncCode2Arr)
 
         // Decode and decrypt total pages
         val encodedTotalPages = regexExtractStringValue(
@@ -249,7 +252,7 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
             "enc_code1:\"(.+?)\"",
             "Unable to match for enc_code1"
         )
-        val decryptedTotalPages = Integer.parseInt(decodeAndDecrypt("encodedTotalPages", encodedTotalPages, decryptKey1Arr))
+        val decryptedTotalPages = Integer.parseInt(decodeAndDecrypt("encodedTotalPages", encodedTotalPages, decryptKeyEncCode1Arr))
 
         return mutableListOf<Page>().apply {
             for (i in startImg..decryptedTotalPages) {
@@ -282,7 +285,7 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
             try {
                 return decryptAES(decodedValue, key)
             } catch (ex: Exception) {
-                if (ex.toString() != "Decryption failed") {
+                if (ex.message != "Decryption failed") {
                     throw ex
                 }
             }
@@ -294,7 +297,7 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
     @SuppressLint("GetInstance")
     private fun decryptAES(value: String, key: String): String {
         val secretKey = SecretKeySpec(key.toByteArray(), "AES")
-        val cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
+        val cipher = Cipher.getInstance("AES/ECB/PKCS7Padding")
 
         return try {
             cipher.init(Cipher.DECRYPT_MODE, secretKey)
@@ -369,18 +372,22 @@ class Onemanhua : ConfigurableSource, ParsedHttpSource() {
     companion object {
         private const val MAINSITE_RATEPERMITS_PREF = "mainSiteRatePermitsPreference"
         private const val MAINSITE_RATEPERMITS_PREF_DEFAULT = "1"
-        /** "Ratelimit permits per period for main website" */
-        private const val MAINSITE_RATEPERMITS_PREF_TITLE = "主站连接数限制"
-        /** "This value affects network request amount to main website url. Lower this value may reduce the chance to get HTTP 403 error, but loading speed will be slower too. Tachiyomi restart required. Current value: %s" */
-        private const val MAINSITE_RATEPERMITS_PREF_SUMMARY = "此值影响向网站发起连接请求的数量。调低此值可能减少发生HTTP 403 错误的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s"
+
+        /** main site's connection limit */
+        private const val MAINSITE_RATEPERMITS_PREF_TITLE = "主站连接限制"
+
+        /** This value affects connection request amount to main site. Lowering this value may reduce the chance to get HTTP 403 error, but loading speed will be slower too. Tachiyomi restart required. Current value: %s" */
+        private const val MAINSITE_RATEPERMITS_PREF_SUMMARY = "此值影响主站的连接请求量。降低此值可以减少获得HTTP 403错误的几率，但加载速度也会变慢。需要重启软件以生效。\n默认值：$MAINSITE_RATEPERMITS_PREF_DEFAULT \n当前值：%s"
         private val MAINSITE_RATEPERMITS_PREF_ENTRIES_ARRAY = (1..10).map { i -> i.toString() }.toTypedArray()
 
-        private const val MAINSITE_RATEPERIOD_PREF = "mainSiteRatePeriodPreference"
-        private const val MAINSITE_RATEPERIOD_PREF_DEFAULT = "2"
-        /** "Ratelimit period per second for main website" */
-        private const val MAINSITE_RATEPERIOD_PREF_TITLE = "主站连接每秒周期"
-        /** "This value affects network request delay to main website url. Lower this value may reduce the chance to get HTTP 403 error, but loading speed will be slower too. Tachiyomi restart required. Current value: %s" */
-        private const val MAINSITE_RATEPERIOD_PREF_SUMMARY = "此值影响向网站发起连接请求的延迟期。调低此值可能减少发生HTTP 403 错误的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s"
-        private val MAINSITE_RATEPERIOD_PREF_ENTRIES_ARRAY = (1..10).map { i -> i.toString() }.toTypedArray()
+        private const val MAINSITE_RATEPERIOD_PREF = "mainSiteRatePeriodMillisPreference"
+        private const val MAINSITE_RATEPERIOD_PREF_DEFAULT = "2500"
+
+        /** main site's connection limit period */
+        private const val MAINSITE_RATEPERIOD_PREF_TITLE = "主站连接限制期"
+
+        /** This value affects the delay when hitting the connection limit to main site. Increasing this value may reduce the chance to get HTTP 403 error, but loading speed will be slower too. Tachiyomi restart required. Current value: %s" */
+        private const val MAINSITE_RATEPERIOD_PREF_SUMMARY = "此值影响主站点连接限制时的延迟（毫秒）。增加这个值可能会减少出现HTTP 403错误的机会，但加载速度也会变慢。需要重启软件以生效。\n默认值：$MAINSITE_RATEPERIOD_PREF_DEFAULT\n当前值：%s"
+        private val MAINSITE_RATEPERIOD_PREF_ENTRIES_ARRAY = (2000..6000 step 500).map { i -> i.toString() }.toTypedArray()
     }
 }
