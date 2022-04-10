@@ -51,7 +51,6 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Tempest Manga", "https://manga.tempestfansub.com", "tr"),
         SingleLang("The Apollo Team", "https://theapollo.team", "en"),
         SingleLang("TukangKomik", "https://tukangkomik.com", "id"),
-        SingleLang("Vapo Scan", "https://vaposcans.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("West Manga", "https://westmanga.info", "id", overrideVersionCode = 1),
         SingleLang("xCaliBR Scans", "https://xcalibrscans.com", "en", overrideVersionCode = 3),
         SingleLang("Shadow Mangas", "https://shadowmangas.com", "es"),

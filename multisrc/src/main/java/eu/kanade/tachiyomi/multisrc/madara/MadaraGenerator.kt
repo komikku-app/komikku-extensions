@@ -426,6 +426,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Unemployed Scans", "https://unemployedscans.com", "en", overrideVersionCode = 1),
         SingleLang("Uyuyan Balik", "https://uyuyanbalik.com", "tr", overrideVersionCode = 1),
         SingleLang("Vanguard Bun", "https://vanguardbun.com", "en", overrideVersionCode = 1),
+        SingleLang("Vapo Scan", "https://vaposcans.com", "pt-BR"),
         SingleLang("Visbellum", "https://visbellum.com", "pt-BR", overrideVersionCode = 2),
         SingleLang("WD Scans (Wicked Dragon Scans)", "https://wdscans.com", "en", className = "WDScans"),
         SingleLang("Wakamics", "https://wakamics.net", "en"),
