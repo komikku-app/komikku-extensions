@@ -53,6 +53,7 @@ jobs:
           CI_MULTISRC: "true"
         with:
           arguments: :multisrc:generateExtensions
+          cache-disabled: true
 
       - name: Build "${{ matrix.lang }}" extensions
         uses: gradle/gradle-command-action@v2
@@ -64,6 +65,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         with:
           arguments: assembleRelease
+          cache-disabled: true
 
       - name: Upload "${{ matrix.lang }}" APKs
         uses: actions/upload-artifact@v2
@@ -109,6 +111,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         with:
           arguments: assembleRelease
+          cache-disabled: true
 
       - name: Upload "${{ matrix.lang }}" APKs
         uses: actions/upload-artifact@v2
