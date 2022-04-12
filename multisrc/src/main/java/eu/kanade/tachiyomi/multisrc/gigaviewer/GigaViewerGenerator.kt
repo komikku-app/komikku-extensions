@@ -15,6 +15,7 @@ class GigaViewerGenerator : ThemeSourceGenerator {
         SingleLang("Comic Days", "https://comic-days.com", "ja"),
         SingleLang("Comic Gardo", "https://comic-gardo.com", "ja"),
         SingleLang("Comiplex", "https://viewer.heros-web.com", "ja"),
+        SingleLang("Corocoro Online", "https://corocoro.jp", "ja"),
         SingleLang("Kurage Bunch", "https://kuragebunch.com", "ja"),
         SingleLang("MAGCOMI", "https://magcomi.com", "ja", className = "MagComi"),
         SingleLang("Magazine Pocket", "https://pocket.shonenmagazine.com", "ja"),
