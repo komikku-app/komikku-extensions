@@ -3,7 +3,9 @@ package eu.kanade.tachiyomi.extension.all.lanraragi
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
+import android.text.InputType
 import android.util.Base64
+import android.widget.Toast
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -31,22 +33,20 @@ import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.IOException
+import java.security.MessageDigest
 
-class LANraragi : ConfigurableSource, HttpSource() {
-    override val baseUrl: String
-        get() = preferences.getString("hostname", "http://127.0.0.1:3000")!!
+open class LANraragi(private val suffix: String = "") : ConfigurableSource, HttpSource() {
+    override val baseUrl by lazy { getPrefBaseUrl() }
 
     override val lang = "all"
 
-    override val name = "LANraragi"
+    override val name by lazy { "LANraragi (${getPrefCustomLabel()})" }
 
     override val supportsLatest = true
 
-    private val apiKey: String
-        get() = preferences.getString("apiKey", "")!!
+    private val apiKey by lazy { getPrefAPIKey() }
 
-    private val latestNamespacePref: String
-        get() = preferences.getString("latestNamespacePref", DEFAULT_SORT_BY_NS)!!
+    private val latestNamespacePref by lazy { getPrefLatestNS() }
 
     private val json by lazy { Injekt.get<Json>() }
 
@@ -141,7 +141,7 @@ class LANraragi : ConfigurableSource, HttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request {
         val filters = mutableListOf<Filter<*>>()
-        val prefNewOnly = preferences.getBoolean("latestNewOnly", false)
+        val prefNewOnly = preferences.getBoolean(NEW_ONLY_KEY, false)
 
         if (prefNewOnly) filters.add(NewArchivesOnly(true))
 
@@ -263,86 +263,72 @@ class LANraragi : ConfigurableSource, HttpSource() {
     private var categories = emptyList<Category>()
 
     // Preferences
+    override val id by lazy {
+        // Retain previous ID for first entry
+        val key = "lanraragi" + (if (suffix == "1") "" else "_$suffix") + "/all/$versionId"
+        val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
+        (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
+    }
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private fun getPrefBaseUrl(): String = preferences.getString(HOSTNAME_KEY, HOSTNAME_DEFAULT)!!
+    private fun getPrefAPIKey(): String = preferences.getString(APIKEY_KEY, "")!!
+    private fun getPrefLatestNS(): String = preferences.getString(SORT_BY_NS_KEY, SORT_BY_NS_DEFAULT)!!
+    private fun getPrefCustomLabel(): String = preferences.getString(CUSTOM_LABEL_KEY, suffix)!!.ifBlank { suffix }
+
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-        val hostnamePref = androidx.preference.EditTextPreference(screen.context).apply {
-            key = "Hostname"
-            title = "Hostname"
-            text = baseUrl
-            summary = baseUrl
-            dialogTitle = "Hostname"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                var hostname = newValue as String
-                if (!hostname.startsWith("http://") && !hostname.startsWith("https://")) {
-                    hostname = "http://$hostname"
-                }
-
-                this.apply {
-                    text = hostname
-                    summary = hostname
-                }
-
-                preferences.edit().putString("hostname", hostname).commit()
-            }
-        }
-
-        val apiKeyPref = androidx.preference.EditTextPreference(screen.context).apply {
-            key = "API Key"
-            title = "API Key"
-            text = apiKey
-            summary = "Required if No-Fun Mode is enabled."
-            dialogTitle = "API Key"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val apiKey = newValue as String
-
-                this.apply {
-                    text = apiKey
-                    summary = "Required if No-Fun Mode is enabled."
-                }
-
-                preferences.edit().putString("apiKey", newValue).commit()
-            }
-        }
-
         val latestNewOnlyPref = androidx.preference.CheckBoxPreference(screen.context).apply {
-            key = "latestNewOnly"
+            key = NEW_ONLY_KEY
             title = "Latest - New Only"
             setDefaultValue(true)
 
             setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit().putBoolean("latestNewOnly", checkValue).commit()
+                preferences.edit().putBoolean(this.key, newValue as Boolean).commit()
             }
         }
 
-        val latestNamespacePref = androidx.preference.EditTextPreference(screen.context).apply {
-            key = "latestNamespacePref"
-            title = "Latest - Sort by Namespace"
-            text = latestNamespacePref
-            summary = "Sort by the given namespace for Latest, such as date_added."
-            dialogTitle = "Latest - Sort by Namespace"
-            setDefaultValue(DEFAULT_SORT_BY_NS)
+        screen.addPreference(screen.editTextPreference(HOSTNAME_KEY, "Hostname", HOSTNAME_DEFAULT, baseUrl, refreshSummary = true))
+        screen.addPreference(screen.editTextPreference(APIKEY_KEY, "API Key", "", "Required if No-Fun Mode is enabled.", true))
+        screen.addPreference(screen.editTextPreference(CUSTOM_LABEL_KEY, "Custom Label", "", "Show the given label for the source instead of the default."))
+        screen.addPreference(latestNewOnlyPref)
+        screen.addPreference(screen.editTextPreference(SORT_BY_NS_KEY, "Latest - Sort by Namespace", SORT_BY_NS_DEFAULT, "Sort by the given namespace for Latest, such as date_added."))
+    }
+
+    private fun androidx.preference.PreferenceScreen.editTextPreference(key: String, title: String, default: String, summary: String, isPassword: Boolean = false, refreshSummary: Boolean = false): androidx.preference.EditTextPreference {
+        return androidx.preference.EditTextPreference(context).apply {
+            this.key = key
+            this.title = title
+            this.summary = summary
+            this.setDefaultValue(default)
+
+            if (isPassword) {
+                setOnBindEditTextListener {
+                    it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                }
+            }
 
             setOnPreferenceChangeListener { _, newValue ->
-                val latestNamespacePref = newValue as String
+                try {
+                    val newString = newValue.toString()
+                    val res = preferences.edit().putString(this.key, newString).commit()
 
-                this.apply {
-                    text = latestNamespacePref
+                    if (refreshSummary) {
+                        this.apply {
+                            this.summary = newValue as String
+                        }
+                    }
+
+                    Toast.makeText(context, "Restart Tachiyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                    res
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
                 }
-
-                preferences.edit().putString("latestNamespacePref", newValue).commit()
             }
         }
-
-        screen.addPreference(hostnamePref)
-        screen.addPreference(apiKeyPref)
-        screen.addPreference(latestNewOnlyPref)
-        screen.addPreference(latestNamespacePref)
     }
 
     // Helper
@@ -464,6 +450,12 @@ class LANraragi : ConfigurableSource, HttpSource() {
     }
 
     companion object {
-        private const val DEFAULT_SORT_BY_NS = "date_added"
+        private const val HOSTNAME_DEFAULT = "http://127.0.0.1:3000"
+        private const val HOSTNAME_KEY = "hostname"
+        private const val APIKEY_KEY = "apiKey"
+        private const val CUSTOM_LABEL_KEY = "customLabel"
+        private const val NEW_ONLY_KEY = "latestNewOnly"
+        private const val SORT_BY_NS_DEFAULT = "date_added"
+        private const val SORT_BY_NS_KEY = "latestNamespacePref"
     }
 }

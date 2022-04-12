@@ -5,13 +5,12 @@ apply plugin: 'kotlinx-serialization'
 ext {
     extName = 'LANraragi'
     pkgNameSuffix = 'all.lanraragi'
-    extClass = '.LANraragi'
-    extVersionCode = 10
+    extClass = '.LANraragiFactory'
+    extVersionCode = 11
 }
 
 dependencies {
-    implementation 'io.reactivex:rxandroid:1.2.1'
-    implementation 'io.reactivex:rxjava:1.3.8'
+    compileOnly libs.bundles.reactivex
 }
 
 apply from: "$rootDir/common.gradle"
