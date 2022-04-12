@@ -153,12 +153,7 @@ abstract class WPMangaStream(
                     url.addQueryParameter("yearx", filter.state)
                 }
                 is StatusFilter -> {
-                    val status = when (filter.state) {
-                        Filter.TriState.STATE_INCLUDE -> "completed"
-                        Filter.TriState.STATE_EXCLUDE -> "ongoing"
-                        else -> ""
-                    }
-                    url.addQueryParameter("status", status)
+                    url.addQueryParameter("status", filter.toUriPart())
                 }
                 is TypeFilter -> {
                     url.addQueryParameter("type", filter.toUriPart())
@@ -462,7 +457,9 @@ abstract class WPMangaStream(
         arrayOf(
             Pair("All", ""),
             Pair("Ongoing", "ongoing"),
-            Pair("Completed", "completed")
+            Pair("Completed", "completed"),
+            Pair("Hiatus", "hiatus"),
+            Pair("Dropped", "dropped")
         )
     )
 
@@ -513,17 +510,21 @@ abstract class WPMangaStream(
         Genre("Completed", "completed"),
         Genre("Cooking", "cooking"),
         Genre("Crime", "crime"),
+        Genre("Cultivation", "cultivation"),
         Genre("Demon", "demon"),
         Genre("Demons", "demons"),
         Genre("Doujinshi", "doujinshi"),
         Genre("Drama", "drama"),
+        Genre("Dungeons", "dungeons"),
         Genre("Ecchi", "ecchi"),
         Genre("Fantasy", "fantasy"),
         Genre("Game", "game"),
         Genre("Games", "games"),
         Genre("Gender Bender", "gender-bender"),
+        Genre("Genius", "genius"),
         Genre("Gore", "gore"),
         Genre("Harem", "harem"),
+        Genre("Hero", "hero"),
         Genre("Historical", "historical"),
         Genre("Horror", "horror"),
         Genre("Isekai", "isekai"),
@@ -541,14 +542,17 @@ abstract class WPMangaStream(
         Genre("Monster Girls", "monster-girls"),
         Genre("Monsters", "monsters"),
         Genre("Music", "music"),
+        Genre("Murim", "murim"),
         Genre("Mystery", "mystery"),
         Genre("One-shot", "one-shot"),
         Genre("Oneshot", "oneshot"),
+        Genre("Overpowered", "overpowered"),
         Genre("Police", "police"),
         Genre("Pshycological", "pshycological"),
         Genre("Psychological", "psychological"),
         Genre("Reincarnation", "reincarnation"),
         Genre("Reverse Harem", "reverse-harem"),
+        Genre("Return", "return"),
         Genre("Romancce", "romancce"),
         Genre("Romance", "romance"),
         Genre("Samurai", "samurai"),
@@ -568,6 +572,7 @@ abstract class WPMangaStream(
         Genre("Time Travel", "time-travel"),
         Genre("Tragedy", "tragedy"),
         Genre("Vampire", "vampire"),
+        Genre("Villain", "villain"),
         Genre("Webtoon", "webtoon"),
         Genre("Webtoons", "webtoons"),
         Genre("Yaoi", "yaoi"),
