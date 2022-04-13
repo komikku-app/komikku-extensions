@@ -30,6 +30,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("8Muses Comics", "https://8muses.love/", "en", isNsfw = true, className = "EightMusesComics"),
         SingleLang("AZManhwa", "https://azmanhwa.net", "en"),
         SingleLang("Adonis Fansub", "https://manga.adonisfansub.com", "tr", overrideVersionCode = 1),
+        SingleLang("Adult Webtoon", "https://adultwebtoon.com/", "en", true),
         SingleLang("Agent of Change Translations", "https://aoc.moe", "en", overrideVersionCode = 1),
         SingleLang("Aiin Scan", "https://aiinscan.xyz", "pt-BR"),
         SingleLang("AiYuManga", "https://aiyumangascanlation.com", "es"),
