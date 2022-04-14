@@ -61,7 +61,8 @@ class BainianManga : ParsedHttpSource() {
     override fun popularMangaSelector() = "ul#list_img > li"
     override fun latestUpdatesSelector() = popularMangaSelector()
     override fun searchMangaSelector() = popularMangaSelector()
-    override fun chapterListSelector() = "ul.jslist01 > li"
+    // Ignore first item, which is link to another comic site
+    override fun chapterListSelector() = "ul.jslist01 > li:not(:first-child)"
 
     override fun searchMangaNextPageSelector() = ".pagination > li:last-child > a"
     override fun popularMangaNextPageSelector() = searchMangaNextPageSelector()
@@ -107,7 +108,10 @@ class BainianManga : ParsedHttpSource() {
                 .substringAfter("var z_img='")
                 .substringBefore("';")
         ).mapIndexed { i, imageUrl ->
-            Page(i, "", imageUrl)
+            when {
+                imageUrl.startsWith("http") -> Page(i, "", imageUrl)
+                else -> Page(i, "", "https://img.hngxgt.net/$imageUrl")
+            }
         }
     }
 
