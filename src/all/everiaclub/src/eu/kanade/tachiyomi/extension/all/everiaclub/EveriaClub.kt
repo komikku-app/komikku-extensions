@@ -63,7 +63,7 @@ class EveriaClub() : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         manga.title = document.select(".entry-title").text()
-        manga.description = document.select(".entry-content").text().trim()
+        manga.description = document.select(".entry-title").text()
         val genres = mutableListOf<String>()
         document.select(".nv-tags-list > a").forEach {
             genres.add(it.text())
@@ -74,10 +74,10 @@ class EveriaClub() : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(element.select("meta[property=\"og:url\"]").attr("abs:content"))
+        chapter.setUrlWithoutDomain(element.select("link[rel=\"canonical\"]").attr("href"))
         chapter.chapter_number = 0F
         chapter.name = element.select(".entry-title").text()
-        chapter.date_upload = SimpleDateFormat("yyyy-MM-DD", Locale.US).parse(element.select("meta[property=\"article:published_time\"]").attr("abs:content").substringBeforeLast("T").substringAfterLast("/"))?.time ?: 0L
+        chapter.date_upload = getDate(element.select("link[rel=\"canonical\"]").attr("href"))
         return chapter
     }
 
@@ -87,8 +87,8 @@ class EveriaClub() : ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
-        document.select(".entry-content img").forEachIndexed { i, it ->
-            val itUrl = it.attr("abs:src")
+        document.select(".wp-block-gallery img").forEachIndexed { i, it ->
+            val itUrl = it.attr("src")
             pages.add(Page(i, itUrl, itUrl))
         }
         return pages
@@ -109,4 +109,19 @@ class EveriaClub() : ParsedHttpSource() {
     class TagFilter : Filter.Text("Tag")
 
     private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T
+
+    private fun getDate(str: String): Long {
+        // At this point(4/12/22), this works with every everiaclub doc
+        val regex = "[0-9]{4}\\/[0-9]{2}\\/[0-9]{2}".toRegex()
+        val match = regex.find(str)
+
+        return runCatching { DATE_FORMAT.parse(match!!.value)?.time }
+            .getOrNull() ?: 0L
+    }
+
+    companion object {
+        private val DATE_FORMAT by lazy {
+            SimpleDateFormat("yyyy/MM/dd", Locale.US)
+        }
+    }
 }
