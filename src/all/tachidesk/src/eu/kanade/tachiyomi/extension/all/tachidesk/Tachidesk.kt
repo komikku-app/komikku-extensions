@@ -19,6 +19,8 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.Credentials
+import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
@@ -28,20 +30,29 @@ import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.RuntimeException
 
 class Tachidesk : ConfigurableSource, HttpSource() {
     override val name = "Tachidesk"
     override val baseUrl by lazy { getPrefBaseUrl() }
+    private val baseLogin by lazy { getPrefBaseLogin() }
+    private val basePassword by lazy { getPrefBasePassword() }
+
     override val lang = "en"
     override val supportsLatest = false
 
     private val json: Json by injectLazy()
 
+    override fun headersBuilder(): Headers.Builder = Headers.Builder().apply {
+        if (basePassword.isNotEmpty() && baseLogin.isNotEmpty()) {
+            val credentials = Credentials.basic(baseLogin, basePassword)
+            add("Authorization", credentials)
+        }
+    }
+
     // ------------- Popular Manga -------------
 
     override fun popularMangaRequest(page: Int): Request =
-        GET("$checkedBaseUrl/api/v1/category/$defaultCategoryId")
+        GET("$checkedBaseUrl/api/v1/category/$defaultCategoryId", headers)
 
     override fun popularMangaParse(response: Response): MangasPage =
         MangasPage(
@@ -53,7 +64,7 @@ class Tachidesk : ConfigurableSource, HttpSource() {
     // ------------- Manga Details -------------
 
     override fun mangaDetailsRequest(manga: SManga) =
-        GET("$checkedBaseUrl/api/v1/manga/${manga.url}/?onlineFetch=true")
+        GET("$checkedBaseUrl/api/v1/manga/${manga.url}/?onlineFetch=true", headers)
 
     override fun mangaDetailsParse(response: Response): SManga =
         json.decodeFromString<MangaDataClass>(response.body!!.string()).let { it.toSManga() }
@@ -124,11 +135,28 @@ class Tachidesk : ConfigurableSource, HttpSource() {
             )
     }
 
-    init {
-        val initBaseUrl = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000).getString(ADDRESS_TITLE, ADDRESS_DEFAULT)!!
+    // ------------- Images -------------
+    override fun imageRequest(page: Page) = GET(page.imageUrl!!, headers)
 
-        if (initBaseUrl.isNotBlank()) {
-            refreshCategoryList(initBaseUrl)
+    // ------------- Settings -------------
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    init {
+        val preferencesMap = mapOf(
+            ADDRESS_TITLE to ADDRESS_DEFAULT,
+            LOGIN_TITLE to LOGIN_DEFAULT,
+            PASSWORD_TITLE to PASSWORD_DEFAULT
+        )
+
+        preferencesMap.forEach { (key, defaultValue) ->
+            val initBase = preferences.getString(key, defaultValue)!!
+
+            if (initBase.isNotBlank()) {
+                refreshCategoryList(initBase)
+            }
         }
     }
 
@@ -154,7 +182,7 @@ class Tachidesk : ConfigurableSource, HttpSource() {
                 }
             }
 
-            return GET("$checkedBaseUrl/api/v1/category/$selectedFilter")
+            return GET("$checkedBaseUrl/api/v1/category/$selectedFilter", headers)
         }
     }
 
@@ -162,15 +190,17 @@ class Tachidesk : ConfigurableSource, HttpSource() {
 
     // ------------- Preferences -------------
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        screen.addPreference(screen.editTextPreference(ADDRESS_TITLE, ADDRESS_DEFAULT, baseUrl))
+        screen.addPreference(screen.editTextPreference(ADDRESS_TITLE, ADDRESS_DEFAULT, baseUrl, false, "i.e. http://192.168.1.115:4567"))
+        screen.addPreference(screen.editTextPreference(LOGIN_TITLE, LOGIN_DEFAULT, baseLogin, false, ""))
+        screen.addPreference(screen.editTextPreference(PASSWORD_TITLE, PASSWORD_DEFAULT, basePassword, true, ""))
     }
 
     /** boilerplate for [EditTextPreference] */
-    private fun PreferenceScreen.editTextPreference(title: String, default: String, value: String, isPassword: Boolean = false): EditTextPreference {
+    private fun PreferenceScreen.editTextPreference(title: String, default: String, value: String, isPassword: Boolean = false, placeholder: String): EditTextPreference {
         return EditTextPreference(context).apply {
             key = title
             this.title = title
-            summary = if (value.isEmpty()) "i.e. http://192.168.1.115:4567" else value
+            summary = value.ifEmpty { placeholder }
             this.setDefaultValue(default)
             dialogTitle = title
 
@@ -193,15 +223,17 @@ class Tachidesk : ConfigurableSource, HttpSource() {
         }
     }
 
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
-
     private fun getPrefBaseUrl(): String = preferences.getString(ADDRESS_TITLE, ADDRESS_DEFAULT)!!
+    private fun getPrefBaseLogin(): String = preferences.getString(LOGIN_TITLE, LOGIN_DEFAULT)!!
+    private fun getPrefBasePassword(): String = preferences.getString(PASSWORD_TITLE, PASSWORD_DEFAULT)!!
 
     companion object {
         private const val ADDRESS_TITLE = "Server URL Address"
         private const val ADDRESS_DEFAULT = ""
+        private const val LOGIN_TITLE = "Login (Basic Auth)"
+        private const val LOGIN_DEFAULT = ""
+        private const val PASSWORD_TITLE = "Password (Basic Auth)"
+        private const val PASSWORD_DEFAULT = ""
     }
 
     // ------------- Not Used -------------
@@ -240,6 +272,5 @@ class Tachidesk : ConfigurableSource, HttpSource() {
     }
 
     private val checkedBaseUrl: String
-        get(): String = if (baseUrl.isNotEmpty()) baseUrl
-        else throw RuntimeException("Set Tachidesk server url in extension settings")
+        get(): String = baseUrl.ifEmpty { throw RuntimeException("Set Tachidesk server url in extension settings") }
 }
