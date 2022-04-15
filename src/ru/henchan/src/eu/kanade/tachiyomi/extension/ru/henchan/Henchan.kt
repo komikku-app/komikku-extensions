@@ -27,11 +27,11 @@ class Henchan : ParsedHttpSource() {
 
     override val name = "Henchan"
 
-    override val baseUrl = "https://hentaichan.live"
+    override val baseUrl = "https://x.hentaichan.live"
 
     override val lang = "ru"
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     private val rateLimitInterceptor = RateLimitInterceptor(2)
 
@@ -40,9 +40,6 @@ class Henchan : ParsedHttpSource() {
 
     override fun popularMangaRequest(page: Int): Request =
         GET("$baseUrl/mostfavorites&sort=manga?offset=${20 * (page - 1)}", headers)
-
-    override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/manga/new?offset=${20 * (page - 1)}", headers)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
 
@@ -86,9 +83,12 @@ class Henchan : ParsedHttpSource() {
         return GET(url, headers)
     }
 
-    override fun popularMangaSelector() = ".content_row"
+    override fun popularMangaSelector() = "div.content_row"
 
-    override fun latestUpdatesSelector() = popularMangaSelector()
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesSelector() = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException("Not used")
 
     override fun searchMangaSelector() = ".content_row:not(:has(div.item:containsOwn(Тип)))"
 
@@ -103,23 +103,17 @@ class Henchan : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("img").first().attr("src").getHQThumbnail()
-
-        val urlElem = element.select("h2 > a").first()
-        manga.setUrlWithoutDomain(urlElem.attr("href"))
-        manga.title = urlElem.attr("title")
-
+        manga.title = element.attr("title")
+        element.select("h2 > a").first().let {
+            manga.setUrlWithoutDomain(it.attr("href"))
+        }
         return manga
     }
-
-    override fun latestUpdatesFromElement(element: Element): SManga =
-        popularMangaFromElement(element)
 
     override fun searchMangaFromElement(element: Element): SManga =
         popularMangaFromElement(element)
 
     override fun popularMangaNextPageSelector() = "#pagination > a:contains(Вперед)"
-
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
     override fun searchMangaNextPageSelector() = "#nextlink, ${popularMangaNextPageSelector()}"
 

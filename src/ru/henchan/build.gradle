@@ -6,7 +6,7 @@ ext {
     extName = 'Henchan'
     pkgNameSuffix = 'ru.henchan'
     extClass = '.Henchan'
-    extVersionCode = 30
+    extVersionCode = 31
     isNsfw = true
 }
 

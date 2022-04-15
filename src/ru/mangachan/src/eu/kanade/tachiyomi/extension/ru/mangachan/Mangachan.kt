@@ -28,7 +28,7 @@ class Mangachan : ParsedHttpSource() {
 
     override val lang = "ru"
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     private val rateLimitInterceptor = RateLimitInterceptor(2)
 
@@ -109,29 +109,21 @@ class Mangachan : ParsedHttpSource() {
         return GET(url, headers)
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/newestch?page=$page")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesSelector() = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException("Not used")
 
     override fun popularMangaSelector() = "div.content_row"
-
-    override fun latestUpdatesSelector() = "ul.area_rightNews li"
 
     override fun searchMangaSelector() = popularMangaSelector()
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("div.manga_images img").first().attr("src")
+        manga.title = element.attr("title")
         element.select("h2 > a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.attr("title")
-        }
-        return manga
-    }
-
-    override fun latestUpdatesFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        element.select("a:nth-child(1)").first().let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.attr("title")
         }
         return manga
     }
@@ -139,8 +131,6 @@ class Mangachan : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
     override fun popularMangaNextPageSelector() = "a:contains(Вперед)"
-
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
     override fun searchMangaNextPageSelector() = "a:contains(Далее)"
 
