@@ -63,7 +63,8 @@ class MMRCMSSources {
             SourceData.Single("Op-VF", "https://www.op-vf.com", "fr", className = "OpVF"),
             SourceData.Single("FR Scan", "https://frscan.cc", "fr", overrideVersionCode = 1),
             SourceData.Single("Ama Scans", "https://amascan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
-            SourceData.Single("Gekkou Scans", "https://gekkou.com.br", "pt-BR", isNsfw = true, pkgName = "gekkouscan", overrideVersionCode = 10),
+            SourceData.Single("Gekkou Scans", "https://gekkou.com.br", "pt-BR", isNsfw = true, pkgName = "gekkouscan", overrideVersionCode = 11),
+            SourceData.Single("Gekkou Hentai", "https://hentai.gekkouscans.com.br", "pt-BR", isNsfw = true),
             SourceData.Single("White Cloud Pavilion", "https://whitecloudpavilion.com/manga/patreon", "en"),
             // NOTE: THIS SOURCE CONTAINS A CUSTOM LANGUAGE SYSTEM (which will be ignored)!
             SourceData.Single("HentaiShark", "https://www.hentaishark.com", "all", isNsfw = true),

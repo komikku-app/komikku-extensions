@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.pt.gekkouscan
+package eu.kanade.tachiyomi.extension.pt.gekkouhentai
 
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.mmrcms.MMRCMS
@@ -8,9 +8,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
-class GekkouScans : MMRCMS(
-    "Gekkou Scans",
-    "https://gekkou.com.br",
+class GekkouHentai : MMRCMS(
+    "Gekkou Hentai",
+    "https://hentai.gekkouscans.com.br",
     "pt-BR"
 ) {
 
