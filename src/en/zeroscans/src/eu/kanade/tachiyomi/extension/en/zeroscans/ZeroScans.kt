@@ -25,13 +25,13 @@ class ZeroScans : HttpSource() {
 
     override val lang: String = "en"
 
-    override val baseUrl: String = "https://beta.zeroscans.com"
+    override val baseUrl: String = "https://zeroscans.com"
 
     override val supportsLatest: Boolean = true
 
     private val json: Json by injectLazy()
 
-    private lateinit var comicList: List<ZeroScansComicDto>
+    private var comicList: List<ZeroScansComicDto> = emptyList()
 
     private lateinit var rankings: ZeroScansRankingsDto
 
