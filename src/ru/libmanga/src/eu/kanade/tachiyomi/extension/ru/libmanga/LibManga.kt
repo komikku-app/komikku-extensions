@@ -84,6 +84,8 @@ class LibManga : ConfigurableSource, HttpSource() {
     override val baseUrl: String = domain.toString()
 
     override fun headersBuilder() = Headers.Builder().apply {
+        //User-Agent required for authorization through third-party accounts (mobile version for correct display in WebView)
+        add("User-Agent", "Mozilla/5.0 (Linux; Android 10; SM-G980F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Mobile Safari/537.36")
         add("Accept", "image/webp,*/*;q=0.8")
         add("Referer", baseUrl)
     }
