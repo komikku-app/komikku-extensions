@@ -400,6 +400,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("SodaScan", "https://sodascan.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Solo Leveling", "https://readsololeveling.online", "en"),
         SingleLang("Sugar Babies", "https://sugarbbscan.com", "en", overrideVersionCode = 2),
+        SingleLang("Summanga", "https://summanga.com", "en", isNsfw = true),
         SingleLang("Sunshine Butterfly Scans", "https://sunshinebutterflyscan.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("SuperManga", "https://supermanga.co", "en"),
         SingleLang("Sweet Time Scan", "https://sweetscan.net", "pt-BR", overrideVersionCode = 2),
