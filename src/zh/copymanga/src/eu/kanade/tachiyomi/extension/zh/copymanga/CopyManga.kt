@@ -47,6 +47,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
     private val mainlandCdn2Url = "https://mirror77.mangafuna.xyz"
     private val overseasCdn1Url = "https://mirror2.mangafunc.fun"
     private val overseasCdn2Url = "https://mirror.mangafunc.fun"
+    private val apiUrl = "https://api.copymanga.org"
 
     val replaceToMirror2 = Regex("mirror277\\.mangafuna\\.xyz\\:12001")
     val replaceToMirror = Regex("mirror77\\.mangafuna\\.xyz\\:12001")
@@ -226,22 +227,13 @@ class CopyManga : ConfigurableSource, HttpSource() {
         return retChapter.asReversed()
     }
 
-    override fun pageListRequest(chapter: SChapter) = GET(baseUrl + chapter.url, headers)
+    override fun pageListRequest(chapter: SChapter) = GET("$apiUrl/api/v3${chapter.url}", headers)
     override fun pageListParse(response: Response): List<Page> {
-        val document = response.asJsoup()
-        val disposableData = document.select("div.imageData").first().attr("contentKey")
-        val disposablePass = this.evaluateScript(document, "jojo")
-
-        val pageJsonString = decryptChapterData(disposableData, disposablePass)
-        val pageArray = JSONArray(pageJsonString)
-
+        val jsonObject = JSONObject(response.body!!.string())
+        val pageArray = jsonObject.getJSONObject("results").getJSONObject("chapter").getJSONArray("contents")
         val ret = ArrayList<Page>(pageArray.length())
         for (i in 0 until pageArray.length()) {
-            var page = pageArray.getJSONObject(i).getString("url")
-            if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
-                page = replaceToMirror2.replace(page, "mirror2.mangafunc.fun:443")
-                page = replaceToMirror.replace(page, "mirror.mangafunc.fun:443")
-            }
+            val page = pageArray.getJSONObject(i).getString("url")
             ret.add(Page(i, "", page))
         }
 
@@ -251,6 +243,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", baseUrl)
         .add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36")
+        .add("region", if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) "0" else "1")
 
     // Unused, we can get image urls directly from the chapter page
     override fun imageUrlParse(response: Response) =
@@ -502,7 +495,7 @@ class CopyManga : ConfigurableSource, HttpSource() {
         val cdnPreference = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = CHANGE_CDN_OVERSEAS
             title = "转换图片CDN为境外CDN"
-            summary = "加载图片使用境外CDN，使用代理的情况下推荐打开此选项（境外CDN可能无法查看一些刚刚更新的漫画，需要等待资源更新到CDN）"
+            summary = "需要重启软件（及清除章节缓存）以生效。加载图片使用境外CDN，使用代理的情况下推荐打开此选项（境外CDN可能无法查看一些刚刚更新的漫画，需要等待资源更新到CDN）"
 
             setOnPreferenceChangeListener { _, newValue ->
                 try {
