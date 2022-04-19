@@ -40,7 +40,7 @@ abstract class WPMangaReader(
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val json: Json by injectLazy()
+    protected val json: Json by injectLazy()
 
     // popular
     override fun popularMangaRequest(page: Int) = searchMangaRequest(page, "", FilterList(OrderByFilter(5)))
