@@ -11,23 +11,11 @@ import java.util.Locale
 class FallenAngels : MMRCMS("Fallen Angels", "https://manga.fascans.com", "en") {
 
     /**
-     * Parses the response from the site and returns a list of chapters.
-     *
-     * Overriden to allow for null chapters
-     *
-     * @param response the response from the site.
-     */
-    override fun chapterListParse(response: Response): List<SChapter> {
-        val document = response.asJsoup()
-        return document.select(chapterListSelector()).mapNotNull { nullableChapterFromElement(it) }
-    }
-
-    /**
      * Returns a chapter from the given element.
      *
      * @param element an element obtained from [chapterListSelector].
      */
-    private fun nullableChapterFromElement(element: Element): SChapter? {
+    override fun nullableChapterFromElement(element: Element): SChapter? {
         val chapter = SChapter.create()
 
         val titleWrapper = element.select("[class^=chapter-title-rtl]").first()

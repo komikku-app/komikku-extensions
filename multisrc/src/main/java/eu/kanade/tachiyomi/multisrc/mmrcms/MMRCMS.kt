@@ -358,7 +358,7 @@ abstract class MMRCMS(
      *
      * @param element an element obtained from [chapterListSelector].
      */
-    private fun nullableChapterFromElement(element: Element): SChapter? {
+    protected open fun nullableChapterFromElement(element: Element): SChapter? {
         val chapter = SChapter.create()
 
         try {
