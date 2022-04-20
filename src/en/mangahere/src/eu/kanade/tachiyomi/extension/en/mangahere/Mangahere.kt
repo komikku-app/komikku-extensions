@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Cookie
 import okhttp3.CookieJar
+import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -33,6 +34,9 @@ class Mangahere : ParsedHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .add("Referer", baseUrl)
 
     override val client: OkHttpClient = super.client.newBuilder()
         .cookieJar(
@@ -150,7 +154,6 @@ class Mangahere : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         manga.author = document.select(".detail-info-right-say > a")?.first()?.text()
-        manga.artist = ""
         manga.genre = document.select(".detail-info-right-tag-list > a")?.joinToString { it.text() }
         manga.description = document.select(".fullcontent")?.first()?.text()
         manga.thumbnail_url = document.select("img.detail-info-cover-img")?.first()
