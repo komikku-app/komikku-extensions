@@ -64,8 +64,8 @@ class LibManga : ConfigurableSource, HttpSource() {
         val originalRequest = chain.request()
         val response = chain.proceed(originalRequest)
         val urlRequest = originalRequest.url.toString()
-        val possibleType = urlRequest.substringAfterLast("/").split(".")
-        return if (!urlRequest.contains(baseUrl) and (possibleType.size == 2)) {
+        val possibleType = urlRequest.substringAfterLast("/").substringBefore("?").split(".")
+        return if (urlRequest.contains("/chapters/") and (possibleType.size == 2)) {
             val realType = possibleType[1]
             val image = response.body?.byteString()?.toResponseBody("image/$realType".toMediaType())
             response.newBuilder().body(image).build()
