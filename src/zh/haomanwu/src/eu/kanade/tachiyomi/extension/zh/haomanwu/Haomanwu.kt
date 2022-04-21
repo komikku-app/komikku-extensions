@@ -51,7 +51,7 @@ class Haomanwu : ParsedHttpSource() {
     // Details
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        title = document.select("p.comic-title").text()
+        title = document.select("div.de-info__box > p.comic-title").text()
         thumbnail_url = document.select("div.de-info__cover > img").attr("src")
         author = document.select("div.comic-author > span.name > a").text()
         artist = author
