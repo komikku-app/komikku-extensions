@@ -141,7 +141,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Império Scans", "https://imperioscans.com.br", "pt-BR", className = "ImperioScans", overrideVersionCode = 1),
         SingleLang("InfraFandub", "https://infrafandub.xyz", "es"),
         SingleLang("Inmortal Scan", "https://manga.mundodrama.site", "es"),
-        SingleLang("InstaManhwa", "https://www.instamanhwa.com", "en", isNsfw = true),
+        SingleLang("InstaManhwa", "https://www.instamanhwa.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("IsekaiScan.com", "https://isekaiscan.com", "en", className = "IsekaiScanCom", overrideVersionCode = 4),
         SingleLang("IsekaiScan.eu (unoriginal)", "https://isekaiscan.eu", "en", className = "IsekaiscanEu"),
         SingleLang("IsekaiScanManga (unoriginal)", "https://isekaiscanmanga.com", "en", className = "IsekaiScanManga", overrideVersionCode = 1),

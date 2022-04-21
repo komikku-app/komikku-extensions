@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.asJsoup
@@ -31,6 +32,10 @@ class InstaManhwa : Madara(
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         return GET("$baseUrl/search?s=$query&page=$page", headers)
+    }
+
+    override fun pageListParse(document: Document): List<Page> {
+        return super.pageListParse(document).distinctBy { it.imageUrl }
     }
 
     override fun chapterListRequest(manga: SManga): Request {
