@@ -14,9 +14,11 @@ import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -111,10 +113,23 @@ class NeoxScanlator :
     }
 
     override fun mangaDetailsRequest(manga: SManga): Request {
-        val mangaSlug = manga.url.removePrefix("/").substringAfter("/")
-        val mangaUrl = "/" + (titleCollectionPath ?: TITLE_PATH_PLACEHOLDER) + "/" + mangaSlug
+        val fixedUrl = (baseUrl + manga.url).toHttpUrl().newBuilder()
+            .setPathSegment(0, titleCollectionPath ?: TITLE_PATH_PLACEHOLDER)
+            .toString()
 
-        return GET(baseUrl + mangaUrl, headers)
+        return GET(fixedUrl, headers)
+    }
+
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+        return client.newCall(chapterListRequest(manga))
+            .asObservable()
+            .doOnNext { response ->
+                if (!response.isSuccessful) {
+                    response.close()
+                    throw Exception(if (response.code == 404) MIGRATION_MESSAGE else "HTTP error ${response.code}")
+                }
+            }
+            .map(::chapterListParse)
     }
 
     override fun xhrChaptersRequest(mangaUrl: String): Request {
@@ -123,10 +138,23 @@ class NeoxScanlator :
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
-        val mangaSlug = mangaUrl.toHttpUrl().pathSegments[1]
-        val fixedUrl = (titleCollectionPath ?: TITLE_PATH_PLACEHOLDER) + "/" + mangaSlug
+        val fixedUrl = mangaUrl.toHttpUrl().newBuilder()
+            .setPathSegment(0, titleCollectionPath ?: TITLE_PATH_PLACEHOLDER)
+            .addPathSegments("ajax/chapters")
+            .toString()
 
-        return POST("$baseUrl/$fixedUrl/ajax/chapters", xhrHeaders)
+        return POST(fixedUrl, xhrHeaders)
+    }
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        val chapterUrl = (baseUrl + chapter.url.removePrefix(baseUrl)).toHttpUrlOrNull()
+            ?: return super.pageListRequest(chapter)
+
+        val fixedUrl = chapterUrl.newBuilder()
+            .setPathSegment(0, titleCollectionPath ?: TITLE_PATH_PLACEHOLDER)
+            .toString()
+
+        return GET(fixedUrl, headers)
     }
 
     override fun imageRequest(page: Page): Request {
@@ -193,8 +221,8 @@ class NeoxScanlator :
     }
 
     companion object {
-        private const val MIGRATION_MESSAGE = "O URL deste mangá mudou. " +
-            "Faça a migração do Neox para o Neox para atualizar a URL."
+        private const val MIGRATION_MESSAGE = "A URL deste mangá mudou. " +
+            "Faça a migração da Neox para a Neox para atualizar a URL."
 
         private const val ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9," +
             "image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
