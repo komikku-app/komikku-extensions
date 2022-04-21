@@ -80,6 +80,7 @@ data class PicaPages(
     val docs: List<PicaPage>,
     val page: Int,
     val pages: Int,
+    val limit: Int
 )
 
 @Serializable

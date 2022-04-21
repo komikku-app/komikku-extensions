@@ -285,7 +285,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
 
         val ret = pages.docs.mapIndexed { index, picaPage ->
             val url = picaPage.media.let { "${it.fileServer}/static/${it.path}" }
-            Page(index, "", url)
+            Page(index + (pages.page - 1) * pages.limit, "", url)
         }.toMutableList()
 
         if (pages.page < pages.pages) {
