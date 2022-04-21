@@ -38,7 +38,6 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("TuttoAnimeManga", "https://tuttoanimemanga.net", "it"),
         SingleLang("Rama", "https://www.ramareader.it", "it"),
         SingleLang("Mabushimajo", "http://mabushimajo.com", "tr"),
-        SingleLang("Hyakuro", "https://hyakuro.com", "en"),
         SingleLang("Le Cercle du Scan", "https://lel.lecercleduscan.com", "fr", className = "LeCercleDuScan", overrideVersionCode = 1),
         SingleLang("LetItGo Scans", "https://reader.letitgo.scans.today", "en", overrideVersionCode = 1),
     )
