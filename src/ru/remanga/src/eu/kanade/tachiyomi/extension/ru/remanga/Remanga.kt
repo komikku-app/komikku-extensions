@@ -8,6 +8,7 @@ import MangaDetDto
 import MyLibraryDto
 import PageDto
 import PageWrapperDto
+import PageWrapperDtoNoLimit
 import SeriesWrapperDto
 import TagsDto
 import UserDto
@@ -72,10 +73,10 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     override val supportsLatest = true
 
-    private val userAgentRandomizer = " ${Random.nextInt().absoluteValue}"
+    private val userAgentRandomizer = "${Random.nextInt().absoluteValue}"
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/78.0$userAgentRandomizer")
+        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 Edg/100.0.$userAgentRandomizer")
         .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/jxl,image/webp,*/*;q=0.8")
         .add("Referer", baseUrl.replace("api.", ""))
 
@@ -99,7 +100,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         val originalRequest = chain.request()
         val response = chain.proceed(originalRequest)
         val urlRequest = originalRequest.url.toString()
-        val possibleType = urlRequest.substringAfterLast("/").split(".")
+        val possibleType = urlRequest.substringAfterLast("/").substringBefore("?").split(".")
         return if (urlRequest.contains("/images/") and (possibleType.size == 2)) {
             val realType = possibleType[1]
             val image = response.body?.byteString()?.toResponseBody("image/$realType".toMediaType())
@@ -123,10 +124,16 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/api/titles/last-chapters/?page=$page&count=$count", headers)
 
-    override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val page = json.decodeFromString<PageWrapperDtoNoLimit<LibraryDto>>(response.body!!.string())
+        val mangas = page.content.map {
+            it.toSManga()
+        }
+        return MangasPage(mangas, mangas.isNotEmpty())
+    }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        if (response.request.url.toString().contains("bookmarks")) {
+        if (response.request.url.toString().contains("/bookmarks/")) {
             val page = json.decodeFromString<PageWrapperDto<MyLibraryDto>>(response.body!!.string())
             val mangas = page.content.map {
                 it.title.toSManga()
@@ -151,9 +158,11 @@ class Remanga : ConfigurableSource, HttpSource() {
             // Do not change the title name to ensure work with a multilingual catalog!
             title = if (isEng.equals("rus")) rus_name else en_name
             url = "/api/titles/$dir/"
-            thumbnail_url = if (img.high.isNotEmpty()) {
+            thumbnail_url = if (img.high?.isNotEmpty() == true) {
                 baseUrl + img.high
-            } else baseUrl + img.mid
+            } else if (img.mid?.isNotEmpty() == true) {
+                baseUrl + img.mid
+            } else baseUrl + img.low
         }
 
     private val simpleDateFormat by lazy { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US) }
