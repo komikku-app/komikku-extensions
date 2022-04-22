@@ -28,7 +28,8 @@ class ZinChanManga : HttpSource() {
     private val apiClient by lazy {
         network.client.newBuilder()
             .sslSocketFactory(ZinChanCert.factory, ZinChanCert.manager)
-            .addInterceptor(RateLimitInterceptor(2)).build()
+            .addInterceptor(RateLimitInterceptor(5, 50))
+            .build()
     }
 
     private val apiHeaders by lazy {
