@@ -269,6 +269,21 @@ open class UriPartFilter(displayName: String, private val vals: Array<Pair<Strin
 Extensions can define URL intent filters by defining it inside a custom `AndroidManifest.xml` file.
 For an example, refer to [the NHentai module's `AndroidManifest.xml` file](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/src/all/nhentai/AndroidManifest.xml) and [its corresponding `NHUrlActivity` handler](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/src/all/nhentai/src/eu/kanade/tachiyomi/extension/all/nhentai/NHUrlActivity.kt).
 
+#### Renaming existing sources
+
+There is some cases where existing sources changes their name on the website. To correctly reflect these changes in the extension, you need to explicity set the `id` to the same old value, otherwise it will get changed by the new `name` value and users will be forced to migrate back to the source.
+
+To get the current `id` value before the name change, you can search the source name in the [repository JSON file](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/repo/index.json) by looking into the `sources` attribute of the extension. When you have the `id` copied, you can override it in the source:
+
+```kotlin
+override val id: Long = <the-id>
+```
+
+Then the class name and the `name` attribute value can be changed. Also don't forget to update the extension name and class name in the individual Gradle file if it is not a multisrc extension.
+
+**Important:** the package name **needs** to be the same (even if it has the old name), otherwise users will not receive the extension update when it gets published in the repository. If you're changing the name of a multisrc source, you can manually set it in the generator class of the theme by using `pkgName = "oldpackagename"`.
+
+The `id` also needs to be explicity set to the old value if you're changing the `lang` attribute.
 
 ## Multi-source themes
 The `multisrc` module houses source code for generating extensions for cases where multiple source sites use the same site generator tool(usually a CMS) for bootsraping their website and this makes them similar enough to prompt code reuse through inheritance/composition; which from now on we will use the general **theme** term to refer to.
@@ -427,25 +442,43 @@ Instead, once you've built and installed your extension on the target device, us
 ### Logs
 
 You can also elect to simply rely on logs printed from your extension, which
-show up in the [`Logcat`](https://developer.android.com/studio/debug/am-logcat) panel of Android Studio
+show up in the [`Logcat`](https://developer.android.com/studio/debug/am-logcat) panel of Android Studio.
 
-### Intercept network calls
-One of the easiest way to debug networking issues (such as 404, 429, no chapter found, etc) is to use mitm proxy.
+### Inspecting network calls
+One of the easiest way to inspect network issues (such as HTTP errors 404, 429, no chapter found etc.) is to use the [`Logcat`](https://developer.android.com/studio/debug/am-logcat) panel of Android Studio and filtering by the `OkHttpClient` tag.
+
+To be able to check the calls done by OkHttp, you need to enable verbose logging in the app, that is not enabled by default and is only included in the Preview versions of Tachiyomi. To enable it, go to More -> Settings -> Advanced -> Verbose logging. After enabling it, don't forget to restart the app.
+
+Inspecting the Logcat allows you to get a good look at the call flow and it's more than enough in most cases where issues occurs. However, alternatively, you can also use an external tool like `mitm-proxy`. For that, refer to the next section.
+
+### Using external network inspecting tools
+If you want to take a deeper look into the network flow, such as taking a look into the request and response bodies, you can use an external tool like `mitm-proxy`.
 
 #### Setup your proxy server
-We are going to use [mitm-proxy](https://mitmproxy.org/) but you can replace it with any other Web Debugger (i.e. Charles, burp, Fiddler,etc).
+We are going to use [mitm-proxy](https://mitmproxy.org/) but you can replace it with any other Web Debugger (i.e. Charles, burp, Fiddler etc). To install and execute, follow the commands bellow.
 
-Execute
-```
-docker run --rm -it -p 8080:8080 -p 127.0.0.1:8081:8081 mitmproxy/mitmproxy mitmweb --web-host 0.0.0.0
+```console
+Install the tool.
+$ sudo pip3 install mitmproxy
+Execute the web interface and the proxy.
+$ mitmweb
 ```
 
-and point your browser to http://127.0.0.0:8081/
+Alternatively, you can also use the Docker image:
+
+```
+$ docker run --rm -it -p 8080:8080 \
+    -p 127.0.0.1:8081:8081 \
+    --web-host 0.0.0.0 \
+    mitmproxy/mitmproxy mitmweb
+```
+
+After installing and running, open your browser and navigate to http://127.0.0.1:8081.
 
 #### OkHttp proxy setup
-Since most of the manga sources are going to use https we need to disable ssl verification in order to use web debugger.
+Since most of the manga sources are going to use HTTPS, we need to disable SSL verification in order to use the web debugger. For that, add this code to inside your source class:
 
-Amend your source kotlin file
+
 ```kotlin
 class MangaSource : MadTheme(
     "MangaSource",
@@ -476,9 +509,9 @@ class MangaSource : MadTheme(
         .build()
 ```
 
-Note: `10.0.2.2` is usually the address of your loopback interface in the android emulator, if tachiyomi tells you that it's unable to connect to 10.0.2.2:8080 you will likely need to change it (the same if you are using hardware device)
+Note: `10.0.2.2` is usually the address of your loopback interface in the android emulator. If Tachiyomi tells you that it's unable to connect to 10.0.2.2:8080 you will likely need to change it (the same if you are using hardware device).
 
-If all went well, you should see all requests and responses made by the source.
+If all went well, you should see all requests and responses made by the source in the web interface of `mitmweb`.
 
 ## Building
 
