@@ -429,6 +429,56 @@ Instead, once you've built and installed your extension on the target device, us
 You can also elect to simply rely on logs printed from your extension, which
 show up in the [`Logcat`](https://developer.android.com/studio/debug/am-logcat) panel of Android Studio
 
+### Intercept network calls
+One of the easiest way to debug networking issues (such as 404, 429, no chapter found, etc) is to use mitm proxy.
+
+#### Setup your proxy server
+We are going to use [mitm-proxy](https://mitmproxy.org/) but you can replace it with any other Web Debugger (i.e. Charles, burp, Fiddler,etc).
+
+Execute
+```
+docker run --rm -it -p 8080:8080 -p 127.0.0.1:8081:8081 mitmproxy/mitmproxy mitmweb --web-host 0.0.0.0
+```
+
+and point your browser to http://0.0.0.0:8081/
+
+#### OkHttp proxy setup
+Since most of the manga sources are going to use https we need to disable ssl verification in order to use web debugger.
+
+Amend your source kotlin file
+```kotlin
+class MangaSource : MadTheme(
+    "MangaSource",
+    "https://example.com",
+    "en"
+) {
+    private fun OkHttpClient.Builder.ignoreAllSSLErrors(): OkHttpClient.Builder {
+        val naiveTrustManager = object : X509TrustManager {
+            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+            override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) = Unit
+            override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) = Unit
+        }
+
+        val insecureSocketFactory = SSLContext.getInstance("TLSv1.2").apply {
+            val trustAllCerts = arrayOf<TrustManager>(naiveTrustManager)
+            init(null, trustAllCerts, SecureRandom())
+        }.socketFactory
+
+        sslSocketFactory(insecureSocketFactory, naiveTrustManager)
+        hostnameVerifier(HostnameVerifier { _, _ -> true })
+        return this
+    }
+
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .ignoreAllSSLErrors()
+        .proxy(Proxy(Proxy.Type.HTTP, InetSocketAddress("10.0.2.2", 8080)))
+        ....
+        .build()
+```
+
+Note: `10.0.2.2` is usually the address of your loopback interface in the android emulator, if tachiyomi tells you that it's unable to connect to 10.0.2.2:8080 you will likely need to change it (the same if you are using hardware device)
+
+If all went well, you should see all requests and responses made by the source.
 
 ## Building
 
