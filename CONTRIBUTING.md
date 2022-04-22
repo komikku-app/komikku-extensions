@@ -440,7 +440,7 @@ Execute
 docker run --rm -it -p 8080:8080 -p 127.0.0.1:8081:8081 mitmproxy/mitmproxy mitmweb --web-host 0.0.0.0
 ```
 
-and point your browser to http://0.0.0.0:8081/
+and point your browser to http://127.0.0.0:8081/
 
 #### OkHttp proxy setup
 Since most of the manga sources are going to use https we need to disable ssl verification in order to use web debugger.
