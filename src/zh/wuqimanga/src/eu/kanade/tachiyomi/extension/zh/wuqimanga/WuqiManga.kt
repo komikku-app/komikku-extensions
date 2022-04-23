@@ -145,7 +145,7 @@ class WuqiManga : ParsedHttpSource() {
         val html = document.html()
         val packed = Regex("eval(.*?)\\n").find(html)?.groups?.get(1)?.value
         val result = Duktape.create().use {
-            it.evaluate(packed) as String
+            it.evaluate(packed!!) as String
         }
         val re2 = Regex("""\{.*\}""")
         val imgJsonStr = re2.find(result)?.groups?.get(0)?.value

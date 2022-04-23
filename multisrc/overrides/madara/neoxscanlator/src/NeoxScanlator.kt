@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
@@ -231,7 +231,7 @@ class NeoxScanlator :
         private const val REFERER = "https://google.com/"
 
         private const val DEFAULT_BASE_URL = "https://neoxscans.net"
-        private val BASE_URL_PREF_KEY = "base_url_${BuildConfig.VERSION_NAME}"
+        private val BASE_URL_PREF_KEY = "base_url_${AppInfo.getVersionName()}"
         private const val BASE_URL_PREF_TITLE = "URL da fonte"
         private const val BASE_URL_PREF_SUMMARY = "Para uso temporário. Quando você atualizar a " +
             "extensão, esta configuração será apagada."

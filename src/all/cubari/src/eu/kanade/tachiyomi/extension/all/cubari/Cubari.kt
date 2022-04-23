@@ -2,7 +2,7 @@ package eu.kanade.tachiyomi.extension.all.cubari
 
 import android.app.Application
 import android.os.Build
-import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -42,7 +42,7 @@ open class Cubari(override val lang: String) : HttpSource() {
             "User-Agent",
             "(Android ${Build.VERSION.RELEASE}; " +
                 "${Build.MANUFACTURER} ${Build.MODEL}) " +
-                "Tachiyomi/${BuildConfig.VERSION_NAME} " +
+                "Tachiyomi/${AppInfo.getVersionName()} " +
                 Build.ID
         )
     }
