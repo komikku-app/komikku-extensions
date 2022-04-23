@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.extension.ko.jmana
 import android.app.Application
 import android.content.SharedPreferences
 import android.widget.Toast
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -201,7 +201,7 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
         const val DETAIL_DESCRIPTION = "설명 : "
         const val DEFAULT_BASEURL = "https://jmana1.net"
         private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-        private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
+        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
         private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
         private const val RESTART_TACHIYOMI = "Restart Tachiyomi to apply new setting."
     }

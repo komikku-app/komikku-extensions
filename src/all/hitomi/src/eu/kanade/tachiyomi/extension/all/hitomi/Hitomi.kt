@@ -358,7 +358,7 @@ open class Hitomi(override val lang: String, private val nozomiLang: String) : H
             gg = response.body!!.string()
         }
         val duktape = Duktape.create()
-        duktape.evaluate(gg!!)
+        duktape.evaluate(gg)
 
         val str = response.body!!.string()
         val json = json.decodeFromString<HitomiChapterDto>(str.removePrefix("var galleryinfo = "))

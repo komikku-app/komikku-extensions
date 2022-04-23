@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.text.InputType
 import android.util.Log
 import android.widget.Toast
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.extension.BuildConfig
 import eu.kanade.tachiyomi.extension.all.komga.dto.AuthorDto
 import eu.kanade.tachiyomi.extension.all.komga.dto.BookDto
 import eu.kanade.tachiyomi.extension.all.komga.dto.CollectionDto
@@ -17,7 +17,6 @@ import eu.kanade.tachiyomi.extension.all.komga.dto.SeriesDto
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
-import eu.kanade.tachiyomi.source.UnmeteredSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -45,7 +44,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, HttpSource() {
+open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
     override fun popularMangaRequest(page: Int): Request =
         GET("$baseUrl/api/v1/series?page=${page - 1}&deleted=false", headers)
 
@@ -397,7 +396,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
 
     override fun headersBuilder(): Headers.Builder =
         Headers.Builder()
-            .add("User-Agent", "TachiyomiKomga/${AppInfo.getVersionName()}")
+            .add("User-Agent", "TachiyomiKomga/${BuildConfig.VERSION_NAME}")
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)

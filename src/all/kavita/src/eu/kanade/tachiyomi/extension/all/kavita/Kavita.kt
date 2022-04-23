@@ -7,7 +7,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.MultiSelectListPreference
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.extension.all.kavita.dto.AuthenticationDto
 import eu.kanade.tachiyomi.extension.all.kavita.dto.ChapterDto
 import eu.kanade.tachiyomi.extension.all.kavita.dto.MangaFormat
@@ -859,13 +859,13 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, HttpSource()
     override fun headersBuilder(): Headers.Builder {
         if (jwtToken.isEmpty()) throw LoginErrorException("401 Error\nOPDS address got modified or is incorrect")
         return Headers.Builder()
-            .add("User-Agent", "Tachiyomi Kavita v${AppInfo.getVersionName()}")
+            .add("User-Agent", "Tachiyomi Kavita v${BuildConfig.VERSION_NAME}")
             .add("Content-Type", "application/json")
             .add("Authorization", "Bearer $jwtToken")
     }
     private fun setupLoginHeaders(): Headers.Builder {
         return Headers.Builder()
-            .add("User-Agent", "Tachiyomi Kavita v${AppInfo.getVersionName()}")
+            .add("User-Agent", "Tachiyomi Kavita v${BuildConfig.VERSION_NAME}")
             .add("Content-Type", "application/json")
             .add("Authorization", "Bearer $jwtToken")
     }
@@ -1147,13 +1147,13 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, HttpSource()
                         .parseAs<ServerInfoDto>()
                     Log.e(
                         LOG_TAG,
-                        "Extension version: code=${AppInfo.getVersionCode()}  name=${AppInfo.getVersionName()}" +
+                        "Extension version: code=${BuildConfig.VERSION_CODE}  name=${BuildConfig.VERSION_NAME}" +
                             " - - Kavita version: ${serverInfoDto.kavitaVersion}"
                     ) // this is not a real error. Using this so it gets printed in dump logs if there's any error
                 } catch (e: EmptyRequestBody) {
-                    Log.e(LOG_TAG, "Extension version: code=${AppInfo.getVersionCode()} - name=${AppInfo.getVersionName()}")
+                    Log.e(LOG_TAG, "Extension version: code=${BuildConfig.VERSION_CODE} - name=${BuildConfig.VERSION_NAME}")
                 } catch (e: Exception) {
-                    Log.e(LOG_TAG, "Tachiyomi version: code=${AppInfo.getVersionCode()} - name=${AppInfo.getVersionName()}", e)
+                    Log.e(LOG_TAG, "Tachiyomi version: code=${BuildConfig.VERSION_CODE} - name=${BuildConfig.VERSION_NAME}", e)
                 }
                 try { // Load Filters
                     // Genres

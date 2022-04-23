@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.text.InputType
 import android.widget.Toast
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -212,7 +212,7 @@ class Mango : ConfigurableSource, HttpSource() {
 
     override fun headersBuilder(): Headers.Builder =
         Headers.Builder()
-            .add("User-Agent", "Tachiyomi Mango v${AppInfo.getVersionName()}")
+            .add("User-Agent", "Tachiyomi Mango v${BuildConfig.VERSION_NAME}")
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)

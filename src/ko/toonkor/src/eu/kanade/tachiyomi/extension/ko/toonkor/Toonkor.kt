@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.extension.ko.toonkor
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Base64
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
@@ -28,7 +28,7 @@ class Toonkor : ConfigurableSource, ParsedHttpSource() {
 
     private val defaultBaseUrl = "https://tkor.dog"
 
-    private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
+    private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
