@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.zeroscans
 
-import eu.kanade.tachiyomi.source.model.Page
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
