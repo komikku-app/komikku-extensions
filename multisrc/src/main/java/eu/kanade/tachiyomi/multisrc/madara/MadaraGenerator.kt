@@ -16,7 +16,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         MultiLang("Leviatan Scans", "https://leviatanscans.com", listOf("en", "es"), className = "LeviatanScansFactory", overrideVersionCode = 9),
         MultiLang("MangaForFree.net", "https://mangaforfree.net", listOf("en", "ko", "all"), isNsfw = true, className = "MangaForFreeFactory", pkgName = "mangaforfree", overrideVersionCode = 1),
         MultiLang("Manhwa18.cc", "https://manhwa18.cc", listOf("en", "ko", "all"), isNsfw = true, className = "Manhwa18CcFactory", pkgName = "manhwa18cc", overrideVersionCode = 1),
-        MultiLang("Reaper Scans", "https://reaperscans.com", listOf("en", "pt-BR"), className = "ReaperScansFactory", pkgName = "reaperscans", overrideVersionCode = 4),
+        MultiLang("Reaper Scans", "https://reaperscans.com", listOf("en", "pt-BR", "fr", "id", "tr"), className = "ReaperScansFactory", pkgName = "reaperscans", overrideVersionCode = 5),
         MultiLang("Seven King Scanlation", "https://sksubs.net", listOf("es", "en"), isNsfw = true),
         MultiLang("YugenMangas", "https://yugenmangas.com", listOf("es", "pt-BR"), overrideVersionCode = 2),
         SingleLang("1st Kiss Manga.love", "https://1stkissmanga.love", "en", className = "FirstKissMangaLove", overrideVersionCode = 1),
