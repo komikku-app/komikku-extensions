@@ -40,6 +40,7 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("Mabushimajo", "http://mabushimajo.com", "tr"),
         SingleLang("Le Cercle du Scan", "https://lel.lecercleduscan.com", "fr", className = "LeCercleDuScan", overrideVersionCode = 1),
         SingleLang("LetItGo Scans", "https://reader.letitgo.scans.today", "en", overrideVersionCode = 1),
+        SingleLang("Wanted Team", "https://reader.onepiecenakama.pl", "pl"),
     )
 
     companion object {
