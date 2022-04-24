@@ -15,10 +15,6 @@ import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-/**
- *  @author Aria Moradi <aria.moradi007@gmail.com>
- */
-
 class TimelessLeaf : HttpSource() {
 
     override val name = "TimelessLeaf"
