@@ -792,6 +792,8 @@ abstract class Madara(
 
     override fun chapterListSelector() = "li.wp-manga-chapter"
 
+    protected open fun chapterDateSelector() = "span.chapter-release-date"
+
     open val chapterUrlSelector = "a"
 
     open val chapterUrlSuffix = "?style=list"
@@ -810,7 +812,7 @@ abstract class Madara(
             // Added "title" alternative
             chapter.date_upload = select("img:not(.thumb)").firstOrNull()?.attr("alt")?.let { parseRelativeDate(it) }
                 ?: select("span a").firstOrNull()?.attr("title")?.let { parseRelativeDate(it) }
-                ?: parseChapterDate(select("span.chapter-release-date").firstOrNull()?.text())
+                ?: parseChapterDate(select(chapterDateSelector()).firstOrNull()?.text())
         }
 
         return chapter
