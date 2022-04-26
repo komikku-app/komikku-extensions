@@ -1,17 +1,14 @@
 package eu.kanade.tachiyomi.extension.en.manhwamanga
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -22,12 +19,12 @@ class ManhwaManga : ParsedHttpSource() {
     override val lang = "en"
     override val supportsLatest = true
 
-    override fun popularMangaSelector() = ".home-truyendecu"
+    override fun popularMangaSelector() = ".box_list .li_truyen"
     override fun latestUpdatesSelector() = popularMangaSelector()
     override fun searchMangaSelector() = popularMangaSelector()
-    override fun chapterListSelector() = "#list-chapter > div.row > div > ul > li:nth-child(n)"
+    override fun chapterListSelector() = "div.content_view div.list-chapters div.list-chapters div.box_list div.chapter-item.row"
 
-    override fun popularMangaNextPageSelector() = "li.active+li a[data-page]"
+    override fun popularMangaNextPageSelector() = "div.page_redirect a.active+ a[data-page]"
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
@@ -66,38 +63,28 @@ class ManhwaManga : ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
 
-    protected fun getXhrChapters(mangaId: String): Document {
-        val xhrHeaders = headersBuilder().add("Content-Type: application/x-www-form-urlencoded; charset=UTF-8")
-            .build()
-        val body = "action=tw_ajax&type=list_chap&id=$mangaId".toRequestBody(null)
-        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", xhrHeaders, body)).execute().asJsoup()
-    }
-
     override fun chapterListParse(response: Response): List<SChapter> {
-        val document = response.asJsoup()
-        val dataIdSelector = "input[id^=id_post]"
-
-        return getXhrChapters(document.select(dataIdSelector).attr("value")).select("option").map { chapterFromElement(it) }.reversed()
+        return super.chapterListParse(response).reversed()
     }
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        element.let { urlElement ->
-            chapter.setUrlWithoutDomain(urlElement.attr("value"))
-            chapter.name = urlElement.text()
+
+        element.select("a").let {
+            chapter.setUrlWithoutDomain(it.attr("href"))
+            chapter.name = it.text()
         }
         chapter.date_upload = 0
-
         return chapter
     }
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        title = document.select("h3.title").text()
-        description = document.select("div.desc-text > p").text()
-        thumbnail_url = document.select("div.books > div > img").attr("src")
-        author = document.select("div.info > div:nth-child(1) > a").attr("title")
-        genre = document.select("div.info > div:nth-child(2) > a").joinToString { it.text() }
-        status = document.select("div.info > div:nth-child(3) > span").text().let {
+        title = document.select("h1").text()
+        description = document.select("div.story-detail-info").text()
+        thumbnail_url = document.select("div.box_info div.box_info_left div.img img").attr("src")
+        author = document.select(".box_info_right .info-item:nth-child(2)").text()
+        // genre = document.select("div.info > div:nth-child(2) > a").joinToString { it.text() }
+        status = document.select(".box_info_right .info-item:nth-child(4) span").text().let {
             when {
                 it.contains("Ongoing") -> SManga.ONGOING
                 it.contains("Completed") -> SManga.COMPLETED
@@ -106,10 +93,9 @@ class ManhwaManga : ParsedHttpSource() {
         }
     }
 
-    override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        document.select(".chapter_beta_content p img").forEachIndexed { index, element ->
-            add(Page(index, "", element.attr("src")))
-        }
+    override fun pageListParse(document: Document): List<Page> {
+        return document.select("div.content_view_chap > p > img")
+            .mapIndexed { i, el -> Page(i, "", el.attr("data-lazy-src")) }
     }
 
     override fun imageUrlRequest(page: Page) = throw Exception("Not used")
