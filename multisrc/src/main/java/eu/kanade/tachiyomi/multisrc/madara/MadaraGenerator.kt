@@ -432,6 +432,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Ultralight Scans", "https://readlight.org", "en"),
         SingleLang("Unemployed Scans", "https://unemployedscans.com", "en", overrideVersionCode = 1),
         SingleLang("Uyuyan Balik", "https://uyuyanbalik.com", "tr", overrideVersionCode = 1),
+        SingleLang("Uzay Manga", "https://uzaymanga.com", "tr"),
         SingleLang("Vanguard Bun", "https://vanguardbun.com", "en", overrideVersionCode = 1),
         SingleLang("Vapo Hentai", "http://xxx.vaposcans.com", "pt-BR", isNsfw = true),
         SingleLang("Vapo Scan", "https://vaposcans.com", "pt-BR", overrideVersionCode = 1),
