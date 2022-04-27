@@ -16,6 +16,7 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import okhttp3.Call
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -100,13 +101,7 @@ class NeoxScanlator :
     // migrate from Neox to Neox to update the URL.
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         return client.newCall(mangaDetailsRequest(manga))
-            .asObservable()
-            .doOnNext { response ->
-                if (!response.isSuccessful) {
-                    response.close()
-                    throw Exception(if (response.code == 404) MIGRATION_MESSAGE else "HTTP error ${response.code}")
-                }
-            }
+            .asCustomObservable()
             .map { response ->
                 mangaDetailsParse(response).apply { initialized = true }
             }
@@ -122,15 +117,11 @@ class NeoxScanlator :
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         return client.newCall(chapterListRequest(manga))
-            .asObservable()
-            .doOnNext { response ->
-                if (!response.isSuccessful) {
-                    response.close()
-                    throw Exception(if (response.code == 404) MIGRATION_MESSAGE else "HTTP error ${response.code}")
-                }
-            }
+            .asCustomObservable()
             .map(::chapterListParse)
     }
+
+    override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun xhrChaptersRequest(mangaUrl: String): Request {
         val xhrHeaders = headersBuilder()
@@ -211,7 +202,7 @@ class NeoxScanlator :
         titleCollectionPath = titlePathResult.getOrNull()
 
         val fixedUrl = request.url.toString()
-            .replace(TITLE_PATH_PLACEHOLDER, titleCollectionPath ?: "comicz")
+            .replace(TITLE_PATH_PLACEHOLDER, titleCollectionPath ?: "manga")
 
         val fixedRequest = request.newBuilder()
             .url(fixedUrl)
@@ -220,8 +211,24 @@ class NeoxScanlator :
         return chain.proceed(fixedRequest)
     }
 
+    private fun Call.asCustomObservable(): Observable<Response> {
+        return asObservable().doOnNext { response ->
+            if (!response.isSuccessful) {
+                response.close()
+                val message = if (response.code == 404)
+                    MIGRATION_MESSAGE else "HTTP error ${response.code}"
+                throw Exception(message)
+            }
+
+            if (response.request.url.toString() == "$baseUrl/" && response.code == 200) {
+                response.close()
+                throw Exception(MIGRATION_MESSAGE)
+            }
+        }
+    }
+
     companion object {
-        private const val MIGRATION_MESSAGE = "A URL deste mangá mudou. " +
+        private const val MIGRATION_MESSAGE = "A URL deste título mudou. " +
             "Faça a migração da Neox para a Neox para atualizar a URL."
 
         private const val ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9," +
