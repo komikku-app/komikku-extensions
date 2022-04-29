@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Call
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -46,7 +45,7 @@ class NeoxScanlator :
         .connectTimeout(1, TimeUnit.MINUTES)
         .readTimeout(1, TimeUnit.MINUTES)
         .addInterceptor(::titleCollectionIntercept)
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .addInterceptor(RateLimitInterceptor(1, 3, TimeUnit.SECONDS))
         .build()
 
     override val altNameSelector = ".post-content_item:contains(Alternativo) .summary-content"
@@ -71,7 +70,8 @@ class NeoxScanlator :
 
         titleCollectionPath = popularPage.mangas.firstOrNull()?.url
             ?.removePrefix("/")
-            ?.substringBefore("/")
+            ?.removeSuffix("/")
+            ?.substringBeforeLast("/")
 
         return popularPage
     }
@@ -81,7 +81,8 @@ class NeoxScanlator :
 
         titleCollectionPath = latestPage.mangas.firstOrNull()?.url
             ?.removePrefix("/")
-            ?.substringBefore("/")
+            ?.removeSuffix("/")
+            ?.substringBeforeLast("/")
 
         return latestPage
     }
@@ -91,14 +92,12 @@ class NeoxScanlator :
 
         titleCollectionPath = searchPage.mangas.firstOrNull()?.url
             ?.removePrefix("/")
-            ?.substringBefore("/")
+            ?.removeSuffix("/")
+            ?.substringBeforeLast("/")
 
         return searchPage
     }
 
-    // Sometimes the site changes the manga URL. This override will
-    // add an error instead of the HTTP 404 to inform the user to
-    // migrate from Neox to Neox to update the URL.
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         return client.newCall(mangaDetailsRequest(manga))
             .asCustomObservable()
@@ -108,11 +107,12 @@ class NeoxScanlator :
     }
 
     override fun mangaDetailsRequest(manga: SManga): Request {
-        val fixedUrl = (baseUrl + manga.url).toHttpUrl().newBuilder()
-            .setPathSegment(0, titleCollectionPath ?: TITLE_PATH_PLACEHOLDER)
-            .toString()
+        val titleSlug = manga.url
+            .removeSuffix("/")
+            .substringAfterLast("/")
+        val fixedPath = titleCollectionPath ?: TITLE_PATH_PLACEHOLDER
 
-        return GET(fixedUrl, headers)
+        return GET("$baseUrl/$fixedPath/$titleSlug", headers)
     }
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
@@ -129,23 +129,25 @@ class NeoxScanlator :
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
-        val fixedUrl = mangaUrl.toHttpUrl().newBuilder()
-            .setPathSegment(0, titleCollectionPath ?: TITLE_PATH_PLACEHOLDER)
-            .addPathSegments("ajax/chapters")
-            .toString()
+        val titleSlug = mangaUrl
+            .substringAfter(baseUrl)
+            .removeSuffix("/")
+            .substringAfterLast("/")
+        val fixedPath = titleCollectionPath ?: TITLE_PATH_PLACEHOLDER
 
-        return POST(fixedUrl, xhrHeaders)
+        return POST("$baseUrl/$fixedPath/$titleSlug/ajax/chapters", xhrHeaders)
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
-        val chapterUrl = (baseUrl + chapter.url.removePrefix(baseUrl)).toHttpUrlOrNull()
+        val chapterUrl = chapter.url.toHttpUrlOrNull()
             ?: return super.pageListRequest(chapter)
 
-        val fixedUrl = chapterUrl.newBuilder()
-            .setPathSegment(0, titleCollectionPath ?: TITLE_PATH_PLACEHOLDER)
-            .toString()
+        val chapterSlug = chapterUrl.pathSegments
+            .takeLast(3)
+            .joinToString("/")
+        val fixedPath = titleCollectionPath ?: TITLE_PATH_PLACEHOLDER
 
-        return GET(fixedUrl, headers)
+        return GET("$baseUrl/$fixedPath/$chapterSlug", headers)
     }
 
     override fun imageRequest(page: Page): Request {
@@ -196,7 +198,8 @@ class NeoxScanlator :
 
             popularPage.mangas.firstOrNull()?.url
                 ?.removePrefix("/")
-                ?.substringBefore("/")
+                ?.removeSuffix("/")
+                ?.substringBeforeLast("/")
         }
 
         titleCollectionPath = titlePathResult.getOrNull()
@@ -215,12 +218,17 @@ class NeoxScanlator :
         return asObservable().doOnNext { response ->
             if (!response.isSuccessful) {
                 response.close()
-                val message = if (response.code == 404)
+                val message = if (response.code == 404 || response.code == 403)
                     MIGRATION_MESSAGE else "HTTP error ${response.code}"
                 throw Exception(message)
             }
 
             if (response.request.url.toString() == "$baseUrl/" && response.code == 200) {
+                response.close()
+                throw Exception(MIGRATION_MESSAGE)
+            }
+
+            if (!response.headers["Content-Type"]!!.contains("text/html")) {
                 response.close()
                 throw Exception(MIGRATION_MESSAGE)
             }
