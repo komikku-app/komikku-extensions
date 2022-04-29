@@ -37,7 +37,6 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("PMScans", "http://www.rackusreader.org", "en", overrideVersionCode = 2),
         SingleLang("Realm Scans", "https://realmscans.com", "en", overrideVersionCode = 3),
         SingleLang("Skull Scans", "https://www.skullscans.com", "en", overrideVersionCode = 1),
-        SingleLang("Shimada Scans", "https://shimadascans.com", "en"),
         SingleLang("Shooting Star Scans", "https://shootingstarscans.com", "en", overrideVersionCode = 3),
         SingleLang("Azure Scans", "https://azuremanga.com", "en", overrideVersionCode = 1),
         SingleLang("Patatescans", "https://patatescans.com", "fr", isNsfw = true, overrideVersionCode = 2),

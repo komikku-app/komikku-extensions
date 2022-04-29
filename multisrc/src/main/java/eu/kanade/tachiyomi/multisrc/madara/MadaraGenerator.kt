@@ -391,6 +391,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Sensaina Yuri", "https://sensainayuri.dropescan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Shield Manga", "https://shieldmanga.io", "en", overrideVersionCode = 3),
         SingleLang("ShinobiScans", "https://shinobiscans.com", "it"),
+        SingleLang("Shimada Scans", "https://shimadascans.com", "en"),
         SingleLang("ShoujoHearts", "https://shoujohearts.com", "en", overrideVersionCode = 2),
         SingleLang("SiXiang Scans", "http://www.sixiangscans.com", "en", overrideVersionCode = 1),
         SingleLang("Sinensis", "https://sinensisscan.com", "pt-BR", overrideVersionCode = 2),
