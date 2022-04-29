@@ -274,7 +274,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("MangaYami", "https://www.mangayami.club", "en", overrideVersionCode = 2),
         SingleLang("Mangaforfree.com", "https://mangaforfree.com", "en", isNsfw = true, className = "Mangaforfreecom"),
         SingleLang("Mangaka3rb", "https://mangaka3rb.com", "ar"),
-        SingleLang("Mangakik", "https://mangakik.com", "en"),
+        SingleLang("Mangakik", "https://mangakik.net", "en", overrideVersionCode = 1),
         SingleLang("Manganato.info", "https://manganato.info", "en", className = "Manganatoinfo"),
         SingleLang("Mangas Origines X", "https://x.mangas-origines.fr", "fr", isNsfw = true),
         SingleLang("Mangas Origines", "https://mangas-origines.fr", "fr", isNsfw = true, overrideVersionCode = 2),
