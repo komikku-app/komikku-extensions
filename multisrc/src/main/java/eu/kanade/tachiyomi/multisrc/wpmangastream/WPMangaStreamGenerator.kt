@@ -16,7 +16,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         MultiLang("Asura Scans", "https://www.asurascans.com", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 12),
         SingleLang("Boosei", "https://boosei.com", "id", overrideVersionCode = 1),
         SingleLang("GURU Komik", "https://gurukomik.com", "id"),
-        SingleLang("GoGoManga", "https://gogomanga.org", "en"),
+        SingleLang("GoGoManga", "https://gogomanga.fun", "en", overrideVersionCode = 1),
         SingleLang("Imagine Scan", "https://imaginescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Imperfect Comics", "https://imperfectcomic.com", "en", overrideVersionCode = 8),
         SingleLang("Infernal Void Scans", "https://infernalvoidscans.com", "en", overrideVersionCode = 3),
