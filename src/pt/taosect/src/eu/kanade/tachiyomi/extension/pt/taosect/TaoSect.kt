@@ -289,12 +289,17 @@ class TaoSect : HttpSource() {
             val firstPageRequest = imageRequest(firstPage)
 
             client.newCall(firstPageRequest).execute().use {
-                it.headers["Content-Type"]!!.contains("text/html")
+                val isHtml = it.headers["Content-Type"]!!.contains("text/html")
+
+                GoogleDriveResponse(!isHtml && it.isSuccessful, it.code)
             }
         }
 
-        if (hasExceededViewLimit.getOrDefault(false)) {
-            throw Exception(EXCEEDED_GOOGLE_DRIVE_VIEW_LIMIT)
+        val defaultResponse = GoogleDriveResponse(false, GD_BACKEND_ERROR)
+        val googleDriveResponse = hasExceededViewLimit.getOrDefault(defaultResponse)
+
+        if (!googleDriveResponse.isValid) {
+            throw Exception(googleDriveResponse.errorMessage)
         }
 
         return pages
@@ -401,6 +406,14 @@ class TaoSect : HttpSource() {
         Tag("62", "Webtoon")
     )
 
+    private data class GoogleDriveResponse(val isValid: Boolean, val code: Int) {
+        val errorMessage: String
+            get() = when (code) {
+                GD_SHARING_RATE_LIMIT_EXCEEDED -> EXCEEDED_GOOGLE_DRIVE_VIEW_LIMIT
+                else -> GOOGLE_DRIVE_UNAVAILABLE
+            }
+    }
+
     companion object {
         private const val ACCEPT_IMAGE = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
         private const val ACCEPT_JSON = "application/json"
@@ -415,7 +428,13 @@ class TaoSect : HttpSource() {
         private const val PROJECT_NOT_FOUND = "Projeto não encontrado."
         private const val CHAPTERS_NOT_FOUND = "Capítulos não encontrados."
         private const val EXCEEDED_GOOGLE_DRIVE_VIEW_LIMIT = "Limite de visualizações atingido " +
-            "no Google Drive. Aguarde com que o limite seja reestabelecido."
+            "no Google Drive. Tente novamente mais tarde."
+        private const val GOOGLE_DRIVE_UNAVAILABLE = "O Google Drive está indisponível no " +
+            "momento. Tente novamente mais tarde."
+
+        // Reference: https://developers.google.com/drive/api/guides/handle-errors
+        private const val GD_SHARING_RATE_LIMIT_EXCEEDED = 403
+        private const val GD_BACKEND_ERROR = 500
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
