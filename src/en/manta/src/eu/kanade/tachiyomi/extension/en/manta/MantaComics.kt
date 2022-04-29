@@ -84,7 +84,7 @@ class MantaComics : HttpSource() {
                 date_upload = it.timestamp
                 chapter_number = it.ord.toFloat()
             }
-        }
+        }.reversed()
 
     override fun fetchChapterList(manga: SManga) =
         chapterListRequest(manga).fetch(::chapterListParse)
