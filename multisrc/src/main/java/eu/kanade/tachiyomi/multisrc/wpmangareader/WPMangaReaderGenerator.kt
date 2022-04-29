@@ -52,6 +52,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Arcane scan", "https://arcanescan.fr", "fr"),
         SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true),
         SingleLang("Origami Orpheans", "https://origami-orpheans.com.br", "pt-BR", overrideVersionCode = 9),
+        SingleLang("Miau Scan", "https://miauscan.com", "es"),
     )
 
     companion object {
