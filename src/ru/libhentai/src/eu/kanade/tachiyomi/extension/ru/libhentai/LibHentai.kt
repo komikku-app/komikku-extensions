@@ -38,7 +38,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
-import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -98,30 +97,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
             return@addInterceptor chain.proceed(originalRequest)
         }
         .build()
-    override fun latestUpdatesRequest(page: Int) = GET(baseUrl, headers)
-
-    private val latestUpdatesSelector = "div.updates__item"
-
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        val elements = response.asJsoup().select(latestUpdatesSelector)
-        val latestMangas = elements?.map { latestUpdatesFromElement(it) }
-        if (latestMangas != null)
-            return MangasPage(latestMangas, false) // TODO: use API
-        return MangasPage(emptyList(), false)
-    }
-
-    private fun latestUpdatesFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        element.select("div.cover").first().let { img ->
-            manga.thumbnail_url = baseUrl + img.attr("data-src").replace("_thumb", "_250x350")
-        }
-
-        element.select("a").first().let { link ->
-            manga.setUrlWithoutDomain(link.attr("href"))
-            manga.title = if (isEng.equals("rus") || element.select(".updates__name_rus").isNullOrEmpty()) { element.select("h4").first().text() } else element.select(".updates__name_rus").first().text()
-        }
-        return manga
-    }
 
     private var csrfToken: String = ""
 
@@ -132,7 +107,47 @@ class LibHentai : ConfigurableSource, HttpSource() {
             add("x-csrf-token", csrfToken)
         }
         .build()
+    // Latest
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException("Not used") // popularMangaRequest()
+    override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
+        if (csrfToken.isEmpty()) {
+            return client.newCall(popularMangaRequest(page))
+                .asObservableSuccess()
+                .flatMap { response ->
+                    // Obtain token
+                    val resBody = response.body!!.string()
+                    csrfToken = "_token\" content=\"(.*)\"".toRegex().find(resBody)!!.groups[1]!!.value
+                    return@flatMap fetchLatestMangaFromApi(page)
+                }
+        }
+        return fetchLatestMangaFromApi(page)
+    }
 
+    private fun fetchLatestMangaFromApi(page: Int): Observable<MangasPage> {
+        return client.newCall(POST("$baseUrl/latest-updates?page=$page", catalogHeaders()))
+            .asObservable().doOnNext { response ->
+                if (!response.isSuccessful) {
+                    response.close()
+                    if (response.code == 419) throw Exception("Для завершения авторизации необходимо перезапустить приложение с полной остановкой.") else throw Exception("HTTP error ${response.code}")
+                }
+            }
+            .map { response ->
+                latestUpdatesParse(response)
+            }
+    }
+
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val resBody = response.body!!.string()
+        val result = json.decodeFromString<JsonObject>(resBody)
+        val itemsLatest = result["data"]?.jsonArray?.map { popularMangaFromElement(it) }
+        if (itemsLatest != null) {
+            val hasNextPage = result["next_page_url"]?.jsonPrimitive?.contentOrNull != null
+            return MangasPage(itemsLatest, hasNextPage)
+        }
+        return MangasPage(emptyList(), false)
+    }
+
+    // Popular
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/login", headers)
 
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
@@ -175,16 +190,20 @@ class LibHentai : ConfigurableSource, HttpSource() {
         return MangasPage(emptyList(), false)
     }
 
+    // Popular cross Latest
     private fun popularMangaFromElement(el: JsonElement) = SManga.create().apply {
+        val slug = el.jsonObject["slug"]!!.jsonPrimitive.content
         title = when {
             isEng.equals("rus") && el.jsonObject["rus_name"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> el.jsonObject["rus_name"]!!.jsonPrimitive.content
             isEng.equals("eng") && el.jsonObject["eng_name"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> el.jsonObject["eng_name"]!!.jsonPrimitive.content
             else -> el.jsonObject["name"]!!.jsonPrimitive.content
         }
-        thumbnail_url = baseUrl + el.jsonObject["covers"]!!.jsonObject["default"]!!.jsonPrimitive.content
-        url = "/" + el.jsonObject["slug"]!!.jsonPrimitive.content
+        thumbnail_url = if (el.jsonObject["covers"] != null) baseUrl + el.jsonObject["covers"]!!.jsonObject["default"]!!.jsonPrimitive.content
+        else baseUrl + "/uploads/cover/" + slug + "/cover/" + el.jsonObject["cover"]!!.jsonPrimitive.content + "_250x350.jpg"
+        url = "/$slug"
     }
 
+    // Details
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
         val dataStr = document
@@ -261,6 +280,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
         return manga
     }
 
+    // Chapters
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
         val redirect = document.html()
@@ -389,6 +409,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
         }
     }
 
+    // Pages
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
 
@@ -464,6 +485,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
 
     override fun imageUrlParse(response: Response): String = ""
 
+    // Workaround to allow "Open in browser" use the
     private fun searchMangaByIdRequest(id: String): Request {
         return GET("$baseUrl/$id", headers)
     }
@@ -487,6 +509,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
         }
     }
 
+    // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (csrfToken.isEmpty()) {
             val tokenResponse = client.newCall(popularMangaRequest(page)).execute()
@@ -578,6 +601,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
         return MangasPage(mangas, searchedMangas.hasNextPage)
     }
 
+    // Filters
     private class SearchFilter(name: String, val id: String) : Filter.TriState(name)
     private class CheckFilter(name: String, val id: String) : Filter.CheckBox(name)
 
