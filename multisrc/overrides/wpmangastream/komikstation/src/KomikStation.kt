@@ -11,7 +11,7 @@ import org.jsoup.nodes.Document
 import uy.kohesive.injekt.injectLazy
 import java.util.concurrent.TimeUnit
 
-class KomikStation : WPMangaStream("Komik Station", "https://komikstation.com", "id") {
+class KomikStation : WPMangaStream("Komik Station", "https://komikstation.co", "id") {
     // Formerly "Komik Station (WP Manga Stream)"
     override val id = 6148605743576635261
 
