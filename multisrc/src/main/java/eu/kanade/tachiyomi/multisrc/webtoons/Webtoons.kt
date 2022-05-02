@@ -321,12 +321,12 @@ open class Webtoons(
         var pages = document.select("div#_imageList > img").mapIndexed { i, element -> Page(i, "", element.attr("data-url")) }
 
         if (showAuthorsNotesPref()) {
-            val note = document.select("div.creator_note > p").text()
+            val note = document.select("div.comment_area div.info_area p").text()
 
             if (note.isNotEmpty()) {
                 val noteImage = toImage(note, 42)
 
-                val creator = document.select("div.creator_note > h2").html().replace("<span>Creator</span>", "").trim()
+                val creator = document.select("div.creator_note span.author a").text().trim()
                 val creatorImage = toImage("Author's Notes from $creator", 43, true)
 
                 pages = pages + Page(pages.size, "", creatorImage)
