@@ -1,16 +1,33 @@
 package eu.kanade.tachiyomi.extension.th.cattranslator
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
-import eu.kanade.tachiyomi.network.POST
-import okhttp3.CacheControl
-import okhttp3.Request
+import eu.kanade.tachiyomi.source.model.SManga
+import org.jsoup.nodes.Element
 
-class CatTranslator : Madara("CAT-translator", "https://cat-translator.com", "th") {
-    override fun popularMangaRequest(page: Int): Request =
-        POST("$baseUrl/manga/wp-admin/admin-ajax.php", formHeaders, formBuilder(page, true).build(), CacheControl.FORCE_NETWORK)
+class CatTranslator : Madara(
+    "CAT-translator",
+    "https://cats-translator.com/manga",
+    "th"
+) {
+    private fun parseMangaFromElement(element: Element, isSearch: Boolean): SManga {
+        val manga = SManga.create()
 
-    override fun latestUpdatesRequest(page: Int): Request =
-        POST("$baseUrl/manga/wp-admin/admin-ajax.php", formHeaders, formBuilder(page, false).build(), CacheControl.FORCE_NETWORK)
+        with(element) {
+            select(if (isSearch) "div.post-title a" else popularMangaUrlSelector).first()?.let {
+                manga.setUrlWithoutDomain(it.attr("abs:href"))
+                manga.url = manga.url.removePrefix("/manga")
+                manga.title = it.ownText()
+            }
 
-    override fun searchPage(page: Int): String = "manga/page/$page/"
+            select("img").first()?.let {
+                manga.thumbnail_url = imageFromElement(it)
+            }
+        }
+
+        return manga
+    }
+
+    override fun popularMangaFromElement(element: Element) = parseMangaFromElement(element, false)
+
+    override fun searchMangaFromElement(element: Element) = parseMangaFromElement(element, true)
 }
