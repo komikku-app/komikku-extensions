@@ -115,19 +115,13 @@ open class NHentai(
                     .asObservableSuccess()
                     .map { response -> searchMangaByIdParse(response, id) }
             }
-            query.isQueryIdNumbers() -> {
+            query.toIntOrNull() != null -> {
                 client.newCall(searchMangaByIdRequest(query))
                     .asObservableSuccess()
                     .map { response -> searchMangaByIdParse(response, query) }
             }
             else -> super.fetchSearchManga(page, query, filters)
         }
-    }
-
-    // The website redirects for any number <= 400000
-    private fun String.isQueryIdNumbers(): Boolean {
-        val int = this.toIntOrNull() ?: return false
-        return int <= 400000
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
