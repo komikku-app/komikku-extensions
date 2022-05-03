@@ -5,7 +5,7 @@ ext {
     extName = 'Selfmanga'
     pkgNameSuffix = 'ru.selfmanga'
     extClass = '.Selfmanga'
-    extVersionCode = 18
+    extVersionCode = 19
 }
 
 dependencies {
