@@ -159,8 +159,39 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
     override fun popularMangaSelector() = "li.js-list-item"
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
         url = element.select(".item__thumb a").attr("href")
-        title = element.select(".item__thumb img").attr("alt")
+        title = toTitle(element.select(".item__thumb img").attr("alt"))
         thumbnail_url = element.select(".item__thumb img").attr("src")
+    }
+
+    private class Genre {
+        companion object {
+            val genreArray = arrayOf(
+                "Any",
+                "Action",
+                "Boys Love",
+                "Comedy",
+                "Drama",
+                "Fantasy",
+                "Girls Love",
+                "Gaming",
+                "Horror",
+                "LGBTQ+",
+                "Mystery",
+                "Romance",
+                "Science Fiction",
+                "Slice of Life"
+            )
+        }
+    }
+
+    private fun toTitle(str: String): String {
+        for (genre in Genre.genreArray) {
+            val extraTitle = ("Tapas " + genre.plus(" "))
+            if (str.contains(extraTitle, ignoreCase = true)) {
+                return str.replace(extraTitle, "")
+            }
+        }
+        return str
     }
 
     // Latest
@@ -218,7 +249,7 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
     override fun searchMangaSelector() = "${popularMangaSelector()}, .search-item-wrap"
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         url = element.select(".item__thumb a, .title-section .title a").attr("href")
-        title = element.select(".item__thumb img").firstOrNull()?.attr("alt") ?: element.select(".title-section .title a").text()
+        title = toTitle(element.select(".item__thumb img").firstOrNull()?.attr("alt") ?: element.select(".title-section .title a").text())
         thumbnail_url = element.select(".item__thumb img, .thumb-wrap img").attr("src")
     }
 
@@ -234,7 +265,20 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
         thumbnail_url = document.select("div.thumb-wrapper img").attr("abs:src")
         author = document.select("ul.creator-section a.name").joinToString { it.text() }
         artist = author
-        description = document.select("div.row-body span.description__body").text()
+        status = document.select("div.schedule span.schedule-label").text().toStatus()
+        val announcementName: String? = document.select("div.series-announcement div.announcement__text p").text()
+        val announcementText: String? = document.select("div.announcement__body p.js-announcement-text").text()
+        description = if (announcementName.isNullOrEmpty() || announcementText.isNullOrEmpty()) {
+            document.select("div.row-body span.description__body").text()
+        } else {
+            announcementName.plus("\n") + announcementText.plus("\n\n") + document.select("div.row-body span.description__body").text()
+        }
+    }
+
+    private fun String.toStatus() = when {
+        this.contains("Updates", ignoreCase = true) -> SManga.ONGOING
+        this.contains("Completed", ignoreCase = true) -> SManga.COMPLETED
+        else -> SManga.UNKNOWN
     }
 
     // Chapters
