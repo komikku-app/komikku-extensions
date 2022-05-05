@@ -98,10 +98,16 @@ abstract class Bilibili(
     protected open val defaultLatestSort: Int = 2
 
     protected open val hasPaidChaptersWarning: String = when (lang) {
-        "zh", "zh-Hans" -> "此漫画的付费章节已从章节列表中过滤，暂时请用网页端或官方app阅读。"
+        "zh", "zh-Hans" -> "$EMOJI_WARNING 此漫画的付费章节已从章节列表中过滤，暂时请用网页端或官方app阅读。"
         else ->
-            "This series has paid chapters that were filtered out from the chapter list. " +
-                "Use the BILIBILI website or the official app to read them for now."
+            "$EMOJI_WARNING WARNING: This series has paid chapters that were filtered out from " +
+                "the chapter list. If you have already bought and have any in your account, sign " +
+                "in through WebView and refresh the chapter list to read them."
+    }
+
+    protected open val paidLabel: String = when (lang) {
+        "zh", "zh-Hans" -> "付费"
+        else -> "Paid"
     }
 
     protected open val imageQualityPrefTitle: String = when (lang) {
@@ -347,13 +353,13 @@ abstract class Bilibili(
         title = comic.title
         author = comic.authorName.joinToString()
         status = if (comic.isFinish == 1) SManga.COMPLETED else SManga.ONGOING
-        genre = comic.styles.joinToString()
+        genre = comic.genres(paidLabel, EMOJI_LOCKED).joinToString()
         description = comic.classicLines
         thumbnail_url = comic.verticalCover + THUMBNAIL_RESOLUTION
         url = "/detail/mc" + comic.id
 
         if (comic.hasPaidChapters && !signedIn) {
-            description += "\n\n$hasPaidChaptersWarning"
+            description = "$hasPaidChaptersWarning\n\n$description"
         }
     }
 
@@ -586,5 +592,8 @@ abstract class Bilibili(
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
         }
+
+        private const val EMOJI_LOCKED = "\uD83D\uDD12"
+        private const val EMOJI_WARNING = "\u26A0\uFE0F"
     }
 }

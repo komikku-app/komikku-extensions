@@ -30,6 +30,9 @@ data class BilibiliComicDto(
 ) {
     val hasPaidChapters: Boolean
         get() = episodeList.any { episode -> episode.payMode == 1 && episode.payGold > 0 }
+
+    fun genres(paidLabel: String, emoji: String): List<String> =
+        (if (hasPaidChapters) listOf("$emoji $paidLabel") else emptyList()) + styles
 }
 
 @Serializable
