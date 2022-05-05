@@ -16,6 +16,7 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -183,6 +184,10 @@ class Baimangu : ConfigurableSource, ParsedHttpSource() {
             setUrlWithoutDomain(element.attr("href"))
         }
     }
+
+    // Reverse the order of the chapter list
+    override fun chapterListParse(response: Response): List<SChapter> =
+        super.chapterListParse(response).reversed()
 
     override fun imageUrlParse(document: Document) = ""
 
