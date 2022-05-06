@@ -30,10 +30,10 @@ class Nekopost : ParsedHttpSource() {
     override val baseUrl: String = "https://www.nekopost.net/manga/"
 
     private val latestMangaEndpoint: String =
-        "https://uatapi.nekopost.net/frontAPI/getLatestChapter/m"
+        "https://api.osemocphoto.com/frontAPI/getLatestChapter/m"
     private val projectDataEndpoint: String =
-        "https://uatapi.nekopost.net/frontAPI/getProjectInfo"
-    private val fileHost: String = "https://fs.nekopost.net"
+        "https://api.osemocphoto.com/frontAPI/getProjectInfo"
+    private val fileHost: String = "https://www.osemocphoto.com"
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -169,7 +169,7 @@ class Nekopost : ParsedHttpSource() {
     override fun popularMangaRequest(page: Int): Request {
         if (page <= 1) existingProject.clear()
 
-        return GET("$latestMangaEndpoint/${page - 1}")
+        return GET("$latestMangaEndpoint/$page")
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
