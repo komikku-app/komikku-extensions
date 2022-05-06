@@ -25,6 +25,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.IOException
 import java.text.DecimalFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -53,7 +54,7 @@ class Mintmanga : ConfigurableSource, ParsedHttpSource() {
             val originalRequest = chain.request()
             val response = chain.proceed(originalRequest)
             if (originalRequest.url.toString().contains(baseUrl) and (originalRequest.url.toString().contains("internal/redirect") or (response.code == 301)))
-                throw Exception("Манга переехала на другой адрес/ссылку!")
+                throw IOException("Манга переехала на другой адрес/ссылку!")
             response
         }
         .build()

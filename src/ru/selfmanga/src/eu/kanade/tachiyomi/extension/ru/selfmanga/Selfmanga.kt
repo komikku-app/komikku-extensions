@@ -15,6 +15,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.io.IOException
 import java.text.DecimalFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -39,7 +40,7 @@ class Selfmanga : ParsedHttpSource() {
             val originalRequest = chain.request()
             val response = chain.proceed(originalRequest)
             if (originalRequest.url.toString().contains(baseUrl) and (originalRequest.url.toString().contains("internal/redirect") or (response.code == 301)))
-                throw Exception("Манга переехала на другой адрес/ссылку!")
+                throw IOException("Манга переехала на другой адрес/ссылку!")
             response
         }
         .build()

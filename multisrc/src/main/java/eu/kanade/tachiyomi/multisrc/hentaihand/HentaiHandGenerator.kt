@@ -10,7 +10,7 @@ class HentaiHandGenerator : ThemeSourceGenerator {
 
     override val themeClass = "HentaiHand"
 
-    override val baseVersionCode: Int = 1
+    override val baseVersionCode: Int = 2
 
     override val sources = listOf(
         MultiLang("HentaiHand", "https://hentaihand.com", listOf("all", "ja", "en", "zh", "bg", "ceb", "other", "tl", "ar", "el", "sr", "jv", "uk", "tr", "fi", "la", "mn", "eo", "sk", "cs", "ko", "ru", "it", "es", "pt-BR", "th", "fr", "id", "vi", "de", "pl", "hu", "nl", "hi"), isNsfw = true, overrideVersionCode = 5),

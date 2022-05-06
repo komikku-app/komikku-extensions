@@ -35,6 +35,7 @@ import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -298,16 +299,16 @@ abstract class HentaiHand(
         val body = jsonObject.toString().toRequestBody(MEDIA_TYPE)
         val response = chain.proceed(POST("$baseUrl/api/login", headers, body))
         if (response.code == 401) {
-            throw Exception("Failed to login, check if username and password are correct")
+            throw IOException("Failed to login, check if username and password are correct")
         }
 
         if (response.body == null)
-            throw Exception("Login response body is empty")
+            throw IOException("Login response body is empty")
         try {
             // Returns access token as a string, unless unparseable
             return json.parseToJsonElement(response.body!!.string()).jsonObject["auth"]!!.jsonObject["access-token"]!!.jsonPrimitive.content
         } catch (e: IllegalArgumentException) {
-            throw Exception("Cannot parse login response body")
+            throw IOException("Cannot parse login response body")
         }
     }
 

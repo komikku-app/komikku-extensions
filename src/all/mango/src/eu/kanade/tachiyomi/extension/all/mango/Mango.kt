@@ -257,7 +257,7 @@ class Mango : ConfigurableSource, HttpSource() {
         val loginRequest = POST("$baseUrl/login", formHeaders, formBody)
         val response = chain.proceed(loginRequest)
         if (response.code != 200 || response.header("Set-Cookie") == null) {
-            throw Exception("Login Failed. Check Address and Credentials")
+            throw IOException("Login Failed. Check Address and Credentials")
         }
         // Save the cookies from the response
         apiCookies = response.header("Set-Cookie")!!
