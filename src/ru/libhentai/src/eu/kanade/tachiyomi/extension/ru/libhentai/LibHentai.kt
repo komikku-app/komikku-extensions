@@ -42,6 +42,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -80,7 +81,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
         } else
             response
     }
-    private val authClient = network.cloudflareClient
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
@@ -90,10 +90,10 @@ class LibHentai : ConfigurableSource, HttpSource() {
         .addInterceptor { chain ->
             val originalRequest = chain.request()
             if (originalRequest.url.toString().contains(baseUrl))
-                if (!authClient.newCall(GET(baseUrl, headers))
+                if (!network.cloudflareClient.newCall(GET(baseUrl, headers))
                     .execute().body!!.string().contains("m-menu__user-info")
                 )
-                    throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
+                    throw IOException("Для просмотра 18+ контента необходима авторизация через WebView")
             return@addInterceptor chain.proceed(originalRequest)
         }
         .build()
