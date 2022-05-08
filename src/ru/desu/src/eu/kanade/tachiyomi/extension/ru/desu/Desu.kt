@@ -93,7 +93,7 @@ class Desu : HttpSource() {
 
         var altName = ""
 
-        if (obj["synonyms"]!!.jsonPrimitive.contentOrNull != null) {
+        if (obj["synonyms"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() && obj["synonyms"]!!.jsonPrimitive.contentOrNull != null) {
             altName = "Альтернативные названия:\n" +
                 obj["synonyms"]!!.jsonPrimitive.content
                     .replace("|", " / ") +
@@ -200,8 +200,8 @@ class Desu : HttpSource() {
             .jsonObject
 
         val cid = obj["id"]!!.jsonPrimitive.int
-
-        return obj["chapters"]!!.jsonObject["list"]!!.jsonArray.map {
+        val objChapter = obj["chapters"]!!
+        return objChapter.jsonObject["list"]!!.jsonArray.map {
             val chapterObj = it.jsonObject
             val ch = chapterObj["ch"]!!.jsonPrimitive.float
             val fullNumStr = "${chapterObj["vol"]!!.jsonPrimitive.int}. Глава " + DecimalFormat("#,###.##").format(ch).replace(",", ".")
@@ -213,7 +213,7 @@ class Desu : HttpSource() {
                 chapter_number = ch
                 date_upload = chapterObj["date"]!!.jsonPrimitive.long * 1000L
             }
-        }
+        }.filter { it.chapter_number <= objChapter.jsonObject["last"]!!.jsonObject["ch"]!!.jsonPrimitive.float }
     }
 
     override fun chapterListRequest(manga: SManga): Request {
