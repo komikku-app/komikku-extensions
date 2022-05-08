@@ -59,7 +59,7 @@ class MMRCMSSources {
             SourceData.Single("AnimaRegia", "https://animaregia.net", "pt-BR", overrideVersionCode = 4),
             SourceData.Single("MangaVadisi", "http://manga-v2.mangavadisi.org", "tr", overrideVersionCode = 1),
             SourceData.Single("MangaID", "https://mangaid.click", "id", overrideVersionCode = 1),
-            SourceData.Single("Jpmangas", "https://jpmangas.co", "fr"),
+            SourceData.Single("Jpmangas", "https://jpmangas.cc", "fr", overrideVersionCode = 1),
             SourceData.Single("Op-VF", "https://www.op-vf.com", "fr", className = "OpVF"),
             SourceData.Single("FR Scan", "https://frscan.cc", "fr", overrideVersionCode = 1),
             SourceData.Single("Ama Scans", "https://amascan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
