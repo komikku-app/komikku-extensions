@@ -1,5 +1,36 @@
 # Contributing
 
+This guide have some instructions and tips on how to create a new Tachiyomi extension. Please **read it carefully** if you're a new contributor or don't have any experience on the required languages and knowledges.
+
+This guide is not definitive and it's being updated over time. If you find any issue on it, feel free to report it through a [Meta Issue](https://github.com/tachiyomiorg/tachiyomi-extensions/issues/new?assignees=&labels=Meta+request&template=request_meta.yml) or fixing it directly by submitting a Pull Request.
+
+## Table of Contents
+
+1. [Prerequisites](#prerequisites)
+   1. [Tools](#tools)
+2. [Getting help](#getting-help)
+3. [Writing an extension](#writing-an-extension)
+   1. [Setting up a new Gradle module](#setting-up-a-new-gradle-module)
+   2. [Core dependencies](#core-dependencies)
+   3. [Extension main class](#extension-main-class)
+   4. [Extension call flow](#extension-call-flow)
+   5. [Misc notes](#misc-notes)
+   6. [Advanced extension features](#advanced-extension-features)
+4. [Multi-source themes](#multi-source-themes)
+   1. [The directory structure](#the-directory-structure)
+   2. [Development workflow](#development-workflow)
+   3. [Scaffolding overrides](#scaffolding-overrides)
+   4. [Additional Notes](#additional-notes)
+5. [Running](#running)
+6. [Debugging](#debugging)
+   1. [Android Debugger](#android-debugger)
+   2. [Logs](#logs)
+   3. [Inspecting network calls](#inspecting-network-calls)
+   4. [Using external network inspecting tools](#using-external-network-inspecting-tools)
+7. [Building](#building)
+8. [Submitting the changes](#submitting-the-changes)
+   1. [Pull Request checklist](#pull-request-checklist)
+
 ## Prerequisites
 
 Before you start, please note that the ability to use following technologies is **required** and that existing contributors will not actively teach them to you.
@@ -20,7 +51,7 @@ Before you start, please note that the ability to use following technologies is 
 
 ## Getting help
 
-- Join [the Discord server](https://discord.gg/tachiyomi) for online help and to ask questions while developing your extension.
+- Join [the Discord server](https://discord.gg/tachiyomi) for online help and to ask questions while developing your extension. When doing so, please ask it in the `#programming` channel.
 - There are some features and tricks that are not explored in this document. Refer to existing extension code for examples.
 
 ## Writing an extension
@@ -516,3 +547,20 @@ If all went well, you should see all requests and responses made by the source i
 ## Building
 
 APKs can be created in Android Studio via `Build > Build Bundle(s) / APK(s) > Build APK(s)` or `Build > Generate Signed Bundle / APK`.
+
+## Submitting the changes
+
+When you feel confident about your changes, submit a new Pull Request so your code can be reviewed and merged if it's approved. We encourage following a [GitHub Standard Fork & Pull Request Workflow](https://gist.github.com/Chaser324/ce0505fbed06b947d962) and following the good practices of the workflow, such as not commiting directly to `master`: always create a new branch for your changes.
+
+If you are more comfortable about using Git GUI-based tools, you can refer to [this guide](https://learntodroid.com/how-to-use-git-and-github-in-android-studio/) about the Git integration inside Android Studio, specifically the "How to Contribute to an to Existing Git Repository in Android Studio" section of the guide.
+
+Please **do test your changes by compiling it through Android Studio** before submitting it. Also make sure to follow the PR checklist available in the PR body field when creating a new PR. As a reference, you can find it below.
+
+### Pull Request checklist
+
+- Update `extVersionCode` value in `build.gradle` for individual extensions
+- Update `overrideVersionCode` or `baseVersionCode` as needed for all multisrc extensions
+- Reference all related issues in the PR body (e.g. "Closes #xyz")
+- Add the `isNsfw = true` flag in `build.gradle` when appropriate
+- Explicitly kept the `id` if a source's name or language were changed
+- Test the modifications by compiling and running the extension through Android Studio
