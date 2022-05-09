@@ -62,7 +62,7 @@ class IRovedOut : HttpSource() {
 
     override fun fetchImageUrl(page: Page): Observable<String> {
         val comicPage = client.newCall(GET(page.url, headers)).execute().asJsoup()
-        val imageUrl = comicPage.selectFirst("#comic > a > img").attr("src")
+        val imageUrl = comicPage.selectFirst("#comic img").attr("src")
         return Observable.just(imageUrl)
     }
 
