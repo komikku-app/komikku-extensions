@@ -32,6 +32,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Davey Scans", "https://daveyscans.com", "id", overrideVersionCode = 1),
         SingleLang("Mangasusu", "https://mangasusu.co.in", "id", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Manhua Raw", "https://manhuaraw.com", "en"),
+        SingleLang("ManhwaIndo", "https://manhwaindo.id", "id", isNsfw = true),
         SingleLang("TurkToon", "https://turktoon.com", "tr"),
         SingleLang("Gecenin Lordu", "https://geceninlordu.com", "tr", overrideVersionCode = 1),
         SingleLang("PMScans", "http://www.rackusreader.org", "en", overrideVersionCode = 2),
