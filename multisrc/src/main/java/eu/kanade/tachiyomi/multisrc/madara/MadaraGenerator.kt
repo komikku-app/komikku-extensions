@@ -175,7 +175,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Lumine Scans", "https://luminescans.xyz", "en", overrideVersionCode = 1),
         SingleLang("MG Komik", "https://mgkomik.com", "id", overrideVersionCode = 2),
         SingleLang("MHentais", "https://mhentais.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
-        SingleLang("MMScans", "https://mm-scans.org", "en", overrideVersionCode = 3),
+        SingleLang("MMScans", "https://mm-scans.org", "en", overrideVersionCode = 4),
         SingleLang("MadaraDex", "https://madaradx.org", "en", isNsfw = true),
         SingleLang("Manga Action", "https://mangaaction.com", "en", overrideVersionCode = 2),
         SingleLang("Manga Bin", "https://mangabin.com", "en", overrideVersionCode = 1),

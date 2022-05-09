@@ -58,4 +58,7 @@ class MMScans : Madara("MMScans", "https://mm-scans.org", "en") {
 
         return manga
     }
+
+    override val mangaDetailsSelectorDescription = "div.summary-text p"
+    override val mangaDetailsSelectorGenre = "div.genres-content"
 }
