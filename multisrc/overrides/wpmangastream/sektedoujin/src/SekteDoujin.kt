@@ -7,7 +7,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class SekteDoujin : WPMangaStream("Sekte Doujin", "https://sektedoujin.xyz", "id", SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id"))) {
+class SekteDoujin : WPMangaStream("Sekte Doujin", "https://sektedoujin.club", "id", SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id"))) {
     private val rateLimitInterceptor = RateLimitInterceptor(4)
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
