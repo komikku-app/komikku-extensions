@@ -4,4 +4,4 @@ import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class Sekaikomik : WPMangaReader("Sekaikomik", "https://www.sekaikomik.site", "id", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("id")))
+class Sekaikomik : WPMangaReader("Sekaikomik", "https://www.sekaikomik.live", "id", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("id")))

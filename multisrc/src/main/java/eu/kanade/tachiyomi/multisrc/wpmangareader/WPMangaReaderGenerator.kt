@@ -28,7 +28,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Martial Manga", "https://martialmanga.com", "es"),
         SingleLang("Mode Scanlator", "https://modescanlator.com", "pt-BR", overrideVersionCode = 7),
         SingleLang("Ngomik", "https://ngomik.net", "id", overrideVersionCode = 1),
-        SingleLang("Sekaikomik", "https://www.sekaikomik.site", "id", isNsfw = true, overrideVersionCode = 8),
+        SingleLang("Sekaikomik", "https://www.sekaikomik.live", "id", isNsfw = true, overrideVersionCode = 9),
         SingleLang("Davey Scans", "https://daveyscans.com", "id", overrideVersionCode = 1),
         SingleLang("Mangasusu", "https://mangasusu.co.in", "id", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Manhua Raw", "https://manhuaraw.com", "en"),
