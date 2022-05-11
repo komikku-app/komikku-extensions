@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.all.bilibili
+package eu.kanade.tachiyomi.multisrc.bilibili
 
 import eu.kanade.tachiyomi.source.model.Filter
 

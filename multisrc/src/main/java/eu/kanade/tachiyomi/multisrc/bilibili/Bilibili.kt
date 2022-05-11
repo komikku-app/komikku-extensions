@@ -1,10 +1,9 @@
-package eu.kanade.tachiyomi.extension.all.bilibili
+package eu.kanade.tachiyomi.multisrc.bilibili
 
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -44,12 +43,7 @@ abstract class Bilibili(
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(::expiredTokenIntercept)
-        .addInterceptor(SpecificHostRateLimitInterceptor(baseUrl.toHttpUrl(), 1))
-        .addInterceptor(SpecificHostRateLimitInterceptor(CDN_URL.toHttpUrl(), 2))
-        .addInterceptor(SpecificHostRateLimitInterceptor(COVER_CDN_URL.toHttpUrl(), 2))
-        .build()
+    override val client: OkHttpClient = network.cloudflareClient
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Accept", ACCEPT_JSON)
@@ -516,7 +510,7 @@ abstract class Bilibili(
         return FilterList(filters)
     }
 
-    private fun expiredTokenIntercept(chain: Interceptor.Chain): Response {
+    protected fun expiredTokenIntercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
 
         // Get a new image token if the current one expired.
@@ -562,8 +556,8 @@ abstract class Bilibili(
     }
 
     companion object {
-        private const val CDN_URL = "https://manga.hdslb.com"
-        private const val COVER_CDN_URL = "https://i0.hdslb.com"
+        const val CDN_URL = "https://manga.hdslb.com"
+        const val COVER_CDN_URL = "https://i0.hdslb.com"
 
         const val BASE_API_COMIC_ENDPOINT = "twirp/comic.v1.Comic"
         const val BASE_API_USER_ENDPOINT = "twirp/comic.v1.User"

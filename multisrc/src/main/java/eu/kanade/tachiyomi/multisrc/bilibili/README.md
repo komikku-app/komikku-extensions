@@ -5,7 +5,7 @@ Table of Content
   - [Why are some chapters missing?](#why-are-some-chapters-missing)
 - [Guides](#Guides)
   - [Reading already paid chapters](#reading-already-paid-chapters)
-    
+
 Don't find the question you are looking for? Go check out our general FAQs and Guides
 over at [Extension FAQ] or [Getting Started].
 
@@ -36,8 +36,8 @@ Follow the following steps to be able to sign in and get access to them:
 #### Observations
 
 - Sign in with your Google account is not supported due to WebView restrictions
-  access that Google have. You need to have a simple account in order to be able
-  to login via WebView.
+  access that Google have. **You need to have a simple account in order to be able
+  to login via WebView**.
 - You may sometime face the *"Failed to refresh the token"* error. To fix it,
   you just need to open the WebView, await for the website to completely load.
   After that, you can close the WebView and try again.

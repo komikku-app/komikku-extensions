@@ -1,6 +1,17 @@
-package eu.kanade.tachiyomi.extension.all.bilibili
+package eu.kanade.tachiyomi.extension.all.bilibilicomics
 
+import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
+import eu.kanade.tachiyomi.multisrc.bilibili.Bilibili
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliAccessToken
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliAccessTokenCookie
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliComicDto
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliCredential
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliGetCredential
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliTag
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliUnlockedEpisode
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliUserEpisodes
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import kotlinx.serialization.decodeFromString
@@ -17,13 +28,26 @@ import okio.Buffer
 import java.io.IOException
 import java.net.URLDecoder
 
+class BilibiliComicsFactory : SourceFactory {
+    override fun createSources() = listOf(
+        BilibiliComicsEn(),
+        BilibiliComicsCn(),
+        BilibiliComicsId(),
+    )
+}
+
 abstract class BilibiliComics(lang: String) : Bilibili(
     "BILIBILI COMICS",
     "https://www.bilibilicomics.com",
     lang
 ) {
+
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::signedInIntercept)
+        .addInterceptor(::expiredTokenIntercept)
+        .addInterceptor(SpecificHostRateLimitInterceptor(baseUrl.toHttpUrl(), 1))
+        .addInterceptor(SpecificHostRateLimitInterceptor(CDN_URL.toHttpUrl(), 2))
+        .addInterceptor(SpecificHostRateLimitInterceptor(COVER_CDN_URL.toHttpUrl(), 2))
         .build()
 
     override val signedIn: Boolean
@@ -245,4 +269,75 @@ abstract class BilibiliComics(lang: String) : Bilibili(
         private const val FAILED_TO_GET_CREDENTIAL =
             "Failed to get the credential to read the chapter."
     }
+}
+
+class BilibiliComicsEn : BilibiliComics("en") {
+
+    override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
+        BilibiliTag("All", -1),
+        BilibiliTag("Action", 19),
+        BilibiliTag("Adventure", 22),
+        BilibiliTag("BL", 3),
+        BilibiliTag("Comedy", 14),
+        BilibiliTag("Eastern", 30),
+        BilibiliTag("Fantasy", 11),
+        BilibiliTag("GL", 16),
+        BilibiliTag("Harem", 15),
+        BilibiliTag("Historical", 12),
+        BilibiliTag("Horror", 23),
+        BilibiliTag("Mistery", 17),
+        BilibiliTag("Romance", 13),
+        BilibiliTag("Slice of Life", 21),
+        BilibiliTag("Suspense", 41),
+        BilibiliTag("Teen", 20)
+    )
+}
+
+class BilibiliComicsCn : BilibiliComics("zh-Hans") {
+
+    override fun getAllSortOptions(): Array<String> = arrayOf("为你推荐", "人气推荐", "更新时间")
+
+    override fun getAllStatus(): Array<String> = arrayOf("全部", "连载中", "已完结")
+
+    override fun getAllPrices(): Array<String> = arrayOf("全部", "免费", "付费")
+
+    override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
+        BilibiliTag("全部", -1),
+        BilibiliTag("校园", 18),
+        BilibiliTag("都市", 9),
+        BilibiliTag("耽美", 3),
+        BilibiliTag("少女", 20),
+        BilibiliTag("恋爱", 13),
+        BilibiliTag("奇幻", 11),
+        BilibiliTag("热血", 19),
+        BilibiliTag("冒险", 22),
+        BilibiliTag("古风", 12),
+        BilibiliTag("百合", 16),
+        BilibiliTag("玄幻", 30),
+        BilibiliTag("悬疑", 41),
+        BilibiliTag("科幻", 8)
+    )
+}
+
+class BilibiliComicsId : BilibiliComics("id") {
+
+    override fun getAllSortOptions(): Array<String> = arrayOf("Kamu Mungkin Suka", "Populer", "Terbaru")
+
+    override fun getAllStatus(): Array<String> = arrayOf("Semua", "Berlangsung", "Tamat")
+
+    override fun getAllPrices(): Array<String> = arrayOf("Semua", "Bebas", "Dibayar")
+
+    override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
+        BilibiliTag("Semua", -1),
+        BilibiliTag("Aksi", 19),
+        BilibiliTag("Fantasi Timur", 30),
+        BilibiliTag("Fantasi", 11),
+        BilibiliTag("Historis", 12),
+        BilibiliTag("Horror", 23),
+        BilibiliTag("Kampus", 18),
+        BilibiliTag("Komedi", 14),
+        BilibiliTag("Menegangkan", 41),
+        BilibiliTag("Remaja", 20),
+        BilibiliTag("Romantis", 13)
+    )
 }
