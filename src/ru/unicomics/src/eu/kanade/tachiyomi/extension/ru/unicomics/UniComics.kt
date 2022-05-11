@@ -202,7 +202,7 @@ class UniComics : ParsedHttpSource() {
             infoElement.select("img").first().attr("src")
         else
             document.select(".left_comics img").first().attr("src").replace(".jpg", "_big.jpg")
-        description = infoElement.select("p").last()?.text()
+        description = infoElement.select("H2").first().text() + "\n" + infoElement.select("p").last()?.text().orEmpty()
         author = infoElement.select("tr:contains(Издательство)").text()
         genre = infoElement.select("tr:contains(Жанр) a").joinToString { it.text() }
     }
@@ -228,7 +228,7 @@ class UniComics : ParsedHttpSource() {
         return GET("$baseDefaultUrl${manga.url}/page/$page", headers)
     }
 
-    override fun chapterListSelector() = "div.right_comics"
+    override fun chapterListSelector() = "div.right_comics:has(td:contains(Читать))"
 
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
         val document = response.asJsoup()
@@ -236,7 +236,7 @@ class UniComics : ParsedHttpSource() {
     }
 
     private fun chapterFromElement(element: Element, manga: SManga): SChapter {
-        val urlElement = element.select("td:eq(1) a")
+        val urlElement = element.select("td:contains(Читать) a").first()
         val chapter = SChapter.create()
         element.select(".list_title").first().text().let {
             val titleNoPrefix = it.removePrefix(manga.title).removePrefix(":").trim()
