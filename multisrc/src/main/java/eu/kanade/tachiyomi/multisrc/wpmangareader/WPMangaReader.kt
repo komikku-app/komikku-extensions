@@ -157,21 +157,13 @@ abstract class WPMangaReader(
 
     // manga details
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        author = document.select(".listinfo li:contains(Author), .tsinfo .imptdt:nth-child(4) i, .infotable tr:contains(author) td:last-child")
-            .firstOrNull()?.ownText()
-
-        artist = document.select(".infotable tr:contains(artist) td:last-child, .tsinfo .imptdt:contains(artist) i")
-            .firstOrNull()?.ownText()
-
-        genre = document.select("div.gnr a, .mgen a, .seriestugenre a").joinToString { it.text() }
-        status = parseStatus(
-            document.select("div.listinfo li:contains(Status), .tsinfo .imptdt:contains(status), .tsinfo .imptdt:contains(الحالة), .infotable tr:contains(status) td")
-                .text()
-        )
-
-        title = document.selectFirst("h1.entry-title").text()
-        thumbnail_url = document.select(".infomanga > div[itemprop=image] img, .thumb img").attr("abs:src")
-        description = document.select(".desc, .entry-content[itemprop=description]").joinToString("\n") { it.text() }
+        author = document.select(seriesAuthorSelector).firstOrNull()?.ownText()
+        artist = document.select(seriesArtistSelector).firstOrNull()?.ownText()
+        genre = document.select(seriesGenreSelector).joinToString { it.text() }
+        status = parseStatus(document.select(seriesStatusSelector).text())
+        title = document.selectFirst(seriesTitleSelector).text()
+        thumbnail_url = document.select(seriesThumbnailSelector).attr("abs:src")
+        description = document.select(seriesDescriptionSelector).joinToString("\n") { it.text() }
 
         // add series type(manga/manhwa/manhua/other) thinggy to genre
         document.select(seriesTypeSelector).firstOrNull()?.ownText()?.let {
@@ -191,6 +183,13 @@ abstract class WPMangaReader(
         }
     }
 
+    open val seriesAuthorSelector = ".listinfo li:contains(Author), .tsinfo .imptdt:nth-child(4) i, .infotable tr:contains(author) td:last-child"
+    open val seriesArtistSelector = ".infotable tr:contains(artist) td:last-child, .tsinfo .imptdt:contains(artist) i"
+    open val seriesGenreSelector = "div.gnr a, .mgen a, .seriestugenre a"
+    open val seriesStatusSelector = "div.listinfo li:contains(Status), .tsinfo .imptdt:contains(status), .tsinfo .imptdt:contains(الحالة), .infotable tr:contains(status) td"
+    open val seriesTitleSelector = "h1.entry-title"
+    open val seriesThumbnailSelector = ".infomanga > div[itemprop=image] img, .thumb img"
+    open val seriesDescriptionSelector = ".desc, .entry-content[itemprop=description]"
     open val seriesTypeSelector = "span:contains(Type) a, .imptdt:contains(Type) :last-child, a[href*=type\\=], .infotable tr:contains(Type) td:last-child"
     open val altNameSelector = ".alternative, .seriestualt"
     open val altName = "Alternative Name" + ": "
