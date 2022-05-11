@@ -20,7 +20,6 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Arcane scan", "https://arcanescan.fr", "fr"),
         SingleLang("Azure Scans", "https://azuremanga.com", "en", overrideVersionCode = 1),
         SingleLang("BeastScans", "https://beastscans.com", "en"),
-        SingleLang("Davey Scans", "https://daveyscans.com", "id", overrideVersionCode = 1),
         SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true),
         SingleLang("Fusion Scanlation", "https://fusionscanlation.com", "es", className = "FusionScanlation", overrideVersionCode = 2),
         SingleLang("Gabut Scans", "https://gabutscans.com", "id"),

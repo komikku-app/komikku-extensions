@@ -53,7 +53,6 @@ class MMRCMSSources {
             SourceData.Single("Puzzmos", "https://puzzmos.com", "tr", overrideVersionCode = 1),
             SourceData.Single("Scan-1", "https://wwv.scan-1.com", "fr", className = "ScanOne", overrideVersionCode = 1),
             SourceData.Single("Lelscan-VF", "https://lelscan-vf.co", "fr", className = "LelscanVF"),
-            SourceData.Single("Komik Manga", "https://adm.komikmanga.com", "id"),
             SourceData.Single("Mangazuki Raws", "https://raws.mangazuki.co", "ko", overrideVersionCode = 1),
             SourceData.Single("Mangazuki", "https://mangazuki.co", "en", overrideVersionCode = 1),
             SourceData.Single("AnimaRegia", "https://animaregia.net", "pt-BR", overrideVersionCode = 4),
