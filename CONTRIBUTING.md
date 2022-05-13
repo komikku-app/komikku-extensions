@@ -284,6 +284,7 @@ open class UriPartFilter(displayName: String, private val vals: Array<Pair<Strin
 - When user opens a chapter, `fetchPageList` will be called and it will return a list of `Page`s.
 - While a chapter is open in the reader or is being downloaded, `fetchImageUrl` will be called to get URLs for each page of the manga if the `Page.imageUrl` is empty.
 - If the source provides all the `Page.imageUrl`'s directly, you can fill them and let the `Page.url` empty, so the app will skip the `fetchImageUrl` source and call directly `fetchImage`.
+- The `Page.url` and `Page.imageUrl` attributes **should be set as an absolute URL**.
 - Chapter pages numbers start from `0`.
 
 ### Misc notes
