@@ -196,11 +196,11 @@ ${placeholders.map { "${" ".repeat(28)}${it.key}: \"${it.value}\""}.joinToString
             fun factoryClassText(): String {
                 return when (source) {
                     is ThemeSourceData.SingleLang -> {
-                        """class ${source.className} : $themeClass("${source.name}", "${source.baseUrl}", "${source.lang}")"""
+                        """class ${source.className} : $themeClass("${source.sourceName}", "${source.baseUrl}", "${source.lang}")"""
                     }
                     is ThemeSourceData.MultiLang -> {
                         val sourceClasses = source.langs.map { lang ->
-                            """$themeClass("${source.name}", "${source.baseUrl}", "$lang")"""
+                            """$themeClass("${source.sourceName}", "${source.baseUrl}", "$lang")"""
                         }
 
                         """
@@ -244,6 +244,14 @@ sealed class ThemeSourceData {
     abstract val pkgName: String
 
     /**
+     * Override it if for some reason the name attribute inside the source class
+     * should be different from the extension name. Useful in cases where the
+     * extension name should be romanized and the source name should be the one
+     * in the source language. Defaults to the extension name if not specified.
+     */
+    abstract val sourceName: String
+
+    /**
      * overrideVersionCode defaults to 0, if a source changes their source override code or
      * a previous existing source suddenly needs source code overrides, overrideVersionCode
      * should be increased.
@@ -260,6 +268,7 @@ sealed class ThemeSourceData {
         override val isNsfw: Boolean = false,
         override val className: String = name.replace(" ", ""),
         override val pkgName: String = className.toLowerCase(Locale.ENGLISH),
+        override val sourceName: String = name,
         override val overrideVersionCode: Int = 0,
     ) : ThemeSourceData()
 
@@ -270,6 +279,7 @@ sealed class ThemeSourceData {
         override val isNsfw: Boolean = false,
         override val className: String = name.replace(" ", "") + "Factory",
         override val pkgName: String = className.substringBefore("Factory").toLowerCase(Locale.ENGLISH),
+        override val sourceName: String = name,
         override val overrideVersionCode: Int = 0,
     ) : ThemeSourceData()
 }

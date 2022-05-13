@@ -12,7 +12,16 @@ class MMRCMSGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = MMRCMSSources.version
 
     override val sources = MMRCMSSources.sourceList.map {
-        SingleLang(it.name, it.baseUrl, it.lang, it.isNsfw, it.className, it.pkgName, it.overrideVersionCode)
+        SingleLang(
+            it.name,
+            it.baseUrl,
+            it.lang,
+            it.isNsfw,
+            it.className,
+            it.pkgName,
+            it.sourceName,
+            it.overrideVersionCode
+        )
     }
 
     companion object {

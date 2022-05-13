@@ -10,6 +10,7 @@ class MMRCMSSources {
             abstract val isNsfw: Boolean
             abstract val className: String
             abstract val pkgName: String
+            abstract val sourceName: String
             abstract val overrideVersionCode: Int
 
             data class Single(
@@ -19,6 +20,7 @@ class MMRCMSSources {
                 override val isNsfw: Boolean = false,
                 override val className: String = name.replace(" ", ""),
                 override val pkgName: String = className.toLowerCase(Locale.ENGLISH),
+                override val sourceName: String = name,
                 override val overrideVersionCode: Int = 0,
             ) : SourceData()
 
@@ -29,6 +31,7 @@ class MMRCMSSources {
                 override val isNsfw: Boolean = false,
                 override val className: String = name.replace(" ", "") + "Factory",
                 override val pkgName: String = className.substringBefore("Factory").toLowerCase(Locale.ENGLISH),
+                override val sourceName: String = name,
                 override val overrideVersionCode: Int = 0,
             ) : SourceData()
         }
