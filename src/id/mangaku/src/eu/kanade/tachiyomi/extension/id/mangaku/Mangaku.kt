@@ -17,7 +17,7 @@ import org.jsoup.nodes.Element
 
 class Mangaku : ParsedHttpSource() {
     override val name = "Mangaku"
-    override val baseUrl = "https://mangaku.in/"
+    override val baseUrl = "https://mangaku.site/"
     override val lang = "id"
     override val supportsLatest = true
     private var searchQuery = ""
