@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -107,10 +108,14 @@ class Happymh : HttpSource() {
         return GET(baseUrl + chapter.url, header)
     }
 
-    override fun pageListParse(response: Response): List<Page> = mutableListOf<Page>().apply {
-        json.parseToJsonElement(response.body!!.string()).jsonObject["data"]!!.jsonObject["scans"]!!.jsonArray.mapIndexed() { index, it ->
-            add(Page(index, "", it.jsonObject["url"]!!.jsonPrimitive.content))
-        }
+    override fun pageListParse(response: Response): List<Page> {
+        return json.parseToJsonElement(response.body!!.string())
+            .jsonObject["data"]!!.jsonObject["scans"]!!.jsonArray
+            // If n == 1, the image is from next chapter
+            .filter { it.jsonObject["n"]!!.jsonPrimitive.int == 0 }
+            .mapIndexed { index, it ->
+                Page(index, "", it.jsonObject["url"]!!.jsonPrimitive.content)
+            }
     }
 
     override fun imageUrlParse(response: Response): String = throw Exception("Not Used")
