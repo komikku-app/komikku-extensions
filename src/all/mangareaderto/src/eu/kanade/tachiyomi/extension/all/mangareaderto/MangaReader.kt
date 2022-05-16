@@ -81,8 +81,8 @@ open class MangaReader(
                         else -> Unit
                     }
                 }
+                GET(toString(), headers)
             }
-            GET(toString(), headers)
         }
 
     override fun searchMangaSelector() = ".manga_list-sbs .manga-poster"
