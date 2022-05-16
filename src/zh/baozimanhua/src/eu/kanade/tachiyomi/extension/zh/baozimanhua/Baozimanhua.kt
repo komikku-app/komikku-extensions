@@ -1,7 +1,11 @@
 package eu.kanade.tachiyomi.extension.zh.baozimanhua
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -16,18 +20,27 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class Baozimanhua : ParsedHttpSource() {
+class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
 
-    override val name = "Baozimanhua"
+    override val id = 5724751873601868259
 
-    override val baseUrl = "https://cn.baozimh.com"
+    override val name = "包子漫画"
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    override val baseUrl = "https://${preferences.getString(MIRROR_PREF, MIRRORS[0])}"
 
     override val lang = "zh"
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addNetworkInterceptor(BannerInterceptor()).build()
 
     override fun chapterListSelector(): String = "div.pure-g[id^=chapter] > div"
 
@@ -42,7 +55,7 @@ class Baozimanhua : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
-            url = element.select("a").attr("href").trim()
+            setUrlWithoutDomain(element.select("a").attr("href").trim())
             name = element.text()
         }
     }
@@ -51,7 +64,7 @@ class Baozimanhua : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            url = element.attr("href")!!.trim()
+            setUrlWithoutDomain(element.attr("href")!!.trim())
             title = element.attr("title")!!.trim()
             thumbnail_url = element.select("> amp-img").attr("src")!!.trim()
         }
@@ -59,7 +72,7 @@ class Baozimanhua : ParsedHttpSource() {
 
     override fun popularMangaNextPageSelector() = throw java.lang.UnsupportedOperationException("Not used.")
 
-    override fun popularMangaRequest(page: Int): Request = GET("https://www.baozimh.com/classify", headers)
+    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/classify", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
@@ -104,8 +117,8 @@ class Baozimanhua : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val pages = document.select("section.comic-contain > amp-img").mapIndexed() { index, element ->
-            Page(index, imageUrl = element.attr("src").trim())
+        val pages = document.select(".comic-contain > .chapter-img > img").mapIndexed { index, element ->
+            Page(index, imageUrl = element.attr("data-src").trim() + COMIC_IMAGE_SUFFIX)
         }
         return pages
     }
@@ -301,7 +314,28 @@ class Baozimanhua : ParsedHttpSource() {
         )
     )
 
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val mirrorPref = androidx.preference.ListPreference(screen.context).apply {
+            key = MIRROR_PREF
+            title = MIRROR_PREF_TITLE
+            entries = MIRRORS
+            entryValues = MIRRORS
+            summary = MIRROR_PREF_SUMMARY
+
+            setDefaultValue(MIRRORS[0])
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putString(MIRROR_PREF, newValue as String).commit()
+            }
+        }
+        screen.addPreference(mirrorPref)
+    }
+
     companion object {
         const val ID_SEARCH_PREFIX = "id:"
+
+        private const val MIRROR_PREF = "MIRROR"
+        private const val MIRROR_PREF_TITLE = "使用镜像网址"
+        private const val MIRROR_PREF_SUMMARY = "使用镜像网址。重启软件生效。"
+        private val MIRRORS = arrayOf("cn.baozimh.com", "cn.webmota.com")
     }
 }
