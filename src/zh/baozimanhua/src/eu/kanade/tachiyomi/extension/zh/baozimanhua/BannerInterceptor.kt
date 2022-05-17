@@ -24,7 +24,7 @@ class BannerInterceptor : Interceptor {
         banner.recycle()
         buffer
     }
-    private val threshold by lazy { w * h * 3 / 2 } // 0.5 per pixel per channel
+    private val threshold by lazy { w * h * 3 } // 1 per pixel per channel
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val url = chain.request().url.toString()

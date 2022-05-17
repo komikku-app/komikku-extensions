@@ -5,7 +5,7 @@ ext {
     extName = 'Baozimanhua'
     pkgNameSuffix = 'zh.baozimanhua'
     extClass = '.Baozimanhua'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 apply from: "$rootDir/common.gradle"
