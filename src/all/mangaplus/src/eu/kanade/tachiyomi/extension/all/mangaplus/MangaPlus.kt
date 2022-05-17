@@ -59,6 +59,8 @@ abstract class MangaPlus(
 
     private val json: Json by injectLazy()
 
+    private val intl by lazy { MangaPlusIntl(langCode) }
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -313,8 +315,8 @@ abstract class MangaPlus(
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualityPref = ListPreference(screen.context).apply {
             key = "${QUALITY_PREF_KEY}_$lang"
-            title = QUALITY_PREF_TITLE
-            entries = QUALITY_PREF_ENTRIES
+            title = intl.imageQuality
+            entries = arrayOf(intl.imageQualityLow, intl.imageQualityMedium, intl.imageQualityHigh)
             entryValues = QUALITY_PREF_ENTRY_VALUES
             setDefaultValue(QUALITY_PREF_DEFAULT_VALUE)
             summary = "%s"
@@ -332,8 +334,8 @@ abstract class MangaPlus(
 
         val splitPref = SwitchPreferenceCompat(screen.context).apply {
             key = "${SPLIT_PREF_KEY}_$lang"
-            title = SPLIT_PREF_TITLE
-            summary = SPLIT_PREF_SUMMARY
+            title = intl.splitDoublePages
+            summary = intl.splitDoublePagesSummary
             setDefaultValue(SPLIT_PREF_DEFAULT_VALUE)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -419,14 +421,10 @@ abstract class MangaPlus(
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36"
 
         private const val QUALITY_PREF_KEY = "imageResolution"
-        private const val QUALITY_PREF_TITLE = "Image quality"
-        private val QUALITY_PREF_ENTRIES = arrayOf("Low", "Medium", "High")
         private val QUALITY_PREF_ENTRY_VALUES = arrayOf("low", "high", "super_high")
         private val QUALITY_PREF_DEFAULT_VALUE = QUALITY_PREF_ENTRY_VALUES[2]
 
         private const val SPLIT_PREF_KEY = "splitImage"
-        private const val SPLIT_PREF_TITLE = "Split double pages"
-        private const val SPLIT_PREF_SUMMARY = "Only a few titles supports disabling this setting."
         private const val SPLIT_PREF_DEFAULT_VALUE = true
 
         val COMPLETED_REGEX = "completado|complete|completo".toRegex()
