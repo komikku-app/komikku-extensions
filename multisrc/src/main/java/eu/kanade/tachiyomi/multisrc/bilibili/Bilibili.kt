@@ -50,76 +50,16 @@ abstract class Bilibili(
         .add("Origin", baseUrl)
         .add("Referer", "$baseUrl/")
 
+    protected val intl by lazy { BilibiliIntl(lang) }
+
     private val apiLang: String = when (lang) {
-        "zh-Hans" -> "cn"
+        BilibiliIntl.SIMPLIFIED_CHINESE -> "cn"
         else -> lang
-    }
-
-    protected open val statusLabel: String = when (lang) {
-        "zh", "zh-Hans" -> "进度"
-        else -> "Status"
-    }
-
-    protected open val sortLabel: String = when (lang) {
-        "zh", "zh-Hans" -> "排序"
-        "id" -> "Urutkan dengan"
-        else -> "Sort by"
-    }
-
-    protected open val genreLabel: String = when (lang) {
-        "zh", "zh-Hans" -> "题材"
-        else -> "Genre"
-    }
-
-    protected open val areaLabel: String = when (lang) {
-        "zh", "zh-Hans" -> "地区"
-        else -> "Area"
-    }
-
-    protected open val priceLabel: String = when (lang) {
-        "zh", "zh-Hans" -> "收费"
-        "id" -> "Harga"
-        else -> "Price"
-    }
-
-    protected open val episodePrefix: String = when (lang) {
-        "zh", "zh-Hans" -> ""
-        else -> "Ep. "
     }
 
     protected open val defaultPopularSort: Int = 1
 
     protected open val defaultLatestSort: Int = 2
-
-    protected open val hasPaidChaptersWarning: String = when (lang) {
-        "zh", "zh-Hans" -> "$EMOJI_WARNING 此漫画的付费章节已从章节列表中过滤，暂时请用网页端或官方app阅读。"
-        else ->
-            "$EMOJI_WARNING WARNING: This series has paid chapters that were filtered out from " +
-                "the chapter list. If you have already bought and have any in your account, sign " +
-                "in through WebView and refresh the chapter list to read them."
-    }
-
-    protected open val paidLabel: String = when (lang) {
-        "zh", "zh-Hans" -> "付费"
-        else -> "Paid"
-    }
-
-    protected open val imageQualityPrefTitle: String = when (lang) {
-        "zh", "zh-Hans" -> "章节图片质量"
-        "id" -> "Kualitas gambar"
-        else -> "Chapter image quality"
-    }
-
-    protected open val imageQualityPrefEntries: Array<String> = when (lang) {
-        "zh", "zh-Hans" -> arrayOf("原图", "高", "低")
-        else -> arrayOf("Raw", "HD", "SD")
-    }
-
-    protected open val imageFormatPrefTitle: String = when (lang) {
-        "zh", "zh-Hans" -> "章节图片格式"
-        "id" -> "Format gambar"
-        else -> "Chapter image format"
-    }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -347,13 +287,13 @@ abstract class Bilibili(
         title = comic.title
         author = comic.authorName.joinToString()
         status = if (comic.isFinish == 1) SManga.COMPLETED else SManga.ONGOING
-        genre = comic.genres(paidLabel, EMOJI_LOCKED).joinToString()
+        genre = comic.genres(intl.pricePaid, EMOJI_LOCKED).joinToString()
         description = comic.classicLines
         thumbnail_url = comic.verticalCover + THUMBNAIL_RESOLUTION
         url = "/detail/mc" + comic.id
 
         if (comic.hasPaidChapters && !signedIn) {
-            description = "$hasPaidChaptersWarning\n\n$description"
+            description = "${intl.hasPaidChaptersWarning}\n\n$description"
         }
     }
 
@@ -373,7 +313,7 @@ abstract class Bilibili(
     }
 
     protected fun chapterFromObject(episode: BilibiliEpisodeDto, comicId: Int): SChapter = SChapter.create().apply {
-        name = episodePrefix + episode.shortTitle +
+        name = intl.episodePrefix + episode.shortTitle +
             (if (episode.title.isNotBlank()) " - " + episode.title else "")
         date_upload = episode.publicationTime.substringBefore("T").toDate()
         url = "/mc$comicId/${episode.id}"
@@ -443,8 +383,8 @@ abstract class Bilibili(
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val imageQualityPref = ListPreference(screen.context).apply {
             key = "${IMAGE_QUALITY_PREF_KEY}_$lang"
-            title = imageQualityPrefTitle
-            entries = imageQualityPrefEntries
+            title = intl.imageQualityPrefTitle
+            entries = intl.imageQualityPrefEntries
             entryValues = IMAGE_QUALITY_PREF_ENTRY_VALUES
             setDefaultValue(IMAGE_QUALITY_PREF_DEFAULT_VALUE)
             summary = "%s"
@@ -462,7 +402,7 @@ abstract class Bilibili(
 
         val imageFormatPref = ListPreference(screen.context).apply {
             key = "${IMAGE_FORMAT_PREF_KEY}_$lang"
-            title = imageFormatPrefTitle
+            title = intl.imageFormatPrefTitle
             entries = IMAGE_FORMAT_PREF_ENTRIES
             entryValues = IMAGE_FORMAT_PREF_ENTRY_VALUES
             setDefaultValue(IMAGE_FORMAT_PREF_DEFAULT_VALUE)
@@ -487,24 +427,27 @@ abstract class Bilibili(
 
     protected open fun getAllAreas(): Array<BilibiliTag> = emptyArray()
 
-    protected open fun getAllSortOptions(): Array<String> = arrayOf("Interest", "Popular", "Updated")
+    protected open fun getAllSortOptions(): Array<String> =
+        arrayOf(intl.sortInterest, intl.sortPopular, intl.sortUpdated)
 
-    protected open fun getAllStatus(): Array<String> = arrayOf("All", "Ongoing", "Completed")
+    protected open fun getAllStatus(): Array<String> =
+        arrayOf(intl.statusAll, intl.statusOngoing, intl.statusComplete)
 
-    protected open fun getAllPrices(): Array<String> = arrayOf("All", "Free", "Paid")
+    protected open fun getAllPrices(): Array<String> =
+        arrayOf(intl.priceAll, intl.priceFree, intl.pricePaid)
 
     override fun getFilterList(): FilterList {
         val filters = mutableListOf(
-            StatusFilter(statusLabel, getAllStatus()),
-            SortFilter(sortLabel, getAllSortOptions(), defaultPopularSort),
-            PriceFilter(priceLabel, getAllPrices()),
-            GenreFilter(genreLabel, getAllGenres())
+            StatusFilter(intl.statusLabel, getAllStatus()),
+            SortFilter(intl.sortLabel, getAllSortOptions(), defaultPopularSort),
+            PriceFilter(intl.priceLabel, getAllPrices()),
+            GenreFilter(intl.genreLabel, getAllGenres())
         )
 
         val allAreas = getAllAreas()
 
         if (allAreas.isNotEmpty()) {
-            filters.add(AreaFilter(areaLabel, allAreas))
+            filters += AreaFilter(intl.areaLabel, allAreas)
         }
 
         return FilterList(filters)
@@ -588,6 +531,6 @@ abstract class Bilibili(
         }
 
         private const val EMOJI_LOCKED = "\uD83D\uDD12"
-        private const val EMOJI_WARNING = "\u26A0\uFE0F"
+        const val EMOJI_WARNING = "\u26A0\uFE0F"
     }
 }

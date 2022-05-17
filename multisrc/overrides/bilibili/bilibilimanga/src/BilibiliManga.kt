@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.zh.bilibilimanga
 
 import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.bilibili.Bilibili
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliIntl
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliTag
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -9,7 +10,7 @@ import okhttp3.OkHttpClient
 class BilibiliManga : Bilibili(
     "哔哩哔哩漫画",
     "https://manga.bilibili.com",
-    "zh-Hans"
+    BilibiliIntl.SIMPLIFIED_CHINESE
 ) {
 
     override val id: Long = 3561131545129718586
@@ -25,11 +26,11 @@ class BilibiliManga : Bilibili(
 
     override val defaultLatestSort: Int = 1
 
-    override fun getAllStatus(): Array<String> = arrayOf("全部", "连载", "完结")
+    override fun getAllSortOptions(): Array<String> =
+        arrayOf(intl.sortPopular, intl.sortUpdated, intl.sortFollowers, intl.sortAdded)
 
-    override fun getAllSortOptions(): Array<String> = arrayOf("人气推荐", "更新时间", "追漫人数", "上架时间")
-
-    override fun getAllPrices(): Array<String> = arrayOf("全部", "免费", "付费", "等就免费")
+    override fun getAllPrices(): Array<String> =
+        arrayOf(intl.priceAll, intl.priceFree, intl.pricePaid, intl.priceWaitForFree)
 
     override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
         BilibiliTag("全部", -1),

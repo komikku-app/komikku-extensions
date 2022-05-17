@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliAccessTokenCookie
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliComicDto
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliCredential
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliGetCredential
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliIntl
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliTag
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliUnlockedEpisode
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliUserEpisodes
@@ -147,7 +148,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
         }
 
         if (!response.isSuccessful) {
-            throw Exception(FAILED_TO_GET_CREDENTIAL)
+            throw Exception(intl.failedToGetCredential)
         }
 
         val result = response.parseAs<BilibiliCredential>()
@@ -230,13 +231,13 @@ abstract class BilibiliComics(lang: String) : Bilibili(
 
     private fun refreshTokenParse(response: Response): BilibiliAccessTokenCookie {
         if (!response.isSuccessful) {
-            throw IOException(FAILED_TO_REFRESH_TOKEN)
+            throw IOException(intl.failedToRefreshToken)
         }
 
         val result = response.parseAs<BilibiliAccessToken>()
 
         if (result.code != 0) {
-            throw IOException(FAILED_TO_REFRESH_TOKEN)
+            throw IOException(intl.failedToRefreshToken)
         }
 
         val accessToken = result.data!!
@@ -263,15 +264,10 @@ abstract class BilibiliComics(lang: String) : Bilibili(
         private val GLOBAL_API_SUBDOMAINS = arrayOf("us-user", "sg-user")
         private const val GLOBAL_BASE_API_USER_ENDPOINT = "twirp/global.v1.User"
         private const val GLOBAL_BASE_API_COMIC_ENDPOINT = "twirp/comic.v1.User"
-
-        private const val FAILED_TO_REFRESH_TOKEN =
-            "Failed to refresh the token. Open the WebView to fix this error."
-        private const val FAILED_TO_GET_CREDENTIAL =
-            "Failed to get the credential to read the chapter."
     }
 }
 
-class BilibiliComicsEn : BilibiliComics("en") {
+class BilibiliComicsEn : BilibiliComics(BilibiliIntl.ENGLISH) {
 
     override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
         BilibiliTag("All", -1),
@@ -293,13 +289,7 @@ class BilibiliComicsEn : BilibiliComics("en") {
     )
 }
 
-class BilibiliComicsCn : BilibiliComics("zh-Hans") {
-
-    override fun getAllSortOptions(): Array<String> = arrayOf("为你推荐", "人气推荐", "更新时间")
-
-    override fun getAllStatus(): Array<String> = arrayOf("全部", "连载中", "已完结")
-
-    override fun getAllPrices(): Array<String> = arrayOf("全部", "免费", "付费")
+class BilibiliComicsCn : BilibiliComics(BilibiliIntl.SIMPLIFIED_CHINESE) {
 
     override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
         BilibiliTag("全部", -1),
@@ -319,13 +309,7 @@ class BilibiliComicsCn : BilibiliComics("zh-Hans") {
     )
 }
 
-class BilibiliComicsId : BilibiliComics("id") {
-
-    override fun getAllSortOptions(): Array<String> = arrayOf("Kamu Mungkin Suka", "Populer", "Terbaru")
-
-    override fun getAllStatus(): Array<String> = arrayOf("Semua", "Berlangsung", "Tamat")
-
-    override fun getAllPrices(): Array<String> = arrayOf("Semua", "Bebas", "Dibayar")
+class BilibiliComicsId : BilibiliComics(BilibiliIntl.INDONESIAN) {
 
     override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
         BilibiliTag("Semua", -1),
