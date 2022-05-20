@@ -15,7 +15,7 @@ class AsuraScansFactory : SourceFactory {
 }
 
 class AsuraScansEn : AsuraScans("https://www.asurascans.com", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
-    override val pageSelector = "div.rdminimal > p > img"
+    override val pageSelector = "div.rdminimal > img, div.rdminimal > p > img"
 
     // Skip scriptPages
     override fun pageListParse(document: Document): List<Page> {
