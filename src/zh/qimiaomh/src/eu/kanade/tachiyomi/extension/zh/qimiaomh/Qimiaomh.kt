@@ -6,10 +6,8 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
@@ -17,7 +15,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.Random
 import java.util.concurrent.TimeUnit
 
 class Qimiaomh : ParsedHttpSource() {
@@ -67,8 +64,7 @@ class Qimiaomh : ParsedHttpSource() {
 
     // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        throw Exception("不管用 (T_T)")
-        // Todo Filters
+        return GET("$baseUrl/search/$query/$page.html")
     }
 
     override fun searchMangaNextPageSelector(): String? = popularMangaNextPageSelector()
@@ -80,7 +76,7 @@ class Qimiaomh : ParsedHttpSource() {
     // Details
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        title = document.select("h1.title").text()
+        title = document.selectFirst("h1.title").ownText()
         author = document.select("p.author").first().ownText()
         artist = author
         val glist = document.select("span.labelBox a").map { it.text() }
@@ -101,27 +97,31 @@ class Qimiaomh : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         url = element.select("a").first().attr("href")
         name = element.select("li.tit").text().trim()
+        date_upload = parseDate(element.selectFirst("li.time").text())
     }
 
     private fun parseDate(date: String): Long {
-        return SimpleDateFormat("dd/MM/yyyy", Locale.US).parse(date)?.time ?: 0L
+        return runCatching { DATE_FORMATTER.parse(date)?.time }
+            .getOrNull() ?: 0L
     }
 
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.select("script:containsData(var did =)").html()
-        val did = script.substringAfter("var did = ").substringBefore(";")
-        val sid = script.substringAfter("var sid = ").substringBefore(";")
-
-        val url = "$baseUrl/Action/Play/AjaxLoadImgUrl?did=$did&sid=$sid&tmp=${Random().nextFloat()}"
-        val response = client.newCall(GET(url, headers)).execute()
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
-
-        return result["listImg"]!!.jsonArray.mapIndexed { i, jsonEl ->
-            Page(i, "", jsonEl.jsonPrimitive.content)
+        return json.decodeFromString<List<String>>(
+            document.select("script:containsData(z_img)").html()
+                .substringAfter("var z_img='")
+                .substringBefore("';")
+        ).mapIndexed { i, imageUrl ->
+            Page(i, "", imageUrl)
         }
     }
 
     override fun imageUrlParse(document: Document): String = ""
+
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
+        }
+    }
 }
