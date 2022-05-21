@@ -2,10 +2,14 @@ package eu.kanade.tachiyomi.extension.zh.bilibilimanga
 
 import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.bilibili.Bilibili
+import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliComicDto
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliIntl
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliTag
+import eu.kanade.tachiyomi.source.model.SChapter
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
+import okhttp3.Response
 
 class BilibiliManga : Bilibili(
     "哔哩哔哩漫画",
@@ -21,6 +25,22 @@ class BilibiliManga : Bilibili(
         .addInterceptor(SpecificHostRateLimitInterceptor(CDN_URL.toHttpUrl(), 2))
         .addInterceptor(SpecificHostRateLimitInterceptor(COVER_CDN_URL.toHttpUrl(), 2))
         .build()
+
+    override fun headersBuilder() = Headers.Builder().apply {
+        add("User-Agent", DEFAULT_USER_AGENT)
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val result = response.parseAs<BilibiliComicDto>()
+
+        if (result.code != 0) {
+            return emptyList()
+        }
+
+        return result.data!!.episodeList
+            .filter { episode -> episode.isInFree || !episode.isLocked }
+            .map { ep -> chapterFromObject(ep, result.data.id) }
+    }
 
     override val defaultPopularSort: Int = 0
 
@@ -62,4 +82,8 @@ class BilibiliManga : Bilibili(
         BilibiliTag("韩国", 6),
         BilibiliTag("其他", 5),
     )
+
+    companion object {
+        const val DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63"
+    }
 }

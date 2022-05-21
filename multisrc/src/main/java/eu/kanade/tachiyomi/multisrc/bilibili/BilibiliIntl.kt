@@ -36,7 +36,8 @@ class BilibiliIntl(lang: String) {
 
     val hasPaidChaptersWarning: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE ->
-            "${Bilibili.EMOJI_WARNING} 此漫画的付费章节已从章节列表中过滤，暂时请用网页端或官方app阅读。"
+            "${Bilibili.EMOJI_WARNING} 此漫画的付费章节已从章节列表中过滤。如果您已购买章节，请在 WebView " +
+                "登录并刷新章节列表以阅读已购章节。"
         else ->
             "${Bilibili.EMOJI_WARNING} WARNING: This series has paid chapters that were filtered " +
                 "out from the chapter list. If you have already bought and have any in your " +
@@ -129,11 +130,15 @@ class BilibiliIntl(lang: String) {
         else -> "Wait for free"
     }
 
-    // TODO: Add Chinese translation.
-    val failedToRefreshToken: String = "Failed to refresh the token. Open the WebView to fix this error."
+    val failedToRefreshToken: String = when (lang) {
+        CHINESE, SIMPLIFIED_CHINESE -> "无法刷新令牌。请打开 WebView 修正错误。"
+        else -> "Failed to refresh the token. Open the WebView to fix this error."
+    }
 
-    // TODO: Add Chinese translation.
-    val failedToGetCredential: String = "Failed to get the credential to read the chapter."
+    val failedToGetCredential: String = when (lang) {
+        CHINESE, SIMPLIFIED_CHINESE -> "无法获取阅读章节所需的凭证。"
+        else -> "Failed to get the credential to read the chapter."
+    }
 
     companion object {
         const val CHINESE = "zh"

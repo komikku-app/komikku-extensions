@@ -38,6 +38,8 @@ data class BilibiliComicDto(
 @Serializable
 data class BilibiliEpisodeDto(
     val id: Int,
+    @SerialName("is_in_free") val isInFree: Boolean,
+    @SerialName("is_locked") val isLocked: Boolean,
     @SerialName("pay_gold") val payGold: Int,
     @SerialName("pay_mode") val payMode: Int,
     @SerialName("pub_time") val publicationTime: String,
