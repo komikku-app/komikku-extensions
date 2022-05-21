@@ -10,7 +10,9 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-// 漫城CMS http://mccms.cn/
+/**
+ * 漫城CMS http://mccms.cn/
+ */
 abstract class MCCMS(
     override val name: String,
     override val baseUrl: String,

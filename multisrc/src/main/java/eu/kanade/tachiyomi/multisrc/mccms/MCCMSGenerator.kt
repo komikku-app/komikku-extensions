@@ -8,10 +8,22 @@ class MCCMSGenerator : ThemeSourceGenerator {
     override val themePkg = "mccms"
     override val baseVersionCode = 1
     override val sources = listOf(
-        SingleLang("Haoman6", "https://www.haoman6.com", "zh", className = "Haoman6", overrideVersionCode = 1),
-        SingleLang("Haomanwu", "https://app2.haomanwu.com", "zh", className = "Haomanwu", overrideVersionCode = 2),
-        SingleLang("Haoman6 (g-lens)", "https://www.g-lens.com", "zh", className = "Haoman6_glens", overrideVersionCode = 0),
-        SingleLang("Haoman8", "https://caiji.haoman8.com", "zh", className = "Haoman8", overrideVersionCode = 0),
+        SingleLang(
+            name = "Haoman6", baseUrl = "https://www.haoman6.com", lang = "zh",
+            className = "Haoman6", sourceName = "好漫6", overrideVersionCode = 1
+        ),
+        SingleLang(
+            name = "Haomanwu", baseUrl = "https://app2.haomanwu.com", lang = "zh",
+            className = "Haomanwu", sourceName = "好漫屋", overrideVersionCode = 3
+        ),
+        SingleLang(
+            name = "Haoman6 (g-lens)", baseUrl = "https://www.g-lens.com", lang = "zh",
+            className = "Haoman6_glens", sourceName = "好漫6 (g-lens)", overrideVersionCode = 0
+        ),
+        SingleLang(
+            name = "Haoman8", baseUrl = "https://caiji.haoman8.com", lang = "zh",
+            className = "Haoman8", sourceName = "好漫8", overrideVersionCode = 0
+        ),
     )
 
     companion object {
