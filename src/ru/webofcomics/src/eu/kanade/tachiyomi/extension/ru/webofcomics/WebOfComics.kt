@@ -340,15 +340,23 @@ class WebOfComics : ParsedHttpSource() {
                         .substringBefore("\">")
                         .trim()
 
-            var subPage = ""
-
+            val countSubPage = counterPageStr.split("document.write").size
             return (startPageStr.toInt() until endPageStr.toInt()).mapIndexed { index, page ->
-                if (startPageStr == "0") {
-                    subPage = when {
-                        page < 10 -> "00"
-                        page < 100 -> "0"
-                        else -> ""
+                val subPage = when (countSubPage) {
+                    3 -> {
+                        when {
+                            page < 10 -> "0"
+                            else -> ""
+                        }
                     }
+                    4 -> {
+                        when {
+                            page < 10 -> "00"
+                            page < 100 -> "0"
+                            else -> ""
+                        }
+                    }
+                    else -> ""
                 }
                 Page(
                     index,
