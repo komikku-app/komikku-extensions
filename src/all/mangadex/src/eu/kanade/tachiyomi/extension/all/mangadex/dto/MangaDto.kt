@@ -59,6 +59,12 @@ data class MangaAttributesDto(
 @Serializable
 data class TagDto(
     val id: String,
+    val attributes: TagAttributesDto
+)
+
+@Serializable
+data class TagAttributesDto(
+    val group: String
 )
 
 fun JsonElement.asMdMap(): Map<String, String> {

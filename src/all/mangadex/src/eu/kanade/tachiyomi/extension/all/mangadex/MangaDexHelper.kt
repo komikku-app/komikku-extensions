@@ -15,14 +15,16 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import okhttp3.CacheControl
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.parser.Parser
+import uy.kohesive.injekt.api.get
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class MangaDexHelper() {
+class MangaDexHelper(private val lang: String) {
 
     val mdFilters = MangaDexFilters()
 
@@ -34,16 +36,26 @@ class MangaDexHelper() {
         prettyPrint = true
     }
 
+    val intl = MangaDexIntl(lang)
+
     /**
      * Gets the UUID from the url
      */
     fun getUUIDFromUrl(url: String) = url.substringAfterLast("/")
 
     /**
-     * get chapters for manga (aka manga/$id/feed endpoint)
+     * Get chapters for manga (aka manga/$id/feed endpoint)
      */
     fun getChapterEndpoint(mangaId: String, offset: Int, langCode: String) =
-        "${MDConstants.apiMangaUrl}/$mangaId/feed?includes[]=${MDConstants.scanlator}&includes[]=${MDConstants.uploader}&limit=500&offset=$offset&translatedLanguage[]=$langCode&order[volume]=desc&order[chapter]=desc"
+        "${MDConstants.apiMangaUrl}/$mangaId/feed".toHttpUrl().newBuilder()
+            .addQueryParameter("includes[]", MDConstants.scanlator)
+            .addQueryParameter("includes[]", MDConstants.uploader)
+            .addQueryParameter("limit", "500")
+            .addQueryParameter("offset", offset.toString())
+            .addQueryParameter("translatedLanguage[]", langCode)
+            .addQueryParameter("order[volume]", "desc")
+            .addQueryParameter("order[chapter]", "desc")
+            .toString()
 
     /**
      * Check if the manga url is a valid uuid
@@ -61,15 +73,15 @@ class MangaDexHelper() {
     fun getLatestChapterOffset(page: Int): String = (MDConstants.latestChapterLimit * (page - 1)).toString()
 
     /**
-     * Remove markdown links as well as parse any html characters in description or
-     * chapter name to actual characters for example &hearts; will show ♥
+     * Remove any HTML characters in description or chapter name to actual
+     * characters. For example &hearts; will show ♥
      */
     fun cleanString(string: String): String {
-        val unescapedString = Parser.unescapeEntities(string, false)
-
-        return unescapedString
+        return Parser.unescapeEntities(string, false)
             .substringBefore("---")
             .replace(markdownLinksRegex, "$1")
+            .replace(markdownItalicBoldRegex, "$1")
+            .replace(markdownItalicRegex, "$1")
             .trim()
     }
 
@@ -109,6 +121,8 @@ class MangaDexHelper() {
             .build()
 
         val markdownLinksRegex = "\\[([^]]+)\\]\\(([^)]+)\\)".toRegex()
+        val markdownItalicBoldRegex = "\\*+\\s*([^\\*]*)\\s*\\*+".toRegex()
+        val markdownItalicRegex = "_+\\s*([^_]*)\\s*_+".toRegex()
 
         val titleSpecialCharactersRegex = "[^a-z0-9]+".toRegex()
 
@@ -213,7 +227,12 @@ class MangaDexHelper() {
     /**
      * Create an SManga from json element with all details
      */
-    fun createManga(mangaDataDto: MangaDataDto, chapters: List<String>, lang: String, coverSuffix: String?): SManga {
+    fun createManga(
+        mangaDataDto: MangaDataDto,
+        chapters: List<String>,
+        lang: String,
+        coverSuffix: String?
+    ): SManga {
         try {
             val attr = mangaDataDto.attributes
 
@@ -224,7 +243,7 @@ class MangaDexHelper() {
                 if (tempContentRating == null || tempContentRating.equals("safe", true)) {
                     null
                 } else {
-                    "Content rating: " + tempContentRating.capitalize(Locale.US)
+                    intl.contentRatingGenre(tempContentRating)
                 }
 
             val dexLocale = Locale.forLanguageTag(lang)
@@ -237,44 +256,53 @@ class MangaDexHelper() {
                     .capitalize(dexLocale)
             )
 
-            val authors = mangaDataDto.relationships.filter { relationshipDto ->
-                relationshipDto.type.equals(MDConstants.author, true)
-            }.mapNotNull { it.attributes!!.name }.distinct()
+            val authors = mangaDataDto.relationships
+                .filter { relationshipDto ->
+                    relationshipDto.type.equals(MDConstants.author, true)
+                }
+                .mapNotNull { it.attributes!!.name }.distinct()
 
-            val artists = mangaDataDto.relationships.filter { relationshipDto ->
-                relationshipDto.type.equals(MDConstants.artist, true)
-            }.mapNotNull { it.attributes!!.name }.distinct()
+            val artists = mangaDataDto.relationships
+                .filter { relationshipDto ->
+                    relationshipDto.type.equals(MDConstants.artist, true)
+                }
+                .mapNotNull { it.attributes!!.name }.distinct()
 
-            val coverFileName = mangaDataDto.relationships.firstOrNull { relationshipDto ->
-                relationshipDto.type.equals(MDConstants.coverArt, true)
-            }?.attributes?.fileName
+            val coverFileName = mangaDataDto.relationships
+                .firstOrNull { relationshipDto ->
+                    relationshipDto.type.equals(MDConstants.coverArt, true)
+                }
+                ?.attributes
+                ?.fileName
 
-            // get tag list
-            val tags = mdFilters.getTags()
+            val tags = mdFilters.getTags(intl)
 
-            // map ids to tag names
-            val genreList = (
-                attr.tags
-                    .map { it.id }
-                    .map { dexId ->
-                        tags.firstOrNull { it.id == dexId }
-                    }
-                    .map { it?.name } +
-                    nonGenres
-                )
-                .filter { it.isNullOrBlank().not() }
+            val genresMap = attr.tags
+                .groupBy({ it.attributes.group }) { tagDto ->
+                    tags.firstOrNull { it.id == tagDto.id }?.name
+                }
+                .map { (group, tags) ->
+                    group to tags.filterNotNull().sortedWith(intl.collator)
+                }
+                .toMap()
+
+            val genreList = MDConstants.tagGroupsOrder.flatMap { genresMap[it].orEmpty() } +
+                nonGenres.filterNotNull()
 
             val desc = attr.description.asMdMap()
+
             return createBasicManga(mangaDataDto, coverFileName, coverSuffix, lang).apply {
                 description = cleanString(desc[lang] ?: desc["en"] ?: "")
                 author = authors.joinToString(", ")
                 artist = artists.joinToString(", ")
                 status = getPublicationStatus(attr, chapters)
-                genre = genreList.joinToString(", ")
+                genre = genreList
+                    .filter(String::isNotEmpty)
+                    .joinToString(", ")
             }
         } catch (e: Exception) {
             Log.e("MangaDex", "error parsing manga", e)
-            throw(e)
+            throw e
         }
     }
 
@@ -295,14 +323,21 @@ class MangaDexHelper() {
                 .joinToString(" & ")
                 .ifEmpty {
                     // fall back to uploader name if no group
-                    val users = chapterDataDto.relationships.filter { relationshipDto ->
-                        relationshipDto.type.equals(
-                            MDConstants.uploader,
-                            true
-                        )
-                    }.mapNotNull { it.attributes!!.username }
-                    users.joinToString(" & ", if (users.isNotEmpty()) "Uploaded by " else "")
-                }.ifEmpty { "No Group" } // "No Group" as final resort
+                    val users = chapterDataDto.relationships
+                        .filter { relationshipDto ->
+                            relationshipDto.type.equals(
+                                MDConstants.uploader,
+                                true
+                            )
+                        }
+                        .mapNotNull { it.attributes!!.username }
+
+                    users.joinToString(
+                        " & ",
+                        if (users.isNotEmpty()) intl.uploadedBy(users.toString()) else ""
+                    )
+                }
+                .ifEmpty { intl.noGroup } // "No Group" as final resort
 
             val chapterName = mutableListOf<String>()
             // Build chapter name
@@ -347,7 +382,7 @@ class MangaDexHelper() {
             }
         } catch (e: Exception) {
             Log.e("MangaDex", "error parsing chapter", e)
-            throw(e)
+            throw e
         }
     }
 

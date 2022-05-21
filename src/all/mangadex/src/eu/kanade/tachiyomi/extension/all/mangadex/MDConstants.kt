@@ -46,7 +46,8 @@ object MDConstants {
         return "${coverQualityPref}_$dexLang"
     }
 
-    fun getCoverQualityPreferenceEntries() = arrayOf("Original", "Medium", "Low")
+    fun getCoverQualityPreferenceEntries(intl: MangaDexIntl) =
+        arrayOf(intl.coverQualityOriginal, intl.coverQualityMedium, intl.coverQualityLow)
 
     fun getCoverQualityPreferenceEntryValues() = arrayOf("", ".512.jpg", ".256.jpg")
 
@@ -76,10 +77,11 @@ object MDConstants {
     }
 
     private const val originalLanguagePref = "originalLanguage"
-    const val originalLanguagePrefValJapanese = "ja"
-    const val originalLanguagePrefValChinese = "zh"
+    const val originalLanguagePrefValJapanese = MangaDexIntl.JAPANESE
+    const val originalLanguagePrefValChinese = MangaDexIntl.CHINESE
     const val originalLanguagePrefValChineseHk = "zh-hk"
-    const val originalLanguagePrefValKorean = "ko"
+    const val originalLanguagePrefValKorean = MangaDexIntl.KOREAN
+    val originalLanguagePrefDefaults = emptySet<String>()
 
     fun getOriginalLanguagePrefKey(dexLang: String): String {
         return "${originalLanguagePref}_$dexLang"
@@ -100,4 +102,10 @@ object MDConstants {
     fun getBlockedUploaderPrefKey(dexLang: String): String {
         return "${blockedUploaderPref}_$dexLang"
     }
+
+    const val tagGroupContent = "content"
+    const val tagGroupFormat = "format"
+    const val tagGroupGenre = "genre"
+    const val tagGroupTheme = "theme"
+    val tagGroupsOrder = arrayOf(tagGroupContent, tagGroupFormat, tagGroupGenre, tagGroupTheme)
 }
