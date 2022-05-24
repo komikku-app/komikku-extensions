@@ -483,7 +483,8 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("مانجا عرب تيم Manga Arab Team", "https://mangaarbteam.com", "ar", className = "MangaArabTeam", overrideVersionCode = 1),
         SingleLang("مانجا ليك", "https://mangalek.com", "ar", className = "Mangalek", overrideVersionCode = 1),
         SingleLang("مانجا لينك", "https://mangalink.io", "ar", className = "MangaLinkio", overrideVersionCode = 2),
-    )
+        SingleLang("Ragnarok Scanlation", "https://ragnarokscanlation.com",  "es", className = "RagnarokScanlation"),
+        )
 
     companion object {
         @JvmStatic
