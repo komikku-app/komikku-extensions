@@ -28,8 +28,8 @@ import kotlin.random.Random
 class MangaKawaii : ParsedHttpSource() {
 
     override val name = "Mangakawaii"
-    override val baseUrl = "https://www.mangakawaii.net"
-    val cdnUrl = "https://cdn.mangakawaii.net"
+    override val baseUrl = "https://www.mangakawaii.io"
+    val cdnUrl = "https://cdn.mangakawaii.pics"
     override val lang = "fr"
     override val supportsLatest = true
     private val rateLimitInterceptor = RateLimitInterceptor(1) // 1 request per second
