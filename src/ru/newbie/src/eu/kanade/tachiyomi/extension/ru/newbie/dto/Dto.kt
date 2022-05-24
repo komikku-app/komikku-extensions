@@ -1,36 +1,9 @@
 import kotlinx.serialization.Serializable
 
+//Catalog API
 @Serializable
-data class TagsDto(
-    val title: TitleDto
-)
-
-@Serializable
-data class BranchesDto(
-    val id: Long,
-    val is_default: Boolean
-)
-
-@Serializable
-data class ImgsDto(
-    val large: String,
-    val small: String,
-)
-
-@Serializable
-data class ImgDto(
-    val srcset: ImgsDto,
-)
-
-@Serializable
-data class TitleDto(
-    val en: String,
-    val ru: String
-)
-
-@Serializable
-data class AuthorDto(
-    val name: String?
+data class PageWrapperDto<T>(
+    val items: List<T>,
 )
 
 @Serializable
@@ -40,6 +13,7 @@ data class LibraryDto(
     val image: ImgDto
 )
 
+//Manga Details
 @Serializable
 data class MangaDetDto(
     val id: Long,
@@ -57,10 +31,39 @@ data class MangaDetDto(
 )
 
 @Serializable
-data class PageWrapperDto<T>(
-    val items: List<T>,
+data class TitleDto(
+    val en: String,
+    val ru: String
 )
 
+@Serializable
+data class AuthorDto(
+    val name: String?
+)
+
+@Serializable
+data class ImgDto(
+    val srcset: ImgsDto,
+)
+
+@Serializable
+data class ImgsDto(
+    val large: String,
+    val small: String,
+)
+
+@Serializable
+data class TagsDto(
+    val title: TitleDto
+)
+
+@Serializable
+data class BranchesDto(
+    val id: Long,
+    val is_default: Boolean
+)
+
+//Chapters
 @Serializable
 data class SeriesWrapperDto<T>(
     val items: T
@@ -81,4 +84,28 @@ data class BookDto(
 data class PageDto(
     val id: Int,
     val slices: Int?
+)
+
+//Search NEO in POST Request
+@Serializable
+data class SearchWrapperDto<T>(
+    val result: T,
+)
+
+@Serializable
+data class SubSearchDto<T>(
+    val hits: List<T>,
+)
+
+@Serializable
+data class SearchLibraryDto(
+    val document: DocElementsDto,
+)
+
+@Serializable
+data class DocElementsDto(
+    val id: String,
+    val title_en: String,
+    val image_large: String,
+    val image_small: String
 )
