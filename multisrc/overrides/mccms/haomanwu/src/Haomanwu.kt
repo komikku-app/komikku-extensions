@@ -10,7 +10,7 @@ class Haomanwu : MCCMS("好漫屋", "https://app2.haomanwu.com") {
 
     // Search
 
-    override fun searchMangaNextPageSelector() = "li:nth-child(30) > a"  // 有30项则可能有下一页
+    override fun searchMangaNextPageSelector() = "li:nth-child(30) > a" // 有30项则可能有下一页
     override fun searchMangaSelector() = "li > a"
     override fun searchMangaFromElement(element: Element) = SManga.create().apply {
         title = element.text()
