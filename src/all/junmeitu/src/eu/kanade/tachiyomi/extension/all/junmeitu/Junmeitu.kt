@@ -19,10 +19,11 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class JunmeiTu() : ConfigurableSource, ParsedHttpSource() {
+class Junmeitu : ConfigurableSource, ParsedHttpSource() {
     override val lang = "all"
-    override val name = "Junmei tu"
+    override val name = "Junmeitu"
     override val supportsLatest = true
+    override val id = 4721197766605490540
 
     // Preference
     private val preferences: SharedPreferences by lazy {

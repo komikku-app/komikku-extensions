@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'Junmei tu'
+    extName = 'Junmeitu'
     pkgNameSuffix = 'all.junmeitu'
-    extClass = '.JunmeiTu'
-    extVersionCode = 1
+    extClass = '.Junmeitu'
+    extVersionCode = 2
     isNsfw = true
 }
 
