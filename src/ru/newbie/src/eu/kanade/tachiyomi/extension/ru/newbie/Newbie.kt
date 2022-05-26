@@ -56,7 +56,7 @@ class Newbie : HttpSource() {
     private var branches = mutableMapOf<String, List<BranchesDto>>()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", "Tachiyomi")
+        .add("User-Agent", "Tachiyomi " + System.getProperty("http.agent"))
         .add("Referer", baseUrl)
 
     private fun imageContentTypeIntercept(chain: Interceptor.Chain): Response {
@@ -139,6 +139,7 @@ class Newbie : HttpSource() {
         val mutableExTag = mutableListOf<String>()
         val mutableType = mutableListOf<String>()
         val mutableStatus = mutableListOf<String>()
+        val mutableTitleStatus = mutableListOf<String>()
         val mutableAge = mutableListOf<String>()
         var orderBy = "MATCH"
         var ascEnd = "DESC"
@@ -171,6 +172,11 @@ class Newbie : HttpSource() {
                         mutableStatus += '"' + status.id + '"'
                     }
                 }
+                is StatusTitleList -> filter.state.forEach { status ->
+                    if (status.state) {
+                        mutableTitleStatus += '"' + status.id + '"'
+                    }
+                }
                 is AgeList -> filter.state.forEach { age ->
                     if (age.state) {
                         mutableAge += '"' + age.id + '"'
@@ -186,7 +192,7 @@ class Newbie : HttpSource() {
 
         return POST(
             "https://neo.newmanga.org/catalogue",
-            body = """{"query":"$query","sort":{"kind":"$orderBy","dir":"$ascEnd"},"filter":{"hidden_projects":[],"genres":{"excluded":$mutableExGenre,"included":$mutableGenre},"tags":{"excluded":$mutableExTag,"included":$mutableTag},"type":{"allowed":$mutableType},"translation_status":{"allowed":[]},"released_year":{"min":null,"max":null},"require_chapters":$requireChapters,"original_status":{"allowed":$mutableStatus},"adult":{"allowed":$mutableAge}},"pagination":{"page":$page,"size":$count}}""".toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()),
+            body = """{"query":"$query","sort":{"kind":"$orderBy","dir":"$ascEnd"},"filter":{"hidden_projects":[],"genres":{"excluded":$mutableExGenre,"included":$mutableGenre},"tags":{"excluded":$mutableExTag,"included":$mutableTag},"type":{"allowed":$mutableType},"translation_status":{"allowed":$mutableStatus},"released_year":{"min":null,"max":null},"require_chapters":$requireChapters,"original_status":{"allowed":$mutableTitleStatus},"adult":{"allowed":$mutableAge}},"pagination":{"page":$page,"size":$count}}""".toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()),
             headers = headers
         )
     }
@@ -240,7 +246,7 @@ class Newbie : HttpSource() {
             thumbnail_url = "$IMAGE_URL/${image.srcset.large}"
             author = o.author?.name
             artist = o.artist?.name
-            description = o.title.ru + "\n" + ratingStar + " " + ratingValue + "\n" + Jsoup.parse(o.description).text()
+            description = o.title.ru + "\n" + ratingStar + " " + ratingValue + " [♡" + hearts + "]\n" + Jsoup.parse(o.description).text()
             genre = parseType(type) + ", " + adult?.let { parseAge(it) } + ", " + genres.joinToString { it.title.ru.capitalize() }
             status = parseStatus(o.status)
         }
@@ -375,7 +381,8 @@ class Newbie : HttpSource() {
     private class SearchFilter(name: String) : Filter.TriState(name)
 
     private class TypeList(types: List<CheckFilter>) : Filter.Group<CheckFilter>("Типы", types)
-    private class StatusList(statuses: List<CheckFilter>) : Filter.Group<CheckFilter>("Статус", statuses)
+    private class StatusList(statuses: List<CheckFilter>) : Filter.Group<CheckFilter>("Статус перевода", statuses)
+    private class StatusTitleList(titles: List<CheckFilter>) : Filter.Group<CheckFilter>("Статус оригинала", titles)
     private class GenreList(genres: List<SearchFilter>) : Filter.Group<SearchFilter>("Жанры", genres)
     private class TagsList(tags: List<SearchFilter>) : Filter.Group<SearchFilter>("Теги", tags)
     private class AgeList(ages: List<CheckFilter>) : Filter.Group<CheckFilter>("Возрастное ограничение", ages)
@@ -386,6 +393,7 @@ class Newbie : HttpSource() {
         TagsList(getTagsList()),
         TypeList(getTypeList()),
         StatusList(getStatusList()),
+        StatusTitleList(getStatusTitleList()),
         AgeList(getAgeList()),
         RequireChapters()
     )
@@ -412,6 +420,12 @@ class Newbie : HttpSource() {
     )
 
     private fun getStatusList() = listOf(
+        CheckFilter("Выпускается", "ON_GOING"),
+        CheckFilter("Заброшен", "ABANDONED"),
+        CheckFilter("Завершён", "COMPLETED"),
+    )
+
+    private fun getStatusTitleList() = listOf(
         CheckFilter("Выпускается", "ON_GOING"),
         CheckFilter("Приостановлен", "SUSPENDED"),
         CheckFilter("Завершён", "COMPLETED"),

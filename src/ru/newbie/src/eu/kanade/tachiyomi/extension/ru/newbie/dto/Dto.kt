@@ -1,6 +1,6 @@
 import kotlinx.serialization.Serializable
 
-//Catalog API
+// Catalog API
 @Serializable
 data class PageWrapperDto<T>(
     val items: List<T>,
@@ -13,7 +13,7 @@ data class LibraryDto(
     val image: ImgDto
 )
 
-//Manga Details
+// Manga Details
 @Serializable
 data class MangaDetDto(
     val id: Long,
@@ -26,6 +26,7 @@ data class MangaDetDto(
     val type: String,
     val status: String,
     val rating: Float,
+    val hearts: Long,
     val adult: String?,
     val branches: List<BranchesDto>,
 )
@@ -63,7 +64,7 @@ data class BranchesDto(
     val is_default: Boolean
 )
 
-//Chapters
+// Chapters
 @Serializable
 data class SeriesWrapperDto<T>(
     val items: T
@@ -86,7 +87,7 @@ data class PageDto(
     val slices: Int?
 )
 
-//Search NEO in POST Request
+// Search NEO in POST Request
 @Serializable
 data class SearchWrapperDto<T>(
     val result: T,
