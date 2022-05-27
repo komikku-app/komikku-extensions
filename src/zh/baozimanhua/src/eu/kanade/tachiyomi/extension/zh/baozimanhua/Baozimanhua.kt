@@ -40,17 +40,18 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(BannerInterceptor()).build()
+        .addInterceptor(BannerInterceptor()).build()
 
-    override fun chapterListSelector(): String = "div.pure-g[id^=chapter] > div"
+    override fun chapterListSelector() = throw UnsupportedOperationException("Not used.")
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val chapters = document.select(chapterListSelector()).map { element ->
-            chapterFromElement(element)
-        }
-        // chapters are listed oldest to newest in the source
-        return chapters.reversed()
+        return if (document.select(".l-box > .pure-g").size == 1) { // only latest chapters
+            document.select(".l-box > .pure-g > div")
+        } else {
+            // chapters are listed oldest to newest in the source
+            document.select(".l-box > .pure-g[id^=chapter] > div").reversed()
+        }.map { chapterFromElement(it) }
     }
 
     override fun chapterFromElement(element: Element): SChapter {
@@ -70,15 +71,12 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
         }
     }
 
-    override fun popularMangaNextPageSelector() = throw java.lang.UnsupportedOperationException("Not used.")
+    override fun popularMangaNextPageSelector(): String? = null
 
-    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/classify", headers)
+    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/classify?page=$page", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        val mangas = document.select(popularMangaSelector()).map { element ->
-            popularMangaFromElement(element)
-        }
+        val mangas = super.popularMangaParse(response).mangas
         return MangasPage(mangas, mangas.size == 36)
     }
 
@@ -88,17 +86,9 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
         return popularMangaFromElement(element)
     }
 
-    override fun latestUpdatesNextPageSelector() = throw java.lang.UnsupportedOperationException("Not used.")
+    override fun latestUpdatesNextPageSelector(): String? = null
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/list/new", headers)
-
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        val mangas = document.select(popularMangaSelector()).map { element ->
-            popularMangaFromElement(element)
-        }
-        return MangasPage(mangas, mangas.size == 12)
-    }
 
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
@@ -113,23 +103,23 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
                 "已完結" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
             }
+            // TODO: upload date by selector "em" in format "(2021年06月29日 更新)"
         }
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val pages = document.select(".comic-contain > .chapter-img > img").mapIndexed { index, element ->
+        return document.select(".comic-contain > .chapter-img > img").mapIndexed { index, element ->
             Page(index, imageUrl = element.attr("data-src").trim() + COMIC_IMAGE_SUFFIX)
         }
-        return pages
     }
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
 
-    override fun searchMangaSelector() = throw java.lang.UnsupportedOperationException("Not used.")
+    override fun searchMangaSelector() = throw UnsupportedOperationException("Not used.")
 
-    override fun searchMangaFromElement(element: Element) = throw java.lang.UnsupportedOperationException("Not used.")
+    override fun searchMangaFromElement(element: Element) = throw UnsupportedOperationException("Not used.")
 
-    override fun searchMangaNextPageSelector() = throw java.lang.UnsupportedOperationException("Not used.")
+    override fun searchMangaNextPageSelector() = throw UnsupportedOperationException("Not used.")
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         return if (query.startsWith(ID_SEARCH_PREFIX)) {

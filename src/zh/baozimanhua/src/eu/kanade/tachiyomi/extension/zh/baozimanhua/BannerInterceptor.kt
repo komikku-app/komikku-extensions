@@ -8,6 +8,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import java.io.ByteArrayOutputStream
+import java.util.EnumSet
 import kotlin.math.abs
 
 class BannerInterceptor : Interceptor {
@@ -34,17 +35,13 @@ class BannerInterceptor : Interceptor {
         val contentType = body.contentType()
         val content = body.bytes()
         val bitmap = BitmapFactory.decodeByteArray(content, 0, content.size)
-        val position = checkBanner(bitmap)
-        return if (position == null) {
+        val positions = checkBanner(bitmap)
+        return if (positions.isEmpty()) {
             response.newBuilder().body(content.toResponseBody(contentType)).build()
         } else {
             val result = Bitmap.createBitmap(
-                bitmap, 0,
-                when (position) {
-                    BannerPosition.TOP -> h
-                    BannerPosition.BOTTOM -> 0
-                },
-                bitmap.width, bitmap.height - h
+                bitmap, 0, if (positions.contains(BannerPosition.TOP)) h else 0,
+                bitmap.width, bitmap.height - h * positions.size
             )
             val output = ByteArrayOutputStream()
             result.compress(Bitmap.CompressFormat.JPEG, 90, output)
@@ -53,16 +50,17 @@ class BannerInterceptor : Interceptor {
         }
     }
 
-    private fun checkBanner(image: Bitmap): BannerPosition? {
-        if (image.width < w || image.height < h) return null
-        if ((image.width - w) % 2 != 0) return null
+    private fun checkBanner(image: Bitmap): EnumSet<BannerPosition> {
+        val result = EnumSet.noneOf(BannerPosition::class.java)
+        if (image.width < w || image.height < h) return result
+        if ((image.width - w) % 2 != 0) return result
         val pad = (image.width - w) / 2
         val buf = IntArray(size)
         image.getPixels(buf, 0, w, pad, 0, w, h) // top
-        if (isIdentical(bannerBuffer, buf)) return BannerPosition.TOP
+        if (isIdentical(bannerBuffer, buf)) result.add(BannerPosition.TOP)
         image.getPixels(buf, 0, w, pad, image.height - h, w, h) // bottom
-        if (isIdentical(bannerBuffer, buf)) return BannerPosition.BOTTOM
-        return null
+        if (isIdentical(bannerBuffer, buf)) result.add(BannerPosition.BOTTOM)
+        return result
     }
 
     private fun isIdentical(a: IntArray, b: IntArray): Boolean {
