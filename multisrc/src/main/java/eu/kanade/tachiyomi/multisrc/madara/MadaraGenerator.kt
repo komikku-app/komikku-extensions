@@ -353,7 +353,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("NovelMic", "https://novelmic.com", "en", overrideVersionCode = 1),
         SingleLang("Novels Town", "https://novelstown.cyou", "ar"),
         SingleLang("Oh No Manga", "https://ohnomanga.com", "en", isNsfw = true),
-        SingleLang("Okamishi Scans", "https://geassscan.net", "pt-BR", pkgName = "geassscanlator", overrideVersionCode = 5),
         SingleLang("Olympus Scanlation", "https://olympusscanlation.com", "es"),
         SingleLang("Ow Scan", "https://owscan.com", "pt-BR", overrideVersionCode = 1),
         SingleLang("Paean Scans", "https://paeanscans.com", "en", overrideVersionCode = 1),
