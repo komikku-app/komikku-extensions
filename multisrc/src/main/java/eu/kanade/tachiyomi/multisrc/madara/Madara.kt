@@ -609,9 +609,9 @@ abstract class Madara(
     )
 
     protected val ongoingStatusList: Array<String> = arrayOf(
-        "OnGoing", "Продолжается", "Updating", "Em Lançamento", "Em andamento", "Em Andamento",
-        "En cours", "Ativo", "Lançando", "Đang Tiến Hành", "Devam Ediyor", "Devam ediyor",
-        "In Corso", "In Arrivo", "مستمرة"
+        "OnGoing", "Продолжается", "Updating", "Em Lançamento", "Em lançamento", "Em andamento",
+        "Em Andamento", "En cours", "Ativo", "Lançando", "Đang Tiến Hành", "Devam Ediyor",
+        "Devam ediyor", "In Corso", "In Arrivo", "مستمرة"
     )
 
     override fun mangaDetailsParse(document: Document): SManga {
@@ -812,7 +812,7 @@ abstract class Madara(
             // Added "title" alternative
             chapter.date_upload = select("img:not(.thumb)").firstOrNull()?.attr("alt")?.let { parseRelativeDate(it) }
                 ?: select("span a").firstOrNull()?.attr("title")?.let { parseRelativeDate(it) }
-                ?: parseChapterDate(select(chapterDateSelector()).firstOrNull()?.text())
+                    ?: parseChapterDate(select(chapterDateSelector()).firstOrNull()?.text())
         }
 
         return chapter

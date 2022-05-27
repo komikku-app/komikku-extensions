@@ -16,6 +16,9 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Call
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -26,6 +29,7 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.UUID
@@ -37,7 +41,7 @@ class NeoxScanlator :
         "Neox Scanlator",
         DEFAULT_BASE_URL,
         "pt-BR",
-        SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+        SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
     ),
     ConfigurableSource {
 
@@ -45,10 +49,13 @@ class NeoxScanlator :
         .connectTimeout(1, TimeUnit.MINUTES)
         .readTimeout(1, TimeUnit.MINUTES)
         .addInterceptor(::titleCollectionIntercept)
+        .addInterceptor(::obsoleteCheckIntercept)
         .addInterceptor(RateLimitInterceptor(1, 3, TimeUnit.SECONDS))
         .build()
 
     override val altNameSelector = ".post-content_item:contains(Alternativo) .summary-content"
+
+    override val chapterUrlSelector = "a:not(:has(img.thumb))"
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -59,6 +66,8 @@ class NeoxScanlator :
     }
 
     private var titleCollectionPath: String? = null
+
+    private var extIsObsolete: Boolean? = null
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Accept", ACCEPT)
@@ -214,6 +223,25 @@ class NeoxScanlator :
         return chain.proceed(fixedRequest)
     }
 
+    private fun obsoleteCheckIntercept(chain: Interceptor.Chain): Response {
+        if (extIsObsolete == null) {
+            val repoRequest = GET(EXT_REPO_JSON)
+            val repoResponse = chain.proceed(repoRequest)
+            val repoJson = json.parseToJsonElement(repoResponse.body!!.string()).jsonArray
+
+            val extDetails = repoJson.firstOrNull { it.jsonObject["pkg"]!!.jsonPrimitive.content == EXT_PKG }
+            extIsObsolete = extDetails == null
+
+            repoResponse.close()
+        }
+
+        if (extIsObsolete == true) {
+            throw IOException(OBSOLETE_ERROR)
+        }
+
+        return chain.proceed(chain.request())
+    }
+
     private fun Call.asCustomObservable(): Observable<Response> {
         return asObservable().doOnNext { response ->
             if (!response.isSuccessful) {
@@ -245,7 +273,7 @@ class NeoxScanlator :
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7,es;q=0.6,gl;q=0.5"
         private const val REFERER = "https://google.com/"
 
-        private const val DEFAULT_BASE_URL = "https://neoxscan.net"
+        private const val DEFAULT_BASE_URL = "https://neoxscans.net"
         private val BASE_URL_PREF_KEY = "base_url_${BuildConfig.VERSION_NAME}"
         private const val BASE_URL_PREF_TITLE = "URL da fonte"
         private const val BASE_URL_PREF_SUMMARY = "Para uso temporário. Quando você atualizar a " +
@@ -254,5 +282,9 @@ class NeoxScanlator :
         private const val RESTART_TACHIYOMI = "Reinicie o Tachiyomi para aplicar as configurações."
 
         private val TITLE_PATH_PLACEHOLDER = UUID.randomUUID().toString()
+
+        private const val EXT_REPO_JSON = "https://raw.githubusercontent.com/tachiyomiorg/tachiyomi-extensions/repo/index.json"
+        private const val EXT_PKG = "eu.kanade.tachiyomi.extension.pt.neoxscanlator"
+        private const val OBSOLETE_ERROR = "Extensão obsoleta. Migre para fontes melhores."
     }
 }
