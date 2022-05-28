@@ -148,10 +148,6 @@ abstract class SinMH(
         }
     }
 
-    init {
-        tryFetchCategories()
-    }
-
     override fun getFilterList() =
         if (::categories.isInitialized) FilterList(
             Filter.Header("如果使用文本搜索，将会忽略分类筛选"),

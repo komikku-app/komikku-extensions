@@ -98,10 +98,6 @@ class MangaCross : HttpSource() {
         }
     }
 
-    init {
-        fetchTags()
-    }
-
     override fun getFilterList() =
         if (::tags.isInitialized) FilterList(
             Filter.Header("NOTE: Ignored if using text search!"),
