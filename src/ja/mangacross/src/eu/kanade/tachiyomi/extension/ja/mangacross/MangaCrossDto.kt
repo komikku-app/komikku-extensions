@@ -128,8 +128,9 @@ data class MCEpisode(
 
     fun getNextDatePrefix(): String? = when {
         !episode_next_date.isNullOrEmpty() -> {
-            val date = parseJSTDate(episode_next_date)
-            date.setTime(date.getTime() + 10 * 3600 * 1000)  // 10 am JST
+            val date = parseJSTDate(episode_next_date).apply {
+                time += 10 * 3600 * 1000 // 10 am JST
+            }
             "【Next: ${localDate.format(date)}】"
         }
         !next_date_customize_text.isNullOrEmpty() -> "【$next_date_customize_text】"

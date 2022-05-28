@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.sinmh
 
+import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -120,6 +121,21 @@ abstract class SinMH(
     }
 
     private lateinit var categories: List<Category>
+    private var isFetchingCategories = false
+
+    private fun tryFetchCategories() {
+        if (isFetchingCategories) return
+        isFetchingCategories = true
+        thread {
+            try {
+                fetchCategories()
+            } catch (e: Exception) {
+                Log.e("SinMH", "Failed to fetch categories ($e)")
+            } finally {
+                isFetchingCategories = false
+            }
+        }
+    }
 
     protected open fun fetchCategories() {
         val document = client.newCall(GET("$baseUrl/list/", headers)).execute().asJsoup()
@@ -133,16 +149,17 @@ abstract class SinMH(
     }
 
     init {
-        thread {
-            fetchCategories()
-        }
+        tryFetchCategories()
     }
 
     override fun getFilterList() =
         if (::categories.isInitialized) FilterList(
             Filter.Header("如果使用文本搜索，将会忽略分类筛选"),
             *categories.map(Category::toUriPartFilter).toTypedArray()
-        ) else FilterList(
-            Filter.Header("分类尚未获取，请返回上一页后重试")
-        )
+        ) else {
+            tryFetchCategories()
+            FilterList(
+                Filter.Header("分类尚未获取，请返回上一页后重试")
+            )
+        }
 }

@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.ja.mangacross
 
+import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
@@ -79,22 +80,38 @@ class MangaCross : HttpSource() {
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used.")
 
     private lateinit var tags: List<Pair<String, MCComicTag?>>
+    private var isFetchingTags = false
+
+    private fun fetchTags() {
+        if (isFetchingTags) return
+        isFetchingTags = true
+        thread {
+            try {
+                val response = client.newCall(GET("$baseUrl/api/menus.json", headers)).execute()
+                val filterList = json.decodeFromString<MCMenu>(response.body!!.string()).toFilterList()
+                tags = listOf(Pair("None", null)) + filterList
+            } catch (e: Exception) {
+                Log.e("MangaCross", "Failed to fetch filters ($e)")
+            } finally {
+                isFetchingTags = false
+            }
+        }
+    }
 
     init {
-        thread {
-            val response = client.newCall(GET("$baseUrl/api/menus.json", headers)).execute()
-            val filterList = json.decodeFromString<MCMenu>(response.body!!.string()).toFilterList()
-            tags = listOf(Pair("None", null)) + filterList
-        }
+        fetchTags()
     }
 
     override fun getFilterList() =
         if (::tags.isInitialized) FilterList(
             Filter.Header("NOTE: Ignored if using text search!"),
             TagFilter("Tag", tags)
-        ) else FilterList(
-            Filter.Header("Tags not fetched yet. Go back and retry."),
-        )
+        ) else {
+            fetchTags()
+            FilterList(
+                Filter.Header("Tags not fetched yet. Go back and retry."),
+            )
+        }
 
     private class TagFilter(displayName: String, private val tags: List<Pair<String, MCComicTag?>>) :
         Filter.Select<String>(displayName, tags.map { it.first }.toTypedArray()) {
