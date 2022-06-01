@@ -88,16 +88,6 @@ data class MCEpisodeList(
     val total_pages: Int,
 )
 
-private val jstDate by lazy {
-    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.ENGLISH).apply {
-        timeZone = TimeZone.getTimeZone("GMT+09:00")
-    }
-}
-
-private val localDate by lazy { getDateTimeInstance() }
-
-private fun parseJSTDate(date: String) = date.removeSuffix("+09:00").let { jstDate.parse(it) }!!
-
 @Serializable
 data class MCEpisode(
 //  val id: Long,
@@ -121,20 +111,34 @@ data class MCEpisode(
         val prefix = if (status == "public") "" else "🔒 "
         name = "$prefix$volume $title"
         // milliseconds are always 000
-        date_upload = parseJSTDate(publish_start).time
+        date_upload = JST_FORMAT_LIST.parseJST(publish_start)!!.time
         // show end date in scanlator field
-        scanlator = publish_end?.let { "~" + localDate.format(parseJSTDate(it)) }
+        scanlator = publish_end?.let { "~" + LOCAL_FORMAT_LIST.format(JST_FORMAT_LIST.parseJST(it)!!) }
     }
 
     fun getNextDatePrefix(): String? = when {
         !episode_next_date.isNullOrEmpty() -> {
-            val date = parseJSTDate(episode_next_date).apply {
+            val date = JST_FORMAT_DESC.parseJST(episode_next_date)!!.apply {
                 time += 10 * 3600 * 1000 // 10 am JST
             }
-            "【Next: ${localDate.format(date)}】"
+            "【Next: ${LOCAL_FORMAT_DESC.format(date)}】"
         }
         !next_date_customize_text.isNullOrEmpty() -> "【$next_date_customize_text】"
         else -> null
+    }
+
+    companion object {
+        // for thread-safety
+        private val JST_FORMAT_DESC = getJSTFormat()
+        private val JST_FORMAT_LIST = getJSTFormat()
+        private val LOCAL_FORMAT_DESC = getDateTimeInstance()
+        private val LOCAL_FORMAT_LIST = getDateTimeInstance()
+
+        private fun SimpleDateFormat.parseJST(date: String) = parse(date.removeSuffix("+09:00"))
+        private fun getJSTFormat() =
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.ENGLISH).apply {
+                timeZone = TimeZone.getTimeZone("GMT+09:00")
+            }
     }
 }
 

@@ -10,7 +10,7 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import java.text.DateFormat.getDateInstance
+import java.text.DateFormat.getDateTimeInstance
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -63,7 +63,7 @@ open class ComicGamma(
             val dateStr = nextDate.textNodes()
                 .filter { it.text().contains("【次回更新】") }[0]
                 .text().trim().removePrefix("【次回更新】")
-            val localDate = JST_FORMAT.parse(dateStr)?.let { LOCAL_FORMAT.format(it) }
+            val localDate = JST_FORMAT_DESC.parseJST(dateStr)?.let { LOCAL_FORMAT_DESC.format(it) }
             if (localDate != null) description = "【Next/Repeat: $localDate】\n$description"
         }
     }
@@ -79,9 +79,17 @@ open class ComicGamma(
             it.text().contains("集中連載") || it.text().contains("配信中!!")
         }.joinToString("／") { it.text() }
         name = "$chapterNumber $title"
-        val date = element.select(".episode_caption").textNodes().firstOrNull { it.text().contains("【公開日】") }
-            ?.text()?.trim()?.removePrefix("【公開日】")
-        date_upload = date?.let { JST_FORMAT.parse(it)?.time } ?: -1L // hide unknown ones
+        element.select(".episode_caption").textNodes().forEach {
+            if (it.text().contains("【公開日】")) {
+                val date = it.text().trim().removePrefix("【公開日】")
+                date_upload = JST_FORMAT_LIST.parseJST(date)!!.time
+            } else if (it.text().contains("【次回更新】")) {
+                val date = it.text().trim().removePrefix("【次回更新】")
+                val localDate = JST_FORMAT_LIST.parseJST(date)?.let { LOCAL_FORMAT_LIST.format(it) }
+                if (localDate != null) scanlator = "~$localDate"
+            }
+        }
+        if (date_upload <= 0L) date_upload = -1L // hide unknown ones
     }
 
     override fun pageListParse(document: Document) =
@@ -91,10 +99,20 @@ open class ComicGamma(
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
 
+    // for thread-safety (of subclasses)
+    private val JST_FORMAT_DESC = getJSTFormat()
+    private val JST_FORMAT_LIST = getJSTFormat()
+    private val LOCAL_FORMAT_DESC = getDateTimeInstance()
+    private val LOCAL_FORMAT_LIST = getDateTimeInstance()
+
     companion object {
-        private val JST_FORMAT by lazy {
-            SimpleDateFormat("yyyy年M月dd日(E)", Locale.JAPANESE).apply { timeZone = TimeZone.getTimeZone("JST") }
+        private fun SimpleDateFormat.parseJST(date: String) = parse(date)?.apply {
+            time += 12 * 3600 * 1000 // updates at 12 noon
         }
-        private val LOCAL_FORMAT by lazy { getDateInstance() }
+
+        private fun getJSTFormat() =
+            SimpleDateFormat("yyyy年M月dd日(E)", Locale.JAPANESE).apply {
+                timeZone = TimeZone.getTimeZone("GMT+09:00")
+            }
     }
 }
