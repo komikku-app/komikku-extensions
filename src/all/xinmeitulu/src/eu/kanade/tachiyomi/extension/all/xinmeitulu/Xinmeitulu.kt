@@ -9,6 +9,10 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.asResponseBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -18,6 +22,8 @@ class Xinmeitulu : ParsedHttpSource() {
     override val lang = "all"
     override val name = "Xinmeitulu"
     override val supportsLatest = false
+
+    override val client = network.client.newBuilder().addInterceptor(::contentTypeIntercept).build()
 
     // Latest
 
@@ -79,4 +85,17 @@ class Xinmeitulu : ParsedHttpSource() {
         }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
+
+    companion object {
+        private fun contentTypeIntercept(chain: Interceptor.Chain): Response {
+            val response = chain.proceed(chain.request())
+            if (response.header("content-type")?.startsWith("image") == true) {
+                val body = response.body!!.source().asResponseBody(jpegMediaType)
+                return response.newBuilder().body(body).build()
+            }
+            return response
+        }
+
+        private val jpegMediaType = "image/jpeg".toMediaType()
+    }
 }
