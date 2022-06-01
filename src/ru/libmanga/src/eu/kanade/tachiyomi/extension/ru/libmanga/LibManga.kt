@@ -208,13 +208,13 @@ class LibManga : ConfigurableSource, HttpSource() {
         val manga = SManga.create()
 
         val body = document.select("div.media-info-list").first()
-        val rawCategory = body.select("div.media-info-list__title:contains(Тип) + div").text()
+        val rawCategory = document.select(".media-short-info a.media-short-info__item").text()
         val category = when {
             rawCategory == "Комикс западный" -> "Комикс"
             rawCategory.isNotBlank() -> rawCategory
             else -> "Манга"
         }
-        var rawAgeStop = body.select("div.media-info-list__title:contains(Возрастной рейтинг) + div").text()
+        var rawAgeStop = document.select(".media-short-info .media-short-info__item[data-caution]").text()
         if (rawAgeStop.isEmpty()) {
             rawAgeStop = "0+"
         }
@@ -241,8 +241,8 @@ class LibManga : ConfigurableSource, HttpSource() {
             else -> dataManga!!.jsonObject["name"]!!.jsonPrimitive.content
         }
         manga.thumbnail_url = document.select(".media-header__cover").attr("src")
-        manga.author = body.select("div.media-info-list__title:contains(Автор) + div").text()
-        manga.artist = body.select("div.media-info-list__title:contains(Художник) + div").text()
+        manga.author = body.select("div.media-info-list__title:contains(Автор) + div a").joinToString { it.text() }
+        manga.artist = body.select("div.media-info-list__title:contains(Художник) + div a").joinToString { it.text() }
         manga.status = if (document.html().contains("paper empty section")
         ) {
             SManga.LICENSED
@@ -288,14 +288,15 @@ class LibManga : ConfigurableSource, HttpSource() {
         val chaptersList = data["chapters"]!!.jsonObject["list"]?.jsonArray
         val slug = data["manga"]!!.jsonObject["slug"]!!.jsonPrimitive.content
         val branches = data["chapters"]!!.jsonObject["branches"]!!.jsonArray.reversed()
+        val teams = data["chapters"]!!.jsonObject["teams"]!!.jsonArray
         val sortingList = preferences.getString(SORTING_PREF, "ms_mixing")
 
-        val chapters: List<SChapter>? = if (branches.isNotEmpty() && !sortingList.equals("ms_mixing")) {
+        val chapters: List<SChapter>? = if (branches.isNotEmpty()) {
             sortChaptersByTranslator(sortingList, chaptersList, slug, branches)
         } else {
             chaptersList
                 ?.filter { it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
-                ?.map { chapterFromElement(it, sortingList, slug) }
+                ?.map { chapterFromElement(it, sortingList, slug, null, null, teams, chaptersList) }
         }
 
         return chapters ?: emptyList()
@@ -304,47 +305,49 @@ class LibManga : ConfigurableSource, HttpSource() {
     private fun sortChaptersByTranslator
     (sortingList: String?, chaptersList: JsonArray?, slug: String, branches: List<JsonElement>): List<SChapter>? {
         var chapters: List<SChapter>? = null
+        val volume = "(?<=/v)[0-9]+(?=/c[0-9]+)".toRegex()
         when (sortingList) {
-            "ms_combining" -> {
+            "ms_mixing" -> {
                 val tempChaptersList = mutableListOf<SChapter>()
                 for (currentBranch in branches.withIndex()) {
-                    val teamId = branches[currentBranch.index].jsonObject["id"]!!.jsonPrimitive.int
+                    val branch = branches[currentBranch.index]
+                    val teamId = branch.jsonObject["id"]!!.jsonPrimitive.int
+                    val teams = branch.jsonObject["teams"]!!.jsonArray.filter { it.jsonObject["is_active"]?.jsonPrimitive?.intOrNull == 1 }
+                    val teamsBranch = if (teams.size == 1)
+                        teams[0].jsonObject["name"]?.jsonPrimitive?.contentOrNull
+                    else if (teams.isEmpty())
+                        branch.jsonObject["teams"]!!.jsonArray[0].jsonObject["name"]!!.jsonPrimitive.content
+                    else null
                     chapters = chaptersList
                         ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
                         ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
-                    chapters?.let { tempChaptersList.addAll(it) }
-                }
-                chapters = tempChaptersList
-            }
-            "ms_largest" -> {
-                val sizesChaptersLists = mutableListOf<Int>()
-                for (currentBranch in branches.withIndex()) {
-                    val teamId = branches[currentBranch.index].jsonObject["id"]!!.jsonPrimitive.int
-                    val chapterSize = chaptersList
-                        ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId }!!.size
-                    sizesChaptersLists.add(chapterSize)
-                }
-                val max = sizesChaptersLists.indexOfFirst { it == sizesChaptersLists.maxOrNull() ?: 0 }
-                val teamId = branches[max].jsonObject["id"]!!.jsonPrimitive.int
-
-                chapters = chaptersList
-                    ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
-                    ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
-            }
-            "ms_active" -> {
-                for (currentBranch in branches.withIndex()) {
-                    val teams = branches[currentBranch.index].jsonObject["teams"]!!.jsonArray
-                    for (currentTeam in teams.withIndex()) {
-                        if (teams[currentTeam.index].jsonObject["is_active"]!!.jsonPrimitive.int == 1) {
-                            val teamId = branches[currentBranch.index].jsonObject["id"]!!.jsonPrimitive.int
-                            chapters = chaptersList
-                                ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
-                                ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
-                            break
-                        }
+                    chapters?.let {
+                        if ((tempChaptersList.size < it.size) && !groupTranslates.contains(teamsBranch.toString()))
+                            tempChaptersList.addAll(0, it)
+                        else
+                            tempChaptersList.addAll(it)
                     }
                 }
-                chapters ?: throw Exception("Активный перевод не назначен на сайте")
+                chapters = tempChaptersList.distinctBy { volume.find(it.url)?.value + "--" + it.chapter_number }.sortedWith(compareBy({ -it.chapter_number }, { volume.find(it.url)?.value }))
+            }
+            "ms_combining" -> {
+                val tempChaptersList = mutableListOf<SChapter>()
+                for (currentBranch in branches.withIndex()) {
+                    val branch = branches[currentBranch.index]
+                    val teamId = branch.jsonObject["id"]!!.jsonPrimitive.int
+                    val teams = branch.jsonObject["teams"]!!.jsonArray.filter { it.jsonObject["is_active"]?.jsonPrimitive?.intOrNull == 1 }
+                    val teamsBranch = if (teams.size == 1)
+                        teams[0].jsonObject["name"]?.jsonPrimitive?.contentOrNull
+                    else if (teams.isEmpty())
+                        branch.jsonObject["teams"]!!.jsonArray[0].jsonObject["name"]!!.jsonPrimitive.content
+                    else null
+                    chapters = chaptersList
+                        ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
+                        ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
+                    if (!groupTranslates.contains(teamsBranch.toString()))
+                        chapters?.let { tempChaptersList.addAll(it) }
+                }
+                chapters = tempChaptersList
             }
         }
 
@@ -352,11 +355,13 @@ class LibManga : ConfigurableSource, HttpSource() {
     }
 
     private fun chapterFromElement
-    (chapterItem: JsonElement, sortingList: String?, slug: String, teamIdParam: Int? = null, branches: List<JsonElement>? = null): SChapter {
+    (chapterItem: JsonElement, sortingList: String?, slug: String, teamIdParam: Int? = null, branches: List<JsonElement>? = null, teams: List<JsonElement>? = null, chaptersList: JsonArray? = null): SChapter {
         val chapter = SChapter.create()
 
         val volume = chapterItem.jsonObject["chapter_volume"]!!.jsonPrimitive.int
         val number = chapterItem.jsonObject["chapter_number"]!!.jsonPrimitive.content
+        val chapterScanlatorId = chapterItem.jsonObject["chapter_scanlator_id"]!!.jsonPrimitive.int
+        val isScanlatorId = teams?.filter { it.jsonObject["id"]?.jsonPrimitive?.intOrNull == chapterScanlatorId }
         val teamId = if (teamIdParam != null) "?bid=$teamIdParam" else ""
 
         val url = "$baseUrl/$slug/v$volume/c$number$teamId"
@@ -365,12 +370,11 @@ class LibManga : ConfigurableSource, HttpSource() {
 
         val nameChapter = chapterItem.jsonObject["chapter_name"]?.jsonPrimitive?.contentOrNull
         val fullNameChapter = "Том $volume. Глава $number"
-        if (!sortingList.equals("ms_mixing")) {
-            chapter.scanlator = branches?.let { getScanlatorTeamName(it, chapterItem) }
-        }
+        chapter.scanlator = if (teams?.size == 1) teams[0].jsonObject["name"]?.jsonPrimitive?.content else if (isScanlatorId.orEmpty().isNotEmpty()) isScanlatorId!![0].jsonObject["name"]?.jsonPrimitive?.content else branches?.let { getScanlatorTeamName(it, chapterItem) } ?: if ((preferences.getBoolean(isScan_USER, false)) || (chaptersList?.distinctBy { it.jsonObject["username"]!!.jsonPrimitive.content }?.size == 1)) chapterItem.jsonObject["username"]!!.jsonPrimitive.content else null
         chapter.name = if (nameChapter.isNullOrBlank()) fullNameChapter else "$fullNameChapter - $nameChapter"
         chapter.date_upload = SimpleDateFormat("yyyy-MM-dd", Locale.US)
             .parse(chapterItem.jsonObject["chapter_created_at"]!!.jsonPrimitive.content.substringBefore(" "))?.time ?: 0L
+        chapter.chapter_number = number.toFloat()
 
         return chapter
     }
@@ -384,20 +388,13 @@ class LibManga : ConfigurableSource, HttpSource() {
                 for (currentTeam in teams.withIndex()) {
                     val team = teams[currentTeam.index].jsonObject
                     val scanlatorId = chapterItem.jsonObject["chapter_scanlator_id"]!!.jsonPrimitive.int
-                    scanlatorData = if ((scanlatorId == team.jsonObject["id"]!!.jsonPrimitive.int) ||
+                    if ((scanlatorId == team.jsonObject["id"]!!.jsonPrimitive.int) ||
                         (scanlatorId == 0 && team["is_active"]!!.jsonPrimitive.int == 1)
-                    ) team["name"]!!.jsonPrimitive.content else branch["teams"]!!.jsonArray[0].jsonObject["name"]!!.jsonPrimitive.content
+                    ) return team["name"]!!.jsonPrimitive.content else scanlatorData = branch["teams"]!!.jsonArray[0].jsonObject["name"]!!.jsonPrimitive.content
                 }
             }
         }
         return scanlatorData
-    }
-
-    override fun prepareNewChapter(chapter: SChapter, manga: SManga) {
-        """Глава\s(\d+)""".toRegex().find(chapter.name)?.let {
-            val number = it.groups[1]?.value!!
-            chapter.chapter_number = number.toFloat()
-        }
     }
 
     // Pages
@@ -625,7 +622,7 @@ class LibManga : ConfigurableSource, HttpSource() {
     private class OrderBy : Filter.Sort(
         "Сортировка",
         arrayOf("Рейтинг", "Имя", "Просмотры", "Дате добавления", "Дате обновления", "Кол-во глав"),
-        Selection(0, false)
+        Selection(2, false)
     )
 
     /*
@@ -845,6 +842,12 @@ class LibManga : ConfigurableSource, HttpSource() {
         private const val SORTING_PREF = "MangaLibSorting"
         private const val SORTING_PREF_Title = "Способ выбора переводчиков"
 
+        private const val isScan_USER = "ScanlatorUsername"
+        private const val isScan_USER_Title = "Альтернативный переводчик"
+
+        private const val TRANSLATORS_TITLE = "Чёрный список переводчиков\n(для красоты через «/» или с новой строки)"
+        private const val TRANSLATORS_DEFAULT = ""
+
         private const val DOMAIN_PREF = "MangaLibDomain"
         private const val DOMAIN_PREF_Title = "Выбор домена"
 
@@ -856,6 +859,7 @@ class LibManga : ConfigurableSource, HttpSource() {
 
     private var server: String? = preferences.getString(SERVER_PREF, null)
     private var isEng: String? = preferences.getString(LANGUAGE_PREF, "eng")
+    private var groupTranslates: String = preferences.getString(TRANSLATORS_TITLE, TRANSLATORS_DEFAULT)!!
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val serverPref = ListPreference(screen.context).apply {
             key = SERVER_PREF
@@ -874,15 +878,25 @@ class LibManga : ConfigurableSource, HttpSource() {
             key = SORTING_PREF
             title = SORTING_PREF_Title
             entries = arrayOf(
-                "Полный список (без повторных переводов)", "Все переводы (друг за другом)",
-                "Наибольшее число глав", "Активный перевод"
+                "Полный список (без повторных переводов)", "Все переводы (друг за другом)"
             )
-            entryValues = arrayOf("ms_mixing", "ms_combining", "ms_largest", "ms_active")
+            entryValues = arrayOf("ms_mixing", "ms_combining")
             summary = "%s"
             setDefaultValue("ms_mixing")
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 preferences.edit().putString(SORTING_PREF, selected).commit()
+            }
+        }
+        val scanlatorUsername = androidx.preference.CheckBoxPreference(screen.context).apply {
+            key = isScan_USER
+            title = isScan_USER_Title
+            summary = "Отображает Ник переводчика если Группа не указана явно."
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+                preferences.edit().putBoolean(key, checkValue).commit()
             }
         }
         val domainPref = ListPreference(screen.context).apply {
@@ -922,6 +936,27 @@ class LibManga : ConfigurableSource, HttpSource() {
         screen.addPreference(domainPref)
         screen.addPreference(serverPref)
         screen.addPreference(sortingPref)
+        screen.addPreference(screen.editTextPreference(TRANSLATORS_TITLE, TRANSLATORS_DEFAULT, groupTranslates))
+        screen.addPreference(scanlatorUsername)
         screen.addPreference(titleLanguagePref)
+    }
+    private fun PreferenceScreen.editTextPreference(title: String, default: String, value: String): androidx.preference.EditTextPreference {
+        return androidx.preference.EditTextPreference(context).apply {
+            key = title
+            this.title = title
+            summary = value.replace("/", "\n")
+            this.setDefaultValue(default)
+            dialogTitle = title
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val res = preferences.edit().putString(title, newValue as String).commit()
+                    Toast.makeText(context, "Для обновления списка необходимо перезапустить приложение с полной остановкой.", Toast.LENGTH_LONG).show()
+                    res
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
     }
 }

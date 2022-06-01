@@ -6,7 +6,7 @@ ext {
     extName = 'HentaiLib'
     pkgNameSuffix = 'ru.libhentai'
     extClass = '.LibHentai'
-    extVersionCode = 16
+    extVersionCode = 17
     isNsfw = true
 }
 
