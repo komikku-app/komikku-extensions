@@ -18,7 +18,7 @@ class Zerobyw : ParsedHttpSource() {
     override val lang: String = "zh"
     override val supportsLatest: Boolean = false
     // Url can be found at https://eprendre2.coding.net/p/zerobyw/d/zerobyw/git/raw/master/url.json
-    override val baseUrl: String = "http://www.zerobywtxt.com"
+    override val baseUrl: String = "http://www.zerobywps8.com"
 
     // Popular
     // Website does not provide popular manga, this is actually latest manga
