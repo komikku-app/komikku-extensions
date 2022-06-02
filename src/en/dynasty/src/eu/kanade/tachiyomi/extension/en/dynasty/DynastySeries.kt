@@ -22,7 +22,7 @@ class DynastySeries : DynastyScans() {
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.startsWith("manga:chapters:")) {
-            val seriesName = Regex("""manga:chapters:(.*?)_ch\d+""").matchEntire(query)?.groups?.get(1)?.value
+            val seriesName = Regex("""manga:chapters:(.*?)_ch[0-9_]+""").matchEntire(query)?.groups?.get(1)?.value
             if (seriesName != null) {
                 return super.fetchSearchManga(page, "manga:$searchPrefix:$seriesName", filters)
             }
