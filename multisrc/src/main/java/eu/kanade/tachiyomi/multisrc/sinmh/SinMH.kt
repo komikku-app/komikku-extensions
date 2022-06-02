@@ -77,7 +77,7 @@ abstract class SinMH(
         author = document.select(".detail-list strong:contains(作者) + a").text()
         description = document.select("#intro-all").text().trim()
             .removePrefix("漫画简介：").trim()
-            .removePrefix("漫画简介：").trim()  // some sources have double prefix
+            .removePrefix("漫画简介：").trim() // some sources have double prefix
         genre = document.select(".detail-list strong:contains(类型) + a").text() + ", " +
             document.select(".breadcrumb-bar a[href*=/list/]").joinToString(", ") { it.text() }
         status = when (document.select(".detail-list strong:contains(状态) + a").text()) {

@@ -54,7 +54,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("TurkToon", "https://turktoon.com", "tr"),
         SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 7),
         SingleLang("YANP Fansub", "https://melhorcasal.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
-        SingleLang("ARESManga", "https://aresmanga.com", "ar", pkgName = "iimanga" ,overrideVersionCode = 2),
+        SingleLang("ARESManga", "https://aresmanga.com", "ar", pkgName = "iimanga", overrideVersionCode = 2),
     )
 
     companion object {
