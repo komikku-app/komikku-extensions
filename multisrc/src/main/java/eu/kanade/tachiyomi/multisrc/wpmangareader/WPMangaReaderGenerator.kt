@@ -35,7 +35,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Mangasusu", "https://mangasusu.co.in", "id", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Mangás Chan", "https://mangaschan.com", "pt-BR", className = "MangasChan"),
         SingleLang("Manhua Raw", "https://manhuaraw.com", "en"),
-        SingleLang("ManhwaIndo", "https://manhwaindo.id", "id", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("ManhwaIndo", "https://manhwaindo.id", "id", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Martial Manga", "https://martialmanga.com", "es"),
         SingleLang("Miau Scan", "https://miauscan.com", "es"),
         SingleLang("Mode Scanlator", "https://modescanlator.com", "pt-BR", overrideVersionCode = 7),
