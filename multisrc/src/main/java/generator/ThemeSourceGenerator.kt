@@ -136,25 +136,29 @@ ${placeholders.map { "${" ".repeat(28)}${it.key}: \"${it.value}\""}.joinToString
 
                 writeSourceClasses(projectSrcPath, srcOverridePath, source, themePkg, themeClass)
                 copyThemeClasses(userDir, themePkg, projectRootPath)
-                copyThemeReadmes(overridesPath, projectRootPath)
+                copyThemeReadmes(userDir, themePkg, overridesPath, projectRootPath)
                 copyResFiles(resOverridePath, defaultResPath, source, projectRootPath)
             }
         }
 
-        private fun copyThemeReadmes(overridesPath: String, projectRootPath: String) {
+        private fun copyThemeReadmes(userDir: String, themePkg: String, overridesPath: String, projectRootPath: String) {
+            val sourcePath = "$userDir/multisrc/src/main/java/${themeSuffix(themePkg, "/")}"
+
             val destinationPath = "$projectRootPath"
             File(destinationPath).mkdirs()
 
-            File(overridesPath)
-                ?.list()
-                ?.filter { it.endsWith("README.md") || it.endsWith("CHANGELOG.md") }
-                ?.forEach {
-                    Files.copy(
-                        File("$overridesPath/$it").toPath(),
-                        File("$destinationPath/$it").toPath(),
-                        StandardCopyOption.REPLACE_EXISTING
-                    )
-                }
+            listOf(sourcePath, overridesPath).forEach { path ->
+                File(path)
+                    ?.list()
+                    ?.filter { it.endsWith("README.md") || it.endsWith("CHANGELOG.md") }
+                    ?.forEach {
+                        Files.copy(
+                            File("$path/$it").toPath(),
+                            File("$destinationPath/$it").toPath(),
+                            StandardCopyOption.REPLACE_EXISTING
+                        )
+                    }
+            }
         }
 
         private fun copyThemeClasses(userDir: String, themePkg: String, projectRootPath: String) {
