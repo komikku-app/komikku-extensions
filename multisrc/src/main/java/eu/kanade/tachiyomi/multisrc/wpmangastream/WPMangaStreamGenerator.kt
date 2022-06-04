@@ -26,7 +26,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Komik Station", "https://komikstation.co", "id", overrideVersionCode = 3),
         SingleLang("KomikIndo.co", "https://komikindo.co", "id", className = "KomikindoCo", overrideVersionCode = 3),
         SingleLang("Kuma Scans (Kuma Translation)", "https://kumascans.com", "en", className = "KumaScans", overrideVersionCode = 1),
-        SingleLang("Manga Pro Z", "https://mangaprotm.com", "ar", overrideVersionCode = 1),
+        SingleLang("Manga Pro", "https://mangaprotm.com", "ar", pkgName = "mangaproz", overrideVersionCode = 2),
         SingleLang("Manga Raw.org", "https://mangaraw.org", "ja", className = "MangaRawOrg", overrideVersionCode = 1),
         SingleLang("Manhwax", "https://manhwax.com", "en", isNsfw = true),
         SingleLang("MangaSwat", "https://swatmanga.co", "ar", overrideVersionCode = 6),

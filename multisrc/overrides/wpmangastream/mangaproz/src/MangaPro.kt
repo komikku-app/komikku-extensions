@@ -7,7 +7,9 @@ import okhttp3.OkHttpClient
 import org.jsoup.nodes.Element
 import java.util.concurrent.TimeUnit
 
-class MangaProZ : WPMangaStream("Manga Pro Z", "https://mangaprotm.com", "ar") {
+class MangaPro : WPMangaStream("Manga Pro", "https://mangaprotm.com", "ar") {
+    override val id: Long = 964048798769065340
+
     private val rateLimitInterceptor = RateLimitInterceptor(4)
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
@@ -16,5 +18,4 @@ class MangaProZ : WPMangaStream("Manga Pro Z", "https://mangaprotm.com", "ar") {
         .addNetworkInterceptor(rateLimitInterceptor)
         .build()
 
-    override fun chapterFromElement(element: Element): SChapter = super.chapterFromElement(element).apply { name = name.removeSuffix(" free") }
 }
