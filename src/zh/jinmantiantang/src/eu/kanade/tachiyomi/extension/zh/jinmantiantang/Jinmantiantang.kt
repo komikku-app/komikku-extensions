@@ -2,10 +2,6 @@ package eu.kanade.tachiyomi.extension.zh.jinmantiantang
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Rect
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
@@ -22,24 +18,17 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.math.BigInteger
-import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Locale
-import kotlin.math.floor
 
 class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
 
@@ -58,82 +47,12 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
     // Add rate limit to fix manga thumbnail load failure
     private val mainSiteRateLimitInterceptor = SpecificHostRateLimitInterceptor(baseHttpUrl, preferences.getString(MAINSITE_RATELIMIT_PREF, "1")!!.toInt(), preferences.getString(MAINSITE_RATELIMIT_PERIOD, "3")!!.toLong())
 
-    // 220980
-    // 算法 html页面 1800 行左右
-    // 图片开始分割的ID编号
-    private val scrambleId = 220980
-
     // 处理URL请求
     override val client: OkHttpClient = network.cloudflareClient
         .newBuilder()
         .addNetworkInterceptor(mainSiteRateLimitInterceptor)
 //        .addNetworkInterceptor(RateLimitInterceptor(1, 3))
-        .addInterceptor(
-            fun(chain): Response {
-                val url = chain.request().url.toString()
-                val response = chain.proceed(chain.request())
-                if (!url.contains("media/photos", ignoreCase = true)) return response // 对非漫画图片连接直接放行
-                if (url.substring(url.indexOf("photos/") + 7, url.lastIndexOf("/")).toInt() < scrambleId) return response // 对在漫画章节ID为220980之前的图片未进行图片分割,直接放行
-// 章节ID:220980(包含)之后的漫画(2020.10.27之后)图片进行了分割getRows倒序处理
-                val aid = url.substring(url.indexOf("photos/") + 7, url.lastIndexOf("/")).toInt()
-                val imgIndex: String = url.substringAfterLast("/").substringBefore(".")
-                val res = response.body!!.byteStream().use {
-                    decodeImage(it, getRows(aid, imgIndex))
-                }
-                val mediaType = "image/avif,image/webp,image/apng,image/*,*/*".toMediaTypeOrNull()
-                val outputBytes = res.toResponseBody(mediaType)
-                return response.newBuilder().body(outputBytes).build()
-            }
-        ).build()
-
-    private fun getRows(aid: Int, imgIndex: String): Int {
-        fun md5(input: String): String {
-            val md = MessageDigest.getInstance("MD5")
-            return BigInteger(1, md.digest(input.toByteArray())).toString(16).padStart(32, '0')
-        }
-
-        return if (aid >= 268850) {
-            2 * (md5(aid.toString() + imgIndex).last().toInt() % 10) + 2
-        } else {
-            10
-        }
-    }
-
-    // 对被分割的图片进行分割,排序处理
-    private fun decodeImage(img: InputStream, rows: Int): ByteArray {
-        // 使用bitmap进行图片处理
-        val input = BitmapFactory.decodeStream(img)
-        // 漫画高度 and width
-        val height = input.height
-        val width = input.width
-        // 未除尽像素
-        val remainder = (height % rows)
-        // 创建新的图片对象
-        val resultBitmap = Bitmap.createBitmap(input.width, input.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(resultBitmap)
-        // 分割图片
-        for (x in 0 until rows) {
-            // 分割算法(详情见html源码页的方法"function scramble_image(img)")
-            var copyH = floor(height / rows.toDouble()).toInt()
-            var py = copyH * (x)
-            val y = height - (copyH * (x + 1)) - remainder
-            if (x == 0) {
-                copyH += remainder
-            } else {
-                py += remainder
-            }
-            // 要裁剪的区域
-            val crop = Rect(0, y, width, y + copyH)
-            // 裁剪后应放置到新图片对象的区域
-            val splic = Rect(0, py, width, py + copyH)
-
-            canvas.drawBitmap(input, crop, splic, null)
-        }
-        // 创建输出流
-        val output = ByteArrayOutputStream()
-        resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, output)
-        return output.toByteArray()
-    }
+        .addInterceptor(ScrambledImageInterceptor).build()
 
     // 点击量排序(人气)
     override fun popularMangaRequest(page: Int): Request {
@@ -311,7 +230,7 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
 
     // 漫画图片信息
     override fun pageListParse(document: Document): List<Page> {
-        fun internalParse(document: Document, pages: MutableList<Page>): List<Page> {
+        tailrec fun internalParse(document: Document, pages: MutableList<Page>): List<Page> {
             val elements = document.select("div[class=center scramble-page][id*=0]")
             for (element in elements) {
                 pages.apply {
@@ -322,9 +241,10 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
                     }
                 }
             }
-            return document.select("a.prevnext").firstOrNull()
-                ?.let { internalParse(client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup(), pages) }
-                ?: pages
+            return when (val next = document.select("a.prevnext").firstOrNull()) {
+                null -> pages
+                else -> internalParse(client.newCall(GET(next.attr("abs:href"), headers)).execute().asJsoup(), pages)
+            }
         }
 
         return internalParse(document, mutableListOf())
@@ -555,14 +475,15 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
         private val PERIOD_ENTRIES_ARRAY = (1..60).map { i -> i.toString() }.toTypedArray()
         private val SITE_ENTRIES_ARRAY_DESCRIPTION = arrayOf(
             "主站", "海外分流",
-            "中国大陆总站", "中国大陆分流1", "中国大陆分流2"
+            "中国大陆总站", "中国大陆分流1", "中国大陆分流1"
         )
         private val SITE_ENTRIES_ARRAY_VALUE = (0..4).map { i -> i.toString() }.toTypedArray()
+
         // List is based on https://jmcomic.bet/
         // Please also update AndroidManifest
         private val SITE_ENTRIES_ARRAY = arrayOf(
             DEFAULT_SITE, "18comic.org",
-            "jmcomic.mobi", "jmcomic1.mobi", "jmcomic1.mobi"
+            "jmcomic.asia", "jmcomic1.asia", "jmcomic1.asia"
         )
     }
 }
