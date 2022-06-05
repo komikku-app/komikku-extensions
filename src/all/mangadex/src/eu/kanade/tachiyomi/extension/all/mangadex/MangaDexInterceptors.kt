@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 
 import android.util.Log
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ImageReportDto
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

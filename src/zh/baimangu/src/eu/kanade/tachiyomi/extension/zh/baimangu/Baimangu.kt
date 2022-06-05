@@ -3,8 +3,8 @@ package eu.kanade.tachiyomi.extension.zh.baimangu
 import android.app.Application
 import android.content.SharedPreferences
 import android.widget.Toast
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -36,16 +36,13 @@ class Baimangu : ConfigurableSource, ParsedHttpSource() {
 
     override val baseUrl = preferences.getString(MAINSITE_URL_PREF, MAINSITE_URL_PREF_DEFAULT)!!
 
-    // Client configs
-    private val mainSiteRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        baseUrl.toHttpUrlOrNull()!!,
-        preferences.getString(MAINSITE_RATEPERMITS_PREF, MAINSITE_RATEPERMITS_PREF_DEFAULT)!!.toInt(),
-        preferences.getString(MAINSITE_RATEPERIOD_PREF, MAINSITE_RATEPERIOD_PREF_DEFAULT)!!.toLong(),
-        TimeUnit.MILLISECONDS,
-    )
-
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(mainSiteRateLimitInterceptor)
+        .rateLimitHost(
+            baseUrl.toHttpUrlOrNull()!!,
+            preferences.getString(MAINSITE_RATEPERMITS_PREF, MAINSITE_RATEPERMITS_PREF_DEFAULT)!!.toInt(),
+            preferences.getString(MAINSITE_RATEPERIOD_PREF, MAINSITE_RATEPERIOD_PREF_DEFAULT)!!.toLong(),
+            TimeUnit.MILLISECONDS,
+        )
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()

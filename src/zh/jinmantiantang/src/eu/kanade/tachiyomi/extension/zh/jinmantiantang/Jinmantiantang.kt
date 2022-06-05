@@ -4,9 +4,9 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -44,13 +44,15 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
         SITE_ENTRIES_ARRAY[preferences.getString(USE_MIRROR_URL_PREF, "0")!!.toInt()]
     private val baseHttpUrl: HttpUrl = baseUrl.toHttpUrlOrNull()!!
 
-    // Add rate limit to fix manga thumbnail load failure
-    private val mainSiteRateLimitInterceptor = SpecificHostRateLimitInterceptor(baseHttpUrl, preferences.getString(MAINSITE_RATELIMIT_PREF, "1")!!.toInt(), preferences.getString(MAINSITE_RATELIMIT_PERIOD, "3")!!.toLong())
-
     // 处理URL请求
     override val client: OkHttpClient = network.cloudflareClient
         .newBuilder()
-        .addNetworkInterceptor(mainSiteRateLimitInterceptor)
+        // Add rate limit to fix manga thumbnail load failure
+        .rateLimitHost(
+            baseHttpUrl,
+            preferences.getString(MAINSITE_RATELIMIT_PREF, "1")!!.toInt(),
+            preferences.getString(MAINSITE_RATELIMIT_PERIOD, "3")!!.toLong(),
+        )
         .addInterceptor(ScrambledImageInterceptor).build()
 
     // 点击量排序(人气)

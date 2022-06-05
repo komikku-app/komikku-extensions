@@ -5,11 +5,7 @@ ext {
     extName = 'Baimangu (Darpou)'
     pkgNameSuffix = 'zh.baimangu'
     extClass = '.Baimangu'
-    extVersionCode = 2
-}
-
-dependencies {
-    implementation project(path: ':lib-ratelimit')
+    extVersionCode = 3
 }
 
 apply from: "$rootDir/common.gradle"
