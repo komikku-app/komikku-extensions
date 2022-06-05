@@ -5,10 +5,18 @@ on:
     paths-ignore:
       - '**.md'
 
+env:
+  CI_CHUNK_SIZE: 75
+
 jobs:
-  check_wrapper:
-    name: Validate Gradle Wrapper
+  prepare:
+    name: Prepare job
     runs-on: ubuntu-latest
+    outputs:
+      individualMatrix: ${{ steps.generate-matrices.outputs.individualMatrix }}
+      multisrcMatrix: ${{ steps.generate-matrices.outputs.multisrcMatrix }}
+    env:
+      CI_MODULE_GEN: true
     steps:
       - name: Clone repo
         uses: actions/checkout@v3
@@ -16,16 +24,54 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v1
 
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: 8
+          distribution: adopt
+
+      - name: Copy CI files
+        run: |
+          mkdir -p ~/.gradle
+          cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
+
+      - name: Generate multisrc sources
+        uses: gradle/gradle-command-action@v2
+        with:
+          arguments: :multisrc:generateExtensions
+
+      - name: Get number of modules
+        run: |
+          set -x
+          ./gradlew -q projects | grep '.*extensions\:\(individual\|multisrc\)\:.*\:.*' > projects.txt
+
+          echo "NUM_INDIVIDUAL_MODULES=$(cat projects.txt | grep '.*\:individual\:.*' | wc -l)" >> $GITHUB_ENV
+          echo "NUM_MULTISRC_MODULES=$(cat projects.txt | grep '.*\:multisrc\:.*' | wc -l)" >> $GITHUB_ENV
+
+      - id: generate-matrices
+        name: Create output matrices
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const numIndividualModules = process.env.NUM_INDIVIDUAL_MODULES;
+            const numMultisrcModules = process.env.NUM_MULTISRC_MODULES;
+            const chunkSize = process.env.CI_CHUNK_SIZE;
+
+            const numIndividualChunks = Math.ceil(numIndividualModules / chunkSize);
+            const numMultisrcChunks = Math.ceil(numMultisrcModules / chunkSize);
+
+            console.log(`Individual modules: ${numIndividualModules} (${numIndividualChunks} chunks of ${chunkSize})`);
+            console.log(`Multi-source modules: ${numMultisrcModules} (${numMultisrcChunks} chunks of ${chunkSize})`);
+
+            core.setOutput('individualMatrix', { 'chunk': [...Array(numIndividualChunks).keys()] });
+            core.setOutput('multisrcMatrix', { 'chunk': [...Array(numMultisrcChunks).keys()] });
+
   build_multisrc:
     name: Build multisrc modules
-    needs: check_wrapper
+    needs: prepare
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
-      matrix:
-        lang: [all, en, ar, de, es, fr, id, it, ja, ko, pt, ru, th, tr, vi, zh, bg, hi, pl]
-        # Full list of locales in project, but no APKs are produced for some of them here:
-        # lang: [all, en, ar, ca, de, es, fr, id, it, ja, ko, pt, ru, th, tr, vi, zh, bg, hi, pl]
+      matrix: ${{ fromJSON(needs.prepare.outputs.multisrcMatrix) }}
     steps:
       - name: Checkout PR
         uses: actions/checkout@v3
@@ -36,7 +82,7 @@ jobs:
           java-version: 8
           distribution: adopt
 
-      - name: Copy CI gradle.properties
+      - name: Copy CI files
         run: |
           mkdir -p ~/.gradle
           cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
@@ -44,30 +90,26 @@ jobs:
       - name: Generate sources from the multi-source library
         uses: gradle/gradle-command-action@v2
         env:
-          CI_MULTISRC: "true"
+          CI_MODULE_GEN: "true"
         with:
           arguments: :multisrc:generateExtensions
           cache-read-only: true
 
-      - name: Build "${{ matrix.lang }}" extensions
+      - name: Build extensions (chunk ${{ matrix.chunk }})
         uses: gradle/gradle-command-action@v2
         env:
           CI_MULTISRC: "true"
-          CI_MATRIX_LANG: ${{ matrix.lang }}
+          CI_CHUNK_NUM: ${{ matrix.chunk }}
         with:
           arguments: assembleDebug
           cache-read-only: true
 
   build_individual:
     name: Build individual modules
-    needs: check_wrapper
+    needs: prepare
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
-      matrix:
-        lang: [all, en, ar, ca, de, es, fr, id, it, ja, ko, pt, ru, th, tr, vi, zh]
-        # Full list of locales in project, but no APKs are produced for some of them here:
-        # lang: [all, en, ar, ca, de, es, fr, id, it, ja, ko, pt, ru, th, tr, vi, zh, bg, hi, pl]
+      matrix: ${{ fromJSON(needs.prepare.outputs.individualMatrix) }}
     steps:
       - name: Checkout PR
         uses: actions/checkout@v3
@@ -78,16 +120,16 @@ jobs:
           java-version: 8
           distribution: adopt
 
-      - name: Copy CI gradle.properties
+      - name: Copy CI files
         run: |
           mkdir -p ~/.gradle
           cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
 
-      - name: Build "${{ matrix.lang }}" extensions
+      - name: Build extensions (chunk ${{ matrix.chunk }})
         uses: gradle/gradle-command-action@v2
         env:
           CI_MULTISRC: "false"
-          CI_MATRIX_LANG: ${{ matrix.lang }}
+          CI_CHUNK_NUM: ${{ matrix.chunk }}
         with:
           arguments: assembleDebug
           cache-read-only: true
