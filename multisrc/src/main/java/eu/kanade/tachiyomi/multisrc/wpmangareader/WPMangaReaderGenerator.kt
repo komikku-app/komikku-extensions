@@ -24,7 +24,6 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Fusion Scanlation", "https://fusionscanlation.com", "es", className = "FusionScanlation", overrideVersionCode = 2),
         SingleLang("Gabut Scans", "https://gabutscans.com", "id"),
         SingleLang("Gecenin Lordu", "https://geceninlordu.com", "tr", overrideVersionCode = 1),
-        SingleLang("Graze Scans", "https://grazescans.com", "en", overrideVersionCode = 2),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 6),
         SingleLang("Komik Lab", "https://komiklab.com", "id"),
         SingleLang("KomikMama", "https://komikmama.net", "id"),
