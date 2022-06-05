@@ -1,9 +1,9 @@
 package eu.kanade.tachiyomi.extension.ja.mangaraworg
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -21,12 +21,10 @@ class MangaRawOrg : WPMangaStream("Manga Raw.org", "https://mangaraw.org", "ja")
     // Formerly "Manga Raw" from WPMangaStream
     override val id = 6223520752496636410
 
-    private val rateLimitInterceptor = RateLimitInterceptor(4)
-
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(4)
         .build()
 
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/search?order=popular&page=$page", headers)

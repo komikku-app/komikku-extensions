@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.pt.meusmangas
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.mangasar.MangaSar
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
@@ -21,7 +21,7 @@ class MeusMangas : MangaSar(
 
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::searchIntercept)
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     override fun popularMangaSelector() = "ul.sidebar-popular li.popular-treending"

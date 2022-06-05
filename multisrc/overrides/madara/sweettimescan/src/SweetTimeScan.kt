@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.pt.sweettimescan
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.MangasPage
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -18,7 +18,7 @@ class SweetTimeScan : Madara(
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     // The source has novels in text format, so we need to filter them.

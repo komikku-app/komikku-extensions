@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.pt.gekkouhentai
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.mmrcms.MMRCMS
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -15,7 +15,7 @@ class GekkouHentai : MMRCMS(
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     override fun chapterListSelector() = "ul.domaintld > li.li:has(a[href^='$baseUrl'])"

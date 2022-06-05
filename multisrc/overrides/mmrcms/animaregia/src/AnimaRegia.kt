@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.pt.animaregia
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.mmrcms.MMRCMS
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
@@ -18,7 +18,7 @@ class AnimaRegia : MMRCMS("AnimaRegia", "https://animaregia.net", "pt-BR") {
     override val id: Long = 4378659695320121364
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     // Remove the language tag from the title name.

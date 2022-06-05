@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.id.komikindoco
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.json.Json
@@ -18,12 +18,10 @@ class KomikindoCo : WPMangaStream("KomikIndo.co", "https://komikindo.co", "id", 
     // Formerly "Komikindo.co"
     override val id = 734619124437406170
 
-    private val rateLimitInterceptor = RateLimitInterceptor(4)
-
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(4)
         .build()
 
     override val hasProjectPage = true

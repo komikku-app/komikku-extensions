@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.pt.mangaschan
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -15,7 +15,7 @@ class MangasChan : WPMangaReader(
 ) {
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     override val altName = "Nome alternativo: "

@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.pt.universohentai
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.gattsu.Gattsu
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.asJsoup
@@ -18,7 +18,7 @@ class UniversoHentai : Gattsu(
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     override fun latestUpdatesSelector() = "div.meio div.videos div.video a[href^=$baseUrl]:not(:has(span.selo-hd))"

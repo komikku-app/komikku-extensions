@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.pt.limascans
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -18,7 +18,7 @@ class LimaScans : Madara(
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     override fun mangaDetailsRequest(manga: SManga): Request {

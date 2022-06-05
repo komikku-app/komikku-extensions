@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.id.komikav
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -19,12 +19,10 @@ class KomikAV : WPMangaStream(
     // Formerly "Komik AV (WP Manga Stream)"
     override val id = 7875815514004535629
 
-    private val rateLimitInterceptor = RateLimitInterceptor(4)
-
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(4)
         .build()
 
     override fun imageRequest(page: Page): Request {

@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.pt.silencescan
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
@@ -20,7 +20,7 @@ class SilenceScan : WPMangaReader(
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     override val altName = "Nome alternativo: "

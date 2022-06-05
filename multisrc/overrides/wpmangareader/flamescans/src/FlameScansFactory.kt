@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.flamescans
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.OkHttpClient
@@ -15,7 +15,7 @@ class FlameScansFactory : SourceFactory {
 
 class FlameScansAr : FlameScans("https://ar.flamescans.org", "ar", "/series") {
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .rateLimit(1, 1, TimeUnit.SECONDS)
         .build()
 
     override val id: Long = 6053688312544266540
@@ -29,6 +29,6 @@ class FlameScansAr : FlameScans("https://ar.flamescans.org", "ar", "/series") {
 
 class FlameScansEn : FlameScans("https://flamescans.org", "en", "/series") {
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 3, TimeUnit.SECONDS))
+        .rateLimit(1, 3, TimeUnit.SECONDS)
         .build()
 }

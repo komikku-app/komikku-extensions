@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.id.kiryuu
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.OkHttpClient
 import org.jsoup.nodes.Document
@@ -13,12 +13,10 @@ class Kiryuu : WPMangaReader("Kiryuu", "https://kiryuu.id", "id", dateFormat = S
     // Formerly "Kiryuu (WP Manga Stream)"
     override val id = 3639673976007021338
 
-    private val rateLimitInterceptor = RateLimitInterceptor(4)
-
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(4)
         .build()
 
     // manga details

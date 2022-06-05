@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.realmscans
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
@@ -17,7 +17,7 @@ class RealmScans : WPMangaReader(
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .rateLimit(1, 1, TimeUnit.SECONDS)
         .build()
 
     override fun pageListParse(document: Document): List<Page> {

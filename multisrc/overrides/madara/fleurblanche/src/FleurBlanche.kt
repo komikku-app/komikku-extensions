@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.pt.fleurblanche
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -20,7 +20,7 @@ class FleurBlanche : Madara(
 
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::authWarningIntercept)
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     override val useNewChapterEndpoint = true

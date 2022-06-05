@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.en.firstkissmanhua
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
 import okhttp3.Request
 import java.text.SimpleDateFormat
@@ -15,10 +15,9 @@ class FirstKissManhua : Madara(
     "en",
     SimpleDateFormat("d MMM yyyy", Locale.US)
 ) {
-    private val rateLimitInterceptor = RateLimitInterceptor(1, 2, TimeUnit.SECONDS)
 
     override val client = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     override fun imageRequest(page: Page): Request = GET(page.imageUrl!!, headersBuilder().add("Referer", "https://1stkissmanga.com").build())

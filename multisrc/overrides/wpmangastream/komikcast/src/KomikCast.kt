@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.id.komikcast
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangastream.WPMangaStream
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -20,12 +20,10 @@ class KomikCast : WPMangaStream("Komik Cast", "https://komikcast.com", "id") {
     // Formerly "Komik Cast (WP Manga Stream)"
     override val id = 972717448578983812
 
-    private val rateLimitInterceptor = RateLimitInterceptor(3)
-
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(3)
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()

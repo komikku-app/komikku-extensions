@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.yugenmangas
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.util.asJsoup
@@ -50,7 +50,7 @@ class YugenMangasBr : YugenMangas(
 
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::uaIntercept)
-        .addInterceptor(RateLimitInterceptor(1, 3, TimeUnit.SECONDS))
+        .rateLimit(1, 3, TimeUnit.SECONDS)
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()

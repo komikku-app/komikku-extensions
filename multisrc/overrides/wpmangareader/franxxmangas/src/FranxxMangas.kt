@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.pt.franxxmangas
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.wpmangareader.WPMangaReader
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.OkHttpClient
 import org.jsoup.nodes.Element
@@ -17,7 +17,7 @@ class FranxxMangas : WPMangaReader(
 ) {
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
     override val altName = "Nomes alternativos: "

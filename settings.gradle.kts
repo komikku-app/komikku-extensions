@@ -1,8 +1,5 @@
 include(":core")
 
-include(":lib-ratelimit")
-project(":lib-ratelimit").projectDir = File("lib/ratelimit")
-
 include(":lib-dataimage")
 project(":lib-dataimage").projectDir = File("lib/dataimage")
 
