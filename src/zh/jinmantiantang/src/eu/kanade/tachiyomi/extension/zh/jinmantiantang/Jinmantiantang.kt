@@ -51,7 +51,6 @@ class Jinmantiantang : ConfigurableSource, ParsedHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
         .newBuilder()
         .addNetworkInterceptor(mainSiteRateLimitInterceptor)
-//        .addNetworkInterceptor(RateLimitInterceptor(1, 3))
         .addInterceptor(ScrambledImageInterceptor).build()
 
     // 点击量排序(人气)

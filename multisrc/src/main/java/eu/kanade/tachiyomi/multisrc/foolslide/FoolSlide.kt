@@ -152,7 +152,7 @@ abstract class FoolSlide(
     }
 
     protected open fun parseChapterDate(date: String): Long? {
-        val lcDate = date.toLowerCase(Locale.ROOT)
+        val lcDate = date.lowercase(Locale.ROOT)
         if (lcDate.endsWith(" ago"))
             parseRelativeDate(lcDate)?.let { return it }
 

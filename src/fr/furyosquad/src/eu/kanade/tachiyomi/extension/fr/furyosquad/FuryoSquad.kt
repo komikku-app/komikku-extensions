@@ -123,7 +123,7 @@ class FuryoSquad : ParsedHttpSource() {
 
         document.select("div.comic-info").let {
             it.select("p.fs-comic-label").forEach { el ->
-                when (el.text().toLowerCase(Locale.ROOT)) {
+                when (el.text().lowercase(Locale.ROOT)) {
                     "scénario" -> manga.author = el.nextElementSibling().text()
                     "dessins" -> manga.artist = el.nextElementSibling().text()
                     "genre" -> manga.genre = el.nextElementSibling().text()
@@ -151,7 +151,7 @@ class FuryoSquad : ParsedHttpSource() {
     }
 
     private fun parseChapterDate(date: String): Long {
-        val lcDate = date.toLowerCase(Locale.ROOT)
+        val lcDate = date.lowercase(Locale.ROOT)
         if (lcDate.startsWith("il y a"))
             parseRelativeDate(lcDate).let { return it }
 

@@ -161,7 +161,7 @@ class ScantradUnion : ParsedHttpSource() {
     }
 
     private fun mapMangaStatusStringToConst(status: String): Int {
-        return when (status.trim().toLowerCase(Locale.FRENCH)) {
+        return when (status.trim().lowercase(Locale.FRENCH)) {
             "en cours" -> SManga.ONGOING
             "terminé" -> SManga.COMPLETED
             "licencié" -> SManga.LICENSED

@@ -38,13 +38,13 @@ class MangaSwat : WPMangaStream("MangaSwat", "https://swatmanga.co", "ar", Simpl
                 thumbnail_url = infoElement.select("img").imgAttr()
 
                 val genres = infoElement.select("span:contains(التصنيف) a, .mgen a")
-                    .map { element -> element.text().toLowerCase() }
+                    .map { element -> element.text().lowercase() }
                     .toMutableSet()
 
                 // add series type(manga/manhwa/manhua/other) thinggy to genre
                 document.select(seriesTypeSelector).firstOrNull()?.ownText()?.let {
                     if (it.isEmpty().not() && genres.contains(it).not()) {
-                        genres.add(it.toLowerCase())
+                        genres.add(it.lowercase())
                     }
                 }
 

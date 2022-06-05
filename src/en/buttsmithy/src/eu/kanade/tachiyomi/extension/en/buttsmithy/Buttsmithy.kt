@@ -178,7 +178,7 @@ class Buttsmithy : HttpSource() {
     }
 
     private fun String.lowercase(): String {
-        return this.toLowerCase(Locale.getDefault())
+        return this.lowercase(Locale.getDefault())
     }
 
     /**

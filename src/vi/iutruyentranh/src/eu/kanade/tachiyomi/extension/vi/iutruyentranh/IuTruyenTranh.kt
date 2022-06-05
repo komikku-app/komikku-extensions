@@ -68,8 +68,8 @@ class IuTruyenTranh : ParsedHttpSource() {
                 is Author -> url.addQueryParameter("autart", filter.state)
                 is GenreList -> filter.state.forEach { genre ->
                     when (genre.state) {
-                        Filter.TriState.STATE_INCLUDE -> genres.add(genre.name.toLowerCase())
-                        Filter.TriState.STATE_EXCLUDE -> genresEx.add(genre.name.toLowerCase())
+                        Filter.TriState.STATE_INCLUDE -> genres.add(genre.name.lowercase())
+                        Filter.TriState.STATE_EXCLUDE -> genresEx.add(genre.name.lowercase())
                     }
                 }
             }

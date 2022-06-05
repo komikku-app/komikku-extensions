@@ -17,10 +17,8 @@ import uy.kohesive.injekt.injectLazy
 /**
  * Rate limit requests ignore covers though
  */
-
 private val coverRegex = Regex("""/images/.*\.jpg""")
 private val baseInterceptor = RateLimitInterceptor(3)
-
 val mdRateLimitInterceptor = Interceptor { chain ->
     return@Interceptor when (chain.request().url.toString().contains(coverRegex)) {
         true -> chain.proceed(chain.request())

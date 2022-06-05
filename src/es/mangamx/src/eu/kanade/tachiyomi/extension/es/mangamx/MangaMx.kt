@@ -106,7 +106,7 @@ open class MangaMx : ConfigurableSource, ParsedHttpSource() {
             for (filter in filters) {
                 when (filter) {
                     is StatusFilter -> uri.appendQueryParameter(
-                        filter.name.toLowerCase(Locale.ROOT),
+                        filter.name.lowercase(Locale.ROOT),
                         statusArray[filter.state].second
                     )
                     is SortBy -> {
@@ -117,7 +117,7 @@ open class MangaMx : ConfigurableSource, ParsedHttpSource() {
                         )
                     }
                     is TypeFilter -> uri.appendQueryParameter(
-                        filter.name.toLowerCase(Locale.ROOT),
+                        filter.name.lowercase(Locale.ROOT),
                         typedArray[filter.state].second
                     )
                     is GenreFilter -> uri.appendQueryParameter(

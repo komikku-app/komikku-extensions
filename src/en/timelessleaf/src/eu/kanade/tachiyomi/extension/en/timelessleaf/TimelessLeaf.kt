@@ -48,7 +48,7 @@ class TimelessLeaf : HttpSource() {
 
         // all mangas are in sub menus, go straight for that to deal with less menu items
         val menuLinks = document.select(".sub-menu a").filterNot { element ->
-            element.text().toLowerCase(Locale.ROOT).contains(pagesWeDontWant)
+            element.text().lowercase(Locale.ROOT).contains(pagesWeDontWant)
         }
 
         // combine the two lists

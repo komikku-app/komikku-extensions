@@ -210,13 +210,13 @@ abstract class WPMangaStream(
                 thumbnail_url = infoElement.select("div.thumb img").imgAttr()
 
                 val genres = infoElement.select("span:contains(Genre) a, .mgen a")
-                    .map { element -> element.text().toLowerCase() }
+                    .map { element -> element.text().lowercase() }
                     .toMutableSet()
 
                 // add series type(manga/manhwa/manhua/other) thinggy to genre
                 document.select(seriesTypeSelector).firstOrNull()?.ownText()?.let {
                     if (it.isEmpty().not() && genres.contains(it).not()) {
-                        genres.add(it.toLowerCase())
+                        genres.add(it.lowercase())
                     }
                 }
 

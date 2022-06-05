@@ -250,7 +250,7 @@ class LibManga : ConfigurableSource, HttpSource() {
             when (
                 body.select("div.media-info-list__title:contains(Статус перевода) + div")
                     .text()
-                    .toLowerCase(Locale.ROOT)
+                    .lowercase(Locale.ROOT)
             ) {
                 "продолжается" -> SManga.ONGOING
                 "завершен" -> SManga.COMPLETED

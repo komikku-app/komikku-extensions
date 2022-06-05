@@ -66,7 +66,7 @@ class AnimaRegia : MMRCMS("AnimaRegia", "https://animaregia.net", "pt-BR") {
         description = document.select("div.row div.well p").text().trim()
 
         for (element in document.select("div.col-sm-5 ul.list-group li.list-group-item")) {
-            when (element.text().trim().toLowerCase(BRAZILIAN_LOCALE).substringBefore(":")) {
+            when (element.text().trim().lowercase(BRAZILIAN_LOCALE).substringBefore(":")) {
                 "autor(es)" -> author = element.select("a")
                     .joinToString(", ") { it.text().trim() }
                 "artist(s)" -> artist = element.select("a")

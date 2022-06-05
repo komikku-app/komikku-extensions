@@ -67,7 +67,7 @@ class Hiveworks : ParsedHttpSource() {
     // Latest
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val day = SimpleDateFormat("EEEE", Locale.US).format(Date()).toLowerCase(Locale.US)
+        val day = SimpleDateFormat("EEEE", Locale.US).format(Date()).lowercase(Locale.US)
         return GET("$baseUrl/home/update-day/$day", headers)
     }
 

@@ -205,7 +205,7 @@ class HBrowse : ParsedHttpSource(), ConfigurableSource {
     }
 
     private class AdvTriStateFilter(val groupName: String, name: String) : Filter.TriState(name) {
-        val formName = "${groupName[0].toLowerCase() + groupName.drop(1).replace(" ", "")}_$name"
+        val formName = "${groupName[0].lowercase() + groupName.drop(1).replace(" ", "")}_$name"
         fun formValue() = when {
             this.isIncluded() -> "y"
             this.isExcluded() -> "n"

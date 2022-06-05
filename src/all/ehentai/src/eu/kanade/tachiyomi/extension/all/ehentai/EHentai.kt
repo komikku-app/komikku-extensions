@@ -206,7 +206,7 @@ abstract class EHentai(
             thumbnailUrl = select("#gd1 div").attr("style").nullIfBlank()?.let {
                 it.substring(it.indexOf('(') + 1 until it.lastIndexOf(')'))
             }
-            genre = select("#gdc div").text().nullIfBlank()?.trim()?.toLowerCase()
+            genre = select("#gdc div").text().nullIfBlank()?.trim()?.lowercase()
 
             uploader = select("#gdn").text().nullIfBlank()?.trim()
 
@@ -225,7 +225,7 @@ abstract class EHentai(
                                 ignore {
                                     when (
                                         left.removeSuffix(":")
-                                            .toLowerCase()
+                                            .lowercase()
                                     ) {
                                         "posted" -> datePosted = EX_DATE_FORMAT.parse(right)?.time ?: 0
                                         "visible" -> visible = right.nullIfBlank()

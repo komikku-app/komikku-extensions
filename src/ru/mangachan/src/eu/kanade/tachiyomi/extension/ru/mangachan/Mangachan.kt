@@ -169,7 +169,7 @@ class Mangachan : ParsedHttpSource() {
         val imgElement = document.select("img#cover").first()
         val rawCategory = infoElement.select("tr:eq(1) > td:eq(1)").text()
         val category = if (rawCategory.isNotEmpty()) {
-            rawCategory.toLowerCase()
+            rawCategory.lowercase()
         } else {
             "манга"
         }

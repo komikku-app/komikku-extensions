@@ -241,7 +241,7 @@ class UniComics : ParsedHttpSource() {
         element.select(".list_title").first().text().let {
             val titleNoPrefix = it.removePrefix(manga.title).removePrefix(":").trim()
             chapter.name = if (titleNoPrefix.isNotEmpty())
-                titleNoPrefix.replaceFirst(titleNoPrefix.first(), titleNoPrefix.first().toUpperCase())
+                titleNoPrefix.replaceFirst(titleNoPrefix.first(), titleNoPrefix.first().uppercaseChar())
             else
                 "Сингл"
             if (titleNoPrefix.contains("№")) {

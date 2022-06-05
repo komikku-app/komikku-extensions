@@ -67,14 +67,14 @@ class MangaRawClub : ParsedHttpSource() {
 
         val manga = SManga.create()
         val author = document.select(".author a").first()?.attr("title")?.trim() ?: ""
-        if (author.toLowerCase(Locale.ROOT) != "updating")
+        if (author.lowercase(Locale.ROOT) != "updating")
             manga.author = author
 
         var description = document.select(".description").first()?.text() ?: ""
         description = description.substringAfter("The Summary is").trim()
 
         val otherTitle = document.select(".alternative-title").first()?.text()?.trim() ?: ""
-        if (otherTitle.isNotEmpty() && otherTitle.toLowerCase(Locale.ROOT) != "updating")
+        if (otherTitle.isNotEmpty() && otherTitle.lowercase(Locale.ROOT) != "updating")
             description += "\n\n$altName $otherTitle"
         manga.description = description.trim()
 

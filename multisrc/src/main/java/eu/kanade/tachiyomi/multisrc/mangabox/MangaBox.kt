@@ -271,7 +271,7 @@ abstract class MangaBox(
     // Based on change_alias JS function from Mangakakalot's website
     @SuppressLint("DefaultLocale")
     open fun normalizeSearchQuery(query: String): String {
-        var str = query.toLowerCase()
+        var str = query.lowercase()
         str = str.replace("[àáạảãâầấậẩẫăằắặẳẵ]".toRegex(), "a")
         str = str.replace("[èéẹẻẽêềếệểễ]".toRegex(), "e")
         str = str.replace("[ìíịỉĩ]".toRegex(), "i")

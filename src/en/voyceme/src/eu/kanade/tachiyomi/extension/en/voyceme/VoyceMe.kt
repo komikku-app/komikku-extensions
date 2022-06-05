@@ -29,7 +29,6 @@ import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale

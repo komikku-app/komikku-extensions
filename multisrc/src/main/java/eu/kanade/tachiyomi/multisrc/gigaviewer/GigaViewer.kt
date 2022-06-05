@@ -50,7 +50,7 @@ abstract class GigaViewer(
     protected val dayOfWeek: String by lazy {
         Calendar.getInstance()
             .getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.US)!!
-            .toLowerCase(Locale.US)
+            .lowercase(Locale.US)
     }
 
     protected open val publisher: String = ""

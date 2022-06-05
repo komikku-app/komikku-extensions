@@ -19,7 +19,7 @@ class MMRCMSSources {
                 val lang: String,
                 override val isNsfw: Boolean = false,
                 override val className: String = name.replace(" ", ""),
-                override val pkgName: String = className.toLowerCase(Locale.ENGLISH),
+                override val pkgName: String = className.lowercase(Locale.ENGLISH),
                 override val sourceName: String = name,
                 override val overrideVersionCode: Int = 0,
             ) : SourceData()
@@ -30,7 +30,7 @@ class MMRCMSSources {
                 val langs: List<String>,
                 override val isNsfw: Boolean = false,
                 override val className: String = name.replace(" ", "") + "Factory",
-                override val pkgName: String = className.substringBefore("Factory").toLowerCase(Locale.ENGLISH),
+                override val pkgName: String = className.substringBefore("Factory").lowercase(Locale.ENGLISH),
                 override val sourceName: String = name,
                 override val overrideVersionCode: Int = 0,
             ) : SourceData()

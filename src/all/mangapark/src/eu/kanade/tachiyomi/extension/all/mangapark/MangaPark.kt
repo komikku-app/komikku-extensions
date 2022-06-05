@@ -186,9 +186,9 @@ open class MangaPark(
     private fun String?.parseStatus() = if (this == null) {
         SManga.UNKNOWN
     } else when {
-        this.toLowerCase(Locale.US).contains("ongoing") -> SManga.ONGOING
-        this.toLowerCase(Locale.US).contains("hiatus") -> SManga.ONGOING
-        this.toLowerCase(Locale.US).contains("completed") -> SManga.COMPLETED
+        this.lowercase(Locale.US).contains("ongoing") -> SManga.ONGOING
+        this.lowercase(Locale.US).contains("hiatus") -> SManga.ONGOING
+        this.lowercase(Locale.US).contains("completed") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 

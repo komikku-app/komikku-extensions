@@ -69,8 +69,8 @@ class MangaPill : ParsedHttpSource() {
 
     private fun parseStatus(element: String): Int = when {
 
-        element.toLowerCase(Locale.ENGLISH).contains("publishing") -> SManga.ONGOING
-        element.toLowerCase(Locale.ENGLISH).contains("finished") -> SManga.COMPLETED
+        element.lowercase(Locale.ENGLISH).contains("publishing") -> SManga.ONGOING
+        element.lowercase(Locale.ENGLISH).contains("finished") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 

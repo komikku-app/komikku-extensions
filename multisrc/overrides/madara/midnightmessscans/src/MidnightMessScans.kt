@@ -37,20 +37,20 @@ class MidnightMessScans : Madara("Midnight Mess Scans", "https://midnightmess.or
                 }
             }
             val genres = select("div.genres-content a")
-                .map { element -> element.text().toLowerCase(Locale.ROOT) }
+                .map { element -> element.text().lowercase(Locale.ROOT) }
                 .toMutableSet()
 
             // add tag(s) to genre
             select("div.tags-content a").forEach { element ->
                 if (genres.contains(element.text()).not()) {
-                    genres.add(element.text().toLowerCase(Locale.ROOT))
+                    genres.add(element.text().lowercase(Locale.ROOT))
                 }
             }
 
             // add manga/manhwa/manhua thinggy to genre
             document.select(seriesTypeSelector).firstOrNull()?.ownText()?.let {
                 if (it.isEmpty().not() && it.notUpdating() && it != "-" && genres.contains(it).not()) {
-                    genres.add(it.toLowerCase(Locale.ROOT))
+                    genres.add(it.lowercase(Locale.ROOT))
                 }
             }
 

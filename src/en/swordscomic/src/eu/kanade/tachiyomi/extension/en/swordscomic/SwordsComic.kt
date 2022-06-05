@@ -102,7 +102,7 @@ class SwordsComic : HttpSource() {
                 charCount = 0
             }
             charCount += word.length + 1
-            builder.append(Uri.encode(word.toUpperCase()))
+            builder.append(Uri.encode(word.uppercase()))
             builder.append("+")
         }
 

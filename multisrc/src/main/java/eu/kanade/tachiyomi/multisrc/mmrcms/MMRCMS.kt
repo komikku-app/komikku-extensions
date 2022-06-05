@@ -299,13 +299,13 @@ abstract class MMRCMS(
         val detailDescription = setOf("description", "resumen")
 
         for (element in document.select(".row .dl-horizontal dt")) {
-            when (element.text().trim().toLowerCase().removeSuffix(":")) {
+            when (element.text().trim().lowercase().removeSuffix(":")) {
                 in detailAuthor -> author = element.nextElementSibling().text()
                 in detailArtist -> artist = element.nextElementSibling().text()
                 in detailGenre -> genre = element.nextElementSibling().select("a").joinToString {
                     it.text().trim()
                 }
-                in detailStatus -> status = when (element.nextElementSibling().text().trim().toLowerCase()) {
+                in detailStatus -> status = when (element.nextElementSibling().text().trim().lowercase()) {
                     in detailStatusComplete -> SManga.COMPLETED
                     in detailStatusOngoing -> SManga.ONGOING
                     else -> SManga.UNKNOWN
@@ -314,13 +314,13 @@ abstract class MMRCMS(
         }
         // When details are in a .panel instead of .row (ES sources)
         for (element in document.select("div.panel span.list-group-item")) {
-            when (element.select("b").text().toLowerCase().substringBefore(":")) {
+            when (element.select("b").text().lowercase().substringBefore(":")) {
                 in detailAuthor -> author = element.select("b + a").text()
                 in detailArtist -> artist = element.select("b + a").text()
                 in detailGenre -> genre = element.getElementsByTag("a").joinToString {
                     it.text().trim()
                 }
-                in detailStatus -> status = when (element.select("b + span.label").text().toLowerCase()) {
+                in detailStatus -> status = when (element.select("b + span.label").text().lowercase()) {
                     in detailStatusComplete -> SManga.COMPLETED
                     in detailStatusOngoing -> SManga.ONGOING
                     else -> SManga.UNKNOWN

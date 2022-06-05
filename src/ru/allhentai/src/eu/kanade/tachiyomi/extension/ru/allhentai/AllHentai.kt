@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.extension.ru.allhentai
 import android.app.Application
 import android.content.SharedPreferences
 import android.widget.Toast
-import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -140,7 +139,7 @@ class AllHentai : ConfigurableSource, ParsedHttpSource() {
         val infoElement = document.select(".expandable").first()
         val rawCategory = infoElement.select("span.elem_category").text()
         val category = if (rawCategory.isNotEmpty()) {
-            rawCategory.toLowerCase()
+            rawCategory.lowercase()
         } else {
             "манга"
         }

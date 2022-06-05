@@ -30,8 +30,8 @@ class DoujinDesu : ParsedHttpSource() {
     }
 
     private fun parseStatus(status: String) = when {
-        status.toLowerCase(Locale.US).contains("finished") -> SManga.ONGOING
-        status.toLowerCase(Locale.US).contains("publishing") -> SManga.COMPLETED
+        status.lowercase(Locale.US).contains("finished") -> SManga.ONGOING
+        status.lowercase(Locale.US).contains("publishing") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 

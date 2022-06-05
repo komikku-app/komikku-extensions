@@ -104,7 +104,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
                     val statusToInclude = mutableListOf<String>()
                     filter.state.forEach { content ->
                         if (content.state) {
-                            statusToInclude.add(content.name.toUpperCase(Locale.ROOT))
+                            statusToInclude.add(content.name.uppercase(Locale.ROOT))
                         }
                     }
                     if (statusToInclude.isNotEmpty()) {
@@ -354,7 +354,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
                 ReadFilter(),
                 TypeSelect(),
                 CollectionSelect(listOf(CollectionFilterEntry("None")) + collections.map { CollectionFilterEntry(it.name, it.id) }),
-                LibraryGroup(libraries.map { LibraryFilter(it.id, it.name) }.sortedBy { it.name.toLowerCase(Locale.ROOT) }),
+                LibraryGroup(libraries.map { LibraryFilter(it.id, it.name) }.sortedBy { it.name.lowercase(Locale.ROOT) }),
                 StatusGroup(listOf("Ongoing", "Ended", "Abandoned", "Hiatus").map { StatusFilter(it) }),
                 GenreGroup(genres.map { GenreFilter(it) }),
                 TagGroup(tags.map { TagFilter(it) }),
@@ -385,7 +385,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
 
     // keep the previous ID when lang was "en", so that preferences and manga bindings are not lost
     override val id by lazy {
-        val key = "${name.toLowerCase()}/en/$versionId"
+        val key = "${name.lowercase()}/en/$versionId"
         val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
         (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
     }

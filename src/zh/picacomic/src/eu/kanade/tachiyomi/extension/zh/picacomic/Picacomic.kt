@@ -61,7 +61,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
         val hmacSha256Key = "~d}\$Q7\$eIni=V)9\\RK/P.RM4;9[7|@/CA}b~OW!3?EV`:<>M7pddUBL5n|0/*Cn"
         val apiKey = basicHeaders["api-key"]
         val path = url.substringAfter("$baseUrl/")
-        val raw = "$path$time$nonce${method}$apiKey".toLowerCase(Locale.ROOT)
+        val raw = "$path$time$nonce${method}$apiKey".lowercase(Locale.ROOT)
         return hmacSHA256(hmacSha256Key, raw).convertToString()
     }
 

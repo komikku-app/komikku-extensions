@@ -166,9 +166,8 @@ class Mangaworld : ParsedHttpSource() {
     }
 
     private fun parseStatus(element: String): Int = when {
-
-        element.toLowerCase().contains("ongoing") -> SManga.ONGOING
-        element.toLowerCase().contains("completed") -> SManga.COMPLETED
+        element.lowercase().contains("ongoing") -> SManga.ONGOING
+        element.lowercase().contains("completed") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 

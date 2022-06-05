@@ -319,7 +319,7 @@ class Multporn : ParsedHttpSource() {
             get() {
                 return state.split(",").filter { it != "" }.map {
                     Regex("[^A-Za-z0-9]").replace(it, " ").trim()
-                        .replace("\\s+".toRegex(), "_").toLowerCase(Locale.getDefault())
+                        .replace("\\s+".toRegex(), "_").lowercase(Locale.getDefault())
                 }.distinct()
             }
     }

@@ -147,7 +147,7 @@ class Mintmanga : ConfigurableSource, ParsedHttpSource() {
         val infoElement = document.select(".expandable").first()
         val rawCategory = infoElement.select("span.elem_category").text()
         val category = if (rawCategory.isNotEmpty()) {
-            rawCategory.toLowerCase()
+            rawCategory.lowercase()
         } else {
             "манга"
         }

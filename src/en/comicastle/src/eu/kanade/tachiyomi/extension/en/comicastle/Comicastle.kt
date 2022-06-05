@@ -154,7 +154,7 @@ class Comicastle : ParsedHttpSource() {
     )
 
     private open class PostFilter(name: String, val vals: Array<String>) : Filter.Select<String>(name, vals) {
-        val pathSegment = name.toLowerCase(Locale.US)
+        val pathSegment = name.lowercase(Locale.US)
         fun hasSelection(): Boolean = state != 0
         fun toRequestBody(): RequestBody = createRequestBody(vals[state])
     }

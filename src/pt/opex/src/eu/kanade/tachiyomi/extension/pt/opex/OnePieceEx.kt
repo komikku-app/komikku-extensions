@@ -72,7 +72,7 @@ class OnePieceEx : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("div.volume-nome h2").text() + " - " +
             element.select("div.volume-nome h3").text()
-        thumbnail_url = THUMBNAIL_URL_MAP[title.toUpperCase(Locale.ROOT)] ?: DEFAULT_THUMBNAIL
+        thumbnail_url = THUMBNAIL_URL_MAP[title.uppercase(Locale.ROOT)] ?: DEFAULT_THUMBNAIL
 
         val customUrl = "$baseUrl/mangas/".toHttpUrlOrNull()!!.newBuilder()
             .addQueryParameter("type", "special")
@@ -142,7 +142,7 @@ class OnePieceEx : ParsedHttpSource() {
                 val volumeEl = document.select("#post > div.volume:contains(" + title.substringAfter(" - ") + ")").first()!!
                 author = if (title.contains("One Piece")) "Eiichiro Oda" else "OPEX"
                 description = volumeEl.select("li.resenha").text()
-                thumbnail_url = THUMBNAIL_URL_MAP[title.toUpperCase(Locale.ROOT)] ?: DEFAULT_THUMBNAIL
+                thumbnail_url = THUMBNAIL_URL_MAP[title.uppercase(Locale.ROOT)] ?: DEFAULT_THUMBNAIL
             }
         }
     }

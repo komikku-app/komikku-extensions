@@ -26,7 +26,7 @@ class SenManga : ParsedHttpSource() {
     override val client = super.client.newBuilder().addInterceptor {
         // Intercept any image requests and add a referer to them
         // Enables bandwidth stealing feature
-        val request = if (it.request().url.pathSegments.firstOrNull()?.trim()?.toLowerCase() == "viewer") {
+        val request = if (it.request().url.pathSegments.firstOrNull()?.trim()?.lowercase() == "viewer") {
             it.request().newBuilder()
                 .addHeader(
                     "Referer",

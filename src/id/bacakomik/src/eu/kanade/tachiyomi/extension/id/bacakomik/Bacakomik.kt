@@ -112,8 +112,8 @@ class Bacakomik : ParsedHttpSource() {
     }
 
     private fun parseStatus(element: String): Int = when {
-        element.toLowerCase().contains("berjalan") -> SManga.ONGOING
-        element.toLowerCase().contains("tamat") -> SManga.COMPLETED
+        element.lowercase().contains("berjalan") -> SManga.ONGOING
+        element.lowercase().contains("tamat") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 

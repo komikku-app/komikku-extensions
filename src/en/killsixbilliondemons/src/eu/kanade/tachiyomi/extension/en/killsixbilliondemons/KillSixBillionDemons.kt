@@ -101,7 +101,7 @@ class KillSixBillionDemons : HttpSource() {
     }
 
     private fun String.lowercase(): String {
-        return this.toLowerCase(Locale.ROOT)
+        return this.lowercase(Locale.ROOT)
     }
 
     /**

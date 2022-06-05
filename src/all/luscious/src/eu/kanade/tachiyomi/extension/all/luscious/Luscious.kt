@@ -151,7 +151,7 @@ abstract class Luscious(
                     }
 
                     if (tagsFilter.state.isNotEmpty()) {
-                        val tags = "+${tagsFilter.state.toLowerCase()}".replace(" ", "_")
+                        val tags = "+${tagsFilter.state.lowercase()}".replace(" ", "_")
                             .replace("_,", "+").replace(",_", "+").replace(",", "+")
                             .replace("+-", "-").replace("-_", "-").trim()
                         add(

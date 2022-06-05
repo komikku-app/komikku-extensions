@@ -78,7 +78,7 @@ class Kumanga : HttpSource() {
         val dt = body.select("#searchinput").attr("dt").toString()
         val kumangaTokenKey = encodeAndReverse(encodeAndReverse(dt))
             .replace("=", "k")
-            .toLowerCase(Locale.ROOT)
+            .lowercase(Locale.ROOT)
         kumangaToken = body.select("div.input-group [type=hidden]").attr(kumangaTokenKey)
         return kumangaToken
     }

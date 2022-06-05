@@ -76,7 +76,7 @@ class HentaiFantasy : ParsedHttpSource() {
                     filter.state
                         .filter { it.state }
                         .map {
-                            paths.add(it.name.toLowerCase().replace(" ", "_"))
+                            paths.add(it.name.lowercase().replace(" ", "_"))
                             it.id.toString()
                         }
                         .forEach { tags.add(it) }

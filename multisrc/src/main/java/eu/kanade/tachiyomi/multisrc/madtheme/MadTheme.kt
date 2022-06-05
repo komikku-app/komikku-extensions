@@ -128,7 +128,7 @@ abstract class MadTheme(
             (altNames.takeIf { it.isNotEmpty() }?.let { "\n\nAlt name(s): ${it.joinToString()}" } ?: "")
 
         val statusText = document.select(".detail .meta > p > strong:contains(Status) ~ a").first()!!.text()
-        status = when (statusText.toLowerCase(Locale.US)) {
+        status = when (statusText.lowercase(Locale.US)) {
             "ongoing" -> SManga.ONGOING
             "completed" -> SManga.COMPLETED
             else -> SManga.UNKNOWN

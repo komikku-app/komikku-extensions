@@ -130,8 +130,8 @@ class Ikuhentai : ParsedHttpSource() {
 
     private fun parseStatus(element: String): Int = when {
 
-        element.toLowerCase().contains("ongoing") -> SManga.ONGOING
-        element.toLowerCase().contains("completado") -> SManga.COMPLETED
+        element.lowercase().contains("ongoing") -> SManga.ONGOING
+        element.lowercase().contains("completado") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 

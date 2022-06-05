@@ -160,7 +160,7 @@ open class MangaToon(
 
     private fun String.toNormalPosterUrl(): String = replace(POSTER_SUFFIX, "$1")
 
-    private fun String.toStatus(): Int = when (toLowerCase(locale)) {
+    private fun String.toStatus(): Int = when (lowercase(locale)) {
         in ONGOING_STATUS -> SManga.ONGOING
         in COMPLETED_STATUS -> SManga.COMPLETED
         else -> SManga.UNKNOWN

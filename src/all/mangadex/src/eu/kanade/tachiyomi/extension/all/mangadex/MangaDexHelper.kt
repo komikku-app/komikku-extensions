@@ -387,7 +387,7 @@ class MangaDexHelper(private val lang: String) {
     }
 
     fun titleToSlug(title: String) = title.trim()
-        .toLowerCase(Locale.US)
+        .lowercase(Locale.US)
         .replace(titleSpecialCharactersRegex, "-")
         .replace(trailingHyphenRegex, "")
         .split("-")

@@ -41,7 +41,7 @@ class ZeroScansHelper {
         comics: List<ZeroScansComicDto>
     ): List<ZeroScansComicDto> {
         var sortedList = when (type) {
-            "alphabetic" -> comics.sortedBy { it.name.toLowerCase(Locale.ROOT) }
+            "alphabetic" -> comics.sortedBy { it.name.lowercase(Locale.ROOT) }
             "rating" -> comics.sortedBy { it.getRating() }
             "chapter_count" -> comics.sortedBy { it.chapterCount }
             "bookmark_count" -> comics.sortedBy { it.bookmarkCount }

@@ -180,7 +180,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
         element.select("a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
-            manga.thumbnail_url = "$baseUrl/imgs/${it.attr("href").replace(Regex("/$"),".jpg").replace("manga","mangas")}".toLowerCase(Locale.ROOT)
+            manga.thumbnail_url = "$baseUrl/imgs/${it.attr("href").replace(Regex("/$"),".jpg").replace("manga","mangas")}".lowercase(Locale.ROOT)
         }
         return manga
     }
@@ -356,7 +356,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
         val checkNew = ArrayList<String>(pagecount)
         var maxIter = document.getElementsByTag("option").size
         var isSinglePage = false
-        if ((zjs.toLowerCase(Locale.ROOT).split("new image").size - 1) == 1) {
+        if ((zjs.lowercase(Locale.ROOT).split("new image").size - 1) == 1) {
             isSinglePage = true
             maxIter = 1
         }

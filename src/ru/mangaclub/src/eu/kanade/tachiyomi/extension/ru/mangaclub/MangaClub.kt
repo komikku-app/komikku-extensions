@@ -104,7 +104,7 @@ class MangaClub : ParsedHttpSource() {
         }
         description = "Читайте описание через WebView"
         genre = document.select("div.info a[href*=tags]").joinToString(", ") {
-            it.text().replaceFirstChar { it.toUpperCase() }.trim()
+            it.text().replaceFirstChar { it.uppercase() }.trim()
         }
     }
 

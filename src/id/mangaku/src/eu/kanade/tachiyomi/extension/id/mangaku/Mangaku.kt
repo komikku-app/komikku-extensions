@@ -70,7 +70,7 @@ class Mangaku : ParsedHttpSource() {
         infoString.forEach {
             if (it.contains("</b>")) {
                 val info = it.split("</b>")
-                val key = info[0].replace(":", "").replace("<b>", "").trim().toLowerCase()
+                val key = info[0].replace(":", "").replace("<b>", "").trim().lowercase()
                 val value = info[1].replace(":", "").trim()
                 when (key) {
                     "genre" -> manga.genre = value.replace("–", ", ").replace("-", ", ").trim()
@@ -163,7 +163,7 @@ class Mangaku : ParsedHttpSource() {
         val mangas = arrayListOf<SManga>()
         document.select(searchMangaSelector()).forEach { element ->
             val manga = popularMangaFromElement(element)
-            if (manga.title.toLowerCase().contains(searchQuery.toLowerCase())) {
+            if (manga.title.lowercase().contains(searchQuery.lowercase())) {
                 mangas.add(manga)
             }
         }

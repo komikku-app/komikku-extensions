@@ -84,8 +84,8 @@ class DigitalTeam : ParsedHttpSource() {
     }
 
     private fun parseStatus(element: String): Int = when {
-        element.toLowerCase(Locale.ROOT).contains("in corso") -> SManga.ONGOING
-        element.toLowerCase(Locale.ROOT).contains("completo") -> SManga.COMPLETED
+        element.lowercase(Locale.ROOT).contains("in corso") -> SManga.ONGOING
+        element.lowercase(Locale.ROOT).contains("completo") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 

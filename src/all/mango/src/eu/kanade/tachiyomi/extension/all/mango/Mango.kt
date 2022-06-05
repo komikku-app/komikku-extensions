@@ -86,9 +86,9 @@ class Mango : ConfigurableSource, UnmeteredSource, HttpSource() {
     // Here the best we can do is just match manga based on their titles
     private fun searchMangaParse(response: Response, query: String): MangasPage {
 
-        val queryLower = query.toLowerCase()
+        val queryLower = query.lowercase()
         val mangas = popularMangaParse(response).mangas
-        val exactMatch = mangas.firstOrNull { it.title.toLowerCase() == queryLower }
+        val exactMatch = mangas.firstOrNull { it.title.lowercase() == queryLower }
         if (exactMatch != null) {
             return MangasPage(listOf(exactMatch), false)
         }
@@ -99,13 +99,13 @@ class Mango : ConfigurableSource, UnmeteredSource, HttpSource() {
 
         // Take results that potentially start the same
         val results = mangas.filter {
-            val title = it.title.toLowerCase()
+            val title = it.title.lowercase()
             val query2 = queryLower.take(7)
             (title.startsWith(query2, true) || title.contains(query2, true))
-        }.sortedBy { textDistance.distance(queryLower, it.title.toLowerCase()) }
+        }.sortedBy { textDistance.distance(queryLower, it.title.lowercase()) }
 
         // Take similar results
-        val results2 = mangas.map { Pair(textDistance2.distance(it.title.toLowerCase(), query), it) }
+        val results2 = mangas.map { Pair(textDistance2.distance(it.title.lowercase(), query), it) }
             .filter { it.first < 0.3 }.sortedBy { it.first }.map { it.second }
         val combinedResults = results.union(results2)
 

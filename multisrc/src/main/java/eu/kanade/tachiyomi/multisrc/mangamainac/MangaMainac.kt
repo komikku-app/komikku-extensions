@@ -69,8 +69,8 @@ abstract class MangaMainac(
     private fun substringextract(text: String, start: String, end: String): String = text.substringAfter(start).substringBefore(end).trim()
 
     private fun parseStatus(element: String): Int = when {
-        element.toLowerCase().contains("ongoing (pub") -> SManga.ONGOING
-        element.toLowerCase().contains("completed (pub") -> SManga.COMPLETED
+        element.lowercase().contains("ongoing (pub") -> SManga.ONGOING
+        element.lowercase().contains("completed (pub") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 

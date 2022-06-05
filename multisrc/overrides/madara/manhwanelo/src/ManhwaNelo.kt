@@ -59,7 +59,7 @@ class ManhwaNelo : Madara("ManhwaNelo", "https://manhwanelo.com", "en") {
                 }
             }
             manga.genre = select("div.genres a")
-                .joinToString(", ") { element -> element.text().toLowerCase(Locale.ROOT) }
+                .joinToString(", ") { element -> element.text().lowercase(Locale.ROOT) }
 
             return manga
         }
