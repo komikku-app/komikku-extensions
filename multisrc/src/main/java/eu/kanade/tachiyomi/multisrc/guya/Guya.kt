@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.os.Build
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -40,7 +40,7 @@ abstract class Guya(
         "User-Agent",
         "(Android ${Build.VERSION.RELEASE}; " +
             "${Build.MANUFACTURER} ${Build.MODEL}) " +
-            "Tachiyomi/${BuildConfig.VERSION_NAME} ${Build.ID}"
+            "Tachiyomi/${AppInfo.getVersionName()} ${Build.ID}"
     )
 
     private val scanlators: ScanlatorStore = ScanlatorStore()

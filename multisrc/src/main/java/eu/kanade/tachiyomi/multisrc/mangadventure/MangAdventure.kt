@@ -2,7 +2,7 @@ package eu.kanade.tachiyomi.multisrc.mangadventure
 
 import android.net.Uri
 import android.os.Build.VERSION
-import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -36,7 +36,7 @@ abstract class MangAdventure(
     /** A user agent representing Tachiyomi. */
     private val userAgent = "Mozilla/5.0 " +
         "(Android ${VERSION.RELEASE}; Mobile) " +
-        "Tachiyomi/${BuildConfig.VERSION_NAME}"
+        "Tachiyomi/${AppInfo.getVersionName()}"
 
     /** The URI of the site's API. */
     private val apiUri by lazy {

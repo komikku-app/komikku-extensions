@@ -35,7 +35,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: 8
+          java-version: 11
           distribution: adopt
 
       - name: Copy CI files
@@ -87,7 +87,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: 8
+          java-version: 11
           distribution: adopt
 
       - name: Copy CI files
@@ -138,7 +138,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: 8
+          java-version: 11
           distribution: adopt
 
       - name: Copy CI files

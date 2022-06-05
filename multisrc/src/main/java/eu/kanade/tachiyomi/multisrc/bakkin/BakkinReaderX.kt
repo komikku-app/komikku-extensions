@@ -4,7 +4,7 @@ import android.app.Application
 import android.os.Build
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -31,7 +31,7 @@ abstract class BakkinReaderX(
 
     private val userAgent = "Mozilla/5.0 (" +
         "Android ${Build.VERSION.RELEASE}; Mobile) " +
-        "Tachiyomi/${BuildConfig.VERSION_NAME}"
+        "Tachiyomi/${AppInfo.getVersionName()}"
 
     protected val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)!!

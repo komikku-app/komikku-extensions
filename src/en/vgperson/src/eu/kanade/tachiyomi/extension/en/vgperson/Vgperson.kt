@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.vgperson
 
 import android.os.Build.VERSION
-import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -29,7 +29,7 @@ class Vgperson : ParsedHttpSource() {
 
     private val userAgent = "Mozilla/5.0 " +
         "(Android ${VERSION.RELEASE}; Mobile) " +
-        "Tachiyomi/${BuildConfig.VERSION_NAME}"
+        "Tachiyomi/${AppInfo.getVersionName()}"
 
     override fun headersBuilder() = Headers.Builder().apply {
         add("User-Agent", userAgent)

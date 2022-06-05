@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.extension.ca.fansubscat
 
-import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -37,7 +37,7 @@ class FansubsCat : HttpSource() {
     override val supportsLatest = true
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", "Tachiyomi/FansubsCat/${BuildConfig.VERSION_NAME}")
+        .add("User-Agent", "Tachiyomi/FansubsCat/${AppInfo.getVersionName()}")
 
     override val client: OkHttpClient = network.client
 
