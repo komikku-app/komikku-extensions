@@ -40,7 +40,7 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(BannerInterceptor()).build()
+        .addInterceptor(BannerInterceptor).build()
 
     override fun chapterListSelector() = throw UnsupportedOperationException("Not used.")
 
@@ -108,8 +108,8 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select(".comic-contain > .chapter-img > img").mapIndexed { index, element ->
-            Page(index, imageUrl = element.attr("data-src").trim() + COMIC_IMAGE_SUFFIX)
+        return document.select(".comic-contain > amp-img").mapIndexed { index, element ->
+            Page(index, imageUrl = element.attr("src").trim() + BannerInterceptor.COMIC_IMAGE_SUFFIX)
         }
     }
 
@@ -145,27 +145,8 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
         return if (query.isNotEmpty()) {
             GET("$baseUrl/search?q=$query", headers)
         } else {
-            lateinit var tag: String
-            lateinit var region: String
-            lateinit var status: String
-            lateinit var start: String
-            filters.forEach { filter ->
-                when (filter) {
-                    is TagFilter -> {
-                        tag = filter.toUriPart()
-                    }
-                    is RegionFilter -> {
-                        region = filter.toUriPart()
-                    }
-                    is StatusFilter -> {
-                        status = filter.toUriPart()
-                    }
-                    is StartFilter -> {
-                        start = filter.toUriPart()
-                    }
-                }
-            }
-            GET("$baseUrl/classify?type=$tag&region=$region&state=$status&filter=$start&page=$page")
+            val parts = filters.filterIsInstance<UriPartFilter>().joinToString("&") { it.toUriPart() }
+            GET("$baseUrl/classify?page=$page&$parts", headers)
         }
     }
 
@@ -194,13 +175,14 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
         StartFilter()
     )
 
-    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
-        Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
-        fun toUriPart() = vals[state].second
+    private open class UriPartFilter(name: String, val query: String, val vals: Array<Pair<String, String>>) :
+        Filter.Select<String>(name, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = "$query=${vals[state].second}"
     }
 
     private class TagFilter : UriPartFilter(
         "标签",
+        "type",
         arrayOf(
             Pair("全部", "all"),
             Pair("都市", "dushi"),
@@ -271,6 +253,7 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
 
     private class RegionFilter : UriPartFilter(
         "地区",
+        "region",
         arrayOf(
             Pair("全部", "all"),
             Pair("国漫", "cn"),
@@ -282,6 +265,7 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
 
     private class StatusFilter : UriPartFilter(
         "进度",
+        "state",
         arrayOf(
             Pair("全部", "all"),
             Pair("连载中", "serial"),
@@ -291,6 +275,7 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
 
     private class StartFilter : UriPartFilter(
         "标题开头",
+        "filter",
         arrayOf(
             Pair("全部", "*"),
             Pair("ABCD", "ABCD"),

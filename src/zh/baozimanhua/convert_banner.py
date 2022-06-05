@@ -9,7 +9,11 @@ package eu.kanade.tachiyomi.extension.zh.baozimanhua
 const val BANNER_BASE64 = "\
 '''
 
-tail = b'"\n'
+tail = b'''\
+"
+const val BANNER_WIDTH = 800
+const val BANNER_HEIGHT = 282
+'''
 
 with open('src/eu/kanade/tachiyomi/extension/zh/baozimanhua/BannerData.kt', 'wb') as f:
     f.write(head)
