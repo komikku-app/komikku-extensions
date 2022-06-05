@@ -5,11 +5,7 @@ ext {
     extName = 'Dilbert'
     pkgNameSuffix = 'en.dilbert'
     extClass = '.Dilbert'
-    extVersionCode = 5
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 6
 }
 
 apply from: "$rootDir/common.gradle"

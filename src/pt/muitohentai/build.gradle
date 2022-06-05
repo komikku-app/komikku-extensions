@@ -6,13 +6,8 @@ ext {
     extName = 'Muito Hentai'
     pkgNameSuffix = 'pt.muitohentai'
     extClass = '.MuitoHentai'
-    extVersionCode = 1
+    extVersionCode = 2
     isNsfw = true
 }
 
-dependencies {
-    implementation project(':lib-ratelimit')
-}
-
 apply from: "$rootDir/common.gradle"
-

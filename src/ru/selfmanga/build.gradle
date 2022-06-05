@@ -5,11 +5,7 @@ ext {
     extName = 'Selfmanga'
     pkgNameSuffix = 'ru.selfmanga'
     extClass = '.Selfmanga'
-    extVersionCode = 21
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 22
 }
 
 apply from: "$rootDir/common.gradle"

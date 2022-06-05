@@ -6,9 +6,9 @@ import eu.kanade.tachiyomi.extension.ar.gmanga.GmangaPreferences.Companion.PREF_
 import eu.kanade.tachiyomi.extension.ar.gmanga.GmangaPreferences.Companion.PREF_CHAPTER_LISTING_SHOW_POPULAR
 import eu.kanade.tachiyomi.extension.ar.gmanga.dto.TableDto
 import eu.kanade.tachiyomi.extension.ar.gmanga.dto.asChapterList
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -49,10 +49,8 @@ class Gmanga : ConfigurableSource, HttpSource() {
 
     private val preferences = GmangaPreferences(id)
 
-    private val rateLimitInterceptor = RateLimitInterceptor(4)
-
     override val client: OkHttpClient = network.client.newBuilder()
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(4)
         .build()
 
     override fun headersBuilder() = Headers.Builder().apply {

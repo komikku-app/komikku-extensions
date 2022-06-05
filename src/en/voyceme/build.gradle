@@ -6,11 +6,7 @@ ext {
     extName = 'Voyce.Me'
     pkgNameSuffix = 'en.voyceme'
     extClass = '.VoyceMe'
-    extVersionCode = 1
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 2
 }
 
 apply from: "$rootDir/common.gradle"

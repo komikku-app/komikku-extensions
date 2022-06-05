@@ -5,12 +5,8 @@ ext {
     extName = 'Bakai'
     pkgNameSuffix = 'pt.bakai'
     extClass = '.Bakai'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = true
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"

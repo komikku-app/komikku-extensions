@@ -1,4 +1,4 @@
- apply plugin: 'com.android.application'
+apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
@@ -6,10 +6,6 @@ ext {
     pkgNameSuffix = 'en.reallifecomics'
     extClass = '.RealLifeComics'
     extVersionCode = 2
-}
-
-dependencies {
-    // implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"

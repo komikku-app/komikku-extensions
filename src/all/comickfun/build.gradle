@@ -6,12 +6,8 @@ ext {
     extName = 'Comick.fun'
     pkgNameSuffix = 'all.comickfun'
     extClass = '.ComickFunFactory'
-    extVersionCode = 9
+    extVersionCode = 10
     isNsfw = true
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"

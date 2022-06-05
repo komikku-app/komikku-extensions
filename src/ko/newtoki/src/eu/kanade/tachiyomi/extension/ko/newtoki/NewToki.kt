@@ -4,10 +4,10 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.SharedPreferences
 import android.widget.Toast
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -40,7 +40,7 @@ open class NewToki(override val name: String, private val defaultBaseUrl: String
     override val client: OkHttpClient = network.cloudflareClient
     protected val rateLimitedClient: OkHttpClient by lazy {
         network.cloudflareClient.newBuilder()
-            .addNetworkInterceptor(RateLimitInterceptor(1, getRateLimitPeriod()))
+            .rateLimit(1, getRateLimitPeriod())
             .build()
     }
 

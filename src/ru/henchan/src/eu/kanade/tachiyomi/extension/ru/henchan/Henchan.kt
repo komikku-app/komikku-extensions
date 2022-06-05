@@ -1,9 +1,9 @@
 package eu.kanade.tachiyomi.extension.ru.henchan
 
 import android.annotation.SuppressLint
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -33,10 +33,9 @@ class Henchan : ParsedHttpSource() {
 
     override val supportsLatest = true
 
-    private val rateLimitInterceptor = RateLimitInterceptor(2)
-
     override val client: OkHttpClient = network.client.newBuilder()
-        .addNetworkInterceptor(rateLimitInterceptor).build()
+        .rateLimit(2)
+        .build()
 
     override fun popularMangaRequest(page: Int): Request =
         GET("$baseUrl/mostfavorites&sort=manga?offset=${20 * (page - 1)}", headers)

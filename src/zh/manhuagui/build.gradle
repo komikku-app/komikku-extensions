@@ -6,12 +6,11 @@ ext {
     extName = 'ManHuaGui'
     pkgNameSuffix = 'zh.manhuagui'
     extClass = '.Manhuagui'
-    extVersionCode = 11
+    extVersionCode = 13
 }
 
 dependencies {
     compileOnly libs.bundles.coroutines
-    implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"

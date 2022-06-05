@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.pt.goldenmangas
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -34,7 +34,7 @@ class GoldenMangas : ParsedHttpSource() {
         .connectTimeout(1, TimeUnit.MINUTES)
         .readTimeout(1, TimeUnit.MINUTES)
         .writeTimeout(1, TimeUnit.MINUTES)
-        .addInterceptor(RateLimitInterceptor(1, 3, TimeUnit.SECONDS))
+        .rateLimit(1, 3, TimeUnit.SECONDS)
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()

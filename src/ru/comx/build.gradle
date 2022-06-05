@@ -6,11 +6,7 @@ ext {
     extName = 'ComX'
     pkgNameSuffix = 'ru.comx'
     extClass = '.ComX'
-    extVersionCode = 16
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 17
 }
 
 apply from: "$rootDir/common.gradle"

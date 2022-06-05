@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.pt.bakai
 
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -27,8 +27,8 @@ class Bakai : ParsedHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(SpecificHostRateLimitInterceptor(baseUrl.toHttpUrl(), 1, 2))
-        .addInterceptor(SpecificHostRateLimitInterceptor(CDN_URL.toHttpUrl(), 1, 1))
+        .rateLimitHost(baseUrl.toHttpUrl(), 1, 2)
+        .rateLimitHost(CDN_URL.toHttpUrl(), 1, 1)
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()

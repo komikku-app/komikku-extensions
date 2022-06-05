@@ -3,9 +3,9 @@ package eu.kanade.tachiyomi.extension.zh.mangabz
 import android.app.Application
 import android.content.SharedPreferences
 import com.squareup.duktape.Duktape
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -40,10 +40,6 @@ class Mangabz : ConfigurableSource, HttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val mainSiteRateLimitInterceptor = SpecificHostRateLimitInterceptor(baseUrl.toHttpUrlOrNull()!!, preferences.getString(MAINSITE_RATELIMIT_PREF, "5")!!.toInt())
-    private val imageCDNRateLimitInterceptor1 = SpecificHostRateLimitInterceptor(imageServer[0].toHttpUrlOrNull()!!, preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt())
-    private val imageCDNRateLimitInterceptor2 = SpecificHostRateLimitInterceptor(imageServer[1].toHttpUrlOrNull()!!, preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt())
-
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .set("Referer", "https://mangabz.com")
         .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36")
@@ -51,9 +47,9 @@ class Mangabz : ConfigurableSource, HttpSource() {
     private val showZhHantWebsite = preferences.getBoolean(SHOW_ZH_HANT_WEBSITE_PREF, false)
 
     override val client: OkHttpClient = network.client.newBuilder()
-        .addNetworkInterceptor(mainSiteRateLimitInterceptor)
-        .addNetworkInterceptor(imageCDNRateLimitInterceptor1)
-        .addNetworkInterceptor(imageCDNRateLimitInterceptor2)
+        .rateLimitHost(baseUrl.toHttpUrlOrNull()!!, preferences.getString(MAINSITE_RATELIMIT_PREF, "5")!!.toInt())
+        .rateLimitHost(imageServer[0].toHttpUrlOrNull()!!, preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt())
+        .rateLimitHost(imageServer[1].toHttpUrlOrNull()!!, preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt())
         .addNetworkInterceptor { chain ->
             val cookies = chain.request().header("Cookie")?.replace(replaceCookiesRegex, "") ?: ""
             val newReq = chain

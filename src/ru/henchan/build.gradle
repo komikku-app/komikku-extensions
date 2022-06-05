@@ -6,12 +6,8 @@ ext {
     extName = 'Henchan'
     pkgNameSuffix = 'ru.henchan'
     extClass = '.Henchan'
-    extVersionCode = 34
+    extVersionCode = 35
     isNsfw = true
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"

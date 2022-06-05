@@ -5,11 +5,7 @@ ext {
     extName = 'Mangachan'
     pkgNameSuffix = 'ru.mangachan'
     extClass = '.Mangachan'
-    extVersionCode = 12
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 13
 }
 
 apply from: "$rootDir/common.gradle"

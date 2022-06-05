@@ -6,11 +6,7 @@ ext {
     extName = 'MANGA Plus by SHUEISHA'
     pkgNameSuffix = 'all.mangaplus'
     extClass = '.MangaPlusFactory'
-    extVersionCode = 31
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 32
 }
 
 apply from: "$rootDir/common.gradle"

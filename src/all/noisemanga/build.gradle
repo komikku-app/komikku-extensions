@@ -5,11 +5,7 @@ ext {
     extName = 'NOISE Manga'
     pkgNameSuffix = 'all.noisemanga'
     extClass = '.NoiseMangaFactory'
-    extVersionCode = 4
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 5
 }
 
 apply from: "$rootDir/common.gradle"

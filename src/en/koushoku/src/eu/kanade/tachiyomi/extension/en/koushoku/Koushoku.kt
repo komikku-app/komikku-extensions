@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.en.koushoku
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -34,9 +34,8 @@ class Koushoku : ParsedHttpSource() {
     override val lang = "en"
     override val supportsLatest = false
 
-    private val rateLimitInterceptor = RateLimitInterceptor(5)
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(5)
         .build()
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/?page=$page", headers)

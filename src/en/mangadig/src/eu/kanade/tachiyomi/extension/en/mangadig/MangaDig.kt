@@ -5,8 +5,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Base64
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -38,13 +38,12 @@ class MangaDig : ConfigurableSource, ParsedHttpSource() {
     }
 
     // Client configs
-    private val mainSiteRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        baseUrl.toHttpUrlOrNull()!!,
-        preferences.getString(MAINSITE_RATEPERMITS_PREF, MAINSITE_RATEPERMITS_PREF_DEFAULT)!!.toInt(),
-        preferences.getString(MAINSITE_RATEPERIOD_PREF, MAINSITE_RATEPERIOD_PREF_DEFAULT)!!.toLong(),
-    )
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(mainSiteRateLimitInterceptor)
+        .rateLimitHost(
+            baseUrl.toHttpUrlOrNull()!!,
+            preferences.getString(MAINSITE_RATEPERMITS_PREF, MAINSITE_RATEPERMITS_PREF_DEFAULT)!!.toInt(),
+            preferences.getString(MAINSITE_RATEPERIOD_PREF, MAINSITE_RATEPERIOD_PREF_DEFAULT)!!.toLong(),
+        )
         .build()
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)

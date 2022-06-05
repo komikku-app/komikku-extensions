@@ -5,11 +5,7 @@ ext {
     extName = 'MangaToon (Limited)'
     pkgNameSuffix = 'all.mangatoon'
     extClass = '.MangaToonFactory'
-    extVersionCode = 3
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 4
 }
 
 apply from: "$rootDir/common.gradle"

@@ -5,9 +5,9 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -53,8 +53,8 @@ abstract class MangaPlus(
     override val client: OkHttpClient = network.client.newBuilder()
         .addInterceptor(::imageIntercept)
         .addInterceptor(::thumbnailIntercept)
-        .addInterceptor(SpecificHostRateLimitInterceptor(API_URL.toHttpUrl(), 1))
-        .addInterceptor(SpecificHostRateLimitInterceptor(baseUrl.toHttpUrl(), 2))
+        .rateLimitHost(API_URL.toHttpUrl(), 1)
+        .rateLimitHost(baseUrl.toHttpUrl(), 2)
         .build()
 
     private val json: Json by injectLazy()

@@ -6,12 +6,8 @@ ext {
     extName = 'MangaVibe'
     pkgNameSuffix = 'pt.mangavibe'
     extClass = '.MangaVibe'
-    extVersionCode = 1
+    extVersionCode = 2
     isNsfw = true
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"

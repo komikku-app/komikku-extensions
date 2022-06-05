@@ -5,11 +5,7 @@ ext {
     extName = 'Readmanga'
     pkgNameSuffix = 'ru.readmanga'
     extClass = '.Readmanga'
-    extVersionCode = 43
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 44
 }
 
 apply from: "$rootDir/common.gradle"

@@ -6,11 +6,7 @@ ext {
     extName = 'Dmzj'
     pkgNameSuffix = 'zh.dmzj'
     extClass = '.Dmzj'
-    extVersionCode = 28
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 29
 }
 
 apply from: "$rootDir/common.gradle"

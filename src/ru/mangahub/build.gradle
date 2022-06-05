@@ -6,11 +6,7 @@ ext {
     extName = 'Mangahub'
     pkgNameSuffix = 'ru.mangahub'
     extClass = '.Mangahub'
-    extVersionCode = 14
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 15
 }
 
 apply from: "$rootDir/common.gradle"

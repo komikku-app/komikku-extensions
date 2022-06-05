@@ -2,9 +2,9 @@ package eu.kanade.tachiyomi.extension.es.tumangaonline
 
 import android.app.Application
 import android.content.SharedPreferences
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -52,21 +52,17 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val webRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        baseUrl.toHttpUrlOrNull()!!,
-        preferences.getString(WEB_RATELIMIT_PREF, WEB_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
-        60
-    )
-
-    private val imageCDNRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        imageCDNUrl.toHttpUrlOrNull()!!,
-        preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
-        60
-    )
-
     override val client: OkHttpClient = network.client.newBuilder()
-        .addNetworkInterceptor(webRateLimitInterceptor)
-        .addNetworkInterceptor(imageCDNRateLimitInterceptor)
+        .rateLimitHost(
+            baseUrl.toHttpUrlOrNull()!!,
+            preferences.getString(WEB_RATELIMIT_PREF, WEB_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
+            60
+        )
+        .rateLimitHost(
+            imageCDNUrl.toHttpUrlOrNull()!!,
+            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
+            60
+        )
         .build()
 
     // Marks erotic content as false and excludes: Ecchi(6), GirlsLove(17), BoysLove(18) and Harem(19) genders

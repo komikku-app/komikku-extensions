@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.mangatoon
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -34,7 +34,7 @@ open class MangaToon(
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.client.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .rateLimit(1, 1, TimeUnit.SECONDS)
         .build()
 
     private val locale by lazy { Locale.forLanguageTag(lang) }

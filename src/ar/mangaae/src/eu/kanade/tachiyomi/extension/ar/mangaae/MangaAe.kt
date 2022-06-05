@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.ar.mangaae
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -25,10 +25,8 @@ class MangaAe : ParsedHttpSource() {
 
     override val supportsLatest = true
 
-    private val rateLimitInterceptor = RateLimitInterceptor(2)
-
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(2)
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()

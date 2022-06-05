@@ -1,9 +1,9 @@
 package eu.kanade.tachiyomi.extension.en.inkr
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -48,7 +48,7 @@ class Inkr : HttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .addInterceptor(::buildIdIntercept)
-        .addInterceptor(RateLimitInterceptor(2, 1, TimeUnit.SECONDS))
+        .rateLimit(2, 1, TimeUnit.SECONDS)
         .build()
 
     private val json: Json by injectLazy()

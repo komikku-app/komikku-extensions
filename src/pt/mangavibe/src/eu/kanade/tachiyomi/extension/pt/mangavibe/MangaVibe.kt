@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.pt.mangavibe
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -39,7 +39,7 @@ class MangaVibe : HttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(RateLimitInterceptor(1, 2, TimeUnit.SECONDS))
+        .rateLimit(1, 2, TimeUnit.SECONDS)
         .addInterceptor(::directoryCacheIntercept)
         .build()
 

@@ -6,11 +6,7 @@ ext {
     extName = 'Graphite Comics'
     pkgNameSuffix = 'en.graphitecomics'
     extClass = '.GraphiteComics'
-    extVersionCode = 1
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 2
 }
 
 apply from: "$rootDir/common.gradle"

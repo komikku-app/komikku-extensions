@@ -10,9 +10,9 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.extension.zh.dmzj.protobuf.ComicDetailResponse
 import eu.kanade.tachiyomi.extension.zh.dmzj.utils.HttpGetFailoverInterceptor
 import eu.kanade.tachiyomi.extension.zh.dmzj.utils.RSA
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -64,34 +64,29 @@ class Dmzj : ConfigurableSource, HttpSource() {
     }
 
     private val httpGetFailoverInterceptor = HttpGetFailoverInterceptor()
-    private val v3apiRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        v3apiUrl.toHttpUrlOrNull()!!,
-        preferences.getString(API_RATELIMIT_PREF, "5")!!.toInt()
-    )
-    private val v4apiRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        v4apiUrl.toHttpUrlOrNull()!!,
-        preferences.getString(API_RATELIMIT_PREF, "5")!!.toInt()
-    )
-    private val apiRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        apiUrl.toHttpUrlOrNull()!!,
-        preferences.getString(API_RATELIMIT_PREF, "5")!!.toInt()
-    )
-    private val imageCDNRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        imageCDNUrl.toHttpUrlOrNull()!!,
-        preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt()
-    )
-    private val imageSmallCDNRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        imageSmallCDNUrl.toHttpUrlOrNull()!!,
-        preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt()
-    )
 
     override val client: OkHttpClient = network.client.newBuilder()
         .addInterceptor(httpGetFailoverInterceptor)
-        .addNetworkInterceptor(apiRateLimitInterceptor)
-        .addNetworkInterceptor(v3apiRateLimitInterceptor)
-        .addNetworkInterceptor(v4apiRateLimitInterceptor)
-        .addNetworkInterceptor(imageCDNRateLimitInterceptor)
-        .addNetworkInterceptor(imageSmallCDNRateLimitInterceptor)
+        .rateLimitHost(
+            apiUrl.toHttpUrlOrNull()!!,
+            preferences.getString(API_RATELIMIT_PREF, "5")!!.toInt()
+        )
+        .rateLimitHost(
+            v3apiUrl.toHttpUrlOrNull()!!,
+            preferences.getString(API_RATELIMIT_PREF, "5")!!.toInt()
+        )
+        .rateLimitHost(
+            v4apiUrl.toHttpUrlOrNull()!!,
+            preferences.getString(API_RATELIMIT_PREF, "5")!!.toInt()
+        )
+        .rateLimitHost(
+            imageCDNUrl.toHttpUrlOrNull()!!,
+            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt()
+        )
+        .rateLimitHost(
+            imageSmallCDNUrl.toHttpUrlOrNull()!!,
+            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt()
+        )
         .build()
 
     override fun headersBuilder() = Headers.Builder().apply {

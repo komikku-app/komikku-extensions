@@ -5,12 +5,8 @@ ext {
     extName = 'Koushoku'
     pkgNameSuffix = 'en.koushoku'
     extClass = '.Koushoku'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = true
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"

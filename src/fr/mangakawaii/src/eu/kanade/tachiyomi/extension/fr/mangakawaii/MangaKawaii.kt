@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.fr.mangakawaii
 
 import android.net.Uri
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -32,12 +32,11 @@ class MangaKawaii : ParsedHttpSource() {
     val cdnUrl = "https://cdn.mangakawaii.pics"
     override val lang = "fr"
     override val supportsLatest = true
-    private val rateLimitInterceptor = RateLimitInterceptor(1) // 1 request per second
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(1)
         .build()
 
     protected open val userAgentRandomizer1 = "${Random.nextInt(9).absoluteValue}"

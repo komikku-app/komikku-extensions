@@ -5,12 +5,8 @@ ext {
     extName = 'TuMangaOnline'
     pkgNameSuffix = 'es.tumangaonline'
     extClass = '.TuMangaOnline'
-    extVersionCode = 37
+    extVersionCode = 38
     isNsfw = true
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"

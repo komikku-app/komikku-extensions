@@ -6,13 +6,8 @@ ext {
     extName = 'INKR'
     pkgNameSuffix = 'en.inkr'
     extClass = '.Inkr'
-    extVersionCode = 3
+    extVersionCode = 4
     isNsfw = true
 }
 
-dependencies {
-    implementation project(':lib-ratelimit')
-}
-
 apply from: "$rootDir/common.gradle"
-

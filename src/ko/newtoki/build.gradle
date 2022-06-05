@@ -5,11 +5,7 @@ ext {
     extName = 'NewToki / ManaToki'
     pkgNameSuffix = 'ko.newtoki'
     extClass = '.NewTokiFactory'
-    extVersionCode = 22
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 23
 }
 
 apply from: "$rootDir/common.gradle"

@@ -5,11 +5,11 @@ ext {
     extName = 'CopyManga'
     pkgNameSuffix = 'zh.copymanga'
     extClass = '.CopyManga'
-    extVersionCode = 25
+    extVersionCode = 26
 }
-apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation 'com.luhuiguo:chinese-utils:1.0'
-    implementation project(':lib-ratelimit')
 }
+
+apply from: "$rootDir/common.gradle"

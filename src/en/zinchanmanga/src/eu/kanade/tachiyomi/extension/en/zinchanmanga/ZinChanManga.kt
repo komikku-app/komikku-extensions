@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.en.zinchanmanga
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -28,7 +28,7 @@ class ZinChanManga : HttpSource() {
     private val apiClient by lazy {
         network.client.newBuilder()
             .sslSocketFactory(ZinChanCert.factory, ZinChanCert.manager)
-            .addInterceptor(RateLimitInterceptor(5, 50))
+            .rateLimit(5, 50)
             .build()
     }
 

@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.pt.saikaiscan
 
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -33,8 +33,8 @@ class SaikaiScan : HttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(SpecificHostRateLimitInterceptor(API_URL.toHttpUrl(), 1, 2))
-        .addInterceptor(SpecificHostRateLimitInterceptor(IMAGE_SERVER_URL.toHttpUrl(), 1, 1))
+        .rateLimitHost(API_URL.toHttpUrl(), 1, 2)
+        .rateLimitHost(IMAGE_SERVER_URL.toHttpUrl(), 1, 1)
         .build()
 
     private val json: Json by injectLazy()

@@ -2,9 +2,9 @@ package eu.kanade.tachiyomi.extension.es.lectormanga
 
 import android.app.Application
 import android.content.SharedPreferences
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -52,37 +52,27 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val webRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        baseUrl.toHttpUrlOrNull()!!,
-        preferences.getString(WEB_RATELIMIT_PREF, WEB_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
-    )
-
-    private val imageCDNRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        imageCDNUrls[0].toHttpUrlOrNull()!!,
-        preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
-    )
-
-    private val imageCDNRateLimitInterceptor1 = SpecificHostRateLimitInterceptor(
-        imageCDNUrls[1].toHttpUrlOrNull()!!,
-        preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
-    )
-
-    private val imageCDNRateLimitInterceptor2 = SpecificHostRateLimitInterceptor(
-        imageCDNUrls[2].toHttpUrlOrNull()!!,
-        preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
-    )
-
-    private val imageCDNRateLimitInterceptor3 = SpecificHostRateLimitInterceptor(
-        imageCDNUrls[3].toHttpUrlOrNull()!!,
-        preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
-    )
-
     override val client: OkHttpClient = network.client.newBuilder()
-        .addNetworkInterceptor(webRateLimitInterceptor)
-        .addNetworkInterceptor(imageCDNRateLimitInterceptor)
-        .addNetworkInterceptor(imageCDNRateLimitInterceptor1)
-        .addNetworkInterceptor(imageCDNRateLimitInterceptor2)
-        .addNetworkInterceptor(imageCDNRateLimitInterceptor3)
+        .rateLimitHost(
+            baseUrl.toHttpUrlOrNull()!!,
+            preferences.getString(WEB_RATELIMIT_PREF, WEB_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
+        )
+        .rateLimitHost(
+            imageCDNUrls[0].toHttpUrlOrNull()!!,
+            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
+        )
+        .rateLimitHost(
+            imageCDNUrls[1].toHttpUrlOrNull()!!,
+            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
+        )
+        .rateLimitHost(
+            imageCDNUrls[2].toHttpUrlOrNull()!!,
+            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
+        )
+        .rateLimitHost(
+            imageCDNUrls[3].toHttpUrlOrNull()!!,
+            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(), 60
+        )
         .build()
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/library?order_item=likes_count&order_dir=desc&type=&filter_by=title&page=$page", headers)

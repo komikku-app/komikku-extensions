@@ -5,11 +5,7 @@ ext {
     extName = 'Manga.ae'
     pkgNameSuffix = 'ar.mangaae'
     extClass = '.MangaAe'
-    extVersionCode = 8
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 9
 }
 
 apply from: "$rootDir/common.gradle"

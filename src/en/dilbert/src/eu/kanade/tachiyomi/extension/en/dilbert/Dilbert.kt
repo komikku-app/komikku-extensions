@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.dilbert
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -26,7 +26,8 @@ class Dilbert : ParsedHttpSource() {
     override val supportsLatest = false
 
     override val client = network.client.newBuilder()
-        .addNetworkInterceptor(RateLimitInterceptor(3)).build()
+        .rateLimit(3)
+        .build()
 
     override fun fetchPopularManga(page: Int) = (currentYear downTo 1989).map {
         SManga.create().apply {

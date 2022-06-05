@@ -8,9 +8,9 @@ import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getNumPages
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTagDescription
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTags
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTime
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -43,9 +43,8 @@ open class NHentai(
 
     override val supportsLatest = true
 
-    private val rateLimitInterceptor = RateLimitInterceptor(4)
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(rateLimitInterceptor)
+        .rateLimit(4)
         .build()
 
     private val preferences: SharedPreferences by lazy {

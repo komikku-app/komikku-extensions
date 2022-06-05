@@ -6,11 +6,7 @@ ext {
     extName = 'UniComics'
     pkgNameSuffix = 'ru.unicomics'
     extClass = '.UniComics'
-    extVersionCode = 4
-}
-
-dependencies {
-    implementation project(':lib-ratelimit')
+    extVersionCode = 5
 }
 
 apply from: "$rootDir/common.gradle"

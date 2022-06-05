@@ -4,8 +4,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import com.luhuiguo.chinese.ChineseUtils
 import com.squareup.duktape.Duktape
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -75,42 +75,32 @@ class CopyManga : ConfigurableSource, HttpSource() {
         init(null, arrayOf(trustManager), SecureRandom())
     }
 
-    private val mainSiteApiRateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        baseUrl.toHttpUrlOrNull()!!,
-        CONNECT_PERMITS,
-        CONNECT_PERIOD
-    )
-
-    private val mainlandCDN1RateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        mainlandCdn1Url.toHttpUrlOrNull()!!,
-        CONNECT_PERMITS,
-        CONNECT_PERIOD
-    )
-
-    private val mainlandCDN2RateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        mainlandCdn2Url.toHttpUrlOrNull()!!,
-        CONNECT_PERMITS,
-        CONNECT_PERIOD
-    )
-
-    private val overseasCDN1RateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        overseasCdn1Url.toHttpUrlOrNull()!!,
-        CONNECT_PERMITS,
-        CONNECT_PERIOD
-    )
-
-    private val overseasCDN2RateLimitInterceptor = SpecificHostRateLimitInterceptor(
-        overseasCdn2Url.toHttpUrlOrNull()!!,
-        CONNECT_PERMITS,
-        CONNECT_PERIOD
-    )
-
     override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(mainSiteApiRateLimitInterceptor)
-        .addInterceptor(mainlandCDN1RateLimitInterceptor)
-        .addInterceptor(mainlandCDN2RateLimitInterceptor)
-        .addInterceptor(overseasCDN1RateLimitInterceptor)
-        .addInterceptor(overseasCDN2RateLimitInterceptor)
+        .rateLimitHost(
+            baseUrl.toHttpUrlOrNull()!!,
+            CONNECT_PERMITS,
+            CONNECT_PERIOD
+        )
+        .rateLimitHost(
+            mainlandCdn1Url.toHttpUrlOrNull()!!,
+            CONNECT_PERMITS,
+            CONNECT_PERIOD
+        )
+        .rateLimitHost(
+            mainlandCdn2Url.toHttpUrlOrNull()!!,
+            CONNECT_PERMITS,
+            CONNECT_PERIOD
+        )
+        .rateLimitHost(
+            overseasCdn1Url.toHttpUrlOrNull()!!,
+            CONNECT_PERMITS,
+            CONNECT_PERIOD
+        )
+        .rateLimitHost(
+            overseasCdn2Url.toHttpUrlOrNull()!!,
+            CONNECT_PERMITS,
+            CONNECT_PERIOD
+        )
         .sslSocketFactory(sslContext.socketFactory, trustManager)
         .build()
 

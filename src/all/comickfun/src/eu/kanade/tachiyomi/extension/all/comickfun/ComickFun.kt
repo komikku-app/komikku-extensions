@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.comickfun
 
-import eu.kanade.tachiyomi.lib.ratelimit.SpecificHostRateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -79,7 +79,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
             }
         )
         // Add interceptor to ratelimit api calls
-        builder.addNetworkInterceptor(SpecificHostRateLimitInterceptor(apiBase.toHttpUrl(), 2))
+        builder.rateLimitHost(apiBase.toHttpUrl(), 2)
         this.client = builder.build()
     }
 

@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.vizshonenjump
 
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -46,7 +46,7 @@ class VizShonenJump : ParsedHttpSource() {
         .addInterceptor(::authCheckIntercept)
         .addInterceptor(::authChapterCheckIntercept)
         .addInterceptor(VizImageInterceptor())
-        .addInterceptor(RateLimitInterceptor(1, 1, TimeUnit.SECONDS))
+        .rateLimit(1, 1, TimeUnit.SECONDS)
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()

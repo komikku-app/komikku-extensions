@@ -5,11 +5,11 @@ import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -74,7 +74,7 @@ class LibManga : ConfigurableSource, HttpSource() {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(RateLimitInterceptor(3))
+        .rateLimit(3)
         .addInterceptor { imageContentTypeIntercept(it) }
         .build()
 
