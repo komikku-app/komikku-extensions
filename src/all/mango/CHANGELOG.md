@@ -1,6 +1,10 @@
+## 1.3.9
 
+### Features
 
-## 1.0.0
+* Exclude from bulk update warnings
+
+## 1.2.1
 
 ### Features
 

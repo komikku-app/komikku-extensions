@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
+import eu.kanade.tachiyomi.source.UnmeteredSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -38,7 +39,7 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 
-class Mango : ConfigurableSource, HttpSource() {
+class Mango : ConfigurableSource, UnmeteredSource, HttpSource() {
 
     override fun popularMangaRequest(page: Int): Request =
         GET("$baseUrl/api/library?depth=0", headersBuilder().build())

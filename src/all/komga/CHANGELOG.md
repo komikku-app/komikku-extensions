@@ -1,3 +1,11 @@
+## 1.3.40
+
+Minimum Komga version required: `0.151.0`
+
+### Features
+
+* Exclude from bulk update warnings
+
 ## 1.2.39
 
 Minimum Komga version required: `0.151.0`

@@ -10,6 +10,7 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
+import eu.kanade.tachiyomi.source.UnmeteredSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -31,7 +32,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
-class Tachidesk : ConfigurableSource, HttpSource() {
+class Tachidesk : ConfigurableSource, UnmeteredSource, HttpSource() {
     override val name = "Tachidesk"
     override val baseUrl by lazy { getPrefBaseUrl() }
     private val baseLogin by lazy { getPrefBaseLogin() }

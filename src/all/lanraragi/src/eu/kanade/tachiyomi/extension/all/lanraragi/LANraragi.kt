@@ -9,6 +9,7 @@ import android.widget.Toast
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
+import eu.kanade.tachiyomi.source.UnmeteredSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -35,7 +36,7 @@ import uy.kohesive.injekt.api.get
 import java.io.IOException
 import java.security.MessageDigest
 
-open class LANraragi(private val suffix: String = "") : ConfigurableSource, HttpSource() {
+open class LANraragi(private val suffix: String = "") : ConfigurableSource, UnmeteredSource, HttpSource() {
     override val baseUrl by lazy { getPrefBaseUrl() }
 
     override val lang = "all"

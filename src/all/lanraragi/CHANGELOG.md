@@ -1,3 +1,10 @@
+## 1.3.12
+Minimum LANraragi version required: 0.8.2
+
+### Features
+
+* Exclude from bulk update warnings
+
 ## 1.2.9
 Minimum LANraragi version required: 0.8.2
 

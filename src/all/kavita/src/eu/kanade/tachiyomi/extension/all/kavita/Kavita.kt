@@ -31,6 +31,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
+import eu.kanade.tachiyomi.source.UnmeteredSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -63,7 +64,7 @@ import java.io.IOException
 import java.net.ConnectException
 import java.security.MessageDigest
 
-class Kavita(private val suffix: String = "") : ConfigurableSource, HttpSource() {
+class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSource, HttpSource() {
     class CompareChapters {
         companion object : Comparator<SChapter> {
             override fun compare(a: SChapter, b: SChapter): Int {

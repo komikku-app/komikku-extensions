@@ -1,3 +1,9 @@
+## 1.3.4
+
+### Features
+
+* Exclude from bulk update warnings
+
 ## 1.2.3
 
 ### Fix
