@@ -260,7 +260,7 @@ open class UriPartFilter(displayName: String, private val vals: Array<Pair<Strin
 
 - After a chapter list for the manga is fetched and the app is going to cache the data, `prepareNewChapter` will be called.
 - `SChapter.date_upload` is the [UNIX Epoch time](https://en.wikipedia.org/wiki/Unix_time) **expressed in milliseconds**.
-    - If you don't pass `SChapter.date_upload`, the app will use the fetch date instead, but it's recommended to always fill it if it's available.
+    - If you don't pass `SChapter.date_upload` and leave it zero, the app will use the default date instead, but it's recommended to always fill it if it's available.
     - To get the time in milliseconds from a date string, you can use a `SimpleDateFormat` like in the example below.
 
       ```kotlin
@@ -276,8 +276,13 @@ open class UriPartFilter(displayName: String, private val vals: Array<Pair<Strin
       }
       ```
       
-      Make sure you make the `SimpleDateFormat` a class constant or variable so it doesn't get recreated for every chapter.
-    - If the parsing have any problem, make sure to return `0L` so the app will use the fetch date instead.
+      Make sure you make the `SimpleDateFormat` a class constant or variable so it doesn't get recreated for every chapter. If you need to parse or format dates in manga description, create another instance since `SimpleDateFormat` is not thread-safe.
+    - If the parsing have any problem, make sure to return `0L` so the app will use the default date instead.
+    - The app will overwrite dates of existing old chapters **UNLESS** `0L` is returned.
+    - The default date has [changed](https://github.com/tachiyomiorg/tachiyomi/pull/7197) in preview ≥ r4442 or stable > 0.13.4.
+      - In older versions, the default date is always the fetch date.
+      - In newer versions, this is the same if every (new) chapter has `0L` returned.
+      - However, if the source only provides the upload date of the latest chapter, you can now set it to the latest chapter and leave other chapters default. The app will automatically set it (instead of fetch date) to every new chapter and leave old chapters' dates untouched.
 
 #### Chapter Pages
 
