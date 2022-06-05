@@ -6,7 +6,7 @@ on:
       - '**.md'
 
 env:
-  CI_CHUNK_SIZE: 75
+  CI_CHUNK_SIZE: 65
 
 jobs:
   prepare:
