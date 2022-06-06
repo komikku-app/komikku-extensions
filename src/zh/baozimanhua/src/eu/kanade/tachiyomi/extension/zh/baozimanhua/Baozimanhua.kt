@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.zh.baozimanhua
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -22,6 +23,8 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
 
@@ -29,9 +32,8 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
 
     override val name = "包子漫画"
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
 
     override val baseUrl = "https://${preferences.getString(MIRROR_PREF, MIRRORS[0])}"
 
@@ -51,7 +53,14 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
         } else {
             // chapters are listed oldest to newest in the source
             document.select(".l-box > .pure-g[id^=chapter] > div").reversed()
-        }.map { chapterFromElement(it) }
+        }.map { chapterFromElement(it) }.apply {
+            if (!isNewDateLogic) return@apply
+            val date = document.select("em").text()
+            if (date.contains('年')) {
+                this[0].date_upload = date.removePrefix("(").removeSuffix(" 更新)")
+                    .let { DATE_FORMAT.parse(it) }?.time ?: 0L
+            } // 否则要么是没有，要么必然是今天（格式如 "今天 xx:xx", "x小时前", "x分钟前"）可以偷懒直接用默认的获取时间
+        }
     }
 
     override fun chapterFromElement(element: Element): SChapter {
@@ -103,7 +112,6 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
                 "已完結" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
             }
-            // TODO: upload date by selector "em" in format "(2021年06月29日 更新)"
         }
     }
 
@@ -312,5 +320,14 @@ class Baozimanhua : ParsedHttpSource(), ConfigurableSource {
         private const val MIRROR_PREF_TITLE = "使用镜像网址"
         private const val MIRROR_PREF_SUMMARY = "使用镜像网址。重启软件生效。"
         private val MIRRORS = arrayOf("cn.baozimh.com", "cn.webmota.com")
+
+        private val DATE_FORMAT = SimpleDateFormat("yyyy年MM月dd日", Locale.ENGLISH)
+        private val isNewDateLogic = run {
+            val commitCount = AppInfo.getVersionName().substringAfter('-', "")
+            if (commitCount.isNotEmpty()) // Preview
+                commitCount.toInt() >= 4442
+            else // Stable
+                AppInfo.getVersionCode() >= 81
+        }
     }
 }
