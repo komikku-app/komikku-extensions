@@ -15,6 +15,9 @@ class AsuraScansFactory : SourceFactory {
 }
 
 class AsuraScansEn : AsuraScans("https://www.asurascans.com", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
+
+    override val mangaDetailsSelectorDescription = "div.desc p, div.entry-content p, div[itemprop=description]:not(:has(p))"
+
     override val pageSelector = "div.rdminimal > img, div.rdminimal > p > img"
 
     // Skip scriptPages

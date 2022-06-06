@@ -203,13 +203,13 @@ abstract class WPMangaStream(
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
             document.select("div.bigcontent, div.animefull, div.main-info").firstOrNull()?.let { infoElement ->
-                status = parseStatus(infoElement.select("span:contains(Status:), .imptdt:contains(Status) i").firstOrNull()?.ownText())
-                author = isEmptyPlaceholder(infoElement.select("span:contains(Author:), span:contains(Pengarang:), .fmed b:contains(Author)+span, .imptdt:contains(Author) i").firstOrNull()?.ownText())
-                artist = isEmptyPlaceholder(infoElement.select(".fmed b:contains(Artist)+span, .imptdt:contains(Artist) i").firstOrNull()?.ownText())
-                description = infoElement.select("div.desc p, div.entry-content p").joinToString("\n") { it.text() }
-                thumbnail_url = infoElement.select("div.thumb img").imgAttr()
+                status = parseStatus(infoElement.select(mangaDetailsSelectorStatus).firstOrNull()?.ownText())
+                author = isEmptyPlaceholder(infoElement.select(mangaDetailsSelectorAuthor).firstOrNull()?.ownText())
+                artist = isEmptyPlaceholder(infoElement.select(mangaDetailsSelectorArtist).firstOrNull()?.ownText())
+                description = infoElement.select(mangaDetailsSelectorDescription).joinToString("\n") { it.text() }
+                thumbnail_url = infoElement.select(mangaDetailsSelectorThumbnail).imgAttr()
 
-                val genres = infoElement.select("span:contains(Genre) a, .mgen a")
+                val genres = infoElement.select(mangaDetailsSelectorGenre)
                     .map { element -> element.text().lowercase() }
                     .toMutableSet()
 
@@ -234,6 +234,13 @@ abstract class WPMangaStream(
             }
         }
     }
+    // Manga Details Selector
+    open val mangaDetailsSelectorAuthor = "span:contains(Author:), span:contains(Pengarang:), .fmed b:contains(Author)+span, .imptdt:contains(Author) i"
+    open val mangaDetailsSelectorArtist = ".fmed b:contains(Artist)+span, .imptdt:contains(Artist) i"
+    open val mangaDetailsSelectorStatus = "span:contains(Status:), .imptdt:contains(Status) i"
+    open val mangaDetailsSelectorDescription = "div.desc p, div.entry-content p"
+    open val mangaDetailsSelectorThumbnail = "div.thumb img"
+    open val mangaDetailsSelectorGenre = "span:contains(Genre) a, .mgen a"
 
     open val seriesTypeSelector = "span:contains(Type) a, .imptdt:contains(Type) a, a[href*=type\\=], .infotable tr:contains(Type) td:last-child"
     open val altNameSelector = ".alternative, .wd-full:contains(Alt) span, .alter, .seriestualt"
