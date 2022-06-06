@@ -18,9 +18,10 @@ import java.util.concurrent.TimeUnit
  * @param unit {TimeUnit} The unit of time for the period. Defaults to seconds.
  */
 class RateLimitInterceptor(
-        private val permits: Int,
-        private val period: Long = 1,
-        private val unit: TimeUnit = TimeUnit.SECONDS) : Interceptor {
+    private val permits: Int,
+    private val period: Long = 1,
+    private val unit: TimeUnit = TimeUnit.SECONDS
+) : Interceptor {
 
     private val requestQueue = ArrayList<Long>(permits)
     private val rateLimitMillis = unit.toMillis(period)
@@ -54,5 +55,4 @@ class RateLimitInterceptor(
 
         return chain.proceed(chain.request())
     }
-
 }
