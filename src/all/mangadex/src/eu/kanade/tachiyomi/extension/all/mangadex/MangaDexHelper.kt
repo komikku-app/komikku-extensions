@@ -331,11 +331,7 @@ class MangaDexHelper(private val lang: String) {
                             )
                         }
                         .mapNotNull { it.attributes!!.username }
-
-                    users.joinToString(
-                        " & ",
-                        if (users.isNotEmpty()) intl.uploadedBy(users.toString()) else ""
-                    )
+                    if (users.isNotEmpty()) intl.uploadedBy(users) else ""
                 }
                 .ifEmpty { intl.noGroup } // "No Group" as final resort
 
