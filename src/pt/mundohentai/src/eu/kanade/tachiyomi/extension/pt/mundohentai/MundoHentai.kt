@@ -26,6 +26,9 @@ class MundoHentai : ParsedHttpSource() {
 
     override val supportsLatest = false
 
+    // They changed their website theme and URLs.
+    override val versionId: Int = 2
+
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
@@ -35,33 +38,31 @@ class MundoHentai : ParsedHttpSource() {
 
     private fun genericMangaFromElement(element: Element): SManga =
         SManga.create().apply {
-            title = element.select("div.menu a.title").text()
-            thumbnail_url = element.attr("style")
-                .substringAfter("url(\"")
-                .substringBefore("\")")
-            url = element.select("a.absolute").attr("href")
+            title = element.select("span.thumb-titulo").text()
+            thumbnail_url = element.select("img.attachment-post-thumbnail").attr("src")
+            setUrlWithoutDomain(element.select("a:has(span.thumb-imagem)").attr("href"))
         }
 
     // The source does not have a popular list page, so we use the Doujin list instead.
     override fun popularMangaRequest(page: Int): Request {
         val newHeaders = headersBuilder()
-            .set("Referer", if (page == 1) baseUrl else "$baseUrl/tipo/doujin/${page - 1}")
+            .set("Referer", if (page == 1) baseUrl else "$baseUrl/category/doujinshi/page/${page - 1}")
             .build()
 
-        val pageStr = if (page != 1) "/$page" else ""
-        return GET("$baseUrl/tipo/doujin$pageStr", newHeaders)
+        val pageStr = if (page != 1) "page/$page" else ""
+        return GET("$baseUrl/category/doujinshi/$pageStr", newHeaders)
     }
 
-    override fun popularMangaSelector(): String = "ul.post-list li div.card:has(a.absolute[href^=/])"
+    override fun popularMangaSelector(): String = "div.lista > ul > li div.thumb-conteudo:has(a[href^=$baseUrl]:has(span.thumb-imagem)):not(:contains(Tufos))"
 
     override fun popularMangaFromElement(element: Element): SManga = genericMangaFromElement(element)
 
-    override fun popularMangaNextPageSelector() = "div.buttons:not(:has(a.selected + a.material-icons))"
+    override fun popularMangaNextPageSelector() = "ul.paginacao li.next"
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.isNotEmpty()) {
-            val url = "$baseUrl/search".toHttpUrlOrNull()!!.newBuilder()
-                .addQueryParameter("q", query)
+            val url = baseUrl.toHttpUrlOrNull()!!.newBuilder()
+                .addQueryParameter("s", query)
                 .toString()
 
             return GET(url, headers)
@@ -75,53 +76,41 @@ class MundoHentai : ParsedHttpSource() {
         }
 
         val newHeaders = headersBuilder()
-            .set("Referer", if (page == 1) "$baseUrl/categories" else "$baseUrl/tags/$tagSlug/${page - 1}")
+            .set("Referer", if (page == 1) "$baseUrl/tags" else "$baseUrl/tag/$tagSlug/page/${page - 1}")
             .build()
 
-        val pageStr = if (page != 1) "/$page" else ""
-        return GET("$baseUrl/tags/$tagSlug$pageStr", newHeaders)
+        val pageStr = if (page != 1) "page/$page" else ""
+        return GET("$baseUrl/tag/$tagSlug/$pageStr", newHeaders)
     }
 
-    override fun searchMangaSelector() = popularMangaSelector() + ":not(:has(div.right-tape))"
+    override fun searchMangaSelector() = popularMangaSelector() + ":not(:has(span.selo-tipo:contains(Legendado)))"
 
     override fun searchMangaFromElement(element: Element): SManga = genericMangaFromElement(element)
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val post = document.select("div.post")
+        val post = document.select("div.post-box")
 
         return SManga.create().apply {
-            author = post.select("div.tags div.tag:contains(Artista:) a.value").text()
-            genre = post.select("div.tags div.tag:contains(Tags:) a.value").joinToString { it.text() }
-            description = post.select("div.tags div.tag:contains(Tipo:)").text()
-                .plus("\n" + post.select("div.tags div.tag:contains(Cor:)").text())
+            author = post.select("ul.post-itens li:contains(Artista:) a").text()
+            genre = post.select("ul.post-itens li:contains(Tags:) a").joinToString { it.text() }
+            description = post.select("ul.post-itens li:contains(Cor:)").text()
             status = SManga.COMPLETED
-            thumbnail_url = post.select("div.cover img").attr("src")
+            thumbnail_url = post.select("div.post-capa img").attr("src")
         }
     }
 
-    override fun chapterListSelector(): String = "div.post header.data div.float-buttons a.read"
+    override fun chapterListSelector(): String = "div.post-box"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = "Capítulo"
-        scanlator = element.parent().parent()
-            .select("div.tags div.tag:contains(Tradutor:) a.value")
-            .text()
         chapter_number = 1f
-        url = element.attr("href")
-    }
-
-    override fun pageListRequest(chapter: SChapter): Request {
-        val newHeader = headersBuilder()
-            .set("Referer", "$baseUrl${chapter.url}".substringBeforeLast("/"))
-            .build()
-
-        return GET(baseUrl + chapter.url, newHeader)
+        setUrlWithoutDomain(element.ownerDocument().location())
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("div.gallery > img")
+        return document.select("div.listaImagens ul.post-fotos img")
             .mapIndexed { i, el ->
                 Page(i, document.location(), el.attr("src"))
             }
