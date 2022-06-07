@@ -79,6 +79,8 @@ class YugenMangasBr : YugenMangas(
                     ?.text()
                 checkedUa = true
             }
+
+            uaResponse.close()
         }
 
         if (userAgent != null) {
