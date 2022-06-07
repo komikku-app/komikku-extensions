@@ -34,7 +34,7 @@ data class ArgosProjectDto(
 @Serializable
 data class ArgosChapterDto(
     val createAt: String? = "",
-    val id: Int = 0,
+    val id: String = "",
     val images: List<String>? = emptyList(),
     val number: Int? = 0,
     val project: ArgosProjectDto? = null,

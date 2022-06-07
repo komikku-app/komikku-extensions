@@ -93,39 +93,6 @@ fun buildPopularQueryPayload(page: Int) = buildJsonObject {
     }
 }
 
-fun buildLatestQueryPayload(page: Int) = buildJsonObject {
-    put("operationName", "getProjects")
-    put("query", POPULAR_QUERY)
-    putJsonObject("variables") {
-        putJsonObject("filters") {
-            putJsonObject("childExpressions") {
-                putJsonObject("filters") {
-                    put("field", "Chapter.id")
-                    put("op", "GE")
-                    put("relationField", "Project.chapters")
-                    putJsonArray("values") {
-                        add("1")
-                    }
-                }
-                put("operator", "AND")
-            }
-            put("operator", "AND")
-        }
-        putJsonObject("orders") {
-            putJsonArray("orders") {
-                addJsonObject {
-                    put("field", "Chapter.createAt")
-                    put("or", "DESC")
-                }
-            }
-        }
-        putJsonObject("pagination") {
-            put("limit", 12)
-            put("page", page)
-        }
-    }
-}
-
 fun buildSearchQueryPayload(query: String, page: Int) = buildJsonObject {
     put("operationName", "getProjects")
     put("query", POPULAR_QUERY)

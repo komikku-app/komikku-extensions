@@ -50,7 +50,7 @@ class ArgosScan : HttpSource(), ConfigurableSource {
 
     override val lang = "pt-BR"
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .addInterceptor(::loginIntercept)
@@ -71,7 +71,11 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     private fun genericMangaFromObject(project: ArgosProjectDto): SManga = SManga.create().apply {
         title = project.name!!
         url = "/obras/${project.id}"
-        thumbnail_url = "$baseUrl/images/${project.id}/${project.cover!!}"
+        thumbnail_url = if (project.cover!! == "default.jpg") {
+            "$baseUrl/img/default.jpg"
+        } else {
+            "$baseUrl/images/${project.id}/${project.cover}"
+        }
     }
 
     override fun popularMangaRequest(page: Int): Request {
@@ -104,20 +108,9 @@ class ArgosScan : HttpSource(), ConfigurableSource {
         return MangasPage(mangaList, hasNextPage)
     }
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        val payload = buildLatestQueryPayload(page)
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-        val body = payload.toString().toRequestBody(JSON_MEDIA_TYPE)
-
-        val newHeaders = headersBuilder()
-            .add("Content-Length", body.contentLength().toString())
-            .add("Content-Type", body.contentType().toString())
-            .build()
-
-        return POST(GRAPHQL_URL, newHeaders, body)
-    }
-
-    override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
+    override fun latestUpdatesParse(response: Response): MangasPage = throw UnsupportedOperationException()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val payload = buildSearchQueryPayload(query, page)
@@ -168,7 +161,11 @@ class ArgosScan : HttpSource(), ConfigurableSource {
         val project = result.data["project"]!!
 
         title = project.name!!
-        thumbnail_url = "$baseUrl/images/${project.id}/${project.cover!!}"
+        thumbnail_url = if (project.cover!! == "default.jpg") {
+            "$baseUrl/img/default.jpg"
+        } else {
+            "$baseUrl/images/${project.id}/${project.cover}"
+        }
         description = project.description.orEmpty()
         author = project.authors.orEmpty().joinToString()
         status = SManga.ONGOING
@@ -196,6 +193,10 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
+        if (chapter.url.removePrefix("/leitor/").toIntOrNull() != null) {
+            throw Exception(REFRESH_WARNING)
+        }
+
         val chapterId = chapter.url.substringAfter("leitor/")
 
         val payload = buildPagesQueryPayload(chapterId)
@@ -369,6 +370,7 @@ class ArgosScan : HttpSource(), ConfigurableSource {
 
         private const val CLOUDFLARE_ERROR = "Falha ao contornar o Cloudflare."
         private const val REQUEST_ERROR = "Erro na requisição. Tente novamente mais tarde."
+        private const val REFRESH_WARNING = "Atualize a lista de capítulos para atualizar os IDs."
 
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
 
