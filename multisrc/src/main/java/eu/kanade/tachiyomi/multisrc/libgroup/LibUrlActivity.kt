@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.ru.libhentai
+package eu.kanade.tachiyomi.multisrc.libgroup
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
@@ -8,12 +8,12 @@ import android.util.Log
 import kotlin.system.exitProcess
 
 /**
- * Springboard that accepts https://hentailib.me/xxx intents and redirects them to
+ * Springboard that accepts https://xxxxlib.me/xxx intents and redirects them to
  * the main tachiyomi process. The idea is to not install the intent filter unless
  * you have this extension installed, but still let the main tachiyomi app control
  * things.
  */
-class LibHentaiActivity : Activity() {
+class LibUrlActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,17 +22,17 @@ class LibHentaiActivity : Activity() {
             val titleid = pathSegments[0]
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"
-                putExtra("query", "${LibHentai.PREFIX_SLUG_SEARCH}$titleid")
+                putExtra("query", "${LibGroup.PREFIX_SLUG_SEARCH}$titleid")
                 putExtra("filter", packageName)
             }
 
             try {
                 startActivity(mainIntent)
             } catch (e: ActivityNotFoundException) {
-                Log.e("LibHentaiActivity", e.toString())
+                Log.e("LibUrlActivity", e.toString())
             }
         } else {
-            Log.e("LibHentaiActivity", "could not parse uri from intent $intent")
+            Log.e("LibUrlActivity", "could not parse uri from intent $intent")
         }
 
         finish()

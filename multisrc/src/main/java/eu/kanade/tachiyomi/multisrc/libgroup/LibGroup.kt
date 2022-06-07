@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.ru.libhentai
+package eu.kanade.tachiyomi.multisrc.libgroup
 
 import android.app.Application
 import android.content.SharedPreferences
@@ -13,6 +13,8 @@ import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -32,8 +34,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -42,12 +42,15 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class LibHentai : ConfigurableSource, HttpSource() {
+abstract class LibGroup(
+    override val name: String,
+    override val baseUrl: String,
+    final override val lang: String
+) : ConfigurableSource, HttpSource() {
 
     private val json: Json by injectLazy()
 
@@ -55,21 +58,9 @@ class LibHentai : ConfigurableSource, HttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_${id}_2", 0x0000)
     }
 
-    override val name: String = "Hentailib"
-
-    override val lang = "ru"
-
     override val supportsLatest = true
 
-    override val baseUrl = "https://hentailib.me"
-
-    override fun headersBuilder() = Headers.Builder().apply {
-        // User-Agent required for authorization through third-party accounts (mobile version for correct display in WebView)
-        add("User-Agent", "Mozilla/5.0 (Linux; Android 10; SM-G980F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Mobile Safari/537.36")
-        add("Accept", "image/webp,*/*;q=0.8")
-        add("Referer", baseUrl)
-    }
-    private fun imageContentTypeIntercept(chain: Interceptor.Chain): Response {
+    protected fun imageContentTypeIntercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         val response = chain.proceed(originalRequest)
         val urlRequest = originalRequest.url.toString()
@@ -81,22 +72,18 @@ class LibHentai : ConfigurableSource, HttpSource() {
         } else
             response
     }
-
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .rateLimit(3)
-        .addInterceptor { imageContentTypeIntercept(it) }
-        .addInterceptor { chain ->
-            val originalRequest = chain.request()
-            if (originalRequest.url.toString().contains(baseUrl))
-                if (!network.cloudflareClient.newCall(GET(baseUrl, headers))
-                    .execute().body!!.string().contains("m-menu__user-info")
-                )
-                    throw IOException("Для просмотра 18+ контента необходима авторизация через WebView")
-            return@addInterceptor chain.proceed(originalRequest)
-        }
         .build()
+
+    override fun headersBuilder() = Headers.Builder().apply {
+        // User-Agent required for authorization through third-party accounts (mobile version for correct display in WebView)
+        add("User-Agent", "Mozilla/5.0 (Linux; Android 10; SM-G980F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Mobile Safari/537.36")
+        add("Accept", "image/webp,*/*;q=0.8")
+        add("Referer", baseUrl)
+    }
 
     private var csrfToken: String = ""
 
@@ -107,6 +94,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
             add("x-csrf-token", csrfToken)
         }
         .build()
+
     // Latest
     override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException("Not used") // popularMangaRequest()
     override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
@@ -149,7 +137,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
 
     // Popular
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/login", headers)
-
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
         if (csrfToken.isEmpty()) {
             return client.newCall(popularMangaRequest(page))
@@ -182,7 +169,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
         val result = json.decodeFromString<JsonObject>(resBody)
         val items = result["items"]!!.jsonObject
         val popularMangas = items["data"]?.jsonArray?.map { popularMangaFromElement(it) }
-
         if (popularMangas != null) {
             val hasNextPage = items["next_page_url"]?.jsonPrimitive?.contentOrNull != null
             return MangasPage(popularMangas, hasNextPage)
@@ -257,12 +243,14 @@ class LibHentai : ConfigurableSource, HttpSource() {
             SManga.LICENSED
         } else
             when (
-                body.select("div.media-info-list__title:contains(Статус перевода) + div")
+                body.select("div.media-info-list__title:contains(Статус тайтла) + div")
                     .text()
                     .lowercase(Locale.ROOT)
             ) {
-                "продолжается" -> SManga.ONGOING
-                "завершен" -> SManga.COMPLETED
+                "онгоинг" -> SManga.ONGOING
+                "завершён" -> SManga.COMPLETED
+                "приостановлен" -> SManga.ON_HIATUS
+                "выпуск прекращён" -> SManga.CANCELLED
                 else -> SManga.UNKNOWN
             }
         manga.genre = category + ", " + rawAgeStop + ", " + genres.joinToString { it.trim() }
@@ -312,59 +300,45 @@ class LibHentai : ConfigurableSource, HttpSource() {
     }
 
     private fun sortChaptersByTranslator
-    (sortingList: String?, chaptersList: JsonArray?, slug: String, branches: List<JsonElement>): List<SChapter>? {
+            (sortingList: String?, chaptersList: JsonArray?, slug: String, branches: List<JsonElement>): List<SChapter>? {
         var chapters: List<SChapter>? = null
         val volume = "(?<=/v)[0-9]+(?=/c[0-9]+)".toRegex()
-        when (sortingList) {
-            "ms_mixing" -> {
-                val tempChaptersList = mutableListOf<SChapter>()
-                for (currentBranch in branches.withIndex()) {
-                    val branch = branches[currentBranch.index]
-                    val teamId = branch.jsonObject["id"]!!.jsonPrimitive.int
-                    val teams = branch.jsonObject["teams"]!!.jsonArray.filter { it.jsonObject["is_active"]?.jsonPrimitive?.intOrNull == 1 }
-                    val teamsBranch = if (teams.size == 1)
-                        teams[0].jsonObject["name"]?.jsonPrimitive?.contentOrNull
-                    else if (teams.isEmpty())
-                        branch.jsonObject["teams"]!!.jsonArray[0].jsonObject["name"]!!.jsonPrimitive.content
-                    else null
-                    chapters = chaptersList
-                        ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
-                        ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
+        val tempChaptersList = mutableListOf<SChapter>()
+        for (currentBranch in branches.withIndex()) {
+            val branch = branches[currentBranch.index]
+            val teamId = branch.jsonObject["id"]!!.jsonPrimitive.int
+            val teams = branch.jsonObject["teams"]!!.jsonArray
+            val isActive = teams.filter { it.jsonObject["is_active"]?.jsonPrimitive?.intOrNull == 1 }
+            val teamsBranch = if (isActive.size == 1)
+                isActive[0].jsonObject["name"]?.jsonPrimitive?.contentOrNull
+            else if (teams.isNotEmpty() && isActive.isEmpty())
+                teams[0].jsonObject["name"]?.jsonPrimitive?.contentOrNull
+            else "Неизвестный"
+            chapters = chaptersList
+                ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
+                ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
+            when (sortingList) {
+                "ms_mixing" -> {
                     chapters?.let {
                         if ((tempChaptersList.size < it.size) && !groupTranslates.contains(teamsBranch.toString()))
                             tempChaptersList.addAll(0, it)
                         else
                             tempChaptersList.addAll(it)
                     }
+                    chapters = tempChaptersList.distinctBy { volume.find(it.url)?.value + "--" + it.chapter_number }.sortedWith(compareBy({ -it.chapter_number }, { volume.find(it.url)?.value }))
                 }
-                chapters = tempChaptersList.distinctBy { volume.find(it.url)?.value + "--" + it.chapter_number }.sortedWith(compareBy({ -it.chapter_number }, { volume.find(it.url)?.value }))
-            }
-            "ms_combining" -> {
-                val tempChaptersList = mutableListOf<SChapter>()
-                for (currentBranch in branches.withIndex()) {
-                    val branch = branches[currentBranch.index]
-                    val teamId = branch.jsonObject["id"]!!.jsonPrimitive.int
-                    val teams = branch.jsonObject["teams"]!!.jsonArray.filter { it.jsonObject["is_active"]?.jsonPrimitive?.intOrNull == 1 }
-                    val teamsBranch = if (teams.size == 1)
-                        teams[0].jsonObject["name"]?.jsonPrimitive?.contentOrNull
-                    else if (teams.isEmpty())
-                        branch.jsonObject["teams"]!!.jsonArray[0].jsonObject["name"]!!.jsonPrimitive.content
-                    else null
-                    chapters = chaptersList
-                        ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
-                        ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
+                "ms_combining" -> {
                     if (!groupTranslates.contains(teamsBranch.toString()))
                         chapters?.let { tempChaptersList.addAll(it) }
+                    chapters = tempChaptersList
                 }
-                chapters = tempChaptersList
             }
         }
-
         return chapters
     }
 
     private fun chapterFromElement
-    (chapterItem: JsonElement, sortingList: String?, slug: String, teamIdParam: Int? = null, branches: List<JsonElement>? = null, teams: List<JsonElement>? = null, chaptersList: JsonArray? = null): SChapter {
+            (chapterItem: JsonElement, sortingList: String?, slug: String, teamIdParam: Int? = null, branches: List<JsonElement>? = null, teams: List<JsonElement>? = null, chaptersList: JsonArray? = null): SChapter {
         val chapter = SChapter.create()
 
         val volume = chapterItem.jsonObject["chapter_volume"]!!.jsonPrimitive.int
@@ -393,7 +367,7 @@ class LibHentai : ConfigurableSource, HttpSource() {
         for (currentBranch in branches.withIndex()) {
             val branch = branches[currentBranch.index].jsonObject
             val teams = branch["teams"]!!.jsonArray
-            if (chapterItem.jsonObject["branch_id"]!!.jsonPrimitive.int == branch["id"]!!.jsonPrimitive.int) {
+            if (chapterItem.jsonObject["branch_id"]!!.jsonPrimitive.int == branch["id"]!!.jsonPrimitive.int && teams.isNotEmpty()) {
                 for (currentTeam in teams.withIndex()) {
                     val team = teams[currentTeam.index].jsonObject
                     val scanlatorId = chapterItem.jsonObject["chapter_scanlator_id"]!!.jsonPrimitive.int
@@ -548,11 +522,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
                     url.addQueryParameter("dir", if (filter.state!!.ascending) "asc" else "desc")
                     url.addQueryParameter("sort", arrayOf("rate", "name", "views", "created_at", "last_chapter_at", "chap_count")[filter.state!!.index])
                 }
-                is TagList -> filter.state.forEach { tag ->
-                    if (tag.state != Filter.TriState.STATE_IGNORE) {
-                        url.addQueryParameter(if (tag.isIncluded()) "tags[include][]" else "tags[exclude][]", tag.id)
-                    }
-                }
                 is MyList -> filter.state.forEach { favorite ->
                     if (favorite.state != Filter.TriState.STATE_IGNORE) {
                         url.addQueryParameter(if (favorite.isIncluded()) "bookmarks[include][]" else "bookmarks[exclude][]", favorite.id)
@@ -607,7 +576,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
     private class StatusList(statuses: List<CheckFilter>) : Filter.Group<CheckFilter>("Статус перевода", statuses)
     private class StatusTitleList(titles: List<CheckFilter>) : Filter.Group<CheckFilter>("Статус тайтла", titles)
     private class GenreList(genres: List<SearchFilter>) : Filter.Group<SearchFilter>("Жанры", genres)
-    private class TagList(tags: List<SearchFilter>) : Filter.Group<SearchFilter>("Теги", tags)
     private class MyList(favorites: List<SearchFilter>) : Filter.Group<SearchFilter>("Мои списки", favorites)
 
     override fun getFilterList() = FilterList(
@@ -615,7 +583,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
         CategoryList(getCategoryList()),
         FormatList(getFormatList()),
         GenreList(getGenreList()),
-        TagList(getTagList()),
         StatusList(getStatusList()),
         StatusTitleList(getStatusTitleList()),
         MyList(getMyList())
@@ -627,11 +594,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
         Selection(2, false)
     )
 
-    /*
-    * Use console
-    * Object.entries(__FILTER_ITEMS__.types).map(([k, v]) => `SearchFilter("${v.label}", "${v.id}")`).join(',\n')
-    * on /manga-list
-    */
     private fun getCategoryList() = listOf(
         CheckFilter("Манга", "1"),
         CheckFilter("OEL-манга", "4"),
@@ -650,11 +612,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
         SearchFilter("Веб", "6")
     )
 
-    /*
-    * Use console
-    * Object.entries(__FILTER_ITEMS__.status).map(([k, v]) => `SearchFilter("${v.label}", "${v.id}")`).join(',\n')
-    * on /manga-list
-    */
     private fun getStatusList() = listOf(
         CheckFilter("Продолжается", "1"),
         CheckFilter("Завершен", "2"),
@@ -670,11 +627,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
         CheckFilter("Выпуск прекращён", "5"),
     )
 
-    /*
-    * Use console
-    * __FILTER_ITEMS__.genres.map(it => `SearchFilter("${it.name}", "${it.id}")`).join(',\n')
-    * on /manga-list
-    */
     private fun getGenreList() = listOf(
         SearchFilter("арт", "32"),
         SearchFilter("боевик", "34"),
@@ -722,175 +674,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
         SearchFilter("яой", "74")
     )
 
-    private fun getTagList() = listOf(
-        SearchFilter("3D", "1"),
-        SearchFilter("Defloration", "287"),
-        SearchFilter("FPP(Вид от первого лица)", "289"),
-        SearchFilter("Footfuck", "5"),
-        SearchFilter("Handjob", "6"),
-        SearchFilter("Lactation", "7"),
-        SearchFilter("Living clothes", "284"),
-        SearchFilter("Mind break", "9"),
-        SearchFilter("Scat", "13"),
-        SearchFilter("Selfcest", "286"),
-        SearchFilter("Shemale", "220"),
-        SearchFilter("Tomboy", "14"),
-        SearchFilter("Unbirth", "283"),
-        SearchFilter("X-Ray", "15"),
-        SearchFilter("Алкоголь", "16"),
-        SearchFilter("Анал", "17"),
-        SearchFilter("Андроид", "18"),
-        SearchFilter("Анилингус", "19"),
-        SearchFilter("Анимация (GIF)", "350"),
-        SearchFilter("Арт", "20"),
-        SearchFilter("Ахэгао", "2"),
-        SearchFilter("БДСМ", "22"),
-        SearchFilter("Бакуню", "21"),
-        SearchFilter("Бара", "293"),
-        SearchFilter("Без проникновения", "336"),
-        SearchFilter("Без текста", "23"),
-        SearchFilter("Без трусиков", "24"),
-        SearchFilter("Без цензуры", "25"),
-        SearchFilter("Беременность", "26"),
-        SearchFilter("Бикини", "27"),
-        SearchFilter("Близнецы", "28"),
-        SearchFilter("Боди-арт", "29"),
-        SearchFilter("Больница", "30"),
-        SearchFilter("Большая грудь", "31"),
-        SearchFilter("Большая попка", "32"),
-        SearchFilter("Борьба", "33"),
-        SearchFilter("Буккакэ", "34"),
-        SearchFilter("В бассейне", "35"),
-        SearchFilter("В ванной", "36"),
-        SearchFilter("В государственном учреждении", "37"),
-        SearchFilter("В общественном месте", "38"),
-        SearchFilter("В очках", "8"),
-        SearchFilter("В первый раз", "39"),
-        SearchFilter("В транспорте", "40"),
-        SearchFilter("Вампиры", "41"),
-        SearchFilter("Вибратор", "42"),
-        SearchFilter("Втроём", "43"),
-        SearchFilter("Гипноз", "44"),
-        SearchFilter("Глубокий минет", "45"),
-        SearchFilter("Горячий источник", "46"),
-        SearchFilter("Групповой секс", "47"),
-        SearchFilter("Гуро", "307"),
-        SearchFilter("Гяру и Гангуро", "48"),
-        SearchFilter("Двойное проникновение", "49"),
-        SearchFilter("Девочки-волшебницы", "50"),
-        SearchFilter("Девушка-туалет", "51"),
-        SearchFilter("Демон", "52"),
-        SearchFilter("Дилдо", "53"),
-        SearchFilter("Домохозяйка", "54"),
-        SearchFilter("Дыра в стене", "55"),
-        SearchFilter("Жестокость", "56"),
-        SearchFilter("Золотой дождь", "57"),
-        SearchFilter("Зомби", "58"),
-        SearchFilter("Зоофилия", "351"),
-        SearchFilter("Зрелые женщины", "59"),
-        SearchFilter("Избиение", "223"),
-        SearchFilter("Измена", "60"),
-        SearchFilter("Изнасилование", "61"),
-        SearchFilter("Инопланетяне", "62"),
-        SearchFilter("Инцест", "63"),
-        SearchFilter("Исполнение желаний", "64"),
-        SearchFilter("Историческое", "65"),
-        SearchFilter("Камера", "66"),
-        SearchFilter("Кляп", "288"),
-        SearchFilter("Колготки", "67"),
-        SearchFilter("Косплей", "68"),
-        SearchFilter("Кримпай", "3"),
-        SearchFilter("Куннилингус", "69"),
-        SearchFilter("Купальники", "70"),
-        SearchFilter("ЛГБТ", "343"),
-        SearchFilter("Латекс и кожа", "71"),
-        SearchFilter("Магия", "72"),
-        SearchFilter("Маленькая грудь", "73"),
-        SearchFilter("Мастурбация", "74"),
-        SearchFilter("Медсестра", "221"),
-        SearchFilter("Мейдочка", "75"),
-        SearchFilter("Мерзкий дядька", "76"),
-        SearchFilter("Милф", "77"),
-        SearchFilter("Много девушек", "78"),
-        SearchFilter("Много спермы", "79"),
-        SearchFilter("Молоко", "80"),
-        SearchFilter("Монашка", "353"),
-        SearchFilter("Монстродевушки", "81"),
-        SearchFilter("Монстры", "82"),
-        SearchFilter("Мочеиспускание", "83"),
-        SearchFilter("На природе", "84"),
-        SearchFilter("Наблюдение", "85"),
-        SearchFilter("Насекомые", "285"),
-        SearchFilter("Небритая киска", "86"),
-        SearchFilter("Небритые подмышки", "87"),
-        SearchFilter("Нетораре", "88"),
-        SearchFilter("Нэтори", "11"),
-        SearchFilter("Обмен телами", "89"),
-        SearchFilter("Обычный секс", "90"),
-        SearchFilter("Огромная грудь", "91"),
-        SearchFilter("Огромный член", "92"),
-        SearchFilter("Омораси", "93"),
-        SearchFilter("Оральный секс", "94"),
-        SearchFilter("Орки", "95"),
-        SearchFilter("Остановка времени", "296"),
-        SearchFilter("Пайзури", "96"),
-        SearchFilter("Парень пассив", "97"),
-        SearchFilter("Переодевание", "98"),
-        SearchFilter("Пирсинг", "308"),
-        SearchFilter("Пляж", "99"),
-        SearchFilter("Повседневность", "100"),
-        SearchFilter("Подвязки", "282"),
-        SearchFilter("Подглядывание", "101"),
-        SearchFilter("Подчинение", "102"),
-        SearchFilter("Похищение", "103"),
-        SearchFilter("Превозмогание", "104"),
-        SearchFilter("Принуждение", "105"),
-        SearchFilter("Прозрачная одежда", "106"),
-        SearchFilter("Проституция", "107"),
-        SearchFilter("Психические отклонения", "108"),
-        SearchFilter("Публично", "109"),
-        SearchFilter("Пытки", "224"),
-        SearchFilter("Пьяные", "110"),
-        SearchFilter("Рабы", "356"),
-        SearchFilter("Рабыни", "111"),
-        SearchFilter("С Сюжетом", "337"),
-        SearchFilter("Сuminside", "4"),
-        SearchFilter("Секс-игрушки", "112"),
-        SearchFilter("Сексуально возбуждённая", "113"),
-        SearchFilter("Сибари", "114"),
-        SearchFilter("Спортивная форма", "117"),
-        SearchFilter("Спортивное тело", "335"),
-        SearchFilter("Спящие", "118"),
-        SearchFilter("Страпон", "119"),
-        SearchFilter("Суккуб", "120"),
-        SearchFilter("Темнокожие", "121"),
-        SearchFilter("Тентакли", "122"),
-        SearchFilter("Толстушки", "123"),
-        SearchFilter("Трагедия", "124"),
-        SearchFilter("Трап", "125"),
-        SearchFilter("Ужасы", "126"),
-        SearchFilter("Униформа", "127"),
-        SearchFilter("Учитель и ученик", "352"),
-        SearchFilter("Ушастые", "128"),
-        SearchFilter("Фантазии", "129"),
-        SearchFilter("Фемдом", "130"),
-        SearchFilter("Фестиваль", "131"),
-        SearchFilter("Фетиш", "132"),
-        SearchFilter("Фистинг", "133"),
-        SearchFilter("Фурри", "134"),
-        SearchFilter("Футанари", "136"),
-        SearchFilter("Футанари имеет парня", "137"),
-        SearchFilter("Цельный купальник", "138"),
-        SearchFilter("Цундэрэ", "139"),
-        SearchFilter("Чикан", "140"),
-        SearchFilter("Чулки", "141"),
-        SearchFilter("Шлюха", "142"),
-        SearchFilter("Эксгибиционизм", "143"),
-        SearchFilter("Эльф", "144"),
-        SearchFilter("Юные", "145"),
-        SearchFilter("Яндэрэ", "146")
-    )
-
     private fun getMyList() = listOf(
         SearchFilter("Читаю", "1"),
         SearchFilter("В планах", "2"),
@@ -914,8 +697,6 @@ class LibHentai : ConfigurableSource, HttpSource() {
 
         private const val LANGUAGE_PREF = "MangaLibTitleLanguage"
         private const val LANGUAGE_PREF_Title = "Выбор языка на обложке"
-
-        private const val COVER_URL = "https://staticlib.me"
     }
 
     private var server: String? = preferences.getString(SERVER_PREF, null)

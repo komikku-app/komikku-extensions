@@ -4,7 +4,7 @@
 
     <application>
         <activity
-            android:name=".ru.libmanga.LibMangaActivity"
+            android:name="eu.kanade.tachiyomi.multisrc.libgroup.LibUrlActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:theme="@android:style/Theme.NoDisplay">
@@ -14,13 +14,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <!-- LibMangaActivity sites can be added here. -->
+                <!-- LibUrlActivity sites can be added here. -->
                 <data
-                    android:host="mangalib.me"
-                    android:pathPattern="/..*/v..*"
-                    android:scheme="https" />
-                <data
-                    android:host="mangalib.org"
+                    android:host="hentailib.me"
                     android:pathPattern="/..*/v..*"
                     android:scheme="https" />
             </intent-filter>
