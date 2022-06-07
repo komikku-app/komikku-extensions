@@ -5,7 +5,7 @@ ext {
     extName = 'Purple Cress'
     pkgNameSuffix = 'en.purplecress'
     extClass = '.PurpleCress'
-    extVersionCode = 2
+    extVersionCode = 3
 }
 
 apply from: "$rootDir/common.gradle"

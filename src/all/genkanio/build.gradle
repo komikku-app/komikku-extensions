@@ -6,7 +6,7 @@ ext {
     extName = 'Genkan.io'
     pkgNameSuffix = "all.genkanio"
     extClass = '.GenkanIOFactory'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 apply from: "$rootDir/common.gradle"

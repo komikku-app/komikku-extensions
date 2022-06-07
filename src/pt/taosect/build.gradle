@@ -6,7 +6,7 @@ ext {
     extName = 'Tao Sect'
     pkgNameSuffix = 'pt.taosect'
     extClass = '.TaoSect'
-    extVersionCode = 17
+    extVersionCode = 18
     isNsfw = true
 }
 
