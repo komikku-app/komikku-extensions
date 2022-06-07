@@ -157,7 +157,7 @@ class VizShonenJump : ParsedHttpSource() {
                 ?.replace("Created by ", "")
             artist = author
             status = SManga.ONGOING
-            description = seriesIntro.select("h4").firstOrNull()?.text()
+            description = seriesIntro.select("div.line-solid").firstOrNull()?.text()
             thumbnail_url = mangaFromList?.thumbnail_url ?: ""
         }
     }
@@ -181,7 +181,7 @@ class VizShonenJump : ParsedHttpSource() {
 
     override fun chapterListSelector() =
         "section.section_chapters div.o_sortable > a.o_chapter-container, " +
-            "section.section_chapters div.o_sortable div.o_chapter-vol-container tr.o_chapter a.o_chapter-container.pad-r-0"
+            "section.section_chapters div.o_sortable div.o_chapter-vol-container tr.o_chapter a.o_chapter-container"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         val isVolume = element.select("div:nth-child(1) table").first() == null
@@ -364,7 +364,7 @@ class VizShonenJump : ParsedHttpSource() {
     companion object {
         private const val ACCEPT_JSON = "application/json, text/javascript, */*; q=0.01"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36"
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH)
