@@ -86,27 +86,26 @@ class MangaDexHelper(private val lang: String) {
     }
 
     /**
-     * Maps dex status to tachi status
+     * Maps dex status to Tachi status.
+     * Adapted from the MangaDex handler from TachiyomiSY.
      */
     fun getPublicationStatus(attr: MangaAttributesDto, chapters: List<String>): Int {
-        return when (attr.status) {
-            null -> SManga.UNKNOWN
+        val tempStatus = when (attr.status) {
             "ongoing" -> SManga.ONGOING
-            "completed", "cancelled" -> doubleCheckChapters(attr, chapters)
-            "hiatus" -> SManga.ONGOING
+            "cancelled" -> SManga.CANCELLED
+            "completed" -> SManga.PUBLISHING_FINISHED
+            "hiatus" -> SManga.ON_HIATUS
             else -> SManga.UNKNOWN
         }
-    }
 
-    /**
-     * if the manga is 'completed' or 'cancelled' then it'll have a lastChapter in the manga obj.
-     * if the simple list of chapters contains that lastChapter, then we can consider it completed.
-     */
-    private fun doubleCheckChapters(attr: MangaAttributesDto, chapters: List<String>): Int {
-        return if (chapters.contains(attr.lastChapter))
+        val publishedOrCancelled = tempStatus == SManga.PUBLISHING_FINISHED ||
+            tempStatus == SManga.CANCELLED
+
+        return if (chapters.contains(attr.lastChapter) && publishedOrCancelled) {
             SManga.COMPLETED
-        else
-            SManga.UNKNOWN
+        } else {
+            tempStatus
+        }
     }
 
     fun parseDate(dateAsString: String): Long =
