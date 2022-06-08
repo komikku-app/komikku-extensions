@@ -100,7 +100,7 @@ class TaoSect : HttpSource() {
     override fun latestUpdatesParse(response: Response): MangasPage {
         val result = response.parseAs<List<TaoSectChapterDto>>()
 
-        if (result.isNullOrEmpty()) {
+        if (result.isEmpty()) {
             return MangasPage(emptyList(), hasNextPage = false)
         }
 
@@ -186,7 +186,7 @@ class TaoSect : HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val result = response.parseAs<List<TaoSectProjectDto>>()
 
-        if (result.isNullOrEmpty()) {
+        if (result.isEmpty()) {
             throw Exception(PROJECT_NOT_FOUND)
         }
 
@@ -224,7 +224,7 @@ class TaoSect : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.parseAs<List<TaoSectChapterDto>>()
 
-        if (result.isNullOrEmpty()) {
+        if (result.isEmpty()) {
             throw Exception(CHAPTERS_NOT_FOUND)
         }
 
@@ -264,7 +264,7 @@ class TaoSect : HttpSource() {
     override fun pageListParse(response: Response): List<Page> {
         val result = response.parseAs<TaoSectChapterDto>()
 
-        if (result.pages.isNullOrEmpty()) {
+        if (result.pages.isEmpty()) {
             return emptyList()
         }
 
@@ -358,6 +358,7 @@ class TaoSect : HttpSource() {
     private fun String.toStatus() = when (this) {
         "Ativos" -> SManga.ONGOING
         "Finalizados", "Oneshots" -> SManga.COMPLETED
+        "Cancelados" -> SManga.CANCELLED
         else -> SManga.UNKNOWN
     }
 
