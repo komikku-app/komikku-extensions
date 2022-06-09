@@ -11,6 +11,7 @@ class ModeScanlator : WPMangaReader(
     "Mode Scanlator",
     "https://modescanlator.com",
     "pt-BR",
+    mangaUrlDirectory = "/projetos",
     dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
 ) {
 
