@@ -8,14 +8,23 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Headers
 import okhttp3.Request
+import org.json.JSONObject
 import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class MangaSwat : WPMangaStream("MangaSwat", "https://swatmanga.co", "ar", SimpleDateFormat("yyyy-MM-dd", Locale.US)) {
+class MangaSwat : WPMangaStream(
+    "MangaSwat",
+    "https://swatmanga.co",
+    "ar",
+    SimpleDateFormat("yyyy-MM-dd", Locale.US)
+) {
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+        .add(
+            "Accept",
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+        )
         .add("Accept-language", "en-US,en;q=0.9")
         .add("Referer", baseUrl)
 
@@ -31,7 +40,9 @@ class MangaSwat : WPMangaStream("MangaSwat", "https://swatmanga.co", "ar", Simpl
         return SManga.create().apply {
             document.select("div.bigcontent").firstOrNull()?.let { infoElement ->
                 genre = infoElement.select("span:contains(التصنيف) a").joinToString { it.text() }
-                status = parseStatus(infoElement.select("span:contains(الحالة)").firstOrNull()?.ownText())
+                status = parseStatus(
+                    infoElement.select("span:contains(الحالة)").firstOrNull()?.ownText()
+                )
                 author = infoElement.select("span:contains(المؤلف)").firstOrNull()?.ownText()
                 artist = infoElement.select("span:contains(الناشر) i").firstOrNull()?.ownText()
                 description = infoElement.select("div.desc").text()
@@ -52,14 +63,23 @@ class MangaSwat : WPMangaStream("MangaSwat", "https://swatmanga.co", "ar", Simpl
             }
         }
     }
+
     override val seriesTypeSelector = "span:contains(النوع) a"
 
     override val pageSelector = "div#readerarea img"
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select(pageSelector)
-            .filterNot { it.attr("src").isNullOrEmpty() }
-            .mapIndexed { i, img -> Page(i, "", img.attr("src")) }
+        var page: List<Page>? = null
+        val scriptContent = document.selectFirst("script:containsData(ts_reader)").data()
+        val removeHead = scriptContent.replace("ts_reader.run(", "").replace(");", "")
+        val jsonObject = JSONObject(removeHead)
+        val sourcesArray = jsonObject.getJSONArray("sources")
+        val imagesArray = sourcesArray.getJSONObject(0).getJSONArray("images")
+        page = List(imagesArray.length()) { i ->
+            Page(i, "", imagesArray[i].toString())
+        }
+
+        return page!!
     }
 
     override fun getFilterList() = FilterList(
@@ -80,8 +100,14 @@ class MangaSwat : WPMangaStream("MangaSwat", "https://swatmanga.co", "ar", Simpl
         Genre("أكشن", "%d8%a3%d9%83%d8%b4%d9%86"),
         Genre("إثارة", "%d8%a5%d8%ab%d8%a7%d8%b1%d8%a9"),
         Genre("إعادة إحياء", "%d8%a5%d8%b9%d8%a7%d8%af%d8%a9-%d8%a5%d8%ad%d9%8a%d8%a7%d8%a1"),
-        Genre("الحياة المدرسية", "%d8%a7%d9%84%d8%ad%d9%8a%d8%a7%d8%a9-%d8%a7%d9%84%d9%85%d8%af%d8%b1%d8%b3%d9%8a%d8%a9"),
-        Genre("الحياة اليومية", "%d8%a7%d9%84%d8%ad%d9%8a%d8%a7%d8%a9-%d8%a7%d9%84%d9%8a%d9%88%d9%85%d9%8a%d8%a9"),
+        Genre(
+            "الحياة المدرسية",
+            "%d8%a7%d9%84%d8%ad%d9%8a%d8%a7%d8%a9-%d8%a7%d9%84%d9%85%d8%af%d8%b1%d8%b3%d9%8a%d8%a9"
+        ),
+        Genre(
+            "الحياة اليومية",
+            "%d8%a7%d9%84%d8%ad%d9%8a%d8%a7%d8%a9-%d8%a7%d9%84%d9%8a%d9%88%d9%85%d9%8a%d8%a9"
+        ),
         Genre("العاب فيديو", "%d8%a7%d9%84%d8%b9%d8%a7%d8%a8-%d9%81%d9%8a%d8%af%d9%8a%d9%88"),
         Genre("ايتشي", "%d8%a7%d9%8a%d8%aa%d8%b4%d9%8a"),
         Genre("ايسكاي", "%d8%a7%d9%8a%d8%b3%d9%83%d8%a7%d9%8a"),
@@ -95,7 +121,10 @@ class MangaSwat : WPMangaStream("MangaSwat", "https://swatmanga.co", "ar", Simpl
         Genre("حديث", "%d8%ad%d8%af%d9%8a%d8%ab"),
         Genre("حربي", "%d8%ad%d8%b1%d8%a8%d9%8a"),
         Genre("حريم", "%d8%ad%d8%b1%d9%8a%d9%85"),
-        Genre("خارق للطبيعة", "%d8%ae%d8%a7%d8%b1%d9%82-%d9%84%d9%84%d8%b7%d8%a8%d9%8a%d8%b9%d8%a9"),
+        Genre(
+            "خارق للطبيعة",
+            "%d8%ae%d8%a7%d8%b1%d9%82-%d9%84%d9%84%d8%b7%d8%a8%d9%8a%d8%b9%d8%a9"
+        ),
         Genre("خيال", "%d8%ae%d9%8a%d8%a7%d9%84"),
         Genre("خيال علمي", "%d8%ae%d9%8a%d8%a7%d9%84-%d8%b9%d9%84%d9%85%d9%8a"),
         Genre("دراما", "%d8%af%d8%b1%d8%a7%d9%85%d8%a7"),
@@ -108,7 +137,10 @@ class MangaSwat : WPMangaStream("MangaSwat", "https://swatmanga.co", "ar", Simpl
         Genre("زومبي", "%d8%b2%d9%88%d9%85%d8%a8%d9%8a"),
         Genre("سحر", "%d8%b3%d8%ad%d8%b1"),
         Genre("سينين", "%d8%b3%d9%8a%d9%86%d9%8a%d9%86"),
-        Genre("شريحة من الحياة", "%d8%b4%d8%b1%d9%8a%d8%ad%d8%a9-%d9%85%d9%86-%d8%a7%d9%84%d8%ad%d9%8a%d8%a7%d8%a9"),
+        Genre(
+            "شريحة من الحياة",
+            "%d8%b4%d8%b1%d9%8a%d8%ad%d8%a9-%d9%85%d9%86-%d8%a7%d9%84%d8%ad%d9%8a%d8%a7%d8%a9"
+        ),
         Genre("شوجو", "%d8%b4%d9%88%d8%ac%d9%88"),
         Genre("شونين", "%d8%b4%d9%88%d9%86%d9%8a%d9%86"),
         Genre("شياطين", "%d8%b4%d9%8a%d8%a7%d8%b7%d9%8a%d9%86"),
@@ -122,7 +154,10 @@ class MangaSwat : WPMangaStream("MangaSwat", "https://swatmanga.co", "ar", Simpl
         Genre("كوميدي", "%d9%83%d9%88%d9%85%d9%8a%d8%af%d9%8a"),
         Genre("لعبة", "%d9%84%d8%b9%d8%a8%d8%a9"),
         Genre("مافيا", "%d9%85%d8%a7%d9%81%d9%8a%d8%a7"),
-        Genre("مصاصى الدماء", "%d9%85%d8%b5%d8%a7%d8%b5%d9%89-%d8%a7%d9%84%d8%af%d9%85%d8%a7%d8%a1"),
+        Genre(
+            "مصاصى الدماء",
+            "%d9%85%d8%b5%d8%a7%d8%b5%d9%89-%d8%a7%d9%84%d8%af%d9%85%d8%a7%d8%a1"
+        ),
         Genre("مغامرات", "%d9%85%d8%ba%d8%a7%d9%85%d8%b1%d8%a7%d8%aa"),
         Genre("موريم", "%d9%85%d9%88%d8%b1%d9%8a%d9%85"),
         Genre("موسيقي", "%d9%85%d9%88%d8%b3%d9%8a%d9%82%d9%89"),

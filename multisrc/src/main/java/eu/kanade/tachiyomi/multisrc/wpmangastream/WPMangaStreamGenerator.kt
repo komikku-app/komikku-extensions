@@ -29,7 +29,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Manga Pro", "https://mangaprotm.com", "ar", pkgName = "mangaproz", overrideVersionCode = 3),
         SingleLang("Manga Raw.org", "https://mangaraw.org", "ja", className = "MangaRawOrg", overrideVersionCode = 1),
         SingleLang("Manhwax", "https://manhwax.com", "en", isNsfw = true),
-        SingleLang("MangaSwat", "https://swatmanga.co", "ar", overrideVersionCode = 6),
+        SingleLang("MangaSwat", "https://swatmanga.co", "ar", overrideVersionCode = 7),
         SingleLang("Mangakyo", "https://www.mangakyo.me", "id"),
         SingleLang("Mareceh", "https://mareceh.com", "id", isNsfw = true, pkgName = "mangceh", overrideVersionCode = 10),
         SingleLang("MasterKomik", "https://masterkomik.com", "id", overrideVersionCode = 1),
