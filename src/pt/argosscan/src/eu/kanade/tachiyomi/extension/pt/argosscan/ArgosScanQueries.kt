@@ -134,7 +134,7 @@ val MANGA_DETAILS_QUERY = buildQuery {
         |         description
         |         authors
         |         cover
-        |         getChapters(order: { id: DESC }) {
+        |         getChapters(order: { number: DESC }) {
         |             id
         |             number
         |             title
