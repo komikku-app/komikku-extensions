@@ -1,41 +1,14 @@
 package eu.kanade.tachiyomi.extension.ru.mangachan
 
+import eu.kanade.tachiyomi.multisrc.multichan.MultiChan
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.source.model.SChapter
-import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
-import java.text.SimpleDateFormat
-import java.util.Locale
 
-class Mangachan : ParsedHttpSource() {
+class MangaChan : MultiChan("MangaChan", "https://manga-chan.me", "ru"){
 
     override val id: Long = 7
-
-    override val name = "Mangachan"
-
-    override val baseUrl = "https://manga-chan.me"
-
-    override val lang = "ru"
-
-    override val supportsLatest = true
-
-    override val client: OkHttpClient = network.client.newBuilder()
-        .rateLimit(2)
-        .build()
-
-    override fun popularMangaRequest(page: Int): Request =
-        GET("$baseUrl/mostfavorites?offset=${20 * (page - 1)}", headers)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var pageNum = 1
@@ -111,126 +84,6 @@ class Mangachan : ParsedHttpSource() {
         return GET(url, headers)
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/manga/new?offset=${20 * (page - 1)}")
-
-    override fun popularMangaSelector() = "div.content_row"
-
-    override fun latestUpdatesSelector() = popularMangaSelector()
-
-    override fun searchMangaSelector() = popularMangaSelector()
-
-    override fun popularMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        manga.thumbnail_url = element.select("div.manga_images img").first().attr("src")
-        manga.title = element.attr("title")
-        element.select("h2 > a").first().let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-        }
-        return manga
-    }
-
-    override fun latestUpdatesFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        manga.title = element.attr("title")
-        element.select("a:nth-child(1)").first().let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-        }
-        return manga
-    }
-
-    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
-
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
-
-    override fun popularMangaNextPageSelector() = "a:contains(Вперед)"
-
-    override fun searchMangaNextPageSelector() = "a:contains(Далее)"
-
-    private fun searchGenresNextPageSelector() = popularMangaNextPageSelector()
-
-    override fun searchMangaParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        var hasNextPage = false
-
-        val mangas = document.select(searchMangaSelector()).map { element ->
-            searchMangaFromElement(element)
-        }
-
-        val nextSearchPage = document.select(searchMangaNextPageSelector())
-        if (nextSearchPage.isNotEmpty()) {
-            val query = document.select("input#searchinput").first().attr("value")
-            val pageNum = nextSearchPage.let { selector ->
-                val onClick = selector.attr("onclick")
-                onClick?.split("""\\d+""")
-            }
-            nextSearchPage.attr("href", "$baseUrl/?do=search&subaction=search&story=$query&search_start=$pageNum")
-            hasNextPage = true
-        }
-
-        val nextGenresPage = document.select(searchGenresNextPageSelector())
-        if (nextGenresPage.isNotEmpty()) {
-            hasNextPage = true
-        }
-
-        return MangasPage(mangas, hasNextPage)
-    }
-
-    override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("table.mangatitle").first()
-        val descElement = document.select("div#description").first()
-        val imgElement = document.select("img#cover").first()
-        val rawCategory = infoElement.select("tr:eq(1) > td:eq(1)").text()
-        val category = if (rawCategory.isNotEmpty()) {
-            rawCategory.lowercase()
-        } else {
-            "манга"
-        }
-        val manga = SManga.create()
-        manga.title = document.select("title").text().substringBefore(" »")
-        manga.author = infoElement.select("tr:eq(2) > td:eq(1)").text()
-        manga.genre = infoElement.select("tr:eq(5) > td:eq(1)").text().split(",").plusElement(category).joinToString { it.trim() }
-        manga.status = parseStatus(infoElement.select("tr:eq(4) > td:eq(1)").text())
-        manga.description = descElement.textNodes().first().text().trim()
-        manga.thumbnail_url = imgElement.attr("src")
-        return manga
-    }
-
-    private fun parseStatus(element: String): Int = when {
-        element.contains("перевод завершен") -> SManga.COMPLETED
-        element.contains("перевод продолжается") -> SManga.ONGOING
-        else -> SManga.UNKNOWN
-    }
-
-    override fun chapterListSelector() = "table.table_cha tr:gt(1)"
-
-    override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("a").first()
-
-        val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(urlElement.attr("href"))
-        chapter.name = urlElement.text()
-        chapter.date_upload = element.select("div.date").first()?.text()?.let {
-            SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(it)?.time ?: 0L
-        } ?: 0
-        return chapter
-    }
-
-    override fun pageListParse(response: Response): List<Page> {
-        val html = response.body!!.string()
-        val beginIndex = html.indexOf("fullimg\":[") + 10
-        val endIndex = html.indexOf(",]", beginIndex)
-        val trimmedHtml = html.substring(beginIndex, endIndex).replace("\"", "")
-        val pageUrls = trimmedHtml.split(',')
-
-        return pageUrls.mapIndexed { i, url -> Page(i, "", url) }
-    }
-
-    override fun pageListParse(document: Document): List<Page> {
-        throw Exception("Not used")
-    }
-
-    override fun imageUrlParse(document: Document) = ""
-
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Тэги", genres)
     private class Genre(name: String, val id: String = name.replace(' ', '_')) : Filter.TriState(name)
     private class Status : Filter.Select<String>("Статус", arrayOf("Все", "Перевод завершен", "Выпуск завершен", "Онгоинг", "Новые главы"))
@@ -246,10 +99,6 @@ class Mangachan : ParsedHttpSource() {
         GenreList(getGenreList())
     )
 
-    /* [...document.querySelectorAll("li.sidetag > a:nth-child(1)")]
-    *  .map(el => `Genre("${el.getAttribute('href').substr(6)}")`).join(',\n')
-    *  on https://mangachan.me/
-    */
     private fun getGenreList() = listOf(
         Genre("18_плюс"),
         Genre("bdsm"),

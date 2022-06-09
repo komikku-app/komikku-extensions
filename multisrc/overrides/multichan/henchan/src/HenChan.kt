@@ -1,47 +1,29 @@
 package eu.kanade.tachiyomi.extension.ru.henchan
 
 import android.annotation.SuppressLint
+import eu.kanade.tachiyomi.multisrc.multichan.MultiChan
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
-import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import java.net.URL
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
-class Henchan : ParsedHttpSource() {
+class HenChan : MultiChan("HenChan", "https://y.hentaichan.live", "ru"){
 
-    override val name = "Henchan"
-
-    override val baseUrl = "https://xxxx.hentaichan.live"
-
-    override val lang = "ru"
-
-    override val supportsLatest = true
-
-    override val client: OkHttpClient = network.client.newBuilder()
-        .rateLimit(2)
-        .build()
-
-    override fun popularMangaRequest(page: Int): Request =
-        GET("$baseUrl/mostfavorites&sort=manga?offset=${20 * (page - 1)}", headers)
-
-    override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/manga/new?offset=${20 * (page - 1)}", headers)
+    override val id: Long = 5504588601186153612
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
 
@@ -88,10 +70,6 @@ class Henchan : ParsedHttpSource() {
         return GET(url, headers)
     }
 
-    override fun popularMangaSelector() = "div.content_row"
-
-    override fun latestUpdatesSelector() = popularMangaSelector()
-
     override fun searchMangaSelector() = ".content_row:not(:has(div.item:containsOwn(Тип)))"
 
     private fun String.getHQThumbnail(): String {
@@ -103,33 +81,13 @@ class Henchan : ParsedHttpSource() {
     }
 
     override fun popularMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
+        val manga = super.popularMangaFromElement(element)
         manga.thumbnail_url = element.select("img").first().attr("src").getHQThumbnail()
-        manga.title = element.attr("title")
-        element.select("h2 > a").first().let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-        }
         return manga
     }
 
-    override fun latestUpdatesFromElement(element: Element): SManga =
-        popularMangaFromElement(element)
-
-    override fun searchMangaFromElement(element: Element): SManga =
-        popularMangaFromElement(element)
-
-    override fun popularMangaNextPageSelector() = "#pagination > a:contains(Вперед)"
-
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
-
-    override fun searchMangaNextPageSelector() = "#nextlink, ${popularMangaNextPageSelector()}"
-
     override fun mangaDetailsParse(document: Document): SManga {
-        val manga = SManga.create()
-        manga.title = document.select("title").text().substringBefore(" »")
-        manga.author = document.select(".row .item2 h2")[1].text()
-        manga.genre = document.select(".sidetag > a:eq(2)").joinToString { it.text() }
-        manga.description = document.select("#description").text().trim()
+        val manga = super.mangaDetailsParse(document)
         manga.thumbnail_url = document.select("img#cover").attr("abs:src").getHQThumbnail()
         return manga
     }
@@ -245,6 +203,7 @@ class Henchan : ParsedHttpSource() {
         }
         return GET(url, Headers.Builder().add("Accept", "image/webp,image/apng").build())
     }
+
     override fun pageListParse(response: Response): List<Page> {
         val html = response.body!!.string()
         val prefix = "fullimg\": ["
@@ -257,12 +216,6 @@ class Henchan : ParsedHttpSource() {
         val pageUrls = trimmedHtml.split(", ")
         return pageUrls.mapIndexed { i, url -> Page(i, "", url) }
     }
-
-    override fun pageListParse(document: Document): List<Page> {
-        throw Exception("Not used")
-    }
-
-    override fun imageUrlParse(document: Document) = ""
 
     private class Genre(val id: String, @SuppressLint("DefaultLocale") name: String = id.replace('_', ' ').capitalize()) : Filter.TriState(name)
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Тэги", genres)
