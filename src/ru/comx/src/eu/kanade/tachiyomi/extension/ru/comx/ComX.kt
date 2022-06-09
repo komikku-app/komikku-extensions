@@ -1,9 +1,9 @@
 package eu.kanade.tachiyomi.extension.ru.comx
 
-import android.webkit.CookieManager
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -17,14 +17,12 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.Cookie
-import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.Headers
-import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
@@ -37,48 +35,37 @@ class ComX : ParsedHttpSource() {
 
     private val json: Json by injectLazy()
 
-    override val name = "Com-x"
+    override val name = "Com-X"
 
     override val baseUrl = "https://com-x.life"
 
     override val lang = "ru"
 
     override val supportsLatest = true
-    private val cookieManager by lazy { CookieManager.getInstance() }
+
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .rateLimit(3)
-        .addNetworkInterceptor { chain ->
-            val originalRequest = chain.request()
-            val response = chain.proceed(originalRequest)
-            if (originalRequest.url.toString().contains(baseUrl) and (response.code == 404))
-                throw Exception("HTTP error ${response.code}. Возможно Antibot, попробуйте пройти капчу в WebView")
-            response
-        }
-        .cookieJar(object : CookieJar {
-            override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) =
-                cookies.filter { it.matches(url) }.forEach {
-                    cookieManager.setCookie(url.toString(), it.toString())
-                }
-
-            override fun loadForRequest(url: HttpUrl) =
-                cookieManager.getCookie(url.toString())?.split("; ")
-                    ?.mapNotNull { Cookie.parse(url, it) } ?: emptyList()
-        })
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/78.0")
-        .add("Referer", baseUrl + "/comix-read/")
+        .add("User-Agent", "Tachiyomi")
+        .add("Referer", baseUrl)
 
-    override fun popularMangaSelector() = "div.short"
-
-    override fun latestUpdatesSelector() = "ul#content-load li.latest"
-
-    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/comix-read/page/$page/", headers)
-
-    override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl, headers)
+    // Popular
+    override fun popularMangaRequest(page: Int): Request {
+        return POST(
+            "$baseUrl/comix-read/page/$page/",
+            body = FormBody.Builder()
+                .add("dlenewssortby", "rating")
+                .add("dledirection", "desc")
+                .add("set_new_sort", "dle_sort_cat_1")
+                .add("set_direction_sort", "dle_direction_cat_1")
+                .build(),
+            headers = headers
+        )
+    }
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
@@ -86,8 +73,10 @@ class ComX : ParsedHttpSource() {
         val mangas = document.select(popularMangaSelector()).map { element ->
             popularMangaFromElement(element)
         }
-        return MangasPage(mangas, document.select(".pagination__pages span").first().text().toInt() <= document.select(".pagination__pages a:last-child").first().text().toInt())
+        return MangasPage(mangas, mangas.size == 50)
     }
+
+    override fun popularMangaSelector() = "div.short"
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
@@ -98,14 +87,22 @@ class ComX : ParsedHttpSource() {
         }
         return manga
     }
+
+    override fun popularMangaNextPageSelector(): Nothing? = null
+
+    // Latest
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page/", headers)
+
     override fun latestUpdatesParse(response: Response): MangasPage {
         val document = response.asJsoup()
 
         val mangas = document.select(latestUpdatesSelector()).map { element ->
             latestUpdatesFromElement(element)
         }
-        return MangasPage(mangas, false)
+        return MangasPage(mangas, mangas.size == 24)
     }
+
+    override fun latestUpdatesSelector() = "ul#content-load li.latest"
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
@@ -116,63 +113,101 @@ class ComX : ParsedHttpSource() {
         }
         return manga
     }
-
-    override fun popularMangaNextPageSelector(): Nothing? = null
-
     override fun latestUpdatesNextPageSelector(): Nothing? = null
 
-    override fun searchMangaNextPageSelector(): Nothing? = null
-
+    // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        /** val url = "$baseUrl/index.php?do=xsearch&searchCat=comix-read&page=$page".toHttpUrlOrNull()!!.newBuilder()
-         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-         when (filter) {
-         is TypeList -> filter.state.forEach { type ->
-         if (type.state) {
-         url.addQueryParameter("field[type][${type.id}]", 1.toString())
-         }
-         }
-         is PubList -> filter.state.forEach { publisher ->
-         if (publisher.state) {
-         url.addQueryParameter("subCat[]", publisher.id)
-         }
-         }
-         is GenreList -> filter.state.forEach { genre ->
-         if (genre.state) {
-         url.addQueryParameter("field[genre][${genre.id}]", 1.toString())
-         }
-         }
-         }
-         }**/
         if (query.isNotEmpty()) {
             return POST(
-                "$baseUrl/index.php?do=search&search_start=$page",
+                "$baseUrl/index.php?do=search",
                 body = FormBody.Builder()
                     .add("do", "search")
                     .add("subaction", "search")
                     .add("story", query)
+                    .add("search_start", page.toString())
                     .build(),
                 headers = headers
             )
         }
-        return GET("$baseUrl/comix-read/", headers)
+        val mutableGenre = mutableListOf<String>()
+        val mutableType = mutableListOf<String>()
+        val mutableAge = mutableListOf<String>()
+        var orderBy = "rating"
+        var ascEnd = "desc"
+        var sectionPub = mutableListOf<String>()
+        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+            when (filter) {
+                is OrderBy -> {
+                    orderBy = arrayOf("date", "rating", "news_read", "comm_num", "title")[filter.state!!.index]
+                    ascEnd = if (filter.state!!.ascending) "asc" else "desc"
+                }
+                is AgeList -> filter.state.forEach { age ->
+                    if (age.state) {
+                        mutableAge += age.id
+                    }
+                }
+                is GenreList -> filter.state.forEach { genre ->
+                    if (genre.state) {
+                        mutableGenre += genre.id
+                    }
+                }
+                is TypeList -> filter.state.forEach { type ->
+                    if (type.state) {
+                        mutableType += type.id
+                    }
+                }
+                is PubList -> filter.state.forEach { publisher ->
+                    if (publisher.state) {
+                        sectionPub += publisher.id
+                    }
+                }
+            }
+        }
+
+        return POST(
+            "$baseUrl/ComicList/p.cat=${sectionPub.joinToString(",")}/g=${mutableGenre.joinToString(",")}/t=${mutableType.joinToString(",")}/adult=${mutableAge.joinToString(",")}/",
+            body = FormBody.Builder()
+                .add("dlenewssortby", orderBy)
+                .add("dledirection", ascEnd)
+                .add("set_new_sort", "dle_sort_xfilter")
+                .add("set_direction_sort", "dle_direction_xfilter")
+                .build(),
+            headers = headers
+        )
     }
 
     override fun searchMangaSelector() = popularMangaSelector()
-
+    override fun searchMangaParse(response: Response) = popularMangaParse(response)
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
+    override fun searchMangaNextPageSelector(): Nothing? = null
 
+    // Details
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select("div.page__grid").first()
 
+        val ratingValue = infoElement.select(".page__activity-votes").textNodes().first().text().trim().toFloat() * 2
+        val ratingVotes = infoElement.select(".page__activity-votes span > span").first().text().trim()
+        val ratingStar = when {
+            ratingValue > 9.5 -> "★★★★★"
+            ratingValue > 8.5 -> "★★★★✬"
+            ratingValue > 7.5 -> "★★★★☆"
+            ratingValue > 6.5 -> "★★★✬☆"
+            ratingValue > 5.5 -> "★★★☆☆"
+            ratingValue > 4.5 -> "★★✬☆☆"
+            ratingValue > 3.5 -> "★★☆☆☆"
+            ratingValue > 2.5 -> "★✬☆☆☆"
+            ratingValue > 1.5 -> "★☆☆☆☆"
+            ratingValue > 0.5 -> "✬☆☆☆☆"
+            else -> "☆☆☆☆☆"
+        }
+
         val manga = SManga.create()
-        manga.title = infoElement.select(".page__title-original").text().split(" | ").first()
+        manga.title = infoElement.select(".page__title-original").text().replace(" / ", " | ").split(" | ").first()
         manga.author = infoElement.select(".page__list li:contains(Издатель)").text()
         manga.genre = infoElement.select(".page__tags a").joinToString { it.text() }
         manga.status = parseStatus(infoElement.select(".page__list li:contains(Статус)").text())
 
-        manga.description = infoElement.select(".page__text ").text()
-
+        manga.description = infoElement.select(".page__header h1").text().replace(" / ", " | ").split(" | ").first() + "\n" + ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" + Jsoup.parse(infoElement.select(".page__text ").first().html().replace("<br>", "REPLACbR")).text().replace("REPLACbR", "\n")
         val src = infoElement.select(".img-wide img").attr("src")
         if (src.contains("://")) {
             manga.thumbnail_url = src
@@ -194,10 +229,13 @@ class ComX : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
 
+    // Chapters
     override fun chapterListSelector() = throw NotImplementedError("Unused")
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
+        if (document.toString().contains("ВНИМАНИЕ! 18+") && document.select(".login__title.stretch-free-width.ws-nowrap").first().text().contains("Войти"))
+            throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
         val dataStr = document
             .toString()
             .substringAfter("window.__DATA__ = ")
@@ -229,6 +267,7 @@ class ComX : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter =
         throw NotImplementedError("Unused")
 
+    // Pages
     override fun pageListParse(response: Response): List<Page> {
         val html = response.body!!.string()
         val baseImgUrl = "https://img.com-x.life/comix/"
@@ -260,103 +299,178 @@ class ComX : ParsedHttpSource() {
     override fun imageRequest(page: Page): Request {
         return GET(page.imageUrl!!, headers)
     }
-    /**
-     private class CheckFilter(name: String, val id: String) : Filter.CheckBox(name)
 
-     private class TypeList(types: List<CheckFilter>) : Filter.Group<CheckFilter>("Тип выпуска", types)
-     private class PubList(publishers: List<CheckFilter>) : Filter.Group<CheckFilter>("Разделы", publishers)
-     private class GenreList(genres: List<CheckFilter>) : Filter.Group<CheckFilter>("Жанры", genres)
+    // Filters
+    private class OrderBy : Filter.Sort(
+        "Сортировать по",
+        arrayOf("Дате", "Популярности", "Посещаемости", "Комментариям", "Алфавиту"),
+        Selection(1, false)
+    )
 
-     override fun getFilterList() = FilterList(
-     TypeList(getTypeList()),
-     PubList(getPubList()),
-     GenreList(getGenreList()),
-     )
+    private class CheckFilter(name: String, val id: String) : Filter.CheckBox(name)
 
-     private fun getTypeList() = listOf(
-     CheckFilter("Лимитка", "1"),
-     CheckFilter("Ван шот", "2"),
-     CheckFilter("Графический Роман", "3"),
-     CheckFilter("Онгоинг", "4"),
-     )
+    private class PubList(publishers: List<CheckFilter>) : Filter.Group<CheckFilter>("Разделы", publishers)
+    private class GenreList(genres: List<CheckFilter>) : Filter.Group<CheckFilter>("Жанры", genres)
+    private class TypeList(types: List<CheckFilter>) : Filter.Group<CheckFilter>("Тип выпуска", types)
+    private class AgeList(ages: List<CheckFilter>) : Filter.Group<CheckFilter>("Возрастное ограничение", ages)
 
-     private fun getPubList() = listOf(
-     CheckFilter("Marvel", "2"),
-     CheckFilter("DC Comics", "14"),
-     CheckFilter("Dark Horse", "7"),
-     CheckFilter("IDW Publishing", "6"),
-     CheckFilter("Image", "4"),
-     CheckFilter("Vertigo", "8"),
-     CheckFilter("Dynamite Entertainment", "10"),
-     CheckFilter("Wildstorm", "5"),
-     CheckFilter("Avatar Press", "11"),
-     CheckFilter("Boom! Studios", "12"),
-     CheckFilter("Top Cow", "9"),
-     CheckFilter("Oni Press", "13"),
-     CheckFilter("Valiant", "15"),
-     CheckFilter("Icon Comics", "16"),
-     CheckFilter("Manga", "3"),
-     CheckFilter("Manhua", "45"),
-     CheckFilter("Manhwa", "44"),
-     CheckFilter("Разные комиксы", "18")
-     )
+    override fun getFilterList() = FilterList(
+        OrderBy(),
+        PubList(getPubList()),
+        GenreList(getGenreList()),
+        TypeList(getTypeList()),
+        AgeList(getAgeList()),
+    )
 
-     private fun getGenreList() = listOf(
-     CheckFilter("Sci-Fi", "2"),
-     CheckFilter("Антиутопия", "3"),
-     CheckFilter("Апокалипсис", "4"),
-     CheckFilter("Боевик", "5"),
-     CheckFilter("Боевые искусства", "6"),
-     CheckFilter("Вампиры", "7"),
-     CheckFilter("Вестерн", "8"),
-     CheckFilter("Военный", "9"),
-     CheckFilter("Детектив", "10"),
-     CheckFilter("Драма", "11"),
-     CheckFilter("Зомби", "12"),
-     CheckFilter("Игры", "13"),
-     CheckFilter("Исекай", "14"),
-     CheckFilter("Исторический", "15"),
-     CheckFilter("Киберпанк", "16"),
-     CheckFilter("Комедия", "17"),
-     CheckFilter("Космоопера", "18"),
-     CheckFilter("Космос", "19"),
-     CheckFilter("Криминал", "20"),
-     CheckFilter("МелоДрама", "21"),
-     CheckFilter("Мистика", "22"),
-     CheckFilter("Научная Фантастика", "23"),
-     CheckFilter("Неотвратимость", "24"),
-     CheckFilter("Нуар", "25"),
-     CheckFilter("Паника", "26"),
-     CheckFilter("Пародия", "27"),
-     CheckFilter("Повседневность", "28"),
-     CheckFilter("Постапокалиптика", "29"),
-     CheckFilter("ПредательСредиНас", "30"),
-     CheckFilter("Приключения", "31"),
-     CheckFilter("Путешествия во времени", "32"),
-     CheckFilter("Сверхъестественное", "33"),
-     CheckFilter("Слэшер", "34"),
-     CheckFilter("Смерть", "35"),
-     CheckFilter("Супергерои", "36"),
-     CheckFilter("Супергероика", "37"),
-     CheckFilter("Сёнен", "38"),
-     CheckFilter("Тревога", "39"),
-     CheckFilter("Триллер", "40"),
-     CheckFilter("Ужасы", "41"),
-     CheckFilter("Фантасмагория", "42"),
-     CheckFilter("Фантастика", "43"),
-     CheckFilter("Фэнтези", "44"),
-     CheckFilter("Экшен", "45"),
-     CheckFilter("Экшн", "46"),
-     CheckFilter("Эротика", "47"),
-     CheckFilter("сэйнэн", "66"),
-     CheckFilter("сёдзё", "67"),
-     CheckFilter("сёнэн", "68"),
-     CheckFilter("сёнэн-ай", "69"),
-     CheckFilter("трагедия", "70"),
-     CheckFilter("фэнтези", "73"),
-     CheckFilter("школа", "74"),
-     CheckFilter("этти", "76"),
-     CheckFilter("яой", "77"),
+    private fun getAgeList() = listOf(
+        CheckFilter("Для всех", "1"),
+        CheckFilter("18+", "2")
+    )
 
-     )**/
+    private fun getTypeList() = listOf(
+        CheckFilter("События в комиксах", "1"),
+        CheckFilter("Аннуалы", "3"),
+        CheckFilter("Артбук", "4"),
+        CheckFilter("Ван-шот", "7"),
+        CheckFilter("Гайд", "15"),
+        CheckFilter("Графический Роман", "17"),
+        CheckFilter("Комикс Стрип", "19"),
+        CheckFilter("Лимитка", "21"),
+        CheckFilter("Макси-серия", "25"),
+        CheckFilter("Мини-серия", "27"),
+        CheckFilter("Онгоинг", "28"),
+        CheckFilter("Рассказ", "29"),
+        CheckFilter("Роман", "30"),
+        CheckFilter("Сборник", "31"),
+        CheckFilter("Серия", "32"),
+        CheckFilter("Спешл", "35"),
+        CheckFilter("Энциклопедия", "36"),
+    )
+
+    private fun getPubList() = listOf(
+        CheckFilter("Manga", "3"),
+        CheckFilter("Manhua", "45"),
+        CheckFilter("Manhwa", "44"),
+        CheckFilter("Aftershock", "50"),
+        CheckFilter("Avatar Press", "11"),
+        CheckFilter("Boom! Studios", "12"),
+        CheckFilter("Dark Horse", "7"),
+        CheckFilter("DC Comics", "14"),
+        CheckFilter("Dynamite Entertainment", "10"),
+        CheckFilter("Icon Comics", "16"),
+        CheckFilter("IDW Publishing", "6"),
+        CheckFilter("Image", "4"),
+        CheckFilter("Marvel", "2"),
+        CheckFilter("Oni Press", "13"),
+        CheckFilter("Top Cow", "9"),
+        CheckFilter("Valiant", "15"),
+        CheckFilter("Vertigo", "8"),
+        CheckFilter("Wildstorm", "5"),
+        CheckFilter("Zenescope", "51"),
+        CheckFilter("Разные комиксы", "18"),
+    )
+
+    private fun getGenreList() = listOf(
+        CheckFilter("Автобиографическая новелла", "9"),
+        CheckFilter("Альтернативная история", "10"),
+        CheckFilter("Антиутопия", "11"),
+        CheckFilter("Апокалипсис", "12"),
+        CheckFilter("Артбук", "14"),
+        CheckFilter("Афрофутуризм", "15"),
+        CheckFilter("Биография", "16"),
+        CheckFilter("Боевик", "17"),
+        CheckFilter("Боевые искусства", "18"),
+        CheckFilter("Вампиры", "19"),
+        CheckFilter("Вестерн", "20"),
+        CheckFilter("Военный", "21"),
+        CheckFilter("Гарем", "22"),
+        CheckFilter("Гендерная интрига", "23"),
+        CheckFilter("Героическое фэнтези", "24"),
+        CheckFilter("Детектив", "25"),
+        CheckFilter("Детский", "26"),
+        CheckFilter("Дзёсэй", "27"),
+        CheckFilter("Документальный", "28"),
+        CheckFilter("Драма", "29"),
+        CheckFilter("Единоборства", "30"),
+        CheckFilter("Жизнь", "31"),
+        CheckFilter("Зомби", "32"),
+        CheckFilter("Игра", "33"),
+        CheckFilter("Игры", "124"),
+        CheckFilter("Исекай", "35"),
+        CheckFilter("Исэкай", "38"),
+        CheckFilter("Исторический", "36"),
+        CheckFilter("История", "37"),
+        CheckFilter("Квест", "39"),
+        CheckFilter("Киберпанк", "40"),
+        CheckFilter("Кодомо", "41"),
+        CheckFilter("Комедия", "42"),
+        CheckFilter("Комелия", "43"),
+        CheckFilter("Космоопера", "44"),
+        CheckFilter("Космос", "45"),
+        CheckFilter("Криминал", "46"),
+        CheckFilter("Криптоистория", "47"),
+        CheckFilter("ЛГБТ", "48"),
+        CheckFilter("Магия", "49"),
+        CheckFilter("Мелодрама", "50"),
+        CheckFilter("Меха", "51"),
+        CheckFilter("Мистика", "52"),
+        CheckFilter("Музыка", "54"),
+        CheckFilter("Научная фантастика", "55"),
+        CheckFilter("Неотвратимость", "56"),
+        CheckFilter("Нуар", "57"),
+        CheckFilter("Омегаверс", "58"),
+        CheckFilter("Паника", "59"),
+        CheckFilter("Пародия", "60"),
+        CheckFilter("Пираты", "61"),
+        CheckFilter("Повседневность", "62"),
+        CheckFilter("Политика", "63"),
+        CheckFilter("Постапокалиптика", "64"),
+        CheckFilter("Предатель среди нас", "65"),
+        CheckFilter("Приключения", "67"),
+        CheckFilter("Приступления", "69"),
+        CheckFilter("Психические отклонения", "70"),
+        CheckFilter("Психоделика", "71"),
+        CheckFilter("Психология", "73"),
+        CheckFilter("Путешествия во времени", "74"),
+        CheckFilter("Религия", "75"),
+        CheckFilter("Романтика", "76"),
+        CheckFilter("Самурайский боевик", "77"),
+        CheckFilter("Сверхъестественное", "78"),
+        CheckFilter("Сейнен", "79"),
+        CheckFilter("Симбиоты", "80"),
+        CheckFilter("Сказка", "81"),
+        CheckFilter("Слэшер", "82"),
+        CheckFilter("Смерть", "83"),
+        CheckFilter("Спорт", "84"),
+        CheckFilter("Стимпанк", "85"),
+        CheckFilter("Супергероика", "87"),
+        CheckFilter("Сэйнэн", "90"),
+        CheckFilter("Сянься", "91"),
+        CheckFilter("Сёдзё", "93"),
+        CheckFilter("Сёдзё-ай", "94"),
+        CheckFilter("Сёнэн", "96"),
+        CheckFilter("Сёнэн-ай", "97"),
+        CheckFilter("Трагедия", "98"),
+        CheckFilter("Тревога", "99"),
+        CheckFilter("Триллер", "100"),
+        CheckFilter("Тюремная драма", "101"),
+        CheckFilter("Ужасы", "102"),
+        CheckFilter("Фантасмагория", "103"),
+        CheckFilter("Фантасмогория", "104"),
+        CheckFilter("Фантастика", "105"),
+        CheckFilter("Фэнтези", "106"),
+        CheckFilter("Хоррор", "109"),
+        CheckFilter("Черный юмор", "110"),
+        CheckFilter("Школа", "111"),
+        CheckFilter("Школьная жизнь", "123"),
+        CheckFilter("Шпионский", "113"),
+        CheckFilter("Экшен", "122"),
+        CheckFilter("Экшн", "115"),
+        CheckFilter("Эротика", "116"),
+        CheckFilter("Этти", "117"),
+        CheckFilter("Юмор", "118"),
+        CheckFilter("Юри", "119"),
+        CheckFilter("Яой", "120"),
+        CheckFilter("Ёнкома", "121"),
+    )
 }
