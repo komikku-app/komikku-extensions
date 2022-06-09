@@ -27,6 +27,70 @@ class MangaDexFilters {
         fun addQueryParameter(url: HttpUrl.Builder, dexLang: String)
     }
 
+    private class HasAvailableChaptersFilter(intl: MangaDexIntl) :
+        Filter.CheckBox(intl.hasAvailableChapters),
+        UrlQueryFilter {
+
+        override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
+            if (state) {
+                url.addQueryParameter("hasAvailableChapters", "true")
+                url.addQueryParameter("availableTranslatedLanguage[]", dexLang)
+            }
+        }
+    }
+
+    private class OriginalLanguage(name: String, val isoCode: String) : Filter.CheckBox(name)
+    private class OriginalLanguageList(intl: MangaDexIntl, originalLanguage: List<OriginalLanguage>) :
+        Filter.Group<OriginalLanguage>(intl.originalLanguage, originalLanguage),
+        UrlQueryFilter {
+
+        override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
+            state.forEach { lang ->
+                if (lang.state) {
+                    // dex has zh and zh-hk for chinese manhua
+                    if (lang.isoCode == MDConstants.originalLanguagePrefValChinese) {
+                        url.addQueryParameter(
+                            "originalLanguage[]",
+                            MDConstants.originalLanguagePrefValChineseHk
+                        )
+                    }
+
+                    url.addQueryParameter("originalLanguage[]", lang.isoCode)
+                }
+            }
+        }
+    }
+
+    private fun getOriginalLanguage(preferences: SharedPreferences, dexLang: String, intl: MangaDexIntl): List<OriginalLanguage> {
+        val originalLanguages = preferences.getStringSet(
+            MDConstants.getOriginalLanguagePrefKey(dexLang),
+            setOf()
+        )!!
+
+        return listOf(
+            OriginalLanguage(intl.originalLanguageFilterJapanese, MDConstants.originalLanguagePrefValJapanese)
+                .apply { state = MDConstants.originalLanguagePrefValJapanese in originalLanguages },
+            OriginalLanguage(intl.originalLanguageFilterChinese, MDConstants.originalLanguagePrefValChinese)
+                .apply { state = MDConstants.originalLanguagePrefValChinese in originalLanguages },
+            OriginalLanguage(intl.originalLanguageFilterKorean, MDConstants.originalLanguagePrefValKorean)
+                .apply { state = MDConstants.originalLanguagePrefValKorean in originalLanguages },
+        )
+    }
+
+    private class ContentRating(name: String, val value: String) : Filter.CheckBox(name)
+    private class ContentRatingList(intl: MangaDexIntl, contentRating: List<ContentRating>) :
+        Filter.Group<ContentRating>(intl.contentRating, contentRating),
+        UrlQueryFilter {
+
+        override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
+            state.forEach { rating ->
+                if (rating.state) {
+                    url.addQueryParameter("contentRating[]", rating.value)
+                }
+            }
+        }
+    }
+
     private fun getContentRating(preferences: SharedPreferences, dexLang: String, intl: MangaDexIntl): List<ContentRating> {
         val contentRatings = preferences.getStringSet(
             MDConstants.getContentRatingPrefKey(dexLang),
@@ -95,56 +159,39 @@ class MangaDexFilters {
         Status(intl.statusCancelled, "cancelled"),
     )
 
-    private class ContentRating(name: String, val value: String) : Filter.CheckBox(name)
-    private class ContentRatingList(intl: MangaDexIntl, contentRating: List<ContentRating>) :
-        Filter.Group<ContentRating>(intl.contentRating, contentRating),
+    data class Sortable(val title: String, val value: String) {
+        override fun toString(): String = title
+    }
+
+    private fun getSortables(intl: MangaDexIntl) = arrayOf(
+        Sortable(intl.sortAlphabetic, "title"),
+        Sortable(intl.sortChapterUploadedAt, "latestUploadedChapter"),
+        Sortable(intl.sortNumberOfFollows, "followedCount"),
+        Sortable(intl.sortContentCreatedAt, "createdAt"),
+        Sortable(intl.sortContentInfoUpdatedAt, "updatedAt"),
+        Sortable(intl.sortRelevance, "relevance"),
+        Sortable(intl.sortYear, "year")
+    )
+
+    class SortFilter(intl: MangaDexIntl, private val sortables: Array<Sortable>) :
+        Filter.Sort(
+            intl.sort,
+            sortables.map(Sortable::title).toTypedArray(),
+            Selection(5, false)
+        ),
         UrlQueryFilter {
 
         override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
-            state.forEach { rating ->
-                if (rating.state) {
-                    url.addQueryParameter("contentRating[]", rating.value)
+            if (state != null) {
+                val query = sortables[state!!.index].value
+                val value = when (state!!.ascending) {
+                    true -> "asc"
+                    false -> "desc"
                 }
+
+                url.addQueryParameter("order[$query]", value)
             }
         }
-    }
-
-    private class OriginalLanguage(name: String, val isoCode: String) : Filter.CheckBox(name)
-    private class OriginalLanguageList(intl: MangaDexIntl, originalLanguage: List<OriginalLanguage>) :
-        Filter.Group<OriginalLanguage>(intl.originalLanguage, originalLanguage),
-        UrlQueryFilter {
-
-        override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
-            state.forEach { lang ->
-                if (lang.state) {
-                    // dex has zh and zh-hk for chinese manhua
-                    if (lang.isoCode == MDConstants.originalLanguagePrefValChinese) {
-                        url.addQueryParameter(
-                            "originalLanguage[]",
-                            MDConstants.originalLanguagePrefValChineseHk
-                        )
-                    }
-
-                    url.addQueryParameter("originalLanguage[]", lang.isoCode)
-                }
-            }
-        }
-    }
-
-    private fun getOriginalLanguage(preferences: SharedPreferences, dexLang: String, intl: MangaDexIntl): List<OriginalLanguage> {
-        val originalLanguages = preferences.getStringSet(
-            MDConstants.getOriginalLanguagePrefKey(dexLang),
-            setOf()
-        )!!
-
-        return listOf(
-            OriginalLanguage(intl.originalLanguageFilterJapanese, MDConstants.originalLanguagePrefValJapanese)
-                .apply { state = MDConstants.originalLanguagePrefValJapanese in originalLanguages },
-            OriginalLanguage(intl.originalLanguageFilterChinese, MDConstants.originalLanguagePrefValChinese)
-                .apply { state = MDConstants.originalLanguagePrefValChinese in originalLanguages },
-            OriginalLanguage(intl.originalLanguageFilterKorean, MDConstants.originalLanguagePrefValKorean)
-                .apply { state = MDConstants.originalLanguagePrefValKorean in originalLanguages },
-        )
     }
 
     internal class Tag(val id: String, name: String) : Filter.TriState(name)
@@ -223,7 +270,6 @@ class MangaDexFilters {
         return tags.sortIfTranslated(intl)
     }
 
-    // to get all tags from dex https://api.mangadex.org/manga/tag
     internal fun getThemes(intl: MangaDexIntl): List<Tag> {
         val tags = listOf(
             Tag("e64f6742-c834-471d-8d72-dd51fc02b835", intl.themeAliens),
@@ -269,6 +315,7 @@ class MangaDexFilters {
         return tags.sortIfTranslated(intl)
     }
 
+    // to get all tags from dex https://api.mangadex.org/manga/tag
     internal fun getTags(intl: MangaDexIntl): List<Tag> {
         return getContents(intl) + getFormats(intl) + getGenres(intl) + getThemes(intl)
     }
@@ -297,53 +344,6 @@ class MangaDexFilters {
 
         override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
             url.addQueryParameter("excludedTagsMode", values[state].value)
-        }
-    }
-
-    data class Sortable(val title: String, val value: String) {
-        override fun toString(): String = title
-    }
-
-    private fun getSortables(intl: MangaDexIntl) = arrayOf(
-        Sortable(intl.sortAlphabetic, "title"),
-        Sortable(intl.sortChapterUploadedAt, "latestUploadedChapter"),
-        Sortable(intl.sortNumberOfFollows, "followedCount"),
-        Sortable(intl.sortContentCreatedAt, "createdAt"),
-        Sortable(intl.sortContentInfoUpdatedAt, "updatedAt"),
-        Sortable(intl.sortRelevance, "relevance"),
-        Sortable(intl.sortYear, "year")
-    )
-
-    class SortFilter(intl: MangaDexIntl, private val sortables: Array<Sortable>) :
-        Filter.Sort(
-            intl.sort,
-            sortables.map(Sortable::title).toTypedArray(),
-            Selection(2, false)
-        ),
-        UrlQueryFilter {
-
-        override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
-            if (state != null) {
-                val query = sortables[state!!.index].value
-                val value = when (state!!.ascending) {
-                    true -> "asc"
-                    false -> "desc"
-                }
-
-                url.addQueryParameter("order[$query]", value)
-            }
-        }
-    }
-
-    private class HasAvailableChaptersFilter(intl: MangaDexIntl) :
-        Filter.CheckBox(intl.hasAvailableChapters),
-        UrlQueryFilter {
-
-        override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
-            if (state) {
-                url.addQueryParameter("hasAvailableChapters", "true")
-                url.addQueryParameter("availableTranslatedLanguage[]", dexLang)
-            }
         }
     }
 

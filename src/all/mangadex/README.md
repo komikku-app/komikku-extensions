@@ -20,6 +20,19 @@ JSON backups are now unusable due to the ID change. You will have to manually re
 
 ## Guides
 
+### What does the Status of a Manga in Tachiyomi mean?
+
+Please refer to the following table
+
+| Status in Tachiyomi | in MangaDex            | Remarks |
+|---------------------|------------------------|---------|
+| Ongoing             | Publication: Ongoing   |         |
+| Cancelled           | Publication: Cancelled | This title was abruptly stopped and will not resume |
+| Publishing Finished | Publication: Completed | The title is finished in its original language. However, Translations remain |
+| On_Hiatus           | Publication: Hiatus    | The title is not currently receiving any new chapters |
+| Completed           | Completed/Cancelled    | All chapters are translated and available |
+| Unknown             | Unknown                | There is no info about the Status of this Entry |
+
 ### How can I block particular Scanlator Groups?
 
 The **MangaDex** extension allows blocking **Scanlator Groups**. Chapters uploaded by a **Blocked Scanlator Group** will not show up in **Latest** or in **Manga feed** (chapters list). For now, you can only block Groups by entering their UUIDs manually.
