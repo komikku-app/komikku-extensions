@@ -532,40 +532,7 @@ abstract class LibGroup(
         return POST(url.toString(), catalogHeaders())
     }
 
-    // Hack search method to add some results from search popup
-    override fun searchMangaParse(response: Response): MangasPage {
-        val searchRequest = response.request.url.queryParameter("name")
-        val mangas = mutableListOf<SManga>()
-
-        if (!searchRequest.isNullOrEmpty()) {
-            val popupSearchHeaders = headers
-                .newBuilder()
-                .add("Accept", "application/json, text/plain, */*")
-                .add("X-Requested-With", "XMLHttpRequest")
-                .build()
-
-            // +200ms
-            val popup = client.newCall(
-                GET("$baseUrl/search?query=$searchRequest", popupSearchHeaders)
-            )
-                .execute().body!!.string()
-
-            val jsonList = json.decodeFromString<JsonArray>(popup)
-            jsonList.forEach {
-                mangas.add(popularMangaFromElement(it))
-            }
-        }
-        val searchedMangas = popularMangaParse(response)
-
-        // Filtered out what find in popup search
-        mangas.addAll(
-            searchedMangas.mangas.filter { search ->
-                mangas.find { search.title == it.title } == null
-            }
-        )
-
-        return MangasPage(mangas, searchedMangas.hasNextPage)
-    }
+    override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
 
     // Filters
     private class SearchFilter(name: String, val id: String) : Filter.TriState(name)
