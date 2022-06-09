@@ -16,7 +16,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.util.concurrent.TimeUnit
 
-class KomikCast : WPMangaStream("Komik Cast", "https://komikcast.com", "id") {
+class KomikCast : WPMangaStream("Komik Cast", "https://komikcast.me", "id") {
     // Formerly "Komik Cast (WP Manga Stream)"
     override val id = 972717448578983812
 
