@@ -30,11 +30,6 @@ jobs:
           java-version: 11
           distribution: adopt
 
-      - name: Copy CI files
-        run: |
-          mkdir -p ~/.gradle
-          cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
-
       - name: Generate multisrc sources
         uses: gradle/gradle-command-action@v2
         with:
@@ -82,11 +77,6 @@ jobs:
           java-version: 11
           distribution: adopt
 
-      - name: Copy CI files
-        run: |
-          mkdir -p ~/.gradle
-          cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
-
       - name: Generate sources from the multi-source library
         uses: gradle/gradle-command-action@v2
         env:
@@ -119,11 +109,6 @@ jobs:
         with:
           java-version: 11
           distribution: adopt
-
-      - name: Copy CI files
-        run: |
-          mkdir -p ~/.gradle
-          cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
 
       - name: Build extensions (chunk ${{ matrix.chunk }})
         uses: gradle/gradle-command-action@v2

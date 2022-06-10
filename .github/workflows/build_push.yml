@@ -38,11 +38,6 @@ jobs:
           java-version: 11
           distribution: adopt
 
-      - name: Copy CI files
-        run: |
-          mkdir -p ~/.gradle
-          cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
-
       - name: Generate multisrc sources
         uses: gradle/gradle-command-action@v2
         with:
@@ -90,10 +85,8 @@ jobs:
           java-version: 11
           distribution: adopt
 
-      - name: Copy CI files
+      - name: Prepare signing key
         run: |
-          mkdir -p ~/.gradle
-          cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
           echo ${{ secrets.SIGNING_KEY }} | base64 -d > signingkey.jks
 
       - name: Generate sources from the multi-source library
@@ -141,10 +134,8 @@ jobs:
           java-version: 11
           distribution: adopt
 
-      - name: Copy CI files
+      - name: Prepare signing key
         run: |
-          mkdir -p ~/.gradle
-          cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
           echo ${{ secrets.SIGNING_KEY }} | base64 -d > signingkey.jks
 
       - name: Build extensions (chunk ${{ matrix.chunk }})
