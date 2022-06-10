@@ -148,7 +148,8 @@ abstract class GroupLe(
     private fun parseStatus(element: String): Int = when {
         element.contains("Запрещена публикация произведения по копирайту") || element.contains("ЗАПРЕЩЕНА К ПУБЛИКАЦИИ НА ТЕРРИТОРИИ РФ!") -> SManga.LICENSED
         element.contains("<b>Перевод:</b> продолжается") -> SManga.ONGOING
-        element.contains("<b>Сингл</b>") || element.contains("<b>Перевод:</b> завер") -> SManga.COMPLETED
+        element.contains("<b>Сингл</b>") || element.contains("<b>Перевод:</b> завер") || element.contains("<b>Перевод:</b> переведено") -> SManga.COMPLETED
+        element.contains("<b>Перевод:</b> приостановлен") -> SManga.ON_HIATUS
         else -> SManga.UNKNOWN
     }
 
@@ -247,7 +248,7 @@ abstract class GroupLe(
         var i = 0
         while (m.find()) {
             val urlParts = m.group().replace("[\"\']+".toRegex(), "").split(',')
-            val url = if (urlParts[1].isEmpty() && urlParts[2].startsWith("/static/")) {
+            var url = if (urlParts[1].isEmpty() && urlParts[2].startsWith("/static/")) {
                 baseUrl + urlParts[2]
             } else {
                 if (urlParts[1].endsWith("/manga/")) {
@@ -256,6 +257,8 @@ abstract class GroupLe(
                     urlParts[1] + urlParts[0] + urlParts[2]
                 }
             }
+            if (!url.contains("://"))
+                url = "https:$url"
             pages.add(Page(i++, "", url))
         }
         return pages
