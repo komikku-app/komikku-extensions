@@ -54,18 +54,7 @@ class ComX : ParsedHttpSource() {
         .add("Referer", baseUrl)
 
     // Popular
-    override fun popularMangaRequest(page: Int): Request {
-        return POST(
-            "$baseUrl/comix-read/page/$page/",
-            body = FormBody.Builder()
-                .add("dlenewssortby", "rating")
-                .add("dledirection", "desc")
-                .add("set_new_sort", "dle_sort_cat_1")
-                .add("set_direction_sort", "dle_direction_cat_1")
-                .build(),
-            headers = headers
-        )
-    }
+    override fun popularMangaRequest(page: Int): Request = searchMangaRequest(page, "", getFilterList())
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
@@ -73,7 +62,8 @@ class ComX : ParsedHttpSource() {
         val mangas = document.select(popularMangaSelector()).map { element ->
             popularMangaFromElement(element)
         }
-        return MangasPage(mangas, mangas.size == 50)
+
+        return MangasPage(mangas, mangas.isNotEmpty())
     }
 
     override fun popularMangaSelector() = "div.short"
@@ -99,7 +89,7 @@ class ComX : ParsedHttpSource() {
         val mangas = document.select(latestUpdatesSelector()).map { element ->
             latestUpdatesFromElement(element)
         }
-        return MangasPage(mangas, mangas.size == 24)
+        return MangasPage(mangas, mangas.isNotEmpty())
     }
 
     override fun latestUpdatesSelector() = "ul#content-load li.latest"
@@ -163,9 +153,9 @@ class ComX : ParsedHttpSource() {
                 }
             }
         }
-
+        val pageParameter = if (page > 1) "page/$page/" else ""
         return POST(
-            "$baseUrl/ComicList/p.cat=${sectionPub.joinToString(",")}/g=${mutableGenre.joinToString(",")}/t=${mutableType.joinToString(",")}/adult=${mutableAge.joinToString(",")}/",
+            "$baseUrl/ComicList/p.cat=${sectionPub.joinToString(",")}/g=${mutableGenre.joinToString(",")}/t=${mutableType.joinToString(",")}/adult=${mutableAge.joinToString(",")}/$pageParameter",
             body = FormBody.Builder()
                 .add("dlenewssortby", orderBy)
                 .add("dledirection", ascEnd)
