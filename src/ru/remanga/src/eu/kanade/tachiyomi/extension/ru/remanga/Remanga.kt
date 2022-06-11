@@ -8,7 +8,6 @@ import MangaDetDto
 import MyLibraryDto
 import PageDto
 import PageWrapperDto
-import PageWrapperDtoNoLimit
 import SeriesWrapperDto
 import TagsDto
 import UserDto
@@ -122,15 +121,9 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/api/titles/last-chapters/?page=$page&count=$count", headers)
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/api/search/catalog/?ordering=-chapter_date&count=$count&page=$page", headers)
 
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        val page = json.decodeFromString<PageWrapperDtoNoLimit<LibraryDto>>(response.body!!.string())
-        val mangas = page.content.map {
-            it.toSManga()
-        }
-        return MangasPage(mangas, mangas.isNotEmpty())
-    }
+    override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
     override fun searchMangaParse(response: Response): MangasPage {
         if (response.request.url.toString().contains("/bookmarks/")) {
@@ -233,11 +226,12 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     private fun parseStatus(status: Int): Int {
         return when (status) {
-            0 -> SManga.COMPLETED
-            1 -> SManga.ONGOING
-            2 -> SManga.ONGOING
-            3 -> SManga.ONGOING
-            5 -> SManga.LICENSED
+            0 -> SManga.COMPLETED // Закончен
+            1 -> SManga.ONGOING // Продолжается
+            2 -> SManga.ON_HIATUS // Заморожен
+            3 -> SManga.ON_HIATUS // Нет переводчика
+            4 -> SManga.ONGOING // Анонс
+            5 -> SManga.LICENSED // Лицензировано
             else -> SManga.UNKNOWN
         }
     }

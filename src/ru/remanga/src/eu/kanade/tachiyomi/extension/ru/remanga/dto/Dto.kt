@@ -72,11 +72,6 @@ data class PageWrapperDto<T>(
 )
 
 @Serializable
-data class PageWrapperDtoNoLimit<T>(
-    val content: List<T>
-)
-
-@Serializable
 data class SeriesWrapperDto<T>(
     val content: T
 )
