@@ -22,7 +22,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Kanzenin", "https://kanzenin.xyz", "id", isNsfw = true),
         SingleLang("KlanKomik", "https://klankomik.com", "id", overrideVersionCode = 1),
         SingleLang("Komik AV", "https://komikav.com", "id", overrideVersionCode = 1),
-        SingleLang("Komik Cast", "https://komikcast.me", "id", overrideVersionCode = 11),
+        SingleLang("Komik Cast", "https://komikcast.me", "id", overrideVersionCode = 12),
         SingleLang("Komik Station", "https://komikstation.co", "id", overrideVersionCode = 3),
         SingleLang("KomikIndo.co", "https://komikindo.co", "id", className = "KomikindoCo", overrideVersionCode = 3),
         SingleLang("Kuma Scans (Kuma Translation)", "https://kumascans.com", "en", className = "KumaScans", overrideVersionCode = 1),
