@@ -34,6 +34,7 @@ class BilibiliComicsFactory : SourceFactory {
         BilibiliComicsEn(),
         BilibiliComicsCn(),
         BilibiliComicsId(),
+        BilibiliComicsEs()
     )
 }
 
@@ -323,5 +324,30 @@ class BilibiliComicsId : BilibiliComics(BilibiliIntl.INDONESIAN) {
         BilibiliTag("Menegangkan", 41),
         BilibiliTag("Remaja", 20),
         BilibiliTag("Romantis", 13)
+    )
+}
+
+class BilibiliComicsEs : BilibiliComics(BilibiliIntl.SPANISH) {
+
+    override fun getAllGenres(): Array<BilibiliTag> = arrayOf(
+        BilibiliTag("Todos", -1),
+        BilibiliTag("Adolescencia", 105),
+        BilibiliTag("BL", 3),
+        BilibiliTag("Ciberdeportes", 104),
+        BilibiliTag("Ciencia ficción", 8),
+        BilibiliTag("Comedia", 14),
+        BilibiliTag("Fantasía occidental", 106),
+        BilibiliTag("Fantasía", 11),
+        BilibiliTag("Ficción Realista", 116),
+        BilibiliTag("GL", 16),
+        BilibiliTag("Histórico", 12),
+        BilibiliTag("Horror", 23),
+        BilibiliTag("Juvenil", 20),
+        BilibiliTag("Moderno", 111),
+        BilibiliTag("Oriental", 30),
+        BilibiliTag("Romance", 13),
+        BilibiliTag("Suspenso", 41),
+        BilibiliTag("Urbano", 9),
+        BilibiliTag("Wuxia", 103)
     )
 }
