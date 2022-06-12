@@ -6,14 +6,14 @@ import generator.ThemeSourceGenerator
 class MCCMSGenerator : ThemeSourceGenerator {
     override val themeClass = "MCCMS"
     override val themePkg = "mccms"
-    override val baseVersionCode = 1
+    override val baseVersionCode = 2
     override val sources = listOf(
         SingleLang(
             name = "Haoman6", baseUrl = "https://www.haoman6.com", lang = "zh",
             className = "Haoman6", sourceName = "好漫6", overrideVersionCode = 2
         ),
         SingleLang(
-            name = "Haomanwu", baseUrl = "https://app2.haomanwu.com", lang = "zh",
+            name = "Haomanwu", baseUrl = "https://app2.haoman6.com", lang = "zh",
             className = "Haomanwu", sourceName = "好漫屋", overrideVersionCode = 3
         ),
         SingleLang(

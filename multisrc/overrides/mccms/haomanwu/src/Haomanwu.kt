@@ -1,12 +1,13 @@
 package eu.kanade.tachiyomi.extension.zh.haomanwu
 
 import eu.kanade.tachiyomi.multisrc.mccms.MCCMS
+import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-class Haomanwu : MCCMS("好漫屋", "https://app2.haomanwu.com") {
+class Haomanwu : MCCMS("好漫屋", "https://app2.haoman6.com") {
 
     // Search
 
@@ -24,4 +25,8 @@ class Haomanwu : MCCMS("好漫屋", "https://app2.haomanwu.com") {
         }
         return pages
     }
+
+    // 分类页面缺失
+    override fun fetchCategories() = Unit
+    override fun getFilterList() = FilterList(emptyList())
 }
