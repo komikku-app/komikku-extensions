@@ -1,22 +1,14 @@
 package eu.kanade.tachiyomi.extension.ru.hentailib
 
-import android.app.Application
-import android.content.SharedPreferences
-import android.widget.Toast
-import androidx.preference.ListPreference
-import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.multisrc.libgroup.LibGroup
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.multisrc.libgroup.LibGroup
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
+import java.io.IOException
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
-import java.io.IOException
 
 class HentaiLib : LibGroup("HentaiLib", "https://hentailib.me", "ru") {
 
