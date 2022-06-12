@@ -1,10 +1,13 @@
 package eu.kanade.tachiyomi.extension.zh.roumanwu
 
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.Serializable
+import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.UUID
 
 @Serializable
@@ -23,7 +26,7 @@ data class Book(
     val author: String,
     val continued: Boolean,
     val tags: List<String>,
-    val updatedAt: String? = null, // TODO: 2022-06-02T00:00:00.000Z
+    val updatedAt: String? = null,
     val activeResource: Resource? = null,
 ) {
     fun toSManga() = SManga.create().apply {
@@ -42,11 +45,26 @@ data class Book(
             url = "/books/$id/$i"
             name = it
         }
+    }.apply {
+        if (isNewDateLogic && !updatedAt.isNullOrBlank()) {
+            this[lastIndex].date_upload = DATE_FORMAT.parse(updatedAt)?.time ?: 0L
+        }
     }
 
     private val uuid by lazy { UUID.fromString(id) }
     override fun hashCode() = uuid.hashCode()
     override fun equals(other: Any?) = other is Book && uuid == other.uuid
+
+    companion object {
+        private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH)
+        private val isNewDateLogic = run {
+            val commitCount = AppInfo.getVersionName().substringAfter('-', "")
+            if (commitCount.isNotEmpty()) // Preview
+                commitCount.toInt() >= 4442
+            else // Stable
+                AppInfo.getVersionCode() >= 81
+        }
+    }
 }
 
 @Serializable
@@ -81,7 +99,7 @@ data class Chapter(
     val chapterAPIPath: String? = null,
 ) {
     fun getPageList() = images!!.mapIndexed { i, it ->
-        Page(i, imageUrl = it.src + if (it.scramble) SCRAMBLED_SUFFIX else "")
+        Page(i, imageUrl = it.src + if (it.scramble) ScrambledImageInterceptor.SCRAMBLED_SUFFIX else "")
     }
 }
 
@@ -90,5 +108,3 @@ data class ChapterWrapper(val chapter: Chapter)
 
 @Serializable
 data class Image(val src: String, val scramble: Boolean)
-
-const val SCRAMBLED_SUFFIX = "?scrambled"

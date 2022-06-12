@@ -12,7 +12,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 
-class ScrambledImageInterceptor : Interceptor {
+object ScrambledImageInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val response = chain.proceed(request)
@@ -48,8 +48,7 @@ class ScrambledImageInterceptor : Interceptor {
         return response.newBuilder().body(responseBody).build()
     }
 
-    companion object {
-        private val jpegMediaType = "image/jpeg".toMediaType()
-        private fun Byte.toPositiveInt() = toInt() and 0xFF
-    }
+    private val jpegMediaType = "image/jpeg".toMediaType()
+    private fun Byte.toPositiveInt() = toInt() and 0xFF
+    const val SCRAMBLED_SUFFIX = "#scrambled"
 }

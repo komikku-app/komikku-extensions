@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -23,15 +24,14 @@ class Roumanwu : HttpSource(), ConfigurableSource {
     override val lang = "zh"
     override val supportsLatest = true
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
 
     override val baseUrl = MIRRORS[
         max(MIRRORS.size - 1, preferences.getString(MIRROR_PREF, MIRROR_DEFAULT)!!.toInt())
     ]
 
-    override val client = network.client.newBuilder().addInterceptor(ScrambledImageInterceptor()).build()
+    override val client = network.client.newBuilder().addInterceptor(ScrambledImageInterceptor).build()
 
     private val json: Json by injectLazy()
 
@@ -60,9 +60,10 @@ class Roumanwu : HttpSource(), ConfigurableSource {
         return if (chapter.images != null) {
             chapter.getPageList()
         } else {
+            @Suppress("NAME_SHADOWING")
             val response = client.newCall(GET(baseUrl + chapter.chapterAPIPath!!, headers)).execute()
             if (!response.isSuccessful) throw Exception("服务器错误: ${response.code}")
-            json.decodeFromString<ChapterWrapper>(response.body!!.string()).chapter.getPageList()
+            response.parseAs<ChapterWrapper>().chapter.getPageList()
         }
     }
 
@@ -124,6 +125,8 @@ class Roumanwu : HttpSource(), ConfigurableSource {
 
         private val TAGS = arrayOf("全部", "正妹", "恋爱", "出版漫画", "肉慾", "浪漫", "大尺度", "巨乳", "有夫之婦", "女大生", "狗血劇", "同居", "好友", "調教", "动作", "後宮", "不倫")
     }
+
+    private inline fun <reified T> Response.parseAs(): T = json.decodeFromStream(this.body!!.byteStream())
 
     private inline fun <reified T> Response.nextjsData() =
         json.decodeFromString<NextData<T>>(this.asJsoup().select("#__NEXT_DATA__").html()).props.pageProps
