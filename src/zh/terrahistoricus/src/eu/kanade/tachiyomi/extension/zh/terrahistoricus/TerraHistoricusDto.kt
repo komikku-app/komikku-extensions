@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.zh.terrahistoricus
 
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.Serializable
@@ -7,10 +8,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class THResult<T>(val code: Int, val msg: String, val data: T)
 
+// https://web.hycdn.cn/comic/site/umi.dee612f8.js
 @Serializable
 data class THComic(
     val cid: String,
-//  val type: Int,
+    val type: Int,
     val cover: String,
     val title: String,
     val subtitle: String,
@@ -23,9 +25,15 @@ data class THComic(
 ) {
     private fun getDescription(): String? {
         var result = ""
-        if (subtitle.isNotEmpty()) result += "「$subtitle」"
+        if (subtitle.isNotEmpty()) result += "「$subtitle」\n"
         if (introduction != null) result += introduction
         return result.ifEmpty { null }
+    }
+
+    private fun getType() = when (type) {
+        2 -> listOf("相簿")
+        3 -> listOf("四格")
+        else -> emptyList() // 1 = Normal
     }
 
     fun toSManga() = SManga.create().apply {
@@ -34,19 +42,34 @@ data class THComic(
         author = authors.joinToString("、")
         thumbnail_url = cover
         description = getDescription()
-        genre = keywords?.joinToString("，")?.replace("，", ", ")
+        genre = (getType() + keywords.orEmpty()).joinToString(", ").replace("，", ", ")
     }
 
-    fun toSChapterList() = episodes?.map { episode ->
+    fun toSChapterList() = episodes!!.map { episode ->
         SChapter.create().apply {
             url = "/api/comic/$cid/episode/${episode.cid!!}"
-            try {
-                chapter_number = episode.shortTitle?.toFloat() ?: chapter_number
-                name = episode.title
-            } catch (e: NumberFormatException) {
-                name = "${episode.shortTitle} ${episode.title}"
+            name = if (episode.type != 1) {
+                "${EPISODE_TYPES[episode.type]} ${episode.title}"
+            } else if (episode.shortTitle.isNullOrBlank()) {
+                episode.title
+            } else {
+                "${episode.shortTitle} ${episode.title}"
             }
-            date_upload = (updateTime ?: 0L) * 1000
+        }
+    }.apply {
+        if (isNewDateLogic) {
+            this[0].date_upload = (updateTime ?: 0L) * 1000
+        }
+    }
+
+    companion object {
+        private val EPISODE_TYPES = arrayOf("", "正篇", "番外", "贺图", "公告")
+        private val isNewDateLogic = run {
+            val commitCount = AppInfo.getVersionName().substringAfter('-', "")
+            if (commitCount.isNotEmpty()) // Preview
+                commitCount.toInt() >= 4442
+            else // Stable
+                AppInfo.getVersionCode() >= 81
         }
     }
 }
@@ -72,7 +95,7 @@ data class THRecentUpdate(
 @Serializable
 data class THEpisode(
     val cid: String? = null,
-//  val type: Int,
+    val type: Int,
     val shortTitle: String?,
     val title: String, // 作品信息中
 //  val likes: Int? = null,
