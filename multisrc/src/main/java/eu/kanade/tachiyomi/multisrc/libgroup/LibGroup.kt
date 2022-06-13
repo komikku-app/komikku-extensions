@@ -45,6 +45,8 @@ import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 
 
 abstract class LibGroup(
@@ -74,22 +76,25 @@ abstract class LibGroup(
             response
     }
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .rateLimit(3)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(1, TimeUnit.MINUTES)
+        .rateLimit(2)
         .build()
 
     override fun headersBuilder() = Headers.Builder().apply {
         // User-Agent required for authorization through third-party accounts (mobile version for correct display in WebView)
         add("User-Agent", "Mozilla/5.0 (Linux; Android 10; SM-G980F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Mobile Safari/537.36")
-        add("Accept", "image/webp,*/*;q=0.8")
+        add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
         add("Referer", baseUrl)
     }
+
+    private val userAgentRandomizer = "${Random.nextInt().absoluteValue}"
 
     private var csrfToken: String = ""
 
     private fun catalogHeaders() = Headers.Builder()
         .apply {
+            add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 Edg/100.0.$userAgentRandomizer")
             add("Accept", "application/json, text/plain, */*")
             add("X-Requested-With", "XMLHttpRequest")
             add("x-csrf-token", csrfToken)
@@ -248,7 +253,7 @@ abstract class LibGroup(
             SManga.LICENSED
         } else
             when {
-                StatusTranslate.contains("завершен" ) && StatusTitle.contains("приостановлен" ) || StatusTranslate.contains("заморожен" ) -> SManga.ON_HIATUS
+                StatusTranslate.contains("завершен" ) && StatusTitle.contains("приостановлен" ) || StatusTranslate.contains("заморожен" ) || StatusTranslate.contains("заброшен" ) -> SManga.ON_HIATUS
                 StatusTranslate.contains("завершен" ) && StatusTitle.contains("выпуск прекращён" ) -> SManga.CANCELLED
                 StatusTranslate.contains("продолжается" ) -> SManga.ONGOING
                 StatusTranslate.contains("завершен" ) -> SManga.COMPLETED
@@ -363,8 +368,7 @@ abstract class LibGroup(
         val fullNameChapter = "Том $volume. Глава $number"
         chapter.scanlator = if (teams?.size == 1) teams[0].jsonObject["name"]?.jsonPrimitive?.content else if (isScanlatorId.orEmpty().isNotEmpty()) isScanlatorId!![0].jsonObject["name"]?.jsonPrimitive?.content else branches?.let { getScanlatorTeamName(it, chapterItem) } ?: if ((preferences.getBoolean(isScan_USER, false)) || (chaptersList?.distinctBy { it.jsonObject["username"]!!.jsonPrimitive.content }?.size == 1)) chapterItem.jsonObject["username"]!!.jsonPrimitive.content else null
         chapter.name = if (nameChapter.isNullOrBlank()) fullNameChapter else "$fullNameChapter - $nameChapter"
-        chapter.date_upload = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-            .parse(chapterItem.jsonObject["chapter_created_at"]!!.jsonPrimitive.content.substringBefore(" "))?.time ?: 0L
+        chapter.date_upload = simpleDateFormat.parse(chapterItem.jsonObject["chapter_created_at"]!!.jsonPrimitive.content.substringBefore(" "))?.time ?: 0L
         chapter.chapter_number = number.toFloat()
 
         return chapter
@@ -665,6 +669,8 @@ abstract class LibGroup(
 
         private const val LANGUAGE_PREF = "MangaLibTitleLanguage"
         private const val LANGUAGE_PREF_Title = "Выбор языка на обложке"
+
+        private val simpleDateFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.US) }
     }
 
     private var server: String? = preferences.getString(SERVER_PREF, null)
