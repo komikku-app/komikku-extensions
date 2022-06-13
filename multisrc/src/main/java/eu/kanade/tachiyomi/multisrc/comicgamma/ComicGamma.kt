@@ -22,7 +22,7 @@ open class ComicGamma(
 ) : ParsedHttpSource() {
     override val supportsLatest = true
 
-    override val client = network.client.newBuilder().addInterceptor(PtImgInterceptor()).build()
+    override val client = network.client.newBuilder().addInterceptor(PtImgInterceptor).build()
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/manga/", headers)
     override fun popularMangaNextPageSelector(): String? = null
@@ -99,20 +99,18 @@ open class ComicGamma(
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
 
-    // for thread-safety (of subclasses)
+    // for thread-safety
     private val JST_FORMAT_DESC = getJSTFormat()
     private val JST_FORMAT_LIST = getJSTFormat()
     private val LOCAL_FORMAT_DESC = getDateTimeInstance()
     private val LOCAL_FORMAT_LIST = getDateTimeInstance()
 
-    companion object {
-        private fun SimpleDateFormat.parseJST(date: String) = parse(date)?.apply {
-            time += 12 * 3600 * 1000 // updates at 12 noon
-        }
-
-        private fun getJSTFormat() =
-            SimpleDateFormat("yyyy年M月dd日(E)", Locale.JAPANESE).apply {
-                timeZone = TimeZone.getTimeZone("GMT+09:00")
-            }
+    private fun SimpleDateFormat.parseJST(date: String) = parse(date)?.apply {
+        time += 12 * 3600 * 1000 // updates at 12 noon
     }
+
+    private fun getJSTFormat() =
+        SimpleDateFormat("yyyy年M月dd日(E)", Locale.JAPANESE).apply {
+            timeZone = TimeZone.getTimeZone("GMT+09:00")
+        }
 }

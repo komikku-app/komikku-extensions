@@ -13,7 +13,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import uy.kohesive.injekt.injectLazy
 import java.io.ByteArrayOutputStream
 
-class PtImgInterceptor : Interceptor {
+object PtImgInterceptor : Interceptor {
 
     private val json: Json by injectLazy()
 
@@ -40,7 +40,9 @@ class PtImgInterceptor : Interceptor {
 
         val output = ByteArrayOutputStream()
         result.compress(Bitmap.CompressFormat.JPEG, 90, output)
-        val responseBody = output.toByteArray().toResponseBody("image/jpeg".toMediaType())
+        val responseBody = output.toByteArray().toResponseBody(jpegMediaType)
         return imgResponse.newBuilder().body(responseBody).build()
     }
+
+    private val jpegMediaType = "image/jpeg".toMediaType()
 }

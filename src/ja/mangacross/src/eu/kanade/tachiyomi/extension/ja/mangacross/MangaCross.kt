@@ -10,14 +10,12 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import kotlin.concurrent.thread
-
-const val maxEntries = 9999
 
 class MangaCross : HttpSource() {
     override val name = "Manga Cross"
@@ -27,17 +25,14 @@ class MangaCross : HttpSource() {
 
     private val json: Json by injectLazy()
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/api/comics.json?count=$maxEntries", headers)
-
-    override fun popularMangaParse(response: Response) = MangasPage(
-        json.decodeFromString<MCComicList>(response.body!!.string()).comics.map(MCComic::toSManga),
-        false // pagination does not work
-    )
+    // Pagination does not work. 9999 is a dummy large number.
+    override fun popularMangaRequest(page: Int) = GET("$baseUrl/api/comics.json?count=9999", headers)
+    override fun popularMangaParse(response: Response) =
+        MangasPage(response.parseAs<MCComicList>().comics.map { it.toSManga() }, false)
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/api/episodes.json?page=$page", headers)
-
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<MCEpisodeList>(response.body!!.string())
+        val result: MCEpisodeList = response.parseAs()
         return MangasPage(result.episodes.map { it.comic!!.toSManga() }, result.current_page < result.total_pages)
     }
 
@@ -53,24 +48,21 @@ class MangaCross : HttpSource() {
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> =
-        client.newCall(chapterListRequest(manga))
-            .asObservableSuccess()
+        client.newCall(chapterListRequest(manga)).asObservableSuccess()
             .map { mangaDetailsParse(it).apply { initialized = true } }
 
     // mangaDetailsRequest untouched in order to let WebView open web page instead of json
 
-    override fun mangaDetailsParse(response: Response) =
-        json.decodeFromString<MCComicDetails>(response.body!!.string()).comic.toSManga()
+    override fun mangaDetailsParse(response: Response) = response.parseAs<MCComicDetails>().comic.toSManga()
 
     override fun chapterListRequest(manga: SManga) = GET("$baseUrl/api${manga.url}.json", headers)
 
-    override fun chapterListParse(response: Response) =
-        json.decodeFromString<MCComicDetails>(response.body!!.string()).comic.toSChapterList()
+    override fun chapterListParse(response: Response) = response.parseAs<MCComicDetails>().comic.toSChapterList()
 
     override fun pageListParse(response: Response): List<Page> {
         return try {
-            json.decodeFromString<MCViewer>(response.body!!.string()).episode_pages.mapIndexed { i, it ->
-                Page(i, "", it.image.original_url)
+            response.parseAs<MCViewer>().episode_pages.mapIndexed { i, it ->
+                Page(i, imageUrl = it.image.original_url)
             }
         } catch (e: SerializationException) {
             throw Exception("Chapter is no longer available!")
@@ -88,8 +80,8 @@ class MangaCross : HttpSource() {
         thread {
             try {
                 val response = client.newCall(GET("$baseUrl/api/menus.json", headers)).execute()
-                val filterList = json.decodeFromString<MCMenu>(response.body!!.string()).toFilterList()
-                tags = listOf(Pair("None", null)) + filterList
+                val filterList = response.parseAs<MCMenu>().toFilterList()
+                tags = listOf(Pair("All", null)) + filterList
             } catch (e: Exception) {
                 Log.e("MangaCross", "Failed to fetch filters ($e)")
             } finally {
@@ -105,12 +97,15 @@ class MangaCross : HttpSource() {
         ) else {
             fetchTags()
             FilterList(
-                Filter.Header("Tags not fetched yet. Go back and retry."),
+                Filter.Header("Fetching tags..."),
+                Filter.Header("Go back to previous screen and retry.")
             )
         }
 
-    private class TagFilter(displayName: String, private val tags: List<Pair<String, MCComicTag?>>) :
-        Filter.Select<String>(displayName, tags.map { it.first }.toTypedArray()) {
+    private class TagFilter(name: String, private val tags: List<Pair<String, MCComicTag?>>) :
+        Filter.Select<String>(name, tags.map { it.first }.toTypedArray()) {
         fun getTag() = tags[state].second
     }
+
+    private inline fun <reified T> Response.parseAs(): T = json.decodeFromStream(this.body!!.byteStream())
 }
