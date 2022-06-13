@@ -79,10 +79,10 @@ class Desu : HttpSource() {
 
         val rawAgeStop = when (obj["adult"]!!.jsonPrimitive.int) {
             1 -> "18+"
-            else -> "0+"
+            else -> ""
         }
 
-        val rawTypeStr = when (obj["kind"]!!.jsonPrimitive.content) {
+        val category = when (obj["kind"]!!.jsonPrimitive.content) {
             "manga" -> "Манга"
             "manhwa" -> "Манхва"
             "manhua" -> "Маньхуа"
@@ -108,20 +108,23 @@ class Desu : HttpSource() {
             obj["description"]!!.jsonPrimitive.content
 
         genre = if (chapter) {
-            obj["genres"]!!.jsonArray
-                .map { it.jsonObject["russian"]!!.jsonPrimitive.content }
-                .plusElement(rawTypeStr)
-                .plusElement(rawAgeStop)
-                .joinToString()
+            "$category, $rawAgeStop, " +
+                obj["genres"]!!.jsonArray
+                    .map { it.jsonObject["russian"]!!.jsonPrimitive.content }
+                    .joinToString()
         } else {
-            obj["genres"]!!.jsonPrimitive.content + ", " + rawTypeStr + ", " + rawAgeStop
+            category + ", " + rawAgeStop + ", " + obj["genres"]!!.jsonPrimitive.content
         }
 
-        status = when (obj["status"]!!.jsonPrimitive.content) {
-            "ongoing" -> SManga.ONGOING
-            "released" -> SManga.COMPLETED
-            //  "copyright" -> SManga.LICENSED  Hides available chapters!
-            else -> SManga.UNKNOWN
+        status = when (obj["trans_status"]!!.jsonPrimitive.content) {
+            "continued" -> SManga.ONGOING
+            "completed" -> SManga.COMPLETED
+            else -> when (obj["status"]!!.jsonPrimitive.content) {
+                "ongoing" -> SManga.ONGOING
+                "released" -> SManga.COMPLETED
+                //  "copyright" -> SManga.LICENSED  Hides available chapters!
+                else -> SManga.UNKNOWN
+            }
         }
     }
 
@@ -171,7 +174,7 @@ class Desu : HttpSource() {
     }
 
     private fun titleDetailsRequest(manga: SManga): Request {
-        return GET(baseUrl + API_URL + manga.url, headers)
+        return GET(baseUrl + API_URL + manga.url + "/", headers)
     }
 
     // Workaround to allow "Open in browser" use the real URL.
@@ -216,9 +219,7 @@ class Desu : HttpSource() {
         }.filter { it.chapter_number <= objChapter.jsonObject["last"]!!.jsonObject["ch"]!!.jsonPrimitive.float }
     }
 
-    override fun chapterListRequest(manga: SManga): Request {
-        return GET(baseUrl + API_URL + manga.url, headers)
-    }
+    override fun chapterListRequest(manga: SManga): Request = titleDetailsRequest(manga)
 
     override fun pageListRequest(chapter: SChapter): Request {
         return GET(baseUrl + API_URL + chapter.url, headers)
