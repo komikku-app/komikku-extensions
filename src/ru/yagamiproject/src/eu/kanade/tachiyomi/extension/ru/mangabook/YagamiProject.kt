@@ -52,30 +52,28 @@ class YagamiProject : ParsedHttpSource() {
 
     // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = if (query.isNotBlank()) {
-            "$baseUrl/reader/search/?s=$query&p=$page"
-        } else {
-            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-                when (filter) {
-                    is CategoryList -> {
-                        if (filter.state > 0) {
-                            val CatQ = getCategoryList()[filter.state].name
-                            val catUrl = "$baseUrl/tags/$CatQ".toHttpUrlOrNull()!!.newBuilder()
-                            return GET(catUrl.toString(), headers)
-                        }
+        if (query.isNotBlank()) {
+            return GET("$baseUrl/reader/search/?s=$query&p=$page", headers)
+        }
+        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+            when (filter) {
+                is CategoryList -> {
+                    if (filter.state > 0) {
+                        val CatQ = getCategoryList()[filter.state].name
+                        val catUrl = "$baseUrl/tags/$CatQ".toHttpUrlOrNull()!!.newBuilder()
+                        return GET(catUrl.toString(), headers)
                     }
-                    is FormatList -> {
-                        if (filter.state > 0) {
-                            val FormN = getFormatList()[filter.state].query
-                            val formaUrl = "$baseUrl/$FormN".toHttpUrlOrNull()!!.newBuilder()
-                            return GET(formaUrl.toString(), headers)
-                        }
+                }
+                is FormatList -> {
+                    if (filter.state > 0) {
+                        val FormN = getFormatList()[filter.state].query
+                        val formaUrl = "$baseUrl/$FormN".toHttpUrlOrNull()!!.newBuilder()
+                        return GET(formaUrl.toString(), headers)
                     }
                 }
             }
-            throw Exception("Filters Not")
         }
-        return GET(url, headers)
+        return popularMangaRequest(page)
     }
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
@@ -92,8 +90,8 @@ class YagamiProject : ParsedHttpSource() {
         val titlestr = document.select("title").text().substringBefore(" :: Yagami").split(" :: ").sorted()
         manga.title = titlestr.first().replace(":: ", "")
         manga.thumbnail_url = document.select(".cover img").first().attr("src")
-        manga.author = infoElement.select("li:contains(Автор(ы):)")?.first()?.text()?.substringAfter("Автор(ы): ")?.split(" / ")?.sorted()?.first()
-        manga.artist = infoElement.select("li:contains(Художник(и):)")?.first()?.text()?.substringAfter("Художник(и): ")?.split(" / ")?.sorted()?.first()
+        manga.author = infoElement.select("li:contains(Автор(ы):)")?.first()?.text()?.substringAfter("Автор(ы): ")?.split(" / ")?.sorted()?.first()?.replace("N/A", "")?.trim()
+        manga.artist = infoElement.select("li:contains(Художник(и):)")?.first()?.text()?.substringAfter("Художник(и): ")?.split(" / ")?.sorted()?.first()?.replace("N/A", "")?.trim()
         manga.status = when (infoElement.select("li:contains(Статус перевода:) span")?.first()?.text()) {
             "онгоинг" -> SManga.ONGOING
             "активный" -> SManga.ONGOING
@@ -106,7 +104,8 @@ class YagamiProject : ParsedHttpSource() {
         if (altSelector.isNotEmpty()) {
             altName = "Альтернативные названия:\n" + altSelector.first().toString().replace("<li><b>Название</b>: ", "").replace("<br>", " / ").substringAfter(" / ").substringBefore("</li>") + "\n\n"
         }
-        manga.description = titlestr.last().replace(":: ", "") + "\n" + altName + infoElement.select("li:contains(Описание:)")?.first()?.text()?.substringAfter("Описание: ")
+        val descriptElem = infoElement.select("li:contains(Описание:)")?.first()?.text()?.substringAfter("Описание: ") ?: ""
+        manga.description = titlestr.last().replace(":: ", "") + "\n" + altName + descriptElem
         return manga
     }
 
@@ -115,15 +114,13 @@ class YagamiProject : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         val chapter = element.select(".title a")
         val chapterScan_Date = element.select(".meta_r")
-        name = when {
-            chapter.attr("title").isNullOrBlank() -> chapter.text()
-            else -> chapter.attr("title")
-        }
-        val numout = name.substringBefore(":").substringAfterLast(" ").substringAfterLast("№")
-        chapter_number = when {
-            numout.contains(Regex("^[0-9]+")) -> numout.toFloat()
-            else -> 0F
-        }
+
+        name = if (chapter.attr("title").isNullOrBlank())
+            chapter.text()
+        else chapter.attr("title")
+
+        chapter_number = name.substringBefore(":").substringAfterLast(" ").substringAfterLast("№").substringAfterLast("#").toFloatOrNull() ?: chapter.attr("href").substringBeforeLast("/").substringAfterLast("/").toFloatOrNull() ?: -1f
+
         setUrlWithoutDomain(chapter.attr("href"))
         date_upload = parseDate(chapterScan_Date.text().substringAfter(", "))
         scanlator = if (chapterScan_Date.select("a").isNotEmpty()) {
