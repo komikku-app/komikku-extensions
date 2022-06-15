@@ -170,7 +170,8 @@ class MangaDexFilters {
         Sortable(intl.sortContentCreatedAt, "createdAt"),
         Sortable(intl.sortContentInfoUpdatedAt, "updatedAt"),
         Sortable(intl.sortRelevance, "relevance"),
-        Sortable(intl.sortYear, "year")
+        Sortable(intl.sortYear, "year"),
+        Sortable(intl.sortRating, "rating")
     )
 
     class SortFilter(intl: MangaDexIntl, private val sortables: Array<Sortable>) :

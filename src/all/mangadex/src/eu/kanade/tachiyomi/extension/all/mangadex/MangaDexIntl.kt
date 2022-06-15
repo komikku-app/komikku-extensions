@@ -620,6 +620,11 @@ class MangaDexIntl(val lang: String) {
         else -> "Year"
     }
 
+    val sortRating: String = when (availableLang) {
+        BRAZILIAN_PORTUGUESE, PORTUGUESE -> "Nota"
+        else -> "Rating"
+    }
+
     val hasAvailableChapters: String = when (availableLang) {
         BRAZILIAN_PORTUGUESE, PORTUGUESE -> "Há capítulos disponíveis"
         else -> "Has available chapters"
