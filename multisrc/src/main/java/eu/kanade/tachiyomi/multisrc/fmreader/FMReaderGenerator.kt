@@ -10,7 +10,7 @@ class FMReaderGenerator : ThemeSourceGenerator {
 
     override val themeClass = "FMReader"
 
-    override val baseVersionCode: Int = 6
+    override val baseVersionCode: Int = 7
 
     /** For future sources: when testing and popularMangaRequest() returns a Jsoup error instead of results
      *  most likely the fix is to override popularMangaNextPageSelector()   */
@@ -18,7 +18,7 @@ class FMReaderGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang("Epik Manga", "https://www.epikmanga.com", "tr"),
         SingleLang("KissLove", "https://klmag.net", "ja", overrideVersionCode = 1),
-        SingleLang("Manga-TR", "https://manga-tr.com", "tr", className = "MangaTR"),
+        SingleLang("Manga-TR", "https://manga-tr.com", "tr", className = "MangaTR", overrideVersionCode = 1),
         SingleLang("Manhwa18", "https://manhwa18.com", "en", isNsfw = true, overrideVersionCode = 2),
         MultiLang("Manhwa18.net", "https://manhwa18.net", listOf("en", "ko"), className = "Manhwa18NetFactory", isNsfw = true),
         SingleLang("WeLoveManga", "https://weloma.net", "ja", pkgName = "rawlh", overrideVersionCode = 3),
