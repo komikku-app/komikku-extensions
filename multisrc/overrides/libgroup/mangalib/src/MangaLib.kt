@@ -27,16 +27,6 @@ class MangaLib : LibGroup("MangaLib", "https://mangalib.me", "ru")  {
 
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::imageContentTypeIntercept)
-        .addInterceptor { chain ->
-            val originalRequest = chain.request()
-            val response = chain.proceed(originalRequest)
-            if (originalRequest.url.toString().contains(baseUrl))
-                if (!network.cloudflareClient.newCall(GET(baseUrl, headers))
-                        .execute().body!!.string().contains("m-menu__user-info") && response.code == 404
-                )
-                    throw IOException("Для просмотра 18+ контента необходима авторизация через WebView")
-            return@addInterceptor response
-        }
         .build()
 
     private var csrfToken: String = ""

@@ -21,6 +21,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import java.io.IOException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -79,6 +80,12 @@ abstract class LibGroup(
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(1, TimeUnit.MINUTES)
         .rateLimit(2)
+        .addInterceptor { chain ->
+            val response = chain.proceed(chain.request())
+            if (response.code == 419)
+                    throw IOException("HTTP error ${response.code}. Для завершения авторизации необходимо перезапустить приложение с полной остановкой.")
+            return@addInterceptor response
+        }
         .build()
 
     override fun headersBuilder() = Headers.Builder().apply {
@@ -119,12 +126,7 @@ abstract class LibGroup(
 
     private fun fetchLatestMangaFromApi(page: Int): Observable<MangasPage> {
         return client.newCall(POST("$baseUrl/latest-updates?page=$page", catalogHeaders()))
-            .asObservable().doOnNext { response ->
-                if (!response.isSuccessful) {
-                    response.close()
-                    if (response.code == 419) throw Exception("Для завершения авторизации необходимо перезапустить приложение с полной остановкой.") else throw Exception("HTTP error ${response.code}")
-                }
-            }
+            .asObservableSuccess()
             .map { response ->
                 latestUpdatesParse(response)
             }
@@ -159,12 +161,7 @@ abstract class LibGroup(
 
     private fun fetchPopularMangaFromApi(page: Int): Observable<MangasPage> {
         return client.newCall(POST("$baseUrl/filterlist?dir=desc&sort=views&page=$page", catalogHeaders()))
-            .asObservable().doOnNext { response ->
-                if (!response.isSuccessful) {
-                    response.close()
-                    if (response.code == 419) throw Exception("Для завершения авторизации необходимо перезапустить приложение с полной остановкой.") else throw Exception("HTTP error ${response.code}")
-                }
-            }
+            .asObservableSuccess()
             .map { response ->
                 popularMangaParse(response)
             }
@@ -215,10 +212,8 @@ abstract class LibGroup(
             rawCategory.isNotBlank() -> rawCategory
             else -> "Манга"
         }
-        var rawAgeStop = document.select(".media-short-info .media-short-info__item[data-caution]").text()
-        if (rawAgeStop.isEmpty()) {
-            rawAgeStop = "0+"
-        }
+
+        val rawAgeStop = document.select(".media-short-info .media-short-info__item[data-caution]").text()
 
         val ratingValue = document.select(".media-rating__value").last().text().toFloat() * 2
         val ratingVotes = document.select(".media-rating__votes").last().text()
@@ -281,9 +276,23 @@ abstract class LibGroup(
         return manga
     }
 
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        return client.newCall(mangaDetailsRequest(manga))
+            .asObservable().doOnNext { response ->
+                if (!response.isSuccessful) {
+                    if (response.code == 404 && response.asJsoup().select("#show-login-button").isNotEmpty()) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView") else throw Exception("HTTP error ${response.code}")
+                }
+            }
+            .map { response ->
+                mangaDetailsParse(response)
+            }
+    }
     // Chapters
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
+        val rawAgeStop = document.select(".media-short-info .media-short-info__item[data-caution]").text()
+        if (rawAgeStop == "18+" && document.select("#show-login-button").isNotEmpty())
+            throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
         val redirect = document.html()
         if (redirect.contains("paper empty section")) {
             return emptyList()
@@ -310,6 +319,18 @@ abstract class LibGroup(
         }
 
         return chapters ?: emptyList()
+    }
+
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+        return client.newCall(mangaDetailsRequest(manga))
+            .asObservable().doOnNext { response ->
+                if (!response.isSuccessful) {
+                    if (response.code == 404 && response.asJsoup().select("#show-login-button").isNotEmpty()) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView") else throw Exception("HTTP error ${response.code}")
+                }
+            }
+            .map { response ->
+                chapterListParse(response)
+            }
     }
 
     private fun sortChaptersByTranslator
@@ -395,6 +416,14 @@ abstract class LibGroup(
     // Pages
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
+
+        //redirect Регистрация 18+
+        val redirect = document.html()
+        if (!redirect.contains("window.__info")) {
+            if (redirect.contains("hold-transition login-page")) {
+                throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
+            }
+        }
 
         val chapInfo = document
             .select("script:containsData(window.__info)")
