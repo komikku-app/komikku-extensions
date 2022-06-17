@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import com.luhuiguo.chinese.ChineseUtils
 import com.squareup.duktape.Duktape
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -214,7 +215,12 @@ class CopyManga : ConfigurableSource, HttpSource() {
 
         // place others to top, as other group updates not so often
         retChapter.addAll(0, otherChapters)
-        return retChapter.asReversed()
+        return retChapter.asReversed().apply {
+            if (!isNewDateLogic) return@apply
+            val latestDate = document.selectFirst(".comicParticulars-sigezi + .comicParticulars-right-txt").text()
+                .let { DATE_FORMAT.parse(it)?.time ?: 0L }
+            this.firstOrNull()?.date_upload = latestDate
+        }
     }
 
     override fun pageListRequest(chapter: SChapter) = GET("$apiUrl/api/v3${chapter.url}", headers)
@@ -232,7 +238,6 @@ class CopyManga : ConfigurableSource, HttpSource() {
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", baseUrl)
-        .add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36")
         .add("region", if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) "0" else "1")
 
     // Unused, we can get image urls directly from the chapter page
@@ -467,34 +472,22 @@ class CopyManga : ConfigurableSource, HttpSource() {
 
     // Change Title to Simplified Chinese For Library Gobal Search Optionally
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-        val zhPreference = androidx.preference.CheckBoxPreference(screen.context).apply {
+        val zhPreference = androidx.preference.SwitchPreferenceCompat(screen.context).apply {
             key = SHOW_Simplified_Chinese_TITLE_PREF
             title = "将标题转换为简体中文"
             summary = "需要重启软件以生效。已添加漫画需要迁移改变标题。"
 
             setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val setting = preferences.edit().putBoolean(SHOW_Simplified_Chinese_TITLE_PREF, newValue as Boolean).commit()
-                    setting
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
+                preferences.edit().putBoolean(SHOW_Simplified_Chinese_TITLE_PREF, newValue as Boolean).commit()
             }
         }
-        val cdnPreference = androidx.preference.CheckBoxPreference(screen.context).apply {
+        val cdnPreference = androidx.preference.SwitchPreferenceCompat(screen.context).apply {
             key = CHANGE_CDN_OVERSEAS
             title = "转换图片CDN为境外CDN"
             summary = "需要重启软件（及清除章节缓存）以生效。加载图片使用境外CDN，使用代理的情况下推荐打开此选项（境外CDN可能无法查看一些刚刚更新的漫画，需要等待资源更新到CDN）"
 
             setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val setting = preferences.edit().putBoolean(CHANGE_CDN_OVERSEAS, newValue as Boolean).commit()
-                    setting
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
+                preferences.edit().putBoolean(CHANGE_CDN_OVERSEAS, newValue as Boolean).commit()
             }
         }
         screen.addPreference(zhPreference)
@@ -504,5 +497,14 @@ class CopyManga : ConfigurableSource, HttpSource() {
     companion object {
         private const val SHOW_Simplified_Chinese_TITLE_PREF = "showSCTitle"
         private const val CHANGE_CDN_OVERSEAS = "changeCDN"
+
+        private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
+        private val isNewDateLogic = run {
+            val commitCount = AppInfo.getVersionName().substringAfter('-', "")
+            if (commitCount.isNotEmpty()) // Preview
+                commitCount.toInt() >= 4442
+            else // Stable
+                AppInfo.getVersionCode() >= 81
+        }
     }
 }
