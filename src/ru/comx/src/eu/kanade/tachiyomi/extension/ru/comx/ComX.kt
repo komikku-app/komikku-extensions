@@ -1,7 +1,9 @@
 package eu.kanade.tachiyomi.extension.ru.comx
 
+import android.webkit.CookieManager
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -14,20 +16,24 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.float
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Cookie
+import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -42,11 +48,49 @@ class ComX : ParsedHttpSource() {
     override val lang = "ru"
 
     override val supportsLatest = true
-
+    private val cookieManager by lazy { CookieManager.getInstance() }
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .rateLimit(3)
+        .cookieJar(
+            object : CookieJar {
+                // Syncs okhttp with WebView cookies, allowing logged-in users do logged-in stuff
+                override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+                    for (cookie in cookies) {
+                        cookieManager.setCookie(url.toString(), cookie.toString())
+                    }
+                }
+
+                override fun loadForRequest(url: HttpUrl): MutableList<Cookie> {
+                    val cookiesString = cookieManager.getCookie(url.toString())
+
+                    if (cookiesString != null && cookiesString.isNotEmpty()) {
+                        val cookieHeaders = cookiesString.split("; ").toList()
+                        val cookies = mutableListOf<Cookie>()
+                        for (header in cookieHeaders) {
+                            cookies.add(Cookie.parse(url, header)!!)
+                        }
+                        // Adds age verification cookies to access mature comics
+                        return if (url.toString().contains("/reader/")) cookies.apply {
+                            add(
+                                Cookie.Builder()
+                                    .domain(baseUrl.substringAfter("//"))
+                                    .path("/")
+                                    .name("adult")
+                                    .value(
+                                        url.toString().substringAfter("/reader/")
+                                            .substringBefore("/")
+                                    )
+                                    .build()
+                            )
+                        } else cookies
+                    } else {
+                        return mutableListOf()
+                    }
+                }
+            }
+        )
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
@@ -190,11 +234,11 @@ class ComX : ParsedHttpSource() {
             ratingValue > 0.5 -> "✬☆☆☆☆"
             else -> "☆☆☆☆☆"
         }
-
+        val rawAgeStop = if (document.toString().contains("ВНИМАНИЕ! 18+")) "18+" else ""
         val manga = SManga.create()
         manga.title = infoElement.select(".page__title-original").text().replace(" / ", " | ").split(" | ").first()
         manga.author = infoElement.select(".page__list li:contains(Издатель)").text()
-        manga.genre = infoElement.select(".page__tags a").joinToString { it.text() }
+        manga.genre = rawAgeStop + ", " + infoElement.select(".page__tags a").joinToString { it.text() }
         manga.status = parseStatus(infoElement.select(".page__list li:contains(Статус)").text())
 
         manga.description = infoElement.select(".page__header h1").text().replace(" / ", " | ").split(" | ").first() + "\n" + ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" + Jsoup.parse(infoElement.select(".page__text ").first().html().replace("<br>", "REPLACbR")).text().replace("REPLACbR", "\n")
@@ -224,8 +268,7 @@ class ComX : ParsedHttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        if (document.toString().contains("ВНИМАНИЕ! 18+") && document.select(".login__title.stretch-free-width.ws-nowrap").first().text().contains("Войти"))
-            throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
+
         val dataStr = document
             .toString()
             .substringAfter("window.__DATA__ = ")
@@ -236,22 +279,16 @@ class ComX : ParsedHttpSource() {
         val chaptersList = data["chapters"]?.jsonArray
         val chapters: List<SChapter>? = chaptersList?.map {
             val chapter = SChapter.create()
-            chapter.name = it.jsonObject["title"]!!.jsonPrimitive.content
-            chapter.date_upload = parseDate(it.jsonObject["date"]!!.jsonPrimitive.content)
+            // title_en is full chapter name, no english name
+            chapter.name = it.jsonObject["title_en"]!!.jsonPrimitive.content
+            if (chapter.name.isEmpty())
+                chapter.name = it.jsonObject["title"]!!.jsonPrimitive.content
+            chapter.date_upload = simpleDateFormat.parse(it.jsonObject["date"]!!.jsonPrimitive.content)?.time ?: 0L
+            chapter.chapter_number = it.jsonObject["posi"]!!.jsonPrimitive.float
             chapter.setUrlWithoutDomain("/readcomix/" + data["news_id"] + "/" + it.jsonObject["id"]!!.jsonPrimitive.content + ".html")
             chapter
         }
         return chapters ?: emptyList()
-    }
-
-    private val simpleDateFormat by lazy { SimpleDateFormat("dd.MM.yyyy", Locale.US) }
-    private fun parseDate(date: String?): Long {
-        date ?: return 0L
-        return try {
-            simpleDateFormat.parse(date)!!.time
-        } catch (_: Exception) {
-            Date().time
-        }
     }
 
     override fun chapterFromElement(element: Element): SChapter =
@@ -260,6 +297,11 @@ class ComX : ParsedHttpSource() {
     // Pages
     override fun pageListParse(response: Response): List<Page> {
         val html = response.body!!.string()
+
+        // Comics 18+
+        if (html.contains("adult__header"))
+            throw Exception("Комикс 18+ (что-то сломалось)")
+
         val baseImgUrl = "https://img.com-x.life/comix/"
 
         val beginTag = "\"images\":["
@@ -278,6 +320,19 @@ class ComX : ParsedHttpSource() {
         }
 
         return pages
+    }
+
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
+        return client.newCall(pageListRequest(chapter))
+            .asObservable().doOnNext { response ->
+                if (!response.isSuccessful) {
+                    if (response.code == 404 && response.asJsoup().toString().contains("Выпуск был удален по требованию правообладателя"))
+                        throw Exception("Лицензировано. Возможно может помочь авторизация через WebView") else throw Exception("HTTP error ${response.code}")
+                }
+            }
+            .map { response ->
+                pageListParse(response)
+            }
     }
 
     override fun pageListParse(document: Document): List<Page> {
@@ -463,4 +518,8 @@ class ComX : ParsedHttpSource() {
         CheckFilter("Яой", "120"),
         CheckFilter("Ёнкома", "121"),
     )
+
+    companion object {
+        private val simpleDateFormat by lazy { SimpleDateFormat("dd.MM.yyyy", Locale.US) }
+    }
 }
