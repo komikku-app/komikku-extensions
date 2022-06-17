@@ -234,11 +234,18 @@ class ComX : ParsedHttpSource() {
             ratingValue > 0.5 -> "✬☆☆☆☆"
             else -> "☆☆☆☆☆"
         }
+        val rawCategory = document.select(".speedbar a").last().text().trim()
+        val category = when (rawCategory.lowercase()) {
+            "manga" -> "Манга"
+            "manhwa" -> "Манхва"
+            "manhua" -> "Маньхуа"
+            else -> "Комикс"
+        }
         val rawAgeStop = if (document.toString().contains("ВНИМАНИЕ! 18+")) "18+" else ""
         val manga = SManga.create()
         manga.title = infoElement.select(".page__title-original").text().replace(" / ", " | ").split(" | ").first()
         manga.author = infoElement.select(".page__list li:contains(Издатель)").text()
-        manga.genre = rawAgeStop + ", " + infoElement.select(".page__tags a").joinToString { it.text() }
+        manga.genre = category + ", " + rawAgeStop + ", " + infoElement.select(".page__tags a").joinToString { it.text() }
         manga.status = parseStatus(infoElement.select(".page__list li:contains(Статус)").text())
 
         manga.description = infoElement.select(".page__header h1").text().replace(" / ", " | ").split(" | ").first() + "\n" + ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" + Jsoup.parse(infoElement.select(".page__text ").first().html().replace("<br>", "REPLACbR")).text().replace("REPLACbR", "\n")
@@ -393,9 +400,10 @@ class ComX : ParsedHttpSource() {
     )
 
     private fun getPubList() = listOf(
-        CheckFilter("Manga", "3"),
-        CheckFilter("Manhua", "45"),
-        CheckFilter("Manhwa", "44"),
+        CheckFilter("Манга", "3"),
+        CheckFilter("Маньхуа", "45"),
+        CheckFilter("Манхва", "44"),
+        CheckFilter("Разные комиксы", "18"),
         CheckFilter("Aftershock", "50"),
         CheckFilter("Avatar Press", "11"),
         CheckFilter("Boom! Studios", "12"),
@@ -412,7 +420,6 @@ class ComX : ParsedHttpSource() {
         CheckFilter("Vertigo", "8"),
         CheckFilter("Wildstorm", "5"),
         CheckFilter("Zenescope", "51"),
-        CheckFilter("Разные комиксы", "18"),
     )
 
     private fun getGenreList() = listOf(
