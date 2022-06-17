@@ -44,7 +44,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Readkomik", "https://readkomik.com", "en", className = "ReadKomik", overrideVersionCode = 1),
         SingleLang("Sekte Doujin", "https://sektedoujin.club", "id", isNsfw = true, overrideVersionCode = 3),
         SingleLang("Sekte Komik", "https://sektekomik.com", "id", overrideVersionCode = 3),
-        SingleLang("Shea Manga", "http://sheamanga.my.id", "id", overrideVersionCode = 3),
+        SingleLang("Shea Manga", "https://sheakomik.com", "id", overrideVersionCode = 4),
         SingleLang("Snudae Scans", "https://snudaescans.com", "en", isNsfw = true, className = "BatotoScans", overrideVersionCode = 1),
         SingleLang("Tempest Manga", "https://manga.tempestfansub.com", "tr"),
         SingleLang("The Apollo Team", "https://theapollo.team", "en"),
