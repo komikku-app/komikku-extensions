@@ -323,11 +323,12 @@ open class BatoTo(
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select("div#mainer div.container-fluid")
         val manga = SManga.create()
-        val status = infoElement.select("div.attr-item:contains(status) span").text()
+        val workStatus = infoElement.select("div.attr-item:contains(original work) span").text()
+        val uploadStatus = infoElement.select("div.attr-item:contains(upload status) span").text()
         manga.title = infoElement.select("h3").text().removeEntities()
         manga.author = infoElement.select("div.attr-item:contains(author) a:first-child").text()
-        manga.artist = infoElement.select("div.attr-item:contains(author) a:last-child").text()
-        manga.status = parseStatus(status)
+        manga.artist = infoElement.select("div.attr-item:contains(artist) a:last-child").text()
+        manga.status = parseStatus(workStatus, uploadStatus)
         manga.genre = infoElement.select(".attr-item b:contains(genres) + span ").joinToString { it.text() }
         manga.description = infoElement.select("div.limit-html").text() + "\n" + infoElement.select(".episode-list > .alert-warning").text().trim()
         manga.thumbnail_url = document.select("div.attr-cover img")
@@ -335,10 +336,15 @@ open class BatoTo(
         return manga
     }
 
-    private fun parseStatus(status: String?) = when {
-        status == null -> SManga.UNKNOWN
-        status.contains("Ongoing") -> SManga.ONGOING
-        status.contains("Completed") -> SManga.COMPLETED
+    private fun parseStatus(workStatus: String?, uploadStatus: String?) = when {
+        workStatus == null -> SManga.UNKNOWN
+        workStatus.contains("Ongoing") -> SManga.ONGOING
+        workStatus.contains("Cancelled") -> SManga.CANCELLED
+        workStatus.contains("Hiatus") -> SManga.ON_HIATUS
+        workStatus.contains("Completed") -> when {
+            uploadStatus?.contains("Ongoing") == true -> SManga.PUBLISHING_FINISHED
+            else -> SManga.COMPLETED
+        }
         else -> SManga.UNKNOWN
     }
 

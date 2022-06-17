@@ -1,3 +1,10 @@
+## 1.2.25
+
+### Fix
+
+* Status parsing
+* Artist name parsing
+
 ## 1.2.23
 
 ### Fix
