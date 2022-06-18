@@ -29,10 +29,10 @@ class JinmantiantangUrlActivity : Activity() {
             try {
                 startActivity(mainIntent)
             } catch (e: ActivityNotFoundException) {
-                Log.e("JinmantiantangUrlActivity", e.toString())
+                Log.e("JinmantiantangUrl", e.toString())
             }
         } else {
-            Log.e("JinmantiantangUrlActivity", "could not parse uri from intent $intent")
+            Log.e("JinmantiantangUrl", "could not parse uri from intent $intent")
         }
 
         finish()
