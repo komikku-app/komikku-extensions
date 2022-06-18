@@ -4,6 +4,6 @@ import eu.kanade.tachiyomi.multisrc.fmreader.FMReader
 import eu.kanade.tachiyomi.source.model.Page
 import org.jsoup.nodes.Document
 
-class KissLove : FMReader("KissLove", "https://klmag.net", "ja") {
+class KissLove : FMReader("KissLove", "https://klmanga.com", "ja") {
     override fun pageListParse(document: Document): List<Page> = base64PageListParse(document)
 }
