@@ -6,7 +6,7 @@ ext {
     extName = 'Com-X'
     pkgNameSuffix = 'ru.comx'
     extClass = '.ComX'
-    extVersionCode = 21
+    extVersionCode = 22
 }
 
 apply from: "$rootDir/common.gradle"

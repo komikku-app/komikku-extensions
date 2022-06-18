@@ -33,6 +33,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -91,6 +92,13 @@ class ComX : ParsedHttpSource() {
                 }
             }
         )
+        .addInterceptor { chain ->
+            val originalRequest = chain.request()
+            val response = chain.proceed(originalRequest)
+            if (response.code == 404 && response.asJsoup().toString().contains("Protected by Batman"))
+                throw IOException("Antibot, попробуйте пройти капчу в WebView")
+            response
+        }
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
