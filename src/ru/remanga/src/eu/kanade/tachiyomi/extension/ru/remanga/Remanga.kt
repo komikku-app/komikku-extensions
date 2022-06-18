@@ -139,9 +139,21 @@ class Remanga : ConfigurableSource, HttpSource() {
             if (preferences.getBoolean(isLib_PREF, false)) {
                 content = content.filter { it.bookmark_type.isNullOrEmpty() }
             }
-            val mangas = content.map {
+
+            var mangas = content.map {
                 it.toSManga()
             }
+
+            if (mangas.isEmpty() && page.props.page < page.props.total_pages && preferences.getBoolean(isLib_PREF, false))
+                mangas = listOf(
+                    SManga.create().apply {
+                        val nextPage = "Пустая страница. Всё в «Закладках»"
+                        title = nextPage
+                        url = nextPage
+                        thumbnail_url = "$baseUrl/icon.png"
+                    }
+                )
+
             return MangasPage(mangas, page.props.page < page.props.total_pages)
         }
     }
@@ -246,7 +258,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         return when (age_limit) {
             2 -> "18+"
             1 -> "16+"
-            else -> "0+"
+            else -> ""
         }
     }
 
