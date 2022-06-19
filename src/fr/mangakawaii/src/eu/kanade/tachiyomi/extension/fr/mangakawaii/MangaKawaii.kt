@@ -36,7 +36,7 @@ class MangaKawaii : ParsedHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .rateLimit(1)
+        .rateLimit(2)
         .build()
 
     protected open val userAgentRandomizer1 = "${Random.nextInt(9).absoluteValue}"
@@ -79,10 +79,11 @@ class MangaKawaii : ParsedHttpSource() {
         val uri = Uri.parse("$baseUrl/search").buildUpon()
             .appendQueryParameter("query", query)
             .appendQueryParameter("search_type", "manga")
+            .appendQueryParameter("page", page.toString())
         return GET(uri.toString(), headers)
     }
-    override fun searchMangaSelector() = "h2 + ul a[href*=manga]"
-    override fun searchMangaNextPageSelector(): String? = null
+    override fun searchMangaSelector() = "div.section__list-group-heading"
+    override fun searchMangaNextPageSelector(): String = "ul.pagination a[rel*=next]"
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("a").text().trim()
         setUrlWithoutDomain(element.select("a").attr("href"))
