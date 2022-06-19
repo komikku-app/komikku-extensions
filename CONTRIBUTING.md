@@ -389,7 +389,7 @@ multisrc
 ├── overrides
 │   └── <themepkg>
 │       ├── default
-│       │   ├── additional.gradle.kts
+│       │   ├── additional.gradle
 │       │   └── res
 │       │       ├── mipmap-hdpi
 │       │       │   └── ic_launcher.png
@@ -403,7 +403,7 @@ multisrc
 │       │       │   └── ic_launcher.png
 │       │       └── web_hi_res_512.png
 │       └── <sourcepkg>
-│           ├── additional.gradle.kts
+│           ├── additional.gradle
 │           ├── AndroidManifest.xml
 │           ├── res
 │           │   ├── mipmap-hdpi
@@ -439,11 +439,11 @@ multisrc
 - `multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/<themepkg>/<Theme>.kt` defines the the theme's default implementation.
 - `multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/<theme>/<Theme>Generator.kt` defines the the theme's generator class, this is similar to a `SourceFactory` class.
 - `multisrc/overrides/<themepkg>/default/res` is the theme's default icons, if a source doesn't have overrides for `res`, then default icons will be used.
-- `multisrc/overrides/<themepkg>/default/additional.gradle.kts` defines additional gradle code, this will be copied at the end of all generated sources from this theme.
+- `multisrc/overrides/<themepkg>/default/additional.gradle` defines additional gradle code, this will be copied at the end of all generated sources from this theme.
 - `multisrc/overrides/<themepkg>/<sourcepkg>` contains overrides for a source that is defined inside the `<Theme>Generator.kt` class.
 - `multisrc/overrides/<themepkg>/<sourcepkg>/src` contains source overrides.
 - `multisrc/overrides/<themepkg>/<sourcepkg>/res` contains override for icons.
-- `multisrc/overrides/<themepkg>/<sourcepkg>/additional.gradle.kts` defines additional gradle code, this will be copied at the end of the generated gradle file below the theme's `additional.gradle.kts`.
+- `multisrc/overrides/<themepkg>/<sourcepkg>/additional.gradle` defines additional gradle code, this will be copied at the end of the generated gradle file below the theme's `additional.gradle`.
 - `multisrc/overrides/<themepkg>/<sourcepkg>/AndroidManifest.xml` is copied as an override to the default `AndroidManifest.xml` generation if it exists.
 
 ### Development workflow

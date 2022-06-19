@@ -116,11 +116,11 @@ ${placeholders.map { "${" ".repeat(28)}${it.key}: \"${it.value}\""}.joinToString
             val overridesPath = "$userDir/multisrc/overrides/$themePkg/${source.pkgName}"
             val defaultResPath = "$userDir/multisrc/overrides/$themePkg/default/res"
             val defaultAndroidManifestPath = "$userDir/multisrc/overrides/$themePkg/default/AndroidManifest.xml"
-            val defaultAdditionalGradlePath = "$userDir/multisrc/overrides/$themePkg/default/additional.gradle.kts"
+            val defaultAdditionalGradlePath = "$userDir/multisrc/overrides/$themePkg/default/additional.gradle"
             val resOverridePath = "$overridesPath/res"
             val srcOverridePath = "$overridesPath/src"
             val manifestOverridePath = "$overridesPath/AndroidManifest.xml"
-            val additionalGradleOverridePath = "$overridesPath/additional.gradle.kts"
+            val additionalGradleOverridePath = "$overridesPath/additional.gradle"
             val projectGradleFile = File("$projectRootPath/build.gradle")
             val projectAndroidManifestFile = File("$projectRootPath/AndroidManifest.xml")
 
