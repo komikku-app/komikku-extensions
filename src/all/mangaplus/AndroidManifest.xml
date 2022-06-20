@@ -30,6 +30,14 @@
                     android:host="www.jumpg-webapi.tokyo-cdn.com"
                     android:path="/www/sns_share"
                     android:scheme="https" />
+                <data
+                    android:host="mangaplus.shueisha.co.jp"
+                    android:pathPattern="/viewer/..*"
+                    android:scheme="https" />
+                <data
+                    android:host="www.mangaplus.shueisha.co.jp"
+                    android:pathPattern="/viewer/..*"
+                    android:scheme="https" />
             </intent-filter>
         </activity>
     </application>

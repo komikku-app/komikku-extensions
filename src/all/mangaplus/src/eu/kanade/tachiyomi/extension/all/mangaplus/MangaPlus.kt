@@ -139,7 +139,29 @@ abstract class MangaPlus(
         return MangasPage(mangas, false)
     }
 
+    private fun fetchTitleIdFromChapterId(chapterId: String): Observable<Int> {
+
+        return Observable.defer {
+            client.newCall(pageListRequestFromChapterId(chapterId)).asObservableSuccess()
+        }.map { response ->
+            titleIdParse(response)
+        }
+    }
+
+    private fun titleIdParse(response: Response): Int {
+        val result = response.asMangaPlusResponse()
+
+        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
+
+        return checkNotNull(result.success.mangaViewer?.titleId) { "Chapter is invalid or expired" }
+    }
+
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        if (query.startsWith(PREFIX_CHAPTER_ID_SEARCH) && query.matches(CHAPTER_ID_SEARCH_PATTERN)) {
+            return fetchTitleIdFromChapterId(query.removePrefix(PREFIX_CHAPTER_ID_SEARCH)).flatMap {
+                fetchSearchManga(page, "$PREFIX_ID_SEARCH$it", filters)
+            }
+        }
         return super.fetchSearchManga(page, query, filters)
             .map {
                 if (it.mangas.size == 1) {
@@ -268,7 +290,10 @@ abstract class MangaPlus(
 
     override fun pageListRequest(chapter: SChapter): Request {
         val chapterId = chapter.url.substringAfterLast("/")
+        return pageListRequestFromChapterId(chapterId)
+    }
 
+    private fun pageListRequestFromChapterId(chapterId: String): Request {
         val newHeaders = headersBuilder()
             .set("Referer", "$baseUrl/viewer/$chapterId")
             .build()
@@ -434,5 +459,7 @@ abstract class MangaPlus(
 
         const val PREFIX_ID_SEARCH = "id:"
         private val ID_SEARCH_PATTERN = "^id:(\\d+)$".toRegex()
+        const val PREFIX_CHAPTER_ID_SEARCH = "ch_id:"
+        private val CHAPTER_ID_SEARCH_PATTERN = "^ch_id:(\\d+)$".toRegex()
     }
 }
