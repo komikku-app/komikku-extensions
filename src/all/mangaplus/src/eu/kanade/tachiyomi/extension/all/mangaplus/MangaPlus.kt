@@ -139,53 +139,22 @@ abstract class MangaPlus(
         return MangasPage(mangas, false)
     }
 
-    private fun fetchTitleIdFromChapterId(chapterId: String): Observable<Int> {
-
-        return Observable.defer {
-            client.newCall(pageListRequestFromChapterId(chapterId)).asObservableSuccess()
-        }.map { response ->
-            titleIdParse(response)
-        }
-    }
-
-    private fun titleIdParse(response: Response): Int {
-        val result = response.asMangaPlusResponse()
-
-        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
-
-        return checkNotNull(result.success.mangaViewer?.titleId) { "Chapter is invalid or expired" }
-    }
-
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        if (query.startsWith(PREFIX_CHAPTER_ID_SEARCH) && query.matches(CHAPTER_ID_SEARCH_PATTERN)) {
-            return fetchTitleIdFromChapterId(query.removePrefix(PREFIX_CHAPTER_ID_SEARCH)).flatMap {
-                fetchSearchManga(page, "$PREFIX_ID_SEARCH$it", filters)
-            }
-        }
-        return super.fetchSearchManga(page, query, filters)
-            .map {
-                if (it.mangas.size == 1) {
-                    return@map it
-                }
-
-                val filteredResult = it.mangas.filter { manga ->
-                    manga.title.contains(query.trim(), true)
-                }
-
-                MangasPage(filteredResult, it.hasNextPage)
-            }
-    }
-
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.startsWith(PREFIX_ID_SEARCH) && query.matches(ID_SEARCH_PATTERN)) {
             return titleDetailsRequest(query.removePrefix(PREFIX_ID_SEARCH))
+        } else if (query.startsWith(PREFIX_CHAPTER_ID_SEARCH) && query.matches(CHAPTER_ID_SEARCH_PATTERN)) {
+            return mangaViewerRequest(query.removePrefix(PREFIX_CHAPTER_ID_SEARCH))
         }
 
         val newHeaders = headersBuilder()
             .set("Referer", "$baseUrl/manga_list/all")
             .build()
 
-        return GET("$API_URL/title_list/allV2?format=json", newHeaders)
+        val apiUrl = "$API_URL/title_list/allV2".toHttpUrl().newBuilder()
+            .addQueryParameter("filter", query.trim())
+            .addQueryParameter("format", "json")
+
+        return GET(apiUrl.toString(), newHeaders)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
@@ -207,9 +176,39 @@ abstract class MangaPlus(
             return MangasPage(listOf(manga), hasNextPage = false)
         }
 
+        if (result.success.mangaViewer != null) {
+            checkNotNull(result.success.mangaViewer.titleId) { intl.chapterExpired }
+
+            val titleId = result.success.mangaViewer.titleId
+            val cacheTitle = titleList.orEmpty().firstOrNull { it.titleId == titleId }
+
+            val manga = if (cacheTitle != null) {
+                SManga.create().apply {
+                    title = result.success.mangaViewer.titleName!!
+                    thumbnail_url = cacheTitle.portraitImageUrl
+                    url = "#/titles/$titleId"
+                }
+            } else {
+                val titleRequest = titleDetailsRequest(titleId.toString())
+                val titleResult = client.newCall(titleRequest).execute().asMangaPlusResponse()
+
+                checkNotNull(titleResult.success) { titleResult.error!!.langPopup(langCode).body }
+
+                titleDetailsParse(titleResult.success.titleDetailView!!)
+            }
+
+            return MangasPage(listOfNotNull(manga), hasNextPage = false)
+        }
+
+        val filter = response.request.url.queryParameter("filter").orEmpty()
+
         titleList = result.success.allTitlesViewV2!!.allTitlesGroup
             .flatMap(AllTitlesGroup::titles)
             .filter { it.language == langCode }
+            .filter { title ->
+                title.name.contains(filter, ignoreCase = true) ||
+                    title.author.contains(filter, ignoreCase = true)
+            }
 
         val mangas = titleList!!.map {
             SManga.create().apply {
@@ -251,17 +250,25 @@ abstract class MangaPlus(
 
         checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
 
-        val details = result.success.titleDetailView!!
-        val title = details.title
+        return titleDetailsParse(result.success.titleDetailView!!)
+            ?: throw Exception(intl.notAvailable)
+    }
 
-        return SManga.create().apply {
-            author = title.author.replace(" / ", ", ")
+    private fun titleDetailsParse(details: TitleDetailView): SManga? {
+        val titleObj = details.title
+
+        val manga = SManga.create().apply {
+            title = titleObj.name
+            author = titleObj.author.replace(" / ", ", ")
             artist = author
             description = details.overview + "\n\n" + details.viewingPeriodDescription
             status = if (details.isCompleted) SManga.COMPLETED else SManga.ONGOING
             genre = details.genres.filter(String::isNotEmpty).joinToString()
-            thumbnail_url = title.portraitImageUrl
+            thumbnail_url = titleObj.portraitImageUrl
+            url = "#/titles/${titleObj.titleId}"
         }
+
+        return manga.takeIf { titleObj.language == langCode }
     }
 
     override fun chapterListRequest(manga: SManga): Request = titleDetailsRequest(manga.url)
@@ -290,10 +297,11 @@ abstract class MangaPlus(
 
     override fun pageListRequest(chapter: SChapter): Request {
         val chapterId = chapter.url.substringAfterLast("/")
-        return pageListRequestFromChapterId(chapterId)
+
+        return mangaViewerRequest(chapterId)
     }
 
-    private fun pageListRequestFromChapterId(chapterId: String): Request {
+    private fun mangaViewerRequest(chapterId: String): Request {
         val newHeaders = headersBuilder()
             .set("Referer", "$baseUrl/viewer/$chapterId")
             .build()
@@ -443,7 +451,7 @@ abstract class MangaPlus(
     companion object {
         private const val API_URL = "https://jumpg-webapi.tokyo-cdn.com/api"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36"
 
         private const val QUALITY_PREF_KEY = "imageResolution"
         private val QUALITY_PREF_ENTRY_VALUES = arrayOf("low", "high", "super_high")
@@ -459,7 +467,7 @@ abstract class MangaPlus(
 
         const val PREFIX_ID_SEARCH = "id:"
         private val ID_SEARCH_PATTERN = "^id:(\\d+)$".toRegex()
-        const val PREFIX_CHAPTER_ID_SEARCH = "ch_id:"
-        private val CHAPTER_ID_SEARCH_PATTERN = "^ch_id:(\\d+)$".toRegex()
+        const val PREFIX_CHAPTER_ID_SEARCH = "chapter-id:"
+        private val CHAPTER_ID_SEARCH_PATTERN = "^chapter-id:(\\d+)$".toRegex()
     }
 }

@@ -96,7 +96,8 @@ data class TitleDetailView(
 @Serializable
 data class MangaViewer(
     val pages: List<MangaPlusPage> = emptyList(),
-    val titleId: Int? = null
+    val titleId: Int? = null,
+    val titleName: String? = null
 )
 
 @Serializable
