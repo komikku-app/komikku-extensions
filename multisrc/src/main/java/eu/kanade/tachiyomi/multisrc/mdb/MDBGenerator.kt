@@ -8,7 +8,7 @@ class MDBGenerator : ThemeSourceGenerator {
     override val themePkg = "mdb"
     override val baseVersionCode = 1
     override val sources = listOf(
-        SingleLang("ManhuaDB", "https://www.manhuadb.com", "zh", sourceName = "漫画DB", overrideVersionCode = 3),
+        SingleLang("ManhuaDB", "https://www.manhuadb.com", "zh", sourceName = "漫画DB", overrideVersionCode = 4),
         SingleLang("Maofly", "https://www.maofly.com", "zh", sourceName = "漫画猫", overrideVersionCode = 1),
     )
 
