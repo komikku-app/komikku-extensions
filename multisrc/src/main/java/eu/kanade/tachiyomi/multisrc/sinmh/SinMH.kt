@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.multisrc.sinmh
 
 import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -14,6 +15,7 @@ import okhttp3.Headers
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Evaluator
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -31,17 +33,20 @@ abstract class SinMH(
     protected open val mobileUrl = _baseUrl.replace("www", "m")
     override val supportsLatest = true
 
+    override val client = network.client.newBuilder().rateLimit(2).build()
+
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
 
     protected open val nextPageSelector = "ul.pagination > li.next:not(.disabled)"
-    protected open val comicItemSelector = "#contList > li"
-    protected open val comicItemTitleSelector = "p > a"
+    protected open val comicItemSelector = "#contList > li, li.list-comic"
+    protected open val comicItemTitleSelector = "p > a, h3 > a"
     protected open fun mangaFromElement(element: Element) = SManga.create().apply {
         val titleElement = element.selectFirst(comicItemTitleSelector)
         title = titleElement.text()
-        setUrlWithoutDomain(titleElement.attr("abs:href"))
-        thumbnail_url = element.selectFirst("img").attr("abs:src")
+        setUrlWithoutDomain(titleElement.attr("href"))
+        val image = element.selectFirst(Evaluator.Tag("img"))
+        thumbnail_url = image.attr("src").ifEmpty { image.attr("data-src") }
     }
 
     // Popular
@@ -80,30 +85,61 @@ abstract class SinMH(
     override fun searchMangaSelector(): String = comicItemSelector
     override fun searchMangaFromElement(element: Element) = mangaFromElement(element)
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
-        if (query.isNotBlank()) {
+        if (query.isNotEmpty()) {
             GET("$baseUrl/search/?keywords=$query&page=$page", headers)
         } else {
             val categories = filters.filterIsInstance<UriPartFilter>().map { it.toUriPart() }
-                .filter { it.isNotEmpty() }.joinToString("-") + "-"
-            GET("$baseUrl/list/$categories/", headers)
+                .filter { it.isNotEmpty() }
+            val sort = filters.filterIsInstance<SortFilter>().firstOrNull()?.toUriPart().orEmpty()
+            val url = StringBuilder(baseUrl).append("/list/").apply {
+                categories.joinTo(this, separator = "-", postfix = "-/")
+            }.append(sort).append("?page=").append(page).toString()
+            GET(url, headers)
         }
 
     // Details
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        title = document.selectFirst(".book-title > h1 > span").text()
-        author = document.selectFirst(".detail-list strong:contains(作者) + a").text()
-        description = document.selectFirst("#intro-all").text().trim()
+        title = document.selectFirst(".book-title > h1").text()
+        val detailsList = document.selectFirst(Evaluator.Class("detail-list"))
+        author = detailsList.select("strong:contains(作者) ~ *").text()
+        description = document.selectFirst(Evaluator.Id("intro-all")).text().trim()
             .removePrefix("漫画简介：").trim()
             .removePrefix("漫画简介：").trim() // some sources have double prefix
-        genre = document.selectFirst(".detail-list strong:contains(类型) + a").text() + ", " +
-            document.select(".breadcrumb-bar a[href*=/list/]").joinToString(", ") { it.text() }
-        status = when (document.selectFirst(".detail-list strong:contains(状态) + a").text()) {
+        genre = mangaDetailsParseDefaultGenre(document, detailsList)
+        status = when (detailsList.selectFirst("strong:contains(状态) + *").text()) {
             "连载中" -> SManga.ONGOING
             "已完结" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
-        thumbnail_url = document.selectFirst("p.cover > img").attr("abs:src")
+        thumbnail_url = document.selectFirst("div.book-cover img").attr("src")
+    }
+
+    protected open fun mangaDetailsParseDefaultGenre(document: Document, detailsList: Element): String {
+        val category = detailsList.selectFirst("strong:contains(类型) + a")
+        val breadcrumbs = document.selectFirst("div.breadcrumb-bar").select("a[href^=/list/]")
+        breadcrumbs.add(0, category)
+        return breadcrumbs.joinToString(", ") { it.text() }
+    }
+
+    protected fun mangaDetailsParseDMZJStyle(document: Document, hasBreadcrumb: Boolean) = SManga.create().apply {
+        val detailsDiv = document.selectFirst("div.comic_deCon")
+        title = detailsDiv.selectFirst(Evaluator.Tag("h1")).text()
+        val details = detailsDiv.select("> ul > li")
+        val linkSelector = Evaluator.Tag("a")
+        author = details[0].selectFirst(linkSelector).text()
+        status = when (details[1].selectFirst(linkSelector).text()) {
+            "连载中" -> SManga.ONGOING
+            "已完结" -> SManga.COMPLETED
+            else -> SManga.UNKNOWN
+        }
+        genre = mutableListOf<Element>().apply {
+            add(details[2].selectFirst(linkSelector)) // 类别
+            addAll(details[3].select(linkSelector)) // 类型
+            if (hasBreadcrumb) addAll(document.selectFirst("div.mianbao").select("a[href^=/list/]"))
+        }.mapTo(mutableSetOf()) { it.text() }.joinToString(", ")
+        description = detailsDiv.selectFirst("> p.comic_deCon_d").text()
+        thumbnail_url = document.selectFirst("div.comic_i_img > img").attr("src")
     }
 
     // Chapters
@@ -117,7 +153,7 @@ abstract class SinMH(
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
         return document.select(chapterListSelector()).map { chapterFromElement(it) }.sortedDescending().apply {
-            if (isNewDateLogic) {
+            if (isNewDateLogic && this.isNotEmpty()) {
                 val date = document.selectFirst(dateSelector).textNodes().last().text()
                 this[0].date_upload = DATE_FORMAT.parse(date)?.time ?: 0L
             }
@@ -126,30 +162,54 @@ abstract class SinMH(
 
     override fun chapterListSelector() = ".chapter-body li > a:not([href^=/comic/app/])"
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.attr("abs:href"))
-        name = element.text()
+        setUrlWithoutDomain(element.attr("href"))
+        val children = element.children()
+        name = if (children.isEmpty()) element.text() else children[0].text()
     }
 
     // Pages
 
     override fun pageListRequest(chapter: SChapter) = GET(mobileUrl + chapter.url, headers)
 
+    protected open val imageHost: String by lazy {
+        client.newCall(GET("$baseUrl/js/config.js", headers)).execute().use {
+            Regex("""resHost:.+?"domain":\["(.+?)"""").find(it.body!!.string())!!
+                .groupValues[1].substringAfter(':').run { "https:$this" }
+        }
+    }
+
+    // baseUrl/js/common.js/getChapterImage()
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.selectFirst("body > script").html()
-        val images = script.substringAfter("chapterImages = [\"").substringBefore("\"]").split("\",\"")
-        val path = script.substringAfter("chapterPath = \"").substringBefore("\";")
-        // assume cover images are on the page image server
-        val server = script.substringAfter("pageImage = \"").substringBefore("/images/cover")
-        return images.mapIndexed { i, image ->
-            val unescapedImage = image.replace("""\/""", "/")
-            val imageUrl = if (unescapedImage.startsWith("/")) {
-                "$server$unescapedImage"
-            } else {
-                "$server/$path$unescapedImage"
+        val script = document.selectFirst("body > script").html().let(::ProgressiveParser)
+        val images = script.substringBetween("chapterImages = ", ";")
+        if (images.length <= 2) return emptyList() // [] or ""
+        val path = script.substringBetween("chapterPath = \"", "\";")
+        return images.let(::parsePageImages).mapIndexed { i, image ->
+            val imageUrl = when {
+                image.startsWith("https://") -> image
+                image.startsWith("/") -> "$imageHost$image"
+                else -> "$imageHost/$path$image"
             }
             Page(i, imageUrl = imageUrl)
         }
     }
+
+    protected class ProgressiveParser(private val text: String) {
+        private var startIndex = 0
+        fun consumeUntil(string: String) = with(text) { startIndex = indexOf(string, startIndex) + string.length }
+        fun substringBetween(left: String, right: String): String = with(text) {
+            val leftIndex = indexOf(left, startIndex) + left.length
+            val rightIndex = indexOf(right, leftIndex)
+            startIndex = rightIndex + right.length
+            return substring(leftIndex, rightIndex)
+        }
+    }
+
+    // default parsing of ["...","..."]
+    protected open fun parsePageImages(chapterImages: String): List<String> =
+        if (chapterImages.length > 2) {
+            chapterImages.run { substring(2, length - 2) }.replace("""\/""", "/").split("\",\"")
+        } else emptyList() // []
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used.")
 
@@ -158,38 +218,52 @@ abstract class SinMH(
         fun toUriPart(): String = uriParts[state]
     }
 
-    protected data class Category(val name: String, val values: Array<String>, val uriParts: Array<String>) {
+    private class SortFilter : Filter.Select<String>("排序方式", sortNames) {
+        fun toUriPart(): String = sortKeys[state]
+    }
+
+    protected class Category(private val name: String, private val values: Array<String>, private val uriParts: Array<String>) {
         fun toUriPartFilter() = UriPartFilter(name, values, uriParts)
     }
 
-    private lateinit var categories: List<Category>
+    protected var categories: List<Category> = emptyList()
 
     protected open fun parseCategories(document: Document) {
-        if (::categories.isInitialized) return
-        categories = document.selectFirst(".filter-nav").children().map { element ->
-            val name = element.selectFirst("label").text()
-            val tags = element.select("a")
+        if (categories.isNotEmpty()) return
+        val labelSelector = Evaluator.Tag("label")
+        val linkSelector = Evaluator.Tag("a")
+        categories = document.selectFirst(Evaluator.Class("filter-nav")).children().map { element ->
+            val name = element.selectFirst(labelSelector).text()
+            val tags = element.select(linkSelector)
             val values = tags.map { it.text() }.toTypedArray()
             val uriParts = tags.map { it.attr("href").removePrefix("/list/").removeSuffix("/") }.toTypedArray()
             Category(name, values, uriParts)
         }
     }
 
-    override fun getFilterList() =
-        if (::categories.isInitialized) FilterList(
-            Filter.Header("如果使用文本搜索，将会忽略分类筛选"),
-            *categories.map(Category::toUriPartFilter).toTypedArray()
-        ) else FilterList(
-            Filter.Header("点击“重置”即可刷新分类，如果失败，"),
-            Filter.Header("请尝试重新从图源列表点击进入图源"),
-        )
+    override fun getFilterList(): FilterList {
+        val list: ArrayList<Filter<*>>
+        if (categories.isNotEmpty()) {
+            list = ArrayList(categories.size + 2)
+            with(list) {
+                add(Filter.Header("如果使用文本搜索，将会忽略分类筛选"))
+                categories.forEach { add(it.toUriPartFilter()) }
+            }
+        } else {
+            list = ArrayList(3)
+            with(list) {
+                add(Filter.Header("点击“重置”即可刷新分类，如果失败，"))
+                add(Filter.Header("请尝试重新从图源列表点击进入图源"))
+            }
+        }
+        list.add(SortFilter())
+        return FilterList(list)
+    }
 
-    private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
-    private val isNewDateLogic = run {
-        val commitCount = AppInfo.getVersionName().substringAfter('-', "")
-        if (commitCount.isNotEmpty()) // Preview
-            commitCount.toInt() >= 4442
-        else // Stable
-            AppInfo.getVersionCode() >= 81
+    companion object {
+        private val DATE_FORMAT by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH) }
+        private val isNewDateLogic = AppInfo.getVersionCode() >= 81
+        private val sortNames = arrayOf("按发布排序", "按发布排序(逆序)", "按更新排序", "按更新排序(逆序)", "按点击排序", "按点击排序(逆序)")
+        private val sortKeys = arrayOf("post/", "-post/", "update/", "-update/", "click/", "-click/")
     }
 }
