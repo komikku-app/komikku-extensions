@@ -326,8 +326,8 @@ open class BatoTo(
         val workStatus = infoElement.select("div.attr-item:contains(original work) span").text()
         val uploadStatus = infoElement.select("div.attr-item:contains(upload status) span").text()
         manga.title = infoElement.select("h3").text().removeEntities()
-        manga.author = infoElement.select("div.attr-item:contains(author) a:first-child").text()
-        manga.artist = infoElement.select("div.attr-item:contains(artist) a:last-child").text()
+        manga.author = infoElement.select("div.attr-item:contains(author) span").text()
+        manga.artist = infoElement.select("div.attr-item:contains(artist) span").text()
         manga.status = parseStatus(workStatus, uploadStatus)
         manga.genre = infoElement.select(".attr-item b:contains(genres) + span ").joinToString { it.text() }
         manga.description = infoElement.select("div.limit-html").text() + "\n" + infoElement.select(".episode-list > .alert-warning").text().trim()
