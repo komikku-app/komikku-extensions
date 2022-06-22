@@ -56,7 +56,7 @@ Some alternative steps can be followed to ignore "repo" branch and skip unrelate
 
 <details><summary>Steps</summary>
 
-1. Make sure to delete "repo" branch in your fork.
+1. Make sure to delete "repo" branch in your fork. You may also want to disable Actions in the repo settings.
 2. Do a partial clone.
     ```bash
     git clone --filter=blob:none --no-checkout <fork-repo-url>
