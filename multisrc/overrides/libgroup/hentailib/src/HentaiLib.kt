@@ -1,12 +1,12 @@
 package eu.kanade.tachiyomi.extension.ru.hentailib
 
 import eu.kanade.tachiyomi.multisrc.libgroup.LibGroup
-import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
-import java.io.IOException
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
@@ -15,6 +15,10 @@ class HentaiLib : LibGroup("HentaiLib", "https://hentailib.me", "ru") {
     override val id: Long = 6425650164840473547
 
     override val client: OkHttpClient = super.client.newBuilder()
+        .rateLimitHost(baseUrl.toHttpUrl(),10) //source
+        .rateLimitHost("https://img2.hentailib.org".toHttpUrl(),1) //secondary
+        .rateLimitHost("https://img4.hentailib.org".toHttpUrl(),1) //fourth
+        .rateLimitHost("https://img3.hentailib.org".toHttpUrl(),1) //compress
         .addInterceptor(::imageContentTypeIntercept)
         .build()
 
