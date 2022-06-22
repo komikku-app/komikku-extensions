@@ -15,9 +15,11 @@ class CubariUrlActivity : Activity() {
         val pathSegments = intent?.data?.pathSegments
 
         if (host != null && pathSegments != null) {
-            val query = when (host) {
-                "m.imgur.com", "imgur.com" -> fromImgur(pathSegments)
-                else -> fromCubari(pathSegments)
+            val query = with(host) {
+                when {
+                    equals("m.imgur.com") || equals("imgur.com") -> fromImgur(pathSegments)
+                    else -> fromCubari(pathSegments)
+                }
             }
 
             if (query == null) {
