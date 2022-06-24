@@ -48,6 +48,7 @@ data class MetadataCollections(
 )
 
 data class MetadataPayload(
+    val forceUseMetadataPayload: Boolean = true,
     var sorting: Int = 1,
     var sorting_asc: Boolean = true,
     var readStatus: ArrayList<String> = arrayListOf< String>(),

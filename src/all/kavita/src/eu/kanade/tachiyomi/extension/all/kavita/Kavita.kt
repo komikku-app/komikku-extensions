@@ -46,10 +46,12 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import okhttp3.Dns
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -87,7 +89,10 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
             }
         }
     }
-
+    override val client: OkHttpClient =
+        network.client.newBuilder()
+            .dns(Dns.SYSTEM)
+            .build()
     override val id by lazy {
         val key = "${"kavita_$suffix"}/all/$versionId"
         val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
@@ -148,18 +153,18 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
+        if (!isLoged) {
+            doLogin()
+        }
         return POST(
-            "$apiUrl/series/recently-added?pageNumber=$page&libraryId=0&pageSize=20",
+            "$apiUrl/series/all?pageNumber=$page&libraryId=0&pageSize=20",
             headersBuilder().build(),
-            buildFilterBody()
+            buildFilterBody(MetadataPayload(sorting = 4, sorting_asc = false, forceUseMetadataPayload = true))
         )
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = response.parseAs<List<SeriesDto>>()
-        series = result
-        val mangaList = result.map { item -> helper.createSeriesDto(item, apiUrl) }
-        return MangasPage(mangaList, helper.hasNextPage(response))
+        return popularMangaParse(response)
     }
 
     /**
@@ -579,6 +584,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
         Pair("Sort name", 1),
         Pair("Created", 2),
         Pair("Last modified", 3),
+        Pair("Item added", 4),
     )
     private class StatusFilter(name: String) : Filter.CheckBox(name, false)
     private class StatusFilterGroup(filters: List<StatusFilter>) :
@@ -872,7 +878,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
     }
     private fun buildFilterBody(filter: MetadataPayload = toFilter): RequestBody {
         var filter = filter
-        if (!isFilterOn) {
+        if (!isFilterOn and !filter.forceUseMetadataPayload) {
             filter = MetadataPayload()
         }
 
