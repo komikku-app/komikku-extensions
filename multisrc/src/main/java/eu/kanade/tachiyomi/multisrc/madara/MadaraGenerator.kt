@@ -164,12 +164,14 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("KlikManga", "https://klikmanga.id", "id", overrideVersionCode = 2),
         SingleLang("Kokomanga", "https://kokomanga.com", "en"),
         SingleLang("Kun Manga", "https://kunmanga.com", "en", overrideVersionCode = 1),
-        SingleLang("LHTranslation", "https://lhtranslation.net", "en", overrideVersionCode = 1),
+        SingleLang("Lady Manga", "https://ladymanga.com", "en"),
+        SingleLang("Lala Manga", "https://lalamanga.com", "en", isNsfw = true),
         SingleLang("Lara Manga", "https://laramanga.com", "en"),
         SingleLang("Latest Manga", "https://latestmanga.net", "en", overrideVersionCode = 1),
         SingleLang("Leitura Noturna", "https://leituranoturna.com", "pt-BR", isNsfw = true),
         SingleLang("Levelerscans", "https://levelerscans.xyz", "en", overrideVersionCode = 1),
         SingleLang("Leviatan Scans X", "https://xxx.leviatanscans.com", "en", isNsfw = true),
+        SingleLang("LHTranslation", "https://lhtranslation.net", "en", overrideVersionCode = 1),
         SingleLang("Lily Manga", "https://lilymanga.com", "en"),
         SingleLang("Lima Scans", "http://limascans.xyz/v2", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Little Monster Scan", "https://littlemonsterscan.com.br", "pt-BR", overrideVersionCode = 4),
@@ -263,6 +265,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("MangaRead.org", "https://www.mangaread.org", "en", className = "MangaReadOrg", overrideVersionCode = 1),
         SingleLang("MangaRex", "https://mangarex.co", "en"),
         SingleLang("MangaSco", "https://mangasco.com", "en", overrideVersionCode = 1),
+        SingleLang("MangaSiro", "https://mangasiro.com", "en", isNsfw = true),
         SingleLang("MangaSmile", "https://mangasmile.com", "en", overrideVersionCode = 1),
         SingleLang("MangaSpark", "https://mangaspark.com", "ar", overrideVersionCode = 1),
         SingleLang("MangaStic", "https://mangastic.com", "en"),
@@ -360,6 +363,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Paean Scans", "https://paeanscans.com", "en", overrideVersionCode = 1),
         SingleLang("Painful Nightz Scan", "https://painfulnightz.com", "en", overrideVersionCode = 1),
         SingleLang("Petrotechsociety", "https://www.petrotechsociety.org", "en", isNsfw = true),
+        SingleLang("Pian Manga", "https://pianmanga.com", "en", isNsfw = true),
         SingleLang("Platinum Crown", "https://platinumscans.com", "en", overrideVersionCode = 1),
         SingleLang("PoManga", "https://pomanga.com", "en"),
         SingleLang("Pojok Manga", "https://pojokmanga.com", "id", overrideVersionCode = 3),
@@ -371,6 +375,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Pirulito Rosa", "https://pirulitorosa.site", "pt-BR", isNsfw = true),
         SingleLang("QueensManga ملكات المانجا", "https://queensmanga.com", "ar", className = "QueensManga", overrideVersionCode = 1),
         SingleLang("RagnarokScan", "https://ragnarokscan.com", "es"),
+        SingleLang("Ragnarok Scanlation", "https://ragnarokscanlation.com", "es", className = "RagnarokScanlation"),
         SingleLang("Rainbow Fairy Scan", "https://rainbowfairyscan.com", "pt-BR"),
         SingleLang("Random Scan", "https://randomscan.online", "pt-BR", overrideVersionCode = 4),
         SingleLang("Random Translations", "https://randomtranslations.com", "en", overrideVersionCode = 1),
@@ -485,9 +490,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("مانجا العاشق", "https://3asq.org", "ar", className = "Manga3asq", overrideVersionCode = 2),
         SingleLang("مانجا عرب تيم Manga Arab Team", "https://mangaarbteam.com", "ar", className = "MangaArabTeam", overrideVersionCode = 1),
         SingleLang("مانجا ليك", "https://mangalek.com", "ar", className = "Mangalek", overrideVersionCode = 1),
-        SingleLang("مانجا لينك", "https://mangalink.io", "ar", className = "MangaLinkio", overrideVersionCode = 2),
-        SingleLang("Ragnarok Scanlation", "https://ragnarokscanlation.com", "es", className = "RagnarokScanlation"),
-        SingleLang("Lady Manga", "https://ladymanga.com", "en")
+        SingleLang("مانجا لينك", "https://mangalink.io", "ar", className = "MangaLinkio", overrideVersionCode = 2)
     )
 
     companion object {
