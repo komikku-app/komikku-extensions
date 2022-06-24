@@ -5,7 +5,7 @@ ext {
     extName = 'mcreader.net'
     pkgNameSuffix = 'en.mangarawclub'
     extClass = '.MangaRawClub'
-    extVersionCode = 12
+    extVersionCode = 13
     isNsfw = true
 }
 
