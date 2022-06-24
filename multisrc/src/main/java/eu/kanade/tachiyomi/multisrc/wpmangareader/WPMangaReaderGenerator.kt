@@ -22,7 +22,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("BeastScans", "https://beastscans.com", "en"),
         SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true),
         SingleLang("Fusion Scanlation", "https://fusionscanlation.com", "es", className = "FusionScanlation", overrideVersionCode = 2),
-        SingleLang("Gabut Scans", "https://gabutscans.com", "id"),
+        SingleLang("Gabut Scans", "https://gabutscans.com", "id", overrideVersionCode = 1),
         SingleLang("Gecenin Lordu", "https://geceninlordu.com", "tr", overrideVersionCode = 1),
         SingleLang("InariManga", "https://inarimanga.com", "es"),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 6),
