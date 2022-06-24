@@ -151,8 +151,12 @@ abstract class SinMH(
     protected open fun List<SChapter>.sortedDescending() = this.asReversed()
 
     override fun chapterListParse(response: Response): List<SChapter> {
+        return chapterListParse(response, chapterListSelector(), dateSelector)
+    }
+
+    protected fun chapterListParse(response: Response, listSelector: String, dateSelector: String): List<SChapter> {
         val document = response.asJsoup()
-        return document.select(chapterListSelector()).map { chapterFromElement(it) }.sortedDescending().apply {
+        return document.select(listSelector).map { chapterFromElement(it) }.sortedDescending().apply {
             if (isNewDateLogic && this.isNotEmpty()) {
                 val date = document.selectFirst(dateSelector).textNodes().last().text()
                 this[0].date_upload = DATE_FORMAT.parse(date)?.time ?: 0L
@@ -160,9 +164,9 @@ abstract class SinMH(
         }
     }
 
-    override fun chapterListSelector() = ".chapter-body li > a:not([href^=/comic/app/])"
+    override fun chapterListSelector() = ".chapter-body li > a"
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
+        runCatching { setUrlWithoutDomain(element.attr("href")) }.onFailure { url = "" }
         val children = element.children()
         name = if (children.isEmpty()) element.text() else children[0].text()
     }
@@ -172,7 +176,7 @@ abstract class SinMH(
     override fun pageListRequest(chapter: SChapter) = GET(mobileUrl + chapter.url, headers)
 
     protected open val imageHost: String by lazy {
-        client.newCall(GET("$baseUrl/js/config.js", headers)).execute().use {
+        client.newCall(GET("$baseUrl/js/config.js", headers)).execute().let {
             Regex("""resHost:.+?"domain":\["(.+?)"""").find(it.body!!.string())!!
                 .groupValues[1].substringAfter(':').run { "https:$this" }
         }

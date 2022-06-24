@@ -52,7 +52,7 @@ class WuqiManga : SinMH("57漫画", "http://www.wuqimh.net") {
     override val dateSelector = ".cont-list dt:contains(更新于) + dd"
 
     override val imageHost: String by lazy {
-        client.newCall(GET("$baseUrl/templates/wuqi/default/scripts/configs.js", headers)).execute().use {
+        client.newCall(GET("$baseUrl/templates/wuqi/default/scripts/configs.js", headers)).execute().let {
             Regex("""\['(.+?)']""").find(it.body!!.string())!!.groupValues[1].run { "http://$this" }
         }
     }
@@ -73,15 +73,14 @@ class WuqiManga : SinMH("57漫画", "http://www.wuqimh.net") {
                 return@replace if (key < size) dictionary[key] else this
             }
         }.removeSurrounding("'").split("','")
-        return unpacked.filterNot { it.endsWith("/ManHuaKu/222.jpg") }.mapIndexed { i, image ->
-            val imageUrl = if (image.startsWith("http")) image else imageHost + image
-            Page(i, imageUrl = imageUrl)
-        }.also { list ->
-            if (list.isEmpty()) return emptyList()
-            client.newCall(GET(list[0].imageUrl!!, headers)).execute().use {
-                if (!it.isSuccessful) throw Exception("该章节的图片加载出错：${it.code}")
-            }
+        val list = unpacked.filterNot { it.endsWith("/ManHuaKu/222.jpg") }.map { image ->
+            if (image.startsWith("http")) image else imageHost + image
         }
+        if (list.isEmpty()) return emptyList()
+        client.newCall(GET(list[0], headers)).execute().apply { close() }.also {
+            if (!it.isSuccessful) throw Exception("该章节的图片加载出错：${it.code}")
+        }
+        return list.mapIndexed { i, imageUrl -> Page(i, imageUrl = imageUrl) }
     }
 
     override fun parseCategories(document: Document) {

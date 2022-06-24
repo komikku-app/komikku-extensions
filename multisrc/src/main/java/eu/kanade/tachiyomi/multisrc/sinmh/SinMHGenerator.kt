@@ -10,7 +10,7 @@ class SinMHGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang(
             name = "Gufeng Manhua", baseUrl = "https://www.gufengmh9.com", lang = "zh",
-            className = "Gufengmh", sourceName = "古风漫画网", overrideVersionCode = 5
+            className = "Gufengmh", sourceName = "古风漫画网", overrideVersionCode = 6
         ),
         SingleLang(
             name = "Imitui Manhua", baseUrl = "https://www.imitui.com", lang = "zh",
