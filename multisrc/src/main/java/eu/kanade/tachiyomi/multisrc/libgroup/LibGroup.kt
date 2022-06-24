@@ -79,6 +79,7 @@ abstract class LibGroup(
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(1, TimeUnit.MINUTES)
+        .rateLimit(3,2)
         .addInterceptor { chain ->
             val response = chain.proceed(chain.request())
             if (response.code == 419)
