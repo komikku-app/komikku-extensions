@@ -45,7 +45,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Anisa Manga", "https://anisamanga.com", "tr"),
         SingleLang("ApollComics", "https://apollcomics.xyz", "es", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Apolltoons", "https://apolltoons.xyz", "es", isNsfw = true),
-        SingleLang("Aqua Manga", "https://aquamanga.com", "en"),
+        SingleLang("Aqua Manga", "https://aquamanga.com", "en", overrideVersionCode = 1),
         SingleLang("ArazNovel", "https://www.araznovel.com", "tr", overrideVersionCode = 3),
         SingleLang("Arthur Scan", "https://arthurscan.xyz", "pt-BR", overrideVersionCode = 4),
         SingleLang("Astral Library", "https://www.astrallibrary.net", "en", overrideVersionCode = 2),
