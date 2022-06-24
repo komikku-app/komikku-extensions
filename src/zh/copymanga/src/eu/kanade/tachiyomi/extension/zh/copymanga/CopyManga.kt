@@ -3,10 +3,9 @@ package eu.kanade.tachiyomi.extension.zh.copymanga
 import android.app.Application
 import android.content.SharedPreferences
 import com.luhuiguo.chinese.ChineseUtils
-import com.squareup.duktape.Duktape
 import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -16,25 +15,20 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
-import javax.net.ssl.SSLContext
-import javax.net.ssl.X509TrustManager
 
 class CopyManga : ConfigurableSource, HttpSource() {
 
@@ -44,10 +38,6 @@ class CopyManga : ConfigurableSource, HttpSource() {
     override val supportsLatest = true
     private val popularLatestPageSize = 50 // default
     private val searchPageSize = 12 // default
-    private val mainlandCdn1Url = "https://mirror277.mangafuna.xyz"
-    private val mainlandCdn2Url = "https://mirror77.mangafuna.xyz"
-    private val overseasCdn1Url = "https://mirror2.mangafunc.fun"
-    private val overseasCdn2Url = "https://mirror.mangafunc.fun"
     private val apiUrl = "https://api.copymanga.org"
 
     val replaceToMirror2 = Regex("mirror277\\.mangafuna\\.xyz\\:12001")
@@ -55,54 +45,12 @@ class CopyManga : ConfigurableSource, HttpSource() {
     // val replaceToMirror2 = Regex("1767566263\\.rsc\\.cdn77\\.org")
     // val replaceToMirror = Regex("1025857477\\.rsc\\.cdn77\\.org")
 
-    private val CONNECT_PERMITS = 1
-    private val CONNECT_PERIOD = 2L
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
-    private val trustManager = object : X509TrustManager {
-        override fun getAcceptedIssuers(): Array<X509Certificate> {
-            return emptyArray()
-        }
-
-        override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
-        }
-
-        override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
-        }
-    }
-    private val sslContext = SSLContext.getInstance("SSL").apply {
-        init(null, arrayOf(trustManager), SecureRandom())
-    }
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .rateLimitHost(
-            baseUrl.toHttpUrlOrNull()!!,
-            CONNECT_PERMITS,
-            CONNECT_PERIOD
-        )
-        .rateLimitHost(
-            mainlandCdn1Url.toHttpUrlOrNull()!!,
-            CONNECT_PERMITS,
-            CONNECT_PERIOD
-        )
-        .rateLimitHost(
-            mainlandCdn2Url.toHttpUrlOrNull()!!,
-            CONNECT_PERMITS,
-            CONNECT_PERIOD
-        )
-        .rateLimitHost(
-            overseasCdn1Url.toHttpUrlOrNull()!!,
-            CONNECT_PERMITS,
-            CONNECT_PERIOD
-        )
-        .rateLimitHost(
-            overseasCdn2Url.toHttpUrlOrNull()!!,
-            CONNECT_PERMITS,
-            CONNECT_PERIOD
-        )
-        .sslSocketFactory(sslContext.socketFactory, trustManager)
+        .rateLimit(1, 2) // 1 request per 2 seconds
         .build()
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/comics?ordering=-popular&offset=${(page - 1) * popularLatestPageSize}&limit=$popularLatestPageSize", headers)
@@ -175,7 +123,8 @@ class CopyManga : ConfigurableSource, HttpSource() {
     override fun chapterListRequest(manga: SManga) = mangaDetailsRequest(manga)
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val disposablePass = this.evaluateScript(document, "dio")
+        val disposablePass = document.selectFirst("script:containsData(dio)").data()
+            .substringAfter("'").substringBeforeLast("'")
 
         // Get encrypted chapters data from another endpoint
         val chapterResponse =
@@ -236,8 +185,8 @@ class CopyManga : ConfigurableSource, HttpSource() {
         return ret
     }
 
-    override fun headersBuilder() = super.headersBuilder()
-        .add("Referer", baseUrl)
+    override fun headersBuilder() = Headers.Builder()
+        .add("User-Agent", String.format(USER_AGENT, preferences.getString(CHROME_VERSION_PREF, CHROME_VERSION_DEFAULT)))
         .add("region", if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) "0" else "1")
 
     // Unused, we can get image urls directly from the chapter page
@@ -412,14 +361,6 @@ class CopyManga : ConfigurableSource, HttpSource() {
         }
     }
 
-    private fun byteArrayToHexString(byteArray: ByteArray): String {
-        var sb = ""
-        for (b in byteArray) {
-            sb += String.format("%02x", b)
-        }
-        return sb
-    }
-
     private fun hexStringToByteArray(string: String): ByteArray {
         val bytes = ByteArray(string.length / 2)
         for (i in 0 until string.length / 2) {
@@ -437,19 +378,6 @@ class CopyManga : ConfigurableSource, HttpSource() {
         } catch (ex: Exception) {
             // Set the time to current in order to display the updated manga in the "Recent updates" section
             System.currentTimeMillis()
-        }
-    }
-
-    private fun evaluateScript(document: Document, expression: String): String {
-        return Duktape.create().use { duktape ->
-            document.select("script:not([src])").map(Element::data).forEach { script ->
-                try {
-                    duktape.evaluate(script)
-                } catch (ex: Exception) {
-                    // Ignore any exception from evaluating the script
-                }
-            }
-            duktape.evaluate(expression).toString()
         }
     }
 
@@ -490,21 +418,30 @@ class CopyManga : ConfigurableSource, HttpSource() {
                 preferences.edit().putBoolean(CHANGE_CDN_OVERSEAS, newValue as Boolean).commit()
             }
         }
+        val chromeVersionPreference = androidx.preference.EditTextPreference(screen.context).apply {
+            key = CHROME_VERSION_PREF
+            title = "User Agent 中的 Chrome 版本号"
+            summary = "访问出现异常时，可以尝试输入最新的 Chrome 版本号。重启生效。"
+            setDefaultValue(CHROME_VERSION_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putString(CHROME_VERSION_PREF, newValue as String).apply()
+                true
+            }
+        }
         screen.addPreference(zhPreference)
         screen.addPreference(cdnPreference)
+        screen.addPreference(chromeVersionPreference)
     }
 
     companion object {
         private const val SHOW_Simplified_Chinese_TITLE_PREF = "showSCTitle"
         private const val CHANGE_CDN_OVERSEAS = "changeCDN"
+        private const val CHROME_VERSION_PREF = "chromeVersion"
+        private const val CHROME_VERSION_DEFAULT = "103"
+
+        private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s.0.0.0 Safari/537.36"
 
         private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
-        private val isNewDateLogic = run {
-            val commitCount = AppInfo.getVersionName().substringAfter('-', "")
-            if (commitCount.isNotEmpty()) // Preview
-                commitCount.toInt() >= 4442
-            else // Stable
-                AppInfo.getVersionCode() >= 81
-        }
+        private val isNewDateLogic = AppInfo.getVersionCode() >= 81
     }
 }
