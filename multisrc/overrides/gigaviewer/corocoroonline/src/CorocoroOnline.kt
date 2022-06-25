@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.ja.corocoroonline
 
 import eu.kanade.tachiyomi.multisrc.gigaviewer.GigaViewer
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -19,6 +18,8 @@ class CorocoroOnline : GigaViewer(
     "https://cdn-img.www.corocoro.jp/public/page"
 ) {
 
+    override val supportsLatest: Boolean = false
+
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::imageIntercept)
         .build()
@@ -27,23 +28,18 @@ class CorocoroOnline : GigaViewer(
 
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/manga", headers)
 
-    override fun popularMangaSelector(): String = "ul.p-list-manga li.p-wp-list-item > a"
+    override fun popularMangaSelector(): String = "a.p-article-wrap"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.selectFirst("h3.p-article-title")!!.text()
-            .substringBefore("第")
-            .trim()
-        thumbnail_url = element.selectFirst("img")!!.attr("src")
+            .substringAfter(']')
+        thumbnail_url = element.selectFirst("> .p-article-image > img")!!.attr("src")
         setUrlWithoutDomain(element.attr("href"))
     }
 
-    override fun latestUpdatesSelector(): String = "div.p-manga-today a.p-article-wrap"
-
     // Site doesn't have a manga search and only returns news in search results.
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        return client.newCall(popularMangaRequest(page))
-            .asObservableSuccess()
-            .map(::popularMangaParse)
+        return fetchPopularManga(page)
             .map { allManga ->
                 val filteredManga = allManga.mangas.filter { manga ->
                     manga.title.contains(query, true)
@@ -64,6 +60,8 @@ class CorocoroOnline : GigaViewer(
 
     // All chapters seems to be free.
     override fun chapterListSelector(): String = "li.episode"
+
+    override val chapterListMode = CHAPTER_LIST_LOCKED
 
     // The source have no collections, so no need to have filters.
     override fun getFilterList(): FilterList = FilterList()

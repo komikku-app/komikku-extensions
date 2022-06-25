@@ -28,7 +28,7 @@ class SundayWebEvery : GigaViewer(
 
     override fun latestUpdatesSelector(): String = "h3#series-$dayOfWeek + section " + popularMangaSelector()
 
-    override fun chapterListSelector(): String = "li.episode:not(.private)"
+    override val chapterListMode = CHAPTER_LIST_LOCKED
 
     override fun getCollections(): List<Collection> = listOf(
         Collection("連載作品", ""),

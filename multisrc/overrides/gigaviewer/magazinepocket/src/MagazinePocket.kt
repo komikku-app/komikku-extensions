@@ -21,8 +21,8 @@ class MagazinePocket : GigaViewer(
     override fun popularMangaSelector(): String = "ul.daily-series li.daily-series-item > a"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.select("h4.daily-series-title").text()
-        thumbnail_url = element.select("div.daily-series-thumb img").attr("data-src")
+        title = element.selectFirst("h4.daily-series-title").text()
+        thumbnail_url = element.selectFirst("div.daily-series-thumb img").attr("data-src")
         setUrlWithoutDomain(element.attr("href"))
     }
 
