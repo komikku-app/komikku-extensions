@@ -18,7 +18,7 @@ import java.util.Locale
 class IRovedOut : HttpSource() {
 
     override val name = "I Roved Out"
-    override val baseUrl = "https://irovedout.com"
+    override val baseUrl = "https://www.irovedout.com"
     override val lang = "en"
     override val supportsLatest = false
     private val archiveUrl = "$baseUrl/archive"
