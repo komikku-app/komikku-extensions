@@ -246,6 +246,8 @@ abstract class NepNep(
     private fun String.toStatus() = when {
         this.contains("Ongoing", ignoreCase = true) -> SManga.ONGOING
         this.contains("Complete", ignoreCase = true) -> SManga.COMPLETED
+        this.contains("Cancelled", ignoreCase = true) -> SManga.CANCELLED
+        this.contains("Hiatus", ignoreCase = true) -> SManga.ON_HIATUS
         else -> SManga.UNKNOWN
     }
 
