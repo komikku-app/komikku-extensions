@@ -22,7 +22,7 @@ class SinMHGenerator : ThemeSourceGenerator {
         ),
         SingleLang(
             name = "Qinqin Manhua", baseUrl = "https://www.acgqd.com", lang = "zh",
-            className = "Qinqin", sourceName = "亲亲漫画", overrideVersionCode = 0
+            className = "Qinqin", sourceName = "亲亲漫画", overrideVersionCode = 1
         ),
         SingleLang(
             name = "57Manhua", baseUrl = "http://www.wuqimh.net", lang = "zh",

@@ -15,6 +15,7 @@ import okhttp3.Headers
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import org.jsoup.select.Evaluator
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -29,6 +30,7 @@ abstract class SinMH(
     _baseUrl: String,
     override val lang: String = "zh",
 ) : ParsedHttpSource() {
+
     override val baseUrl = _baseUrl
     protected open val mobileUrl = _baseUrl.replace("www", "m")
     override val supportsLatest = true
@@ -149,6 +151,7 @@ abstract class SinMH(
     protected open val dateSelector = ".date"
 
     protected open fun List<SChapter>.sortedDescending() = this.asReversed()
+    protected open fun Elements.sectionsDescending() = this.asReversed()
 
     override fun chapterListParse(response: Response): List<SChapter> {
         return chapterListParse(response, chapterListSelector(), dateSelector)
@@ -156,14 +159,19 @@ abstract class SinMH(
 
     protected fun chapterListParse(response: Response, listSelector: String, dateSelector: String): List<SChapter> {
         val document = response.asJsoup()
-        return document.select(listSelector).map { chapterFromElement(it) }.sortedDescending().apply {
-            if (isNewDateLogic && this.isNotEmpty()) {
-                val date = document.selectFirst(dateSelector).textNodes().last().text()
-                this[0].date_upload = DATE_FORMAT.parse(date)?.time ?: 0L
-            }
+        val sectionSelector = listSelector.substringBefore(' ')
+        val itemSelector = listSelector.substringAfter(' ')
+        val list = document.select(sectionSelector).sectionsDescending().flatMap { section ->
+            section.select(itemSelector).map { chapterFromElement(it) }.sortedDescending()
         }
+        if (isNewDateLogic && list.isNotEmpty()) {
+            val date = document.selectFirst(dateSelector).textNodes().last().text()
+            list[0].date_upload = DATE_FORMAT.parse(date)?.time ?: 0L
+        }
+        return list
     }
 
+    /** 必须是 "section item" */
     override fun chapterListSelector() = ".chapter-body li > a"
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         runCatching { setUrlWithoutDomain(element.attr("href")) }.onFailure { url = "" }

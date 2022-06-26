@@ -4,6 +4,7 @@ import android.util.Base64
 import eu.kanade.tachiyomi.multisrc.sinmh.SinMH
 import eu.kanade.tachiyomi.network.GET
 import org.jsoup.nodes.Document
+import org.jsoup.select.Elements
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -13,6 +14,8 @@ class Qinqin : SinMH("亲亲漫画", "https://www.acgqd.com") {
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/list/post/?page=$page", headers)
 
     override fun mangaDetailsParse(document: Document) = mangaDetailsParseDMZJStyle(document, hasBreadcrumb = true)
+
+    override fun Elements.sectionsDescending() = this
 
     // https://www.acgqd.com/js/jmzz20191018.js
     override fun parsePageImages(chapterImages: String): List<String> {
