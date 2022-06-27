@@ -18,7 +18,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("GoGoManga", "https://gogomanga.fun", "en", overrideVersionCode = 1),
         SingleLang("Imagine Scan", "https://imaginescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Imperfect Comics", "https://imperfectcomic.com", "en", overrideVersionCode = 8),
-        SingleLang("Infernal Void Scans", "https://infernalvoidscans.com", "en", overrideVersionCode = 3),
+        SingleLang("Infernal Void Scans", "https://void-scans.com", "en", overrideVersionCode = 4),
         SingleLang("Kanzenin", "https://kanzenin.xyz", "id", isNsfw = true),
         SingleLang("KlanKomik", "https://klankomik.com", "id", overrideVersionCode = 1),
         SingleLang("Komik AV", "https://komikav.com", "id", overrideVersionCode = 1),
