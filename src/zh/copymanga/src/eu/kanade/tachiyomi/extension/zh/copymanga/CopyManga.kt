@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.zh.copymanga
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
@@ -49,12 +50,18 @@ class CopyManga : HttpSource(), ConfigurableSource {
         .addInterceptor(NonblockingRateLimitInterceptor(2, 4)) // 2 requests per 4 seconds
         .build()
 
-    override fun headersBuilder() = headersBuilder(preferences.getBoolean(OVERSEAS_CDN_PREF, false))
-    private fun headersBuilder(useOverseasCdn: Boolean) = Headers.Builder()
-        .add("User-Agent", System.getProperty("http.agent")!!)
-        .add("region", if (useOverseasCdn) "0" else "1")
+    private fun Headers.Builder.setUserAgent(userAgent: String) = set("User-Agent", userAgent)
+    private fun Headers.Builder.setRegion(useOverseasCdn: Boolean) = set("region", if (useOverseasCdn) "0" else "1")
+    private fun Headers.Builder.setReferer() = set("Referer", WWW_PREFIX + domain)
+    private fun Headers.Builder.setVersion(version: String) = set("version", version)
 
-    private var apiHeaders = headersBuilder().build()
+    private var apiHeaders = Headers.Builder()
+        .setUserAgent(preferences.getString(USER_AGENT_PREF, DEFAULT_USER_AGENT)!!)
+        .setRegion(preferences.getBoolean(OVERSEAS_CDN_PREF, false))
+        .setReferer()
+        .add("platform", "1")
+        .setVersion(preferences.getString(VERSION_PREF, DEFAULT_VERSION)!!)
+        .build()
 
     private var useWebp = preferences.getBoolean(WEBP_PREF, true)
 
@@ -151,10 +158,15 @@ class CopyManga : HttpSource(), ConfigurableSource {
     // 新版 API 中间是 /chapter2/ 并且返回值需要排序
     override fun pageListRequest(chapter: SChapter) = GET("$apiUrl/api/v3${chapter.url}", apiHeaders)
 
-    override fun pageListParse(response: Response): List<Page> =
-        response.parseAs<ChapterPageListWrapperDto>().chapter.contents.mapIndexed { i, it ->
+    override fun pageListParse(response: Response): List<Page> {
+        val result: ChapterPageListWrapperDto = response.parseAs()
+        if (result.show_app) {
+            throw Exception("访问受限，请尝试在插件设置中修改 User Agent")
+        }
+        return result.chapter.contents.mapIndexed { i, it ->
             Page(i, imageUrl = it.url)
         }
+    }
 
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used.")
 
@@ -226,6 +238,33 @@ class CopyManga : HttpSource(), ConfigurableSource {
                 preferences.edit().putString(DOMAIN_PREF, index).apply()
                 domain = DOMAINS[index.toInt()]
                 apiUrl = API_PREFIX + domain
+                apiHeaders = apiHeaders.newBuilder().setReferer().build()
+                true
+            }
+        }.let { screen.addPreference(it) }
+
+        EditTextPreference(screen.context).apply {
+            key = USER_AGENT_PREF
+            title = "User Agent"
+            summary = "可以在 Windows/macOS/iOS 上用浏览器访问 https://tool.lu/useragent 获取（不要使用 Windows Chrome 103）"
+            setDefaultValue(DEFAULT_USER_AGENT)
+            setOnPreferenceChangeListener { _, newValue ->
+                val userAgent = newValue as String
+                preferences.edit().putString(USER_AGENT_PREF, userAgent).apply()
+                apiHeaders = apiHeaders.newBuilder().setUserAgent(userAgent).build()
+                true
+            }
+        }.let { screen.addPreference(it) }
+
+        EditTextPreference(screen.context).apply {
+            key = VERSION_PREF
+            title = "网页版本号"
+            summary = "访问受限时按实际情况修改"
+            setDefaultValue(DEFAULT_VERSION)
+            setOnPreferenceChangeListener { _, newValue ->
+                val version = newValue as String
+                preferences.edit().putString(VERSION_PREF, version).apply()
+                apiHeaders = apiHeaders.newBuilder().setVersion(version).build()
                 true
             }
         }.let { screen.addPreference(it) }
@@ -238,7 +277,7 @@ class CopyManga : HttpSource(), ConfigurableSource {
             setOnPreferenceChangeListener { _, newValue ->
                 val useOverseasCdn = newValue as Boolean
                 preferences.edit().putBoolean(OVERSEAS_CDN_PREF, useOverseasCdn).apply()
-                apiHeaders = headersBuilder(useOverseasCdn).build()
+                apiHeaders = apiHeaders.newBuilder().setRegion(useOverseasCdn).build()
                 true
             }
         }.let { screen.addPreference(it) }
@@ -275,12 +314,16 @@ class CopyManga : HttpSource(), ConfigurableSource {
         private const val OVERSEAS_CDN_PREF = "changeCDN"
         private const val SC_TITLE_PREF = "showSCTitle"
         private const val WEBP_PREF = "webp"
+        private const val USER_AGENT_PREF = "userAgent"
+        private const val VERSION_PREF = "version"
         // private const val CHROME_VERSION_PREF = "chromeVersion" // default value was "103"
 
         private const val WWW_PREFIX = "https://www."
         private const val API_PREFIX = "https://api."
         private val DOMAINS = arrayOf("copymanga.org", "copymanga.info", "copymanga.net")
         private val DOMAIN_INDICES = arrayOf("0", "1", "2")
+        private const val DEFAULT_USER_AGENT = "Dart/2.16(dart:io)"
+        private const val DEFAULT_VERSION = "2022.06.22"
 
         private const val PAGE_SIZE = 20
         private const val CHAPTER_PAGE_SIZE = 500

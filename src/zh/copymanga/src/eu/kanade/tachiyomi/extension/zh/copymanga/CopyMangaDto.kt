@@ -114,7 +114,7 @@ class ChapterPageListDto(val contents: List<UrlDto>)
 class UrlDto(val url: String)
 
 @Serializable
-class ChapterPageListWrapperDto(val chapter: ChapterPageListDto)
+class ChapterPageListWrapperDto(val chapter: ChapterPageListDto, val show_app: Boolean)
 
 @Serializable
 class ListDto<T>(
