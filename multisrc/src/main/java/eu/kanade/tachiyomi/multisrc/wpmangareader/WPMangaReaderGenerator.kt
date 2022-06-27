@@ -14,7 +14,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         MultiLang("Flame Scans", "https://flamescans.org", listOf("ar", "en"), className = "FlameScansFactory", pkgName = "flamescans", overrideVersionCode = 1),
-        SingleLang("Ace Scans", "https://acescans.xyz", "en", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("Ace Scans", "https://acescans.xyz", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Alpha Scans", "https://alpha-scans.org", "en", overrideVersionCode = 1),
         SingleLang("Anitation Arts", "https://anitationarts.org", "en", overrideVersionCode = 1),
         SingleLang("Arcane scan", "https://arcanescan.fr", "fr"),
