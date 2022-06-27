@@ -2,10 +2,13 @@ package eu.kanade.tachiyomi.extension.zh.copymanga
 
 import android.app.Application
 import android.content.SharedPreferences
-import com.luhuiguo.chinese.ChineseUtils
-import eu.kanade.tachiyomi.AppInfo
+import android.util.Log
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.extension.zh.copymanga.MangaDto.Companion.parseChapterGroups
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -14,434 +17,272 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.json.JSONArray
-import org.json.JSONObject
+import rx.Observable
+import rx.Single
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.text.SimpleDateFormat
-import java.util.Locale
-import javax.crypto.Cipher
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.SecretKeySpec
+import uy.kohesive.injekt.injectLazy
+import kotlin.concurrent.thread
 
-class CopyManga : ConfigurableSource, HttpSource() {
-
+class CopyManga : HttpSource(), ConfigurableSource {
     override val name = "拷贝漫画"
-    override val baseUrl = "https://www.copymanga.org"
     override val lang = "zh"
     override val supportsLatest = true
-    private val popularLatestPageSize = 50 // default
-    private val searchPageSize = 12 // default
-    private val apiUrl = "https://api.copymanga.org"
 
-    val replaceToMirror2 = Regex("mirror277\\.mangafuna\\.xyz\\:12001")
-    val replaceToMirror = Regex("mirror77\\.mangafuna\\.xyz\\:12001")
-    // val replaceToMirror2 = Regex("1767566263\\.rsc\\.cdn77\\.org")
-    // val replaceToMirror = Regex("1025857477\\.rsc\\.cdn77\\.org")
+    private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
 
-    override val client: OkHttpClient = super.client.newBuilder()
-        .rateLimit(1, 2) // 1 request per 2 seconds
+    private var domain = DOMAINS[preferences.getString(DOMAIN_PREF, "0")!!.toInt().coerceIn(0, DOMAINS.size - 1)]
+    override val baseUrl = WWW_PREFIX + domain
+    private var apiUrl = API_PREFIX + domain // www. 也可以
+
+    override val client: OkHttpClient = network.client.newBuilder()
+        .addInterceptor(NonblockingRateLimitInterceptor(2, 4)) // 2 requests per 4 seconds
         .build()
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/comics?ordering=-popular&offset=${(page - 1) * popularLatestPageSize}&limit=$popularLatestPageSize", headers)
-    override fun popularMangaParse(response: Response): MangasPage = parseSearchMangaWithFilterOrPopularOrLatestResponse(response)
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/comics?ordering=-datetime_updated&offset=${(page - 1) * popularLatestPageSize}&limit=$popularLatestPageSize", headers)
-    override fun latestUpdatesParse(response: Response): MangasPage = parseSearchMangaWithFilterOrPopularOrLatestResponse(response)
+    override fun headersBuilder() = headersBuilder(preferences.getBoolean(OVERSEAS_CDN_PREF, false))
+    private fun headersBuilder(useOverseasCdn: Boolean) = Headers.Builder()
+        .add("User-Agent", System.getProperty("http.agent")!!)
+        .add("region", if (useOverseasCdn) "0" else "1")
+
+    private var apiHeaders = headersBuilder().build()
+
+    private var useWebp = preferences.getBoolean(WEBP_PREF, true)
+
+    init {
+        MangaDto.convertToSc = preferences.getBoolean(SC_TITLE_PREF, false)
+    }
+
+    override fun popularMangaRequest(page: Int): Request {
+        val offset = PAGE_SIZE * (page - 1)
+        return GET("$apiUrl/api/v3/recs?pos=3200102&limit=$PAGE_SIZE&offset=$offset", apiHeaders)
+    }
+
+    override fun popularMangaParse(response: Response): MangasPage {
+        val page: ListDto<MangaWrapperDto> = response.parseAs()
+        val hasNextPage = page.offset + page.limit < page.total
+        return MangasPage(page.list.map { it.toSManga() }, hasNextPage)
+    }
+
+    override fun latestUpdatesRequest(page: Int): Request {
+        val offset = PAGE_SIZE * (page - 1)
+        return GET("$apiUrl/api/v3/update/newest?limit=$PAGE_SIZE&offset=$offset", apiHeaders)
+    }
+
+    override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        // when perform html search, sort by popular
-        val apiUrlString = "$baseUrl/api/kb/web/searchs/comics?limit=$searchPageSize&offset=${(page - 1) * searchPageSize}&platform=2&q=$query&q_type="
-//        val apiUrlString = "$baseUrl/api/v3/search/comic?limit=$searchPageSize&offset=${(page - 1) * searchPageSize}&platform=2&q=$query&q_type="
-        val htmlUrlString = "$baseUrl/comics?offset=${(page - 1) * popularLatestPageSize}&limit=$popularLatestPageSize"
-        val requestUrlString: String
-
-        val params = filters.map {
-            if (it is MangaFilter) {
-                it.toUriPart()
-            } else ""
-        }.filter { it != "" }.joinToString("&")
-        // perform html search only when do have filter and not search anything
-        if (params != "" && query == "") {
-            requestUrlString = "$htmlUrlString&$params"
+        val offset = PAGE_SIZE * (page - 1)
+        val builder = apiUrl.toHttpUrl().newBuilder()
+            .addQueryParameter("limit", "$PAGE_SIZE")
+            .addQueryParameter("offset", "$offset")
+        if (query.isNotBlank()) {
+            builder.addPathSegments("api/v3/search/comic")
+                .addQueryParameter("q", query)
+            filters.filterIsInstance<SearchFilter>().firstOrNull()?.addQuery(builder)
         } else {
-            requestUrlString = apiUrlString
+            builder.addPathSegments("api/v3/comics")
+            filters.filterIsInstance<CopyMangaFilter>().forEach {
+                if (it !is SearchFilter) it.addQuery(builder)
+            }
         }
-        val url = requestUrlString.toHttpUrlOrNull()?.newBuilder()
-        return GET(url.toString(), headers)
+        return Request.Builder().url(builder.build()).headers(apiHeaders).build()
     }
+
     override fun searchMangaParse(response: Response): MangasPage {
-        if (response.headers("content-type").filter { it.contains("json", true) }.any()) {
-            // result from api request
-            return parseSearchMangaResponseAsJson(response)
+        val page: ListDto<MangaDto> = response.parseAs()
+        val hasNextPage = page.offset + page.limit < page.total
+        return MangasPage(page.list.map { it.toSManga() }, hasNextPage)
+    }
+
+    // 让 WebView 打开网页而不是 API
+    override fun mangaDetailsRequest(manga: SManga) = GET(WWW_PREFIX + domain + manga.url, apiHeaders)
+
+    private fun realMangaDetailsRequest(manga: SManga) =
+        GET("$apiUrl/api/v3/comic2/${manga.url.removePrefix(MangaDto.URL_PREFIX)}", apiHeaders)
+
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> =
+        client.newCall(realMangaDetailsRequest(manga)).asObservableSuccess().map { mangaDetailsParse(it) }
+
+    override fun mangaDetailsParse(response: Response): SManga =
+        response.parseAs<MangaWrapperDto>().toSMangaDetails()
+
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Single.create<List<SChapter>> {
+        val result = ArrayList<SChapter>()
+        val groups = manga.description?.parseChapterGroups() ?: run {
+            val response = client.newCall(realMangaDetailsRequest(manga)).execute()
+            response.parseAs<MangaWrapperDto>().groups!!.values
+        }
+        val mangaSlug = manga.url.removePrefix(MangaDto.URL_PREFIX)
+        result.fetchChapterGroup(mangaSlug, "default", "")
+        for (group in groups) {
+            result.fetchChapterGroup(mangaSlug, group.path_word, group.name)
+        }
+        it.onSuccess(result)
+    }.toObservable()
+
+    private fun ArrayList<SChapter>.fetchChapterGroup(manga: String, key: String, name: String) {
+        val result = ArrayList<SChapter>(0)
+        var offset = 0
+        var hasNextPage = true
+        while (hasNextPage) {
+            val response = client.newCall(GET("$apiUrl/api/v3/comic/$manga/group/$key/chapters?limit=$CHAPTER_PAGE_SIZE&offset=$offset", apiHeaders)).execute()
+            val chapters: ListDto<ChapterDto> = response.parseAs()
+            result.ensureCapacity(chapters.total)
+            chapters.list.mapTo(result) { it.toSChapter(name) }
+            offset += CHAPTER_PAGE_SIZE
+            hasNextPage = offset < chapters.total
+        }
+        addAll(result.asReversed())
+    }
+
+    override fun chapterListRequest(manga: SManga) = throw UnsupportedOperationException("Not used.")
+    override fun chapterListParse(response: Response) = throw UnsupportedOperationException("Not used.")
+
+    // 新版 API 中间是 /chapter2/ 并且返回值需要排序
+    override fun pageListRequest(chapter: SChapter) = GET("$apiUrl/api/v3${chapter.url}", apiHeaders)
+
+    override fun pageListParse(response: Response): List<Page> =
+        response.parseAs<ChapterPageListWrapperDto>().chapter.contents.mapIndexed { i, it ->
+            Page(i, imageUrl = it.url)
+        }
+
+    override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used.")
+
+    override fun imageRequest(page: Page): Request {
+        val imageUrl = page.imageUrl!!
+        return if (useWebp && imageUrl.endsWith(".jpg")) {
+            GET(imageUrl.removeSuffix(".jpg") + ".webp")
         } else {
-            // result from html request
-            return parseSearchMangaWithFilterOrPopularOrLatestResponse(response)
+            GET(imageUrl)
         }
     }
 
-    override fun mangaDetailsRequest(manga: SManga) = GET(baseUrl + manga.url, headers)
-    override fun mangaDetailsParse(response: Response): SManga {
-        val document = response.asJsoup()
-        var _title: String = document.select("div.comicParticulars-title-right > ul > li:eq(0) ").first().text()
-        if (preferences.getBoolean(SHOW_Simplified_Chinese_TITLE_PREF, false)) {
-            _title = ChineseUtils.toSimplified(_title)
-        }
-        val manga = SManga.create().apply {
-            title = _title
-            var picture = document.select("div.comicParticulars-title-left img").first().attr("data-src")
-            if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
-                picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun:443")
-                picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun:443")
-            }
-            thumbnail_url = picture
-            description = document.select("div.comicParticulars-synopsis p.intro").first().text().trim()
-        }
-
-        val items = document.select("div.comicParticulars-title-right ul li")
-        if (items.size >= 7) {
-            manga.author = items[2].select("a").map { i -> i.text().trim() }.joinToString(", ")
-            manga.status = when (items[5].select("span.comicParticulars-right-txt").first().text().trim()) {
-                "已完結" -> SManga.COMPLETED
-                "連載中" -> SManga.ONGOING
-                else -> SManga.UNKNOWN
-            }
-            manga.genre = items[6].select("a").map { i -> i.text().trim().trim('#') }.joinToString(", ")
-        }
-        return manga
-    }
-
-    override fun chapterListRequest(manga: SManga) = mangaDetailsRequest(manga)
-    override fun chapterListParse(response: Response): List<SChapter> {
-        val document = response.asJsoup()
-        val disposablePass = document.selectFirst("script:containsData(dio)").data()
-            .substringAfter("'").substringBeforeLast("'")
-
-        // Get encrypted chapters data from another endpoint
-        val chapterResponse =
-            client.newCall(GET("${response.request.url}/chapters", headers)).execute()
-        val disposableData = JSONObject(chapterResponse.body!!.string()).get("results").toString()
-
-        // Decrypt chapter JSON
-        val chapterJsonString = decryptChapterData(disposableData, disposablePass)
-
-        val chapterJson = JSONObject(chapterJsonString)
-        // Get the comic path word
-        val comicPathWord = chapterJson.optJSONObject("build")?.optString("path_word")
-
-        // Get chapter groups
-        val chapterGroups = chapterJson.optJSONObject("groups")
-        if (chapterGroups == null) {
-            return listOf()
-        }
-
-        val retChapter = ArrayList<SChapter>()
-        // Get chapters according to groups
-        val keys = chapterGroups.keys().asSequence().toList()
-        keys.filter { it -> it == "default" }.forEach { groupName ->
-            run {
-                val chapterGroup = chapterGroups.getJSONObject(groupName)
-                fillChapters(chapterGroup, retChapter, comicPathWord)
-            }
-        }
-
-        val otherChapters = ArrayList<SChapter>()
-        keys.filter { it -> it != "default" }.forEach { groupName ->
-            run {
-                val chapterGroup = chapterGroups.getJSONObject(groupName)
-                fillChapters(chapterGroup, otherChapters, comicPathWord)
-            }
-        }
-
-        // place others to top, as other group updates not so often
-        retChapter.addAll(0, otherChapters)
-        return retChapter.asReversed().apply {
-            if (!isNewDateLogic) return@apply
-            val latestDate = document.selectFirst(".comicParticulars-sigezi + .comicParticulars-right-txt").text()
-                .let { DATE_FORMAT.parse(it)?.time ?: 0L }
-            this.firstOrNull()?.date_upload = latestDate
+    private inline fun <reified T> Response.parseAs(): T = use {
+        if (code == 200) {
+            json.decodeFromStream<ResultDto<T>>(body!!.byteStream()).results
+        } else {
+            throw Exception(json.decodeFromStream<ResultMessageDto>(body!!.byteStream()).message)
         }
     }
 
-    override fun pageListRequest(chapter: SChapter) = GET("$apiUrl/api/v3${chapter.url}", headers)
-    override fun pageListParse(response: Response): List<Page> {
-        val jsonObject = JSONObject(response.body!!.string())
-        val pageArray = jsonObject.getJSONObject("results").getJSONObject("chapter").getJSONArray("contents")
-        val ret = ArrayList<Page>(pageArray.length())
-        for (i in 0 until pageArray.length()) {
-            val page = pageArray.getJSONObject(i).getString("url")
-            ret.add(Page(i, "", page))
+    private var genres: Array<Param> = emptyArray()
+    private var isFetchingGenres = false
+
+    override fun getFilterList(): FilterList {
+        val genreFilter = if (genres.isEmpty()) {
+            fetchGenres()
+            Filter.Header("点击“重置”尝试刷新题材分类")
+        } else {
+            GenreFilter(genres)
         }
-
-        return ret
+        return FilterList(
+            SearchFilter(),
+            Filter.Separator(),
+            Filter.Header("分类（搜索文本时无效）"),
+            genreFilter,
+            RegionFilter(),
+            StatusFilter(),
+            SortFilter(),
+        )
     }
 
-    override fun headersBuilder() = Headers.Builder()
-        .add("User-Agent", String.format(USER_AGENT, preferences.getString(CHROME_VERSION_PREF, CHROME_VERSION_DEFAULT)))
-        .add("region", if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) "0" else "1")
-
-    // Unused, we can get image urls directly from the chapter page
-    override fun imageUrlParse(response: Response) =
-        throw UnsupportedOperationException("This method should not be called!")
-
-    // Copymanga has different logic in polular and search page, mix two logic in search progress for now
-    override fun getFilterList() = FilterList(
-        MangaFilter(
-            "题材",
-            "theme",
-            arrayOf(
-                Pair("全部", ""),
-                Pair("愛情", "aiqing"),
-                Pair("歡樂向", "huanlexiang"),
-                Pair("冒险", "maoxian"),
-                Pair("百合", "baihe"),
-                Pair("東方", "dongfang"),
-                Pair("奇幻", "qihuan"),
-                Pair("校园", "xiaoyuan"),
-                Pair("科幻", "kehuan"),
-                Pair("生活", "shenghuo"),
-                Pair("轻小说", "qingxiaoshuo"),
-                Pair("格鬥", "gedou"),
-                Pair("神鬼", "shengui"),
-                Pair("悬疑", "xuanyi"),
-                Pair("耽美", "danmei"),
-                Pair("其他", "qita"),
-                Pair("舰娘", "jianniang"),
-                Pair("职场", "zhichang"),
-                Pair("治愈", "zhiyu"),
-                Pair("萌系", "mengxi"),
-                Pair("四格", "sige"),
-                Pair("伪娘", "weiniang"),
-                Pair("竞技", "jingji"),
-                Pair("搞笑", "gaoxiao"),
-                Pair("長條", "changtiao"),
-                Pair("性转换", "xingzhuanhuan"),
-                Pair("侦探", "zhentan"),
-                Pair("节操", "jiecao"),
-                Pair("热血", "rexue"),
-                Pair("美食", "meishi"),
-                Pair("後宮", "hougong"),
-                Pair("励志", "lizhi"),
-                Pair("音乐舞蹈", "yinyuewudao"),
-                Pair("彩色", "COLOR"),
-                Pair("AA", "aa"),
-                Pair("异世界", "yishijie"),
-                Pair("历史", "lishi"),
-                Pair("战争", "zhanzheng"),
-                Pair("机战", "jizhan"),
-                Pair("C97", "comiket97"),
-                Pair("C96", "comiket96"),
-                Pair("宅系", "zhaixi"),
-                Pair("C98", "C98"),
-                Pair("C95", "comiket95"),
-                Pair("恐怖", "%E6%81%90%E6%80 %96"),
-                Pair("FATE", "fate"),
-                Pair("無修正", "Uncensored"),
-                Pair("穿越", "chuanyue"),
-                Pair("武侠", "wuxia"),
-                Pair("生存", "shengcun"),
-                Pair("惊悚", "jingsong"),
-                Pair("都市", "dushi"),
-                Pair("LoveLive", "loveLive"),
-                Pair("转生", "zhuansheng"),
-                Pair("重生", "chongsheng"),
-                Pair("仙侠", "xianxia")
-            )
-        ),
-        MangaFilter(
-            "排序",
-            "ordering",
-            arrayOf(
-                Pair("最热门", "-popular"),
-                Pair("最冷门", "popular"),
-                Pair("最新", "-datetime_updated"),
-                Pair("最早", "datetime_updated"),
-            )
-        ),
-    )
-
-    private class MangaFilter(
-        displayName: String,
-        searchName: String,
-        val vals: Array<Pair<String, String>>,
-        defaultValue: Int = 0
-    ) :
-        Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), defaultValue) {
-        val searchName = searchName
-        fun toUriPart(): String {
-            val selectVal = vals[state].second
-            return if (selectVal != "") "$searchName=$selectVal" else ""
-        }
-    }
-
-    private fun parseSearchMangaWithFilterOrPopularOrLatestResponse(response: Response): MangasPage {
-        val document = response.asJsoup()
-
-        val mangas = document.select("div.exemptComicList div.exemptComic-box").first().attr("list")
-
-        val comicArray = JSONArray(mangas)
-
-        // There is always a next pager, so use itemCount to check. XD
-        val hasNextPage = comicArray.length() == popularLatestPageSize
-        val ret = mangaListFromJsonArray(comicArray)
-
-        return MangasPage(ret, hasNextPage)
-    }
-
-    private fun parseSearchMangaResponseAsJson(response: Response): MangasPage {
-        val body = response.body!!.string()
-        // results > comic > list []
-        val res = JSONObject(body)
-        val comicArray = res.optJSONObject("results")?.optJSONArray("list")
-        if (comicArray == null) {
-            return MangasPage(listOf(), false)
-        }
-
-        val ret = mangaListFromJsonArray(comicArray)
-
-        return MangasPage(ret, comicArray.length() == searchPageSize)
-    }
-
-    private fun mangaListFromJsonArray(comicArray: JSONArray): ArrayList<SManga> {
-        val ret = ArrayList<SManga>(comicArray.length())
-
-        for (i in 0 until comicArray.length()) {
-            val obj = comicArray.getJSONObject(i)
-            val authorArray = obj.getJSONArray("author")
-            var _title: String = obj.getString("name")
-            if (preferences.getBoolean(SHOW_Simplified_Chinese_TITLE_PREF, false)) {
-                _title = ChineseUtils.toSimplified(_title)
-            }
-            ret.add(
-                SManga.create().apply {
-                    title = _title
-                    var picture = obj.getString("cover")
-                    if (preferences.getBoolean(CHANGE_CDN_OVERSEAS, false)) {
-                        picture = replaceToMirror2.replace(picture, "mirror2.mangafunc.fun:443")
-                        picture = replaceToMirror.replace(picture, "mirror.mangafunc.fun:443")
-                    }
-                    thumbnail_url = picture
-                    author = Array<String?>(authorArray.length()) { i -> authorArray.getJSONObject(i).getString("name") }.joinToString(", ")
-                    status = SManga.UNKNOWN
-                    url = "/comic/${obj.getString("path_word")}"
-                }
-            )
-        }
-
-        return ret
-    }
-
-    private fun fillChapters(chapterGroup: JSONObject, retChapter: ArrayList<SChapter>, comicPathWord: String?) {
-        // group's last update time
-        val groupLastUpdateTime =
-            chapterGroup.optJSONObject("last_chapter")?.optString("datetime_created")
-
-        // chapters in the group to
-        val chapterArray = chapterGroup.optJSONArray("chapters")
-        if (chapterArray != null) {
-            for (i in 0 until chapterArray.length()) {
-                val chapter = chapterArray.getJSONObject(i)
-                retChapter.add(
-                    SChapter.create().apply {
-                        name = chapter.getString("name")
-                        url = "/comic/$comicPathWord/chapter/${chapter.getString("id")}"
-                        date_upload = stringToUnixTimestamp(groupLastUpdateTime)
-                    }
-                )
+    private fun fetchGenres() {
+        if (genres.isNotEmpty() || isFetchingGenres) return
+        isFetchingGenres = true
+        thread {
+            try {
+                val response = client.newCall(GET("$apiUrl/api/v3/theme/comic/count?limit=500", apiHeaders)).execute()
+                val list = response.parseAs<ListDto<KeywordDto>>().list
+                val result = ArrayList<Param>(list.size + 1).apply { add(Param("全部", "")) }
+                genres = list.mapTo(result) { it.toParam() }.toTypedArray()
+            } catch (e: Exception) {
+                Log.e("CopyManga", "failed to fetch genres", e)
+            } finally {
+                isFetchingGenres = false
             }
         }
     }
 
-    private fun hexStringToByteArray(string: String): ByteArray {
-        val bytes = ByteArray(string.length / 2)
-        for (i in 0 until string.length / 2) {
-            bytes[i] = string.substring(i * 2, i * 2 + 2).toInt(16).toByte()
-        }
-        return bytes
-    }
-
-    private fun stringToUnixTimestamp(string: String?, pattern: String = "yyyy-MM-dd", locale: Locale = Locale.CHINA): Long {
-        if (string == null) System.currentTimeMillis()
-
-        return try {
-            val time = SimpleDateFormat(pattern, locale).parse(string)?.time
-            if (time != null) time else System.currentTimeMillis()
-        } catch (ex: Exception) {
-            // Set the time to current in order to display the updated manga in the "Recent updates" section
-            System.currentTimeMillis()
-        }
-    }
-
-    // thanks to unpacker toolsite, http://matthewfl.com/unPacker.html
-    private fun decryptChapterData(disposableData: String, disposablePass: String?): String {
-        val prePart = disposableData.substring(0, 16)
-        val postPart = disposableData.substring(16, disposableData.length)
-        val disposablePassByteArray = (disposablePass ?: "hotmanga.aes.key").toByteArray(Charsets.UTF_8)
-        val prepartByteArray = prePart.toByteArray(Charsets.UTF_8)
-        val dataByteArray = hexStringToByteArray(postPart)
-
-        val secretKey = SecretKeySpec(disposablePassByteArray, "AES")
-        val iv = IvParameterSpec(prepartByteArray)
-        val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, iv)
-        val result = String(cipher.doFinal(dataByteArray), Charsets.UTF_8)
-
-        return result
-    }
-
-    // Change Title to Simplified Chinese For Library Gobal Search Optionally
-    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-        val zhPreference = androidx.preference.SwitchPreferenceCompat(screen.context).apply {
-            key = SHOW_Simplified_Chinese_TITLE_PREF
-            title = "将标题转换为简体中文"
-            summary = "需要重启软件以生效。已添加漫画需要迁移改变标题。"
-
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = DOMAIN_PREF
+            title = "网址域名"
+            summary = "连接不稳定时可以尝试切换"
+            entries = DOMAINS
+            entryValues = DOMAIN_INDICES
+            setDefaultValue("0")
             setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putBoolean(SHOW_Simplified_Chinese_TITLE_PREF, newValue as Boolean).commit()
-            }
-        }
-        val cdnPreference = androidx.preference.SwitchPreferenceCompat(screen.context).apply {
-            key = CHANGE_CDN_OVERSEAS
-            title = "转换图片CDN为境外CDN"
-            summary = "需要重启软件（及清除章节缓存）以生效。加载图片使用境外CDN，使用代理的情况下推荐打开此选项（境外CDN可能无法查看一些刚刚更新的漫画，需要等待资源更新到CDN）"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putBoolean(CHANGE_CDN_OVERSEAS, newValue as Boolean).commit()
-            }
-        }
-        val chromeVersionPreference = androidx.preference.EditTextPreference(screen.context).apply {
-            key = CHROME_VERSION_PREF
-            title = "User Agent 中的 Chrome 版本号"
-            summary = "访问出现异常时，可以尝试输入最新的 Chrome 版本号。重启生效。"
-            setDefaultValue(CHROME_VERSION_DEFAULT)
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putString(CHROME_VERSION_PREF, newValue as String).apply()
+                val index = newValue as String
+                preferences.edit().putString(DOMAIN_PREF, index).apply()
+                domain = DOMAINS[index.toInt()]
+                apiUrl = API_PREFIX + domain
                 true
             }
-        }
-        screen.addPreference(zhPreference)
-        screen.addPreference(cdnPreference)
-        screen.addPreference(chromeVersionPreference)
+        }.let { screen.addPreference(it) }
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = OVERSEAS_CDN_PREF
+            title = "使用“港台及海外线路”"
+            summary = "连接不稳定时可以尝试切换，关闭时使用“大陆用户线路”，已阅读章节需要清空缓存才能生效"
+            setDefaultValue(false)
+            setOnPreferenceChangeListener { _, newValue ->
+                val useOverseasCdn = newValue as Boolean
+                preferences.edit().putBoolean(OVERSEAS_CDN_PREF, useOverseasCdn).apply()
+                apiHeaders = headersBuilder(useOverseasCdn).build()
+                true
+            }
+        }.let { screen.addPreference(it) }
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = WEBP_PREF
+            title = "使用 WebP 图片格式"
+            summary = "默认开启，可以节省网站流量"
+            setDefaultValue(true)
+            setOnPreferenceChangeListener { _, newValue ->
+                val webp = newValue as Boolean
+                preferences.edit().putBoolean(WEBP_PREF, webp).apply()
+                useWebp = webp
+                true
+            }
+        }.let { screen.addPreference(it) }
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = SC_TITLE_PREF
+            title = "将作品标题转换为简体中文"
+            summary = "修改后，已添加漫画需要迁移才能更新标题"
+            setDefaultValue(false)
+            setOnPreferenceChangeListener { _, newValue ->
+                val convertToSc = newValue as Boolean
+                preferences.edit().putBoolean(SC_TITLE_PREF, convertToSc).apply()
+                MangaDto.convertToSc = convertToSc
+                true
+            }
+        }.let { screen.addPreference(it) }
     }
 
     companion object {
-        private const val SHOW_Simplified_Chinese_TITLE_PREF = "showSCTitle"
-        private const val CHANGE_CDN_OVERSEAS = "changeCDN"
-        private const val CHROME_VERSION_PREF = "chromeVersion"
-        private const val CHROME_VERSION_DEFAULT = "103"
+        private const val DOMAIN_PREF = "domain"
+        private const val OVERSEAS_CDN_PREF = "changeCDN"
+        private const val SC_TITLE_PREF = "showSCTitle"
+        private const val WEBP_PREF = "webp"
+        // private const val CHROME_VERSION_PREF = "chromeVersion" // default value was "103"
 
-        private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s.0.0.0 Safari/537.36"
+        private const val WWW_PREFIX = "https://www."
+        private const val API_PREFIX = "https://api."
+        private val DOMAINS = arrayOf("copymanga.org", "copymanga.info", "copymanga.net")
+        private val DOMAIN_INDICES = arrayOf("0", "1", "2")
 
-        private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
-        private val isNewDateLogic = AppInfo.getVersionCode() >= 81
+        private const val PAGE_SIZE = 20
+        private const val CHAPTER_PAGE_SIZE = 500
     }
 }

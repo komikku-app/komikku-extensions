@@ -1,11 +1,12 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'CopyManga'
     pkgNameSuffix = 'zh.copymanga'
     extClass = '.CopyManga'
-    extVersionCode = 28
+    extVersionCode = 29
 }
 
 dependencies {
@@ -13,3 +14,13 @@ dependencies {
 }
 
 apply from: "$rootDir/common.gradle"
+
+android {
+    packagingOptions {
+        exclude '/pinyin.txt'
+        exclude '/polyphone.txt'
+        exclude '/trad.txt'
+        exclude '/traditional.txt'
+        exclude '/unknown.txt'
+    }
+}
