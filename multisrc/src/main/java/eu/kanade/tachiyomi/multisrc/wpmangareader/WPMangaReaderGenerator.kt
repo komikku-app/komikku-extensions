@@ -52,7 +52,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Skull Scans", "https://www.skullscans.com", "en", overrideVersionCode = 1),
         SingleLang("Tsundoku Traduções", "https://tsundoku.com.br", "pt-BR", className = "TsundokuTraducoes", overrideVersionCode = 9),
         SingleLang("TurkToon", "https://turktoon.com", "tr"),
-        SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 8),
+        SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 9),
         SingleLang("ARESManga", "https://aresmanga.com", "ar", pkgName = "iimanga", overrideVersionCode = 2),
     )
 
