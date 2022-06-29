@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.zh.copymanga
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
+import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
@@ -55,13 +56,14 @@ class CopyManga : HttpSource(), ConfigurableSource {
     private fun Headers.Builder.setReferer() = set("Referer", WWW_PREFIX + domain)
     private fun Headers.Builder.setVersion(version: String) = set("version", version)
 
-    private var apiHeaders = Headers.Builder()
+    override fun headersBuilder() = Headers.Builder()
         .setUserAgent(preferences.getString(USER_AGENT_PREF, DEFAULT_USER_AGENT)!!)
         .setRegion(preferences.getBoolean(OVERSEAS_CDN_PREF, false))
         .setReferer()
         .add("platform", "1")
         .setVersion(preferences.getString(VERSION_PREF, DEFAULT_VERSION)!!)
-        .build()
+
+    private var apiHeaders = headersBuilder().build()
 
     private var useWebp = preferences.getBoolean(WEBP_PREF, true)
 
@@ -180,11 +182,12 @@ class CopyManga : HttpSource(), ConfigurableSource {
     }
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        if (code == 200) {
-            json.decodeFromStream<ResultDto<T>>(body!!.byteStream()).results
-        } else {
+        if (header("Content-Type") != "application/json") {
+            throw Exception("访问受限，请尝试在插件设置中修改 User Agent")
+        } else if (code != 200) {
             throw Exception(json.decodeFromStream<ResultMessageDto>(body!!.byteStream()).message)
         }
+        json.decodeFromStream<ResultDto<T>>(body!!.byteStream()).results
     }
 
     private var genres: Array<Param> = emptyArray()
@@ -225,6 +228,8 @@ class CopyManga : HttpSource(), ConfigurableSource {
         }
     }
 
+    var fetchVersionState = 0 // 0 = not yet or failed, 1 = fetching, 2 = fetched
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = DOMAIN_PREF
@@ -234,9 +239,7 @@ class CopyManga : HttpSource(), ConfigurableSource {
             entryValues = DOMAIN_INDICES
             setDefaultValue("0")
             setOnPreferenceChangeListener { _, newValue ->
-                val index = newValue as String
-                preferences.edit().putString(DOMAIN_PREF, index).apply()
-                domain = DOMAINS[index.toInt()]
+                domain = DOMAINS[(newValue as String).toInt()]
                 apiUrl = API_PREFIX + domain
                 apiHeaders = apiHeaders.newBuilder().setReferer().build()
                 true
@@ -245,27 +248,54 @@ class CopyManga : HttpSource(), ConfigurableSource {
 
         EditTextPreference(screen.context).apply {
             key = USER_AGENT_PREF
-            title = "User Agent"
-            summary = "可以在 Windows/macOS/iOS 上用浏览器访问 https://tool.lu/useragent 获取（不要使用 Windows Chrome 103）"
+            title = "User Agent (UA)"
+            summary = "可以使用 Windows/macOS/iOS 上浏览器的 UA，不要使用安卓浏览器和 Windows Chrome 103（“在 WebView 中打开”需要重启应用刷新）"
             setDefaultValue(DEFAULT_USER_AGENT)
             setOnPreferenceChangeListener { _, newValue ->
-                val userAgent = newValue as String
-                preferences.edit().putString(USER_AGENT_PREF, userAgent).apply()
-                apiHeaders = apiHeaders.newBuilder().setUserAgent(userAgent).build()
+                apiHeaders = apiHeaders.newBuilder().setUserAgent(newValue as String).build()
                 true
             }
         }.let { screen.addPreference(it) }
 
         EditTextPreference(screen.context).apply {
-            key = VERSION_PREF
-            title = "网页版本号"
-            summary = "访问受限时按实际情况修改"
-            setDefaultValue(DEFAULT_VERSION)
-            setOnPreferenceChangeListener { _, newValue ->
-                val version = newValue as String
-                preferences.edit().putString(VERSION_PREF, version).apply()
-                apiHeaders = apiHeaders.newBuilder().setVersion(version).build()
-                true
+            key = UA_CHECKER
+            title = "获取浏览器 UA 的链接"
+            summary = "点击后可以在弹出的对话框中复制链接"
+            setDefaultValue(UA_CHECKER)
+            setOnPreferenceChangeListener { _, _ -> false }
+        }.let { screen.addPreference(it) }
+
+        SwitchPreferenceCompat(screen.context).apply {
+            title = "更新网页版本号"
+            summary = "点击尝试更新网页版本号，当前为：${preferences.getString(VERSION_PREF, DEFAULT_VERSION)}"
+            setOnPreferenceChangeListener { _, _ ->
+                if (fetchVersionState == 1) {
+                    Toast.makeText(screen.context, "已经在尝试更新，请勿反复点击", Toast.LENGTH_SHORT).show()
+                    return@setOnPreferenceChangeListener false
+                } else if (fetchVersionState == 2) {
+                    Toast.makeText(screen.context, "版本号已经成功更新，返回重进刷新", Toast.LENGTH_SHORT).show()
+                    return@setOnPreferenceChangeListener false
+                }
+                Toast.makeText(screen.context, "开始尝试更新网页版本号", Toast.LENGTH_SHORT).show()
+                fetchVersionState = 1
+                thread {
+                    try {
+                        val headers = apiHeaders.newBuilder().setUserAgent(System.getProperty("http.agent")!!).build()
+                        val html = client.newCall(GET("https://www.copymanga.org/h5", headers)).execute().body!!.string()
+                        val jsRegex = Regex("""https\S+?index\.\w+?\.js""")
+                        val jsUrl = jsRegex.find(html)!!.value
+                        val js = client.newCall(GET(jsUrl, headers)).execute().body!!.string()
+                        val versionRegex = Regex("""VERSION:"([\d.]+?)"""", RegexOption.IGNORE_CASE)
+                        val version = versionRegex.find(js)!!.groupValues[1]
+                        preferences.edit().putString(VERSION_PREF, version).apply()
+                        apiHeaders = apiHeaders.newBuilder().setVersion(version).build()
+                        fetchVersionState = 2
+                    } catch (e: Throwable) {
+                        fetchVersionState = 0
+                        Log.e("CopyManga", "failed to fetch version", e)
+                    }
+                }
+                false
             }
         }.let { screen.addPreference(it) }
 
@@ -275,9 +305,7 @@ class CopyManga : HttpSource(), ConfigurableSource {
             summary = "连接不稳定时可以尝试切换，关闭时使用“大陆用户线路”，已阅读章节需要清空缓存才能生效"
             setDefaultValue(false)
             setOnPreferenceChangeListener { _, newValue ->
-                val useOverseasCdn = newValue as Boolean
-                preferences.edit().putBoolean(OVERSEAS_CDN_PREF, useOverseasCdn).apply()
-                apiHeaders = apiHeaders.newBuilder().setRegion(useOverseasCdn).build()
+                apiHeaders = apiHeaders.newBuilder().setRegion(newValue as Boolean).build()
                 true
             }
         }.let { screen.addPreference(it) }
@@ -288,9 +316,7 @@ class CopyManga : HttpSource(), ConfigurableSource {
             summary = "默认开启，可以节省网站流量"
             setDefaultValue(true)
             setOnPreferenceChangeListener { _, newValue ->
-                val webp = newValue as Boolean
-                preferences.edit().putBoolean(WEBP_PREF, webp).apply()
-                useWebp = webp
+                useWebp = newValue as Boolean
                 true
             }
         }.let { screen.addPreference(it) }
@@ -301,9 +327,7 @@ class CopyManga : HttpSource(), ConfigurableSource {
             summary = "修改后，已添加漫画需要迁移才能更新标题"
             setDefaultValue(false)
             setOnPreferenceChangeListener { _, newValue ->
-                val convertToSc = newValue as Boolean
-                preferences.edit().putBoolean(SC_TITLE_PREF, convertToSc).apply()
-                MangaDto.convertToSc = convertToSc
+                MangaDto.convertToSc = newValue as Boolean
                 true
             }
         }.let { screen.addPreference(it) }
@@ -322,8 +346,9 @@ class CopyManga : HttpSource(), ConfigurableSource {
         private const val API_PREFIX = "https://api."
         private val DOMAINS = arrayOf("copymanga.org", "copymanga.info", "copymanga.net")
         private val DOMAIN_INDICES = arrayOf("0", "1", "2")
-        private const val DEFAULT_USER_AGENT = "Dart/2.16(dart:io)"
-        private const val DEFAULT_VERSION = "2022.06.22"
+        private const val DEFAULT_USER_AGENT = ""
+        private const val DEFAULT_VERSION = "2022.06.29"
+        private const val UA_CHECKER = "https://tool.lu/useragent"
 
         private const val PAGE_SIZE = 20
         private const val CHAPTER_PAGE_SIZE = 500
