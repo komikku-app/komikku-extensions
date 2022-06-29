@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'Pufei'
+    extName = 'Pufei Manhua'
     pkgNameSuffix = 'zh.pufei'
     extClass = '.Pufei'
-    extVersionCode = 8
+    extVersionCode = 9
 }
 
 apply from: "$rootDir/common.gradle"
