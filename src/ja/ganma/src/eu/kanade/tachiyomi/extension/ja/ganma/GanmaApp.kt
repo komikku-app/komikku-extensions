@@ -8,8 +8,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.FormBody
@@ -57,9 +55,9 @@ class GanmaApp(private val metadata: Metadata) : Ganma() {
         var field2 = preferences.getString(TOKEN_FIELD2_PREF, "")!!
         if (field1.isEmpty() || field2.isEmpty()) {
             val response = client.newCall(POST(metadata.baseUrl + metadata.tokenUrl, appHeaders)).execute()
-            val token: JsonObject = response.parseAs()
-            field1 = token[metadata.tokenField1]!!.jsonPrimitive.content
-            field2 = token[metadata.tokenField2]!!.jsonPrimitive.content
+            val token: Map<String, String> = response.parseAs()
+            field1 = token[metadata.tokenField1]!!
+            field2 = token[metadata.tokenField2]!!
         }
         val requestBody = FormBody.Builder().apply {
             add(metadata.tokenField1, field1)
@@ -89,7 +87,7 @@ class GanmaApp(private val metadata: Metadata) : Ganma() {
         super.setupPreferenceScreen(screen)
         SwitchPreferenceCompat(screen.context).apply {
             title = "Clear session"
-            setOnPreferenceClickListener {
+            setOnPreferenceChangeListener { _, _ ->
                 clearSession(clearToken = false)
                 Toast.makeText(screen.context, "Session cleared", Toast.LENGTH_SHORT).show()
                 false
@@ -97,7 +95,7 @@ class GanmaApp(private val metadata: Metadata) : Ganma() {
         }.let { screen.addPreference(it) }
         SwitchPreferenceCompat(screen.context).apply {
             title = "Clear token"
-            setOnPreferenceClickListener {
+            setOnPreferenceChangeListener { _, _ ->
                 clearSession(clearToken = true)
                 Toast.makeText(screen.context, "Token cleared", Toast.LENGTH_SHORT).show()
                 false

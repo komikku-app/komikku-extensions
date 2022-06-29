@@ -4,13 +4,15 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.Serializable
+import java.text.DateFormat.getDateTimeInstance
+import java.util.Date
 
 @Serializable
-data class Result<T>(val root: T)
+class Result<T>(val root: T)
 
 // Manga
 @Serializable
-data class Magazine(
+class Magazine(
     val id: String,
     val alias: String? = null,
     val title: String,
@@ -38,6 +40,7 @@ data class Magazine(
             !flagsText.isNullOrEmpty() -> SManga.ONGOING
             else -> SManga.UNKNOWN
         }
+        initialized = true
     }
 
     private fun generateDescription(flagsText: String?): String {
@@ -48,12 +51,20 @@ data class Magazine(
         return result.joinToString("\n\n")
     }
 
-    fun getSChapterList() = items.map {
-        SChapter.create().apply {
-            url = "${alias!!}#$id/${it.id ?: it.storyId}"
-            val prefix = if (it.kind == "free") "" else "🔒 "
-            name = if (it.subtitle != null) "$prefix${it.title} ${it.subtitle}" else "$prefix${it.title}"
-            date_upload = it.releaseStart ?: -1
+    fun getSChapterList(): List<SChapter> {
+        val now = System.currentTimeMillis()
+        return items.map {
+            SChapter.create().apply {
+                url = "${alias!!}#$id/${it.id ?: it.storyId}"
+                name = buildString {
+                    if (it.kind != "free") append("🔒 ")
+                    append(it.title)
+                    if (it.subtitle != null) append(' ').append(it.subtitle)
+                }
+                val time = it.releaseStart ?: -1
+                date_upload = time
+                if (time > now) scanlator = getDateTimeInstance().format(Date(time)) + '~'
+            }
         }
     }
 }
@@ -68,7 +79,7 @@ fun String.chapterDir(): Pair<String, String> =
 
 // Chapter
 @Serializable
-data class Story(
+class Story(
     val id: String? = null,
     val storyId: String? = null,
     val title: String,
@@ -89,19 +100,19 @@ data class Story(
 }
 
 @Serializable
-data class File(val url: String)
+class File(val url: String)
 
 @Serializable
-data class Author(val penName: String? = null)
+class Author(val penName: String? = null)
 
 @Serializable
-data class Top(val boxes: List<Box>)
+class Top(val boxes: List<Box>)
 
 @Serializable
-data class Box(val panels: List<Magazine>)
+class Box(val panels: List<Magazine>)
 
 @Serializable
-data class Flags(
+class Flags(
     val isMonday: Boolean = false,
     val isTuesday: Boolean = false,
     val isWednesday: Boolean = false,
@@ -142,10 +153,10 @@ data class Flags(
 }
 
 @Serializable
-data class Announcement(val text: String)
+class Announcement(val text: String)
 
 @Serializable
-data class Directory(
+class Directory(
     val baseUrl: String,
     val token: String,
     val files: List<String>,
@@ -157,7 +168,7 @@ data class Directory(
 }
 
 @Serializable
-data class AppStory(val pages: List<AppPage>) {
+class AppStory(val pages: List<AppPage>) {
     fun toPageList(): List<Page> {
         val result = ArrayList<Page>(pages.size)
         pages.forEach {
@@ -171,7 +182,7 @@ data class AppStory(val pages: List<AppPage>) {
 }
 
 @Serializable
-data class AppPage(
+class AppPage(
     val imageURL: File? = null,
     val afterwordImageURL: File? = null,
 )
@@ -179,7 +190,7 @@ data class AppPage(
 // Please keep the data private to support the site,
 // otherwise they might change their APIs.
 @Serializable
-data class Metadata(
+class Metadata(
     val userAgent: String,
     val baseUrl: String,
     val tokenUrl: String,
@@ -192,4 +203,4 @@ data class Metadata(
 )
 
 @Serializable
-data class Session(val expire: Long)
+class Session(val expire: Long)

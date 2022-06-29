@@ -75,7 +75,7 @@ open class Ganma : HttpSource(), ConfigurableSource {
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> =
         client.newCall(realMangaDetailsRequest(manga)).asObservableSuccess()
-            .map { mangaDetailsParse(it).apply { initialized = true } }
+            .map { mangaDetailsParse(it) }
 
     override fun mangaDetailsParse(response: Response): SManga =
         response.parseAs<Magazine>().toSMangaDetails()
@@ -117,10 +117,6 @@ open class Ganma : HttpSource(), ConfigurableSource {
             key = METADATA_PREF
             title = "Metadata (Debug)"
             setDefaultValue("")
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putString(METADATA_PREF, newValue as String).apply()
-                true
-            }
         }.let { screen.addPreference(it) }
     }
 }
