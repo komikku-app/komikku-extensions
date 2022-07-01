@@ -33,7 +33,7 @@ internal data class Chapter(
     private val id: Int,
     val title: String,
     val number: Float,
-    val volume: Int,
+    val volume: Int?,
     val published: String,
     val final: Boolean,
     val series: String,
