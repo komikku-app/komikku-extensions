@@ -246,11 +246,11 @@ abstract class WPMangaReader(
 
         countViews(document)
 
-        // Some sites like mangakita now load pages via javascript
+        // Some sites like Mangakita, MangKomik now load pages via javascript
         if (pages.isNotEmpty()) { return pages }
 
         val docString = document.toString()
-        val imageListRegex = Regex("\\\"images.*?:.*?(\\[.*?\\])")
+        val imageListRegex = Regex("\\\"images\\\"\\s*:\\s*(\\[.*?\\])")
         val imageListJson = imageListRegex.find(docString)!!.destructured.toList()[0]
 
         val imageList = json.parseToJsonElement(imageListJson).jsonArray
