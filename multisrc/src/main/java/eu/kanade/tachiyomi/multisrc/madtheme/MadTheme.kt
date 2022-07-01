@@ -110,7 +110,11 @@ abstract class MadTheme(
         thumbnail_url = element.select("img").first()!!.attr("abs:data-src")
     }
 
-    override fun searchMangaNextPageSelector(): String? = ".paginator [rel=next]"
+    /*
+     * Only some sites use the next/previous buttons, so instead we check for the next link
+     * after the active one. We use the :not() selector to exclude the optional next button
+     */
+    override fun searchMangaNextPageSelector(): String? = ".paginator > a.active + a:not([rel=next])"
 
     // Details
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
