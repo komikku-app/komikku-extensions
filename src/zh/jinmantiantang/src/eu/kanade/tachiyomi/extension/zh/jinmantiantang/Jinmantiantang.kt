@@ -39,8 +39,8 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-    override val baseUrl: String = "https://" +
-        SITE_ENTRIES_ARRAY[preferences.getString(USE_MIRROR_URL_PREF, "0")!!.toInt()]
+    override val baseUrl: String = "https://" + preferences.getString(USE_MIRROR_URL_PREF, "0")!!
+        .toInt().coerceAtMost(SITE_ENTRIES_ARRAY.size - 1).let { SITE_ENTRIES_ARRAY[it] }
 
     // 处理URL请求
     override val client: OkHttpClient = network.cloudflareClient
@@ -233,7 +233,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
             val singleChapter = SChapter.create().apply {
                 name = "单章节"
                 url = document.select("a[class=col btn btn-primary dropdown-toggle reading]").attr("href")
-                date_upload = sdf.parse(document.select("div[itemprop='datePublished']").attr("content"))?.time
+                date_upload = sdf.parse(document.select("[itemprop=datePublished]").last().attr("content"))?.time
                     ?: 0
             }
             return listOf(singleChapter)
@@ -397,9 +397,6 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
             summary = MAINSITE_RATELIMIT_PREF_SUMMARY
 
             setDefaultValue(MAINSITE_RATELIMIT_PREF_DEFAULT)
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putString(MAINSITE_RATELIMIT_PREF, newValue as String).commit()
-            }
         }
 
         val mainSiteRateLimitPeriodPreference = ListPreference(screen.context).apply {
@@ -410,9 +407,6 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
             summary = MAINSITE_RATELIMIT_PERIOD_SUMMARY
 
             setDefaultValue(MAINSITE_RATELIMIT_PERIOD_DEFAULT)
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putString(MAINSITE_RATELIMIT_PERIOD, newValue as String).commit()
-            }
         }
 
         val mirrorURLPreference = ListPreference(screen.context).apply {
@@ -423,9 +417,6 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
             summary = USE_MIRROR_URL_PREF_SUMMARY
 
             setDefaultValue("0")
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putString(USE_MIRROR_URL_PREF, newValue as String).commit()
-            }
         }
 
         val blockGenrePreference = EditTextPreference(screen.context).apply {
@@ -433,9 +424,6 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
             title = BLOCK_PREF_TITLE
             setDefaultValue(BLOCK_PREF_DEFAULT)
             dialogTitle = BLOCK_PREF_DIALOGTITLE
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putString(BLOCK_PREF, newValue as String).commit()
-            }
         }
 
         screen.addPreference(mainSiteRateLimitPreference)
@@ -472,15 +460,15 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
 
         private val SITE_ENTRIES_ARRAY_DESCRIPTION = arrayOf(
             "主站", "海外分流",
-            "中国大陆总站", "中国大陆分流1", "中国大陆分流1"
+            "中国大陆总站", "中国大陆分流"
         )
-        private val SITE_ENTRIES_ARRAY_VALUE = (0..4).map { i -> i.toString() }.toTypedArray()
+        private val SITE_ENTRIES_ARRAY_VALUE = arrayOf("0", "1", "2", "3")
 
         // List is based on https://jmcomic.bet/
         // Please also update AndroidManifest
         private val SITE_ENTRIES_ARRAY = arrayOf(
             DEFAULT_SITE, "18comic.org",
-            "jmcomic.asia", "jmcomic.city", "jmcomic.city"
+            "jmcomic.asia", "jmcomic.city"
         )
     }
 }
