@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.earlymanga
 
 import android.util.Base64
+import eu.kanade.tachiyomi.extension.R
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -14,8 +15,12 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Locale
+import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 
@@ -112,13 +117,43 @@ class EarlyManga : ParsedHttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         var document = response.asJsoup()
         val chapters = mutableListOf<SChapter>()
-        var nextPage = 2
-        document.select(chapterListSelector()).map { chapters.add(chapterFromElement(it)) }
+
+        val crypt1 = (R.mipmap.ic_launcher ushr 87895464) * (456123 ushr 42) - 16 / 4 * -3
+        val crypt5 = crypt1.toString().toByteArray(Charsets.UTF_32BE)
+        val crypt6 = MessageDigest.getInstance("SHA-1").digest(crypt5).take(16)
+        val crypt2 = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        val crypt3 = SecretKeySpec(crypt6.toByteArray(), "AES")
+        val crypt4 = IvParameterSpec(Base64.decode("totally not some plaintxt".toByteArray(Charsets.UTF_8), Base64.DEFAULT))
+        crypt2.init(Cipher.DECRYPT_MODE, crypt3, crypt4)
+        val str1 = String(crypt2.doFinal(Base64.decode(chapterListSelector().toByteArray(Charsets.UTF_8), Base64.DEFAULT)))
+        val str2 = String(crypt2.doFinal(Base64.decode("FhWk/QUpqr6795+ktyPR2s7RUKP9XJVPx/HNMcxbEwg=".toByteArray(Charsets.UTF_8), Base64.DEFAULT)))
+        val str3 = String(crypt2.doFinal(Base64.decode("r2llTpuYqOQBPsnD4nruudrDl0IbVOE3J2+3M4Gae1y4eVMFxjaIobY+6A1g6zjo4gXhIEPRcCddl/Y2GN6CsA4TAtnZD6QulM5qj2+SuBj7MwWJPgrdeAiJUw7YYWROm/vhyT+lsofEJkCXwg+VOQ==".toByteArray(Charsets.UTF_8), Base64.DEFAULT)))
+        val str4 = String(crypt2.doFinal(Base64.decode("r2llTpuYqOQBPsnD4nruudrDl0IbVOE3J2+3M4Gae1zTjwoHDBmNuSPotdFbY2FlefoT7PZAKpDSS8nzO/n8soZp0ElftLVjNWbI4rvfnAHid6SbvT4G68fmPZBpp7zAkrEERr66utE0Uf5vfb2f0Q==".toByteArray(Charsets.UTF_8), Base64.DEFAULT)))
+        val str5 = String(crypt2.doFinal(Base64.decode("r2llTpuYqOQBPsnD4nruudrDl0IbVOE3J2+3M4Gae1y4eVMFxjaIobY+6A1g6zjoJRqX9VqATcFxezY/RP+EBTCAzmHHWKQuomALunDOFrgPCzOYOQIry+HeW/LArcH5OCkC8r7cM/Sh7EeIO18Mh/hntbB9VZGZrtZBmR/gNGI=".toByteArray(Charsets.UTF_8), Base64.DEFAULT)))
+
+        var i = (50 * 256 / 8 ushr 10) + 1
+        fun doThings(): List<Element> {
+            val redHerring = document.select(str1)
+            return redHerring.map { allChapters ->
+                var next = allChapters
+                repeat(10) {
+                    if (next.selectFirst(str2) != null) {
+                        val current = next.select(str5 ?: str3)?.text() ?: str4
+                        next.addClass(current)
+                    } else {
+                        next = next.parent()
+                    }
+                }
+                next
+            }
+        }
+
+        doThings().map { chapters.add(chapterFromElement(it)) }
         while (document.select(paginationNextPageSelector).isNotEmpty()) {
             val currentPage = document.select(".nav-link.active").attr("href")
-            document = client.newCall(chapterListRequest(currentPage, nextPage)).execute().asJsoup()
-            document.select(chapterListSelector()).map { chapters.add(chapterFromElement(it)) }
-            nextPage++
+            document = client.newCall(chapterListRequest(currentPage, i)).execute().asJsoup()
+            doThings().map { chapters.add(chapterFromElement(it)) }
+            ++i
         }
 
         return chapters
@@ -126,17 +161,21 @@ class EarlyManga : ParsedHttpSource() {
 
     private val paginationNextPageSelector = popularMangaNextPageSelector()
 
-    override fun chapterListSelector() = ".chapter-container > .row:not(:first-child,.d-none)"
+    override fun chapterListSelector() = "fNFYGQlj6FsW4YGRZLzMtkJqwtW4rBpDBJLUkK0lfHqUsPji6tQKpkBZzvEcpJUy"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        val selectorEncoded1 = "TG1OdmJDro" + "wQWdJQ2NvbEFro" + "wnSUNBZ0lDQWdJQ0FrownSUNj" + "b2xBZ0lDQWdJQ0rowFnSUNBZ0xuSnZkeWN" +
-            "vbEFnSUNBZ0rowlDQWdJRDRjb2xnSUNBZ0xt" + "TnZiQzFzWnkwMUlDQWrowdJRDRnSU" + "NBZ1lUcHViM1FvT21acGNu" + "TjBMV05rowvYVd4a0tTd2dJY29s" +
-            "Q0FnSUM1amIyd2dJQ0Fn" + "SUNBdWNtOTNJQ0FnSWNvbENB" + "Z0lDQWdMbU52row" + "YkMxc1p5MDFJQ0FnY2" +
-            "9sSUNBZ0lDQWdJR0ZiYUhKbFppb" + "zlZMmhoY0hSbGNpMWRXY2ro" + "w9sMmh5WldZcVBWd3ZZMmhoY0hSbGN" + "sMDZhR0Z6S2NvbEdScG" + "Rpaz0="
-        val selectorEncoded2 = String(Base64.decode(selectorEncoded1.replace("row", ""), Base64.DEFAULT))
-        val selectorDecoded = String(Base64.decode(selectorEncoded2.replace("col", ""), Base64.DEFAULT))
-        setUrlWithoutDomain(element.select(selectorDecoded).attr("href"))
-        name = "Chapter " + url.substringAfter("chapter-")
+        val crypt1 = (R.mipmap.ic_launcher ushr 123456) * (789456 ushr 78) + 52 / 4 * -1
+        val crypt5 = crypt1.toString().toByteArray(Charsets.UTF_32BE)
+        val crypt6 = MessageDigest.getInstance("SHA-1").digest(crypt5).take(16)
+        val crypt2 = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        val crypt3 = SecretKeySpec(crypt6.toByteArray(), "AES")
+        val crypt4 = IvParameterSpec(Base64.decode("totally not some plaintxt".toByteArray(Charsets.UTF_8), Base64.DEFAULT))
+        crypt2.init(Cipher.DECRYPT_MODE, crypt3, crypt4)
+        val str1 = String(crypt2.doFinal(Base64.decode("ckFyOt1FSclkqG4dG2+mbw==".toByteArray(Charsets.UTF_8), Base64.DEFAULT)))
+        val str2 = element.selectFirst(str1)
+
+        setUrlWithoutDomain(str2.attr("href"))
+        name = str2.text()
         date_upload = parseChapterDate(element.select(".ml-1").attr("title"))
     }
 
