@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = '6Manhua'
+    pkgNameSuffix = 'zh.sixmh'
+    extClass = '.SixMH'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation 'com.github.stevenyomi:unpacker:919be5cb30' // SHA of 1.0 tag
+}
