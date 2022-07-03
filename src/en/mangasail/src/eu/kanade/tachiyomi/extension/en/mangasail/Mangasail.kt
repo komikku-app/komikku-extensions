@@ -115,9 +115,9 @@ class Mangasail : ParsedHttpSource() {
         return parse(htmlString).let {
             when (field) {
                 "field_image2" -> it.selectFirst("img.img-responsive").attr("src")
-                "field_status", "field_author", "field_artist" -> it.selectFirst("div.field-item.even").text()
-                "body" -> it.selectFirst("div.field-item.even p").text().substringAfter("summary: ")
-                "field_genres" -> it.select("a").text()
+                "field_status", "field_author", "field_artist" -> it.selectFirst("div.field-item.even")?.text()
+                "body" -> it.selectFirst("div.field-item.even p")?.text()?.substringAfter("summary: ")
+                "field_genres" -> it.select("a")?.text()
                 else -> null
             }
         }
