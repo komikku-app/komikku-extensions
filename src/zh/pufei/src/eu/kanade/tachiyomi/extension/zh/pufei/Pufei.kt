@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import com.github.stevenyomi.unpacker.ProgressiveParser
+import com.github.stevenyomi.unpacker.Unpacker
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -35,8 +37,8 @@ class Pufei : ParsedHttpSource(), ConfigurableSource {
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-    private val domain = preferences.getString(MIRROR_PREF, "0")!!.toInt()
-        .coerceIn(0, MIRRORS.size - 1).let { MIRRORS[it] }
+    private val domain = preferences.getString(MIRROR_PREF, "0")!!
+        .toInt().coerceAtMost(MIRRORS.size - 1).let { MIRRORS[it] }
 
     override val baseUrl = "http://m.$domain"
     private val pcUrl = "http://www.$domain"
@@ -76,7 +78,7 @@ class Pufei : ParsedHttpSource(), ConfigurableSource {
         return MangasPage(mangas, false)
     }
 
-    private val searchCache = HashMap<String, String>(0)
+    private val searchCache = HashMap<String, String>()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         return if (query.isNotBlank()) {
@@ -168,17 +170,14 @@ class Pufei : ParsedHttpSource(), ConfigurableSource {
 
     override fun pageListRequest(chapter: SChapter) = GET(baseUrl + chapter.url, headers)
 
-    // Reference: https://github.com/evanw/packer/blob/master/packer.js
     override fun pageListParse(response: Response): List<Page> {
         val html = String(response.body!!.bytes(), GB2312).let(::ProgressiveParser)
         val base64 = html.substringBetween("cp=\"", "\"")
-        val packed = String(Base64.decode(base64, Base64.DEFAULT)).let(::ProgressiveParser)
-        packed.consumeUntil("p}('")
-        val imageList = packed.substringBetween("[", "]").replace("\\", "")
-        if (imageList.isEmpty()) return emptyList()
-        packed.consumeUntil("',")
-        val dictionary = packed.substringBetween("'", "'").split('|')
-        val result = unpack(imageList, dictionary).removeSurrounding("'").split("','")
+        val script = String(Base64.decode(base64, Base64.DEFAULT))
+        val result = Unpacker.unpack(script, "[", "]")
+            .ifEmpty { return emptyList() }
+            .replace("\\", "")
+            .removeSurrounding("\"").split("\",\"")
         // baseUrl/skin/2014mh/view.js (imgserver), mobileUrl/skin/main.js (IMH.reader)
         return result.mapIndexed { i, image ->
             val imageUrl = if (image.startsWith("http")) image else IMAGE_SERVER + image
@@ -194,14 +193,10 @@ class Pufei : ParsedHttpSource(), ConfigurableSource {
         ListPreference(screen.context).apply {
             key = MIRROR_PREF
             title = "使用镜像网站"
-            summary = "选择要使用的镜像网站，重启生效"
+            summary = "选择要使用的镜像网站，重启生效\n已选择：%s"
             entries = MIRRORS_DESCRIPTION
             entryValues = MIRROR_VALUES
             setDefaultValue("0")
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putString(MIRROR_PREF, newValue as String).apply()
-                true
-            }
         }.let { screen.addPreference(it) }
     }
 

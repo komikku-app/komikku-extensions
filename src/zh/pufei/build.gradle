@@ -5,7 +5,11 @@ ext {
     extName = 'Pufei Manhua'
     pkgNameSuffix = 'zh.pufei'
     extClass = '.Pufei'
-    extVersionCode = 9
+    extVersionCode = 10
 }
 
 apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation 'com.github.stevenyomi:unpacker:12a09e3c1a' // 1.1
+}
