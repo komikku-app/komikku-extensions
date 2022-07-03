@@ -6,8 +6,7 @@ ext {
     extName = 'Tachidesk'
     pkgNameSuffix = 'all.tachidesk'
     extClass = '.Tachidesk'
-    extVersionCode = 5
-    isNsfw = true
+    extVersionCode = 6
 }
 
 dependencies {
