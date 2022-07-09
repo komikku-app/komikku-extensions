@@ -16,7 +16,6 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         MultiLang("Flame Scans", "https://flamescans.org", listOf("ar", "en"), className = "FlameScansFactory", pkgName = "flamescans", overrideVersionCode = 1),
         SingleLang("Ace Scans", "https://acescans.xyz", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Alpha Scans", "https://alpha-scans.org", "en", overrideVersionCode = 1),
-        SingleLang("Anitation Arts", "https://anitationarts.org", "en", overrideVersionCode = 1),
         SingleLang("Arcane scan", "https://arcanescan.fr", "fr"),
         SingleLang("Azure Scans", "https://azuremanga.com", "en", overrideVersionCode = 1),
         SingleLang("BeastScans", "https://beastscans.com", "en"),
