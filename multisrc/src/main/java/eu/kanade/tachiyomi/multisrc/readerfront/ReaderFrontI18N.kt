@@ -4,7 +4,7 @@ sealed class ReaderFrontI18N(val id: Int) {
     protected abstract val genres: Map<String, String>
 
     operator fun get(name: NameWrapper) =
-        name.toString().let { genres.getOrDefault(it, it) }
+        name.toString().let { genres[it] ?: it }
 
     object SPANISH : ReaderFrontI18N(1) {
         override val genres = mapOf(
