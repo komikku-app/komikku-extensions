@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.madtheme
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -13,6 +14,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -31,6 +33,14 @@ abstract class MadTheme(
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
+
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .rateLimitHost("https://s1.mbcdnv1.xyz".toHttpUrl(), 1, 1)
+        .rateLimitHost("https://s1.mbcdnv2.xyz".toHttpUrl(), 1, 1)
+        .rateLimitHost("https://s1.mbcdnv3.xyz".toHttpUrl(), 1, 1)
+        .rateLimitHost("https://s1.mbcdnv4.xyz".toHttpUrl(), 1, 1)
+        .rateLimitHost("https://s1.mbcdnv5.xyz".toHttpUrl(), 1, 1)
+        .build()
 
     override fun headersBuilder() = Headers.Builder().apply {
         add("Referer", "$baseUrl/")
@@ -295,8 +305,9 @@ abstract class MadTheme(
         fun toUriPart() = vals[state].second
     }
 
+    open var CDN_URL: String? = null
+
     companion object {
-        private var CDN_URL: String? = null
         private var CDN_URL_ALT: List<String> = listOf()
         private var CDN_PATH: String? = null
     }
