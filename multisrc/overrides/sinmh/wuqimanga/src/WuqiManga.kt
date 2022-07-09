@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.zh.wuqimanga
 
+import com.github.stevenyomi.unpacker.Unpacker
 import eu.kanade.tachiyomi.multisrc.sinmh.SinMH
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
@@ -59,20 +60,12 @@ class WuqiManga : SinMH("57漫画", "http://www.wuqimh.net") {
 
     override fun pageListRequest(chapter: SChapter) = GET(baseUrl + chapter.url, headers)
 
-    // Reference: https://github.com/evanw/packer/blob/master/packer.js
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.selectFirst("body > script").html().let(::ProgressiveParser)
-        val imageList = script.substringBetween(":[", "]").replace("\\", "")
-        if (imageList.isEmpty()) return emptyList()
-        script.consumeUntil("""};',""")
-        val dictionary = script.substringBetween("'", "'").split('|')
-        val size = dictionary.size
-        val unpacked = Regex("""\b\w+\b""").replace(imageList) {
-            with(it.value) {
-                val key = parseRadix62()
-                return@replace if (key < size) dictionary[key] else this
-            }
-        }.removeSurrounding("'").split("','")
+        val script = document.selectFirst("body > script").html()
+        val unpacked = Unpacker.unpack(script, ":[", "]")
+            .ifEmpty { return emptyList() }
+            .replace("\\", "")
+            .removeSurrounding("\"").split("\",\"")
         val list = unpacked.filterNot { it.endsWith("/ManHuaKu/222.jpg") }.map { image ->
             if (image.startsWith("http")) image else imageHost + image
         }
@@ -130,16 +123,4 @@ class WuqiManga : SinMH("57漫画", "http://www.wuqimh.net") {
 
     private val sortNames = arrayOf("最新发布", "最近更新", "人气最旺", "评分最高")
     private val sortKeys = arrayOf("order-id", "order-addtime", "order-hits", "order-gold")
-}
-
-private fun String.parseRadix62(): Int {
-    var result = 0
-    for (char in this) {
-        result = result * 62 + when {
-            char <= '9' -> char.code - '0'.code
-            char >= 'a' -> char.code - 'a'.code + 10
-            else -> char.code - 'A'.code + 36
-        }
-    }
-    return result
 }

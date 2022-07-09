@@ -32,7 +32,7 @@ abstract class SinMH(
 ) : ParsedHttpSource() {
 
     override val baseUrl = _baseUrl
-    protected open val mobileUrl = _baseUrl.replace("www", "m")
+    protected open val mobileUrl = _baseUrl.replaceFirst("www.", "m.")
     override val supportsLatest = true
 
     override val client = network.client.newBuilder().rateLimit(2).build()
@@ -206,20 +206,9 @@ abstract class SinMH(
         }
     }
 
-    protected class ProgressiveParser(private val text: String) {
-        private var startIndex = 0
-        fun consumeUntil(string: String) = with(text) { startIndex = indexOf(string, startIndex) + string.length }
-        fun substringBetween(left: String, right: String): String = with(text) {
-            val leftIndex = indexOf(left, startIndex) + left.length
-            val rightIndex = indexOf(right, leftIndex)
-            startIndex = rightIndex + right.length
-            return substring(leftIndex, rightIndex)
-        }
-    }
-
     // default parsing of ["...","..."]
     protected open fun parsePageImages(chapterImages: String): List<String> =
-        if (chapterImages.length > 2) {
+        if (chapterImages.length > 4) {
             chapterImages.run { substring(2, length - 2) }.replace("""\/""", "/").split("\",\"")
         } else emptyList() // []
 
@@ -258,7 +247,7 @@ abstract class SinMH(
         if (categories.isNotEmpty()) {
             list = ArrayList(categories.size + 2)
             with(list) {
-                add(Filter.Header("如果使用文本搜索，将会忽略分类筛选"))
+                add(Filter.Header("分类筛选（搜索文本时无效）"))
                 categories.forEach { add(it.toUriPartFilter()) }
             }
         } else {
