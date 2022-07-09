@@ -112,14 +112,16 @@ class SixMH : ParsedHttpSource() {
         val document = client.newCall(mobileRequest(manga)).execute().asJsoup()
         val list = mutableListOf<SChapter>()
 
-        document.select(".chapter-list > a, dd[class^=gengduo]").forEach { element ->
-            if (element.tagName() == "a") {
-                val chapter = SChapter.create().apply {
+        val tab = document.selectFirst(Evaluator.Class("cartoon-directory")).children()
+        if (tab.size >= 2) {
+            tab[1].children().mapTo(list) { element ->
+                SChapter.create().apply {
                     url = element.attr("href")
                     name = element.text()
                 }
-                list.add(chapter)
-            } else {
+            }
+            if (tab.size >= 3) {
+                val element = tab[2]
                 val path = manga.url
                 val body = FormBody.Builder().apply {
                     addEncoded("id", element.attr("data-id"))
