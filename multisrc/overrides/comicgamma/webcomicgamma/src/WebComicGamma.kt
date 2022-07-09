@@ -55,7 +55,7 @@ class WebComicGamma : ComicGamma("Web Comic Gamma", "https://webcomicgamma.takes
         val list = element.selectFirst(Evaluator.Class("read__contents")).children()
         name = "[$number] ${list[0].text()}"
         if (list.size >= 3) {
-            date_upload = dateFormat.parse(list[2].text())?.time ?: 0L
+            date_upload = dateFormat.parseJST(list[2].text())?.time ?: 0L
         }
         if (date_upload <= 0L) date_upload = -1L // hide unknown ones
     }

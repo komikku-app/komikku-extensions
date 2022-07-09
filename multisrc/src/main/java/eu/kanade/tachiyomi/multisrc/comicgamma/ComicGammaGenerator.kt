@@ -16,7 +16,7 @@ class ComicGammaGenerator : ThemeSourceGenerator {
             className = "WebComicGamma",
             pkgName = "webcomicgamma",
             sourceName = "Web Comic Gamma",
-            overrideVersionCode = 1,
+            overrideVersionCode = 2,
         ),
         SingleLang(
             name = "Web Comic Gamma Plus",
