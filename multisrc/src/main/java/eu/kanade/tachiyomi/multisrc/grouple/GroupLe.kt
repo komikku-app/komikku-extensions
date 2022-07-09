@@ -44,7 +44,7 @@ abstract class GroupLe(
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.client.newBuilder()
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimit(2)
         .addNetworkInterceptor { chain ->
             val originalRequest = chain.request()
