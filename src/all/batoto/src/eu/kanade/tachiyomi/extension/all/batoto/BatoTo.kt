@@ -98,8 +98,38 @@ open class BatoTo(
     companion object {
         private const val MIRROR_PREF_KEY = "MIRROR"
         private const val MIRROR_PREF_TITLE = "Mirror"
-        private val MIRROR_PREF_ENTRIES = arrayOf("Bato.to", "Batotoo.com", "Comiko.net", "Battwo.com", "Mangatoto.com", "Mycdhands.com")
-        private val MIRROR_PREF_ENTRY_VALUES = arrayOf("https://bato.to", "https://batotoo.com", "https://comiko.net", "https://battwo.com", "https://mangatoto.com", "https://mycdhands.com")
+        private val MIRROR_PREF_ENTRIES = arrayOf(
+            "bato.to",
+            "batocc.com",
+            "batotoo.com",
+            "batotwo.com",
+            "battwo.com",
+            "comiko.net",
+            "mangatoto.com",
+            "mangatoto.net",
+            "mangatoto.org",
+            "mycordant.co.uk",
+            "dto.to",
+            "hto.to",
+            "mto.to",
+            "wto.to"
+        )
+        private val MIRROR_PREF_ENTRY_VALUES = arrayOf(
+            "https://bato.to",
+            "https://batocc.com",
+            "https://batotoo.com",
+            "https://batotwo.com",
+            "https://battwo.com",
+            "https://comiko.net",
+            "https://mangatoto.com",
+            "https://mangatoto.net",
+            "https://mangatoto.org",
+            "https://mycordant.co.uk",
+            "https://dto.to",
+            "https://hto.to",
+            "https://mto.to",
+            "https://wto.to"
+        )
         private val MIRROR_PREF_DEFAULT_VALUE = MIRROR_PREF_ENTRY_VALUES[0]
 
         private const val ALT_CHAPTER_LIST_PREF_KEY = "ALT_CHAPTER_LIST"
