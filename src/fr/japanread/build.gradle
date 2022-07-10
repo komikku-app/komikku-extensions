@@ -6,7 +6,7 @@ ext {
     extName = 'Japanread'
     pkgNameSuffix = 'fr.japanread'
     extClass = '.Japanread'
-    extVersionCode = 9
+    extVersionCode = 10
     isNsfw = true
 }
 
