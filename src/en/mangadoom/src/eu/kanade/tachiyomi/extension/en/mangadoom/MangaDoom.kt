@@ -102,22 +102,22 @@ class MangaDoom : HttpSource() {
             this.thumbnail_url = innerContentElement
                 .select("div.col-md-4 > img").first()?.attr("src")
 
-            this.genre = dlElement.select("dt:containsOwn(Categories:) + dd > a")
+            this.genre = dlElement.select("dt:contains(Categories:) ~ dd > a[title]")
                 .joinToString { e -> e.attr("title") }
 
             this.description = innerContentElement.select("div.note").first()?.let {
                 descriptionProcessor(it)
             }
 
-            this.author = dlElement.select("dt:containsOwn(Author:) + dd > a")
-                .first()?.ownText().takeIf { it != "-" }
+            this.author = dlElement.selectFirst("dt:contains(Author:) ~ dd")
+                ?.text().takeIf { it != "-" }
 
-            this.artist = dlElement.select("dt:containsOwn(Artist:) + dd > a")
-                .first()?.ownText().takeIf { it != "-" }
+            this.artist = dlElement.selectFirst("dt:contains(Artist:) ~ dd")
+                ?.text().takeIf { it != "-" }
 
             this.status = when (
-                dlElement.select("dt:containsOwn(Status:) + dd")
-                    .first().ownText()
+                dlElement.selectFirst("dt:contains(Status:) ~ dd")
+                    ?.text()
             ) {
                 "Ongoing" -> SManga.ONGOING
                 "Completed" -> SManga.COMPLETED
