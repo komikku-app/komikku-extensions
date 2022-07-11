@@ -18,7 +18,7 @@ class AsuraScansEn : AsuraScans("https://www.asurascans.com", "en", SimpleDateFo
 
     override val mangaDetailsSelectorDescription = "div.desc p, div.entry-content p, div[itemprop=description]:not(:has(p))"
 
-    override val pageSelector = "div.rdminimal > img, div.rdminimal > p > img"
+    override val pageSelector = "div.rdminimal > img, div.rdminimal > p > img, div.rdminimal > a > img"
 
     // Skip scriptPages
     override fun pageListParse(document: Document): List<Page> {
