@@ -129,7 +129,7 @@ class SChapterDeserializer : KSerializer<SChapter> {
 
     private fun formatChapterTitle(title: String?, chap: String?, vol: String?): String {
         val numNonNull = listOfNotNull(title.takeIf { !it.isNullOrBlank() }, chap, vol).size
-        if (numNonNull == 0) throw RuntimeException("formatChapterTitle requires at least one non-null argument")
+        if (numNonNull == 0) return "unknown"
 
         val formattedTitle = StringBuilder()
         if (vol != null) formattedTitle.append("${numNonNull.takeIf { it > 1 }?.let { "Vol." } ?: "Volume"} $vol")
@@ -229,7 +229,7 @@ class SMangaDeserializer : KSerializer<SManga> {
                         "id" -> id = decodeIntElement(descriptor, index)
                         "artists" -> artist = nameList()
                         "authors" -> author = nameList()
-                        "desc" -> description = cleanDesc(decodeStringElement(descriptor, index))
+                        "desc" -> tryTo { description = cleanDesc(decodeStringElement(descriptor, index)) }
                         // Isn't always a string in every api call
                         "demographic" -> tryTo { genre = listOfNotNull(genre, decodeStringElement(descriptor, index)).joinToString(", ") }
                         // Isn't always a list of objects in every api call
