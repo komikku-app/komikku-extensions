@@ -280,7 +280,7 @@ abstract class LibGroup(
         return client.newCall(mangaDetailsRequest(manga))
             .asObservable().doOnNext { response ->
                 if (!response.isSuccessful) {
-                    if (response.code == 404 && response.asJsoup().select("#show-login-button").isNotEmpty()) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView") else throw Exception("HTTP error ${response.code}")
+                    if (response.code == 404 && response.asJsoup().select(".m-menu__sign-in").isNotEmpty()) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView") else throw Exception("HTTP error ${response.code}")
                 }
             }
             .map { response ->
@@ -291,7 +291,7 @@ abstract class LibGroup(
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
         val rawAgeStop = document.select(".media-short-info .media-short-info__item[data-caution]").text()
-        if (rawAgeStop == "18+" && document.select("#show-login-button").isNotEmpty())
+        if (rawAgeStop == "18+" && document.select(".m-menu__sign-in").isNotEmpty())
             throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
         val redirect = document.html()
         if (redirect.contains("paper empty section")) {
@@ -325,7 +325,7 @@ abstract class LibGroup(
         return client.newCall(mangaDetailsRequest(manga))
             .asObservable().doOnNext { response ->
                 if (!response.isSuccessful) {
-                    if (response.code == 404 && response.asJsoup().select("#show-login-button").isNotEmpty()) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView") else throw Exception("HTTP error ${response.code}")
+                    if (response.code == 404 && response.asJsoup().select(".m-menu__sign-in").isNotEmpty()) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView") else throw Exception("HTTP error ${response.code}")
                 }
             }
             .map { response ->
@@ -420,7 +420,7 @@ abstract class LibGroup(
         //redirect Регистрация 18+
         val redirect = document.html()
         if (!redirect.contains("window.__info")) {
-            if (redirect.contains("hold-transition login-page")) {
+            if (redirect.contains("auth-layout")) {
                 throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
             }
         }
