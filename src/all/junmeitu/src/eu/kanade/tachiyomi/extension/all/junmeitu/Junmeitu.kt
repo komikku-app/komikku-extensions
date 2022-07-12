@@ -12,18 +12,25 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Request
+import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Evaluator
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 
 class Junmeitu : ConfigurableSource, ParsedHttpSource() {
     override val lang = "all"
     override val name = "Junmeitu"
     override val supportsLatest = true
     override val id = 4721197766605490540
+
+    private val json: Json by injectLazy()
 
     // Preference
     private val preferences: SharedPreferences by lazy {
@@ -40,13 +47,6 @@ class Junmeitu : ConfigurableSource, ParsedHttpSource() {
             entryValues = MIRROR_PREF_ENTRY_VALUES
             setDefaultValue(MIRROR_PREF_DEFAULT_VALUE)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString("${MIRROR_PREF_KEY}_$lang", entry).commit()
-            }
         }
         screen.addPreference(mirrorPref)
     }
@@ -112,11 +112,8 @@ class Junmeitu : ConfigurableSource, ParsedHttpSource() {
         val manga = SManga.create()
         manga.title = document.selectFirst(".news-title,.title").text()
         manga.description = document.select(".news-info,.picture-details").text() + "\n" + document.select(".introduce").text()
-        val genres = mutableListOf<String>()
-        document.select(".relation_tags > a").forEach {
-            genres.add(it.text())
-        }
-        manga.genre = genres.joinToString(", ")
+        manga.genre = document.select(".relation_tags > a").joinToString { it.text() }
+        manga.status = SManga.COMPLETED
         return manga
     }
 
@@ -133,39 +130,37 @@ class Junmeitu : ConfigurableSource, ParsedHttpSource() {
     // Pages
     override fun pageListParse(document: Document): List<Page> {
         val numPages = document.select(".pages > a:nth-last-of-type(2)").text().toIntOrNull()
-        var url = document.select(".position a:last-child").first().attr("abs:href")
-        val pages = mutableListOf<Page>()
-        var count = 0
-        if (numPages != null) {
-            url = url.substringBeforeLast(".")
-            while (numPages != count) {
-                count += 1
-                val doc = when (count) {
-                    1 -> document
-                    else -> client.newCall(GET("$url-$count.html")).execute().asJsoup()
-                }
-                doc.select(".pictures img,.news-body img").forEachIndexed() { index, it ->
-                    val imgUrl = when {
-                        it.hasAttr("data-original") -> it.attr("abs:data-original")
-                        it.hasAttr("data-src") -> it.attr("abs:data-src")
-                        it.hasAttr("data-lazy-src") -> it.attr("abs:data-lazy-src")
-                        else -> it.attr("abs:src")
-                    }
-                    pages.add(Page(index, imgUrl, imgUrl))
-                }
+        val newsBody = document.selectFirst(Evaluator.Class("news-body"))
+        if (newsBody == null) {
+            val baseUrl = this.baseUrl
+            val prefix = document.location().run {
+                val index = lastIndexOf('.') // .html
+                baseUrl + "/ajax_" + substring(baseUrl.length + 1, index) + '-'
             }
+            val postfix = document.selectFirst("body > script").data().run {
+                val script = substringAfterLast("pc_cid = ")
+                val categoryId = script.substringBefore(';')
+                val contentId = script.substringAfter("pc_id = ").substringBeforeLast(';')
+                ".html?ajax=1&catid=$categoryId&conid=$contentId"
+            }
+            return (1..numPages!!).map { Page(it - 1, "$prefix$it$postfix") }
         } else {
-            document.select(".pictures img,.news-body img").forEachIndexed() { index, it ->
+            return newsBody.select(Evaluator.Tag("img")).mapIndexed { index, it ->
                 val imgUrl = when {
                     it.hasAttr("data-original") -> it.attr("abs:data-original")
                     it.hasAttr("data-src") -> it.attr("abs:data-src")
                     it.hasAttr("data-lazy-src") -> it.attr("abs:data-lazy-src")
                     else -> it.attr("abs:src")
                 }
-                pages.add(Page(index, imgUrl, imgUrl))
+                Page(index, imageUrl = imgUrl)
             }
         }
-        return pages
+    }
+
+    override fun imageUrlParse(response: Response): String {
+        val page: PageDto = json.decodeFromString(response.body!!.string())
+        val img = Jsoup.parseBodyFragment(page.pic).body().child(0)
+        return img.attr("src")
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
