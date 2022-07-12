@@ -259,7 +259,7 @@ abstract class GroupLe(
             }
             if (!url.contains("://"))
                 url = "https:$url"
-            pages.add(Page(i++, "", url))
+            pages.add(Page(i++, "", url.replace("//resh","//h")))
         }
         return pages
     }
