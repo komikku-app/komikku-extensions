@@ -7,7 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import kotlin.system.exitProcess
 
-class BaozimanhuaUrlActivity : Activity() {
+class BaoziUrlActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
@@ -19,7 +19,7 @@ class BaozimanhuaUrlActivity : Activity() {
             }
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"
-                putExtra("query", "${Baozimanhua.ID_SEARCH_PREFIX}$id")
+                putExtra("query", "${Baozi.ID_SEARCH_PREFIX}$id")
                 putExtra("filter", packageName)
             }
 

@@ -2,10 +2,14 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'Baozimanhua'
+    extName = 'Baozi Manhua'
     pkgNameSuffix = 'zh.baozimanhua'
-    extClass = '.Baozimanhua'
-    extVersionCode = 8
+    extClass = '.Baozi'
+    extVersionCode = 9
 }
 
 apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation 'com.github.stevenyomi:baozibanner:9ac9b08e1d' // 1.0
+}

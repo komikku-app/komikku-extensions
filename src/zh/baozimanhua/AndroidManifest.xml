@@ -3,7 +3,7 @@
     package="eu.kanade.tachiyomi.extension">
     <application>
         <activity
-            android:name=".zh.baozimanhua.BaozimanhuaUrlActivity"
+            android:name=".zh.baozimanhua.BaoziUrlActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:theme="@android:style/Theme.NoDisplay">
