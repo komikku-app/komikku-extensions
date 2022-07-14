@@ -44,9 +44,7 @@ abstract class MangaRaw(
 
     override fun popularMangaNextPageSelector() = ".next.page-numbers"
 
-    // manga101 and mangapro have a '新刊コミック' page, but all manga under syosetu.top.
-    // visit these manga will cause "Too many follow-up requests: 21" and this make latest update complete unusable
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/newmanga/page/$page", headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/$page", headers)
 
     override fun latestUpdatesSelector() = popularMangaSelector()
 
