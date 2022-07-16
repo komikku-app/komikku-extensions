@@ -7,7 +7,7 @@ object MLConstants {
     const val searchMangaNextPageSelector = "link[rel=next]"
     const val latestUpdatesSelector = "div.slider__item"
     const val searchMangaSelector = "div.page-item-detail.manga"
-    const val popularMangaNextPageSelector = "a.nextpostslink"
+    const val popularMangaNextPageSelector = "nav.navigation-ajax"
     const val latestUpdatesNextPageSelector = "div[role=navigation] a.last"
 
     const val popularMangaSelector = "div.page-item-detail.manga"
