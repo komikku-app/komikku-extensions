@@ -399,6 +399,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Seafoam Scans", "https://seafoamscans.com", "en", overrideVersionCode = 2),
         SingleLang("Seikou Scans", "https://seikouscans.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Sensaina Yuri", "https://sensainayuri.dropescan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
+        SingleLang("ShavelProiection", "https://www.shavelproiection.com", "it", true),
         SingleLang("Shield Manga", "https://shieldmanga.io", "en", overrideVersionCode = 3),
         SingleLang("ShinobiScans", "https://shinobiscans.com", "it"),
         SingleLang("Shimada Scans", "https://shimadascans.com", "en"),
