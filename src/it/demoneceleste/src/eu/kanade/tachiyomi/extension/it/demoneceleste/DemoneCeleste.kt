@@ -132,6 +132,7 @@ class DemoneCeleste : ParsedHttpSource() {
         manga.status = when {
             infoElement.text().lowercase().contains("in corso") -> SManga.ONGOING
             infoElement.text().lowercase().contains("concluso") -> SManga.COMPLETED
+            infoElement.text().lowercase().contains("sospeso") -> SManga.ON_HIATUS
             else -> SManga.UNKNOWN
         }
         manga.author = infoElement.select("p:has(strong:contains(Autore))")?.text()!!.replace("Autore: ", "")
