@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -75,17 +76,26 @@ class Koushoku : ParsedHttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = "$baseUrl/search".toHttpUrlOrNull()!!.newBuilder()
             .addQueryParameter("page", page.toString())
-            .addQueryParameter("q", query)
 
         val filterList = if (filters.isEmpty()) getFilterList() else filters
-        filterList.findInstance<SortFilter>()?.let {
-            url.addQueryParameter("sort", it.toUriPart())
-        }
-        filterList.findInstance<OrderFilter>()?.let {
-            url.addQueryParameter("order", it.toUriPart())
-        }
-
+        filterList.findInstance<SortFilter>()?.addQueryParameter(url)
+        url.addQueryParameter("q", buildAdvQuery(query, filterList))
+        println(url)
         return GET(url.toString(), headers)
+    }
+
+    private fun buildAdvQuery(query: String, filterList: FilterList): String {
+        val title = "title*:$query"
+        val filters: List<String> = filterList.filterIsInstance<Filter.Text>().map { filter ->
+            val included = mutableListOf<String>()
+            val excluded = mutableListOf<String>()
+            val name = if (filter.name.lowercase().contentEquals("tags")) "tag" else filter.name.lowercase()
+            filter.state.split(",").map(String::trim).filterNot(String::isBlank).forEach { entry ->
+                if (entry.startsWith("-")) excluded.add(entry) else included.add(entry)
+            }
+            "$name*:${included.joinToString(",")} -$name*:${excluded.joinToString(",")}"
+        }
+        return "$title ${filters.joinToString(" ")}"
     }
 
     override fun searchMangaSelector() = latestUpdatesSelector()
@@ -150,33 +160,57 @@ class Koushoku : ParsedHttpSource() {
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
 
     override fun getFilterList() = FilterList(
-        SortFilter(),
-        OrderFilter()
+        SortFilter(
+            "Sort",
+            arrayOf(
+                Sortable("ID", "id"),
+                Sortable("Title", "title"),
+                Sortable("Created Date", "created_at"),
+                Sortable("Uploaded Date", "published_at"),
+                Sortable("Pages", "pages"),
+            )
+        ),
+        Filter.Header("Separate tags with commas (,)"),
+        Filter.Header("Prepend with dash (-) to exclude"),
+        ArtistFilter(),
+        CircleFilter(),
+        MagazineFilter(),
+        ParodyFilter(),
+        TagFilter(),
+        PagesFilter()
     )
 
-    private class SortFilter : UriPartFilter(
-        "Sort",
-        arrayOf(
-            Pair("Created Date", "created_at"),
-            Pair("ID", "id"),
-            Pair("Title", "title"),
-            Pair("Published Date", "published_at")
-        )
-    )
+    // Adapted from Mangadex ext
+    class SortFilter(displayName: String, private val sortables: Array<Sortable>) :
+        Filter.Sort(
+            displayName,
+            sortables.map(Sortable::title).toTypedArray(),
+            Selection(2, false)
+        ) {
+        fun addQueryParameter(url: HttpUrl.Builder) {
+            if (state != null) {
+                val sort = sortables[state!!.index].value
+                val order = when (state!!.ascending) {
+                    true -> "asc"
+                    false -> "desc"
+                }
 
-    private class OrderFilter : UriPartFilter(
-        "Order",
-        arrayOf(
-            Pair("Descending", "desc"),
-            Pair("Ascending", "asc"),
-        )
-    )
-
-    // Taken from nhentai ext
-    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
-        Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
-        fun toUriPart() = vals[state].second
+                url.addQueryParameter("sort", sort)
+                url.addQueryParameter("order", order)
+            }
+        }
     }
+
+    data class Sortable(val title: String, val value: String) {
+        override fun toString(): String = title
+    }
+
+    class ArtistFilter : Filter.Text("Artist")
+    class CircleFilter : Filter.Text("Circle")
+    class MagazineFilter : Filter.Text("Magazine")
+    class ParodyFilter : Filter.Text("Parody")
+    class TagFilter : Filter.Text("Tags")
+    class PagesFilter : Filter.Text("Pages")
 
     // Taken from nhentai ext
     private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T
