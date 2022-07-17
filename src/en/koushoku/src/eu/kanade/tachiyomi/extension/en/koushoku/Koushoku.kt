@@ -80,22 +80,31 @@ class Koushoku : ParsedHttpSource() {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         filterList.findInstance<SortFilter>()?.addQueryParameter(url)
         url.addQueryParameter("q", buildAdvQuery(query, filterList))
-        println(url)
         return GET(url.toString(), headers)
     }
 
     private fun buildAdvQuery(query: String, filterList: FilterList): String {
-        val title = "title*:$query"
+        val title = if (query.isNotBlank()) "title*:$query " else ""
         val filters: List<String> = filterList.filterIsInstance<Filter.Text>().map { filter ->
+            if (filter.state.isBlank()) return@map ""
             val included = mutableListOf<String>()
             val excluded = mutableListOf<String>()
             val name = if (filter.name.lowercase().contentEquals("tags")) "tag" else filter.name.lowercase()
             filter.state.split(",").map(String::trim).filterNot(String::isBlank).forEach { entry ->
-                if (entry.startsWith("-")) excluded.add(entry) else included.add(entry)
+                if (entry.startsWith("-")) {
+                    excluded.add(entry.slice(1 until entry.length))
+                } else {
+                    included.add(entry)
+                }
             }
-            "$name*:${included.joinToString(",")} -$name*:${excluded.joinToString(",")}"
+            buildString {
+                if (included.isNotEmpty()) append("$name*:${included.joinToString(",")} ")
+                if (excluded.isNotEmpty()) append("-$name*:${excluded.joinToString(",")}")
+            }
         }
-        return "$title ${filters.joinToString(" ")}"
+        return "$title${
+        filters.filterNot(String::isBlank).joinToString(" ", transform = String::trim)
+        }"
     }
 
     override fun searchMangaSelector() = latestUpdatesSelector()
