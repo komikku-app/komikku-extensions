@@ -10,7 +10,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.nio.charset.Charset
 
-class WeLoveManga : FMReader("WeLoveManga", "https://weloma.net", "ja") {
+class WeLoveManga : FMReader("WeLoveManga", "https://weloma.art", "ja") {
     // Formerly "RawLH"
     override val id = 7595224096258102519
 
