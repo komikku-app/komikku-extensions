@@ -207,7 +207,7 @@ class Kuaikanmanhua : HttpSource() {
         val document = response.asJsoup()
         val script = document.selectFirst("script:containsData(comicImages)").data()
         val images = script.substringAfter("comicImages:")
-            .substringBefore("},nextComicInfo")
+            .substringBefore(",is_vip_exclusive")
             .replace("""(:([^\[\{\"]+?)[\},])""".toRegex(), fixJson)
             .replace("""([,{]([^\[\{\"]+?)[\}:])""".toRegex(), fixJson)
             .let { json.parseToJsonElement(it).jsonArray }
