@@ -7,13 +7,16 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/stale@v4
+    - uses: actions/stale@v5
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        # Close everything older than 1 year
-        days-before-issue-stale: 365
+        # Close everything older than ~6 months
+        days-before-issue-stale: 180
         days-before-issue-close: 0
+        ignore-updates: true
+        any-of-issue-labels: "Source request"
         exempt-issue-labels: do-not-autoclose
-        close-issue-message: "In an effort to have a more manageable issue backlog, we're closing issues older than 1 year. If you think your request or report is still relevant and may benefit others, please open a new issue."
+        close-issue-message: "In an effort to have a more manageable issue backlog, we're closing older requests that weren't addressed. If you think the source may still benefit others, please open a new request."
+        close-issue-reason: not_planned
         ascending: true
         operations-per-run: 250
