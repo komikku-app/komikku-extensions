@@ -158,7 +158,7 @@ class Koushoku : ParsedHttpSource() {
         if (id.isNullOrEmpty())
             throw UnsupportedOperationException("Error: Unknown archive id")
 
-        val url = URL(document.selectFirst(".page img").attr("src"))
+        val url = URL(document.selectFirst(".main img, main img").attr("src"))
         val origin = "${url.protocol}://${url.host}"
 
         return (1..totalPages).map {
