@@ -21,7 +21,9 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Evaluator
 import rx.Observable
+import rx.Single
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
@@ -122,11 +124,27 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
         }
     }
 
-    override fun pageListParse(document: Document): List<Page> {
-        return document.select(".comic-contain amp-img").mapIndexed { index, element ->
-            Page(index, imageUrl = element.attr("src"))
-        }
-    }
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = Single.create<List<Page>> {
+        val pageList = ArrayList<Page>(0)
+        var url = baseUrl + chapter.url
+        var pageCount = 0
+        var i = 0
+        do {
+            val document = client.newCall(GET(url, headers)).execute().asJsoup()
+            if (i == 0) {
+                pageCount = document.selectFirst(Evaluator.Class("comic-text__amp"))
+                    ?.run { text().substringAfter('/').toInt() } ?: break
+                pageList.ensureCapacity(pageCount)
+            }
+            document.select(".comic-contain amp-img").mapTo(pageList) { element ->
+                Page(i++, imageUrl = element.attr("src"))
+            }
+            url = document.selectFirst(Evaluator.Id("next-chapter"))?.attr("href") ?: ""
+        } while (i < pageCount)
+        it.onSuccess(pageList)
+    }.toObservable()
+
+    override fun pageListParse(document: Document) = throw UnsupportedOperationException("Not used.")
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
 
