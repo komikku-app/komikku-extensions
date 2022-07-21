@@ -16,7 +16,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -41,7 +40,10 @@ class Bainian : ParsedHttpSource(), ConfigurableSource {
     private fun String.stripMirror() = if (useMirror) "/comic" + removePrefix("/manhuadaquan") else this
     private fun String.toMirror() = if (useMirror) baseUrl + "/manhuadaquan" + removePrefix("/comic") else baseUrl + this
 
-    override val client: OkHttpClient = network.client.newBuilder().rateLimit(2).build()
+    override val client = network.client.newBuilder()
+        .rateLimit(2)
+        .addInterceptor(MimeInterceptor)
+        .build()
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/page/hot/$page.html", headers)
     override fun popularMangaNextPageSelector() = ".pagination > li:last-child > a"
@@ -191,10 +193,6 @@ class Bainian : ParsedHttpSource(), ConfigurableSource {
             title = "使用镜像网站"
             summary = "使用“漫画全集”网站，重启生效"
             setDefaultValue(false)
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putBoolean(USE_MIRROR_PREF, newValue as Boolean).apply()
-                true
-            }
         }.let { screen.addPreference(it) }
     }
 
