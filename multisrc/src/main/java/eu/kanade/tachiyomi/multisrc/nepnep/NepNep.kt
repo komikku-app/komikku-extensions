@@ -95,11 +95,22 @@ abstract class NepNep(
                 SManga.create().apply {
                     title = directory[i].getString("s")!!
                     url = "/manga/${directory[i].getString("i")}"
-                    thumbnail_url = "https://cover.nep.li/cover/${directory[i].getString("i")}.jpg"
+                    thumbnail_url = getThumbnailUrl(directory[i].getString("i")!!)
                 }
             )
         }
         return MangasPage(mangas, endRange < directory.lastIndex)
+    }
+
+    private var thumbnailUrl: String? = null
+
+    private fun getThumbnailUrl(id: String): String {
+        if (thumbnailUrl.isNullOrEmpty()) {
+            val response = client.newCall(popularMangaRequest(1)).execute()
+            thumbnailUrl = response.asJsoup().select(".SearchResult > .SearchResultCover img").first().attr("ng-src")
+        }
+
+        return thumbnailUrl!!.replace("{{Result.i}}", id)
     }
 
     // Latest
