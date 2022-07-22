@@ -6,6 +6,8 @@ import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import org.jsoup.nodes.Element
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class LeviatanScansFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
@@ -13,7 +15,8 @@ class LeviatanScansFactory : SourceFactory {
         LeviatanScansES(),
     )
 }
-class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "en") {
+
+class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "en", SimpleDateFormat("MMM, yy", Locale.US)) {
     override val useNewChapterEndpoint: Boolean = true
 
     override fun popularMangaFromElement(element: Element) =
@@ -28,9 +31,10 @@ class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "e
     override fun chapterFromElement(element: Element) =
         replaceRandomUrlPartInChapter(super.chapterFromElement(element))
 
-    override val mangaDetailsSelectorDescription = "div.post-content div.manga-excerpt"
+    override val mangaDetailsSelectorStatus = ".post-content_item:contains(Status) .summary-content"
 }
-class LeviatanScansES : Madara("Leviatan Scans", "https://es.leviatanscans.com", "es") {
+
+class LeviatanScansES : Madara("Leviatan Scans", "https://es.leviatanscans.com", "es", SimpleDateFormat("MMM, yy", Locale("es"))) {
     override val useNewChapterEndpoint: Boolean = true
 
     override fun popularMangaFromElement(element: Element) =
@@ -44,6 +48,8 @@ class LeviatanScansES : Madara("Leviatan Scans", "https://es.leviatanscans.com",
 
     override fun chapterFromElement(element: Element) =
         replaceRandomUrlPartInChapter(super.chapterFromElement(element))
+
+    override val mangaDetailsSelectorStatus = ".post-content_item:contains(Status) .summary-content"
 }
 
 fun Madara.replaceRandomUrlPartInManga(manga: SManga): SManga {
