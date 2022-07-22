@@ -448,7 +448,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Sweet Desire Scan", "https://sweetdesire.com.br", "pt-BR", isNsfw = true),
         SingleLang("Sweet Time Scan", "https://sweetscan.net", "pt-BR", overrideVersionCode = 2),
         SingleLang("TappyToon.Net", "https://tappytoon.net", "en", className = "Tappytoonnet"),
-        SingleLang("Tatakae Scan", "https://tatakaescan.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("Tatakae Scan", "https://tatakaescan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Taurus Fansub", "https://taurusfansub.com", "es", isNsfw = false),
         SingleLang("TeenManhua", "https://teenmanhua.com", "en"),
         SingleLang("The Beginning After The End", "https://www.thebeginningaftertheend.fr", "fr"),
