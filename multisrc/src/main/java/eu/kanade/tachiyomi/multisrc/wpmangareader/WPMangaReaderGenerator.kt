@@ -54,6 +54,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 10),
         SingleLang("White Cloud Pavilion (New)", "https://www.whitecloudpavilion.com", "en", pkgName = "whitecloudpavilionnew", className = "WhiteCloudPavilion"),
         SingleLang("ARESManga", "https://aresmanga.com", "ar", pkgName = "iimanga", overrideVersionCode = 2),
+        SingleLang("Sushi-Scan", "https://sushiscan.su", "fr", className = "SushiScan"),
     )
 
     companion object {
