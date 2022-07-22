@@ -3,6 +3,17 @@ description: Suggest a feature to improve a source
 labels: [Feature request]
 body:
 
+  - type: input
+    id: source
+    attributes:
+      label: Source name and language
+      description: |
+        You can find the extension name in **Browse → Extensions**.
+      placeholder: |
+        Example: "Mangahere (English)"
+    validations:
+      required: true
+
   - type: textarea
     id: feature-description
     attributes:
