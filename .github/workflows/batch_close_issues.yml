@@ -1,5 +1,10 @@
 name: "Batch close stale issues"
+
 on:
+  # Monthly
+  schedule:
+    - cron: '0 0 1 * *'
+  # Manual trigger
   workflow_dispatch:
     inputs:
 
@@ -7,13 +12,12 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/stale@v5
+    - uses: actions/stale@v5.1.0
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         # Close everything older than ~6 months
         days-before-issue-stale: 180
         days-before-issue-close: 0
-        ignore-updates: true
         any-of-issue-labels: "Source request"
         exempt-issue-labels: do-not-autoclose
         close-issue-message: "In an effort to have a more manageable issue backlog, we're closing older requests that weren't addressed. If you think the source may still benefit others, please open a new request."
