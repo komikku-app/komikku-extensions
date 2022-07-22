@@ -20,6 +20,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
@@ -74,15 +75,17 @@ abstract class NepNep(
     }
 
     // don't use ";" for substringBefore() !
-    private fun directoryFromResponse(response: Response): JsonArray {
-        val str = response.asJsoup().select("script:containsData(MainFunction)").first().data()
+    private fun directoryFromDocument(document: Document): JsonArray {
+        val str = document.select("script:containsData(MainFunction)").first().data()
             .substringAfter("vm.Directory = ").substringBefore("vm.GetIntValue").trim()
             .replace(";", " ")
         return json.parseToJsonElement(str).jsonArray
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        directory = directoryFromResponse(response).sortedByDescending { it.getString("v") }
+        val document = response.asJsoup()
+        thumbnailUrl = document.select(".SearchResult > .SearchResultCover img").first().attr("ng-src")
+        directory = directoryFromDocument(document).sortedByDescending { it.getString("v") }
         return parseDirectory(1)
     }
 
@@ -130,7 +133,7 @@ abstract class NepNep(
     override fun latestUpdatesRequest(page: Int): Request = popularMangaRequest(1)
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        directory = directoryFromResponse(response).sortedByDescending { it.getString("lt") }
+        directory = directoryFromDocument(response.asJsoup()).sortedByDescending { it.getString("lt") }
         return parseDirectory(1)
     }
 
@@ -152,7 +155,7 @@ abstract class NepNep(
 
     private fun searchMangaParse(response: Response, query: String, filters: FilterList): MangasPage {
         val trimmedQuery = query.trim()
-        directory = directoryFromResponse(response)
+        directory = directoryFromDocument(response.asJsoup())
             .filter {
                 // Comparing query with display name
                 it.getString("s")!!.contains(trimmedQuery, ignoreCase = true) or
@@ -198,6 +201,7 @@ abstract class NepNep(
                         Filter.TriState.STATE_EXCLUDE -> genresNo.add(genre.name)
                     }
                 }
+                else -> continue
             }
         }
         if (genres.isNotEmpty()) genres.map { genre ->
