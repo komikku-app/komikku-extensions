@@ -63,6 +63,14 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             // chapters are listed oldest to newest in the source
             document.select(".l-box > .pure-g[id^=chapter] > div").reversed()
         }.map { chapterFromElement(it) }.apply {
+            val chapterOrderPref = preferences.getString(CHAPTER_ORDER_PREF, CHAPTER_ORDER_DISABLED)
+            if (chapterOrderPref != CHAPTER_ORDER_DISABLED) {
+                val isAggressive = chapterOrderPref == CHAPTER_ORDER_AGGRESSIVE
+                forEach {
+                    if (isAggressive || it.name.any(Char::isDigit))
+                        it.url = it.url + '#' + it.name // += will use one more StringBuilder
+                }
+            }
             if (!isNewDateLogic) return@apply
             val date = document.select("em").text()
             if (date.contains('年')) {
@@ -139,7 +147,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             document.select(".comic-contain amp-img").mapTo(pageList) { element ->
                 Page(i++, imageUrl = element.attr("src"))
             }
-            url = document.selectFirst(Evaluator.Id("next-chapter"))?.attr("href") ?: ""
+            url = document.selectFirst(Evaluator.Id("next-chapter"))?.attr("href") ?: break
         } while (i < pageCount)
         it.onSuccess(pageList)
     }.toObservable()
@@ -205,10 +213,11 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = MIRROR_PREF
-            title = MIRROR_PREF_TITLE
+            title = "使用镜像网址"
             entries = MIRRORS
             entryValues = MIRRORS
-            summary = MIRROR_PREF_SUMMARY
+            summary = "已选择：%s\n" +
+                "重启生效，切换简繁体后需要迁移才能刷新漫画标题。"
             setDefaultValue(MIRRORS[0])
         }.let { screen.addPreference(it) }
 
@@ -224,17 +233,37 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
                 true
             }
         }.let { screen.addPreference(it) }
+
+        ListPreference(screen.context).apply {
+            key = CHAPTER_ORDER_PREF
+            title = "修复章节顺序错误导致的错标已读"
+            summary = "已选择：%s\n" +
+                "部分作品的章节顺序错误，最新章节总是显示为一个旧章节，导致检查更新时新章节被错标为已读。" +
+                "开启后，将会正确判断新章节和已读情况，但是错误的章节顺序不会改变。" +
+                "如果作品有章节标号重复，开启或关闭后第一次刷新会导致它们的阅读状态同步。" +
+                "开启或关闭强力模式后第一次刷新会将所有未标号的章节标记为未读。"
+            entries = arrayOf("关闭", "开启 (对有标号的章节有效)", "强力模式 (对所有章节有效)")
+            entryValues = arrayOf(CHAPTER_ORDER_DISABLED, CHAPTER_ORDER_ENABLED, CHAPTER_ORDER_AGGRESSIVE)
+            setDefaultValue(CHAPTER_ORDER_DISABLED)
+        }.let { screen.addPreference(it) }
     }
 
     companion object {
         const val ID_SEARCH_PREFIX = "id:"
 
         private const val MIRROR_PREF = "MIRROR"
-        private const val MIRROR_PREF_TITLE = "使用镜像网址"
-        private const val MIRROR_PREF_SUMMARY = "重启生效，已选择：%s"
-        private val MIRRORS = arrayOf("cn.baozimh.com", "cn.webmota.com")
+        private val MIRRORS = arrayOf(
+            "cn.baozimh.com", "cn.webmota.com",
+            "tw.baozimh.com", "tw.webmota.com",
+            "www.baozimh.com", "www.webmota.com",
+        )
 
         private const val DEFAULT_LEVEL = BaoziBanner.NORMAL.toString()
+
+        private const val CHAPTER_ORDER_PREF = "CHAPTER_ORDER"
+        private const val CHAPTER_ORDER_DISABLED = "0"
+        private const val CHAPTER_ORDER_ENABLED = "1"
+        private const val CHAPTER_ORDER_AGGRESSIVE = "2"
 
         private val DATE_FORMAT by lazy { SimpleDateFormat("yyyy年MM月dd日", Locale.ENGLISH) }
         private val isNewDateLogic = AppInfo.getVersionCode() >= 81
