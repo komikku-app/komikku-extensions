@@ -15,7 +15,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Evaluator
-import org.jsoup.select.QueryParser
 import rx.Observable
 
 /** ManhuaDB: https://www.manhuadb.com/ */
@@ -36,10 +35,10 @@ abstract class MDB(
     override fun popularMangaRequest(page: Int) = GET(listUrl("page-$page"), headers)
     override fun popularMangaSelector() = "div.comic-main-section > div.comic-book-unit"
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        val link = element.selectFirst(listComicLinkSelector)
+        val link = element.selectFirst("h2 > a")
         setUrlWithoutDomain(link.attr("href"))
         title = link.text()
-        thumbnail_url = element.selectFirst(imgSelector).absUrl("src")
+        thumbnail_url = element.selectFirst(Evaluator.Tag("img")).absUrl("src")
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
@@ -68,27 +67,27 @@ abstract class MDB(
         throw UnsupportedOperationException("Not used.")
 
     protected open fun transformTitle(title: String) = title
-    protected abstract val authorSelector: Evaluator
+    protected abstract val authorSelector: String
     protected open fun transformDescription(description: String) = description
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        title = document.selectFirst(h1Selector).text().let { transformTitle(it) }
+        title = document.selectFirst(Evaluator.Tag("h1")).text().let { transformTitle(it) }
         author = document.selectFirst(authorSelector).text()
-        description = document.selectFirst(descriptionSelector).text().let { transformDescription(it) }
+        description = document.selectFirst("p.comic_story").text().let { transformDescription(it) }
         genre = parseGenre(document).joinToString(", ")
-        status = when (document.selectFirst(statusSelector).text()) {
+        status = when (document.selectFirst("a.comic-pub-state").text()) {
             "连载中" -> SManga.ONGOING
             "已完结" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
-        thumbnail_url = document.selectFirst(coverSelector).attr("src")
+        thumbnail_url = document.selectFirst("td.comic-cover > img").absUrl("src")
     }
 
     protected open fun parseGenre(document: Document): List<String> {
         val list = mutableListOf<String>()
-        list.add(document.selectFirst(regionSelector).text())
-        list.add(document.selectFirst(audienceSelector).text().removeSuffix("漫画"))
-        val tags = document.select(tagSelector)
+        list.add(document.selectFirst("th:contains(地区) + td").text())
+        list.add(document.selectFirst("th:contains(面向读者) + td").text().removeSuffix("漫画"))
+        val tags = document.select("ul.tags > li > a")
         for (i in 1 until tags.size) { // skip status
             list.add(tags[i].text())
         }
@@ -102,12 +101,12 @@ abstract class MDB(
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val imgData = document.selectFirst(scriptSelector).data()
+        val imgData = document.selectFirst("body > script:containsData(img_data)").data()
             .substringAfter("img_data = ").run {
                 val endIndex = indexOf(this[0], startIndex = 1) // find end quote
                 substring(1, endIndex)
             }
-        val readerConfig = document.selectFirst(readerConfigSelector)
+        val readerConfig = document.selectFirst(Evaluator.Class("vg-r-data"))
         return parseImages(imgData, readerConfig).mapIndexed { i, it ->
             Page(i, imageUrl = it)
         }
@@ -117,11 +116,11 @@ abstract class MDB(
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
 
-    protected data class Category(val name: String, val values: Array<String>, val params: List<String>) {
+    protected class Category(val name: String, private val values: Array<String>, private val params: List<String>) {
         fun toFilter() = CategoryFilter(name, values, params)
     }
 
-    protected class CategoryFilter(name: String, values: Array<String>, val params: List<String>) :
+    protected class CategoryFilter(name: String, values: Array<String>, private val params: List<String>) :
         Filter.Select<String>(name, values) {
         fun getParam() = params[state]
     }
@@ -130,7 +129,7 @@ abstract class MDB(
 
     protected open fun parseCategories(document: Document) {
         if (::categories.isInitialized) return
-        val filters = document.select(filterSelector)
+        val filters = document.select("div.search_div > div")
         val list = ArrayList<Category>(filters.size + 1)
         for (filter in filters) {
             val children = filter.children()
@@ -144,9 +143,10 @@ abstract class MDB(
                     values.add(link.text())
                     params.add(link.attr("href").let(::extractParams).let(::parseParam))
                 }
-                list.add(Category(children[0].selectFirst(spanSelector).text(), values.toTypedArray(), params))
+                val name = children[0].selectFirst(Evaluator.Tag("span")).text()
+                list.add(Category(name, values.toTypedArray(), params))
             } else if (filterContainer.hasClass("form-row")) { // Dropdown filter
-                for (select in filterContainer.select(selectSelector)) {
+                for (select in filterContainer.select(Evaluator.Tag("select"))) {
                     val options = select.children()
                     val values = ArrayList<String>(options.size).apply { add("全部") }
                     val params = ArrayList<String>(options.size).apply { add("") }
@@ -177,21 +177,4 @@ abstract class MDB(
             Filter.Header("点击“重置”即可刷新分类，如果失败，"),
             Filter.Header("请尝试重新从图源列表点击进入图源"),
         )
-
-    companion object {
-        private val listComicLinkSelector = QueryParser.parse("h2 > a")
-        private val imgSelector = Evaluator.Tag("img")
-        private val h1Selector = Evaluator.Tag("h1")
-        private val coverSelector = QueryParser.parse("td.comic-cover > img")
-        private val descriptionSelector = QueryParser.parse("p.comic_story")
-        private val tagSelector = QueryParser.parse("ul.tags > li > a")
-        private val statusSelector = QueryParser.parse("a.comic-pub-state")
-        private val regionSelector = QueryParser.parse("th:contains(地区) + td")
-        private val audienceSelector = QueryParser.parse("th:contains(面向读者) + td")
-        private val scriptSelector = QueryParser.parse("body > script:containsData(img_data)")
-        private val readerConfigSelector = Evaluator.Class("vg-r-data")
-        private val filterSelector = QueryParser.parse("div.search_div > div")
-        private val spanSelector = Evaluator.Tag("span")
-        private val selectSelector = Evaluator.Tag("select")
-    }
 }

@@ -12,8 +12,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Response
 import org.jsoup.nodes.Element
-import org.jsoup.select.Evaluator
-import org.jsoup.select.QueryParser
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -33,7 +31,7 @@ class ManhuaDB : MDB("漫画DB", "https://www.manhuadb.com"), ConfigurableSource
     override fun latestUpdatesSelector() = throw UnsupportedOperationException("Not used.")
     override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException("Not used.")
 
-    override val authorSelector: Evaluator = QueryParser.parse("a.comic-creator")
+    override val authorSelector = "a.comic-creator"
     override fun transformDescription(description: String) = description.substringBeforeLast("欢迎在漫画DB观看")
 
     override fun chapterListParse(response: Response) = super.chapterListParse(response).asReversed()
@@ -65,10 +63,6 @@ class ManhuaDB : MDB("漫画DB", "https://www.manhuadb.com"), ConfigurableSource
             title = "优先使用 WebP 图片格式"
             summary = "默认开启，可以节省网站流量"
             setDefaultValue(true)
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putBoolean(WEBP_PREF, newValue as Boolean).apply()
-                true
-            }
         }.let { screen.addPreference(it) }
     }
 

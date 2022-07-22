@@ -7,8 +7,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
 import org.jsoup.nodes.Element
-import org.jsoup.select.Evaluator
-import org.jsoup.select.QueryParser
 import rufus.lzstring4java.LZString
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -29,7 +27,7 @@ class Maofly : MDB("漫画猫", "https://www.maofly.com") {
     override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
 
     override fun transformTitle(title: String) = title.run { substring(1, length - 1) } // 《title》
-    override val authorSelector: Evaluator = QueryParser.parse("td.pub-duration")
+    override val authorSelector = "td.pub-duration"
     override fun transformDescription(description: String) =
         description.substringAfter("的漫画作品。").substringBeforeLast(" 。。欢迎您到漫画猫畅快阅读。")
 
@@ -37,7 +35,7 @@ class Maofly : MDB("漫画猫", "https://www.maofly.com") {
         val document = response.asJsoup()
         return document.select(chapterListSelector()).map { chapterFromElement(it) }.apply {
             if (!isNewDateLogic) return@apply
-            this[0].date_upload = document.selectFirst(dateSelector).text()
+            this[0].date_upload = document.selectFirst("th:contains(上次更新) + td").text()
                 .let { dateFormat.parse(it)!!.time }
         }
     }
@@ -50,8 +48,7 @@ class Maofly : MDB("漫画猫", "https://www.maofly.com") {
     }
 
     companion object {
-        private val dateSelector = QueryParser.parse("th:contains(上次更新) + td")
-        private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        private val dateFormat by lazy { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH) }
         private val isNewDateLogic = AppInfo.getVersionCode() >= 81
     }
 }
