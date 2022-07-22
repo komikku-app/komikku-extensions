@@ -10,7 +10,7 @@ class MadaraGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Madara"
 
-    override val baseVersionCode: Int = 22
+    override val baseVersionCode: Int = 23
 
     override val sources = listOf(
         MultiLang("Leviatan Scans", "https://leviatanscans.com", listOf("en", "es"), className = "LeviatanScansFactory", overrideVersionCode = 9),
