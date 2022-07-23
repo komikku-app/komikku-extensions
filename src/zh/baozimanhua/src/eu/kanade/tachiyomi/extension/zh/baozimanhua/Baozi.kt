@@ -133,6 +133,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
     }
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = Single.create<List<Page>> {
+        val pageNumberSelector = Evaluator.Class("comic-text__amp")
         val pageList = ArrayList<Page>(0)
         var url = baseUrl + chapter.url
         var pageCount = 0
@@ -140,11 +141,13 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
         do {
             val document = client.newCall(GET(url, headers)).execute().asJsoup()
             if (i == 0) {
-                pageCount = document.selectFirst(Evaluator.Class("comic-text__amp"))
+                pageCount = document.selectFirst(pageNumberSelector)
                     ?.run { text().substringAfter('/').toInt() } ?: break
                 pageList.ensureCapacity(pageCount)
             }
-            document.select(".comic-contain amp-img").mapTo(pageList) { element ->
+            document.select(".comic-contain amp-img").dropWhile { element ->
+                element.selectFirst(pageNumberSelector).text().substringBefore('/').toInt() <= i
+            }.mapTo(pageList) { element ->
                 Page(i++, imageUrl = element.attr("src"))
             }
             url = document.selectFirst(Evaluator.Id("next-chapter"))?.attr("href") ?: break
