@@ -99,11 +99,11 @@ abstract class BakkinReaderX(
 
     override fun fetchChapterList(manga: SManga) =
         observableSeries { series ->
-            series.first { it.dir == manga.url }.mapIndexed { idx, chapter ->
+            series.first { it.dir == manga.url }.map { chapter ->
                 SChapter.create().apply {
                     url = chapter.dir
                     name = chapter.toString()
-                    chapter_number = idx.toFloat()
+                    chapter_number = chapter.number
                     date_upload = 0L
                 }
             }.reversed()

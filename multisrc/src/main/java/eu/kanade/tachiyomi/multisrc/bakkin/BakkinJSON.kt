@@ -10,7 +10,12 @@ internal data class Series(
     val volumes: List<Volume>
 ) : Iterable<Chapter> {
     override fun iterator() = volumes.flatMap { vol ->
-        vol.map { it.copy("$dir/${vol.dir}/${it.dir}", "$vol - $it") }
+        vol.map {
+            it.copy(
+                name = "$vol - $it",
+                dir = "$dir/${vol.dir}/${it.dir}"
+            )
+        }
     }.iterator()
 
     val cover: String
@@ -34,5 +39,8 @@ internal data class Chapter(
     val name: String,
     val pages: List<String>
 ) : Iterable<String> by pages {
+    val number: Float
+        get() = dir.substringAfterLast('c').toFloatOrNull() ?: -1f
+
     override fun toString() = name.ifEmpty { dir }
 }
