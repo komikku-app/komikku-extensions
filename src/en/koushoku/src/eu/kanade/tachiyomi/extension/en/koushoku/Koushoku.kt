@@ -84,7 +84,7 @@ class Koushoku : ParsedHttpSource() {
     }
 
     private fun buildAdvQuery(query: String, filterList: FilterList): String {
-        val title = if (query.isNotBlank()) "title*:$query " else ""
+        val title = if (query.isNotBlank()) "title*:\"$query\" " else ""
         val filters: List<String> = filterList.filterIsInstance<Filter.Text>().map { filter ->
             if (filter.state.isBlank()) return@map ""
             val included = mutableListOf<String>()
@@ -98,8 +98,8 @@ class Koushoku : ParsedHttpSource() {
                 }
             }
             buildString {
-                if (included.isNotEmpty()) append("$name*:${included.joinToString(",")} ")
-                if (excluded.isNotEmpty()) append("-$name*:${excluded.joinToString(",")}")
+                if (included.isNotEmpty()) append("$name&*:\"${included.joinToString(",")}\" ")
+                if (excluded.isNotEmpty()) append("-$name&*:\"${excluded.joinToString(",")}\"")
             }
         }
         return "$title${
@@ -117,8 +117,8 @@ class Koushoku : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element) = latestUpdatesFromElement(element)
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        title = document.select(".metadata .title").text()
-        thumbnail_url = document.select(thumbnailSelector).attr("src")
+        title = document.selectFirst(".metadata .title").text()
+        thumbnail_url = document.selectFirst(thumbnailSelector).attr("src")
         artist = document.select(".metadata .artists a, .metadata .circles a")
             .joinToString { it.text() }
         author = artist
