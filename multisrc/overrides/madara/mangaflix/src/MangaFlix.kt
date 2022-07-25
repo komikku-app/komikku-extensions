@@ -20,9 +20,9 @@ class MangaFlix : Madara(
         val chapter = super.chapterFromElement(element)
 
         with(element) {
-            select(chapterUrlSelector).first()?.let { urlElement ->
-                // use .ownText() instead of .text()
-                chapter.name = urlElement.ownText()
+            selectFirst(chapterUrlSelector)?.let { urlElement ->
+                // Using .text() on the <a> tag is too broad
+                chapter.name = urlElement.selectFirst("> p")!!.text()
             }
         }
 
