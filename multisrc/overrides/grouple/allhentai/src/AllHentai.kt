@@ -7,7 +7,7 @@ import eu.kanade.tachiyomi.source.model.FilterList
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 
-class AllHentai : GroupLe("AllHentai", "http://23.allhen.online", "ru"){
+class AllHentai : GroupLe("AllHentai", "http://23.allhen.online", "ru") {
 
     override val id: Long = 1809051393403180443
 
@@ -52,7 +52,7 @@ class AllHentai : GroupLe("AllHentai", "http://23.allhen.online", "ru"){
         }
         return if (url.toString().contains("?"))
             GET(url.toString().replace("=%3D", "="), headers)
-        else  popularMangaRequest(page)
+        else popularMangaRequest(page)
     }
 
     private class OrderBy : Filter.Select<String>(

@@ -33,7 +33,7 @@ class SelfManga : GroupLe("SelfManga", "https://selfmanga.live", "ru") {
         }
         return if (url.toString().contains("?"))
             GET(url.toString().replace("=%3D", "="), headers)
-        else  popularMangaRequest(page)
+        else popularMangaRequest(page)
     }
 
     private class Genre(name: String, val id: String) : Filter.TriState(name)

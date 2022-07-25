@@ -6,7 +6,7 @@ import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import okhttp3.Request
 
-class YaoiChan : MultiChan("YaoiChan", "https://yaoi-chan.me", "ru"){
+class YaoiChan : MultiChan("YaoiChan", "https://yaoi-chan.me", "ru") {
 
     override val id: Long = 2466512768990363955
 

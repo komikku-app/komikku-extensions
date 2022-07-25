@@ -71,14 +71,24 @@ tasks {
                 throw Exception("Java process failed with exit code: $exitCode")
             }
         }
-        dependsOn("ktFormat", "ktLint", "assembleDebug")
+        dependsOn("ktLint", "assembleDebug")
     }
 
     register<org.jmailen.gradle.kotlinter.tasks.LintTask>("ktLint") {
+        if (project.hasProperty("theme")) {
+            val theme = project.property("theme")
+            source(files("src/main/java/eu/kanade/tachiyomi/multisrc/$theme", "overrides/$theme"))
+            return@register
+        }
         source(files("src", "overrides"))
     }
 
     register<org.jmailen.gradle.kotlinter.tasks.FormatTask>("ktFormat") {
+        if (project.hasProperty("theme")) {
+            val theme = project.property("theme")
+            source(files("src/main/java/eu/kanade/tachiyomi/multisrc/$theme", "overrides/$theme"))
+            return@register
+        }
         source(files("src", "overrides"))
     }
 }

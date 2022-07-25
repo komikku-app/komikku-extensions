@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.extension.ja.manga9co
 import eu.kanade.tachiyomi.multisrc.mangaraw.MangaRaw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Request

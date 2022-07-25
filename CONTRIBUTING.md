@@ -82,6 +82,8 @@ Some alternative steps can be followed to ignore "repo" branch and skip unrelate
     # allow a multisrc theme
     /multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/<source>
     /multisrc/overrides/<source>
+    # or type the source name directly
+    <source>
     ```
 4. Configure remotes.
     ```bash
@@ -496,6 +498,9 @@ with open(f"{package}/src/{source}.kt", "w") as f:
     - For each time a source changes in a way that should the version increase, `overrideVersionCode` should be increased by one.
     - When a theme's default implementation changes, `baseVersionCode` should be increased, the initial value should be `1`.
     - For example, for a new theme with a new source, extention version code will be `0 + 0 + 1 = 1`.
+- `IntelijConfigurationGeneratorMainKt` should be run on creating or removing a multisrc theme.
+    - On removing a theme, you can manually remove the corresponding configuration in the `.run` folder instead.
+    - Be careful if you're using sparse checkout. If other configurations are accidentally removed, `git add` the file you want and `git restore` the others. Another choice is to allow `/multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/*` before running the generator.
 
 ## Running
 

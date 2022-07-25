@@ -15,7 +15,7 @@ import okhttp3.Request
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class MangaLib : LibGroup("MangaLib", "https://mangalib.me", "ru")  {
+class MangaLib : LibGroup("MangaLib", "https://mangalib.me", "ru") {
 
     override val id: Long = 6111047689498497237
 

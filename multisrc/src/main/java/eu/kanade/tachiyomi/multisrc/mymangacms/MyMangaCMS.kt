@@ -115,9 +115,11 @@ abstract class MyMangaCMS(
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         return when {
             query.startsWith(PREFIX_URL_SEARCH) -> {
-                fetchMangaDetails(SManga.create().apply {
-                    url = query.removePrefix(PREFIX_URL_SEARCH).trim().replace(baseUrl, "")
-                })
+                fetchMangaDetails(
+                    SManga.create().apply {
+                        url = query.removePrefix(PREFIX_URL_SEARCH).trim().replace(baseUrl, "")
+                    }
+                )
                     .map { MangasPage(listOf(it), false) }
             }
             else -> super.fetchSearchManga(page, query, filters)
@@ -260,7 +262,8 @@ abstract class MyMangaCMS(
         val document = response.asJsoup()
         val originalScanlator = document.select("div.fantrans-value a")
         val scanlator: String? = if (originalScanlator.isEmpty() ||
-            originalScanlator.first().text().trim().lowercase() == "đang cập nhật") {
+            originalScanlator.first().text().trim().lowercase() == "đang cập nhật"
+        ) {
             null
         } else {
             originalScanlator.first().text().trim()

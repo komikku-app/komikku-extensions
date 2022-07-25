@@ -33,7 +33,8 @@ class MangaPro : WPMangaStream("Manga Pro", "https://mangaprotm.com", "ar") {
             chapter.setUrlWithoutDomain("")
 
         chapter.name = if (urlElement.select("span.chapternum")
-                .isNotEmpty()) urlElement.select("span.chapternum").text() else urlElement.text()
+            .isNotEmpty()
+        ) urlElement.select("span.chapternum").text() else urlElement.text()
         chapter.name = chapter.name.replace("-*free".toRegex(RegexOption.IGNORE_CASE), "")
         chapter.date_upload =
             element.select("span.rightoff, time, span.chapterdate").firstOrNull()?.text()

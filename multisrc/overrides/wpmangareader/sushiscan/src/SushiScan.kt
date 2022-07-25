@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.source.model.SManga
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-
 class SushiScan : WPMangaReader("Sushi-Scan", "https://sushiscan.su", "fr", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.FRENCH)) {
     override val altName = "Nom alternatif : "
     override val seriesStatusSelector = ".tsinfo .imptdt:contains(Statut)"

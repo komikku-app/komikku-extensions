@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.ja.syosetu
 
 import eu.kanade.tachiyomi.multisrc.mangaraw.MangaRaw
-import eu.kanade.tachiyomi.network.GET
 import okhttp3.Request
 
 class SyoSetu : MangaRaw("SyoSetu", "https://syosetu.top") {

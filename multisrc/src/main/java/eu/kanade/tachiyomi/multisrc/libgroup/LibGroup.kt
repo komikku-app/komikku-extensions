@@ -19,12 +19,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.concurrent.TimeUnit
-import kotlin.math.absoluteValue
-import kotlin.random.Random
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -48,7 +42,12 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 
 abstract class LibGroup(
     override val name: String,
@@ -83,7 +82,7 @@ abstract class LibGroup(
         .addInterceptor { chain ->
             val response = chain.proceed(chain.request())
             if (response.code == 419)
-                    throw IOException("HTTP error ${response.code}. Для завершения авторизации необходимо перезапустить приложение с полной остановкой.")
+                throw IOException("HTTP error ${response.code}. Для завершения авторизации необходимо перезапустить приложение с полной остановкой.")
             return@addInterceptor response
         }
         .build()
@@ -248,11 +247,11 @@ abstract class LibGroup(
             SManga.LICENSED
         } else
             when {
-                StatusTranslate.contains("завершен" ) && StatusTitle.contains("приостановлен" ) || StatusTranslate.contains("заморожен" ) || StatusTranslate.contains("заброшен" ) -> SManga.ON_HIATUS
-                StatusTranslate.contains("завершен" ) && StatusTitle.contains("выпуск прекращён" ) -> SManga.CANCELLED
-                StatusTranslate.contains("продолжается" ) -> SManga.ONGOING
-                StatusTranslate.contains("завершен" ) -> SManga.COMPLETED
-                else -> when (StatusTitle){
+                StatusTranslate.contains("завершен") && StatusTitle.contains("приостановлен") || StatusTranslate.contains("заморожен") || StatusTranslate.contains("заброшен") -> SManga.ON_HIATUS
+                StatusTranslate.contains("завершен") && StatusTitle.contains("выпуск прекращён") -> SManga.CANCELLED
+                StatusTranslate.contains("продолжается") -> SManga.ONGOING
+                StatusTranslate.contains("завершен") -> SManga.COMPLETED
+                else -> when (StatusTitle) {
                     "онгоинг" -> SManga.ONGOING
                     "анонс" -> SManga.ONGOING
                     "завершён" -> SManga.COMPLETED
@@ -334,7 +333,7 @@ abstract class LibGroup(
     }
 
     private fun sortChaptersByTranslator
-            (sortingList: String?, chaptersList: JsonArray?, slug: String, branches: List<JsonElement>): List<SChapter>? {
+    (sortingList: String?, chaptersList: JsonArray?, slug: String, branches: List<JsonElement>): List<SChapter>? {
         var chapters: List<SChapter>? = null
         val volume = "(?<=/v)[0-9]+(?=/c[0-9]+)".toRegex()
         val tempChaptersList = mutableListOf<SChapter>()
@@ -372,7 +371,7 @@ abstract class LibGroup(
     }
 
     private fun chapterFromElement
-            (chapterItem: JsonElement, sortingList: String?, slug: String, teamIdParam: Int? = null, branches: List<JsonElement>? = null, teams: List<JsonElement>? = null, chaptersList: JsonArray? = null): SChapter {
+    (chapterItem: JsonElement, sortingList: String?, slug: String, teamIdParam: Int? = null, branches: List<JsonElement>? = null, teams: List<JsonElement>? = null, chaptersList: JsonArray? = null): SChapter {
         val chapter = SChapter.create()
 
         val volume = chapterItem.jsonObject["chapter_volume"]!!.jsonPrimitive.int
@@ -417,7 +416,7 @@ abstract class LibGroup(
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
 
-        //redirect Регистрация 18+
+        // redirect Регистрация 18+
         val redirect = document.html()
         if (!redirect.contains("window.__info")) {
             if (redirect.contains("auth-layout")) {

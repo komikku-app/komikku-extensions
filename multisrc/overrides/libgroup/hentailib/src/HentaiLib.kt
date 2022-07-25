@@ -48,7 +48,6 @@ class HentaiLib : LibGroup("HentaiLib", "https://hentailib.me", "ru") {
         return POST(url.toString(), catalogHeaders())
     }
 
-
     // Filters
     private class SearchFilter(name: String, val id: String) : Filter.TriState(name)
 

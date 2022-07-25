@@ -51,7 +51,6 @@ class YaoiLib : LibGroup("YaoiLib", "https://yaoilib.me", "ru") {
         return POST(url.toString(), catalogHeaders())
     }
 
-
     // Filters
     private class SearchFilter(name: String, val id: String) : Filter.TriState(name)
     private class CheckFilter(name: String, val id: String) : Filter.CheckBox(name)

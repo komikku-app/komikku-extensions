@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.ru.readmanga
 
-import android.widget.Toast
 import eu.kanade.tachiyomi.multisrc.grouple.GroupLe
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
@@ -8,7 +7,7 @@ import eu.kanade.tachiyomi.source.model.FilterList
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 
-class ReadManga : GroupLe("ReadManga", "https://readmanga.live", "ru"){
+class ReadManga : GroupLe("ReadManga", "https://readmanga.live", "ru") {
 
     override val id: Long = 5
 
@@ -56,7 +55,7 @@ class ReadManga : GroupLe("ReadManga", "https://readmanga.live", "ru"){
         }
         return if (url.toString().contains("?"))
             GET(url.toString().replace("=%3D", "="), headers)
-        else  popularMangaRequest(page)
+        else popularMangaRequest(page)
     }
 
     private class OrderBy : Filter.Select<String>(

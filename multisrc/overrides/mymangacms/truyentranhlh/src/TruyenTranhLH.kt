@@ -65,4 +65,3 @@ class TruyenTranhLH : MyMangaCMS("TruyenTranhLH", "https://truyentranhlh.net", "
         Genre("Dark Fantasy", 57),
     )
 }
-
