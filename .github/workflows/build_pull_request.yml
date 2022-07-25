@@ -32,7 +32,31 @@ jobs:
           java-version: 11
           distribution: adopt
 
+      - id: get-changed-files
+        name: Get changed files
+        uses: jitterbit/get-changed-files@v1
+
+      - id: parse-changed-files
+        name: Parse changed files
+        run: |
+          isIndividualChanged=0
+          isMultisrcChanged=0
+          for changedFile in ${{ steps.get-changed-files.outputs.all }}; do
+            if [[ ${changedFile} == src/* ]]; then
+              isIndividualChanged=1
+            elif [[ ${changedFile} == multisrc/* ]]; then
+              isMultisrcChanged=1
+            else
+              isIndividualChanged=1
+              isMultisrcChanged=1
+              break
+            fi
+          done
+          echo "::set-output name=isIndividualChanged::$isIndividualChanged"
+          echo "::set-output name=isMultisrcChanged::$isMultisrcChanged"
+
       - name: Generate multisrc sources
+        if: ${{ steps.parse-changed-files.outputs.isMultisrcChanged == '1' }}
         uses: gradle/gradle-command-action@v2
         with:
           arguments: :multisrc:generateExtensions
@@ -62,29 +86,6 @@ jobs:
 
             core.setOutput('individualMatrix', { 'chunk': [...Array(numIndividualChunks).keys()] });
             core.setOutput('multisrcMatrix', { 'chunk': [...Array(numMultisrcChunks).keys()] });
-
-      - id: get-changed-files
-        name: Get changed files
-        uses: jitterbit/get-changed-files@v1
-
-      - id: parse-changed-files
-        name: Parse changed files
-        run: |
-          isIndividualChanged=0
-          isMultisrcChanged=0
-          for changedFile in ${{ steps.get-changed-files.outputs.all }}; do
-            if [[ ${changedFile} == src/* ]]; then
-              isIndividualChanged=1
-            elif [[ ${changedFile} == multisrc/* ]]; then
-              isMultisrcChanged=1
-            else
-              isIndividualChanged=1
-              isMultisrcChanged=1
-              break
-            fi
-          done
-          echo "::set-output name=isIndividualChanged::$isIndividualChanged"
-          echo "::set-output name=isMultisrcChanged::$isMultisrcChanged"
 
   build_multisrc:
     name: Build multisrc modules
