@@ -84,7 +84,7 @@ open class NHentai(
 
     override fun latestUpdatesRequest(page: Int) = GET(if (nhLang.isBlank()) "$baseUrl/?page=$page" else "$baseUrl/language/$nhLang/?page=$page", headers)
 
-    override fun latestUpdatesSelector() = "#content .index-container:not(.index-popular) .gallery"
+    override fun latestUpdatesSelector() = "#content .container:not(.index-popular) .gallery"
 
     override fun latestUpdatesFromElement(element: Element) = SManga.create().apply {
         setUrlWithoutDomain(element.select("a").attr("href"))
@@ -130,17 +130,19 @@ open class NHentai(
         val advQuery = combineQuery(filterList)
         val favoriteFilter = filterList.findInstance<FavoriteFilter>()
         val isOkayToSort = filterList.findInstance<UploadedFilter>()?.state?.isBlank() ?: true
+        val offsetPage =
+            filterList.findInstance<OffsetPageFilter>()?.state?.toIntOrNull()?.plus(page) ?: page
 
         if (favoriteFilter?.state == true) {
             val url = "$baseUrl/favorites".toHttpUrlOrNull()!!.newBuilder()
                 .addQueryParameter("q", "$fixedQuery $advQuery")
-                .addQueryParameter("page", page.toString())
+                .addQueryParameter("page", offsetPage.toString())
 
             return GET(url.toString(), headers)
         } else {
             val url = "$baseUrl/search".toHttpUrlOrNull()!!.newBuilder()
                 .addQueryParameter("q", "$fixedQuery $nhLangSearch$advQuery")
-                .addQueryParameter("page", page.toString())
+                .addQueryParameter("page", offsetPage.toString())
 
             if (isOkayToSort) {
                 filterList.findInstance<SortFilter>()?.let { f ->
@@ -262,6 +264,7 @@ open class NHentai(
 
         Filter.Separator(),
         SortFilter(),
+        OffsetPageFilter(),
         Filter.Header("Sort is ignored if favorites only"),
         FavoriteFilter()
     )
@@ -275,6 +278,8 @@ open class NHentai(
     class UploadedFilter : AdvSearchEntryFilter("Uploaded")
     class PagesFilter : AdvSearchEntryFilter("Pages")
     open class AdvSearchEntryFilter(name: String) : Filter.Text(name)
+
+    class OffsetPageFilter : Filter.Text("Offset results by # pages")
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
 
