@@ -1,3 +1,11 @@
+## 1.3.41
+
+Minimum Komga version required: `0.151.0`
+
+### Features
+
+* Improve how the status is displayed
+
 ## 1.3.40
 
 Minimum Komga version required: `0.151.0`

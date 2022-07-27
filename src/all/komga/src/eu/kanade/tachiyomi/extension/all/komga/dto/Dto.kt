@@ -41,7 +41,8 @@ data class SeriesMetadataDto(
     val genres: Set<String>,
     val genresLock: Boolean,
     val tags: Set<String>,
-    val tagsLock: Boolean
+    val tagsLock: Boolean,
+    val totalBookCount: Int? = null
 )
 
 @Serializable
