@@ -27,6 +27,7 @@ class MangaDexFactory : SourceFactory {
         MangaDexIndonesian(),
         MangaDexItalian(),
         MangaDexJapanese(),
+        MangaDexKazakh(),
         MangaDexKorean(),
         MangaDexLatin(),
         MangaDexLithuanian(),
@@ -44,6 +45,7 @@ class MangaDexFactory : SourceFactory {
         MangaDexSpanishLTAM(),
         MangaDexSpanishSpain(),
         MangaDexSwedish(),
+        MangaDexTamil(),
         MangaDexThai(),
         MangaDexTurkish(),
         MangaDexUkrainian(),
@@ -73,6 +75,7 @@ class MangaDexHungarian : MangaDex("hu", "hu")
 class MangaDexIndonesian : MangaDex("id", "id")
 class MangaDexItalian : MangaDex("it", "it")
 class MangaDexJapanese : MangaDex("ja", "ja")
+class MangaDexKazakh : MangaDex("kk", "kk")
 class MangaDexKorean : MangaDex("ko", "ko")
 class MangaDexLatin : MangaDex("la", "la")
 class MangaDexLithuanian : MangaDex("lt", "lt")
@@ -90,6 +93,7 @@ class MangaDexSerboCroatian : MangaDex("sh", "sh")
 class MangaDexSpanishLTAM : MangaDex("es-419", "es-la")
 class MangaDexSpanishSpain : MangaDex("es", "es")
 class MangaDexSwedish : MangaDex("sv", "sv")
+class MangaDexTamil : MangaDex("ta", "ta")
 class MangaDexThai : MangaDex("th", "th")
 class MangaDexTurkish : MangaDex("tr", "tr")
 class MangaDexUkrainian : MangaDex("uk", "uk")
