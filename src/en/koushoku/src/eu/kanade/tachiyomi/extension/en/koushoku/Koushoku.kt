@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -33,11 +34,16 @@ class Koushoku : ParsedHttpSource() {
     override val baseUrl = "https://koushoku.org"
     override val name = "Koushoku"
     override val lang = "en"
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .rateLimit(5)
+        .rateLimit(1)
         .build()
+
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+        .removeAll("User-Agent") // Default UA is blocked on CDN
+        .add("Origin", baseUrl)
+        .add("Referer", "$baseUrl/")
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/?page=$page", headers)
     override fun latestUpdatesSelector() = "#archives.feed .entries > .entry"
@@ -111,7 +117,7 @@ class Koushoku : ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = latestUpdatesNextPageSelector()
     override fun searchMangaFromElement(element: Element) = latestUpdatesFromElement(element)
 
-    override fun popularMangaRequest(page: Int) = latestUpdatesRequest(page)
+    override fun popularMangaRequest(page: Int) = GET("$baseUrl/popular?page=$page", headers)
     override fun popularMangaSelector() = latestUpdatesSelector()
     override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
     override fun popularMangaFromElement(element: Element) = latestUpdatesFromElement(element)
