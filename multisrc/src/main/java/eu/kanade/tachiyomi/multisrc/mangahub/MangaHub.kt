@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.multisrc.mangahub
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -16,7 +17,9 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -41,7 +44,18 @@ abstract class MangaHub(
 
     protected abstract val serverId: String
 
-    protected open val cdnHost = " https://img.mghubcdn.com/".toHttpUrl()
+    protected open val cdnImgUrl = "https://img.mghubcdn.com"
+    protected open val cdnApiUrl = "https://api.mghubcdn.com"
+
+    override val client: OkHttpClient by lazy {
+        super.client.newBuilder()
+            .rateLimitHost(cdnImgUrl.toHttpUrl(), 1, 2)
+            .build()
+    }
+
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+        .add("Origin", baseUrl)
+        .add("Referer", "$baseUrl/")
 
     // Popular
     override fun popularMangaRequest(page: Int): Request =
@@ -234,11 +248,11 @@ abstract class MangaHub(
                 null
             )
 
-        return POST("https://api.mghubcdn.com/graphql", jsonHeaders, body)
+        return POST("$cdnApiUrl/graphql", jsonHeaders, body)
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val cdn = "https://img.mghubcdn.com/file/imghub"
+        val cdn = "$cdnImgUrl/file/imghub"
         val chapterObject = json
             .decodeFromString<GraphQLDataDto<ChapterDto>>(response.body!!.string())
 
