@@ -9,7 +9,7 @@ class GroupLeGenerator : ThemeSourceGenerator {
 
     override val themeClass = "GroupLe"
 
-    override val baseVersionCode: Int = 4
+    override val baseVersionCode: Int = 5
 
     override val sources = listOf(
         SingleLang("ReadManga", "https://readmanga.live", "ru", overrideVersionCode = 46),

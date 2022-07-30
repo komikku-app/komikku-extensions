@@ -12,7 +12,7 @@ class ReadManga : GroupLe("ReadManga", "https://readmanga.live", "ru") {
     override val id: Long = 5
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search/advanced".toHttpUrlOrNull()!!.newBuilder()
+        val url = "$baseUrl/search/advanced?offset=${70 * (page - 1)}".toHttpUrlOrNull()!!.newBuilder()
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is GenreList -> filter.state.forEach { genre ->
@@ -53,7 +53,7 @@ class ReadManga : GroupLe("ReadManga", "https://readmanga.live", "ru") {
         if (query.isNotEmpty()) {
             url.addQueryParameter("q", query)
         }
-        return if (url.toString().contains("?"))
+        return if (url.toString().contains("&"))
             GET(url.toString().replace("=%3D", "="), headers)
         else popularMangaRequest(page)
     }
@@ -86,14 +86,16 @@ class ReadManga : GroupLe("ReadManga", "https://readmanga.live", "ru") {
         Genre("Для взрослых", "s_mature"),
         Genre("Завершенная", "s_completed"),
         Genre("Переведено", "s_translated"),
+        Genre("Заброшен перевод", "s_abandoned_popular"),
         Genre("Длинная", "s_many_chapters"),
         Genre("Ожидает загрузки", "s_wait_upload"),
-        Genre("Продается", "s_sale")
+        Genre("Продается", "s_sale"),
+        Genre("Белые жанры", "s_not_pessimized")
     )
     private fun getMore() = listOf(
+        Genre("Анонс", "el_9578"),
         Genre("В цвете", "el_7290"),
         Genre("Веб", "el_2160"),
-        Genre("Выпуск приостановлен", "el_8033"),
         Genre("Сборник", "el_2157")
     )
 
@@ -104,26 +106,27 @@ class ReadManga : GroupLe("ReadManga", "https://readmanga.live", "ru") {
     )
 
     private fun getCategoryList() = listOf(
+        Genre("OEL-манга", "el_9577"),
+        Genre("Додзинси", "el_2141"),
+        Genre("Арт", "el_5685"),
         Genre("Ёнкома", "el_2161"),
-        Genre("Комикс западный", "el_3515"),
+        Genre("Комикс", "el_3515"),
         Genre("Манхва", "el_3001"),
         Genre("Маньхуа", "el_3002"),
         Genre("Ранобэ", "el_8575"),
     )
 
     private fun getGenreList() = listOf(
-        Genre("арт", "el_5685"),
         Genre("боевик", "el_2155"),
         Genre("боевые искусства", "el_2143"),
-        Genre("вампиры", "el_2148"),
         Genre("гарем", "el_2142"),
         Genre("гендерная интрига", "el_2156"),
         Genre("героическое фэнтези", "el_2146"),
         Genre("детектив", "el_2152"),
         Genre("дзёсэй", "el_2158"),
-        Genre("додзинси", "el_2141"),
         Genre("драма", "el_2118"),
         Genre("игра", "el_2154"),
+        Genre("исэкай", "el_9450"),
         Genre("история", "el_2119"),
         Genre("киберпанк", "el_8032"),
         Genre("кодомо", "el_2137"),
@@ -144,12 +147,13 @@ class ReadManga : GroupLe("ReadManga", "https://readmanga.live", "ru") {
         Genre("сёнэн-ай", "el_2139"),
         Genre("спорт", "el_2129"),
         Genre("сэйнэн", "el_2138"),
+        Genre("сянься", "el_9561"),
         Genre("трагедия", "el_2153"),
         Genre("триллер", "el_2150"),
         Genre("ужасы", "el_2125"),
+        Genre("уся", "el_9560"),
         Genre("фэнтези", "el_2131"),
         Genre("школа", "el_2127"),
-        Genre("этти", "el_2149"),
-        Genre("юри", "el_2123")
+        Genre("этти", "el_2149")
     )
 }

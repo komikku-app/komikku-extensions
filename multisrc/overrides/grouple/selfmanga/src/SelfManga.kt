@@ -12,7 +12,7 @@ class SelfManga : GroupLe("SelfManga", "https://selfmanga.live", "ru") {
     override val id: Long = 5227602742162454547
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search/advanced".toHttpUrlOrNull()!!.newBuilder()
+        val url = "$baseUrl/search/advanced?offset=${70 * (page - 1)}".toHttpUrlOrNull()!!.newBuilder()
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is GenreList -> filter.state.forEach { genre ->
@@ -31,7 +31,7 @@ class SelfManga : GroupLe("SelfManga", "https://selfmanga.live", "ru") {
         if (query.isNotEmpty()) {
             url.addQueryParameter("q", query)
         }
-        return if (url.toString().contains("?"))
+        return if (url.toString().contains("&"))
             GET(url.toString().replace("=%3D", "="), headers)
         else popularMangaRequest(page)
     }
@@ -56,7 +56,6 @@ class SelfManga : GroupLe("SelfManga", "https://selfmanga.live", "ru") {
     private fun getGenreList() = listOf(
         Genre("боевик", "el_2155"),
         Genre("боевые искусства", "el_2143"),
-        Genre("вампиры", "el_2148"),
         Genre("гарем", "el_2142"),
         Genre("гендерная интрига", "el_2156"),
         Genre("героическое фэнтези", "el_2146"),

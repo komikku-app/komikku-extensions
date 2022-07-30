@@ -12,7 +12,7 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
     override val id: Long = 6
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search/advanced".toHttpUrlOrNull()!!.newBuilder()
+        val url = "$baseUrl/search/advanced?offset=${70 * (page - 1)}".toHttpUrlOrNull()!!.newBuilder()
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is GenreList -> filter.state.forEach { genre ->
@@ -53,7 +53,7 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
         if (query.isNotEmpty()) {
             url.addQueryParameter("q", query)
         }
-        return if (url.toString().contains("?"))
+        return if (url.toString().contains("&"))
             GET(url.toString().replace("=%3D", "="), headers)
         else popularMangaRequest(page)
     }
@@ -85,10 +85,13 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
         Genre("Для взрослых", "s_mature"),
         Genre("Завершенная", "s_completed"),
         Genre("Переведено", "s_translated"),
+        Genre("Заброшен перевод", "s_abandoned_popular"),
         Genre("Длинная", "s_many_chapters"),
         Genre("Ожидает загрузки", "s_wait_upload"),
+        Genre("Белые жанры", "s_not_pessimized")
     )
     private fun getMore() = listOf(
+        Genre("Анонс", "el_6641"),
         Genre("В цвете", "el_4614"),
         Genre("Веб", "el_1355"),
         Genre("Выпуск приостановлен", "el_5232"),
@@ -103,28 +106,27 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
     )
 
     private fun getCategoryList() = listOf(
+        Genre("OEL-манга", "el_6637"),
+        Genre("Додзинси", "el_1332"),
+        Genre("Арт", "el_2220"),
         Genre("Ёнкома", "el_2741"),
-        Genre("Комикс западный", "el_1903"),
-        Genre("Комикс русский", "el_2173"),
+        Genre("Комикс", "el_1903"),
         Genre("Манхва", "el_1873"),
         Genre("Маньхуа", "el_1875"),
         Genre("Ранобэ", "el_5688"),
     )
 
     private fun getGenreList() = listOf(
-        Genre("арт", "el_2220"),
-        Genre("бара", "el_1353"),
         Genre("боевик", "el_1346"),
         Genre("боевые искусства", "el_1334"),
-        Genre("вампиры", "el_1339"),
         Genre("гарем", "el_1333"),
         Genre("гендерная интрига", "el_1347"),
         Genre("героическое фэнтези", "el_1337"),
         Genre("детектив", "el_1343"),
         Genre("дзёсэй", "el_1349"),
-        Genre("додзинси", "el_1332"),
         Genre("драма", "el_1310"),
         Genre("игра", "el_5229"),
+        Genre("исэкай", "el_6420"),
         Genre("история", "el_1311"),
         Genre("киберпанк", "el_1351"),
         Genre("комедия", "el_1328"),
@@ -144,9 +146,11 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
         Genre("сёнэн-ай", "el_1330"),
         Genre("спорт", "el_1321"),
         Genre("сэйнэн", "el_1329"),
+        Genre("сянься", "el_6631"),
         Genre("трагедия", "el_1344"),
         Genre("триллер", "el_1341"),
         Genre("ужасы", "el_1317"),
+        Genre("уся", "el_6632"),
         Genre("фэнтези", "el_1323"),
         Genre("школа", "el_1319"),
         Genre("эротика", "el_1340"),
