@@ -1,3 +1,12 @@
+## 1.3.42
+
+Minimum Komga version required: `0.151.0`
+
+### Fix
+
+* default sort broken since Komga 0.155.1
+* proper sort criteria for readlists
+
 ## 1.3.41
 
 Minimum Komga version required: `0.151.0`

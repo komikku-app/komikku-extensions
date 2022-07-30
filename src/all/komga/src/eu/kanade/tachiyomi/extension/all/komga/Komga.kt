@@ -47,7 +47,7 @@ import java.util.Locale
 
 open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, HttpSource() {
     override fun popularMangaRequest(page: Int): Request =
-        GET("$baseUrl/api/v1/series?page=${page - 1}&deleted=false", headers)
+        GET("$baseUrl/api/v1/series?page=${page - 1}&deleted=false&sort=metadata.titleSort,asc", headers)
 
     override fun popularMangaParse(response: Response): MangasPage =
         processSeriesPage(response)
@@ -157,7 +157,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
                 }
                 is Filter.Sort -> {
                     var sortCriteria = when (filter.state?.index) {
-                        0 -> "metadata.titleSort"
+                        0 -> if (type == "series") "metadata.titleSort" else "name"
                         1 -> "createdDate"
                         2 -> "lastModifiedDate"
                         else -> ""
