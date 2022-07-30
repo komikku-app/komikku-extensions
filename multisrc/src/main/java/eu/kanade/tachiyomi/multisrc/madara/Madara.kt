@@ -615,6 +615,14 @@ abstract class Madara(
         "Devam ediyor", "In Corso", "In Arrivo", "مستمرة", "مستمر", "En Curso"
     )
 
+    protected val hiatusStatusList: Array<String> = arrayOf(
+        "On Hold"
+    )
+
+    protected val canceledStatusList: Array<String> = arrayOf(
+        "Canceled"
+    )
+
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         with(document) {
@@ -645,10 +653,10 @@ abstract class Madara(
             }
             select(mangaDetailsSelectorStatus).last()?.let {
                 manga.status = when (it.text()) {
-                    // I don't know what's the corresponding for COMPLETED and LICENSED
-                    // There's no support for "Canceled" or "On Hold"
                     in completedStatusList -> SManga.COMPLETED
                     in ongoingStatusList -> SManga.ONGOING
+                    in hiatusStatusList -> SManga.ON_HIATUS
+                    in canceledStatusList -> SManga.CANCELLED
                     else -> SManga.UNKNOWN
                 }
             }
