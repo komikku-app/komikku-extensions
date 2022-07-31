@@ -306,7 +306,7 @@ open class UriPartFilter(displayName: String, private val vals: Array<Pair<Strin
 - `fetchMangaDetails` is called to update a manga's details from when it was initialized earlier.
     - `SManga.initialized` tells the app if it should call `fetchMangaDetails`. If you are overriding `fetchMangaDetails`, make sure to pass it as `true`.
     - `SManga.genre` is a string containing list of all genres separated with `", "`.
-    - `SManga.status` is an "enum" value. Refer to [the values in the `SManga` companion object](https://github.com/tachiyomiorg/extensions-lib/blob/9733fcf8d7708ce1ef24b6c242c47d67ac60b045/library/src/main/java/eu/kanade/tachiyomi/source/model/SManga.kt#L24-L27).
+    - `SManga.status` is an "enum" value. Refer to [the values in the `SManga` companion object](https://github.com/tachiyomiorg/extensions-lib/blob/master/library/src/main/java/eu/kanade/tachiyomi/source/model/SManga.kt#L24).
     - During a backup, only `url` and `title` are stored. To restore the rest of the manga data, the app calls `fetchMangaDetails`, so all fields should be (re)filled in if possible.
     - If a `SManga` is cached, `fetchMangaDetails` will be only called when the user does a manual update (Swipe-to-Refresh).
 - `fetchChapterList` is called to display the chapter list.
