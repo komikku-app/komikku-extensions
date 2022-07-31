@@ -96,7 +96,7 @@ abstract class GroupLe(
         val infoElement = document.select(".expandable").first()
         val rawCategory = infoElement.select("span.elem_category").text()
         val category = if (rawCategory.isNotEmpty()) {
-            rawCategory.lowercase()
+            rawCategory
         } else {
             "манга"
         }
@@ -117,15 +117,15 @@ abstract class GroupLe(
             ratingValue > 0.5 -> "✬☆☆☆☆"
             else -> "☆☆☆☆☆"
         }
-        val rawAgeValue = infoElement.select(".elem_limitation .element-link").first()?.text()
+        val rawAgeValue = infoElement.select(".elem_limitation .element-link").first()?.text() ?: ""
         val rawAgeStop = when (rawAgeValue) {
-            "NC-17" -> "18+, "
-            "R18+" -> "18+, "
-            "R" -> "16+, "
-            "G" -> "16+, "
-            "PG" -> "16+, "
-            "PG-13" -> "12+, "
-            else -> ""
+            "NC-17" -> "18+"
+            "R18+" -> "18+"
+            "R" -> "16+"
+            "G" -> "16+"
+            "PG" -> "16+"
+            "PG-13" -> "12+"
+            else -> rawAgeValue
         }
         val manga = SManga.create()
         var authorElement = infoElement.select("span.elem_author").first()?.text()
@@ -135,7 +135,7 @@ abstract class GroupLe(
         manga.title = document.select("h1.names .name").text()
         manga.author = authorElement
         manga.artist = infoElement.select("span.elem_illustrator").first()?.text()
-        manga.genre = category + ", " + rawAgeStop + infoElement.select("span.elem_genre").text().split(",").joinToString { it.trim() }
+        manga.genre = (category + ", " + rawAgeStop + ", " + infoElement.select("span.elem_genre").text() + ", " + infoElement.select("span.elem_tag").text()).split(", ").filter { it.isNotEmpty() }.joinToString { it.trim().lowercase() }
         var altName = ""
         if (infoElement.select(".another-names").isNotEmpty()) {
             altName = "Альтернативные названия:\n" + infoElement.select(".another-names").text() + "\n\n"
