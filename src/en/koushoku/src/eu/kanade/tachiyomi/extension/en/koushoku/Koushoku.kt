@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -38,7 +37,8 @@ class Koushoku : ParsedHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .rateLimit(1)
+        .addInterceptor(KoushokuWebViewInterceptor())
+        .rateLimit(1, 4)
         .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
@@ -123,9 +123,21 @@ class Koushoku : ParsedHttpSource() {
     override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
     override fun popularMangaFromElement(element: Element) = latestUpdatesFromElement(element)
 
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        return if (!manga.initialized) {
+            super.fetchMangaDetails(manga)
+        } else {
+            Observable.just(manga)
+        }
+    }
+
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         title = document.selectFirst(".metadata .title").text()
+
+        // Reuse cover from browse
         thumbnail_url = document.selectFirst(thumbnailSelector).attr("src")
+            .replace(Regex("/\\d+\\.webp\$"), "/288.webp")
+
         artist = document.select(".metadata .artists a, .metadata .circles a")
             .joinToString { it.text() }
         author = artist
@@ -139,7 +151,7 @@ class Koushoku : ParsedHttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        antiBan(document)
+
         return listOf(
             SChapter.create().apply {
                 setUrlWithoutDomain(response.request.url.encodedPath)
@@ -172,6 +184,14 @@ class Koushoku : ParsedHttpSource() {
         return (1..totalPages).map {
             Page(it, "", "$origin/data/$id/$it.jpg")
         }
+    }
+
+    override fun imageRequest(page: Page): Request {
+        val newHeaders = headersBuilder()
+            .add("Origin", baseUrl)
+            .build()
+
+        return GET(page.imageUrl!!, newHeaders)
     }
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
@@ -252,71 +272,5 @@ class Koushoku : ParsedHttpSource() {
 
         val size = document.selectFirst(".metadata .size td:nth-child(2)")
         append("Size: ").append(size.text())
-    }
-
-    // anti-ban
-
-    override fun popularMangaParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        antiBan(document)
-
-        val mangas = document.select(popularMangaSelector()).map { element ->
-            popularMangaFromElement(element)
-        }
-
-        val hasNextPage = popularMangaNextPageSelector()?.let { selector ->
-            document.select(selector).first()
-        } != null
-
-        return MangasPage(mangas, hasNextPage)
-    }
-
-    override fun searchMangaParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        antiBan(document)
-
-        val mangas = document.select(searchMangaSelector()).map { element ->
-            searchMangaFromElement(element)
-        }
-
-        val hasNextPage = searchMangaNextPageSelector()?.let { selector ->
-            document.select(selector).first()
-        } != null
-
-        return MangasPage(mangas, hasNextPage)
-    }
-
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        antiBan(document)
-
-        val mangas = document.select(latestUpdatesSelector()).map { element ->
-            latestUpdatesFromElement(element)
-        }
-
-        val hasNextPage = latestUpdatesNextPageSelector()?.let { selector ->
-            document.select(selector).first()
-        } != null
-
-        return MangasPage(mangas, hasNextPage)
-    }
-
-    override fun mangaDetailsParse(response: Response): SManga {
-        return mangaDetailsParse(response.asJsoup())
-    }
-
-    override fun pageListParse(response: Response): List<Page> {
-        val document = response.asJsoup()
-        antiBan(document)
-        return pageListParse(document)
-    }
-
-    private fun antiBan(document: Document) {
-        val styles = document.select("link[rel=stylesheet]")
-
-        styles.forEach {
-            val request = GET(it.absUrl("href"), headers, CacheControl.FORCE_NETWORK)
-            runCatching { client.newCall(request).execute().close() }
-        }
     }
 }
