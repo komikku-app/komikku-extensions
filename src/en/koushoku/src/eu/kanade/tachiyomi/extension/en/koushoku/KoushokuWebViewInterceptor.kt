@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import okhttp3.Interceptor
@@ -21,11 +20,14 @@ class KoushokuWebViewInterceptor : Interceptor {
         val request = chain.request()
         val response = chain.proceed(request)
 
-        val responseBody = response.peekBody(1 * 1024 * 1024).toString()
-        val document = Jsoup.parse(responseBody)
-        if (document.selectFirst("h1")?.text()?.contains(Regex("banned$")) == true) {
-            throw Exception("You have been banned. Check WebView for details.")
-        } else if (response.headers("Content-Type").any { it.contains("text/html") }) {
+        if (response.headers("Content-Type").any { it.contains("text/html") }) {
+            val responseBody = response.peekBody(1 * 1024 * 1024).toString()
+            val document = Jsoup.parse(responseBody)
+
+            if (document.selectFirst("h1")?.text()?.contains(Regex("banned$")) == true) {
+                throw IOException("You have been banned. Check WebView for details.")
+            }
+
             try {
                 proceedWithWebView(response)
             } catch (e: Exception) {

@@ -43,7 +43,6 @@ class Koushoku : ParsedHttpSource() {
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36")
-        .add("Origin", baseUrl)
         .add("Referer", "$baseUrl/")
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/?page=$page", headers)
@@ -147,8 +146,6 @@ class Koushoku : ParsedHttpSource() {
         status = SManga.COMPLETED
     }
 
-    override fun chapterListRequest(manga: SManga) = GET("$baseUrl${manga.url}", headers)
-
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
 
@@ -167,7 +164,7 @@ class Koushoku : ParsedHttpSource() {
 
     override fun chapterListSelector() = throw UnsupportedOperationException("Not used")
 
-    override fun pageListRequest(chapter: SChapter) = GET("$baseUrl${chapter.url}/1")
+    override fun pageListRequest(chapter: SChapter) = GET("$baseUrl${chapter.url}/1", headers)
 
     override fun pageListParse(document: Document): List<Page> {
         val totalPages = document.selectFirst(".total").text().toInt()
