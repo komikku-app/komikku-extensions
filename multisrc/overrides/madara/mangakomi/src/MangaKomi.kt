@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 
 class MangaKomi : Madara(
     "MangaKomi",
-    "https://mangakomi.com",
+    "https://mangakomi.io",
     "en"
 ) {
 
