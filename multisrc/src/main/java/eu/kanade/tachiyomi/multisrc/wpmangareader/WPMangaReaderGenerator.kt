@@ -26,7 +26,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("InariManga", "https://inarimanga.com", "es"),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 6),
         SingleLang("Komik Lab", "https://komiklab.com", "id"),
-        SingleLang("KomikMama", "https://komikmama.net", "id"),
+        SingleLang("KomikMama", "https://komikmama.co", "id", overrideVersionCode = 1),
         SingleLang("Legion Scan", "https://legionscans.com", "es"),
         SingleLang("Magus Manga", "https://magusmanga.com", "ar"),
         SingleLang("MangKomik", "https://mangkomik.com", "id"),
