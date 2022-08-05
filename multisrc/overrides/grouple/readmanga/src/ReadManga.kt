@@ -12,10 +12,7 @@ class ReadManga : GroupLe("ReadManga", "https://readmanga.live", "ru") {
     override val id: Long = 5
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search/advanced?offset=${70 * (page - 1)}".toHttpUrlOrNull()!!.newBuilder()
-        if (query.isNotEmpty()) {
-            url.addQueryParameter("q", query)
-        }
+        val url = super.searchMangaRequest(page, query, filters).url.newBuilder()
         (if (filters.isEmpty()) getFilterList().reversed() else filters.reversed()).forEach { filter ->
             when (filter) {
                 is GenreList -> filter.state.forEach { genre ->
@@ -113,9 +110,9 @@ class ReadManga : GroupLe("ReadManga", "https://readmanga.live", "ru") {
         Genre("Арт", "el_5685"),
         Genre("Ёнкома", "el_2161"),
         Genre("Комикс", "el_3515"),
+        Genre("Манга", "el_9451"),
         Genre("Манхва", "el_3001"),
-        Genre("Маньхуа", "el_3002"),
-        Genre("Ранобэ", "el_8575"),
+        Genre("Маньхуа", "el_3002")
     )
 
     private fun getGenreList() = listOf(

@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -91,6 +92,14 @@ abstract class GroupLe(
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val url = "$baseUrl/search/advanced?offset=${50 * (page - 1)}".toHttpUrlOrNull()!!.newBuilder()
+        if (query.isNotEmpty()) {
+            url.addQueryParameter("q", query)
+        }
+        return GET(url.toString().replace("=%3D", "="), headers)
+    }
 
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select(".expandable").first()

@@ -12,7 +12,7 @@ class AllHentai : GroupLe("AllHentai", "http://23.allhen.online", "ru") {
     override val id: Long = 1809051393403180443
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search/advanced?offset=${70 * (page - 1)}".toHttpUrlOrNull()!!.newBuilder()
+        val url = super.searchMangaRequest(page, query, filters).url.newBuilder()
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is GenreList -> filter.state.forEach { genre ->
@@ -46,9 +46,6 @@ class AllHentai : GroupLe("AllHentai", "http://23.allhen.online", "ru") {
                 }
                 else -> return@forEach
             }
-        }
-        if (query.isNotEmpty()) {
-            url.addQueryParameter("q", query)
         }
         return if (url.toString().contains("&"))
             GET(url.toString().replace("=%3D", "="), headers)

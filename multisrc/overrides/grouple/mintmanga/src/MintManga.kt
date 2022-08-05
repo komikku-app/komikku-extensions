@@ -12,10 +12,7 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
     override val id: Long = 6
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search/advanced?offset=${70 * (page - 1)}".toHttpUrlOrNull()!!.newBuilder()
-        if (query.isNotEmpty()) {
-            url.addQueryParameter("q", query)
-        }
+        val url = super.searchMangaRequest(page, query, filters).url.newBuilder()
         (if (filters.isEmpty()) getFilterList().reversed() else filters.reversed()).forEach { filter ->
             when (filter) {
                 is GenreList -> filter.state.forEach { genre ->
@@ -113,9 +110,10 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
         Genre("Арт", "el_2220"),
         Genre("Ёнкома", "el_2741"),
         Genre("Комикс", "el_1903"),
+        Genre("Манга", "el_6421"),
         Genre("Манхва", "el_1873"),
         Genre("Маньхуа", "el_1875"),
-        Genre("Ранобэ", "el_5688"),
+        Genre("Ранобэ", "el_5688")
     )
 
     private fun getGenreList() = listOf(

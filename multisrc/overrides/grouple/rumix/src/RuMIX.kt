@@ -10,10 +10,7 @@ import okhttp3.Request
 class RuMIX : GroupLe("RuMIX", "https://rumix.me", "ru") {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search/advanced?offset=${70 * (page - 1)}".toHttpUrlOrNull()!!.newBuilder()
-        if (query.isNotEmpty()) {
-            url.addQueryParameter("q", query)
-        }
+        val url = super.searchMangaRequest(page, query, filters).url.newBuilder()
         (if (filters.isEmpty()) getFilterList().reversed() else filters.reversed()).forEach { filter ->
             when (filter) {
                 is OrderBy -> {
