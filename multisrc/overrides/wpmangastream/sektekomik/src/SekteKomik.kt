@@ -7,9 +7,11 @@ import eu.kanade.tachiyomi.source.model.Page
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class SekteKomik : WPMangaStream("Sekte Komik", "https://sektekomik.com", "id") {
+class SekteKomik : WPMangaStream("Sekte Komik", "https://sektekomik.com", "id", SimpleDateFormat("MMMM dd, yyyy", Locale("id"))) {
     // Formerly "Sekte Komik (WP Manga Stream)"
     override val id = 7866629035053218469
 
