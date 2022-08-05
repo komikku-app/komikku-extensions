@@ -16,7 +16,7 @@ class LeviatanScansFactory : SourceFactory {
     )
 }
 
-class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "en", SimpleDateFormat("MMM, yy", Locale.US)) {
+class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "en", SimpleDateFormat("MMM dd, yyyy", Locale.US)) {
     override val useNewChapterEndpoint: Boolean = true
 
     override fun popularMangaFromElement(element: Element) =
