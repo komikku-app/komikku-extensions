@@ -28,9 +28,9 @@ class MCCMSGenerator : ThemeSourceGenerator {
             name = "Haomanwu (www)", baseUrl = "https://www.haomanwu.com", lang = "zh",
             className = "Haomanwu_www", sourceName = "好漫屋 (网页)", overrideVersionCode = 0
         ),
-        SingleLang( // 与 app.manhuaorg.com 相同（部分渠道记为“好漫2”）
-            name = "Pupu Manhua", baseUrl = "https://www.manhuaorg.com", lang = "zh",
-            className = "Manhuaorg", sourceName = "朴朴漫画", overrideVersionCode = 0
+        SingleLang(
+            name = "Pupu Manhua", baseUrl = "https://app.manhuaorg.com", lang = "zh",
+            className = "Manhuaorg", sourceName = "朴朴漫画", overrideVersionCode = 1
         ),
     )
 
