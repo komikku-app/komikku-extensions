@@ -45,7 +45,7 @@ class Webnovel : ParsedHttpSource() {
         val manga = SManga.create()
         manga.url = element.attr("abs:href").substringAfter(baseUrl)
         manga.title = element.attr("title")
-        manga.thumbnail_url = element.select("img").attr("abs:src")
+        manga.thumbnail_url = element.select("img").attr("abs:data-original")
         return manga
     }
 
@@ -75,14 +75,20 @@ class Webnovel : ParsedHttpSource() {
 
     override fun searchMangaSelector() = popularMangaSelector()
 
-    override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
+    override fun searchMangaFromElement(element: Element): SManga {
+        val manga = SManga.create()
+        manga.url = element.attr("abs:href").substringAfter(baseUrl)
+        manga.title = element.attr("title")
+        manga.thumbnail_url = element.select("img").attr("abs:src")
+        return manga
+    }
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     // manga details
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         thumbnail_url = document.select("i.g_thumb img:first-child").attr("abs:src")
-        title = document.select("h2").text()
+        title = document.select("h1").text()
         description = document.select(".j_synopsis p").text()
     }
 
