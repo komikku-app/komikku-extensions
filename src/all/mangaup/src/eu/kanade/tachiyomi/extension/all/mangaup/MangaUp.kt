@@ -158,7 +158,7 @@ class MangaUp(override val lang: String) : HttpSource() {
         val request = chain.request()
         val response = chain.proceed(request)
 
-        if (response.code == 401 && request.url.toString().contains(TITLE_THUMBNAIL_PATH)) {
+        if (response.code == 410 && request.url.toString().contains(TITLE_THUMBNAIL_PATH)) {
             val titleId = request.url.toString()
                 .substringAfter("/$TITLE_THUMBNAIL_PATH/")
                 .substringBefore(".webp")
