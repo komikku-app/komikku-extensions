@@ -12,7 +12,7 @@ class NepNepGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 11
 
     override val sources = listOf(
-        SingleLang("MangaSee", "https://mangasee123.com", "en", overrideVersionCode = 20),
+        SingleLang("MangaSee", "https://mangasee123.com", "en", overrideVersionCode = 21),
         SingleLang("MangaLife", "https://manga4life.com", "en", overrideVersionCode = 16),
     )
 
