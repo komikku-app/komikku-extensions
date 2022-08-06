@@ -120,8 +120,10 @@ abstract class SinMH(
     protected open fun mangaDetailsParseDefaultGenre(document: Document, detailsList: Element): String {
         val category = detailsList.selectFirst("strong:contains(类型) + a")
         val breadcrumbs = document.selectFirst("div.breadcrumb-bar").select("a[href^=/list/]")
-        breadcrumbs.add(0, category)
-        return breadcrumbs.joinToString(", ") { it.text() }
+        return buildString {
+            append(category)
+            breadcrumbs.map(Element::text).filter(String::isNotEmpty).joinTo(this, prefix = ", ")
+        }
     }
 
     protected fun mangaDetailsParseDMZJStyle(document: Document, hasBreadcrumb: Boolean) = SManga.create().apply {
