@@ -109,7 +109,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("FastManhwa", "https://fastmanhwa.net", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Final Scans", "https://finalscans.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Fiz Manga", "https://fizmanga.com", "en"),
-        SingleLang("Fleur Blanche", "https://fbsquadz.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("Fleur Blanche", "https://fbsquads.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Flex Tape Scans", "https://flextapescans.com", "en", isNsfw = true),
         SingleLang("Fox White", "https://foxwhite.com.br", "pt-BR"),
         SingleLang("Free Manga", "https://freemanga.me", "en", isNsfw = true, overrideVersionCode = 3),

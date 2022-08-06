@@ -13,9 +13,9 @@ import java.util.concurrent.TimeUnit
 
 class FleurBlanche : Madara(
     "Fleur Blanche",
-    "https://fbsquadz.com",
+    "https://fbsquads.com",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
