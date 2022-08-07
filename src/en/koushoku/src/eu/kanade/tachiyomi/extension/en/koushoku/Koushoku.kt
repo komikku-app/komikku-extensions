@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -20,15 +21,15 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import java.net.URL
 
 class Koushoku : ParsedHttpSource() {
     companion object {
         const val PREFIX_ID_SEARCH = "id:"
 
-        val archiveRegex = "/archive/(\\d+)".toRegex()
-        const val thumbnailSelector = ".thumbnail img"
-        const val magazinesSelector = ".metadata .magazines a"
+        const val thumbnailSelector = "figure img"
+        const val magazinesSelector = ".metadata a[href^='/magazines/']"
+
+        private val PATTERN_IMAGES = "(.+/)(\\d+)(.*)".toRegex()
     }
 
     override val baseUrl = "https://koushoku.org"
@@ -42,17 +43,17 @@ class Koushoku : ParsedHttpSource() {
         .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
-        .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36")
+        .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36")
         .add("Referer", "$baseUrl/")
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/?page=$page", headers)
     override fun latestUpdatesSelector() = "#archives.feed .entries > .entry"
-    override fun latestUpdatesNextPageSelector() = "#archives.feed .pagination .next"
+    override fun latestUpdatesNextPageSelector() = "footer nav li:has(a.active) + li:not(:last-child) > a"
 
     override fun latestUpdatesFromElement(element: Element) = SManga.create().apply {
-        setUrlWithoutDomain(element.select("a").attr("href"))
-        title = element.select(".title").text()
-        thumbnail_url = element.select(thumbnailSelector).attr("src")
+        setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        title = element.selectFirst("[title]").attr("title")
+        thumbnail_url = element.selectFirst(thumbnailSelector).absUrl("src")
     }
 
     private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/archive/$id", headers)
@@ -131,13 +132,13 @@ class Koushoku : ParsedHttpSource() {
     }
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        title = document.selectFirst(".metadata .title").text()
+        title = document.selectFirst(".metadata > h1").text()
 
         // Reuse cover from browse
-        thumbnail_url = document.selectFirst(thumbnailSelector).attr("src")
+        thumbnail_url = document.selectFirst(thumbnailSelector).absUrl("src")
             .replace(Regex("/\\d+\\.webp\$"), "/288.webp")
 
-        artist = document.select(".metadata .artists a, .metadata .circles a")
+        artist = document.select(".metadata a[href^='/artists/'], .metadata a[href^='/circles/']")
             .joinToString { it.text() }
         author = artist
         genre = document.select(".metadata .tags a, $magazinesSelector")
@@ -153,7 +154,7 @@ class Koushoku : ParsedHttpSource() {
             SChapter.create().apply {
                 setUrlWithoutDomain(response.request.url.encodedPath)
                 name = "Chapter"
-                date_upload = document.select(".metadata .published td:nth-child(2)")
+                date_upload = document.select("tr > td:first-child:contains(Uploaded Date) + td")
                     .attr("data-unix").toLong() * 1000
             }
         )
@@ -171,22 +172,26 @@ class Koushoku : ParsedHttpSource() {
         if (totalPages == 0)
             throw UnsupportedOperationException("Error: Empty pages (try Webview)")
 
-        val id = archiveRegex.find(document.location())?.groups?.get(1)?.value
-        if (id.isNullOrEmpty())
-            throw UnsupportedOperationException("Error: Unknown archive id")
-
-        val url = URL(document.selectFirst(".main img, main img").attr("src"))
-        val origin = "${url.protocol}://${url.host}"
+        val url = document.selectFirst(".main img, main img").absUrl("src")
+        val match = PATTERN_IMAGES.find(url)!!
+        val prefix = match.groupValues[1]
+        val suffix = match.groupValues[3]
 
         return (1..totalPages).map {
-            Page(it, "", "$origin/data/$id/$it.jpg")
+            Page(it, "", "$prefix$it$suffix")
         }
     }
 
     override fun imageRequest(page: Page): Request {
-        val newHeaders = headersBuilder()
-            .add("Origin", baseUrl)
-            .build()
+        val url = page.imageUrl!!.toHttpUrl()
+
+        val newHeaders = if (baseUrl.toHttpUrl().host != url.host) {
+            headersBuilder()
+                .add("Origin", baseUrl)
+                .build()
+        } else {
+            headers
+        }
 
         return GET(page.imageUrl!!, newHeaders)
     }
@@ -257,17 +262,17 @@ class Koushoku : ParsedHttpSource() {
             append("\n")
         }
 
-        val parodies = document.select(".metadata .parodies a")
+        val parodies = document.select(".metadata a[href^='/parodies/']")
         if (parodies.isNotEmpty()) {
             append("Parodies: ")
             append(parodies.joinToString { it.text() })
             append("\n")
         }
 
-        val pages = document.selectFirst(".metadata .pages td:nth-child(2)")
+        val pages = document.selectFirst("tr > td:first-child:contains(Pages) + td")
         append("Pages: ").append(pages.text()).append("\n")
 
-        val size = document.selectFirst(".metadata .size td:nth-child(2)")
+        val size = document.selectFirst("tr > td:first-child:contains(Size) + td")
         append("Size: ").append(size.text())
     }
 }
