@@ -16,7 +16,7 @@
  
                 <data
                     android:host="mangasee123.com"
-                    android:pathPattern="/manga/*"
+                    android:pathPattern="/manga/..*"
                     android:scheme="https" />
             </intent-filter>
         </activity>
