@@ -396,7 +396,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Rainbow Fairy Scan", "https://rainbowfairyscan.com", "pt-BR"),
         SingleLang("Random Scan", "https://randomscans.com", "pt-BR", overrideVersionCode = 5),
         SingleLang("Random Translations", "https://randomtranslations.com", "en", overrideVersionCode = 1),
-        SingleLang("Raw Mangas", "https://rawmangas.net", "ja", isNsfw = true, overrideVersionCode = 2),
         SingleLang("RawDEX", "https://rawdex.net", "ko", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ReadAdult", "https://readadult.net", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ReadFreeComics", "https://readfreecomics.com", "en", isNsfw = false),
