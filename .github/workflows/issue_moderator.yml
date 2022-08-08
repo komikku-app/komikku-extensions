@@ -16,6 +16,8 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           duplicate-check-enabled: true
           duplicate-check-label: Source request
+          existing-check-enabled: true
+          existing-check-label: Source request
           auto-close-rules: |
             [
               {
