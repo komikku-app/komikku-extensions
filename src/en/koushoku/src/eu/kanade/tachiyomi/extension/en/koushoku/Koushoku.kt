@@ -2,7 +2,7 @@ package eu.kanade.tachiyomi.extension.en.koushoku
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -38,8 +38,9 @@ class Koushoku : ParsedHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(KoushokuWebViewInterceptor())
-        .rateLimit(1, 4)
+        .addInterceptor(GoogleTranslateInterceptor())
+        .addNetworkInterceptor(GoogleTranslateNetworkInterceptor())
+        .rateLimitHost("https://ksk-h7glm2.xyz".toHttpUrl(), 1)
         .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
