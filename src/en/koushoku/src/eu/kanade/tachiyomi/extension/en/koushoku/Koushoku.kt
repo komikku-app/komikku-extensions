@@ -21,6 +21,9 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.text.SimpleDateFormat
+import java.util.Locale
+import kotlin.random.Random
 
 class Koushoku : ParsedHttpSource() {
     companion object {
@@ -30,6 +33,7 @@ class Koushoku : ParsedHttpSource() {
         const val magazinesSelector = ".metadata a[href^='/magazines/']"
 
         private val PATTERN_IMAGES = "(.+/)(\\d+)(.*)".toRegex()
+        private val DATE_FORMAT = SimpleDateFormat("E, d MMM yyy HH:mm:ss 'UTC'", Locale.US)
     }
 
     override val baseUrl = "https://koushoku.org"
@@ -38,14 +42,25 @@ class Koushoku : ParsedHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(GoogleTranslateInterceptor())
-        .addNetworkInterceptor(GoogleTranslateNetworkInterceptor())
-        .rateLimitHost("https://ksk-h7glm2.xyz".toHttpUrl(), 1)
+        .addInterceptor(KoushokuWebViewInterceptor())
+        // Site: 40req per 1 minute
+        // Here: 1req per 2 sec -> 30req per 1 minute
+        // (somewhat lower due to caching)
+        .rateLimitHost("https://koushoku.org".toHttpUrl(), 1, 2)
         .build()
 
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
-        .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36")
-        .add("Referer", "$baseUrl/")
+    override fun headersBuilder(): Headers.Builder {
+        val chromeStableVersion = listOf("104.0.5112.69", "103.0.5060.71", "103.0.5060.70", "103.0.5060.53", "103.0.5060.129", "102.0.5005.99", "102.0.5005.98", "102.0.5005.78", "102.0.5005.125").random()
+        val chromeCanaryVersion = listOf("106.0.5227.0", "106.0.5209.0", "106.0.5206.0", "106.0.5201.2", "106.0.5201.0", "106.0.5200.0", "106.0.5199.0", "106.0.5197.0", "106.0.5196.0", "105.0.5195.2", "105.0.5194.0", "105.0.5193.0", "105.0.5192.0", "105.0.5191.0", "105.0.5190.0", "105.0.5189.0", "105.0.5186.0", "105.0.5185.0", "105.0.5184.0", "105.0.5182.0", "105.0.5180.0", "105.0.5179.3", "105.0.5178.0", "105.0.5177.2", "105.0.5176.0", "105.0.5175.0", "105.0.5174.0", "105.0.5173.0", "105.0.5172.0", "105.0.5171.0").random()
+        val chromeVersion = if (Random.nextFloat() > 0.2) chromeStableVersion else chromeCanaryVersion
+
+        val deviceInfo = if (Random.nextFloat() > 0.2) "" else "; " + listOf("SM-S908B", "SM-S908U", "SM-A536B", "SM-A536U", "SM-S901B", "SM-S901U", "SM-A736B", "SM-G973F", "SM-A528B", "SM-G975U", "SM-G990B", "SM-G990U").random()
+        val androidVersion = IntRange(if (deviceInfo.isEmpty()) 9 else 11, 12).random()
+
+        return super.headersBuilder()
+            .set("User-Agent", "Mozilla/5.0 (Linux; Android $androidVersion$deviceInfo) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$chromeVersion Mobile Safari/537.36")
+            .add("Referer", "$baseUrl/")
+    }
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/?page=$page", headers)
     override fun latestUpdatesSelector() = "#archives.feed .entries > .entry"
@@ -155,8 +170,13 @@ class Koushoku : ParsedHttpSource() {
             SChapter.create().apply {
                 setUrlWithoutDomain(response.request.url.encodedPath)
                 name = "Chapter"
-                date_upload = document.select("tr > td:first-child:contains(Uploaded Date) + td")
-                    .attr("data-unix").toLong() * 1000
+
+                val dateText = document.select("tr > td:first-child:contains(Uploaded Date) + td")
+                    .text()
+                date_upload = runCatching { DATE_FORMAT.parse(dateText) }
+                    .getOrNull()
+                    ?.time
+                    ?: 0
             }
         )
     }
@@ -168,36 +188,27 @@ class Koushoku : ParsedHttpSource() {
 
     override fun pageListRequest(chapter: SChapter) = GET("$baseUrl${chapter.url}/1", headers)
 
-    override fun pageListParse(document: Document): List<Page> {
-        val totalPages = document.selectFirst(".total").text().toInt()
+    override fun pageListParse(response: Response): List<Page> {
+        val document = response.asJsoup()
+
+        val totalPages = document.selectFirst(".total")?.text()?.toInt() ?: 0
         if (totalPages == 0)
             throw UnsupportedOperationException("Error: Empty pages (try Webview)")
 
-        val url = document.selectFirst(".main img, main img").absUrl("src")
-        val match = PATTERN_IMAGES.find(url)!!
+        val match = PATTERN_IMAGES.find(response.request.url.toString())!!
         val prefix = match.groupValues[1]
         val suffix = match.groupValues[3]
 
         return (1..totalPages).map {
-            Page(it, "", "$prefix$it$suffix")
+            Page(it, "$prefix$it$suffix")
         }
     }
 
-    override fun imageRequest(page: Page): Request {
-        val url = page.imageUrl!!.toHttpUrl()
+    override fun pageListParse(document: Document): List<Page> =
+        throw UnsupportedOperationException("Not used")
 
-        val newHeaders = if (baseUrl.toHttpUrl().host != url.host) {
-            headersBuilder()
-                .add("Origin", baseUrl)
-                .build()
-        } else {
-            headers
-        }
-
-        return GET(page.imageUrl!!, newHeaders)
-    }
-
-    override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
+    override fun imageUrlParse(document: Document): String =
+        document.selectFirst(".main img, main img").absUrl("src")
 
     override fun getFilterList() = FilterList(
         SortFilter(
@@ -273,7 +284,7 @@ class Koushoku : ParsedHttpSource() {
         val pages = document.selectFirst("tr > td:first-child:contains(Pages) + td")
         append("Pages: ").append(pages.text()).append("\n")
 
-        val size = document.selectFirst("tr > td:first-child:contains(Size) + td")
-        append("Size: ").append(size.text())
+        val size: Element? = document.selectFirst("tr > td:first-child:contains(Size) + td")
+        append("Size: ").append(size?.text() ?: "Unknown")
     }
 }
