@@ -54,6 +54,8 @@ abstract class MangaHub(
     }
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation/List_of_default_Accept_values
+        .add("Accept", "text/html, application/xhtml+xml, image/jxr, */*")
         .add("Origin", baseUrl)
         .add("Referer", "$baseUrl/")
 
