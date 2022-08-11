@@ -23,6 +23,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.internal.userAgent
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
@@ -53,11 +54,32 @@ abstract class MangaHub(
             .build()
     }
 
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
-        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation/List_of_default_Accept_values
-        .add("Accept", "text/html, application/xhtml+xml, image/jxr, */*")
-        .add("Origin", baseUrl)
-        .add("Referer", "$baseUrl/")
+    override fun headersBuilder(): Headers.Builder {
+        val chromeVersion = userAgent
+            .substringAfter("Chrome/")
+            .substringBefore(".")
+            .toIntOrNull()
+            ?: "104"
+
+        val edgeVersion = userAgent
+            .substringAfter("Edg/")
+            .substringBefore(".")
+            .toIntOrNull()
+            ?: chromeVersion
+
+        return super.headersBuilder()
+            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("DNT", "1")
+            .add("Referer", "$baseUrl/")
+            .add("Sec-CH-UA", "\"Chromium\";v=\"$chromeVersion\", \" Not A;Brand\";v=\"99\", \"Microsoft Edge\";v=\"$edgeVersion\"")
+            .add("Sec-CH-UA-Mobile", "?0")
+            .add("Sec-CH-UA-Platform", "\"Windows\"")
+            .add("Sec-Fetch-Dest", "document")
+            .add("Sec-Fetch-Mode", "navigate")
+            .add("Sec-Fetch-Site", "same-origin")
+            .add("Upgrade-Insecure-Requests", "1")
+    }
 
     // Popular
     override fun popularMangaRequest(page: Int): Request =
@@ -237,7 +259,15 @@ abstract class MangaHub(
 
     // Pages
     override fun pageListRequest(chapter: SChapter): Request {
-        val jsonHeaders = headers.newBuilder().add("Content-Type", "application/json").build()
+        val jsonHeaders = headersBuilder()
+            .set("Accept", "application/json")
+            .add("Content-Type", "application/json")
+            .add("Origin", baseUrl)
+            .set("Sec-Fetch-Dest", "empty")
+            .set("Sec-Fetch-Mode", "cors")
+            .set("Sec-Fetch-Site", "cross-site")
+            .removeAll("Upgrade-Insecure-Requests")
+            .build()
 
         val slug = chapter.url
             .substringAfter("chapter/")
@@ -269,6 +299,18 @@ abstract class MangaHub(
         throw UnsupportedOperationException("Not used.")
 
     // Image
+    override fun imageUrlRequest(page: Page): Request {
+        val newHeaders = headersBuilder()
+            .set("Accept", "image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+            .set("Sec-Fetch-Dest", "image")
+            .set("Sec-Fetch-Mode", "no-cors")
+            .set("Sec-Fetch-Site", "cross-site")
+            .removeAll("Upgrade-Insecure-Requests")
+            .build()
+
+        return GET(page.url, newHeaders)
+    }
+
     override fun imageUrlParse(document: Document): String =
         throw UnsupportedOperationException("Not used.")
 
