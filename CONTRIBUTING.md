@@ -557,7 +557,7 @@ Inspecting the Logcat allows you to get a good look at the call flow and it's mo
 If you want to take a deeper look into the network flow, such as taking a look into the request and response bodies, you can use an external tool like `mitm-proxy`.
 
 #### Setup your proxy server
-We are going to use [mitm-proxy](https://mitmproxy.org/) but you can replace it with any other Web Debugger (i.e. Charles, burp, Fiddler etc). To install and execute, follow the commands bellow.
+We are going to use [mitm-proxy](https://mitmproxy.org/) but you can replace it with any other Web Debugger (i.e. Charles, Burp Suite, Fiddler etc). To install and execute, follow the commands bellow.
 
 ```console
 Install the tool.
@@ -582,14 +582,28 @@ Since most of the manga sources are going to use HTTPS, we need to disable SSL v
 
 
 ```kotlin
-class MangaSource : MadTheme(
+package eu.kanade.tachiyomi.extension.en.mangasource
+import eu.kanade.tachiyomi.multisrc.mangatheme.mangasource
+
+import android.annotation.SuppressLint
+import okhttp3.OkHttpClient
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
+
+class MangaSource : MangaTheme(
     "MangaSource",
     "https://example.com",
     "en"
 ) {
     private fun OkHttpClient.Builder.ignoreAllSSLErrors(): OkHttpClient.Builder {
-        val naiveTrustManager = object : X509TrustManager {
-            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+        val naiveTrustManager = @SuppressLint("CustomX509TrustManager")
+        object : X509TrustManager {
+            override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
             override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) = Unit
             override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) = Unit
         }
@@ -600,15 +614,15 @@ class MangaSource : MadTheme(
         }.socketFactory
 
         sslSocketFactory(insecureSocketFactory, naiveTrustManager)
-        hostnameVerifier(HostnameVerifier { _, _ -> true })
+        hostnameVerifier { _, _ -> true }
         return this
     }
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .ignoreAllSSLErrors()
         .proxy(Proxy(Proxy.Type.HTTP, InetSocketAddress("10.0.2.2", 8080)))
-        ....
         .build()
+}
 ```
 
 Note: `10.0.2.2` is usually the address of your loopback interface in the android emulator. If Tachiyomi tells you that it's unable to connect to 10.0.2.2:8080 you will likely need to change it (the same if you are using hardware device).
