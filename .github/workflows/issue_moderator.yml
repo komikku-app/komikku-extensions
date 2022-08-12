@@ -37,7 +37,7 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(mangago|mangafox|hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|heroscan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|read\\s*comic\\s*online|coco\\s*manhua|hitomi\\.la|copymanga|neox).*",
+                "regex": ".*(mangago|mangafox|hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|heroscan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|read\\s*comic\\s*online|cocomanga|hitomi\\.la|copymanga|neox).*",
                 "ignoreCase": true,
                 "message": "{match} will not be added back as it is too difficult to maintain. Read #3475 for more information"
               },
