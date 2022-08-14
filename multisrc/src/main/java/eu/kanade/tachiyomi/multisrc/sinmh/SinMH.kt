@@ -121,7 +121,7 @@ abstract class SinMH(
         val category = detailsList.selectFirst("strong:contains(类型) + a")
         val breadcrumbs = document.selectFirst("div.breadcrumb-bar").select("a[href^=/list/]")
         return buildString {
-            append(category)
+            append(category.text())
             breadcrumbs.map(Element::text).filter(String::isNotEmpty).joinTo(this, prefix = ", ")
         }
     }
