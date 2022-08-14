@@ -19,11 +19,11 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import okhttp3.internal.userAgent
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
@@ -50,21 +50,62 @@ abstract class MangaHub(
 
     override val client: OkHttpClient by lazy {
         super.client.newBuilder()
+            .addInterceptor(::apiAuthInterceptor)
             .rateLimitHost(cdnImgUrl.toHttpUrl(), 1, 2)
             .build()
     }
 
-    override fun headersBuilder(): Headers.Builder {
-        val chromeVersion = userAgent
-            .substringAfter("Chrome/")
-            .substringBefore(".")
-            .toIntOrNull()
-            ?: "104"
+    private fun apiAuthInterceptor(chain: Interceptor.Chain): Response {
+        val request = chain.request().also { request ->
+            parseApiKey(request).let { if (it.isNotEmpty()) cdnApiKey = it }
+        }
 
-        val edgeVersion = userAgent
-            .substringAfter("Edg/")
-            .substringBefore(".")
-            .toIntOrNull()
+        if (request.url.toString() == "$cdnApiUrl/graphql" && cdnApiKey!!.isNotEmpty()) {
+            val newRequest = request.newBuilder()
+                .addHeader("x-mhub-access", cdnApiKey!!)
+                .build()
+
+            return chain.proceed(newRequest)
+        }
+
+        return chain.proceed(request).also { response ->
+            parseApiKey(response).let { if (it.isNotEmpty()) cdnApiKey = it }
+        }
+    }
+
+    private var cdnApiKey: String? = null
+        get() = field ?: client.newCall(GET(baseUrl, headers)).execute().let(::parseApiKey)
+
+    private fun parseApiKey(request: Request): String =
+        request.header("Cookie")
+            ?.split("; ")
+            ?.mapNotNull { kv ->
+                val (k, v) = kv.split('=')
+                if (k == "mhub_access") v else null
+            }?.firstOrNull()
+            ?: ""
+
+    private fun parseApiKey(response: Response): String =
+        response.headers("Set-Cookie")
+            .mapNotNull { kv ->
+                val (k, v) = kv.split("; ").first().split('=')
+                if (k == "mhub_access") v else null
+            }.firstOrNull()
+            ?: ""
+
+    override fun headersBuilder(): Headers.Builder {
+        val defaultUserAgent = super.headersBuilder()["User-Agent"]
+
+        val chromeVersion = defaultUserAgent
+            ?.substringAfter("Chrome/")
+            ?.substringBefore(".")
+            ?.toIntOrNull()
+            ?: "102"
+
+        val edgeVersion = defaultUserAgent
+            ?.substringAfter("Edg/")
+            ?.substringBefore(".")
+            ?.toIntOrNull()
             ?: chromeVersion
 
         return super.headersBuilder()
