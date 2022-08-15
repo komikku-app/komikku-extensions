@@ -98,7 +98,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Drope Scan", "https://dropescan.com", "pt-BR", overrideVersionCode = 4),
         SingleLang("EGY Manga", "https://egymanga.net", "ar", overrideVersionCode = 1),
         SingleLang("Emperor Scan", "https://emperorscan.com/", "es"),
-        SingleLang("Empire Webtoon", "https://webtoonempire.com", "ar", isNsfw = true),
+        SingleLang("Empire Webtoon", "https://webtoonempire.com", "ar", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Eromanhwas", "https://eromanhwas.com", "en"),
         SingleLang("Eromiau", "https://www.eromiau.com", "es", isNsfw = true),
         SingleLang("Esomanga", "http://esomanga.com", "tr"),
