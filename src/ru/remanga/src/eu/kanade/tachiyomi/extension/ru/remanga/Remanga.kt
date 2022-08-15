@@ -432,7 +432,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     override fun imageUrlParse(response: Response): String = throw NotImplementedError("Unused")
 
     private fun searchMangaByIdRequest(id: String): Request {
-        return GET("$baseUrl/api/titles/$id", headers)
+        return GET("$baseUrl/api/titles/$id/", headers)
     }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
@@ -442,7 +442,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 .asObservableSuccess()
                 .map { response ->
                     val details = mangaDetailsParse(response)
-                    details.url = "/api/titles/$realQuery"
+                    details.url = "/api/titles/$realQuery/"
                     MangasPage(listOf(details), false)
                 }
         } else {
