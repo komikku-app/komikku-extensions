@@ -7,6 +7,10 @@ on:
     paths-ignore:
       - '**.md'
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 env:
   CI_CHUNK_SIZE: 65
 
@@ -20,12 +24,6 @@ jobs:
     env:
       CI_MODULE_GEN: true
     steps:
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.9.1
-        with:
-          access_token: ${{ github.token }}
-          all_but_latest: true
-
       - name: Clone repo
         uses: actions/checkout@v3
 
