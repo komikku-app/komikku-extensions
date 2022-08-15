@@ -8,8 +8,9 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -115,7 +116,11 @@ class ComicNewtype : HttpSource() {
     override fun pageListRequest(chapter: SChapter) = GET(baseUrl + chapter.url + "json/", headers)
 
     override fun pageListParse(response: Response): List<Page> =
-        Json.decodeFromString<List<String>>(response.body!!.string()).mapIndexed { index, path ->
+        Json.parseToJsonElement(response.body!!.string()).jsonArray.mapIndexed { index, jsonElement ->
+            val path = when (jsonElement) {
+                is JsonArray -> jsonElement[0]
+                else -> jsonElement
+            }.jsonPrimitive.content
             val newPath = path.removeSuffix("/h1200q75nc/")
             Page(index, imageUrl = baseUrl + newPath)
         }
