@@ -47,10 +47,11 @@ class Dmzj : ConfigurableSource, HttpSource() {
     override val baseUrl = "https://m.dmzj.com"
     private val v3apiUrl = "https://v3api.dmzj.com"
     private val v3ChapterApiUrl = "https://nnv3api.muwai.com"
+
     // v3api now shutdown the functionality to fetch manga detail and chapter list, so move these logic to v4api
     private val v4apiUrl = "https://nnv4api.muwai.com" // https://v4api.dmzj1.com
     private val apiUrl = "https://api.dmzj.com"
-    private val oldPageListApiUrl = "https://api.m.dmzj.com"
+    private val oldPageListApiUrl = "http://api.m.dmzj.com" // this domain has an expired certificate
     private val webviewPageListApiUrl = "https://m.dmzj.com/chapinfo"
     private val imageCDNUrl = "https://images.dmzj.com"
     private val imageSmallCDNUrl = "https://imgsmall.dmzj.com"
@@ -404,8 +405,13 @@ class Dmzj : ConfigurableSource, HttpSource() {
                 obj.getJSONObject("chapter").getJSONArray("page_url")
             } catch (e: org.json.JSONException) {
                 // JSON data from api.m.dmzj.com may be incomplete, extract page_url list using regex
-                val extractPageList = extractPageListRegex.find(responseBody)!!.value
-                JSONObject("{$extractPageList}").getJSONArray("page_url")
+                val extractPageList = extractPageListRegex.find(responseBody)?.value
+                if (extractPageList != null) {
+                    JSONObject("{$extractPageList}").getJSONArray("page_url")
+                } else {
+                    // The responseBody content is a sentence, for example, "The comic does not exist".
+                    throw Exception(responseBody)
+                }
             }
         } else {
             throw Exception("can't parse response")
@@ -630,7 +636,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
         private val extractComicIdFromWebpageRegex = Regex("""addSubscribe\((\d+)\)""")
         private val checkComicIdIsNumericalRegex = Regex("""^\d+$""")
         private val extractComicIdFromMangaUrlRegex = Regex("""(\d+)\.(json|html)""") // Get comic ID from manga.url
-        private val extractPageListRegex = Regex("""\"page_url\".+?\]""")
+        private val extractPageListRegex = Regex(""""page_url".+?]""")
 
         private val ENTRIES_ARRAY = (1..10).map { i -> i.toString() }.toTypedArray()
         const val PREFIX_ID_SEARCH = "id:"

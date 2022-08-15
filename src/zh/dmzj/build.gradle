@@ -6,7 +6,7 @@ ext {
     extName = 'Dmzj'
     pkgNameSuffix = 'zh.dmzj'
     extClass = '.Dmzj'
-    extVersionCode = 30
+    extVersionCode = 31
 }
 
 apply from: "$rootDir/common.gradle"
