@@ -17,6 +17,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
@@ -26,7 +27,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.net.URLEncoder
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -57,89 +60,47 @@ abstract class MangaHub(
 
     private fun apiAuthInterceptor(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
-        parseApiKey(originalRequest).let { cdnApiKey = it }
 
-        val request = if (originalRequest.url.toString() == "$cdnApiUrl/graphql") {
-            val newRequest = originalRequest.newBuilder()
-                .header("x-mhub-access", cdnApiKey!!)
-                .build()
+        val cookie = client.cookieJar
+            .loadForRequest(baseUrl.toHttpUrl())
+            .firstOrNull { it.name == "mhub_access" }
 
-            newRequest
-        } else {
-            originalRequest
-        }
-
-        val originalResponse = chain.proceed(request)
-        parseApiKey(originalResponse).let { cdnApiKey = it }
-
-        return if (request.url.toString() == "$cdnApiUrl/graphql") {
-            var newResponse: Response? = null
-            runCatching {
-                val responseData = json
-                    .decodeFromString<GraphQLDataDto<ChapterDto>>(originalResponse.peekBody(1 * 1024 * 1024).string())
-
-                if (
-                    responseData.errors?.isNotEmpty() == true ||
-                    responseData.data.chapter == null
-                ) {
-                    val buffer = okio.Buffer()
-                    request.body!!.writeTo(buffer)
-                    val requestBody = buffer.readUtf8()
-
-                    val slug = PATTERN_SLUG.find(requestBody)?.groupValues?.get(1)
-                    cdnApiKey = fetchCdnApiKey(slug)
-
-                    val newRequest = originalRequest.newBuilder()
-                        .header("x-mhub-access", cdnApiKey!!)
-                        .build()
-
-                    // Bypass rate limit for this request
-                    newResponse = super.client.newCall(newRequest).execute()
-                }
+        val request =
+            if (originalRequest.url.toString() == "$cdnApiUrl/graphql" && cookie != null) {
+                originalRequest.newBuilder()
+                    .header("x-mhub-access", cookie.value)
+                    .build()
+            } else {
+                originalRequest
             }
-            newResponse ?: originalResponse
-        } else {
-            originalResponse
-        }
+
+        return chain.proceed(request)
     }
 
-    private var cdnApiKey: String? = null
-        get() {
-            if (field == null)
-                field = fetchCdnApiKey(null)
-            return field
-        }
-        set(value) {
-            if (value == null) return
-            field = value
-        }
+    private fun refreshApiKey(chapter: SChapter) {
+        val now = Calendar.getInstance().time.time
+        val url = "$baseUrl${chapter.url}".toHttpUrl()
+        val number = chapter.url
+            .substringAfter("chapter-")
+            .substringBefore("/")
 
-    private fun fetchCdnApiKey(slug: String?): String? {
-        val request = if (slug == null) {
-            GET("$baseUrl/?reloadKey=1", headers)
-        } else {
-            GET("$baseUrl/manga/$slug?reloadKey=1", headers)
-        }
+        val recently = "{\"${now - (0..120).random()}\":{\"mangaID\":${(1..42000).random()},\"number\":$number}}"
 
-        // Bypass rate limit for this request
-        val response = super.client.newCall(request).execute()
-        return parseApiKey(response)
+        client.cookieJar.saveFromResponse(
+            url,
+            listOf(
+                Cookie.Builder()
+                    .domain(url.host)
+                    .name("recently")
+                    .value(URLEncoder.encode(recently, "utf-8"))
+                    .expiresAt(now + 2 * 60 * 60 * 24 * 31) // +2 months
+                    .build()
+            )
+        )
+
+        val request = GET("$url?reloadKey=1", headers)
+        client.newCall(request).execute()
     }
-
-    private fun parseApiKey(request: Request): String? =
-        request.header("Cookie")
-            ?.split("; ")
-            ?.mapNotNull { kv ->
-                val (k, v) = kv.split('=')
-                if (k == "mhub_access") v else null
-            }?.firstOrNull()
-
-    private fun parseApiKey(response: Response): String? =
-        response.headers("Set-Cookie")
-            .mapNotNull { kv ->
-                val (k, v) = kv.split("; ").first().split('=')
-                if (k == "mhub_access") v else null
-            }.firstOrNull()
 
     override fun headersBuilder(): Headers.Builder {
         val defaultUserAgent = super.headersBuilder()["User-Agent"]
@@ -372,16 +333,22 @@ abstract class MangaHub(
         return POST("$cdnApiUrl/graphql", jsonHeaders, body)
     }
 
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> =
+        super.fetchPageList(chapter)
+            .doOnError { refreshApiKey(chapter) }
+            .retry(1)
+
     override fun pageListParse(response: Response): List<Page> {
         val cdn = "$cdnImgUrl/file/imghub"
         val chapterObject = json
             .decodeFromString<GraphQLDataDto<ChapterDto>>(response.body!!.string())
 
-        if (chapterObject.errors != null) {
-            val errors = chapterObject.errors.joinToString("\n") { it.message }
-            throw Exception(errors)
-        } else if (chapterObject.data.chapter == null) {
-            throw Exception("Unknown error while fetching pages")
+        if (chapterObject.data?.chapter == null) {
+            if (chapterObject.errors != null) {
+                val errors = chapterObject.errors.joinToString("\n") { it.message }
+                throw Exception(errors)
+            }
+            throw Exception("Unknown error while processing pages")
         }
 
         val pagesObject = json
@@ -503,17 +470,13 @@ abstract class MangaHub(
         Genre("Yaoi", "yaoi"),
         Genre("Yuri", "yuri")
     )
-
-    companion object {
-        private val PATTERN_SLUG = ",slug:\\\\\"([^\\\\]+)\\\\\",".toRegex()
-    }
 }
 
 // DTO
 @Serializable
 data class GraphQLDataDto<T>(
     val errors: List<ErrorDto>? = null,
-    val data: T
+    val data: T? = null
 )
 
 @Serializable
