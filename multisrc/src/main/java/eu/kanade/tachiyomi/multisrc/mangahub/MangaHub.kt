@@ -56,42 +56,90 @@ abstract class MangaHub(
     }
 
     private fun apiAuthInterceptor(chain: Interceptor.Chain): Response {
-        val request = chain.request().also { request ->
-            parseApiKey(request).let { if (it.isNotEmpty()) cdnApiKey = it }
-        }
+        val originalRequest = chain.request()
+        parseApiKey(originalRequest).let { cdnApiKey = it }
 
-        if (request.url.toString() == "$cdnApiUrl/graphql" && cdnApiKey!!.isNotEmpty()) {
-            val newRequest = request.newBuilder()
-                .addHeader("x-mhub-access", cdnApiKey!!)
+        val request = if (originalRequest.url.toString() == "$cdnApiUrl/graphql") {
+            val newRequest = originalRequest.newBuilder()
+                .header("x-mhub-access", cdnApiKey!!)
                 .build()
 
-            return chain.proceed(newRequest)
+            newRequest
+        } else {
+            originalRequest
         }
 
-        return chain.proceed(request).also { response ->
-            parseApiKey(response).let { if (it.isNotEmpty()) cdnApiKey = it }
+        val originalResponse = chain.proceed(request)
+        parseApiKey(originalResponse).let { cdnApiKey = it }
+
+        return if (request.url.toString() == "$cdnApiUrl/graphql") {
+            var newResponse: Response? = null
+            runCatching {
+                val responseData = json
+                    .decodeFromString<GraphQLDataDto<ChapterDto>>(originalResponse.peekBody(1 * 1024 * 1024).string())
+
+                if (
+                    responseData.errors?.isNotEmpty() == true ||
+                    responseData.data.chapter == null
+                ) {
+                    val buffer = okio.Buffer()
+                    request.body!!.writeTo(buffer)
+                    val requestBody = buffer.readUtf8()
+
+                    val slug = PATTERN_SLUG.find(requestBody)?.groupValues?.get(1)
+                    cdnApiKey = fetchCdnApiKey(slug)
+
+                    val newRequest = originalRequest.newBuilder()
+                        .header("x-mhub-access", cdnApiKey!!)
+                        .build()
+
+                    // Bypass rate limit for this request
+                    newResponse = super.client.newCall(newRequest).execute()
+                }
+            }
+            newResponse ?: originalResponse
+        } else {
+            originalResponse
         }
     }
 
     private var cdnApiKey: String? = null
-        get() = field ?: client.newCall(GET(baseUrl, headers)).execute().let(::parseApiKey)
+        get() {
+            if (field == null)
+                field = fetchCdnApiKey(null)
+            return field
+        }
+        set(value) {
+            if (value == null) return
+            field = value
+        }
 
-    private fun parseApiKey(request: Request): String =
+    private fun fetchCdnApiKey(slug: String?): String? {
+        val request = if (slug == null) {
+            GET("$baseUrl/?reloadKey=1", headers)
+        } else {
+            GET("$baseUrl/manga/$slug?reloadKey=1", headers)
+        }
+
+        // Bypass rate limit for this request
+        val response = super.client.newCall(request).execute()
+        return parseApiKey(response)
+    }
+
+    private fun parseApiKey(request: Request): String? =
         request.header("Cookie")
             ?.split("; ")
             ?.mapNotNull { kv ->
                 val (k, v) = kv.split('=')
                 if (k == "mhub_access") v else null
             }?.firstOrNull()
-            ?: ""
 
-    private fun parseApiKey(response: Response): String =
+    private fun parseApiKey(response: Response): String? =
         response.headers("Set-Cookie")
             .mapNotNull { kv ->
                 val (k, v) = kv.split("; ").first().split('=')
                 if (k == "mhub_access") v else null
             }.firstOrNull()
-            ?: ""
 
     override fun headersBuilder(): Headers.Builder {
         val defaultUserAgent = super.headersBuilder()["User-Agent"]
@@ -329,6 +377,13 @@ abstract class MangaHub(
         val chapterObject = json
             .decodeFromString<GraphQLDataDto<ChapterDto>>(response.body!!.string())
 
+        if (chapterObject.errors != null) {
+            val errors = chapterObject.errors.joinToString("\n") { it.message }
+            throw Exception(errors)
+        } else if (chapterObject.data.chapter == null) {
+            throw Exception("Unknown error while fetching pages")
+        }
+
         val pagesObject = json
             .decodeFromString<JsonObject>(chapterObject.data.chapter.pages)
         val pages = pagesObject.values.map { it.jsonPrimitive.content }
@@ -448,17 +503,27 @@ abstract class MangaHub(
         Genre("Yaoi", "yaoi"),
         Genre("Yuri", "yuri")
     )
+
+    companion object {
+        private val PATTERN_SLUG = ",slug:\\\\\"([^\\\\]+)\\\\\",".toRegex()
+    }
 }
 
 // DTO
 @Serializable
 data class GraphQLDataDto<T>(
+    val errors: List<ErrorDto>? = null,
     val data: T
 )
 
 @Serializable
+data class ErrorDto(
+    val message: String
+)
+
+@Serializable
 data class ChapterDto(
-    val chapter: ChapterInnerDto
+    val chapter: ChapterInnerDto?
 )
 
 @Serializable
