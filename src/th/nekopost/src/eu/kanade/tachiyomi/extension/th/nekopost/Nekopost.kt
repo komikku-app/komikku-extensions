@@ -43,6 +43,8 @@ class Nekopost : ParsedHttpSource() {
 
     private val existingProject: HashSet<String> = HashSet()
 
+    private var firstPageNulled: Boolean = false
+
     override val lang: String = "th"
     override val name: String = "Nekopost"
 
@@ -78,7 +80,7 @@ class Nekopost : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga = throw NotImplementedError("Unused")
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(GET("$projectDataEndpoint/${manga.url}"))
+        return client.newCall(GET("$projectDataEndpoint/${manga.url}", headers))
             .asObservableSuccess()
             .map { response ->
                 val responseBody =
@@ -93,6 +95,8 @@ class Nekopost : ParsedHttpSource() {
                         author = it.authorName
                         description = it.info
                         status = getStatus(it.status)
+                        thumbnail_url =
+                            "$fileHost/collectManga/${it.projectId}/${it.projectId}_cover.jpg"
                         initialized = true
                     }
 
@@ -107,7 +111,7 @@ class Nekopost : ParsedHttpSource() {
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         return if (manga.status != SManga.LICENSED) {
-            client.newCall(GET("$projectDataEndpoint/${manga.url}"))
+            client.newCall(GET("$projectDataEndpoint/${manga.url}", headers))
                 .asObservableSuccess()
                 .map { response ->
                     val responseBody =
@@ -142,7 +146,7 @@ class Nekopost : ParsedHttpSource() {
     }
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
-        return client.newCall(GET("$fileHost/collectManga/${chapter.url}"))
+        return client.newCall(GET("$fileHost/collectManga/${chapter.url}", headers))
             .asObservableSuccess()
             .map { response ->
                 val responseBody =
@@ -168,18 +172,18 @@ class Nekopost : ParsedHttpSource() {
 
     override fun popularMangaRequest(page: Int): Request {
         if (page <= 1) existingProject.clear()
-
-        return GET("$latestMangaEndpoint/$page")
+        //API has a bug that sometime it returns null on first page
+        return GET("$latestMangaEndpoint/${if (firstPageNulled) page else page - 1 }", headers)
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
         val responseBody = response.body ?: throw Error("Unable to fetch mangas")
         val projectList: RawProjectSummaryList = json.decodeFromString(responseBody.string())
 
-        val mangaList: List<SManga> =
+        val mangaList: List<SManga> = if (projectList.listChapter != null) {
             projectList.listChapter
-                ?.filter { !existingProject.contains(it.projectId) }
-                ?.map {
+                .filter { !existingProject.contains(it.projectId) }
+                .map {
                     SManga.create().apply {
                         url = it.projectId
                         title = it.projectName
@@ -188,7 +192,11 @@ class Nekopost : ParsedHttpSource() {
                         initialized = false
                         status = 0
                     }
-                } ?: return MangasPage(emptyList(), hasNextPage = false)
+                }
+        } else {
+            firstPageNulled = true //API has a bug that sometime it returns null on first page
+            return MangasPage(emptyList(), hasNextPage = false)
+        }
 
         mangaList.forEach { existingProject.add(it.url) }
 
