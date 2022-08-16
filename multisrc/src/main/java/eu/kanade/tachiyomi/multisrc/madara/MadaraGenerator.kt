@@ -371,6 +371,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Ninja Scan", "https://ninjascan.xyz", "pt-BR", overrideVersionCode = 1),
         SingleLang("Nitro Scans", "https://nitroscans.com", "en"),
         SingleLang("Noblesse Translations", "https://www.noblessetranslations.com", "es"),
+        SingleLang("Nocturnal Scans", "https://nocturnalscans.com", "en"),
         SingleLang("NovelCrow", "https://novelcrow.com", "en", isNsfw = true),
         SingleLang("NovelMic", "https://novelmic.com", "en", overrideVersionCode = 1),
         SingleLang("Novels Town", "https://novelstown.cyou", "ar"),
