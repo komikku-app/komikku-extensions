@@ -156,7 +156,7 @@ abstract class MangaThemesia(
     open val altNamePrefix = "Alternative Name: "
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        document.selectFirst(seriesDetailsSelector).let { seriesDetails ->
+        document.selectFirst(seriesDetailsSelector)?.let { seriesDetails ->
             title = seriesDetails.selectFirst(seriesTitleSelector)?.text().orEmpty()
             artist = seriesDetails.selectFirst(seriesArtistSelector)?.ownText().removeEmptyPlaceholder()
             author = seriesDetails.selectFirst(seriesAuthorSelector)?.ownText().removeEmptyPlaceholder()
@@ -194,7 +194,7 @@ abstract class MangaThemesia(
     }
 
     // Chapter list
-    override fun chapterListSelector() = "div.bxcl li, div.cl li, #chapterlist li .eph-num, li:has(div.chbox):has(div.eph-num)"
+    override fun chapterListSelector() = "div.bxcl li, div.cl li, #chapterlist li, ul li:has(div.chbox):has(div.eph-num)"
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
