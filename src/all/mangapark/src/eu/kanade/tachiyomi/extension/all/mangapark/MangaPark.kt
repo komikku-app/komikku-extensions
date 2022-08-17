@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.mangapark
 
-import com.squareup.duktape.Duktape
+import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -252,24 +252,21 @@ open class MangaPark(
             throw Exception("The chapter content seems to be deleted.\n\nContact the site owner if possible.")
         }
 
-        val script = document.select("script").html()
-        val imgCdnHost = script.substringAfter("const imgCdnHost = \"").substringBefore("\";")
-        val imgPathLisRaw = script.substringAfter("const imgPathLis = ").substringBefore(";")
-        val imgPathLis = json.parseToJsonElement(imgPathLisRaw).jsonArray
-        val amPass = script.substringAfter("const amPass = ").substringBefore(";")
-        val amWord = script.substringAfter("const amWord = ").substringBefore(";")
+        val script = document.selectFirst("script:containsData(imgHttpLis):containsData(amWord):containsData(amPass)")?.html()
+            ?: throw RuntimeException("Couldn't find script with image data.")
 
-        val decryptScript =
-            cryptoJS + "CryptoJS.AES.decrypt($amWord, $amPass).toString(CryptoJS.enc.Utf8);"
+        val imgHttpLisString = script.substringAfter("const imgHttpLis =").substringBefore(";").trim()
+        val imgHttpLis = json.parseToJsonElement(imgHttpLisString).jsonArray.map { it.jsonPrimitive.content }
+        val amWord = script.substringAfter("const amWord =").substringBefore(";").trim()
+        val amPass = script.substringAfter("const amPass =").substringBefore(";").trim()
 
-        val imgWordLisRaw = Duktape.create().use { it.evaluate(decryptScript).toString() }
-        val imgWordLis = json.parseToJsonElement(imgWordLisRaw).jsonArray
+        val decryptScript = cryptoJS + "CryptoJS.AES.decrypt($amWord, $amPass).toString(CryptoJS.enc.Utf8);"
 
-        return imgWordLis.mapIndexed { i, imgWordE ->
-            val imgPath = imgPathLis[i].jsonPrimitive.content
-            val imgWord = imgWordE.jsonPrimitive.content
+        val imgAccListString = QuickJs.create().use { it.evaluate(decryptScript).toString() }
+        val imgAccList = json.parseToJsonElement(imgAccListString).jsonArray.map { it.jsonPrimitive.content }
 
-            Page(i, "", "$imgCdnHost$imgPath?$imgWord")
+        return imgHttpLis.zip(imgAccList).mapIndexed { i, (imgUrl, imgAcc) ->
+            Page(i, imageUrl = "$imgUrl?$imgAcc")
         }
     }
 
@@ -291,7 +288,6 @@ open class MangaPark(
 
         const val PREFIX_ID_SEARCH = "id:"
 
-        const val CryptoJSUrl =
-            "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"
+        const val CryptoJSUrl = "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"
     }
 }
