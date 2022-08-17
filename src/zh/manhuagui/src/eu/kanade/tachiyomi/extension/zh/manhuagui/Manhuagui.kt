@@ -2,7 +2,7 @@ package eu.kanade.tachiyomi.extension.zh.manhuagui
 
 import android.app.Application
 import android.content.SharedPreferences
-import com.squareup.duktape.Duktape
+import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -289,7 +289,7 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
         if (hiddenEncryptedChapterList != null) {
             if (getShowR18()) {
                 // Hidden chapter list is LZString encoded
-                val decodedHiddenChapterList = Duktape.create().use {
+                val decodedHiddenChapterList = QuickJs.create().use {
                     it.evaluate(
                         jsDecodeFunc +
                             """LZString.decompressFromBase64('${hiddenEncryptedChapterList.`val`()}');"""
@@ -381,7 +381,7 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
 
         val html = document.html()
         val imgCode = re.find(html)?.groups?.get(1)?.value
-        val imgDecode = Duktape.create().use {
+        val imgDecode = QuickJs.create().use {
             it.evaluate(jsDecodeFunc + imgCode) as String
         }
 

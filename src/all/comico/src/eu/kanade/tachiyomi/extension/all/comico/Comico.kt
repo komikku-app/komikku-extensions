@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.comico
 
 import android.webkit.CookieManager
-import com.squareup.duktape.Duktape
+import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -166,7 +166,7 @@ open class Comico(
     private fun paginate(route: String, page: Int) =
         GET("$apiUrl/$route?pageNo=${page - 1}&pageSize=25", apiHeaders)
 
-    private fun String.decrypt() = Duktape.create().use {
+    private fun String.decrypt() = QuickJs.create().use {
         // javax.crypto.Cipher does not support empty IV
         val script = """
         const key = CryptoJS.enc.Utf8.parse('$AES_KEY'), iv = {words: []}

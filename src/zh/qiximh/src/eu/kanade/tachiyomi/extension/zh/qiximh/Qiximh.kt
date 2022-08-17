@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.extension.zh.qiximh
 
-import com.squareup.duktape.Duktape
+import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.Filter
@@ -302,10 +302,11 @@ class Qiximh : HttpSource() {
 
         // Special thanks to author who created Mangahere.kt
         val script = document.select("script:containsData(function(p,a,c,k,e,d))").html().removePrefix("eval")
-        val deobfuscatedScript = Duktape.create().use { it.evaluate(script).toString() }
-        val urls = deobfuscatedScript.substringAfter("newImgs=[\"").substringBefore("\"]").split("\",\"")
+        val deobfuscatedScript = QuickJs.create().use { it.evaluate(script).toString() }
+        val imageUrlListString = deobfuscatedScript.substringAfter("newImgs=").trim()
+        val imageUrlList = json.parseToJsonElement(imageUrlListString).jsonArray.map { it.jsonPrimitive.content }
 
-        return urls.mapIndexed { index, s -> Page(index, "", s) }
+        return imageUrlList.mapIndexed { index, s -> Page(index, imageUrl = s) }
     }
 
     // Unused

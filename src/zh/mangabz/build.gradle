@@ -5,7 +5,7 @@ ext {
     extName = 'Mangabz'
     pkgNameSuffix = 'zh.mangabz'
     extClass = '.Mangabz'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 dependencies {

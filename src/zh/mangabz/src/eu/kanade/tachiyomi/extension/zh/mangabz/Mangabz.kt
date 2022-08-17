@@ -2,7 +2,7 @@ package eu.kanade.tachiyomi.extension.zh.mangabz
 
 import android.app.Application
 import android.content.SharedPreferences
-import com.squareup.duktape.Duktape
+import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
@@ -276,7 +276,7 @@ class Mangabz : ConfigurableSource, HttpSource() {
 
     private fun fetchImageUrlListFromAPI(apiUrl: String, requestHeaders: Headers = headers): JSONArray {
         val jsEvalPayload = client.newCall(GET(apiUrl, requestHeaders)).execute().body!!.string()
-        val imgUrlDecode = Duktape.create().use {
+        val imgUrlDecode = QuickJs.create().use {
             it.evaluate("$jsEvalPayload; JSON.stringify(d);") as String
         }
         return JSONArray(imgUrlDecode)

@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.zh.tencentcomics
 
 import android.util.Base64
-import com.squareup.duktape.Duktape
+import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
@@ -146,7 +146,7 @@ class TencentComics : ParsedHttpSource() {
 
         val raw = html.substringAfterLast("var DATA =").substringBefore("PRELOAD_NUM").trim().replace(Regex("^\'|\',$"), "")
         val decodePrefix = "var raw = \"$raw\"; var nonce = $nonce"
-        val full = Duktape.create().use { it.evaluate(decodePrefix + jsDecodeFunction).toString() }
+        val full = QuickJs.create().use { it.evaluate(decodePrefix + jsDecodeFunction).toString() }
         val chapterData = json.parseToJsonElement(String(Base64.decode(full, Base64.DEFAULT))).jsonObject
 
         if (!chapterData["chapter"]!!.jsonObject["canRead"]!!.jsonPrimitive.boolean) throw Exception("[此章节为付费内容]")

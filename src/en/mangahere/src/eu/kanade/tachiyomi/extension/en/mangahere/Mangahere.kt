@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.mangahere
 
-import com.squareup.duktape.Duktape
+import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -212,7 +212,7 @@ class Mangahere : ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> {
         val bar = document.select("script[src*=chapter_bar]")
-        val duktape = Duktape.create()
+        val quickJs = QuickJs.create()
 
         /*
             function to drop last imageUrl if it's broken/unneccesary, working imageUrls are incremental (e.g. t001, t002, etc); if the difference between
@@ -236,16 +236,16 @@ class Mangahere : ParsedHttpSource() {
         // if-branch is for webtoon reader, else is for page-by-page
         return if (bar.isNotEmpty()) {
             val script = document.select("script:containsData(function(p,a,c,k,e,d))").html().removePrefix("eval")
-            val deobfuscatedScript = duktape.evaluate(script).toString()
+            val deobfuscatedScript = quickJs.evaluate(script).toString()
             val urls = deobfuscatedScript.substringAfter("newImgs=['").substringBefore("'];").split("','")
-            duktape.close()
+            quickJs.close()
 
             urls.mapIndexed { index, s -> Page(index, "", "https:$s") }
         } else {
             val html = document.html()
             val link = document.location()
 
-            var secretKey = extractSecretKey(html, duktape)
+            var secretKey = extractSecretKey(html, quickJs)
 
             val chapterIdStartLoc = html.indexOf("chapterid")
             val chapterId = html.substring(
@@ -285,7 +285,7 @@ class Mangahere : ParsedHttpSource() {
                         secretKey = ""
                 }
 
-                val deobfuscatedScript = duktape.evaluate(responseText.removePrefix("eval")).toString()
+                val deobfuscatedScript = quickJs.evaluate(responseText.removePrefix("eval")).toString()
 
                 val baseLinkStartPos = deobfuscatedScript.indexOf("pix=") + 5
                 val baseLinkEndPos = deobfuscatedScript.indexOf(";", baseLinkStartPos) - 1
@@ -299,15 +299,15 @@ class Mangahere : ParsedHttpSource() {
             }
         }
             .dropLastIfBroken()
-            .also { duktape.close() }
+            .also { quickJs.close() }
     }
 
-    private fun extractSecretKey(html: String, duktape: Duktape): String {
+    private fun extractSecretKey(html: String, quickJs: QuickJs): String {
         val secretKeyScriptLocation = html.indexOf("eval(function(p,a,c,k,e,d)")
         val secretKeyScriptEndLocation = html.indexOf("</script>", secretKeyScriptLocation)
         val secretKeyScript = html.substring(secretKeyScriptLocation, secretKeyScriptEndLocation).removePrefix("eval")
 
-        val secretKeyDeobfuscatedScript = duktape.evaluate(secretKeyScript).toString()
+        val secretKeyDeobfuscatedScript = quickJs.evaluate(secretKeyScript).toString()
 
         val secretKeyStartLoc = secretKeyDeobfuscatedScript.indexOf("'")
         val secretKeyEndLoc = secretKeyDeobfuscatedScript.indexOf(";")
@@ -317,7 +317,7 @@ class Mangahere : ParsedHttpSource() {
             secretKeyEndLoc
         )
 
-        return duktape.evaluate(secretKeyResultScript).toString()
+        return quickJs.evaluate(secretKeyResultScript).toString()
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
