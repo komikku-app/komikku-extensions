@@ -192,7 +192,7 @@ abstract class Zbulu(
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select("div.chapter-content img").mapIndexed { i, img ->
-            Page(i, "", img.attr("abs:data-src"))
+            Page(i, "", img.attr(if (img.hasAttr("data-src")) "abs:data-src" else "abs:src"))
         }
     }
 
