@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.multisrc.mangaraw
+package eu.kanade.tachiyomi.extension.ja.manga1001
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -13,11 +13,11 @@ import org.jsoup.nodes.Element
 
 /**
  * Common parsers of mangaraw sites, follow manga1001.top by default.
+ * FIXME: manga1001.top changed its theme
  */
-abstract class MangaRaw(
-    override val name: String,
-    override val baseUrl: String,
-) : ParsedHttpSource() {
+class Manga1001 : ParsedHttpSource() {
+    override val name = "Manga1001"
+    override val baseUrl = "https://manga1001.top"
 
     protected open val imageSelector = ".wp-block-image > img"
 
