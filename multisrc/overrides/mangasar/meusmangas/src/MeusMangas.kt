@@ -2,27 +2,19 @@ package eu.kanade.tachiyomi.extension.pt.meusmangas
 
 import eu.kanade.tachiyomi.multisrc.mangasar.MangaSar
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
-import java.util.concurrent.TimeUnit
 
 class MeusMangas : MangaSar(
     "Meus Mangás",
     "https://meusmangas.net",
     "pt-BR"
 ) {
-
-    override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(::searchIntercept)
-        .rateLimit(1, 2, TimeUnit.SECONDS)
-        .build()
 
     override fun popularMangaSelector() = "ul.sidebar-popular li.popular-treending"
 

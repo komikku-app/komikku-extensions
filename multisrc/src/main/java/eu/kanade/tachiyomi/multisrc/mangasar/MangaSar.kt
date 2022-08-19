@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.multisrc.mangasar
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -29,6 +30,7 @@ import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 abstract class MangaSar(
     override val name: String,
@@ -38,7 +40,10 @@ abstract class MangaSar(
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(::searchIntercept)
+        .rateLimit(1, 2, TimeUnit.SECONDS)
+        .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Accept", ACCEPT_HTML)
@@ -51,7 +56,7 @@ abstract class MangaSar(
 
     private val apiHeaders: Headers by lazy { apiHeadersBuilder().build() }
 
-    private val json: Json by injectLazy()
+    protected val json: Json by injectLazy()
 
     override fun popularMangaRequest(page: Int): Request {
         return GET(baseUrl, headers)
@@ -89,7 +94,7 @@ abstract class MangaSar(
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<MangaSarLatestDto>(response.body!!.string())
+        val result = response.parseAs<MangaSarLatestDto>()
 
         val latestMangas = result.releases
             .map(::latestUpdatesFromObject)
@@ -116,7 +121,7 @@ abstract class MangaSar(
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<Map<String, MangaSarTitleDto>>(response.body!!.string())
+        val result = response.parseAs<Map<String, MangaSarTitleDto>>()
 
         val searchResults = result.values.map(::searchMangaFromObject)
 
@@ -131,12 +136,12 @@ abstract class MangaSar(
 
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
-        val infoElement = document.select("div.manga-single div.dados").first()
+        val infoElement = document.selectFirst("div.manga-single div.dados")!!
 
         return SManga.create().apply {
-            title = infoElement.select("h1").first()!!.text()
-            thumbnail_url = infoElement.select("div.thumb img").first()!!.attr("abs:src")
-            description = infoElement.select("div.sinopse").first()!!.text()
+            title = infoElement.selectFirst("h1")!!.text()
+            thumbnail_url = infoElement.selectFirst("div.thumb img")!!.attr("abs:src")
+            description = infoElement.selectFirst("div.sinopse")!!.text()
             genre = infoElement.select("ul.generos li a span.button").joinToString { it.text() }
         }
     }
@@ -162,7 +167,7 @@ abstract class MangaSar(
     override fun chapterListParse(response: Response): List<SChapter> {
         val mangaUrl = response.request.header("Referer")!!.substringAfter(baseUrl)
 
-        var result = json.decodeFromString<MangaSarPaginatedChaptersDto>(response.body!!.string())
+        var result = response.parseAs<MangaSarPaginatedChaptersDto>()
 
         if (result.chapters.isNullOrEmpty()) {
             return emptyList()
@@ -177,9 +182,7 @@ abstract class MangaSar(
 
         while (++page <= lastPage!!) {
             val nextPageRequest = chapterListPaginatedRequest(mangaUrl, page)
-            result = client.newCall(nextPageRequest).execute().let {
-                json.decodeFromString(it.body!!.string())
-            }
+            result = client.newCall(nextPageRequest).execute().parseAs()
 
             chapters += result.chapters!!
                 .map(::chapterFromObject)
@@ -212,8 +215,8 @@ abstract class MangaSar(
 
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        val apiParams = document.select("script:containsData(id_serie)").firstOrNull()
-            ?.data() ?: throw Exception(TOKEN_NOT_FOUND)
+        val apiParams = document.selectFirst("script:containsData(id_serie)")?.data()
+            ?: throw Exception(TOKEN_NOT_FOUND)
 
         val chapterUrl = response.request.url.toString()
         val serieId = apiParams.substringAfter("\"")
@@ -221,9 +224,7 @@ abstract class MangaSar(
         val token = TOKEN_REGEX.find(apiParams)!!.groupValues[1]
 
         val apiRequest = pageListApiRequest(chapterUrl, serieId, token)
-        val apiResponse = client.newCall(apiRequest).execute().let {
-            json.decodeFromString<MangaSarReaderDto>(it.body!!.string())
-        }
+        val apiResponse = client.newCall(apiRequest).execute().parseAs<MangaSarReaderDto>()
 
         return apiResponse.images
             .filter { it.url.startsWith("http") }
@@ -266,6 +267,10 @@ abstract class MangaSar(
         }
 
         return chain.proceed(chain.request())
+    }
+
+    protected inline fun <reified T> Response.parseAs(): T = use {
+        json.decodeFromString(body?.string().orEmpty())
     }
 
     protected fun String.toDate(): Long {
