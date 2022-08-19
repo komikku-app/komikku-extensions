@@ -7,7 +7,7 @@ object MLConstants {
     const val searchMangaNextPageSelector = "link[rel=next]"
     const val latestUpdatesSelector = "div.slider__item"
     const val searchMangaSelector = "div.page-item-detail.manga"
-    const val popularMangaNextPageSelector = "nav.navigation-ajax"
+    const val popularMangaNextPageSelector = "a.nextpostslink"
     const val latestUpdatesNextPageSelector = "div[role=navigation] a.last"
 
     const val popularMangaSelector = "div.page-item-detail.manga"
@@ -36,4 +36,5 @@ object MLConstants {
     const val chapterReleaseDateLinkParser = "span.chapter-release-date a"
     const val chapterReleaseDateIParser = "span.chapter-release-date i"
     const val pageListParseSelector = "div.page-break.no-gaps img"
+    const val imageAttribute = "abs:data-src"
 }

@@ -11,13 +11,11 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import java.util.concurrent.TimeUnit
 
 class ManhwaLatino : ParsedHttpSource() {
 
@@ -36,14 +34,6 @@ class ManhwaLatino : ParsedHttpSource() {
      * Header for Request
      */
     override fun headersBuilder() = Headers.Builder().add("Referer", "$baseUrl")
-
-    /**
-     * Http Client with Cloudflare
-     */
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .build()
 
     /**
      * Parser for The WebSite
