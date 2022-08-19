@@ -72,7 +72,7 @@ class MangaRawClub : ParsedHttpSource() {
             manga.author = author
 
         var description = document.select(".description").first()?.text() ?: ""
-        description = description.substringAfter("The Summary is").trim()
+        description = description.substringAfter("»——").trim()
 
         val otherTitle = document.select(".alternative-title").first()?.text()?.trim() ?: ""
         if (otherTitle.isNotEmpty() && otherTitle.lowercase(Locale.ROOT) != "updating")
@@ -81,6 +81,9 @@ class MangaRawClub : ParsedHttpSource() {
 
         manga.genre = document.select(".categories a[href*=genre]").joinToString(", ") {
             it.attr("title").removeSuffix("Genre").trim()
+                .split(" ").joinToString(" ") { char ->
+                    char.lowercase().replaceFirstChar { c -> c.uppercase() }
+                }
         }
 
         val statusElement = document.select("div.header-stats")
