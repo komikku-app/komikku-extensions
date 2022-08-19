@@ -439,7 +439,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("SkyRaws", "https://skyraws.com", "en", overrideVersionCode = 1),
         SingleLang("Sleeping Knight Scans", "https://skscans.com", "en", overrideVersionCode = 2),
         SingleLang("Sleepy Translations", "https://sleepytranslations.com", "en", overrideVersionCode = 1),
-        SingleLang("Smash Scan", "https://smashscan.com.br", "pt-BR", overrideVersionCode = 1),
         SingleLang("SodaScan", "https://sodascan.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Solo Leveling", "https://readsololeveling.online", "en"),
         SingleLang("Sugar Babies", "https://sugarbbscan.com", "en", overrideVersionCode = 2),
