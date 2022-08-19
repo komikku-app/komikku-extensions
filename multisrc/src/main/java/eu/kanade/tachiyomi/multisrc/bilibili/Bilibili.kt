@@ -6,6 +6,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -43,14 +44,19 @@ abstract class Bilibili(
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(::expiredTokenIntercept)
+        .rateLimitHost(baseUrl.toHttpUrl(), 1)
+        .rateLimitHost(CDN_URL.toHttpUrl(), 2)
+        .rateLimitHost(COVER_CDN_URL.toHttpUrl(), 2)
+        .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Accept", ACCEPT_JSON)
         .add("Origin", baseUrl)
         .add("Referer", "$baseUrl/")
 
-    protected val intl by lazy { BilibiliIntl(lang) }
+    protected open val intl by lazy { BilibiliIntl(lang) }
 
     private val apiLang: String = when (lang) {
         BilibiliIntl.SIMPLIFIED_CHINESE -> "cn"
@@ -75,85 +81,15 @@ abstract class Bilibili(
     private val chapterImageFormat: String
         get() = preferences.getString("${IMAGE_FORMAT_PREF_KEY}_$lang", IMAGE_FORMAT_PREF_DEFAULT_VALUE)!!
 
-    override fun popularMangaRequest(page: Int): Request {
-        val requestPayload = buildJsonObject {
-            put("area_id", -1)
-            put("is_finish", -1)
-            put("is_free", -1)
-            put("order", defaultPopularSort)
-            put("page_num", page)
-            put("page_size", POPULAR_PER_PAGE)
-            put("style_id", -1)
-            put("style_prefer", "[]")
-        }
-        val requestBody = requestPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
+    override fun popularMangaRequest(page: Int): Request =
+        searchMangaRequest(page, "", FilterList(SortFilter("", emptyArray(), defaultPopularSort)))
 
-        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/ClassPage".toHttpUrl()
-            .newBuilder()
-            .addCommonParameters()
-            .toString()
+    override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
 
-        return POST(apiUrl, headers, requestBody)
-    }
+    override fun latestUpdatesRequest(page: Int): Request =
+        searchMangaRequest(page, "", FilterList(SortFilter("", emptyArray(), defaultLatestSort)))
 
-    override fun popularMangaParse(response: Response): MangasPage {
-        val result = response.parseAs<List<BilibiliComicDto>>()
-
-        if (result.code != 0) {
-            return MangasPage(emptyList(), hasNextPage = false)
-        }
-
-        val comicList = result.data!!.map(::popularMangaFromObject)
-        val hasNextPage = comicList.size == POPULAR_PER_PAGE
-
-        return MangasPage(comicList, hasNextPage)
-    }
-
-    private fun popularMangaFromObject(comic: BilibiliComicDto): SManga = SManga.create().apply {
-        title = comic.title
-        thumbnail_url = comic.verticalCover + THUMBNAIL_RESOLUTION
-        url = "/detail/mc${comic.seasonId}"
-    }
-
-    override fun latestUpdatesRequest(page: Int): Request {
-        val requestPayload = buildJsonObject {
-            put("area_id", -1)
-            put("is_finish", -1)
-            put("is_free", -1)
-            put("order", defaultLatestSort)
-            put("page_num", page)
-            put("page_size", POPULAR_PER_PAGE)
-            put("style_id", -1)
-            put("style_prefer", "[]")
-        }
-        val requestBody = requestPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
-
-        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/ClassPage".toHttpUrl()
-            .newBuilder()
-            .addCommonParameters()
-            .toString()
-
-        return POST(apiUrl, headers, requestBody)
-    }
-
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = response.parseAs<List<BilibiliComicDto>>()
-
-        if (result.code != 0) {
-            return MangasPage(emptyList(), hasNextPage = false)
-        }
-
-        val comicList = result.data!!.map(::latestMangaFromObject)
-        val hasNextPage = comicList.size == POPULAR_PER_PAGE
-
-        return MangasPage(comicList, hasNextPage)
-    }
-
-    private fun latestMangaFromObject(comic: BilibiliComicDto): SManga = SManga.create().apply {
-        title = comic.title
-        thumbnail_url = comic.verticalCover + THUMBNAIL_RESOLUTION
-        url = "/detail/mc${comic.seasonId}"
-    }
+    override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.startsWith(PREFIX_ID_SEARCH) && query.matches(ID_SEARCH_PATTERN)) {
@@ -206,7 +142,7 @@ abstract class Bilibili(
             .set("Referer", refererUrl)
             .build()
 
-        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/".toHttpUrl().newBuilder()
+        val apiUrl = "$baseUrl/$API_COMIC_V1_COMIC_ENDPOINT/".toHttpUrl().newBuilder()
             .addPathSegment(if (query.isBlank()) "ClassPage" else "Search")
             .addCommonParameters()
             .toString()
@@ -272,7 +208,7 @@ abstract class Bilibili(
             .set("Referer", baseUrl + mangaUrl)
             .build()
 
-        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/ComicDetail".toHttpUrl()
+        val apiUrl = "$baseUrl/$API_COMIC_V1_COMIC_ENDPOINT/ComicDetail".toHttpUrl()
             .newBuilder()
             .addCommonParameters()
             .toString()
@@ -312,19 +248,19 @@ abstract class Bilibili(
             .map { ep -> chapterFromObject(ep, result.data.id) }
     }
 
-    protected fun chapterFromObject(episode: BilibiliEpisodeDto, comicId: Int): SChapter = SChapter.create().apply {
+    protected open fun chapterFromObject(episode: BilibiliEpisodeDto, comicId: Int): SChapter = SChapter.create().apply {
         name = intl.episodePrefix + episode.shortTitle +
             (if (episode.title.isNotBlank()) " - " + episode.title else "")
         date_upload = episode.publicationTime.substringBefore("T").toDate()
         url = "/mc$comicId/${episode.id}"
     }
 
-    override fun pageListRequest(chapter: SChapter): Request =
-        imageIndexRequest(chapter.url, "")
+    override fun pageListRequest(chapter: SChapter): Request = imageIndexRequest(chapter.url, "")
 
     override fun pageListParse(response: Response): List<Page> = imageIndexParse(response)
 
-    protected fun imageIndexRequest(chapterUrl: String, credential: String): Request {
+    @Suppress("SameParameterValue")
+    protected open fun imageIndexRequest(chapterUrl: String, credential: String): Request {
         val chapterId = chapterUrl.substringAfterLast("/").toInt()
 
         val jsonPayload = buildJsonObject {
@@ -337,7 +273,7 @@ abstract class Bilibili(
             .set("Referer", baseUrl + chapterUrl)
             .build()
 
-        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/GetImageIndex".toHttpUrl()
+        val apiUrl = "$baseUrl/$API_COMIC_V1_COMIC_ENDPOINT/GetImageIndex".toHttpUrl()
             .newBuilder()
             .addCommonParameters()
             .toString()
@@ -345,7 +281,7 @@ abstract class Bilibili(
         return POST(apiUrl, newHeaders, requestBody)
     }
 
-    protected fun imageIndexParse(response: Response): List<Page> {
+    protected open fun imageIndexParse(response: Response): List<Page> {
         val result = response.parseAs<BilibiliReader>()
 
         if (result.code != 0) {
@@ -370,7 +306,7 @@ abstract class Bilibili(
         }
         val requestBody = jsonPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
 
-        val apiUrl = "$baseUrl/$BASE_API_COMIC_ENDPOINT/ImageToken".toHttpUrl()
+        val apiUrl = "$baseUrl/$API_COMIC_V1_COMIC_ENDPOINT/ImageToken".toHttpUrl()
             .newBuilder()
             .addCommonParameters()
             .toString()
@@ -453,7 +389,7 @@ abstract class Bilibili(
         return FilterList(filters)
     }
 
-    protected fun expiredTokenIntercept(chain: Interceptor.Chain): Response {
+    private fun expiredTokenIntercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
 
         // Get a new image token if the current one expired.
@@ -470,6 +406,7 @@ abstract class Bilibili(
 
             val newRequest = imageRequest(Page(0, "", newPageUrl))
 
+            imageTokenResponse.close()
             response.close()
             return chain.proceed(newRequest)
         }
@@ -477,7 +414,7 @@ abstract class Bilibili(
         return response
     }
 
-    protected fun HttpUrl.Builder.addCommonParameters(): HttpUrl.Builder = let {
+    protected open fun HttpUrl.Builder.addCommonParameters(): HttpUrl.Builder = let {
         if (name == "BILIBILI COMICS") {
             addQueryParameter("lang", apiLang)
             addQueryParameter("sys_lang", apiLang)
@@ -502,8 +439,7 @@ abstract class Bilibili(
         const val CDN_URL = "https://manga.hdslb.com"
         const val COVER_CDN_URL = "https://i0.hdslb.com"
 
-        const val BASE_API_COMIC_ENDPOINT = "twirp/comic.v1.Comic"
-        const val BASE_API_USER_ENDPOINT = "twirp/comic.v1.User"
+        const val API_COMIC_V1_COMIC_ENDPOINT = "twirp/comic.v1.Comic"
 
         private const val ACCEPT_JSON = "application/json, text/plain, */*"
 

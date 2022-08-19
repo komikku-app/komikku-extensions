@@ -10,7 +10,7 @@ class BilibiliGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Bilibili"
 
-    override val baseVersionCode: Int = 3
+    override val baseVersionCode: Int = 4
 
     override val sources = listOf(
         MultiLang(
