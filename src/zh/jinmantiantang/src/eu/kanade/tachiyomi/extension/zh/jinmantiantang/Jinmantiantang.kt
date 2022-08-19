@@ -2,8 +2,6 @@ package eu.kanade.tachiyomi.extension.zh.jinmantiantang
 
 import android.app.Application
 import android.content.SharedPreferences
-import androidx.preference.EditTextPreference
-import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -17,6 +15,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -47,7 +46,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
         .newBuilder()
         // Add rate limit to fix manga thumbnail load failure
         .rateLimitHost(
-            baseUrl.toHttpUrlOrNull()!!,
+            baseUrl.toHttpUrl(),
             preferences.getString(MAINSITE_RATELIMIT_PREF, MAINSITE_RATELIMIT_PREF_DEFAULT)!!.toInt(),
             preferences.getString(MAINSITE_RATELIMIT_PERIOD, MAINSITE_RATELIMIT_PERIOD_DEFAULT)!!.toLong(),
         )
@@ -60,7 +59,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
 
     override fun popularMangaNextPageSelector(): String = "a.prevnext"
     override fun popularMangaSelector(): String {
-        return "div.list-col:not([style])"
+        return "div.list-col > div.p-b-15:not([data-group])"
     }
 
     private fun List<SManga>.filterGenre(): List<SManga> {
@@ -73,7 +72,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     }
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val children = element.child(0).children()
+        val children = element.children()
         if (children[0].tagName() == "a") children.removeFirst()
         title = children[1].text()
         setUrlWithoutDomain(children[0].selectFirst("a").attr("href"))
@@ -389,86 +388,9 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val mainSiteRateLimitPreference = ListPreference(screen.context).apply {
-            key = MAINSITE_RATELIMIT_PREF
-            title = MAINSITE_RATELIMIT_PREF_TITLE
-            entries = PREF_ENTRIES_ARRAY
-            entryValues = PREF_ENTRIES_ARRAY
-            summary = MAINSITE_RATELIMIT_PREF_SUMMARY
-
-            setDefaultValue(MAINSITE_RATELIMIT_PREF_DEFAULT)
-        }
-
-        val mainSiteRateLimitPeriodPreference = ListPreference(screen.context).apply {
-            key = MAINSITE_RATELIMIT_PERIOD
-            title = MAINSITE_RATELIMIT_PERIOD_TITLE
-            entries = PERIOD_ENTRIES_ARRAY
-            entryValues = PERIOD_ENTRIES_ARRAY
-            summary = MAINSITE_RATELIMIT_PERIOD_SUMMARY
-
-            setDefaultValue(MAINSITE_RATELIMIT_PERIOD_DEFAULT)
-        }
-
-        val mirrorURLPreference = ListPreference(screen.context).apply {
-            key = USE_MIRROR_URL_PREF
-            title = USE_MIRROR_URL_PREF_TITLE
-            entries = SITE_ENTRIES_ARRAY_DESCRIPTION
-            entryValues = SITE_ENTRIES_ARRAY_VALUE
-            summary = USE_MIRROR_URL_PREF_SUMMARY
-
-            setDefaultValue("0")
-        }
-
-        val blockGenrePreference = EditTextPreference(screen.context).apply {
-            key = BLOCK_PREF
-            title = BLOCK_PREF_TITLE
-            setDefaultValue(BLOCK_PREF_DEFAULT)
-            dialogTitle = BLOCK_PREF_DIALOGTITLE
-        }
-
-        screen.addPreference(mainSiteRateLimitPreference)
-        screen.addPreference(mainSiteRateLimitPeriodPreference)
-        screen.addPreference(mirrorURLPreference)
-        screen.addPreference(blockGenrePreference)
+        getPreferenceList(screen.context).forEach { screen.addPreference(it) }
     }
-
     companion object {
-        private const val DEFAULT_SITE = "18comic.vip"
         const val PREFIX_ID_SEARCH = "JM:"
-
-        private const val BLOCK_PREF = "BLOCK_GENRES_LIST"
-        private const val BLOCK_PREF_TITLE = "屏蔽词列表"
-        private const val BLOCK_PREF_DEFAULT = "// 例如 \"YAOI cos 扶他 毛絨絨 獵奇 韩漫 韓漫\", " +
-            "关键词之间用空格分离, 大小写不敏感, \"//\"后的字符会被忽略"
-        private const val BLOCK_PREF_DIALOGTITLE = "关键词列表"
-
-        private const val MAINSITE_RATELIMIT_PREF = "mainSiteRateLimitPreference"
-        private const val MAINSITE_RATELIMIT_PREF_TITLE = "在限制时间内（下个设置项）允许的请求数量。" //  Number of requests allowed within a period of units.
-        private const val MAINSITE_RATELIMIT_PREF_SUMMARY = "此值影响更新书架时发起连接请求的数量。调低此值可能减小IP被屏蔽的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s"
-        private val PREF_ENTRIES_ARRAY = (1..10).map { i -> i.toString() }.toTypedArray()
-        private const val MAINSITE_RATELIMIT_PREF_DEFAULT = 1.toString()
-
-        private const val MAINSITE_RATELIMIT_PERIOD = "mainSiteRateLimitPeriodPreference"
-        private const val MAINSITE_RATELIMIT_PERIOD_TITLE = "限制持续时间。单位秒" // The limiting duration. Defaults to 3.
-        private const val MAINSITE_RATELIMIT_PERIOD_SUMMARY = "此值影响更新书架时请求的间隔时间。调大此值可能减小IP被屏蔽的几率，但更新时间也会变慢。需要重启软件以生效。\n当前值：%s"
-        private val PERIOD_ENTRIES_ARRAY = (1..60).map { i -> i.toString() }.toTypedArray()
-        private const val MAINSITE_RATELIMIT_PERIOD_DEFAULT = 3.toString()
-
-        private const val USE_MIRROR_URL_PREF = "useMirrorWebsitePreference"
-        private const val USE_MIRROR_URL_PREF_TITLE = "使用镜像网址"
-        private const val USE_MIRROR_URL_PREF_SUMMARY = "使用镜像网址。需要重启软件以生效。" // "Use mirror url. Defaults to main site"
-
-        private val SITE_ENTRIES_ARRAY_DESCRIPTION = arrayOf(
-            "主站", "海外分流",
-            "中国大陆总站", "中国大陆分流"
-        )
-        private val SITE_ENTRIES_ARRAY_VALUE = arrayOf("0", "1", "2", "3")
-
-        // List is based on https://jmcomic.bet/
-        // Please also update AndroidManifest
-        private val SITE_ENTRIES_ARRAY = arrayOf(
-            DEFAULT_SITE, "18comic.org",
-            "jmcomic.asia", "jmcomic.city"
-        )
     }
 }

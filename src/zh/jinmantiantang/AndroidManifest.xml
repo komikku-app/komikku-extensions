@@ -27,7 +27,15 @@
                     android:pathPattern="/album/..*"
                     android:scheme="https" />
                 <data
-                    android:host="jmcomic.city"
+                    android:host="jmcomic1.city"
+                    android:pathPattern="/album/..*"
+                    android:scheme="https" />
+                <data
+                    android:host="jmcomic.me"
+                    android:pathPattern="/album/..*"
+                    android:scheme="https" />
+                <data
+                    android:host="jmcomic1.me"
                     android:pathPattern="/album/..*"
                     android:scheme="https" />
             </intent-filter>
