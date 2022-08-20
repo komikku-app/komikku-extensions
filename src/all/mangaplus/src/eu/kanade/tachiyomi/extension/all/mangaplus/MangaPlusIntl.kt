@@ -41,4 +41,14 @@ class MangaPlusIntl(lang: Language) {
         Language.PORTUGUESE_BR -> "Título não disponível neste idioma."
         else -> "Title not available in this language."
     }
+
+    val unknownError: String = when (lang) {
+        Language.PORTUGUESE_BR -> "Um erro desconhecido ocorreu."
+        else -> "An unknown error happened."
+    }
+
+    val titleRemoved: String = when (lang) {
+        Language.PORTUGUESE_BR -> "Este título foi removido do catálogo do MANGA Plus."
+        else -> "This title was removed from the MANGA Plus catalogue."
+    }
 }

@@ -32,17 +32,17 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.util.UUID
 
-abstract class MangaPlus(
+class MangaPlus(
     override val lang: String,
     private val internalLang: String,
     private val langCode: Language
 ) : HttpSource(), ConfigurableSource {
 
-    final override val name = "MANGA Plus by SHUEISHA"
+    override val name = "MANGA Plus by SHUEISHA"
 
-    final override val baseUrl = "https://mangaplus.shueisha.co.jp"
+    override val baseUrl = "https://mangaplus.shueisha.co.jp"
 
-    final override val supportsLatest = true
+    override val supportsLatest = true
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Origin", baseUrl)
@@ -84,7 +84,9 @@ abstract class MangaPlus(
     override fun popularMangaParse(response: Response): MangasPage {
         val result = response.asMangaPlusResponse()
 
-        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
+        checkNotNull(result.success) {
+            result.error!!.langPopup(langCode)?.body ?: intl.unknownError
+        }
 
         titleList = result.success.titleRankingView!!.titles
             .filter { it.language == langCode }
@@ -111,7 +113,9 @@ abstract class MangaPlus(
     override fun latestUpdatesParse(response: Response): MangasPage {
         val result = response.asMangaPlusResponse()
 
-        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
+        checkNotNull(result.success) {
+            result.error!!.langPopup(langCode)?.body ?: intl.unknownError
+        }
 
         // Fetch all titles to get newer thumbnail URLs in the interceptor.
         val popularResponse = client.newCall(popularMangaRequest(1)).execute()
@@ -160,7 +164,9 @@ abstract class MangaPlus(
     override fun searchMangaParse(response: Response): MangasPage {
         val result = response.asMangaPlusResponse()
 
-        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
+        checkNotNull(result.success) {
+            result.error!!.langPopup(langCode)?.body ?: intl.unknownError
+        }
 
         if (result.success.titleDetailView != null) {
             val mangaPlusTitle = result.success.titleDetailView.title
@@ -192,7 +198,9 @@ abstract class MangaPlus(
                 val titleRequest = titleDetailsRequest(titleId.toString())
                 val titleResult = client.newCall(titleRequest).execute().asMangaPlusResponse()
 
-                checkNotNull(titleResult.success) { titleResult.error!!.langPopup(langCode).body }
+                checkNotNull(titleResult.success) {
+                    titleResult.error!!.langPopup(langCode)?.body ?: intl.unknownError
+                }
 
                 titleDetailsParse(titleResult.success.titleDetailView!!)
             }
@@ -248,7 +256,15 @@ abstract class MangaPlus(
     override fun mangaDetailsParse(response: Response): SManga {
         val result = response.asMangaPlusResponse()
 
-        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
+        checkNotNull(result.success) {
+            val error = result.error!!.langPopup(langCode)
+
+            when {
+                error?.subject == NOT_FOUND_SUBJECT -> intl.titleRemoved
+                !error?.body.isNullOrEmpty() -> error!!.body
+                else -> intl.unknownError
+            }
+        }
 
         return titleDetailsParse(result.success.titleDetailView!!)
             ?: throw Exception(intl.notAvailable)
@@ -263,7 +279,7 @@ abstract class MangaPlus(
             artist = author
             description = details.overview + "\n\n" + details.viewingPeriodDescription
             status = if (details.isCompleted) SManga.COMPLETED else SManga.ONGOING
-            genre = details.genres.filter(String::isNotEmpty).joinToString()
+            genre = details.genres.joinToString()
             thumbnail_url = titleObj.portraitImageUrl
             url = "#/titles/${titleObj.titleId}"
         }
@@ -276,7 +292,15 @@ abstract class MangaPlus(
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.asMangaPlusResponse()
 
-        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
+        checkNotNull(result.success) {
+            val error = result.error!!.langPopup(langCode)
+
+            when {
+                error?.subject == NOT_FOUND_SUBJECT -> intl.titleRemoved
+                !error?.body.isNullOrEmpty() -> error!!.body
+                else -> intl.unknownError
+            }
+        }
 
         val titleDetailView = result.success.titleDetailView!!
 
@@ -319,7 +343,15 @@ abstract class MangaPlus(
     override fun pageListParse(response: Response): List<Page> {
         val result = response.asMangaPlusResponse()
 
-        checkNotNull(result.success) { result.error!!.langPopup(langCode).body }
+        checkNotNull(result.success) {
+            val error = result.error!!.langPopup(langCode)
+
+            when {
+                error?.subject == NOT_FOUND_SUBJECT -> intl.chapterExpired
+                !error?.body.isNullOrEmpty() -> error!!.body
+                else -> intl.unknownError
+            }
+        }
 
         val referer = response.request.header("Referer")!!
 
@@ -451,7 +483,7 @@ abstract class MangaPlus(
     companion object {
         private const val API_URL = "https://jumpg-webapi.tokyo-cdn.com/api"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"
 
         private const val QUALITY_PREF_KEY = "imageResolution"
         private val QUALITY_PREF_ENTRY_VALUES = arrayOf("low", "high", "super_high")
@@ -462,6 +494,8 @@ abstract class MangaPlus(
 
         val COMPLETED_REGEX = "completado|complete|completo".toRegex()
         val REEDITION_REGEX = "revival|remasterizada".toRegex()
+
+        private const val NOT_FOUND_SUBJECT = "Not Found"
 
         private const val TITLE_THUMBNAIL_PATH = "title_thumbnail_portrait_list"
 

@@ -10,13 +10,10 @@ data class MangaPlusResponse(
 )
 
 @Serializable
-data class ErrorResult(
-    val englishPopup: Popup,
-    val popups: List<Popup> = emptyList()
-) {
+data class ErrorResult(val popups: List<Popup> = emptyList()) {
 
-    fun langPopup(lang: Language): Popup =
-        popups.firstOrNull { it.language == lang } ?: englishPopup
+    fun langPopup(lang: Language): Popup? =
+        popups.firstOrNull { it.language == lang }
 }
 
 @Serializable
@@ -85,11 +82,11 @@ data class TitleDetailView(
         get() = nonAppearanceInfo.contains(MangaPlus.COMPLETED_REGEX) || isOneShot
 
     val genres: List<String>
-        get() = listOf(
-            if (isSimulReleased && !isReEdition) "Simulrelease" else "",
-            if (isOneShot) "One-shot" else "",
-            if (isReEdition) "Re-edition" else "",
-            if (isWebtoon) "Webtoon" else ""
+        get() = listOfNotNull(
+            "Simulrelease".takeIf { isSimulReleased && !isReEdition && !isOneShot },
+            "One-shot".takeIf { isOneShot },
+            "Re-edition".takeIf { isReEdition },
+            "Webtoon".takeIf { isWebtoon }
         )
 }
 
