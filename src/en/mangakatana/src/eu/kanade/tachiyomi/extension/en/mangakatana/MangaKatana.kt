@@ -179,7 +179,7 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
         date_upload = dateFormat.parse(element.select(".update_time").text())?.time ?: 0
     }
 
-    private val imageArrayRegex = Regex("""var ytaw=\[([^\[]*)]""")
+    private val imageArrayRegex = Regex("""var htnc=\[([^\[]*)]""")
     private val imageUrlRegex = Regex("""'([^']*)'""")
 
     // Page List
@@ -190,7 +190,7 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val imageArray = document.select("script:containsData(var ytaw)").firstOrNull()?.data()
+        val imageArray = document.select("script:containsData(var htnc)").firstOrNull()?.data()
             ?.let { imageArrayRegex.find(it)?.groupValues?.get(1) }
             ?: throw Exception("Image array not found")
         return imageUrlRegex.findAll(imageArray).asIterable().mapIndexed { i, mr ->
