@@ -72,7 +72,7 @@ class MangaRawClub : ParsedHttpSource() {
             manga.author = author
 
         var description = document.select(".description").first()?.text() ?: ""
-        description = description.substringAfter("»——").trim()
+        description = description.substringAfter("Summary is").trim()
 
         val otherTitle = document.select(".alternative-title").first()?.text()?.trim() ?: ""
         if (otherTitle.isNotEmpty() && otherTitle.lowercase(Locale.ROOT) != "updating")
