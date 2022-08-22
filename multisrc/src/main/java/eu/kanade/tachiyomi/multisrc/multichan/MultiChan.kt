@@ -95,7 +95,7 @@ abstract class MultiChan(
         val rawCategory = infoElement.select(":contains(Тип) a").text().lowercase()
         val manga = SManga.create()
         manga.title = document.select("title").text().substringBefore(" »")
-        manga.author = infoElement.select(":contains(Автор)").text()
+        manga.author = infoElement.select(":contains(Автор) .item2").text()
         manga.genre = rawCategory + ", " + document.select(".sidetags ul a:last-child").joinToString { it.text() }
         manga.status = parseStatus(infoElement.select(":contains(Загружено)").text())
         manga.description = descElement.textNodes().first().text().trim()
@@ -117,6 +117,7 @@ abstract class MultiChan(
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         chapter.name = urlElement.text()
+        chapter.chapter_number = "(глава\\s|часть\\s)([0-9]+\\.?[0-9]*)".toRegex(RegexOption.IGNORE_CASE).find(chapter.name)?.groupValues?.get(2)?.toFloat() ?: -1F
         chapter.date_upload = simpleDateFormat.parse(element.select("div.date").first().text())?.time ?: 0L
         return chapter
     }

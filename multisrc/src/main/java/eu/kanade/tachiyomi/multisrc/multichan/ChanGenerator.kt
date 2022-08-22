@@ -9,7 +9,7 @@ class ChanGenerator : ThemeSourceGenerator {
 
     override val themeClass = "MultiChan"
 
-    override val baseVersionCode: Int = 1
+    override val baseVersionCode: Int = 2
 
     override val sources = listOf(
         SingleLang("MangaChan", "https://manga-chan.me", "ru", overrideVersionCode = 14),
