@@ -16,10 +16,14 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -79,12 +83,29 @@ abstract class MangaHub(
 
     private fun refreshApiKey(chapter: SChapter) {
         val now = Calendar.getInstance().time.time
-        val url = "$baseUrl${chapter.url}".toHttpUrl()
-        val number = chapter.url
-            .substringAfter("chapter-")
-            .substringBefore("/")
 
-        val recently = "{\"${now - (0..120).random()}\":{\"mangaID\":${(1..42000).random()},\"number\":$number}}"
+        val slug = "$baseUrl${chapter.url}"
+            .toHttpUrlOrNull()
+            ?.pathSegments
+            ?.get(1)
+
+        val url = if (slug != null) {
+            "$baseUrl/manga/$slug".toHttpUrl()
+        } else {
+            baseUrl.toHttpUrl()
+        }
+
+        // Clear key cookie
+        val cookie = Cookie.parse(url, "mhub_access=; Max-Age=8640000; Path=/; Expires=Mon, 1 Jan 2080 00:00:00 GMT")!!
+        client.cookieJar.saveFromResponse(url, listOf(cookie))
+
+        // Set required cookie (for cache busting?)
+        val recently = buildJsonObject {
+            putJsonObject((now - (0..3600).random()).toString()) {
+                put("mangaID", (1..42_000).random())
+                put("number", (1..20).random())
+            }
+        }.toString()
 
         client.cookieJar.saveFromResponse(
             url,
