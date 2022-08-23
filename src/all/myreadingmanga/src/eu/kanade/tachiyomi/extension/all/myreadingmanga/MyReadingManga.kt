@@ -76,6 +76,9 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
             if (filter is UriFilter) {
                 filter.addToUri(uri, "wpsolr_fq[${i - indexModifier}]")
             }
+            if (filter is SearchSortTypeList) {
+                uri.appendQueryParameter("wpsolr_sort", listOf("sort_by_random", "sort_by_date_desc", "sort_by_date_asc", "sort_by_relevancy_desc")[filter.state])
+            }
         }
         uri.appendQueryParameter("wpsolr_page", page.toString())
 
@@ -97,9 +100,10 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
 
     // Build Manga From Element
     private fun buildManga(titleElement: Element, thumbnailElement: Element?): SManga {
-        val manga = SManga.create()
-        manga.setUrlWithoutDomain(titleElement.attr("href"))
-        manga.title = cleanTitle(titleElement.text())
+        val manga = SManga.create().apply {
+            setUrlWithoutDomain(titleElement.attr("href"))
+            title = cleanTitle(titleElement.text())
+        }
         if (thumbnailElement != null) manga.thumbnail_url = getThumbnail(getImage(thumbnailElement))
         return manga
     }
@@ -140,6 +144,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
 
     private fun mangaDetailsParse(document: Document, needCover: Boolean = true): SManga {
         return SManga.create().apply {
+            title = cleanTitle(document.select("h1").text())
             author = cleanAuthor(document.select("h1").text())
             artist = author
             genre = document.select(".entry-header p a[href*=genre]").joinToString { it.text() }
@@ -178,7 +183,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
 
         val date = parseDate(document.select(".entry-time").text())
         val mangaUrl = document.baseUri()
-        val chfirstname = document.select(".chapter-class a[href*=$mangaUrl]")?.first()?.text()?.ifEmpty { "Ch. 1" }?.capitalize()
+        val chfirstname = document.select(".chapter-class a[href*=$mangaUrl]")?.first()?.text()?.ifEmpty { "Ch. 1" }?.replaceFirstChar { it.titlecase() }
             ?: "Ch. 1"
         // create first chapter since its on main manga page
         chapters.add(createChapter("1", document.baseUri(), date, chfirstname))
@@ -187,7 +192,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
             it.forEach {
                 if (!it.text().contains("Next »", true)) {
                     val pageNumber = it.text()
-                    val chname = document.select(".chapter-class a[href$=/$pageNumber/]")?.text()?.ifEmpty { "Ch. $pageNumber" }?.capitalize()
+                    val chname = document.select(".chapter-class a[href$=/$pageNumber/]")?.text()?.ifEmpty { "Ch. $pageNumber" }?.replaceFirstChar { it.titlecase() }
                         ?: "Ch. $pageNumber"
                     chapters.add(createChapter(it.text(), document.baseUri(), date, chname))
                 }
@@ -262,6 +267,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
     override fun getFilterList(): FilterList {
         return FilterList(
             EnforceLanguageFilter(siteLang),
+            SearchSortTypeList(),
             GenreFilter(returnFilter(getCache(cachedPagesUrls["genres"]!!), ".tagcloud a[href*=/genre/]")),
             TagFilter(returnFilter(getCache(cachedPagesUrls["tags"]!!), ".tagcloud a[href*=/tag/]")),
             CatFilter(returnFilter(getCache(cachedPagesUrls["categories"]!!), ".links a")),
@@ -282,6 +288,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
     private class CatFilter(CATID: Array<String>) : UriSelectFilter("Categories", "categories", arrayOf("Any", *CATID))
     private class PairingFilter(PAIR: Array<String>) : UriSelectFilter("Pairing", "pairing_str", arrayOf("Any", *PAIR))
     private class ScanGroupFilter(GROUP: Array<String>) : UriSelectFilter("Scanlation Group", "group_str", arrayOf("Any", *GROUP))
+    private class SearchSortTypeList : Filter.Select<String>("Sort by", arrayOf("Random", "Newest", "Oldest", "More relevant"))
 
     /**
      * Class that creates a select filter. Each entry in the dropdown has a name and a display name.
