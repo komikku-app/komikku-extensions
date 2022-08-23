@@ -10,7 +10,7 @@ class MCCMSGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang(
             name = "Haoman6", baseUrl = "https://www.haoman6.com", lang = "zh",
-            className = "Haoman6", sourceName = "好漫6", overrideVersionCode = 2
+            className = "Haoman6", sourceName = "好漫6", overrideVersionCode = 3
         ),
         SingleLang( // 与 app2.haomanwu.com 相同
             name = "Haomanwu", baseUrl = "https://app2.haoman6.com", lang = "zh",
