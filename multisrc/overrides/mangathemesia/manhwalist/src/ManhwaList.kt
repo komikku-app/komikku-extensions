@@ -14,4 +14,6 @@ class ManhwaList : MangaThemesia("ManhwaList", "https://manhwalist.com", "id") {
         .build()
 
     override val hasProjectPage = true
+
+    override val pageSelector = "div#readerarea img.jetpack-lazy-image"
 }
