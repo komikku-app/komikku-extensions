@@ -30,7 +30,7 @@ internal data class Page(
 /** Chapter model schema. */
 @kotlinx.serialization.Serializable
 internal data class Chapter(
-    private val id: Int,
+    val id: Int,
     val title: String,
     val number: Float,
     val volume: Int?,
@@ -38,8 +38,7 @@ internal data class Chapter(
     val final: Boolean,
     val series: String,
     val groups: List<String>,
-    val full_title: String,
-    val url: String
+    val full_title: String
 ) {
     override fun equals(other: Any?) =
         this === other || other is Chapter && id == other.id
@@ -50,10 +49,9 @@ internal data class Chapter(
 /** Series model schema. */
 @kotlinx.serialization.Serializable
 internal data class Series(
-    private val slug: String,
+    val slug: String,
     val title: String,
-    val url: String,
-    val cover: String?,
+    val cover: String,
     val description: String? = null,
     val completed: Boolean? = null,
     val licensed: Boolean? = null,

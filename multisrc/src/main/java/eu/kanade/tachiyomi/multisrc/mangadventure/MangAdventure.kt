@@ -38,15 +38,13 @@ abstract class MangAdventure(
         "(Android ${VERSION.RELEASE}; Mobile) " +
         "Tachiyomi/${AppInfo.getVersionName()}"
 
-    /** The URI of the site's API. */
-    private val apiUri by lazy {
-        Uri.parse("$baseUrl/api/v$versionId")!!
-    }
+    /** The URL of the site's API. */
+    private val apiUrl by lazy { "$baseUrl/api/v2" }
 
     /** The JSON parser of the class. */
     private val json by injectLazy<Json>()
 
-    override val versionId = 2
+    override val versionId = 3
 
     override val supportsLatest = true
 
@@ -54,21 +52,13 @@ abstract class MangAdventure(
         super.headersBuilder().set("User-Agent", userAgent)
 
     override fun latestUpdatesRequest(page: Int) =
-        apiUri.buildUpon().appendEncodedPath("series").run {
-            appendQueryParameter("page", page.toString())
-            appendQueryParameter("sort", "-latest_upload")
-            GET(toString(), headers)
-        }
+        GET("$apiUrl/series?page=$page&sort=-latest_upload", headers)
 
     override fun popularMangaRequest(page: Int) =
-        apiUri.buildUpon().appendEncodedPath("series").run {
-            appendQueryParameter("page", page.toString())
-            appendQueryParameter("sort", "-views")
-            GET(toString(), headers)
-        }
+        GET("$apiUrl/series?page=$page&sort=-views", headers)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
-        apiUri.buildUpon().appendEncodedPath("series").run {
+        Uri.parse(apiUrl).buildUpon().appendEncodedPath("series").run {
             if (query.startsWith(SLUG_QUERY)) {
                 appendQueryParameter("slug", query.substring(SLUG_QUERY.length))
             } else {
@@ -82,21 +72,10 @@ abstract class MangAdventure(
         }
 
     override fun chapterListRequest(manga: SManga) =
-        apiUri.buildUpon().appendEncodedPath("chapters").run {
-            appendQueryParameter("series", manga.slug)
-            appendQueryParameter("date_format", "timestamp")
-            GET(toString(), headers)
-        }
+        GET("$apiUrl/series/${manga.url}/chapters?date_format=timestamp", headers)
 
     override fun pageListRequest(chapter: SChapter) =
-        apiUri.buildUpon().appendEncodedPath("pages").run {
-            val (slug, vol, num) = chapter.components
-            appendQueryParameter("track", "true")
-            appendQueryParameter("series", slug)
-            appendQueryParameter("volume", vol)
-            appendQueryParameter("number", num)
-            GET(toString(), headers)
-        }
+        GET("$apiUrl/chapters/${chapter.url}/pages?track=true", headers)
 
     override fun latestUpdatesParse(response: Response) =
         response.decode<Paginator<Series>>().let {
@@ -112,7 +91,7 @@ abstract class MangAdventure(
     override fun chapterListParse(response: Response) =
         response.decode<Results<Chapter>>().map { chapter ->
             SChapter.create().apply {
-                url = chapter.url
+                url = chapter.id.toString()
                 name = buildString {
                     append(chapter.full_title)
                     if (chapter.final) append(" [END]")
@@ -133,11 +112,11 @@ abstract class MangAdventure(
 
     // Return the real URL for "Open in browser"
     override fun mangaDetailsRequest(manga: SManga) =
-        GET(baseUrl + manga.url, headers)
+        GET("$baseUrl/reader/${manga.url}", headers)
 
     // Workaround to allow "Open in browser" to use the real URL
     override fun fetchMangaDetails(manga: SManga) =
-        client.newCall(GET("$apiUri/series/${manga.slug}", headers))
+        client.newCall(GET("$apiUrl/series/${manga.url}", headers))
             .asObservableSuccess().map {
                 mangaDetailsParse(it).apply { initialized = true }
             }!!
@@ -154,14 +133,6 @@ abstract class MangAdventure(
             CategoryList(categories)
         )
 
-    /** The slug of the manga. */
-    private inline val SManga.slug
-        get() = url.split('/')[2]
-
-    /** The components (series, volume, number) of the chapter. */
-    private inline val SChapter.components
-        get() = url.split('/').slice(2..5)
-
     /** Decodes the JSON response as an object. */
     private inline fun <reified T> Response.decode() =
         json.decodeFromJsonElement<T>(json.parseToJsonElement(body!!.string()))
@@ -169,7 +140,7 @@ abstract class MangAdventure(
     /** Converts a [Series] object to an [SManga]. */
     private fun mangaFromJSON(series: Series) =
         SManga.create().apply {
-            url = series.url
+            url = series.slug
             title = series.title
             thumbnail_url = series.cover
             description = buildString {
