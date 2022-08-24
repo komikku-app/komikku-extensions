@@ -10,7 +10,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
 
     override val themeClass = "MangaThemesia"
 
-    override val baseVersionCode: Int = 17
+    override val baseVersionCode: Int = 18
 
     override val sources = listOf(
         MultiLang("Asura Scans", "https://www.asurascans.com", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 16),

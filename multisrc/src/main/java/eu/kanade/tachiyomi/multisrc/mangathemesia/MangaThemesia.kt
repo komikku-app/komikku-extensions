@@ -94,13 +94,13 @@ abstract class MangaThemesia(
                         url.addQueryParameter("yearx", filter.state)
                     }
                     is StatusFilter -> {
-                        url.addQueryParameter("status", filter.selectedValue)
+                        url.addQueryParameter("status", filter.selectedValue())
                     }
                     is TypeFilter -> {
-                        url.addQueryParameter("type", filter.selectedValue)
+                        url.addQueryParameter("type", filter.selectedValue())
                     }
                     is OrderByFilter -> {
-                        url.addQueryParameter("order", filter.selectedValue)
+                        url.addQueryParameter("order", filter.selectedValue())
                     }
                     is GenreListFilter -> {
                         filter.state
@@ -112,7 +112,7 @@ abstract class MangaThemesia(
                     }
                     // if site has project page, default value "hasProjectPage" = false
                     is ProjectFilter -> {
-                        if (filter.selectedValue == "project-filter-on") {
+                        if (filter.selectedValue() == "project-filter-on") {
                             url.setPathSegment(0, projectPageString.substring(1))
                         }
                     }
@@ -310,14 +310,14 @@ abstract class MangaThemesia(
 
     open class SelectFilter(
         displayName: String,
-        vals: Array<Pair<String, String>>,
+        val vals: Array<Pair<String, String>>,
         defaultValue: String? = null
     ) : Filter.Select<String>(
         displayName,
         vals.map { it.first }.toTypedArray(),
         vals.indexOfFirst { it.second == defaultValue }.takeIf { it != -1 } ?: 0
     ) {
-        val selectedValue = vals[state].second
+        fun selectedValue() = vals[state].second
     }
 
     protected class StatusFilter : SelectFilter(
