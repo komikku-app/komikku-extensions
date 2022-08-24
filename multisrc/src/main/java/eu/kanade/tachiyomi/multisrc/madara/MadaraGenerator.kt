@@ -401,7 +401,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Remangas", "https://remangas.net", "pt-BR"),
         SingleLang("Remoscans", "https://remoscans.xyz", "en"),
         SingleLang("Renascence Scans (Renascans)", "https://new.renascans.com", "en", className = "RenaScans", overrideVersionCode = 1),
-        SingleLang("Reset Scans", "https://reset-scans.com", "en", overrideVersionCode = 5),
         SingleLang("Rh2PlusManga", "https://www.rh2plusmanga.com", "th", overrideVersionCode = 4),
         SingleLang("Rio2 Manga", "https://rio2manga.com", "en"),
         SingleLang("Romantik Manga", "https://romantikmanga.com", "tr"),
