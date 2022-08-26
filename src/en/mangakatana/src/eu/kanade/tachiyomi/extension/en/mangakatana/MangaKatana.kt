@@ -179,7 +179,8 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
         date_upload = dateFormat.parse(element.select(".update_time").text())?.time ?: 0
     }
 
-    private val imageArrayRegex = Regex("""var htnc=\[([^\[]*)]""")
+    private val imageArrayYtawRegex = Regex("""var ytaw=\[([^\[]*)]""")
+    private val imageArrayHtncRegex = Regex("""var htnc=\[([^\[]*)]""")
     private val imageUrlRegex = Regex("""'([^']*)'""")
 
     // Page List
@@ -190,12 +191,28 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val imageArray = document.select("script:containsData(var htnc)").firstOrNull()?.data()
-            ?.let { imageArrayRegex.find(it)?.groupValues?.get(1) }
-            ?: throw Exception("Image array not found")
-        return imageUrlRegex.findAll(imageArray).asIterable().mapIndexed { i, mr ->
-            Page(i, "", mr.groupValues[1])
-        }
+        val imageArrayYtaw = document.select("script:containsData(var ytaw)").firstOrNull()?.data()
+            ?.let { imageArrayYtawRegex.find(it)?.groupValues?.get(1) }
+        val imageArrayHtnc = document.select("script:containsData(var htnc)").firstOrNull()?.data()
+            ?.let { imageArrayHtncRegex.find(it)?.groupValues?.get(1) }
+
+        val pagesYtaw =
+            imageArrayYtaw?.let {
+                imageUrlRegex.findAll(it).asIterable().mapIndexed { i, mr ->
+                    Page(i, "", mr.groupValues[1])
+                }
+            } ?: emptyList()
+        val pagesHtnc =
+            imageArrayHtnc?.let {
+                imageUrlRegex.findAll(it).asIterable().mapIndexed { i, mr ->
+                    Page(i, "", mr.groupValues[1])
+                }
+            } ?: emptyList()
+
+        return if (pagesYtaw.size >= pagesHtnc.size)
+            pagesYtaw
+        else
+            pagesHtnc
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
