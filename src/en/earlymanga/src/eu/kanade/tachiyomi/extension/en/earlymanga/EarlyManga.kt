@@ -82,7 +82,7 @@ class EarlyManga : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.url = element.select("a").attr("abs:href").substringAfter(baseUrl)
-        manga.title = element.select("div:has(.flag)+a").attr("title")
+        manga.title = element.select("a.manga_title").attr("title")
         manga.thumbnail_url = element.select("a img").attr("abs:src")
         return manga
     }
