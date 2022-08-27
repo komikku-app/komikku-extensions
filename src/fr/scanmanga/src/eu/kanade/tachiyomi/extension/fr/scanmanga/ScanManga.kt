@@ -52,7 +52,7 @@ class ScanManga : ParsedHttpSource() {
 
     // Popular
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/Tout-le-TOP.html", headers)
+        return GET("$baseUrl/TOP-Manga-Webtoon-22.html", headers)
     }
 
     override fun popularMangaSelector() = "div.image_manga a[href]"
