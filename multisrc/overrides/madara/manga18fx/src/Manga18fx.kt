@@ -2,17 +2,22 @@ package eu.kanade.tachiyomi.extension.en.manga18fx
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Evaluator
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+// The site isn't actually based on Madara but reproduces it very well
 class Manga18fx : Madara(
     "Manga18fx",
     "https://manga18fx.com",
@@ -30,6 +35,7 @@ class Manga18fx : Madara(
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
+        loadGenres(document)
         val block = document.selectFirst(Evaluator.Class("trending-block"))
         val mangas = block.select(Evaluator.Tag("a")).map(::mangaFromElement)
         return MangasPage(mangas, false)
@@ -45,6 +51,7 @@ class Manga18fx : Madara(
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val document = response.asJsoup()
+        loadGenres(document)
         val mangas = document.select(Evaluator.Class("bsx-item")).map {
             mangaFromElement(it.selectFirst(Evaluator.Tag("a")))
         }
@@ -53,8 +60,21 @@ class Manga18fx : Madara(
         return MangasPage(mangas, hasNextPage)
     }
 
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
-        GET("$baseUrl/search?q=$query&page=$page", headers)
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        if (query.isEmpty()) {
+            filters.forEach { filter ->
+                if (filter is GenreFilter)
+                    return GET(filter.vals[filter.state].second, headers)
+            }
+        }
+
+        val url = "$baseUrl/search".toHttpUrl().newBuilder()
+            .addQueryParameter("q", query)
+            .addQueryParameter("page", page.toString())
+            .toString()
+
+        return GET(url, headers)
+    }
 
     override fun searchMangaParse(response: Response) = latestUpdatesParse(response)
 
@@ -68,5 +88,43 @@ class Manga18fx : Madara(
 
     override fun chapterDateSelector() = "span.chapter-time"
 
-    override fun getFilterList() = FilterList(emptyList())
+    class GenreFilter(val vals: List<Pair<String, String>>) :
+        Filter.Select<String>("Genre", vals.map { it.first }.toTypedArray())
+
+    private fun loadGenres(document: Document) {
+        genresList = document.select(".header-bottom li a").map {
+            val href = it.attr("href")
+            val url = if (href.startsWith("http")) href else "$baseUrl/$href"
+
+            Pair(it.text(), url)
+        }
+    }
+
+    private var genresList: List<Pair<String, String>> = emptyList()
+    private var hardCodedTypes: List<Pair<String, String>> = listOf(
+        Pair("Manhwa", "$baseUrl/manga-genre/manhwa"),
+        Pair("Manhua", "$baseUrl/manga-genre/manhua"),
+        Pair("Raw", "$baseUrl/manga-genre/raw"),
+    )
+
+    override fun getFilterList(): FilterList {
+
+        val filters = mutableListOf<Filter<*>>(
+            Filter.Header("Filters are ignored for text search!"),
+        )
+
+        filters.apply {
+            if (genresList.isNotEmpty()) {
+                add(
+                    GenreFilter(hardCodedTypes + genresList)
+                )
+            } else {
+                add(
+                    Filter.Header("Wait for mangas to load then tap Reset")
+                )
+            }
+        }
+
+        return FilterList(filters)
+    }
 }
