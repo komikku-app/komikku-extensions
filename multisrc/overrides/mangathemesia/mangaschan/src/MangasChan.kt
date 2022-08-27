@@ -18,5 +18,9 @@ class MangasChan : MangaThemesia(
         .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
-    override val altNamePrefix = "Nome alternativo: "
+    override val altNamePrefix = "Nomes alternativos: "
+
+    override val seriesArtistSelector = ".infotable tr:contains(Artista) td:last-child"
+    override val seriesAuthorSelector = ".infotable tr:contains(Autor) td:last-child"
+    override val seriesTypeSelector = ".infotable tr:contains(Tipo) td:last-child"
 }

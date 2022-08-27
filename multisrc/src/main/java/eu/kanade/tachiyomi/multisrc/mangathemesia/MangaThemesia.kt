@@ -142,7 +142,7 @@ abstract class MangaThemesia(
     override fun searchMangaNextPageSelector() = "div.pagination .next, div.hpage .r"
 
     // Manga details
-    open val seriesDetailsSelector = "div.bigcontent, div.animefull, div.main-info"
+    open val seriesDetailsSelector = "div.bigcontent, div.animefull, div.main-info, div.postbody"
     open val seriesTitleSelector = "h1.entry-title"
     open val seriesArtistSelector = ".infotable tr:contains(artist) td:last-child, .tsinfo .imptdt:contains(artist) i, .fmed b:contains(artist)+span, span:contains(artist)"
     open val seriesAuthorSelector = ".infotable tr:contains(author) td:last-child, .tsinfo .imptdt:contains(author) i, .fmed b:contains(author)+span, span:contains(author)"
@@ -449,7 +449,12 @@ abstract class MangaThemesia(
         }
     }
 
-    protected open fun Element.imgAttr(): String = if (this.hasAttr("data-src")) this.attr("abs:data-src") else this.attr("abs:src")
+    protected open fun Element.imgAttr(): String = when {
+        hasAttr("data-lazy-src") -> attr("abs:data-lazy-src")
+        hasAttr("data-src") -> attr("abs:data-src")
+        else -> attr("abs:src")
+    }
+
     protected open fun Elements.imgAttr(): String = this.first().imgAttr()
 
     // Unused
