@@ -1,3 +1,9 @@
+## 1.3.6
+
+### Fix
+
+* Fixed "lateinit property title not initialized"
+
 ## 1.3.5
 
 ### Features
