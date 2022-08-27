@@ -23,7 +23,7 @@ import java.util.Locale
 
 class HentaiVN : ParsedHttpSource() {
 
-    override val baseUrl = "https://hentaivn.fun"
+    override val baseUrl = "https://hentaivn.la"
     override val lang = "vi"
     override val name = "HentaiVN"
     override val supportsLatest = true
@@ -99,6 +99,7 @@ class HentaiVN : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select(".main > .page-left > .left-info > .page-info")
         val manga = SManga.create()
+        manga.title = infoElement.select("h1[itemprop=name] a").text()
         manga.author = infoElement.select("p:contains(Tác giả:) a").text()
         manga.description = infoElement.select(":root > p:contains(Nội dung:) + p").text()
         manga.genre = infoElement.select("p:contains(Thể loại:) a").joinToString { it.text() }

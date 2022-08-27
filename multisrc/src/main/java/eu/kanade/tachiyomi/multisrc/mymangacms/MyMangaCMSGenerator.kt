@@ -26,7 +26,7 @@ class MyMangaCMSGenerator : ThemeSourceGenerator {
             "PheManga",
             "phemanga",
         ),
-        SingleLang("LKDTT", "https://lkdtt.com", "vi", true)
+        SingleLang("LKDTT", "https://lkdtt.net", "vi", true, overrideVersionCode = 1)
     )
 
     companion object {
