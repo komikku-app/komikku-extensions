@@ -1,15 +1,18 @@
 package eu.kanade.tachiyomi.extension.vi.truyenqq
 
-import android.net.Uri
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
@@ -27,51 +30,86 @@ class TruyenQQ : ParsedHttpSource() {
     override val supportsLatest: Boolean = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .connectTimeout(1, TimeUnit.MINUTES)
-        .readTimeout(1, TimeUnit.MINUTES)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .followRedirects(true)
         .build()
 
-    override fun headersBuilder(): Headers.Builder {
-        return super.headersBuilder().add("Referer", baseUrl)
-    }
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", baseUrl)
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.US)
 
     private val floatPattern = Regex("""\d+(?:\.\d+)?""")
 
-    // Popular
-    override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/top-thang/trang-$page.html", headers)
-    }
-    override fun popularMangaNextPageSelector(): String = ".page_redirect > a:last-child > p:not(.active)"
+    // Selector trả về array các manga (chọn cả ảnh cx được tí nữa parse)
     override fun popularMangaSelector(): String = "ul.grid > li"
-    override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        setUrlWithoutDomain(element.select("a").first().attr("abs:href"))
-        thumbnail_url = element.select("img.lazy-image").attr("abs:data-src")
-        title = element.select("h3 a").text()
-    }
+    // Selector trả về array các manga update (giống selector ở trên)
+    override fun latestUpdatesSelector(): String = popularMangaSelector()
+    // Selector của nút trang kế tiếp
+    override fun popularMangaNextPageSelector(): String = ".page_redirect > a:nth-last-child(2) > p:not(.active)"
+    override fun latestUpdatesNextPageSelector(): String = popularMangaNextPageSelector()
 
-    // Latest
+    // Trang html chứa popular
+    override fun popularMangaRequest(page: Int): Request {
+        return GET("$baseUrl/truyen-yeu-thich/trang-$page.html", headers)
+    }
+    // Trang html chứa Latest (các cập nhật mới nhất)
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/truyen-moi-cap-nhat/trang-$page.html", headers)
     }
-    override fun latestUpdatesNextPageSelector(): String = popularMangaNextPageSelector()
-    override fun latestUpdatesSelector(): String = popularMangaSelector()
-    override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
 
-    // Search
+    // respond là html của trang popular chứ không phải của element đã select
+    override fun popularMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+
+        val imgURL = document.select(".book_avatar img").map { it.attr("abs:src") }
+        val mangas = document.select(popularMangaSelector()).mapIndexed { index, element -> popularMangaFromElement(element, imgURL[index]) }
+
+        val hasNextPage = popularMangaNextPageSelector().let { selector ->
+            document.select(selector).first()
+        } != null
+
+        return MangasPage(mangas, hasNextPage)
+    }
+
+    // Từ 1 element trong list popular đã select ở trên parse thông tin 1 Manga
+    // Trông code bất ổn nhưng t đang cố làm theo blogtruyen vì t không biết gì hết XD
+    private fun popularMangaFromElement(element: Element, imgURL: String): SManga {
+        val manga = SManga.create()
+        element.select(".book_info .book_name h3 a").first().let {
+            manga.setUrlWithoutDomain((it.attr("href")))
+            manga.title = it.text().trim()
+            manga.thumbnail_url = imgURL
+        }
+        return manga
+    }
+
+    // Không dùng bản này của fuction nên throw Exception, dùng function ở trên (có 2 params)
+    override fun popularMangaFromElement(element: Element): SManga = throw Exception("Not Used")
+
+    override fun latestUpdatesFromElement(element: Element): SManga {
+        val manga = SManga.create()
+        element.select(".book_info .book_name h3 a").first().let {
+            manga.setUrlWithoutDomain((it.attr("href")))
+            manga.title = it.text().trim()
+        }
+        manga.thumbnail_url = element.select(".book_avatar img").first().attr("abs:src")
+        return manga
+    }
+
+    // Tìm kiếm
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val uri = Uri.parse("$baseUrl/tim-kiem/trang-$page.html").buildUpon()
-            .appendQueryParameter("q", query)
+        val url = "$baseUrl/tim-kiem/trang-$page.html"
+        val uri = url.toHttpUrlOrNull()!!.newBuilder()
+        uri.addQueryParameter("q", query)
         return GET(uri.toString(), headers)
 
         // Todo Filters
     }
     override fun searchMangaNextPageSelector(): String = popularMangaNextPageSelector()
     override fun searchMangaSelector(): String = popularMangaSelector()
-    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
+    override fun searchMangaFromElement(element: Element): SManga = latestUpdatesFromElement(element)
 
     // Details
 
