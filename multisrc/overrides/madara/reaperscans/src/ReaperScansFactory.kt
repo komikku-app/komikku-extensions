@@ -83,7 +83,7 @@ class ReaperScansId : ReaperScans("https://reaperscans.id", "id") {
 }
 
 class ReaperScansFr : ReaperScans(
-    "https://new.reaperscans.fr",
+    "https://reaperscans.fr",
     "fr",
     SimpleDateFormat("dd/MM/yyyy", Locale.US)
 ) {
