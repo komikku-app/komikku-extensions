@@ -30,6 +30,7 @@ class Manga18fx : Madara(
 
     override val fetchGenres = false
     override val sendViewCount = false
+    override val useLoadMoreSearch = false
 
     override fun popularMangaRequest(page: Int) = GET(baseUrl, headers)
 
@@ -60,20 +61,27 @@ class Manga18fx : Madara(
         return MangasPage(mangas, hasNextPage)
     }
 
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList) =
+        super.fetchSearchManga(page, query, filters).doOnNext {
+            for (manga in it.mangas)
+                manga.url = manga.url.removeSuffix("/")
+        }
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.isEmpty()) {
             filters.forEach { filter ->
                 if (filter is GenreFilter)
                     return GET(filter.vals[filter.state].second, headers)
             }
+            return latestUpdatesRequest(page)
         }
 
         val url = "$baseUrl/search".toHttpUrl().newBuilder()
             .addQueryParameter("q", query)
             .addQueryParameter("page", page.toString())
-            .toString()
+            .build()
 
-        return GET(url, headers)
+        return Request.Builder().url(url).headers(headers).build()
     }
 
     override fun searchMangaParse(response: Response) = latestUpdatesParse(response)
@@ -109,11 +117,9 @@ class Manga18fx : Madara(
 
     override fun getFilterList(): FilterList {
 
-        val filters = mutableListOf<Filter<*>>(
-            Filter.Header("Filters are ignored for text search!"),
-        )
+        val filters = buildList(2) {
+            add(Filter.Header("Filters are ignored for text search!"))
 
-        filters.apply {
             if (genresList.isNotEmpty()) {
                 add(
                     GenreFilter(hardCodedTypes + genresList)
