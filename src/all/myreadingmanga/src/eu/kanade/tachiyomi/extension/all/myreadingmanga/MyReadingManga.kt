@@ -14,6 +14,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.CacheControl
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -22,20 +23,16 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 open class MyReadingManga(override val lang: String, private val siteLang: String, private val latestLang: String) : ParsedHttpSource() {
 
     // Basic Info
     override val name = "MyReadingManga"
     final override val baseUrl = "https://myreadingmanga.info"
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(CloudflareWafInterceptor(".myreadingmanga.info"))
-        .connectTimeout(1, TimeUnit.MINUTES)
-        .readTimeout(1, TimeUnit.MINUTES)
-        .retryOnConnectionFailure(true)
-        .followRedirects(true)
-        .build()!!
+    override val client: OkHttpClient = network.cloudflareClient
+    override fun headersBuilder(): Headers.Builder =
+        super.headersBuilder()
+            .set("User-Agent", USER_AGENT)
     override val supportsLatest = true
 
     // Popular - Random
@@ -314,5 +311,9 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
      */
     private interface UriFilter {
         fun addToUri(uri: Uri.Builder, uriParam: String)
+    }
+
+    companion object {
+        private const val USER_AGENT = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Mobile Safari/537.36"
     }
 }
