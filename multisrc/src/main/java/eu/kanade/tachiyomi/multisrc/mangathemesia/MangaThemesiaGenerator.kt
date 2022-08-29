@@ -49,6 +49,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Magus Manga", "https://magusmanga.com", "ar"),
         SingleLang("Manga Pro", "https://mangaprotm.com", "ar", pkgName = "mangaproz", overrideVersionCode = 3),
         SingleLang("Manga Raw.org", "https://mangaraw.org", "ja", className = "MangaRawOrg", overrideVersionCode = 1),
+        SingleLang("Mangacim", "https://www.mangacim.com", "tr", overrideVersionCode = 1),
         SingleLang("MangaKita", "https://mangakita.net", "id", overrideVersionCode = 1),
         SingleLang("Mangakyo", "https://www.mangakyo.me", "id"),
         SingleLang("Mangasusu", "https://mangasusu.co.in", "id", isNsfw = true, overrideVersionCode = 1),
