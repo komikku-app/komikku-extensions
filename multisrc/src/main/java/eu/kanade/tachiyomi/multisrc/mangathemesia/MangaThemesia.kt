@@ -149,7 +149,7 @@ abstract class MangaThemesia(
     open val seriesDescriptionSelector = ".desc, .entry-content[itemprop=description]"
     open val seriesAltNameSelector = ".alternative, .wd-full:contains(alt) span, .alter, .seriestualt"
     open val seriesGenreSelector = "div.gnr a, .mgen a, .seriestugenre a, span:contains(genre)"
-    open val seriesTypeSelector = ".infotable tr:contains(type) td:last-child, .tsinfo .imptdt:contains(type) i, .fmed b:contains(type)+span, span:contains(type) a, a[href*=type\\=]"
+    open val seriesTypeSelector = ".infotable tr:contains(type) td:last-child, .tsinfo .imptdt:contains(type) i, .tsinfo .imptdt:contains(type) a, .fmed b:contains(type)+span, span:contains(type) a, a[href*=type\\=]"
     open val seriesStatusSelector = ".infotable tr:contains(status) td:last-child, .tsinfo .imptdt:contains(status) i, .fmed b:contains(status)+span span:contains(status)"
     open val seriesThumbnailSelector = ".infomanga > div[itemprop=image] img, .thumb img"
 
