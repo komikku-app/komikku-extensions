@@ -22,7 +22,7 @@ class Mangafreak : ParsedHttpSource() {
 
     override val lang: String = "en"
 
-    override val baseUrl: String = "https://w12.mangafreak.net"
+    override val baseUrl: String = "https://w13.mangafreak.net"
 
     override val supportsLatest: Boolean = true
 
@@ -162,7 +162,7 @@ class Mangafreak : ParsedHttpSource() {
     // Pages
 
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        document.select("img#gohere").forEachIndexed { index, element ->
+        document.select("img#gohere[src]").forEachIndexed { index, element ->
             add(Page(index, "", element.attr("abs:src")))
         }
     }
