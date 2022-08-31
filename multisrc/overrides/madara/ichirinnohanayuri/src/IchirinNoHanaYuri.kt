@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 
 class IchirinNoHanaYuri : Madara(
     "Ichirin No Hana Yuri",
-    "https://ichirinnohanayuri.com.br",
+    "https://ichirinnohanayuriscan.com",
     "pt-BR",
     SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
 ) {

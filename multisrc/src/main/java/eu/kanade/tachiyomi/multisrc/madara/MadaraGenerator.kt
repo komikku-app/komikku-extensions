@@ -150,7 +150,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("hManhwa", "https://hmanhwa.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Hscans", "https://hscans.com", "en", overrideVersionCode = 2),
         SingleLang("Hunter Fansub", "https://hunterfansub.com", "es", overrideVersionCode = 1),
-        SingleLang("Ichirin No Hana Yuri", "https://ichirinnohanayuri.com.br", "pt-BR", overrideVersionCode = 3),
+        SingleLang("Ichirin No Hana Yuri", "https://ichirinnohanayuriscan.com", "pt-BR", isNsfw = true, overrideVersionCode = 4),
         SingleLang("Ikifeng", "https://ikifeng.com", "es", isNsfw = true),
         SingleLang("Immortal Updates", "https://immortalupdates.com", "en", overrideVersionCode = 2),
         SingleLang("Império Scans", "https://imperioscans.com.br", "pt-BR", className = "ImperioScans", overrideVersionCode = 1),
