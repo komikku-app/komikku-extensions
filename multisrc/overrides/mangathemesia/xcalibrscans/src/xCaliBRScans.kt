@@ -1,17 +1,13 @@
 package eu.kanade.tachiyomi.extension.en.xcalibrscans
 
-import eu.kanade.tachiyomi.extension.en.xcalibrscans.interceptor.MirrorImageInterceptor
-import eu.kanade.tachiyomi.extension.en.xcalibrscans.interceptor.SplittedImageInterceptor
-import eu.kanade.tachiyomi.extension.en.xcalibrscans.interceptor.prepareMirrorImageForInterceptor
-import eu.kanade.tachiyomi.extension.en.xcalibrscans.interceptor.prepareSplittedImageForInterceptor
+import android.util.Log
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import org.jsoup.nodes.Document
-import java.lang.IllegalArgumentException
+import org.jsoup.nodes.Element
 import java.util.concurrent.TimeUnit
 
 class xCaliBRScans : MangaThemesia("xCaliBR Scans", "https://xcalibrscans.com", "en") {
@@ -19,69 +15,50 @@ class xCaliBRScans : MangaThemesia("xCaliBR Scans", "https://xcalibrscans.com", 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
+        .addInterceptor(AntiScrapInterceptor())
         .rateLimit(2)
-        .addNetworkInterceptor(SplittedImageInterceptor())
-        .addNetworkInterceptor(MirrorImageInterceptor())
         .build()
 
     override val hasProjectPage = true
 
-    override val pageSelector = "div#readerarea > p, div#readerarea > div"
-
     override fun pageListParse(document: Document): List<Page> {
-        val htmlPages = mutableListOf<Page>()
+        document.selectFirst("div#readerarea .sword_box") ?: return super.pageListParse(document)
 
-        document.select(pageSelector)
-            .filterNot {
-                it.select("img").all { imgEl ->
-                    imgEl.attr("abs:src").isNullOrEmpty()
-                }
-            }
-            .map { el ->
-                if (el.tagName() == "div") {
-                    when {
-                        el.hasClass("kage") -> {
-                            el.select("img").map { imgEl ->
-                                val index = htmlPages.size
-                                val imageUrl =
-                                    imgEl.attr("abs:src").prepareMirrorImageForInterceptor()
-                                htmlPages.add(Page(index, "", imageUrl))
-                            }
-                        }
-                        el.hasClass("row") -> {
-                            val index = htmlPages.size
-                            val imageUrls = el.select("img").map { imgEl ->
-                                imgEl.attr("abs:src")
-                            }.prepareSplittedImageForInterceptor()
-                            htmlPages.add(Page(index, "", imageUrls))
-                        }
-                        else -> {
-                            val index = htmlPages.size
-                            Page(index, "", el.select("img").attr("abs:src"))
-                        }
+        val imgUrls = mutableListOf<String>()
+
+        // Selects all direct descendant of "div#readerarea"
+        document.select("div#readerarea > *")
+            .forEach { element ->
+                when {
+                    element.tagName() == "p" -> {
+                        val imgUrl = element.selectFirst("img").imgAttr()
+                        imgUrls.add(imgUrl)
                     }
-                } else {
-                    val index = htmlPages.size
-                    Page(index, "", el.select("img").attr("abs:src"))
+                    element.tagName() == "div" && element.hasClass("kage") -> {
+                        parseAntiScrapScramble(element, imgUrls)
+                    }
+                    else -> {
+                        Log.d("xCaliBR Scans", "Unknown element for page parsing $element")
+                    }
                 }
             }
 
-        countViews(document)
+        return imgUrls.mapIndexed { index, imageUrl -> Page(index, imageUrl = imageUrl) }
+    }
 
-        // Some sites also loads pages via javascript
-        if (htmlPages.isNotEmpty()) { return htmlPages }
+    private fun parseAntiScrapScramble(element: Element, destination: MutableList<String>) {
+        element.select("div.sword")
+            .forEach { swordDiv ->
+                val imgUrls = swordDiv.select("img").map { it.imgAttr() }
+                val urls = imgUrls.joinToString(AntiScrapInterceptor.IMAGE_URLS_SEPARATOR)
+                val url = baseUrl.toHttpUrl()
+                    .newBuilder()
+                    .addQueryParameter("urls", urls)
+                    .fragment(AntiScrapInterceptor.ANTI_SCRAP_FRAGMENT)
+                    .build()
+                    .toString()
 
-        val docString = document.toString()
-        val imageListJson = JSON_IMAGE_LIST_REGEX.find(docString)?.destructured?.toList()?.get(0).orEmpty()
-        val imageList = try {
-            json.parseToJsonElement(imageListJson).jsonArray
-        } catch (_: IllegalArgumentException) {
-            emptyList()
-        }
-        val scriptPages = imageList.mapIndexed { i, jsonEl ->
-            Page(i, "", jsonEl.jsonPrimitive.content)
-        }
-
-        return scriptPages
+                destination.add(url)
+            }
     }
 }
