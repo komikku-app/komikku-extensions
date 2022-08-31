@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class HenChan : MultiChan("HenChan", "https://y.hentaichan.live", "ru") {
+class HenChan : MultiChan("HenChan", "https://hchan.live", "ru") {
 
     override val id: Long = 5504588601186153612
 
