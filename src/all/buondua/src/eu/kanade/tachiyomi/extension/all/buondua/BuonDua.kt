@@ -23,7 +23,7 @@ class BuonDua() : ParsedHttpSource() {
     // Latest
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("img").attr("abs:data-src")
+        manga.thumbnail_url = element.select("img").attr("abs:src")
         manga.title = element.select(".item-content .item-link").text()
         manga.setUrlWithoutDomain(element.select(".item-content .item-link").attr("abs:href"))
         return manga
@@ -94,9 +94,9 @@ class BuonDua() : ParsedHttpSource() {
                 0 -> document
                 else -> client.newCall(GET(page.attr("abs:href"))).execute().asJsoup()
             }
-            doc.select(".article-fulltext img").forEachIndexed { i, it ->
-                val itUrl = it.attr("abs:data-src")
-                pages.add(Page(i, itUrl, itUrl))
+            doc.select(".article-fulltext img").forEach { it ->
+                val itUrl = it.attr("abs:src")
+                pages.add(Page(pages.size, "", itUrl))
             }
         }
         return pages
