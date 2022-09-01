@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.extension.all.mangareaderto
 import eu.kanade.tachiyomi.source.model.Filter
 import java.util.Calendar
 
-object Note : Filter.Text("NOTE: Ignored if using text search!")
+object Note : Filter.Header("NOTE: Ignored if using text search!")
 
 sealed class Select(
     name: String,

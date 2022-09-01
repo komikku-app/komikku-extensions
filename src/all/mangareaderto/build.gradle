@@ -1,11 +1,12 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = 'MangaReader'
+    extName = 'MangaReader.to'
     pkgNameSuffix = 'all.mangareaderto'
     extClass = '.MangaReaderFactory'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = true
 }
 

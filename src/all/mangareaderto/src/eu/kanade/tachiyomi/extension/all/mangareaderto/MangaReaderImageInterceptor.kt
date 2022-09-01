@@ -5,188 +5,122 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
 import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import kotlin.math.ceil
-import kotlin.math.floor
+import javax.crypto.Cipher
+import javax.crypto.spec.SecretKeySpec
+import kotlin.math.min
 
-class MangaReaderImageInterceptor : Interceptor {
+object MangaReaderImageInterceptor : Interceptor {
 
-    private var s = IntArray(256)
-    private var arc4i = 0
-    private var arc4j = 0
+    private val memo = hashMapOf<Int, IntArray>()
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val response = chain.proceed(chain.request())
+        val request = chain.request()
+        val response = chain.proceed(request)
 
-        // shuffled page requests should have shuffled=true query parameter
-        if (chain.request().url.queryParameter("shuffled") != "true")
-            return response
+        val url = request.url
+        // TODO: remove the query parameter check (legacy) in later versions
+        if (url.fragment != SCRAMBLED && url.queryParameter("shuffled") == null) return response
 
-        val image = unscrambleImage(response.body!!.byteStream())
-        val body = image.toResponseBody("image/png".toMediaTypeOrNull())
+        val image = descramble(response.body!!.byteStream())
+        val body = image.toResponseBody("image/jpeg".toMediaType())
         return response.newBuilder()
             .body(body)
             .build()
     }
 
-    private fun unscrambleImage(image: InputStream): ByteArray {
+    private fun descramble(image: InputStream): ByteArray {
         // obfuscated code (imgReverser function): https://mangareader.to/js/read.min.js
         // essentially, it shuffles arrays of the image slices using the key 'stay'
 
         val bitmap = BitmapFactory.decodeStream(image)
+        val width = bitmap.width
+        val height = bitmap.height
 
-        val result = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(result)
 
-        val horizontalParts = ceil(bitmap.width / SLICE_SIZE.toDouble()).toInt()
-        val totalParts = horizontalParts * ceil(bitmap.height / SLICE_SIZE.toDouble()).toInt()
-
-        // calculate slices
-        val slices: HashMap<Int, MutableList<Rect>> = hashMapOf()
-
-        for (i in 0 until totalParts) {
-            val row = floor(i / horizontalParts.toDouble()).toInt()
-
-            val x = (i - row * horizontalParts) * SLICE_SIZE
-            val y = row * SLICE_SIZE
-            val width = if (x + SLICE_SIZE <= bitmap.width) SLICE_SIZE else bitmap.width - x
-            val height = if (y + SLICE_SIZE <= bitmap.height) SLICE_SIZE else bitmap.height - y
-
-            val srcRect = Rect(x, y, width, height)
-            val key = width - height
-            if (!slices.containsKey(key)) {
-                slices[key] = mutableListOf()
+        val pieces = ArrayList<Piece>()
+        for (y in 0 until height step PIECE_SIZE) {
+            for (x in 0 until width step PIECE_SIZE) {
+                val w = min(PIECE_SIZE, width - x)
+                val h = min(PIECE_SIZE, height - y)
+                pieces.add(Piece(x, y, w, h))
             }
-            slices[key]?.add(srcRect)
         }
 
-        // handle groups of slices
-        for (sliceEntry in slices) {
-            // reset random number generator for every un-shuffle
-            resetRng()
+        val groups = pieces.groupBy { it.w shl 16 or it.h }
 
-            val currentSlices = sliceEntry.value
-            val sliceCount = currentSlices.count()
+        for (group in groups.values) {
+            val size = group.size
 
-            // un-shuffle slice indices
-            val orderedSlices = IntArray(sliceCount)
-            val keys = MutableList(sliceCount) { it }
+            val permutation = memo.getOrPut(size) {
+                // The key is actually "stay", but it's padded here in case the code is run in
+                // Oracle's JDK, where RC4 key is required to be at least 5 bytes
+                val random = SeedRandom("staystay")
 
-            for (i in currentSlices.indices) {
-                val r = floor(prng() * keys.count()).toInt()
-                val g = keys[r]
-                keys.removeAt(r)
-                orderedSlices[g] = i
+                // https://github.com/webcaetano/shuffle-seed
+                val indices = (0 until size).toMutableList()
+                IntArray(size) { indices.removeAt((random.nextDouble() * indices.size).toInt()) }
             }
 
-            // draw slices
-            val cols = getColumnCount(currentSlices)
+            for ((i, original) in permutation.withIndex()) {
+                val src = group[i]
+                val dst = group[original]
 
-            val groupX = currentSlices[0].left
-            val groupY = currentSlices[0].top
-
-            for ((i, orderedIndex) in orderedSlices.withIndex()) {
-                val slice = currentSlices[i]
-
-                val row = floor((orderedIndex / cols).toDouble()).toInt()
-                val col = orderedIndex - row * cols
-
-                val width = slice.right
-                val height = slice.bottom
-
-                val x = groupX + col * width
-                val y = groupY + row * height
-
-                val srcRect = Rect(x, y, x + width, y + height)
-                val dstRect = Rect(
-                    slice.left,
-                    slice.top,
-                    slice.left + width,
-                    slice.top + height
-                )
+                val srcRect = Rect(src.x, src.y, src.x + src.w, src.y + src.h)
+                val dstRect = Rect(dst.x, dst.y, dst.x + dst.w, dst.y + dst.h)
 
                 canvas.drawBitmap(bitmap, srcRect, dstRect, null)
             }
         }
 
         val output = ByteArrayOutputStream()
-        result.compress(Bitmap.CompressFormat.PNG, 100, output)
+        result.compress(Bitmap.CompressFormat.JPEG, 90, output)
         return output.toByteArray()
     }
 
-    private fun getColumnCount(slices: List<Rect>): Int {
-        if (slices.count() == 1) return 1
-        var t: Int? = null
-        for (i in slices.indices) {
-            if (t == null) t = slices[i].top
-            if (t != slices[i].top) {
-                return i
+    private class Piece(val x: Int, val y: Int, val w: Int, val h: Int)
+
+    // https://github.com/davidbau/seedrandom
+    private class SeedRandom(key: String) {
+        private val input = ByteArray(RC4_WIDTH)
+        private val buffer = ByteArray(RC4_WIDTH)
+        private var pos = RC4_WIDTH
+
+        private val rc4 = Cipher.getInstance("RC4").apply {
+            init(Cipher.ENCRYPT_MODE, SecretKeySpec(key.toByteArray(), "RC4"))
+            update(input, 0, RC4_WIDTH, buffer) // RC4-drop[256]
+        }
+
+        fun nextDouble(): Double {
+            var num = nextByte()
+            var exp = 8
+            while (num < 1L shl 52) {
+                num = num shl 8 or nextByte()
+                exp += 8
             }
+            while (num >= 1L shl 53) {
+                num = num ushr 1
+                exp--
+            }
+            return Math.scalb(num.toDouble(), -exp)
         }
-        return slices.count()
-    }
 
-    private fun resetRng() {
-        arc4i = 0
-        arc4j = 0
-        initializeS()
-        arc4(256) // RC4-drop[256]
-    }
-
-    private fun initializeS() {
-        val t = IntArray(256)
-        for (i in 0..255) {
-            s[i] = i
-            t[i] = KEY[i % KEY.size]
-        }
-        var j = 0
-        var tmp: Int
-        for (i in 0..255) {
-            j = (j + s[i] + t[i]) and 0xFF
-            tmp = s[j]
-            s[j] = s[i]
-            s[i] = tmp
+        private fun nextByte(): Long {
+            if (pos == RC4_WIDTH) {
+                rc4.update(input, 0, RC4_WIDTH, buffer)
+                pos = 0
+            }
+            return buffer[pos++].toLong() and 0xFF
         }
     }
 
-    private fun prng(): Double {
-        var n = arc4(6)
-        var d = 281474976710656.0 // 256^6 (start with 6 chunks in n)
-        var x = 0L
-        while (n < 4503599627370496) { // 2^52 (52 significant digits in a double)
-            n = (n + x) * 256
-            d *= 256
-            x = arc4(1)
-            if (n < 0) break // overflow
-        }
-        return (n + x) / d
-    }
-
-    private fun arc4(count: Int): Long {
-        var t: Int
-        var tmp: Int
-        var r: Long = 0
-
-        repeat(count) {
-            arc4i = (arc4i + 1) and 0xFF
-            arc4j = (arc4j + s[arc4i]) and 0xFF
-            tmp = s[arc4j]
-            s[arc4j] = s[arc4i]
-            s[arc4i] = tmp
-            t = (s[arc4i] + s[arc4j]) and 0xFF
-
-            r = r * 256 + s[t]
-        }
-
-        return r
-    }
-
-    companion object {
-        private val KEY = "stay".map { it.toByte().toInt() }
-        private const val SLICE_SIZE = 200
-    }
+    private const val RC4_WIDTH = 256
+    private const val PIECE_SIZE = 200
+    const val SCRAMBLED = "scrambled"
 }

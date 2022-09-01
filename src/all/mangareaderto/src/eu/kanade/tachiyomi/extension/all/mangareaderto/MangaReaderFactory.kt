@@ -4,5 +4,5 @@ import eu.kanade.tachiyomi.source.SourceFactory
 
 class MangaReaderFactory : SourceFactory {
     override fun createSources() =
-        listOf(MangaReader("en"), MangaReader("ja"))
+        arrayOf("en", "fr", "ja", "ko", "zh").map(::MangaReader)
 }
