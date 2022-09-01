@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 
 class KomikCast : MangaThemesia(
     "Komik Cast",
-    "https://komikcast.me",
+    baseUrl = "https://komikcast.me",
     "id",
     mangaUrlDirectory = "/daftar-komik"
 ) {
@@ -43,6 +43,15 @@ class KomikCast : MangaThemesia(
             .build()
 
         return GET(page.imageUrl!!, newHeaders)
+    }
+
+    override fun popularMangaRequest(page: Int) = customPageRequest(page, "orderby", "popular")
+    override fun latestUpdatesRequest(page: Int) = customPageRequest(page, "sortby", "update")
+
+    private fun customPageRequest(page: Int, filterKey: String, filterValue: String): Request {
+        val pagePath = if (page > 1) "page/$page/" else ""
+
+        return GET("$baseUrl$mangaUrlDirectory/$pagePath?$filterKey=$filterValue", headers)
     }
 
     override fun searchMangaSelector() = "div.list-update_item"
