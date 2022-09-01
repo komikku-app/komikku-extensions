@@ -373,6 +373,8 @@ class Remanga : ConfigurableSource, HttpSource() {
     @SuppressLint("DefaultLocale")
     private fun chapterName(book: BookDto): String {
         var chapterName = "${book.tome}. Глава ${book.chapter}"
+        if (book.is_paid and (book.is_bought != true))
+            chapterName += " \uD83D\uDCB2 "
         if (book.name.isNotBlank()) {
             chapterName += " ${book.name.capitalize()}"
         }
@@ -708,7 +710,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         val paidChapterShow = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = PAID_PREF
             title = PAID_PREF_Title
-            summary = "Показывает не купленные главы(может вызвать ошибки при обновлении/автозагрузке)"
+            summary = "Показывает не купленные\uD83D\uDCB2 главы(может вызвать ошибки при обновлении/автозагрузке)"
             setDefaultValue(false)
 
             setOnPreferenceChangeListener { _, newValue ->
