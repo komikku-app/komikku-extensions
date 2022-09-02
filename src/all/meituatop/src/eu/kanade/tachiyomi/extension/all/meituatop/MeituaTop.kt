@@ -42,7 +42,9 @@ class MeituaTop : HttpSource() {
                 initialized = true
             }
         }
-        val lastPage = document.select(Evaluator.Class("page_link"))[3].attr("href")
+        val pageLinks = document.select(Evaluator.Class("page_link"))
+        if (pageLinks.isEmpty()) return MangasPage(mangas, false)
+        val lastPage = pageLinks[3].attr("href")
         val hasNextPage = document.location().pageNumber() != lastPage.pageNumber()
         return MangasPage(mangas, hasNextPage)
     }
@@ -60,7 +62,7 @@ class MeituaTop : HttpSource() {
             return GET(url, headers)
         }
 
-        val filter = filters.firstOrNull() as? RegionFilter ?: return popularMangaRequest(page)
+        val filter = filters.filterIsInstance<RegionFilter>().firstOrNull() ?: return popularMangaRequest(page)
         return GET("$baseUrl/arttype/${21 + filter.state}a-$page.html", headers)
     }
 
