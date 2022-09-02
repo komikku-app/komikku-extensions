@@ -2,7 +2,14 @@ package eu.kanade.tachiyomi.multisrc.webtoons
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Typeface
 import android.net.Uri
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
@@ -25,20 +32,24 @@ import okhttp3.CookieJar
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.io.ByteArrayOutputStream
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import kotlin.math.ceil
 
 open class Webtoons(
     override val name: String,
@@ -71,6 +82,7 @@ open class Webtoons(
                 }
             }
         )
+        .addInterceptor(TextInterceptor)
         .build()
 
     private val day: String
@@ -291,32 +303,6 @@ open class Webtoons(
 
     override fun chapterListRequest(manga: SManga) = GET("https://m.webtoons.com" + manga.url, mobileHeaders)
 
-    private fun wordwrap(t: String, lineWidth: Int) = buildString {
-        // TODO: Split off into library file or something, because Tapastic is using the exact same wordwrap and toImage functions
-        //  src/en/tapastic/src/eu/kanade/tachiyomi/extension/en/tapastic/Tapastic.kt
-        val text = t.replace("\n", "\n ")
-        var charCount = 0
-        text.split(" ").forEach { w ->
-            if (w.contains("\n")) {
-                charCount = 0
-            }
-            if (charCount > lineWidth) {
-                append("\n")
-                charCount = 0
-            }
-            append("$w ")
-            charCount += w.length + 1
-        }
-    }
-
-    private fun toImage(t: String, fontSize: Int, bold: Boolean = false): String {
-        val text = wordwrap(t.replace("&amp;", "&").replace("\\s*<br>\\s*".toRegex(), "\n"), 65)
-        val imgHeight = (text.lines().size + 2) * fontSize * 1.3
-        return "https://placehold.jp/" + fontSize + "/ffffff/000000/1500x" + ceil(imgHeight).toInt() + ".png?" +
-            "css=%7B%22text-align%22%3A%22%20left%22%2C%22padding-left%22%3A%22%203%25%22" + (if (bold) "%2C%22font-weight%22%3A%22%20600%22" else "") + "%7D&" +
-            "text=" + Uri.encode(text)
-    }
-
     override fun pageListParse(document: Document): List<Page> {
         var pages = document.select("div#_imageList > img").mapIndexed { i, element -> Page(i, "", element.attr("data-url")) }
 
@@ -324,13 +310,13 @@ open class Webtoons(
             val note = document.select("div.comment_area div.info_area p").text()
 
             if (note.isNotEmpty()) {
-                val noteImage = toImage(note, 42)
 
                 val creator = document.select("div.creator_note span.author a").text().trim()
-                val creatorImage = toImage("Author's Notes from $creator", 43, true)
 
-                pages = pages + Page(pages.size, "", creatorImage)
-                pages = pages + Page(pages.size, "", noteImage)
+                pages = pages + Page(
+                    pages.size, "",
+                    "http://note/" + Uri.encode(creator) + "/" + Uri.encode(note)
+                )
             }
         }
 
@@ -358,5 +344,101 @@ open class Webtoons(
     companion object {
         const val URL_SEARCH_PREFIX = "url:"
         private const val SHOW_AUTHORS_NOTES_KEY = "showAuthorsNotes"
+    }
+
+    // TODO: Split off into library file or something, because Webtoons is using the exact same TextInterceptor
+    //  src/en/tapastic/src/eu/kanade/tachiyomi/extension/en/tapastic/Tapastic.kt
+    object TextInterceptor : Interceptor {
+        // With help from:
+        // https://github.com/tachiyomiorg/tachiyomi-extensions/pull/13304#issuecomment-1234532897
+        // https://medium.com/over-engineering/drawing-multiline-text-to-canvas-on-android-9b98f0bfa16a
+
+        // Designer values:
+        private const val WIDTH: Int = 1000
+        private const val X_PADDING: Float = 50f
+        private const val Y_PADDING: Float = 25f
+        private const val HEADING_FONT_SIZE: Float = 36f
+        private const val BODY_FONT_SIZE: Float = 30f
+        private const val SPACING_MULT: Float = 1.1f
+        private const val SPACING_ADD: Float = 2f
+
+        // No need to touch this one:
+        private const val HOST = "note"
+
+        override fun intercept(chain: Interceptor.Chain): Response {
+            val request = chain.request()
+            val url = request.url
+            if (url.host != HOST) return chain.proceed(request)
+
+            val creator = textFixer("Author's Notes from ${url.pathSegments[0]}")
+            val story = textFixer(url.pathSegments[1])
+
+            // Heading
+            val paintHeading = TextPaint().apply {
+                color = Color.BLACK
+                textSize = HEADING_FONT_SIZE
+                typeface = Typeface.DEFAULT_BOLD
+                isAntiAlias = true
+            }
+
+            @Suppress("DEPRECATION")
+            val heading: StaticLayout = StaticLayout(
+                creator, paintHeading, (WIDTH - 2 * X_PADDING).toInt(),
+                Layout.Alignment.ALIGN_NORMAL, SPACING_MULT, SPACING_ADD, true
+            )
+
+            // Body
+            val paintBody = TextPaint().apply {
+                color = Color.BLACK
+                textSize = BODY_FONT_SIZE
+                typeface = Typeface.DEFAULT
+                isAntiAlias = true
+            }
+
+            @Suppress("DEPRECATION")
+            val body: StaticLayout = StaticLayout(
+                story, paintBody, (WIDTH - 2 * X_PADDING).toInt(),
+                Layout.Alignment.ALIGN_NORMAL, SPACING_MULT, SPACING_ADD, true
+            )
+
+            // Image building
+            val imgHeight: Int = (heading.height + body.height + 2 * Y_PADDING).toInt()
+            val bitmap: Bitmap = Bitmap.createBitmap(WIDTH, imgHeight, Bitmap.Config.ARGB_8888)
+            val canvas: Canvas = Canvas(bitmap)
+
+            // Image drawing
+            canvas.drawColor(Color.WHITE)
+            heading.draw(canvas, X_PADDING, Y_PADDING)
+            body.draw(canvas, X_PADDING, Y_PADDING + heading.height.toFloat())
+
+            // Image converting & returning
+            val stream: ByteArrayOutputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 0, stream)
+            val responseBody = stream.toByteArray().toResponseBody("image/png".toMediaType())
+            return Response.Builder()
+                .request(request)
+                .protocol(Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .body(responseBody)
+                .build()
+        }
+
+        private fun textFixer(t: String): String {
+            return t
+                .replace("&amp;", "&")
+                .replace("&#39;", "'")
+                .replace("&quot;", "\"")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("\\s*<br>\\s*".toRegex(), "\n")
+        }
+
+        private fun StaticLayout.draw(canvas: Canvas, x: Float, y: Float) {
+            canvas.save()
+            canvas.translate(x, y)
+            this.draw(canvas)
+            canvas.restore()
+        }
     }
 }
