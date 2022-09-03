@@ -37,7 +37,7 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(mangago|mangafox|hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|heroscan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|cocomanga|hitomi\\.la|copymanga|neox|1manga\\.co|mangafox\\.fun|mangahere\\.onl|manga\\s*hub|mangakakalot\\.fun|manganel(?!o)|mangaonline\\.fun|mangapanda\\.onl|mangareader\\.site|mangatoday|manga\\.town|onemanga\\.info).*",
+                "regex": ".*(mangago|mangafox|hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|heroscan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|cocomanga|hitomi\\.la|copymanga|neox|1manga\\.co|mangafox\\.fun|mangahere\\.onl|manga\\s*hub|mangakakalot\\.fun|manganel(?!o)|mangaonline\\.fun|mangapanda\\.onl|mangareader\\.site|mangatoday|manga\\.town|onemanga\\.info|koushoku).*",
                 "ignoreCase": true,
                 "message": "{match} will not be added back as it is too difficult to maintain. Read #3475 for more information"
               },
