@@ -54,6 +54,7 @@ class PepperCarrot : HttpSource(), ConfigurableSource {
     override fun getFilterList() = getFilters(preferences)
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        if (query.isNotEmpty()) return Observable.error(Exception("No search"))
         if (filters.isNotEmpty()) preferences.saveFrom(filters)
         return fetchPopularManga(page)
     }
