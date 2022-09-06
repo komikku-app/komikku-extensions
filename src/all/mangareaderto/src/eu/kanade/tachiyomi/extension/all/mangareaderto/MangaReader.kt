@@ -133,12 +133,10 @@ open class MangaReader(
                 return
             }
         }
-        val nodes = childNodes()
         val authorList = ArrayList<String>(count)
         val artistList = ArrayList<String>(count)
         for ((index, author) in authors.withIndex()) {
-            val nodeIndex = nodes.indexOf(author)
-            val textNode = nodes.getOrNull(nodeIndex + 1) as? TextNode
+            val textNode = author.nextSibling() as? TextNode
             val list = if (textNode != null && "(Art)" in textNode.wholeText) artistList else authorList
             list.add(text[index])
         }
