@@ -280,7 +280,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("MangaSiro", "https://mangasiro.com", "en", isNsfw = true),
         SingleLang("MangaSmile", "https://mangasmile.com", "en", overrideVersionCode = 1),
         SingleLang("MangaSpark", "https://mangaspark.com", "ar", overrideVersionCode = 1),
-        SingleLang("MangaStic", "https://mangastic.com", "en"),
+        SingleLang("MangaStic", "https://mangastic.me", "en", overrideVersionCode = 1),
         SingleLang("MangasTK", "https://mangastk.com", "es", isNsfw = true),
         SingleLang("Mangasushi", "https://mangasushi.org", "en", overrideVersionCode = 3),
         SingleLang("MangaTK", "https://mangatk.com", "en"),
