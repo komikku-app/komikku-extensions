@@ -1,6 +1,8 @@
 package eu.kanade.tachiyomi.multisrc.madtheme
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservable
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -12,6 +14,8 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -19,6 +23,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -40,6 +45,12 @@ abstract class MadTheme(
         .rateLimitHost("https://s1.mbcdnv3.xyz".toHttpUrl(), 1, 1)
         .rateLimitHost("https://s1.mbcdnv4.xyz".toHttpUrl(), 1, 1)
         .rateLimitHost("https://s1.mbcdnv5.xyz".toHttpUrl(), 1, 1)
+        .build()
+
+    // TODO: better cookie sharing
+    // TODO: don't count cached responses against rate limit
+    private val chapterClient: OkHttpClient = network.cloudflareClient.newBuilder()
+        .rateLimit(1, 12)
         .build()
 
     override fun headersBuilder() = Headers.Builder().apply {
@@ -150,6 +161,35 @@ abstract class MadTheme(
     }
 
     // Chapters
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+        // API is heavily rate limited. Use custom client
+        return if (manga.status != SManga.LICENSED) {
+            chapterClient.newCall(chapterListRequest(manga))
+                .asObservable()
+                .map { response ->
+                    chapterListParse(response)
+                }
+        } else {
+            Observable.error(Exception("Licensed - No chapters to show"))
+        }
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        if (response.code in 200..299) {
+            return super.chapterListParse(response)
+        }
+
+        // Try to use message from site
+        response.body?.let { body ->
+            json.decodeFromString<JsonObject>(body.string())["message"]
+                ?.jsonPrimitive
+                ?.content
+                ?.let { throw Exception(it) }
+        }
+
+        throw Exception("HTTP error ${response.code}")
+    }
+
     override fun chapterListRequest(manga: SManga): Request =
         GET("$baseUrl/api/manga${manga.url}/chapters?source=detail", headers)
 
