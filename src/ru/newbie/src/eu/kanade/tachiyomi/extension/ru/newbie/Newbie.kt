@@ -15,6 +15,8 @@ import android.annotation.TargetApi
 import android.app.Application
 import android.content.SharedPreferences
 import android.os.Build
+import android.widget.Toast
+import androidx.preference.ListPreference
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -99,7 +101,7 @@ class Newbie : ConfigurableSource, HttpSource() {
         val o = this
         return SManga.create().apply {
             // Do not change the title name to ensure work with a multilingual catalog!
-            title = o.title.en
+            title = if (isEng.equals("rus")) o.title.ru else o.title.en
             url = "$id"
             thumbnail_url = if (image.srcset.large.isNotEmpty()) {
                 "$IMAGE_URL/${image.srcset.large}"
@@ -122,7 +124,7 @@ class Newbie : ConfigurableSource, HttpSource() {
     private fun SearchLibraryDto.toSearchManga(): SManga {
         return SManga.create().apply {
             // Do not change the title name to ensure work with a multilingual catalog!
-            title = document.title_en
+            title = if (isEng.equals("rus")) document.title_ru else document.title_en
             url = document.id
             thumbnail_url = if (document.image_large.isNotEmpty()) {
                 "$IMAGE_URL/${document.image_large}"
@@ -250,12 +252,13 @@ class Newbie : ConfigurableSource, HttpSource() {
         val o = this
         return SManga.create().apply {
             // Do not change the title name to ensure work with a multilingual catalog!
-            title = o.title.en
+            title = if (isEng.equals("rus")) o.title.ru else o.title.en
             url = "$id"
             thumbnail_url = "$IMAGE_URL/${image.srcset.large}"
             author = o.author?.name
             artist = o.artist?.name
-            description = o.title.ru + "\n" + ratingStar + " " + ratingValue + " [♡" + hearts + "]\n" + Jsoup.parse(o.description).text()
+            val mediaNameLanguage = if (isEng.equals("rus")) o.title.en else o.title.ru
+            description = mediaNameLanguage + "\n" + ratingStar + " " + ratingValue + " [♡" + hearts + "]\n" + Jsoup.parse(o.description).text()
             genre = parseType(type) + ", " + adult?.let { parseAge(it) } + ", " + genres.joinToString { it.title.ru.capitalize() }
             status = parseStatus(o.status)
         }
@@ -618,7 +621,22 @@ class Newbie : ConfigurableSource, HttpSource() {
         CheckFilter("18+", "ADULT_18")
     )
 
+    private var isEng: String? = preferences.getString(LANGUAGE_PREF, "eng")
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
+        val titleLanguagePref = ListPreference(screen.context).apply {
+            key = LANGUAGE_PREF
+            title = LANGUAGE_PREF_Title
+            entries = arrayOf("Английский", "Русский")
+            entryValues = arrayOf("eng", "rus")
+            summary = "%s"
+            setDefaultValue("eng")
+            setOnPreferenceChangeListener { _, newValue ->
+                val titleLanguage = preferences.edit().putString(LANGUAGE_PREF, newValue as String).commit()
+                val warning = "Если язык обложки не изменился очистите базу данных в приложении (Настройки -> Дополнительно -> Очистить базу данных)"
+                Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
+                titleLanguage
+            }
+        }
         val paidChapterShow = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = PAID_PREF
             title = PAID_PREF_Title
@@ -630,12 +648,16 @@ class Newbie : ConfigurableSource, HttpSource() {
                 preferences.edit().putBoolean(key, checkValue).commit()
             }
         }
+        screen.addPreference(titleLanguagePref)
         screen.addPreference(paidChapterShow)
     }
 
     companion object {
         private const val API_URL = "https://api.newmanga.org/v2"
         private const val IMAGE_URL = "https://storage.newmanga.org"
+
+        private const val LANGUAGE_PREF = "NewMangaTitleLanguage"
+        private const val LANGUAGE_PREF_Title = "Выбор языка на обложке"
 
         private const val PAID_PREF = "PaidChapter"
         private const val PAID_PREF_Title = "Показывать платные главы"

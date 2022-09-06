@@ -107,6 +107,7 @@ data class SearchLibraryDto(
 data class DocElementsDto(
     val id: String,
     val title_en: String,
+    val title_ru: String,
     val image_large: String,
     val image_small: String
 )
