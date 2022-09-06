@@ -375,7 +375,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Novels Town", "https://novelstown.cyou", "ar"),
         SingleLang("Oh No Manga", "https://ohnomanga.com", "en", isNsfw = true),
         SingleLang("OlympusScan.top", "https://olympusscan.top", "es", className = "OlympusScanTop"),
-        SingleLang("Paean Scans", "https://paeanscans.com", "en", overrideVersionCode = 1),
         SingleLang("Painful Nightz Scan", "https://painfulnightz.com", "en", overrideVersionCode = 1),
         SingleLang("Petrotechsociety", "https://www.petrotechsociety.org", "en", isNsfw = true),
         SingleLang("Pian Manga", "https://pianmanga.com", "en", isNsfw = true),
