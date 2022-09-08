@@ -18,6 +18,10 @@
                     android:host="mangabz.com"
                     android:pathPattern="/..*"
                     android:scheme="https" />
+                <data
+                    android:host="xmanhua.com"
+                    android:pathPattern="/..*"
+                    android:scheme="https" />
             </intent-filter>
         </activity>
     </application>
