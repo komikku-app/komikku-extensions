@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.zh.mangabz
 
+import android.util.Log
 import android.webkit.CookieManager
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -13,7 +14,7 @@ class CookieInterceptor(
     init {
         val url = "https://$domain/"
         val cookie = "$key=$value; Domain=$domain; Path=/"
-        CookieManager.getInstance().setCookie(url, cookie)
+        setCookie(url, cookie)
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -24,7 +25,7 @@ class CookieInterceptor(
         val cookieList = request.header("Cookie")?.split("; ") ?: emptyList()
         if (cookie in cookieList) return chain.proceed(request)
 
-        CookieManager.getInstance().setCookie("https://$domain/", "$cookie; Domain=$domain; Path=/")
+        setCookie("https://$domain/", "$cookie; Domain=$domain; Path=/")
         val prefix = "$key="
         val newCookie = buildList(cookieList.size + 1) {
             cookieList.filterNotTo(this) { it.startsWith(prefix) }
@@ -32,5 +33,14 @@ class CookieInterceptor(
         }.joinToString("; ")
         val newRequest = request.newBuilder().header("Cookie", newCookie).build()
         return chain.proceed(newRequest)
+    }
+
+    private fun setCookie(url: String, value: String) {
+        try {
+            CookieManager.getInstance().setCookie(url, value)
+        } catch (e: Exception) {
+            // Probably running on Tachidesk
+            Log.e("Mangabz", "failed to set cookie", e)
+        }
     }
 }
