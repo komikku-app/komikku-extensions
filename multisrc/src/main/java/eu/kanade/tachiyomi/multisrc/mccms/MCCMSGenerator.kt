@@ -12,10 +12,6 @@ class MCCMSGenerator : ThemeSourceGenerator {
             name = "Haoman6", baseUrl = "https://www.haoman6.com", lang = "zh",
             className = "Haoman6", sourceName = "好漫6", overrideVersionCode = 3
         ),
-        SingleLang( // 与 app2.haomanwu.com 相同
-            name = "Haomanwu", baseUrl = "https://app2.haoman6.com", lang = "zh",
-            className = "Haomanwu", sourceName = "好漫屋", overrideVersionCode = 3
-        ),
         SingleLang(
             name = "Haoman6 (g-lens)", baseUrl = "https://www.g-lens.com", lang = "zh",
             className = "Haoman6_glens", sourceName = "好漫6 (g-lens)", overrideVersionCode = 0
@@ -30,7 +26,11 @@ class MCCMSGenerator : ThemeSourceGenerator {
         ),
         SingleLang(
             name = "Pupu Manhua", baseUrl = "https://app.manhuaorg.com", lang = "zh",
-            className = "Manhuaorg", sourceName = "朴朴漫画", overrideVersionCode = 1
+            className = "Manhuaorg", sourceName = "朴朴漫画", overrideVersionCode = 2
+        ),
+        SingleLang(
+            name = "PPHanman", baseUrl = "https://pphm.xyz", lang = "zh", isNsfw = true,
+            className = "PPHanman", sourceName = "PP韩漫", overrideVersionCode = 0
         ),
     )
 
