@@ -446,7 +446,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("The Beginning After The End", "https://www.thebeginningaftertheend.fr", "fr"),
         SingleLang("The Guild", "https://theguildscans.com", "en"),
         SingleLang("The Sugar", "https://thesugarscan.com", "pt-BR"),
-        SingleLang("TheFluffyHangoutGroup", "https://www.fluffyhangout.club", "en", overrideVersionCode = 2),
         SingleLang("Three Queens Scanlator", "https://tqscan.com.br", "pt-BR", overrideVersionCode = 3),
         SingleLang("Tiempo de webeo", "https://tiempodewebeo.com", "es", className = "TiempoDeWebeo", isNsfw = true),
         SingleLang("Time Naight", "https://timenaight.com", "tr"),
