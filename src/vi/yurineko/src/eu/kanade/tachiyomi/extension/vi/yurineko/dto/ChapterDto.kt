@@ -11,7 +11,7 @@ val DATE_FORMATTER = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
     timeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
 }
 
-val FLOATING_NUMBER_REGEX = Regex("""([+-]?(?:[0-9]*[.])?[0-9]+)""")
+val CHAPTER_NUMBER_REGEX = Regex("""[+\-]?([0-9]*[\.])?[0-9]+""", RegexOption.IGNORE_CASE)
 
 @Serializable
 data class ChapterDto(
@@ -32,11 +32,11 @@ data class ChapterDto(
             }.getOrNull() ?: 0L
         }
 
-        val match = FLOATING_NUMBER_REGEX.find(dto.name)
-        chapter_number = if (dto.name.lowercase().startsWith("vol")) {
-            match?.groups?.get(2)
+        val match = CHAPTER_NUMBER_REGEX.findAll(dto.name)
+        chapter_number = if (match.count() > 1 && dto.name.lowercase().startsWith("vol")) {
+            match.elementAt(1)
         } else {
-            match?.groups?.get(1)
+            match.elementAtOrNull(0)
         }?.value?.toFloat() ?: -1f
         scanlator = teams
     }

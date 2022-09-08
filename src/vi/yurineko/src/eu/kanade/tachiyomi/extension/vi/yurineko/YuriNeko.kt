@@ -195,7 +195,7 @@ class YuriNeko : HttpSource() {
     }
 
     override fun getFilterList() = FilterList(
-        Filter.Header("Lưu ý rằng không thể vừa tìm kiếm vừa lọc bằng tag cùng lúc."),
+        Filter.Header("Lưu ý rằng không thể vừa tìm kiếm vừa lọc bằng tag."),
         Filter.Header("Tìm kiếm sẽ được ưu tiên."),
         UriPartFilter("Tag", getGenreList())
     )
