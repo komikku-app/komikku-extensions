@@ -16,7 +16,7 @@ class LeviatanScansFactory : SourceFactory {
     )
 }
 
-class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "en", SimpleDateFormat("MMM dd, yyyy", Locale.US)) {
+class LeviatanScansEN : Madara("Leviatan Scans", "https://en.leviatanscans.com", "en", SimpleDateFormat("MMM dd, yyyy", Locale.US)) {
     override val useNewChapterEndpoint: Boolean = true
 
     override fun popularMangaFromElement(element: Element) =
@@ -28,8 +28,17 @@ class LeviatanScansEN : Madara("Leviatan Scans", "https://leviatanscans.com", "e
     override fun searchMangaFromElement(element: Element) =
         replaceRandomUrlPartInManga(super.searchMangaFromElement(element))
 
-    override fun chapterFromElement(element: Element) =
-        replaceRandomUrlPartInChapter(super.chapterFromElement(element))
+    override fun chapterFromElement(element: Element): SChapter {
+        val chapter = replaceRandomUrlPartInChapter(super.chapterFromElement(element))
+
+        with(element) {
+            selectFirst(chapterUrlSelector)?.let { urlElement ->
+                chapter.name = urlElement.ownText()
+            }
+        }
+
+        return chapter
+    }
 
     override val mangaDetailsSelectorStatus = ".post-content_item:contains(Status) .summary-content"
 }
