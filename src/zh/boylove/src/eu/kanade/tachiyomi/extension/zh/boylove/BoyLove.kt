@@ -7,6 +7,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -41,7 +42,7 @@ class BoyLove : HttpSource(), ConfigurableSource {
         .coerceIn(0, MIRRORS.size - 1).let { MIRRORS[it] }
 
     override val client = network.client.newBuilder()
-        .addInterceptor(NonblockingRateLimiter(2))
+        .rateLimit(2)
         .build()
 
     override fun popularMangaRequest(page: Int): Request =

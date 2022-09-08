@@ -4,6 +4,7 @@ import com.github.stevenyomi.unpacker.Unpacker
 import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -33,7 +34,7 @@ class SixMH : ParsedHttpSource() {
     private val json: Json by injectLazy()
 
     override val client = network.client.newBuilder()
-        .addInterceptor(NonblockingRateLimiter(2))
+        .rateLimit(2)
         .build()
 
     override fun popularMangaRequest(page: Int) = GET("$PC_URL/rank/1-$page.html", headers)

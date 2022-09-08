@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaListDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.RelationshipDto
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -59,9 +60,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         .add("User-Agent", "Tachiyomi " + System.getProperty("http.agent"))
 
     override val client = network.client.newBuilder()
-        .addNetworkInterceptor(mdRateLimitInterceptor)
-        .addInterceptor(coverInterceptor)
-        .addInterceptor(MdAtHomeReportInterceptor(network.client, headersBuilder().build()))
+        .rateLimit(3)
+        .addInterceptor(MdAtHomeReportInterceptor(network.client, headers))
         .build()
 
     // POPULAR Manga Section

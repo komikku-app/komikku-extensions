@@ -14,18 +14,6 @@ import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
 
 /**
- * Rate limit requests ignore covers though
- */
-private val coverRegex = Regex("""/images/.*\.jpg""")
-private val baseInterceptor = RateLimitInterceptor(3)
-val mdRateLimitInterceptor = Interceptor { chain ->
-    return@Interceptor when (chain.request().url.toString().contains(coverRegex)) {
-        true -> chain.proceed(chain.request())
-        false -> baseInterceptor.intercept(chain)
-    }
-}
-
-/**
  * Interceptor to post to md@home for MangaDex Stats
  */
 class MdAtHomeReportInterceptor(
@@ -70,24 +58,6 @@ class MdAtHomeReportInterceptor(
                 }
             }
 
-            response
-        }
-    }
-}
-
-val coverInterceptor = Interceptor { chain ->
-    val originalRequest = chain.request()
-    return@Interceptor chain.proceed(chain.request()).let { response ->
-        if (response.code == 404 && originalRequest.url.toString()
-            .contains(coverRegex)
-        ) {
-            response.close()
-            chain.proceed(
-                originalRequest.newBuilder().url(
-                    originalRequest.url.toString().substringBeforeLast(".") + ".thumb.jpg"
-                ).build()
-            )
-        } else {
             response
         }
     }
