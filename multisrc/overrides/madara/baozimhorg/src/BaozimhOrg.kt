@@ -43,6 +43,7 @@ class BaozimhOrg : ConfigurableSource, Madara(
     override val client = network.client
 
     override val useLoadMoreSearch = false
+    override val sendViewCount = false
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/hots/$page/", headers)
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/dayup/$page/", headers)
@@ -103,6 +104,9 @@ class BaozimhOrg : ConfigurableSource, Madara(
 
     override fun parseRelativeDate(date: String) =
         super.parseRelativeDate(date.replace("小时", "hour"))
+
+    // Jsoup won't ignore duplicates inside <noscript> tag
+    override val pageListParseSelector = ".text-left img.lazyload"
 
     var genres: Array<Pair<String, String>> = emptyArray()
 
