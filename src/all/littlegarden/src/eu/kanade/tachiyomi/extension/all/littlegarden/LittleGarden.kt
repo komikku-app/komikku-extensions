@@ -174,7 +174,7 @@ class LittleGarden : ParsedHttpSource() {
         val pages = mutableListOf<Page>()
         val chapNb = document.selectFirst("div.chapter-number").text().trim().toInt()
         val engChaps: IntArray = intArrayOf(970, 987, 992)
-        if (document.selectFirst("div.manga-name").text().trim() == "One Piece" && (engChaps.contains(chapNb) || chapNb > 994)) { // Permits to get French pages rather than English pages for some chapters
+        if (document.selectFirst("div.manga-name").text().trim() == "One Piece" && (engChaps.contains(chapNb) || chapNb > 1004)) { // Permits to get French pages rather than English pages for some chapters
             oricolPageRegex.findAll(document.select("script:containsData(pages)").toString()).asIterable().mapIndexed { i, it ->
                 if (it.groups["colored"]?.value?.contains("\"") == true) { // Their JS dict has " " around the link only when available. Also uses colored pages rather than B&W as it's the main strength of this site
                     pages.add(Page(i, "", cdnUrl + it.groups["colored"]?.value?.replace("\"", "") + ".webp"))
