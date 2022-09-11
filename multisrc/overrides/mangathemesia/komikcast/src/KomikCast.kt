@@ -3,11 +3,14 @@ package eu.kanade.tachiyomi.extension.id.komikcast
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.model.Filter
+import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
@@ -95,4 +98,98 @@ class KomikCast : MangaThemesia(
     }
 
     override val hasProjectPage: Boolean = true
+    override val projectPageString = "/project-list"
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val url = baseUrl.toHttpUrl().newBuilder()
+
+        if (query.isNotEmpty()) {
+            url.addPathSegments("page/$page/").addQueryParameter("s", query)
+        } else {
+            url.addPathSegment(mangaUrlDirectory.substring(1)).addPathSegments("page/$page/")
+        }
+
+        filters.forEach { filter ->
+            when (filter) {
+                is StatusFilter -> {
+                    url.addQueryParameter("status", filter.selectedValue())
+                }
+                is TypeFilter -> {
+                    url.addQueryParameter("type", filter.selectedValue())
+                }
+                is OrderByFilter -> {
+                    url.addQueryParameter("orderby", filter.selectedValue())
+                }
+                is GenreListFilter -> {
+                    filter.state
+                        .filter { it.state != Filter.TriState.STATE_IGNORE }
+                        .forEach {
+                            val value = if (it.state == Filter.TriState.STATE_EXCLUDE) "-${it.value}" else it.value
+                            url.addQueryParameter("genre[]", value)
+                        }
+                }
+                // if site has project page, default value "hasProjectPage" = false
+                is ProjectFilter -> {
+                    if (filter.selectedValue() == "project-filter-on") {
+                        url.setPathSegment(0, projectPageString.substring(1))
+                    }
+                }
+                else -> { /* Do Nothing */ }
+            }
+        }
+        return GET(url.toString())
+    }
+
+    private class StatusFilter : SelectFilter(
+        "Status",
+        arrayOf(
+            Pair("All", ""),
+            Pair("Ongoing", "ongoing"),
+            Pair("Completed", "completed")
+        )
+    )
+
+    private class TypeFilter : SelectFilter(
+        "Type",
+        arrayOf(
+            Pair("All", ""),
+            Pair("Manga", "manga"),
+            Pair("Manhwa", "manhwa"),
+            Pair("Manhua", "manhua")
+        )
+    )
+
+    private class OrderByFilter(defaultOrder: String? = null) : SelectFilter(
+        "Sort By",
+        arrayOf(
+            Pair("Default", ""),
+            Pair("A-Z", "titleasc"),
+            Pair("Z-A", "titledesc"),
+            Pair("Update", "update"),
+            Pair("Popular", "popular")
+        ),
+        defaultOrder
+    )
+
+    override fun getFilterList(): FilterList {
+        val filters = mutableListOf<Filter<*>>(
+            Filter.Separator(),
+            StatusFilter(),
+            TypeFilter(),
+            OrderByFilter(),
+            Filter.Header("Genre exclusion is not available for all sources"),
+            GenreListFilter(getGenreList()),
+        )
+        if (hasProjectPage) {
+            filters.addAll(
+                mutableListOf<Filter<*>>(
+                    Filter.Separator(),
+                    Filter.Header("NOTE: Can't be used with other filter!"),
+                    Filter.Header("$name Project List page"),
+                    ProjectFilter(),
+                )
+            )
+        }
+        return FilterList(filters)
+    }
 }
