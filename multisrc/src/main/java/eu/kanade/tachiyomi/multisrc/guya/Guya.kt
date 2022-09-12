@@ -21,6 +21,8 @@ import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
+import org.jsoup.Jsoup
+import org.jsoup.select.Evaluator
 import rx.Observable
 import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
@@ -49,8 +51,6 @@ abstract class Guya(
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
-
-    private val scanlatorPreference = "SCANLATOR_PREFERENCE"
 
     // Request builder for the "browse" page of the manga
     override fun popularMangaRequest(page: Int): Request {
@@ -250,15 +250,13 @@ abstract class Guya(
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val scanlatorKeys = scanlators.keys().toTypedArray()
+
         val preference = ListPreference(screen.context).apply {
             key = "preferred_scanlator"
             title = "Preferred scanlator"
-            entries = arrayOf<String>()
-            entryValues = arrayOf<String>()
-            for (key in scanlators.keys()) {
-                entries += scanlators.getValueFromKey(key)
-                entryValues += key
-            }
+            entries = Array(scanlatorKeys.size) { scanlators.getValueFromKey(scanlatorKeys[it]) }
+            entryValues = scanlatorKeys
             summary = "Current: %s\n\n" +
                 "This setting sets the scanlation group to prioritize " +
                 "on chapter refresh/update. It will get the next available if " +
@@ -428,7 +426,13 @@ abstract class Guya(
         manga.title = title.ifEmpty { json.getString("title") }
         manga.artist = json.optString("artist")
         manga.author = json.optString("author")
-        manga.description = json.optString("description")
+        manga.description = json.optString("description").let {
+            if ('<' !in it) return@let it // no HTML
+            Jsoup.parseBodyFragment(it).body().run {
+                select(Evaluator.Tag("a")).remove()
+                text()
+            }
+        }
         manga.url = if (slug.startsWith(PROXY_PREFIX)) slug else json.getString("slug")
 
         val cover = json.optString("cover")
@@ -581,5 +585,7 @@ abstract class Guya(
         const val SLUG_PREFIX = "slug:"
         const val PROXY_PREFIX = "proxy:"
         const val NESTED_PROXY_API_PREFIX = "/proxy/api/"
+
+        private const val scanlatorPreference = "SCANLATOR_PREFERENCE"
     }
 }
