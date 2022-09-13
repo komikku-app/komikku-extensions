@@ -30,6 +30,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
+// Formerly WPMangaStream & WPMangaReader -> MangaThemesia
 abstract class MangaThemesia(
     override val name: String,
     override val baseUrl: String,
