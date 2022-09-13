@@ -29,7 +29,6 @@ class MangaMainacGenerator : ThemeSourceGenerator {
         //
         // SingleLang("", "https://5-toubunnohanayome.net/", "en"), //Down at time of creating this generator
         // SingleLang("", "http://beastars.net/", "en"), //Down at time of creating this generator
-        // SingleLang("", "https://neverlandmanga.net/", "en"), //Down at time of creating this generator
         // SingleLang("", "https://ww1.readhunterxhunter.net/", "en"), //Down at time of creating this generator
     )
 
