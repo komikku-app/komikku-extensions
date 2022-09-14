@@ -46,11 +46,11 @@ abstract class ZManga(
     override fun popularMangaNextPageSelector() = "div.pagination .next"
 
     // latest
-    override fun latestUpdatesSelector() = popularMangaSelector()
-
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/advanced-search/${pagePathSegment(page)}?order=update")
     }
+
+    override fun latestUpdatesSelector() = popularMangaSelector()
 
     override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
 
