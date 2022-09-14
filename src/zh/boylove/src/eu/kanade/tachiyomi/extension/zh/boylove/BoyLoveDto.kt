@@ -13,7 +13,7 @@ import java.util.Locale
 class MangaDto(
     val id: Int,
     private val title: String,
-    private val update_time: JsonPrimitive,
+    private val update_time: JsonPrimitive? = null,
     private val image: String,
     private val auther: String,
     private val desc: String,
@@ -24,12 +24,6 @@ class MangaDto(
         url = id.toString()
         title = this@MangaDto.title
         author = auther
-        val updateTime = if (update_time.isString) {
-            update_time.content
-        } else {
-            dateFormat.format(Date(update_time.long * 1000))
-        }
-        description = "更新时间：$updateTime\n\n$desc"
         genre = keyword.replace(",", ", ")
         status = when (mhstatus) {
             0 -> SManga.ONGOING
@@ -37,6 +31,16 @@ class MangaDto(
             else -> SManga.UNKNOWN
         }
         thumbnail_url = image.toImageUrl()
+        val rawUpdateTime = update_time
+        if (rawUpdateTime == null) {
+            description = desc.trim()
+            return@apply
+        }
+        val updateTime = when {
+            rawUpdateTime.isString -> rawUpdateTime.content
+            else -> dateFormat.format(Date(rawUpdateTime.long * 1000))
+        }
+        description = "更新时间：$updateTime\n\n${desc.trim()}"
         initialized = true
     }
 }
