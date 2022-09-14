@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -16,6 +17,7 @@ import okhttp3.Request
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 class KomikCast : MangaThemesia(
@@ -72,8 +74,46 @@ class KomikCast : MangaThemesia(
 
     override fun chapterListSelector() = "div.komik_info-chapters li"
 
-    override fun chapterFromElement(element: Element) = super.chapterFromElement(element).apply {
-        date_upload = element.selectFirst(".chapter-link-time")?.text().parseChapterDate()
+    override fun chapterFromElement(element: Element) = SChapter.create().apply {
+        val urlElements = element.select("a")
+        setUrlWithoutDomain(urlElements.attr("href"))
+        name = element.select(".lch a, .chapternum").text().ifBlank { urlElements.first().text() }
+        date_upload = parseChapterDate2(element.select(".chapter-link-time").text())
+    }
+
+    private fun parseChapterDate2(date: String): Long {
+        return if (date.endsWith("ago")) {
+            val value = date.split(' ')[0].toInt()
+            when {
+                "min" in date -> Calendar.getInstance().apply {
+                    add(Calendar.MINUTE, value * -1)
+                }.timeInMillis
+                "hour" in date -> Calendar.getInstance().apply {
+                    add(Calendar.HOUR_OF_DAY, value * -1)
+                }.timeInMillis
+                "day" in date -> Calendar.getInstance().apply {
+                    add(Calendar.DATE, value * -1)
+                }.timeInMillis
+                "week" in date -> Calendar.getInstance().apply {
+                    add(Calendar.DATE, value * 7 * -1)
+                }.timeInMillis
+                "month" in date -> Calendar.getInstance().apply {
+                    add(Calendar.MONTH, value * -1)
+                }.timeInMillis
+                "year" in date -> Calendar.getInstance().apply {
+                    add(Calendar.YEAR, value * -1)
+                }.timeInMillis
+                else -> {
+                    0L
+                }
+            }
+        } else {
+            try {
+                dateFormat.parse(date)?.time ?: 0
+            } catch (_: Exception) {
+                0L
+            }
+        }
     }
 
     override fun pageListParse(document: Document): List<Page> {

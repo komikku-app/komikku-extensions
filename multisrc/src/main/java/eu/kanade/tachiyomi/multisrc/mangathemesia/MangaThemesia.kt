@@ -36,7 +36,7 @@ abstract class MangaThemesia(
     override val baseUrl: String,
     override val lang: String,
     val mangaUrlDirectory: String = "/manga",
-    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+    val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
 ) : ParsedHttpSource() {
 
     protected open val json: Json by injectLazy()
