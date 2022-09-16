@@ -91,6 +91,7 @@ class Hiveworks : ParsedHttpSource() {
                 is OriginalsFilter -> if (filter.state) return GET("$baseUrl/originals", headers)
                 is KidsFilter -> if (filter.state) return GET("$baseUrl/kids", headers)
                 is CompletedFilter -> if (filter.state) return GET("$baseUrl/completed", headers)
+                else -> { /*Do nothing*/ }
             }
         }
         if (query.isNotEmpty()) {
@@ -155,14 +156,14 @@ class Hiveworks : ParsedHttpSource() {
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         val url = manga.url
-        return client.newCall(mangaDetailsRequest(manga))
+        return client.newCall(GET(baseUrl, headers)) //Bypasses mangaDetailsRequest
             .asObservableSuccess()
             .map { response ->
                 mangaDetailsParse(response, url).apply { initialized = true }
             }
     }
 
-    override fun mangaDetailsRequest(manga: SManga) = GET(baseUrl, headers)
+    override fun mangaDetailsRequest(manga: SManga) = GET(manga.url, headers) //Used to open proper page in webview
     override fun mangaDetailsParse(document: Document): SManga = throw Exception("Not Used")
     private fun mangaDetailsParse(response: Response, url: String): SManga {
         val document = response.asJsoup()
@@ -189,11 +190,13 @@ class Hiveworks : ParsedHttpSource() {
     override fun chapterListSelector() = "select[name=comic] option"
     override fun chapterListRequest(manga: SManga): Request {
         val uri = Uri.parse(manga.url).buildUpon()
-        if ("sssscomic" in uri.toString()) {
-            uri.appendQueryParameter("id", "archive") // sssscomic uses query string in url
-        } else {
-            uri.appendPath("comic")
-            uri.appendPath("archive")
+        when {
+            "sssscomic" in uri.toString() -> uri.appendQueryParameter("id", "archive") // sssscomic uses query string in url
+            "awkwardzombie" in uri.toString() -> uri.appendPath("awkward-zombie").appendPath("archive")
+            else -> {
+                uri.appendPath("comic")
+                uri.appendPath("archive")
+            }
         }
         return GET(uri.toString(), headers)
     }
@@ -203,6 +206,7 @@ class Hiveworks : ParsedHttpSource() {
         when {
             "witchycomic" in url -> return witchyChapterListParse(response)
             "sssscomic" in url -> return ssssChapterListParse(response)
+            "awkwardzombie" in url -> return awkwardzombieChapterListParse(response)
         }
         val document = response.asJsoup()
         val baseUrl = document.select("div script").html().substringAfter("href='").substringBefore("'")
@@ -222,11 +226,7 @@ class Hiveworks : ParsedHttpSource() {
     private fun createChapter(element: Element, baseUrl: String?) = SChapter.create().apply {
         name = element.text().substringAfter("-").trim()
         url = baseUrl + element.attr("value")
-        date_upload = parseDate(element.text().substringBefore("-").trim())
-    }
-
-    private fun parseDate(date: String): Long {
-        return SimpleDateFormat("MMM dd, yyyy", Locale.US).parse(date)?.time ?: 0
+        date_upload = parseDate(element.text().substringBefore("-").trim(), DATE_FORMATTER)
     }
 
     override fun chapterFromElement(element: Element) = throw Exception("Not Used")
@@ -249,14 +249,12 @@ class Hiveworks : ParsedHttpSource() {
                 pages.add(Page(pages.size, "", document.select("div#aftercomic img").attr("src")))
                 pages.add(Page(pages.size, "", smbcTextHandler(document)))
             }
-        }
-        // sssscomic doesn't use standard Hiveworks image locations
-        when {
             "sssscomic" in url -> {
                 val urlPath = document.select("img.comicnormal").attr("src")
                 val urlimg = response.request.url.resolve("../../$urlPath").toString()
                 pages.add(Page(pages.size, "", urlimg))
             }
+            else -> { /*Do Nothing*/ }
         }
 
         return pages
@@ -406,6 +404,23 @@ class Hiveworks : ParsedHttpSource() {
     )
 
     // Other Code
+
+    private fun awkwardzombieChapterListParse(response: Response): List<SChapter> {
+        val chapters = mutableListOf<SChapter>()
+        response.asJsoup().select("div.archive-line").forEach {
+            chapters.add(
+                SChapter.create().apply {
+                    val chapterNumber = it.select(".archive-date").text().substringAfter("#").substringBefore(",")
+                    chapter_number = chapterNumber.toFloat()
+                    name = "#$chapterNumber ${it.select("div.archive-title").text()} (${it.select(".archive-game").text()})"
+                    url = it.select("a").attr("abs:href")
+                    date_upload = parseDate(it.select(".archive-date").text().substringAfter(", "), awkwardzombieDateFormat)
+                }
+            )
+        }
+        return chapters
+    }
+
     // Gets the chapter list for witchycomic
     private fun witchyChapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
@@ -501,5 +516,15 @@ class Hiveworks : ParsedHttpSource() {
                 }
             }
         }
+    }
+
+    private fun parseDate(dateStr: String, format: SimpleDateFormat): Long {
+        return runCatching { format.parse(dateStr)?.time }
+            .getOrNull() ?: 0L
+    }
+
+    companion object {
+        private val DATE_FORMATTER by lazy { SimpleDateFormat("MMM dd, yyyy", Locale.US) }
+        private val awkwardzombieDateFormat by lazy { SimpleDateFormat("MM-dd-yy", Locale.US) }
     }
 }
