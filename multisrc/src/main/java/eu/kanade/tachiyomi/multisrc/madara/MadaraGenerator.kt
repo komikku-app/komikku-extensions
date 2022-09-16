@@ -294,7 +294,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Manhatic", "https://manhatic.com", "ar", isNsfw = true),
         SingleLang("Manhua Dragon", "https://manhuadragon.com", "en"),
         SingleLang("Manhua ES", "https://manhuaes.com", "en", overrideVersionCode = 6),
-        SingleLang("Manhua Kiss", "https://manhuakiss.me", "en", isNsfw = true),
+        SingleLang("Manhua Kiss", "https://manhuakiss.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Manhua Plus", "https://manhuaplus.com", "en", overrideVersionCode = 6),
         SingleLang("Manhua SY", "https://www.manhuasy.com", "en", overrideVersionCode = 1),
         SingleLang("ManhuaBox", "https://manhuabox.net", "en", overrideVersionCode = 2),
