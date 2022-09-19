@@ -4,6 +4,9 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.extension.ar.gmanga.GmangaPreferences.Companion.PREF_CHAPTER_LISTING
 import eu.kanade.tachiyomi.extension.ar.gmanga.GmangaPreferences.Companion.PREF_CHAPTER_LISTING_SHOW_ALL
 import eu.kanade.tachiyomi.extension.ar.gmanga.GmangaPreferences.Companion.PREF_CHAPTER_LISTING_SHOW_POPULAR
+import eu.kanade.tachiyomi.extension.ar.gmanga.GmangaPreferences.Companion.PREF_LASTETS_LISTING
+import eu.kanade.tachiyomi.extension.ar.gmanga.GmangaPreferences.Companion.PREF_LASTETS_LISTING_SHOW_LASTETS_CHAPTER
+import eu.kanade.tachiyomi.extension.ar.gmanga.GmangaPreferences.Companion.PREF_LASTETS_LISTING_SHOW_LASTETS_MANGA
 import eu.kanade.tachiyomi.extension.ar.gmanga.dto.TableDto
 import eu.kanade.tachiyomi.extension.ar.gmanga.dto.asChapterList
 import eu.kanade.tachiyomi.network.GET
@@ -20,6 +23,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
@@ -32,6 +36,8 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class Gmanga : ConfigurableSource, HttpSource() {
 
@@ -53,11 +59,17 @@ class Gmanga : ConfigurableSource, HttpSource() {
         .rateLimit(4)
         .build()
 
+    private val parsedDatePattern: SimpleDateFormat = SimpleDateFormat(
+        "yyyy-MM-dd HH:mm:ss ZZZ zzz",
+        Locale.ENGLISH
+    )
+    private val formattedDatePattern: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
     override fun headersBuilder() = Headers.Builder().apply {
         add("User-Agent", USER_AGENT)
     }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) = preferences.setupPreferenceScreen(screen)
+    override fun setupPreferenceScreen(screen: PreferenceScreen) =
+        preferences.setupPreferenceScreen(screen)
 
     override fun chapterListRequest(manga: SManga): Request {
         val mangaId = manga.url.substringAfterLast("/")
@@ -95,54 +107,154 @@ class Gmanga : ConfigurableSource, HttpSource() {
         }.sortedWith(compareBy({ -it.chapter_number }, { -it.date_upload }))
     }
 
-    override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used")
+    override fun imageUrlParse(response: Response): String =
+        throw UnsupportedOperationException("Not used")
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val data = json.decodeFromString<JsonObject>(response.asJsoup().select(".js-react-on-rails-component").html())
+        val isLatest = when (preferences.getString(PREF_LASTETS_LISTING)) {
+            PREF_LASTETS_LISTING_SHOW_LASTETS_MANGA -> true
+            PREF_LASTETS_LISTING_SHOW_LASTETS_CHAPTER -> false
+            else -> true
+        }
+
+        val mangas = if (!isLatest) {
+            val decMga = decryptResponse(response)
+            val selectedManga = decMga["rows"]!!.jsonArray[0].jsonObject["rows"]!!.jsonArray
+            buildJsonArray {
+                for (i in 0 until selectedManga.size) {
+                    add(selectedManga[i].jsonArray[17])
+                }
+            }
+        } else {
+            val data = json.decodeFromString<JsonObject>(
+                response.asJsoup().select(".js-react-on-rails-component").html()
+            )
+            data["mangaDataAction"]!!.jsonObject["newMangas"]!!.jsonArray
+        }
         return MangasPage(
-            data["mangaDataAction"]!!.jsonObject["newMangas"]!!.jsonArray.map {
+            mangas.jsonArray.map {
                 SManga.create().apply {
                     url = "/mangas/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                     title = it.jsonObject["title"]!!.jsonPrimitive.content
-
-                    thumbnail_url = it.jsonObject["cover"]!!.jsonPrimitive.contentOrNull?.let { coverFileName ->
-                        val thumbnail = "medium_${coverFileName.substringBeforeLast(".")}.webp"
+                    val thumbnail = "medium_${
+                    it.jsonObject["cover"]!!.jsonPrimitive.content.substringBeforeLast(".")
+                    }.webp"
+                    thumbnail_url =
                         "https://media.gmanga.me/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
-                    }
                 }
             },
-            false
+            (mangas.size >= 30) && !isLatest
         )
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/mangas/latest", headers)
+        val latestUrl = when (preferences.getString(PREF_LASTETS_LISTING)) {
+            PREF_LASTETS_LISTING_SHOW_LASTETS_MANGA -> "$baseUrl/mangas/latest"
+            PREF_LASTETS_LISTING_SHOW_LASTETS_CHAPTER -> "https://api.gmanga.me/api/releases?page=$page"
+            else -> "$baseUrl/mangas/latest"
+        }
+        return GET(latestUrl, headers)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val data = json.decodeFromString<JsonObject>(response.asJsoup().select(".js-react-on-rails-component").html())
+        val altNamePrefix = "مسميّات أخرى"
+        val translationStatusPrefix = "حالة الترجمة"
+        val startedDayPrefix = "تاريخ النشر"
+        val endedDayPrefix = "تاريخ الانتهاء"
+        val data = json.decodeFromString<JsonObject>(
+            response.asJsoup().select(".js-react-on-rails-component").html()
+        )
         val mangaData = data["mangaDataAction"]!!.jsonObject["mangaData"]!!.jsonObject
         return SManga.create().apply {
-            description = mangaData["summary"]!!.jsonPrimitive.contentOrNull ?: ""
-            artist = mangaData["artists"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content }
-            author = mangaData["authors"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content }
-            genre = mangaData["categories"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content }
+            description =
+                mangaData["summary"]!!.jsonPrimitive.contentOrNull?.ifEmpty { "لم يتم اضافة قصة بعد" }
+            artist =
+                mangaData["artists"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content }
+            author =
+                mangaData["authors"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content }
+            status = parseStatus(mangaData["story_status"].toString())
+            genre = listOfNotNull(
+                mangaData["type"]!!.jsonObject["title"]!!.jsonPrimitive.content,
+                mangaData["type"]!!.jsonObject["name"]!!.jsonPrimitive.content,
+                mangaData["categories"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content }
+            ).joinToString(", ")
+
+            parseTranslationStatus(mangaData["translation_status"].toString()).let {
+                description = "$description\n\n:$translationStatusPrefix ᗏ \n$it •"
+            }
+            var startedDate =
+                mangaData["s_date"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() }
+            startedDate = if (startedDate.isNullOrBlank().not()) {
+                parsedDatePattern.parse(startedDate!!)?.let { formattedDatePattern.format(it) }
+            } else {
+                null
+            }
+            var endedDay = mangaData["e_date"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() }
+            endedDay = if (endedDay.isNullOrBlank().not()) {
+                parsedDatePattern.parse(endedDay!!)?.let { formattedDatePattern.format(it) }
+            } else {
+                null
+            }
+
+            val alternativeName = listOfNotNull(
+                mangaData["synonyms"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() },
+                mangaData["arabic_title"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() },
+                mangaData["japanese"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() },
+                mangaData["english"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() }
+            ).joinToString("\n").trim()
+
+            val additionalInformation = listOfNotNull(
+                startedDate,
+                endedDay,
+                alternativeName
+            )
+            additionalInformation.forEach { info ->
+                when (info) {
+                    startedDate ->
+                        description =
+                            "$description\n\n:$startedDayPrefix ᗏ \n$startedDate •"
+                    endedDay -> description = "$description\n\n:$endedDayPrefix ᗏ \n$endedDay •"
+                    alternativeName ->
+                        description =
+                            "$description\n\n:$altNamePrefix ᗏ \n$alternativeName •"
+                    else -> description
+                }
+            }
         }
+    }
+
+    private fun parseStatus(status: String?) = when {
+        status == null -> SManga.UNKNOWN
+        status.contains("2") -> SManga.ONGOING
+        status.contains("3") -> SManga.COMPLETED
+        else -> SManga.UNKNOWN
+    }
+
+    private fun parseTranslationStatus(status: String?) = when {
+        status == null -> "مجهول"
+        status.contains("0") -> "منتهية"
+        status.contains("1") -> "مستمرة"
+        status.contains("2") -> "متوقفة"
+        else -> "مجهول"
     }
 
     override fun pageListParse(response: Response): List<Page> {
         val url = response.request.url.toString()
-        val data = json.decodeFromString<JsonObject>(response.asJsoup().select(".js-react-on-rails-component").html())
-        val releaseData = data["readerDataAction"]!!.jsonObject["readerData"]!!.jsonObject["release"]!!.jsonObject
+        val data = json.decodeFromString<JsonObject>(
+            response.asJsoup().select(".js-react-on-rails-component").html()
+        )
+        val releaseData =
+            data["readerDataAction"]!!.jsonObject["readerData"]!!.jsonObject["release"]!!.jsonObject
 
         val hasWebP = releaseData["webp_pages"]!!.jsonArray.size > 0
-        return releaseData[if (hasWebP) "webp_pages" else "pages"]!!.jsonArray.map { it.jsonPrimitive.content }.mapIndexed { index, pageUri ->
-            Page(
-                index,
-                "$url#page_$index",
-                "https://media.gmanga.me/uploads/releases/${releaseData["storage_key"]!!.jsonPrimitive.content}/hq${if (hasWebP) "_webp" else ""}/$pageUri"
-            )
-        }
+        return releaseData[if (hasWebP) "webp_pages" else "pages"]!!.jsonArray.map { it.jsonPrimitive.content }
+            .mapIndexed { index, pageUri ->
+                Page(
+                    index,
+                    "$url#page_$index",
+                    "https://media.gmanga.me/uploads/releases/${releaseData["storage_key"]!!.jsonPrimitive.content}/hq${if (hasWebP) "_webp" else ""}/$pageUri"
+                )
+            }
     }
 
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
@@ -157,8 +269,11 @@ class Gmanga : ConfigurableSource, HttpSource() {
                 SManga.create().apply {
                     url = "/mangas/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                     title = it.jsonObject["title"]!!.jsonPrimitive.content
-                    val thumbnail = "medium_${it.jsonObject["cover"]!!.jsonPrimitive.content.substringBeforeLast(".")}.webp"
-                    thumbnail_url = "https://media.gmanga.me/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
+                    val thumbnail = "medium_${
+                    it.jsonObject["cover"]!!.jsonPrimitive.content.substringBeforeLast(".")
+                    }.webp"
+                    thumbnail_url =
+                        "https://media.gmanga.me/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
                 }
             },
             mangas.size == 50
@@ -166,13 +281,18 @@ class Gmanga : ConfigurableSource, HttpSource() {
     }
 
     private fun decryptResponse(response: Response): JsonObject {
-        val encryptedData = json.decodeFromString<JsonObject>(response.body!!.string())["data"]!!.jsonPrimitive.content
+        val encryptedData =
+            json.decodeFromString<JsonObject>(response.body!!.string())["data"]!!.jsonPrimitive.content
         val decryptedData = decrypt(encryptedData)
         return json.decodeFromString(decryptedData)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        return GmangaFilters.buildSearchPayload(page, query, if (filters.isEmpty()) getFilterList() else filters).let {
+        return GmangaFilters.buildSearchPayload(
+            page,
+            query,
+            if (filters.isEmpty()) getFilterList() else filters
+        ).let {
             val body = it.toString().toRequestBody(MEDIA_TYPE)
             POST("$baseUrl/api/mangas/search", headers, body)
         }
@@ -181,7 +301,8 @@ class Gmanga : ConfigurableSource, HttpSource() {
     override fun getFilterList() = GmangaFilters.getFilterList()
 
     companion object {
-        private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36"
+        private const val USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36"
         private val MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
     }
 }
