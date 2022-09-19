@@ -83,6 +83,7 @@ class BilibiliIntl(lang: String) {
         CHINESE, SIMPLIFIED_CHINESE -> "人气推荐"
         INDONESIAN -> "Populer"
         SPANISH -> "Popularidad"
+        FRENCH -> "Préférences"
         else -> "Popular"
     }
 
@@ -90,6 +91,7 @@ class BilibiliIntl(lang: String) {
         CHINESE, SIMPLIFIED_CHINESE -> "更新时间"
         INDONESIAN -> "Terbaru"
         SPANISH -> "Actualización"
+        FRENCH -> "Récent"
         else -> "Updated"
     }
 
@@ -107,6 +109,7 @@ class BilibiliIntl(lang: String) {
         CHINESE, SIMPLIFIED_CHINESE -> "全部"
         INDONESIAN -> "Semua"
         SPANISH -> "Todos"
+        FRENCH -> "Tout"
         else -> "All"
     }
 
@@ -114,6 +117,7 @@ class BilibiliIntl(lang: String) {
         CHINESE, SIMPLIFIED_CHINESE -> "连载中"
         INDONESIAN -> "Berlangsung"
         SPANISH -> "En curso"
+        FRENCH -> "En cours"
         else -> "Ongoing"
     }
 
@@ -121,6 +125,7 @@ class BilibiliIntl(lang: String) {
         CHINESE, SIMPLIFIED_CHINESE -> "已完结"
         INDONESIAN -> "Tamat"
         SPANISH -> "Finalizado"
+        FRENCH -> "Complet"
         else -> "Completed"
     }
 
@@ -168,5 +173,6 @@ class BilibiliIntl(lang: String) {
         const val INDONESIAN = "id"
         const val SIMPLIFIED_CHINESE = "zh-Hans"
         const val SPANISH = "es"
+        const val FRENCH = "fr"
     }
 }
