@@ -179,8 +179,7 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
         date_upload = dateFormat.parse(element.select(".update_time").text())?.time ?: 0
     }
 
-    private val imageArrayYtawRegex = Regex("""var ytaw=\[([^\[]*)]""")
-    private val imageArrayHtncRegex = Regex("""var htnc=\[([^\[]*)]""")
+    private val imageArrayNameRegex = Regex("""data-src['"],\s*(\w+)""")
     private val imageUrlRegex = Regex("""'([^']*)'""")
 
     // Page List
@@ -191,28 +190,17 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val imageArrayYtaw = document.select("script:containsData(var ytaw)").firstOrNull()?.data()
-            ?.let { imageArrayYtawRegex.find(it)?.groupValues?.get(1) }
-        val imageArrayHtnc = document.select("script:containsData(var htnc)").firstOrNull()?.data()
-            ?.let { imageArrayHtncRegex.find(it)?.groupValues?.get(1) }
+        val imageScript = document.select("script:containsData(data-src)").firstOrNull()?.data()
+            ?: return emptyList()
+        val imageArrayName = imageArrayNameRegex.find(imageScript)?.groupValues?.get(1)
+            ?: return emptyList()
+        val imageArrayRegex = Regex("""var $imageArrayName=\[([^\[]*)]""")
 
-        val pagesYtaw =
-            imageArrayYtaw?.let {
-                imageUrlRegex.findAll(it).asIterable().mapIndexed { i, mr ->
-                    Page(i, "", mr.groupValues[1])
-                }
-            } ?: emptyList()
-        val pagesHtnc =
-            imageArrayHtnc?.let {
-                imageUrlRegex.findAll(it).asIterable().mapIndexed { i, mr ->
-                    Page(i, "", mr.groupValues[1])
-                }
-            } ?: emptyList()
-
-        return if (pagesYtaw.size >= pagesHtnc.size)
-            pagesYtaw
-        else
-            pagesHtnc
+        return imageArrayRegex.find(imageScript)?.groupValues?.get(1)?.let {
+            imageUrlRegex.findAll(it).asIterable().mapIndexed { i, mr ->
+                Page(i, "", mr.groupValues[1])
+            }
+        } ?: emptyList()
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
