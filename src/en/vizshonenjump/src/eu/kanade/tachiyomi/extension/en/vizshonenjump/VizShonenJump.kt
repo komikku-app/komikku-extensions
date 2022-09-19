@@ -27,7 +27,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -65,14 +64,19 @@ class VizShonenJump : ParsedHttpSource() {
             .set("Referer", baseUrl)
             .build()
 
-        return GET("$baseUrl/shonenjump", newHeaders, CacheControl.FORCE_NETWORK)
+        return GET(
+            url = "$baseUrl/read/shonenjump/section/free-chapters",
+            headers = newHeaders,
+            cache = CacheControl.FORCE_NETWORK
+        )
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val mangasPage = super.popularMangaParse(response)
-
-        if (mangasPage.mangas.isEmpty())
+        if (!response.request.url.toString().contains("section/free-chapters")) {
             throw Exception(COUNTRY_NOT_SUPPORTED)
+        }
+
+        val mangasPage = super.popularMangaParse(response)
 
         mangaList = mangasPage.mangas.sortedBy { it.title }
 
@@ -83,8 +87,8 @@ class VizShonenJump : ParsedHttpSource() {
         "section.section_chapters div.o_sort_container div.o_sortable > a.o_chapters-link"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.select("div.pad-x-rg").first().text()
-        thumbnail_url = element.select("div.pos-r img.disp-bl").first()
+        title = element.selectFirst("div.pad-x-rg").text()
+        thumbnail_url = element.selectFirst("div.pos-r img.disp-bl")
             ?.attr("data-original")
         url = element.attr("href")
     }
@@ -94,10 +98,11 @@ class VizShonenJump : ParsedHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = popularMangaRequest(page)
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val mangasPage = super.latestUpdatesParse(response)
-
-        if (mangasPage.mangas.isEmpty())
+        if (!response.request.url.toString().contains("section/free-chapters")) {
             throw Exception(COUNTRY_NOT_SUPPORTED)
+        }
+
+        val mangasPage = super.latestUpdatesParse(response)
 
         mangaList = mangasPage.mangas.sortedBy { it.title }
 
@@ -123,12 +128,11 @@ class VizShonenJump : ParsedHttpSource() {
         popularMangaRequest(page)
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val mangasPage = super.searchMangaParse(response)
-
-        if (mangasPage.mangas.isEmpty())
+        if (!response.request.url.toString().contains("section/free-chapters")) {
             throw Exception(COUNTRY_NOT_SUPPORTED)
+        }
 
-        return mangasPage
+        return super.searchMangaParse(response)
     }
 
     override fun searchMangaSelector() = popularMangaSelector()
@@ -321,7 +325,7 @@ class VizShonenJump : ParsedHttpSource() {
             .toString()
         val authCheckRequest = GET(authCheckUrl, authCheckHeaders)
         val authCheckResponse = chain.proceed(authCheckRequest)
-        val authCheckJson = Json.parseToJsonElement(authCheckResponse.body!!.string()).jsonObject
+        val authCheckJson = json.parseToJsonElement(authCheckResponse.body!!.string()).jsonObject
 
         authCheckResponse.close()
 
@@ -354,17 +358,14 @@ class VizShonenJump : ParsedHttpSource() {
     }
 
     private fun String.toDate(): Long {
-        return try {
-            DATE_FORMATTER.parse(this)!!.time
-        } catch (e: ParseException) {
-            0L
-        }
+        return runCatching { DATE_FORMATTER.parse(this)?.time }
+            .getOrNull() ?: 0L
     }
 
     companion object {
         private const val ACCEPT_JSON = "application/json, text/javascript, */*; q=0.01"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH)
