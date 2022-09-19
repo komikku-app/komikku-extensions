@@ -49,7 +49,7 @@ abstract class GroupLe(
             val originalRequest = chain.request()
             val response = chain.proceed(originalRequest)
             if (originalRequest.url.toString().contains(baseUrl) and (originalRequest.url.toString().contains("internal/redirect") or (response.code == 301)))
-                throw IOException("Манга переехала на другой адрес/ссылку!")
+                throw IOException("Ссылка на мангу была изменена. Перемегрируйте мангу на тотже (или смежный с GroupLe) источник или передабавте из Поисковика/Каталога.")
             response
         }
         .build()
@@ -186,7 +186,7 @@ abstract class GroupLe(
     override fun chapterListSelector() = "div.chapters-link > table > tbody > tr:has(td > a):has(td.date:not(.text-info))"
 
     private fun chapterFromElement(element: Element, manga: SManga): SChapter {
-        val urlElement = element.select("a").first()
+        val urlElement = element.select("a.chapter-link").first()
         val chapterInf = element.select("td.item-title").first()
         val urlText = urlElement.text()
 
@@ -249,7 +249,14 @@ abstract class GroupLe(
 
     override fun pageListParse(response: Response): List<Page> {
         val html = response.body!!.string()
-        val beginIndex = html.indexOf("rm_h.initReader( [")
+
+        val readerMark = "rm_h.initReader( ["
+
+        if (!html.contains(readerMark)) {
+            throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
+        }
+
+        val beginIndex = html.indexOf(readerMark)
         val endIndex = html.indexOf(");", beginIndex)
         val trimmedHtml = html.substring(beginIndex, endIndex)
 
