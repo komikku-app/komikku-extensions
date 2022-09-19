@@ -83,7 +83,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Patatescans", "https://patatescans.com", "fr", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Phantom Scans", "https://phantomscans.com", "en", overrideVersionCode = 1),
         SingleLang("Phoenix Fansub", "https://phoenixfansub.com", "es", overrideVersionCode = 2),
-        SingleLang("PMScans", "http://www.rackusreader.org", "en", overrideVersionCode = 2),
+        SingleLang("PMScans", "https://rackusreads.com", "en", overrideVersionCode = 3),
         SingleLang("Random Scans", "https://randomscans.xyz", "en"),
         SingleLang("Rawkuma", "https://rawkuma.com/", "ja"),
         SingleLang("Readkomik", "https://readkomik.com", "en", className = "ReadKomik", overrideVersionCode = 1),
