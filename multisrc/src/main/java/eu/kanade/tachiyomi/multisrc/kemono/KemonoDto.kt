@@ -3,6 +3,8 @@ package eu.kanade.tachiyomi.multisrc.kemono
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.double
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -11,9 +13,12 @@ class KemonoCreatorDto(
     private val id: String,
     val name: String,
     private val service: String,
-    private val updated: String,
+    private val updated: JsonPrimitive,
 ) {
-    val updatedDate get() = dateFormat.parse(updated)?.time ?: 0
+    val updatedDate get() = when {
+        updated.isString -> dateFormat.parse(updated.content)?.time ?: 0
+        else -> (updated.double * 1000).toLong()
+    }
 
     fun toSManga(baseUrl: String) = SManga.create().apply {
         url = "/$service/user/$id" // should be /server/ for Discord but will be filtered anyway
