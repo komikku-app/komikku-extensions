@@ -96,20 +96,3 @@ data class ChapterDto(
     val volumeId: Int,
     val created: String
 )
-
-@Serializable
-data class SearchResultsDto(
-    val series: List<SeriesSearchDto>
-)
-
-@Serializable
-data class SeriesSearchDto(
-    val seriesId: Int,
-    val name: String,
-    val originalName: String,
-    val sortName: String,
-    val localizedName: String,
-    val format: Int,
-    val libraryName: String,
-    val libraryId: Int
-)

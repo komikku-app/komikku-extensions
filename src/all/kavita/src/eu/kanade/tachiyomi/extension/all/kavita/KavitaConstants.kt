@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.kavita
 
 object KavitaConstants {
-    // togle filters
+    // toggle filters
     const val toggledFiltersPref = "toggledFilters"
     val filterPrefEntries = arrayOf(
         "Sort Options",
@@ -24,7 +24,8 @@ object KavitaConstants {
         "Editor",
         "Publisher",
         "Character",
-        "Translators"
+        "Translators",
+        "ReleaseYearRange"
     )
     val filterPrefEntriesValue = arrayOf(
         "Sort Options",
@@ -47,7 +48,8 @@ object KavitaConstants {
         "Editor",
         "Publisher",
         "Character",
-        "Translators"
+        "Translators",
+        "ReleaseYearRange"
     )
     val defaultFilterPrefEntries = setOf(
         "Sort Options",
@@ -70,7 +72,8 @@ object KavitaConstants {
         "Editor",
         "Publisher",
         "Character",
-        "Translators"
+        "Translators",
+        "ReleaseYearRange"
     )
 
     const val customSourceNamePref = "customSourceName"

@@ -1,3 +1,14 @@
+## 1.3.7
+
+### Features
+
+* New Sort filter: Time to read
+* New Filter: Year release filter
+
+### Fix
+* Filters can now be used together with search
+* Epub and pdfs no longer show in format filter (currently not supported)
+
 ## 1.3.6
 
 ### Fix
