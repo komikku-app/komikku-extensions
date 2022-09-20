@@ -14,6 +14,10 @@ android {
         minSdk = 29
         targetSdk = AndroidConfig.targetSdk
     }
+
+    kotlinOptions {
+        freeCompilerArgs += "-Xopt-in=kotlinx.serialization.ExperimentalSerializationApi"
+    }
 }
 
 repositories {

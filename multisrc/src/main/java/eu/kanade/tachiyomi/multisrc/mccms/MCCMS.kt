@@ -124,7 +124,6 @@ open class MCCMS(
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used.")
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        @Suppress("OPT_IN_USAGE")
         json.decodeFromStream<ResultDto<T>>(it.body!!.byteStream()).data
     }
 
