@@ -41,10 +41,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        if (!filtersCached) {
-            cachedPagesUrls.onEach { filterAssist(it.value) }
-            filtersCached = true
-        }
+        cacheAssistant()
         return searchMangaParse(response)
     }
     override fun popularMangaNextPageSelector() = throw Exception("Not used")
@@ -60,6 +57,10 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
     override fun latestUpdatesNextPageSelector() = "li.pagination-next"
     override fun latestUpdatesSelector() = "article"
     override fun latestUpdatesFromElement(element: Element) = buildManga(element.select("a[rel]").first(), element.select("a.entry-image-link img").first())
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        cacheAssistant()
+        return super.latestUpdatesParse(response)
+    }
 
     // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -74,7 +75,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
                 filter.addToUri(uri, "wpsolr_fq[${i - indexModifier}]")
             }
             if (filter is SearchSortTypeList) {
-                uri.appendQueryParameter("wpsolr_sort", listOf("sort_by_random", "sort_by_date_desc", "sort_by_date_asc", "sort_by_relevancy_desc")[filter.state])
+                uri.appendQueryParameter("wpsolr_sort", listOf("sort_by_date_desc", "sort_by_date_asc", "sort_by_random", "sort_by_relevancy_desc")[filter.state])
             }
         }
         uri.appendQueryParameter("wpsolr_page", page.toString())
@@ -233,6 +234,13 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
         return response.body!!.string()
     }
 
+    private fun cacheAssistant() {
+        if (!filtersCached) {
+            cachedPagesUrls.onEach { filterAssist(it.value) }
+            filtersCached = true
+        }
+    }
+
     // Returns page from cache to reduce calls to website
     private fun getCache(url: String): Document? {
         val response = client.newCall(GET(url, headers, CacheControl.FORCE_CACHE)).execute()
@@ -285,7 +293,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
     private class CatFilter(CATID: Array<String>) : UriSelectFilter("Categories", "categories", arrayOf("Any", *CATID))
     private class PairingFilter(PAIR: Array<String>) : UriSelectFilter("Pairing", "pairing_str", arrayOf("Any", *PAIR))
     private class ScanGroupFilter(GROUP: Array<String>) : UriSelectFilter("Scanlation Group", "group_str", arrayOf("Any", *GROUP))
-    private class SearchSortTypeList : Filter.Select<String>("Sort by", arrayOf("Random", "Newest", "Oldest", "More relevant"))
+    private class SearchSortTypeList : Filter.Select<String>("Sort by", arrayOf("Newest", "Oldest", "Random", "More relevant"))
 
     /**
      * Class that creates a select filter. Each entry in the dropdown has a name and a display name.
