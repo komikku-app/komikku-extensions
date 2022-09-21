@@ -43,7 +43,7 @@ class BoyLove : HttpSource(), ConfigurableSource {
     override val baseUrl = "https://" + preferences.getString(MIRROR_PREF, "0")!!.toInt()
         .coerceIn(0, MIRRORS.size - 1).let { MIRRORS[it] }
 
-    override val client = network.client.newBuilder()
+    override val client = network.cloudflareClient.newBuilder()
         .rateLimit(2)
         .build()
 
