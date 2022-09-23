@@ -1,97 +1,32 @@
 package eu.kanade.tachiyomi.extension.ko.newtoki
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.CacheControl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
-import okhttp3.Response
 import org.jsoup.nodes.Element
-import rx.Observable
-import java.util.concurrent.TimeUnit
 
 /*
  * ManaToki is too big to support in a Factory File., So split into separate file.
  */
 
-class ManaToki(domainNumber: Long) : NewToki("ManaToki", "https://manatoki$domainNumber.net", "comic") {
+object ManaToki : NewToki("ManaToki", "comic") {
     // / ! DO NOT CHANGE THIS !  Only the site name changed from newtoki.
-    override val id by lazy { generateSourceId("NewToki", lang, versionId) }
-    override val supportsLatest by lazy { getExperimentLatest() }
+    override val id = MANATOKI_ID
 
-    override fun latestUpdatesSelector() = ".media.post-list"
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/update?hid=update&page=$page")
-    override fun latestUpdatesNextPageSelector() = "nav.pg_wrap > .pg > strong"
-    override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
-        // if this is true, Handle Only 10 mangas with accurate Details per page. (Real Latest Page has 70 mangas.)
-        // Else, Parse from Latest page. which is incomplete.
-        val isParseWithDetail = getLatestWithDetail()
-        val reqPage = if (isParseWithDetail) ((page - 1) / 7 + 1) else page
-        return rateLimitedClient.newCall(latestUpdatesRequest(reqPage))
-            .asObservableSuccess()
-            .map { response ->
-                if (isParseWithDetail) latestUpdatesParseWithDetailPage(response, page)
-                else latestUpdatesParseWithLatestPage(response)
-            }
-    }
+    override val baseUrl get() = "https://$MANATOKI_PREFIX$domainNumber.net"
 
-    private fun latestUpdatesParseWithDetailPage(response: Response, page: Int): MangasPage {
-        val document = response.asJsoup()
+    override val preferences = manaTokiPreferences
 
-        // given cache time to prevent repeated lots of request in latest.
-        val cacheControl = CacheControl.Builder().maxAge(28, TimeUnit.DAYS).maxStale(28, TimeUnit.DAYS).build()
+    private val chapterRegex by lazy { Regex(""" [ \d,~.-]+화$""") }
 
-        val rm = 70 * ((page - 1) / 7)
-        val min = (page - 1) * 10 - rm
-        val max = page * 10 - rm
-        val elements = document.select("${latestUpdatesSelector()} p > a").slice(min until max)
-        val mangas = elements.map { element ->
-            val url = element.attr("abs:href")
-            val manga = mangaDetailsParse(rateLimitedClient.newCall(GET(url, cache = cacheControl)).execute())
-            manga.url = getUrlPath(url)
-            manga
-        }
-
-        val hasNextPage = try {
-            !document.select(popularMangaNextPageSelector()).text().contains("10")
-        } catch (_: Exception) {
-            false
-        }
-
-        return MangasPage(mangas, hasNextPage)
-    }
-
-    private fun latestUpdatesParseWithLatestPage(response: Response): MangasPage {
-        val document = response.asJsoup()
-
-        val mangas = document.select(latestUpdatesSelector()).map { element ->
-            latestUpdatesElementParse(element)
-        }
-
-        val hasNextPage = try {
-            !document.select(popularMangaNextPageSelector()).text().contains("10")
-        } catch (_: Exception) {
-            false
-        }
-
-        return MangasPage(mangas, hasNextPage)
-    }
-
-    private fun latestUpdatesElementParse(element: Element): SManga {
+    fun latestUpdatesElementParse(element: Element): SManga {
         val linkElement = element.select("a.btn-primary")
         val rawTitle = element.select(".post-subject > a").first().ownText().trim()
 
-        // TODO: Make Clear Regex.
-        val chapterRegex = Regex("""((?:\s+)(?:(?:(?:[0-9]+권)?(?:[0-9]+부)?(?:[0-9]*?시즌[0-9]*?)?)?(?:\s*)(?:(?:[0-9]+)(?:[-.](?:[0-9]+))?)?(?:\s*[~,]\s*)?(?:[0-9]+)(?:[-.](?:[0-9]+))?)(?:화))""")
         val title = rawTitle.trim().replace(chapterRegex, "")
-        // val regexSpecialChapter = Regex("(부록|단편|외전|.+편)")
-        // val lastTitleWord = excludeChapterTitle.split(" ").last()
-        // val title = excludeChapterTitle.replace(lastTitleWord, lastTitleWord.replace(regexSpecialChapter, ""))
 
         val manga = SManga.create()
         manga.url = getUrlPath(linkElement.attr("href"))
@@ -103,8 +38,6 @@ class ManaToki(domainNumber: Long) : NewToki("ManaToki", "https://manatoki$domai
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = ("$baseUrl/comic" + (if (page > 1) "/p$page" else "")).toHttpUrl().newBuilder()
-
-        val genres = mutableListOf<String>()
 
         filters.forEach { filter ->
             when (filter) {
@@ -121,20 +54,17 @@ class ManaToki(domainNumber: Long) : NewToki("ManaToki", "https://manatoki$domai
                 }
 
                 is SearchGenreTypeList -> {
-                    filter.state.forEach {
-                        if (it.state) {
-                            genres.add(it.id)
-                        }
-                    }
+                    val genres = filter.state.filter { it.state }.joinToString(",") { it.id }
+                    url.addQueryParameter("tag", genres)
                 }
 
                 is SearchSortTypeList -> {
-                    url.addQueryParameter("sst", listOf("wr_datetime", "wr_hit", "wr_good", "as_update")[filter.state])
+                    val state = filter.state ?: return@forEach
+                    url.addQueryParameter("sst", arrayOf("wr_datetime", "wr_hit", "wr_good", "as_update")[state.index])
+                    url.addQueryParameter("sod", if (state.ascending) "asc" else "desc")
                 }
 
-                is SearchOrderTypeList -> {
-                    url.addQueryParameter("sod", listOf("desc", "asc")[filter.state])
-                }
+                else -> {}
             }
         }
 
@@ -142,14 +72,12 @@ class ManaToki(domainNumber: Long) : NewToki("ManaToki", "https://manatoki$domai
             url.addQueryParameter("stx", query)
 
             // Remove some filter QueryParams that not working with query
-            url.setQueryParameter("publish", null)
-            url.setQueryParameter("jaum", null)
-
-            return GET(url.toString())
+            url.removeAllQueryParameters("publish")
+            url.removeAllQueryParameters("jaum")
+            url.removeAllQueryParameters("tag")
         }
 
-        url.addQueryParameter("tag", genres.joinToString(","))
-        return GET(url.toString())
+        return GET(url.toString(), headers)
     }
 
     private class SearchCheckBox(name: String, val id: String = name) : Filter.CheckBox(name)
@@ -227,7 +155,7 @@ class ManaToki(domainNumber: Long) : NewToki("ManaToki", "https://manatoki$domai
         ).map { SearchCheckBox(it) }
     )
 
-    private class SearchSortTypeList : Filter.Select<String>(
+    private class SearchSortTypeList : Filter.Sort(
         "Sort",
         arrayOf(
             "기본(날짜순)",
@@ -237,20 +165,12 @@ class ManaToki(domainNumber: Long) : NewToki("ManaToki", "https://manatoki$domai
         )
     )
 
-    private class SearchOrderTypeList : Filter.Select<String>(
-        "Order",
-        arrayOf(
-            "Descending",
-            "Ascending"
-        )
-    )
-
     override fun getFilterList() = FilterList(
-        Filter.Header("Some filters can't use with query"),
+        SearchSortTypeList(),
+        Filter.Separator(),
+        Filter.Header(ignoredForTextSearch()),
         SearchPublishTypeList(),
         SearchJaumTypeList(),
-        SearchSortTypeList(),
-        SearchOrderTypeList(),
         SearchGenreTypeList()
     )
 }

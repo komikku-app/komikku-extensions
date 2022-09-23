@@ -4,8 +4,9 @@ apply plugin: 'kotlin-android'
 ext {
     extName = 'NewToki / ManaToki'
     pkgNameSuffix = 'ko.newtoki'
-    extClass = '.NewTokiFactory'
-    extVersionCode = 23
+    extClass = '.TokiFactory'
+    extVersionCode = 24
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
