@@ -5,7 +5,8 @@ import android.content.SharedPreferences
 import androidx.preference.CheckBoxPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import app.cash.quickjs.QuickJs
+import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
+import eu.kanade.tachiyomi.lib.cryptoaes.Deobfuscator
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -463,18 +464,13 @@ open class BatoTo(
         val batoWord = script.substringAfter("const batoWord =").substringBefore(";").trim()
         val batoPass = script.substringAfter("const batoPass =").substringBefore(";").trim()
 
-        val decryptScript = cryptoJS + "CryptoJS.AES.decrypt($batoWord, $batoPass).toString(CryptoJS.enc.Utf8);"
-
-        val imgAccListString = QuickJs.create().use { it.evaluate(decryptScript).toString() }
+        val evaluatedPass: String = Deobfuscator.deobfuscateJsPassword(batoPass)
+        val imgAccListString = CryptoAES.decrypt(batoWord.removeSurrounding("\""), evaluatedPass)
         val imgAccList = json.parseToJsonElement(imgAccListString).jsonArray.map { it.jsonPrimitive.content }
 
         return imgHttpLis.zip(imgAccList).mapIndexed { i, (imgUrl, imgAcc) ->
             Page(i, imageUrl = "$imgUrl?$imgAcc")
         }
-    }
-
-    private val cryptoJS by lazy {
-        client.newCall(GET(CryptoJSUrl, headers)).execute().body!!.string()
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
@@ -912,8 +908,6 @@ open class BatoTo(
     ).filterNot { it.value == siteLang }
 
     companion object {
-        const val CryptoJSUrl = "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"
-
         private const val MIRROR_PREF_KEY = "MIRROR"
         private const val MIRROR_PREF_TITLE = "Mirror"
         private val MIRROR_PREF_ENTRIES = arrayOf(

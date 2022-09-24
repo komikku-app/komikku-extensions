@@ -1,3 +1,17 @@
+## 1.3.30
+
+### Refactor
+
+* Replace CryptoJS with Native Kotlin Functions
+* Remove QuickJS dependency
+
+## 1.3.29
+
+### Refactor
+
+* Cleanup pageListParse function
+* Replace Duktape with QuickJS
+
 ## 1.3.28
 
 ### Features
@@ -149,7 +163,7 @@
 
 ### Features
 
-* Scanlotor support
+* Scanlator support
 
 ### Fix
 

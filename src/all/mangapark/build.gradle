@@ -6,8 +6,12 @@ ext {
     extName = 'MangaPark v3'
     pkgNameSuffix = 'all.mangapark'
     extClass = '.MangaParkFactory'
-    extVersionCode = 17
+    extVersionCode = 18
     isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(':lib-cryptoaes'))
+}

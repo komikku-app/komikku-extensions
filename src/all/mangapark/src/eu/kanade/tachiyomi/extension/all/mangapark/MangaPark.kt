@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.mangapark
 
-import app.cash.quickjs.QuickJs
+import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
+import eu.kanade.tachiyomi.lib.cryptoaes.Deobfuscator
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -260,18 +261,13 @@ open class MangaPark(
         val amWord = script.substringAfter("const amWord =").substringBefore(";").trim()
         val amPass = script.substringAfter("const amPass =").substringBefore(";").trim()
 
-        val decryptScript = cryptoJS + "CryptoJS.AES.decrypt($amWord, $amPass).toString(CryptoJS.enc.Utf8);"
-
-        val imgAccListString = QuickJs.create().use { it.evaluate(decryptScript).toString() }
+        val evaluatedPass: String = Deobfuscator.deobfuscateJsPassword(amPass)
+        val imgAccListString = CryptoAES.decrypt(amWord.removeSurrounding("\""), evaluatedPass)
         val imgAccList = json.parseToJsonElement(imgAccListString).jsonArray.map { it.jsonPrimitive.content }
 
         return imgHttpLis.zip(imgAccList).mapIndexed { i, (imgUrl, imgAcc) ->
             Page(i, imageUrl = "$imgUrl?$imgAcc")
         }
-    }
-
-    private val cryptoJS by lazy {
-        client.newCall(GET(CryptoJSUrl, headers)).execute().body!!.string()
     }
 
     override fun getFilterList() = mpFilters.getFilterList()
@@ -287,7 +283,5 @@ open class MangaPark(
     companion object {
 
         const val PREFIX_ID_SEARCH = "id:"
-
-        const val CryptoJSUrl = "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"
     }
 }
