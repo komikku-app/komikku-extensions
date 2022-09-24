@@ -12,13 +12,11 @@ import org.jsoup.nodes.Element
  * ManaToki is too big to support in a Factory File., So split into separate file.
  */
 
-object ManaToki : NewToki("ManaToki", "comic") {
+object ManaToki : NewToki("ManaToki", "comic", manaTokiPreferences) {
     // / ! DO NOT CHANGE THIS !  Only the site name changed from newtoki.
     override val id = MANATOKI_ID
 
     override val baseUrl get() = "https://$MANATOKI_PREFIX$domainNumber.net"
-
-    override val preferences = manaTokiPreferences
 
     private val chapterRegex by lazy { Regex(""" [ \d,~.-]+화$""") }
 

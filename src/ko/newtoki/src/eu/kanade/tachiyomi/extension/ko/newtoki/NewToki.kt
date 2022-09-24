@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -30,18 +29,17 @@ import java.util.concurrent.TimeUnit
  *
  * Based on https://github.com/gnuboard/gnuboard5
  **/
-abstract class NewToki(override val name: String, private val boardName: String) : ConfigurableSource, ParsedHttpSource() {
+abstract class NewToki(
+    override val name: String,
+    private val boardName: String,
+    private val preferences: SharedPreferences,
+) : ParsedHttpSource(), ConfigurableSource {
 
     override val lang: String = "ko"
     override val supportsLatest = true
 
-    override val client: OkHttpClient by lazy {
-        buildClient(withRateLimit = false)
-    }
-
-    protected val rateLimitedClient: OkHttpClient by lazy {
-        buildClient(withRateLimit = true)
-    }
+    override val client by lazy { buildClient(withRateLimit = false) }
+    private val rateLimitedClient by lazy { buildClient(withRateLimit = true) }
 
     private fun buildClient(withRateLimit: Boolean) =
         network.cloudflareClient.newBuilder()
@@ -259,10 +257,6 @@ abstract class NewToki(override val name: String, private val boardName: String)
 
     // We are able to get the image URL directly from the page list
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("This method should not be called!")
-
-    override fun getFilterList() = FilterList()
-
-    abstract val preferences: SharedPreferences
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
         getPreferencesInternal(screen.context).map(screen::addPreference)

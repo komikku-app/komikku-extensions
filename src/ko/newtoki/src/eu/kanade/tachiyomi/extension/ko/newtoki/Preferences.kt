@@ -14,8 +14,8 @@ const val NEWTOKI_ID = 1977818283770282459L // "NewToki (Webtoon)/ko/1"
 const val MANATOKI_PREFIX = "manatoki"
 const val NEWTOKI_PREFIX = "newtoki"
 
-val manaTokiPreferences = getSharedPreferences(MANATOKI_ID)
-val newTokiPreferences = getSharedPreferences(NEWTOKI_ID)
+val manaTokiPreferences = getSharedPreferences(MANATOKI_ID).migrate()
+val newTokiPreferences = getSharedPreferences(NEWTOKI_ID).migrate()
 
 fun getPreferencesInternal(context: Context) = arrayOf(
 
@@ -53,6 +53,22 @@ var SharedPreferences.domainNumber: String
 
 val SharedPreferences.rateLimitPeriod: Int
     get() = getString(RATE_LIMIT_PERIOD_PREF, RATE_LIMIT_PERIOD_DEFAULT)!!.toInt().coerceIn(1, RATE_LIMIT_PERIOD_MAX)
+
+private fun SharedPreferences.migrate(): SharedPreferences {
+    if ("Override BaseUrl" !in this) return this // already migrated
+    val editor = edit().clear() // clear all legacy preferences listed below
+    val oldValue = try { // this was a long
+        getLong(RATE_LIMIT_PERIOD_PREF, -1).toInt()
+    } catch (_: ClassCastException) {
+        -1
+    }
+    if (oldValue != -1) { // convert to string
+        val newValue = oldValue.coerceIn(1, RATE_LIMIT_PERIOD_MAX)
+        editor.putString(RATE_LIMIT_PERIOD_PREF, newValue.toString())
+    }
+    editor.apply()
+    return this
+}
 
 /**
  * Don't use the following legacy keys:

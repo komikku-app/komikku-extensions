@@ -6,13 +6,11 @@ import eu.kanade.tachiyomi.source.model.FilterList
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 
-object NewTokiWebtoon : NewToki("NewToki", "webtoon") {
+object NewTokiWebtoon : NewToki("NewToki", "webtoon", newTokiPreferences) {
     // / ! DO NOT CHANGE THIS !  Prevent to treating as a new site
     override val id = NEWTOKI_ID
 
     override val baseUrl get() = "https://$NEWTOKI_PREFIX$domainNumber.com"
-
-    override val preferences = newTokiPreferences
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = ("$baseUrl/webtoon" + (if (page > 1) "/p$page" else "")).toHttpUrl().newBuilder()
