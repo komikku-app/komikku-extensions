@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.extension.zh.wuqimanga
 
-import com.github.stevenyomi.unpacker.Unpacker
+import eu.kanade.tachiyomi.lib.unpacker.Unpacker
 import eu.kanade.tachiyomi.multisrc.sinmh.SinMH
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter

@@ -8,7 +8,7 @@ class MangabzGenerator : ThemeSourceGenerator {
     override val themePkg = "mangabz"
     override val baseVersionCode = 1
     override val sources = listOf(
-        SingleLang("Mangabz", "https://mangabz.com", "zh", overrideVersionCode = 5),
+        SingleLang("Mangabz", "https://mangabz.com", "zh", overrideVersionCode = 6),
         SingleLang("vomic", "http://www.vomicmh.com", "zh", className = "Vomic"),
     )
 

@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.zh.sixmh
 
-import com.github.stevenyomi.unpacker.Unpacker
 import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.lib.unpacker.Unpacker
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit

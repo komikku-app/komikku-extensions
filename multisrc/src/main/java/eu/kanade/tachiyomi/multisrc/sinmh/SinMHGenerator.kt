@@ -26,7 +26,7 @@ class SinMHGenerator : ThemeSourceGenerator {
         ),
         SingleLang(
             name = "57Manhua", baseUrl = "http://www.wuqimh.net", lang = "zh",
-            className = "WuqiManga", sourceName = "57漫画", overrideVersionCode = 3
+            className = "WuqiManga", sourceName = "57漫画", overrideVersionCode = 4
         ),
     )
 

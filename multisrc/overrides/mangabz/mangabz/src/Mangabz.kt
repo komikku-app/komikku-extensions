@@ -2,8 +2,8 @@ package eu.kanade.tachiyomi.extension.zh.mangabz
 
 import android.app.Application
 import androidx.preference.PreferenceScreen
-import com.github.stevenyomi.unpacker.ProgressiveParser
-import com.github.stevenyomi.unpacker.Unpacker
+import eu.kanade.tachiyomi.lib.unpacker.SubstringExtractor
+import eu.kanade.tachiyomi.lib.unpacker.Unpacker
 import eu.kanade.tachiyomi.multisrc.mangabz.MangabzTheme
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -128,7 +128,7 @@ class Mangabz : MangabzTheme("Mangabz", ""), ConfigurableSource {
 
         return client.newCall(GET(page.url, headers)).asObservableSuccess().map {
             val script = Unpacker.unpack(it.body!!.string())
-            val parser = ProgressiveParser(script)
+            val parser = SubstringExtractor(script)
             val prefix = parser.substringBetween("pix=\"", "\"")
             // 2 pages, or 15 if server cache is ready
             val paths = parser.substringBetween("[\"", "\"]").split("\",\"")

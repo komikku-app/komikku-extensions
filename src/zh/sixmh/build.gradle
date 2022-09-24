@@ -6,11 +6,11 @@ ext {
     extName = '6Manhua'
     pkgNameSuffix = 'zh.sixmh'
     extClass = '.SixMH'
-    extVersionCode = 3
+    extVersionCode = 4
 }
 
 apply from: "$rootDir/common.gradle"
 
 dependencies {
-    implementation 'com.github.stevenyomi:unpacker:12a09e3c1a' // 1.1
+    implementation project(':lib-unpacker')
 }
