@@ -24,7 +24,7 @@ class GoldenMangas : ParsedHttpSource() {
 
     override val name = "Golden Mangás"
 
-    override val baseUrl = "https://goldenmanga.top"
+    override val baseUrl = "https://goldenmangas.top"
 
     override val lang = "pt-BR"
 
