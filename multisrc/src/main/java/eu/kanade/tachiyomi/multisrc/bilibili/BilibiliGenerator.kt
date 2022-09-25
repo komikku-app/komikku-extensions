@@ -18,7 +18,7 @@ class BilibiliGenerator : ThemeSourceGenerator {
             baseUrl = "https://www.bilibilicomics.com",
             langs = listOf("en", "zh-Hans", "id", "es", "fr"),
             className = "BilibiliComicsFactory",
-            overrideVersionCode = 2
+            overrideVersionCode = 3
         ),
         SingleLang(
             name = "BILIBILI MANGA",

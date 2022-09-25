@@ -346,7 +346,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Momo no Hana Scan", "https://momonohanascan.com", "pt-BR", className = "MomoNoHanaScan", overrideVersionCode = 1),
         SingleLang("MonarcaManga", "https://monarcamanga.com", "es"),
         SingleLang("Mortals Groove", "https://mortalsgroove.com", "en", overrideVersionCode = 1),
-        SingleLang("MR Yaoi Fansub", "https://mrtenzus.com", "pt-BR", isNsfw = true, className = "MrYaoiFansub"),
+        SingleLang("MR Yaoi Fansub", "https://mrtenzus.com", "pt-BR", isNsfw = true, className = "MrYaoiFansub", overrideVersionCode = 1),
         SingleLang("Muctau", "https://www.bibimanga.com", "en", overrideVersionCode = 2),
         SingleLang("MurimScan", "https://murimscan.run", "en", isNsfw = true),
         SingleLang("My Universe Scanlator", "https://muscan.com.br", "pt-BR"),

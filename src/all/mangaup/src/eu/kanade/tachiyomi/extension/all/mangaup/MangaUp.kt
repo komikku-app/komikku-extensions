@@ -17,7 +17,6 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.closeQuietly
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 
@@ -169,7 +168,7 @@ class MangaUp(override val lang: String) : HttpSource() {
                 ?: title.thumbnailUrl
                 ?: return response
 
-            response.closeQuietly()
+            response.close()
             val thumbnailRequest = GET(thumbnailUrl, request.headers)
             return chain.proceed(thumbnailRequest)
         }

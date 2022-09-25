@@ -25,7 +25,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import okhttp3.internal.closeQuietly
 import okio.Buffer
 import java.io.IOException
 import java.net.URLDecoder
@@ -209,7 +208,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
             val refreshTokenResponse = chain.proceed(refreshTokenRequest)
 
             accessTokenCookie = refreshTokenParse(refreshTokenResponse)
-            refreshTokenResponse.closeQuietly()
+            refreshTokenResponse.close()
 
             request = request.newBuilder()
                 .header("Authorization", "Bearer ${accessTokenCookie!!.accessToken}")
