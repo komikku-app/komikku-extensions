@@ -11,7 +11,6 @@ import javax.crypto.spec.SecretKeySpec
 /**
  * Conforming with CryptoJS AES method
  */
-// see https://gist.github.com/thackerronak/554c985c3001b16810af5fc0eb5c358f
 @Suppress("unused", "FunctionName")
 object CryptoAES {
 
@@ -22,10 +21,12 @@ object CryptoAES {
     private const val KDF_DIGEST = "MD5"
 
     /**
-     * Decrypt
-     * Thanks Artjom B. for this: http://stackoverflow.com/a/29152379/4405051
+     * Decrypt using CryptoJS defaults compatible method.
+     * Uses KDF equivalent to OpenSSL's EVP_BytesToKey function
+     *
+     * http://stackoverflow.com/a/29152379/4405051
+     * @param cipherText base64 encoded ciphertext
      * @param password passphrase
-     * @param cipherText encrypted string
      */
     fun decrypt(cipherText: String, password: String): String {
         try {
@@ -34,19 +35,52 @@ object CryptoAES {
             val cipherTextBytes = Arrays.copyOfRange(ctBytes, 16, ctBytes.size)
             val md5: MessageDigest = MessageDigest.getInstance("MD5")
             val keyAndIV = generateKeyAndIV(32, 16, 1, saltBytes, password.toByteArray(Charsets.UTF_8), md5)
-            val cipher = Cipher.getInstance(HASH_CIPHER)
-            val keyS = SecretKeySpec(keyAndIV!![0], AES)
-            cipher.init(Cipher.DECRYPT_MODE, keyS, IvParameterSpec(keyAndIV!![1]))
-            return cipher.doFinal(cipherTextBytes).toString(Charsets.UTF_8)
+            return decryptAES(cipherTextBytes,
+                keyAndIV?.get(0) ?: ByteArray(32),
+                keyAndIV?.get(1) ?: ByteArray(16))
         } catch (e: Exception) {
             return ""
         }
     }
 
     /**
+     * Decrypt using CryptoJS defaults compatible method.
+     *
+     * @param cipherText base64 encoded ciphertext
+     * @param keyBytes key as a bytearray
+     * @param ivBytes iv as a bytearray
+     */
+    fun decrypt(cipherText: String, keyBytes: ByteArray, ivBytes: ByteArray): String {
+        return try {
+            val cipherTextBytes = Base64.decode(cipherText, Base64.DEFAULT)
+            decryptAES(cipherTextBytes, keyBytes, ivBytes)
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    /**
+     * Decrypt using CryptoJS defaults compatible method.
+     *
+     * @param cipherTextBytes encrypted text as a bytearray
+     * @param keyBytes key as a bytearray
+     * @param ivBytes iv as a bytearray
+     */
+    private fun decryptAES(cipherTextBytes: ByteArray, keyBytes: ByteArray, ivBytes: ByteArray): String {
+        return try {
+            val cipher = Cipher.getInstance(HASH_CIPHER)
+            val keyS = SecretKeySpec(keyBytes, AES)
+            cipher.init(Cipher.DECRYPT_MODE, keyS, IvParameterSpec(ivBytes))
+            cipher.doFinal(cipherTextBytes).toString(Charsets.UTF_8)
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    /**
      * Generates a key and an initialization vector (IV) with the given salt and password.
      *
-     * Thanks to @Codo on Stackoverflow (https://stackoverflow.com/a/41434590)
+     * https://stackoverflow.com/a/41434590
      * This method is equivalent to OpenSSL's EVP_BytesToKey function
      * (see https://github.com/openssl/openssl/blob/master/crypto/evp/evp_key.c).
      * By default, OpenSSL uses a single iteration, MD5 as the algorithm and UTF-8 encoded password data.
