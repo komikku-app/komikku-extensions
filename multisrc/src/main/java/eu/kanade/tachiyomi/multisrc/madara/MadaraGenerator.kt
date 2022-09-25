@@ -119,6 +119,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Gatemanga", "https://gatemanga.com", "ar", overrideVersionCode = 1),
         SingleLang("GeassToon", "https://geasstoon.com", "tr"),
         SingleLang("Gemanga", "https://gemanga.com", "ar", overrideVersionCode = 2),
+        SingleLang("Glorious Scan", "https://gloriousscan.com", "pt-BR"),
         SingleLang("Glory Manga", "https://glorymanga.com", "tr"),
         SingleLang("Glory Scans", "https://gloryscans.com", "tr", isNsfw = true),
         SingleLang("Gogoscans", "https://www.gogoscans.com", "en"),
