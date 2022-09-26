@@ -46,6 +46,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.ByteArrayOutputStream
+import java.net.SocketException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -82,8 +83,18 @@ open class Webtoons(
                 }
             }
         )
+        .addInterceptor(::sslRetryInterceptor)
         .addInterceptor(TextInterceptor)
         .build()
+
+    // m.webtoons.com throws an SSL error that can be solved by a simple retry
+    private fun sslRetryInterceptor(chain: Interceptor.Chain): Response {
+        return try {
+            chain.proceed(chain.request())
+        } catch (e: SocketException) {
+            chain.proceed(chain.request())
+        }
+    }
 
     private val day: String
         get() {
