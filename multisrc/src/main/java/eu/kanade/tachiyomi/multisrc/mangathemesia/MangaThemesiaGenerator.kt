@@ -26,6 +26,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("BeastScans", "https://beastscans.com", "en"),
         SingleLang("Boosei", "https://boosei.com", "id", overrideVersionCode = 1),
         SingleLang("Clayrer", "https://clayrer.net", "es"),
+        SingleLang("Constellar Scans", "https://constellarscans.com", "en", isNsfw = true),
         SingleLang("Dojing.net", "https://dojing.net", "id", isNsfw = true, className = "DojingNet"),
         SingleLang("FlameScans.fr", "https://flamescans.fr", "fr", className = "FlameScansFR"),
         SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true),
