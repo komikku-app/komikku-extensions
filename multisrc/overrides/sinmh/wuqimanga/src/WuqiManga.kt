@@ -13,6 +13,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Evaluator
 
 // Memo: the old implementation had a string preference with key "IMAGE_SERVER"
+// Updating the domain to www.wuqimh.com causes some requests to return 404
 class WuqiManga : SinMH("57漫画", "http://www.wuqimh.net") {
 
     override val nextPageSelector = "span.pager > a:last-child" // in the last page it's a span
@@ -53,7 +54,7 @@ class WuqiManga : SinMH("57漫画", "http://www.wuqimh.net") {
     override val dateSelector = ".cont-list dt:contains(更新于) + dd"
 
     override val imageHost: String by lazy {
-        client.newCall(GET("$baseUrl/templates/wuqi/default/scripts/configs.js", headers)).execute().let {
+        client.newCall(GET("$mobileUrl/templates_pc/default/scripts/configs.js", headers)).execute().let {
             Regex("""\['(.+?)']""").find(it.body!!.string())!!.groupValues[1].run { "http://$this" }
         }
     }
