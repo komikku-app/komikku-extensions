@@ -18,24 +18,34 @@ data class ReaperSeriesDto(
     val status: String? = null,
     val thumbnail: String,
     val title: String,
+    val tags: List<ReaperTagDto>? = emptyList(),
     val chapters: List<ReaperChapterDto>? = emptyList()
 ) {
 
     fun toSManga(): SManga = SManga.create().apply {
         title = this@ReaperSeriesDto.title
-        author = this@ReaperSeriesDto.author
-        artist = this@ReaperSeriesDto.studio
-        description = this@ReaperSeriesDto.description?.let { Jsoup.parseBodyFragment(it).text() }
+        author = this@ReaperSeriesDto.author?.trim()
+        artist = this@ReaperSeriesDto.studio?.trim()
+        description = this@ReaperSeriesDto.description
+            ?.let { Jsoup.parseBodyFragment(it).select("p") }
+            ?.joinToString("\n\n") { it.text() }
+        genre = tags.orEmpty()
+            .sortedBy(ReaperTagDto::name)
+            .joinToString { it.name }
         thumbnail_url = "${ReaperScans.API_URL}/cover/$thumbnail"
         status = when (this@ReaperSeriesDto.status) {
             "Ongoing" -> SManga.ONGOING
             "Hiatus" -> SManga.ON_HIATUS
             "Dropped" -> SManga.CANCELLED
+            "Completed", "Finished" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
         url = "/series/$slug"
     }
 }
+
+@Serializable
+data class ReaperTagDto(val name: String)
 
 @Serializable
 data class ReaperChapterDto(
@@ -47,7 +57,7 @@ data class ReaperChapterDto(
 ) {
 
     fun toSChapter(seriesSlug: String): SChapter = SChapter.create().apply {
-        name = this@ReaperChapterDto.name
+        name = this@ReaperChapterDto.name.trim()
         date_upload = runCatching { DATE_FORMAT.parse(createdAt.substringBefore("."))?.time }
             .getOrNull() ?: 0L
         url = "/series/$seriesSlug/$slug#$id"
@@ -68,4 +78,13 @@ data class ReaperReaderDto(
 @Serializable
 data class ReaperReaderContentDto(
     val images: List<String>? = emptyList()
+)
+
+@Serializable
+data class ReaperSearchDto(
+    val order: String,
+    @SerialName("order_by") val orderBy: String,
+    @SerialName("series_status") val status: String,
+    @SerialName("series_type") val type: String,
+    @SerialName("tags_ids") val tagIds: List<Int> = emptyList()
 )

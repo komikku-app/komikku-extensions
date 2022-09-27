@@ -11,10 +11,8 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -49,15 +47,14 @@ class ReaperScans : HttpSource() {
         .add("Referer", "$baseUrl/")
 
     override fun popularMangaRequest(page: Int): Request {
-        val payloadObj = buildJsonObject {
-            put("order", "desc")
-            put("order_by", "total_views")
-            put("series_status", "Ongoing")
-            put("series_type", "Comic")
-            put("tag_ids", JsonArray(emptyList()))
-        }
+        val payloadObj = ReaperSearchDto(
+            order = "desc",
+            orderBy = "total_views",
+            status = "Ongoing",
+            type = "Comic"
+        )
 
-        val payload = payloadObj.toString().toRequestBody(JSON_MEDIA_TYPE)
+        val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
 
         val apiHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
@@ -75,15 +72,14 @@ class ReaperScans : HttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val payloadObj = buildJsonObject {
-            put("order", "desc")
-            put("order_by", "latest")
-            put("series_status", "Ongoing")
-            put("series_type", "Comic")
-            put("tag_ids", JsonArray(emptyList()))
-        }
+        val payloadObj = ReaperSearchDto(
+            order = "desc",
+            orderBy = "latest",
+            status = "Ongoing",
+            type = "Comic"
+        )
 
-        val payload = payloadObj.toString().toRequestBody(JSON_MEDIA_TYPE)
+        val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
 
         val apiHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
@@ -96,22 +92,20 @@ class ReaperScans : HttpSource() {
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val sortByFilter = filters.filterIsInstance<SortByFilter>().firstOrNull()
-        val sortAscending = sortByFilter?.state?.ascending ?: false
-        val sortProperty = sortByFilter?.selected ?: "total_views"
+        val sortByFilter = filters.firstInstanceOrNull<SortByFilter>()
 
-        val status = filters.filterIsInstance<StatusFilter>()
-            .firstOrNull()?.selected?.value ?: "Ongoing"
+        val payloadObj = ReaperSearchDto(
+            order = if (sortByFilter?.state?.ascending == true) "asc" else "desc",
+            orderBy = sortByFilter?.selected ?: "total_views",
+            status = filters.firstInstanceOrNull<StatusFilter>()?.selected?.value ?: "Ongoing",
+            type = "Comic",
+            tagIds = filters.firstInstanceOrNull<GenreFilter>()?.state
+                ?.filter(Genre::state)
+                ?.map(Genre::id)
+                .orEmpty()
+        )
 
-        val payloadObj = buildJsonObject {
-            put("order", if (sortAscending) "asc" else "desc")
-            put("order_by", sortProperty)
-            put("series_status", status)
-            put("series_type", "Comic")
-            put("tag_ids", JsonArray(emptyList()))
-        }
-
-        val payload = payloadObj.toString().toRequestBody(JSON_MEDIA_TYPE)
+        val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
 
         val apiHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
@@ -213,14 +207,45 @@ class ReaperScans : HttpSource() {
         SortProperty("Data de criação", "latest")
     )
 
+    private fun getGenreList(): List<Genre> = listOf(
+        Genre("Artes Marciais", 2),
+        Genre("Aventura", 10),
+        Genre("Ação", 9),
+        Genre("Comédia", 14),
+        Genre("Drama", 15),
+        Genre("Escolar", 7),
+        Genre("Fantasia", 11),
+        Genre("Ficção científica", 16),
+        Genre("Guerra", 17),
+        Genre("Isekai", 18),
+        Genre("Jogo", 12),
+        Genre("Mangá", 24),
+        Genre("Manhua", 23),
+        Genre("Manhwa", 22),
+        Genre("Mecha", 19),
+        Genre("Mistério", 20),
+        Genre("Nacional", 8),
+        Genre("Realidade Virtual", 21),
+        Genre("Retorno", 3),
+        Genre("Romance", 5),
+        Genre("Segunda vida", 4),
+        Genre("Seinen", 1),
+        Genre("Shounen", 13),
+        Genre("Terror", 6)
+    )
+
     override fun getFilterList(): FilterList = FilterList(
         StatusFilter(getStatusList()),
         SortByFilter(getSortProperties()),
+        GenreFilter(getGenreList())
     )
 
     private inline fun <reified T> Response.parseAs(): T = use {
         json.decodeFromString(it.body?.string().orEmpty())
     }
+
+    private inline fun <reified R> List<*>.firstInstanceOrNull(): R? =
+        filterIsInstance<R>().firstOrNull()
 
     companion object {
         private const val ACCEPT_IMAGE = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"

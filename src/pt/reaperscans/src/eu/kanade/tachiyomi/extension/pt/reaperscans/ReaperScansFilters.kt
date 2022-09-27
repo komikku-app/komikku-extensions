@@ -2,6 +2,10 @@ package eu.kanade.tachiyomi.extension.pt.reaperscans
 
 import eu.kanade.tachiyomi.source.model.Filter
 
+class Genre(title: String, val id: Int) : Filter.CheckBox(title)
+
+class GenreFilter(genres: List<Genre>) : Filter.Group<Genre>("Gêneros", genres)
+
 open class EnhancedSelect<T>(name: String, values: Array<T>) : Filter.Select<T>(name, values) {
     val selected: T
         get() = values[state]
