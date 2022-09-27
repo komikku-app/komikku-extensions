@@ -6,10 +6,8 @@ import java.util.TimeZone
 
 object MDConstants {
 
-    const val UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
-
-    val uuidRegex = UUID_REGEX.toRegex()
-    val onlyUuidRegex = "^$UUID_REGEX$".toRegex()
+    val uuidRegex =
+        Regex("[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")
 
     const val mangaLimit = 20
     const val latestChapterLimit = 100
