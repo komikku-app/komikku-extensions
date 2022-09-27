@@ -64,6 +64,10 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         .addInterceptor(MdAtHomeReportInterceptor(network.client, headers))
         .build()
 
+    init {
+        preferences.sanitizeExistingUuidPrefs()
+    }
+
     // POPULAR Manga Section
 
     override fun popularMangaRequest(page: Int): Request {
@@ -745,15 +749,11 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             title = helper.intl.blockGroupByUuid
             summary = helper.intl.blockGroupByUuidSummary
 
-            setOnPreferenceChangeListener { _, newValue ->
-                val groupsBlocked = newValue.toString()
-                    .split(",")
-                    .map { it.trim() }
-                    .filter { helper.containsUuid(it) }
-                    .joinToString(", ")
+            setOnBindEditTextListener(helper::setupEditTextUuidValidator)
 
+            setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit()
-                    .putString(MDConstants.getBlockedGroupsPrefKey(dexLang), groupsBlocked)
+                    .putString(MDConstants.getBlockedGroupsPrefKey(dexLang), newValue.toString())
                     .commit()
             }
         }
@@ -763,15 +763,11 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             title = helper.intl.blockUploaderByUuid
             summary = helper.intl.blockUploaderByUuidSummary
 
-            setOnPreferenceChangeListener { _, newValue ->
-                val uploaderBlocked = newValue.toString()
-                    .split(",")
-                    .map { it.trim() }
-                    .filter { helper.containsUuid(it) }
-                    .joinToString(", ")
+            setOnBindEditTextListener(helper::setupEditTextUuidValidator)
 
+            setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit()
-                    .putString(MDConstants.getBlockedUploaderPrefKey(dexLang), uploaderBlocked)
+                    .putString(MDConstants.getBlockedUploaderPrefKey(dexLang), newValue.toString())
                     .commit()
             }
         }
@@ -794,5 +790,29 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
     private inline fun <reified T> Response.parseAs(): T = use {
         helper.json.decodeFromString(body?.string().orEmpty())
+    }
+
+    private fun SharedPreferences.sanitizeExistingUuidPrefs() {
+        if (getBoolean(MDConstants.getHasSanitizedUuidsPrefKey(dexLang), false)) {
+            return
+        }
+
+        val blockedGroups = getString(MDConstants.getBlockedGroupsPrefKey(dexLang), "")!!
+            .split(",")
+            .map(String::trim)
+            .filter(helper::isUuid)
+            .joinToString(", ")
+
+        val blockedUploaders = getString(MDConstants.getBlockedUploaderPrefKey(dexLang), "")!!
+            .split(",")
+            .map(String::trim)
+            .filter(helper::isUuid)
+            .joinToString(", ")
+
+        edit()
+            .putString(MDConstants.getBlockedGroupsPrefKey(dexLang), blockedGroups)
+            .putString(MDConstants.getBlockedUploaderPrefKey(dexLang), blockedUploaders)
+            .putBoolean(MDConstants.getHasSanitizedUuidsPrefKey(dexLang), true)
+            .apply()
     }
 }

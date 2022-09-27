@@ -3,13 +3,18 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 import java.text.Collator
 import java.util.Locale
 
-class MangaDexIntl(val lang: String) {
+class MangaDexIntl(lang: String) {
 
     val availableLang: String = if (lang in AVAILABLE_LANGS) lang else ENGLISH
 
-    val locale: Locale = Locale.forLanguageTag(availableLang)
+    private val locale: Locale = Locale.forLanguageTag(availableLang)
 
     val collator: Collator = Collator.getInstance(locale)
+
+    val invalidUuids: String = when (availableLang) {
+        BRAZILIAN_PORTUGUESE, PORTUGUESE -> "O texto contém UUIDs inválidos"
+        else -> "The text contains invalid UUIDs"
+    }
 
     val invalidGroupId: String = when (availableLang) {
         BRAZILIAN_PORTUGUESE, PORTUGUESE -> "ID do grupo inválido"

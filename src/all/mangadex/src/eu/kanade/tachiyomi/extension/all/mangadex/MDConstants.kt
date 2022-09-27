@@ -6,8 +6,10 @@ import java.util.TimeZone
 
 object MDConstants {
 
-    val uuidRegex =
-        Regex("[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")
+    const val UUID_REGEX = "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
+
+    val uuidRegex = UUID_REGEX.toRegex()
+    val onlyUuidRegex = "^$UUID_REGEX$".toRegex()
 
     const val mangaLimit = 20
     const val latestChapterLimit = 100
@@ -101,6 +103,11 @@ object MDConstants {
     private const val blockedUploaderPref = "blockedUploader"
     fun getBlockedUploaderPrefKey(dexLang: String): String {
         return "${blockedUploaderPref}_$dexLang"
+    }
+
+    private const val hasSanitizedUuidsPref = "hasSanitizedUuids"
+    fun getHasSanitizedUuidsPrefKey(dexLang: String): String {
+        return "${hasSanitizedUuidsPref}_$dexLang"
     }
 
     const val tagGroupContent = "content"

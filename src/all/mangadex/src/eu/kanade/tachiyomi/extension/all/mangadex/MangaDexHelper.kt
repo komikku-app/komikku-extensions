@@ -1,6 +1,10 @@
 package eu.kanade.tachiyomi.extension.all.mangadex
 
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
+import android.widget.Button
+import android.widget.EditText
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AtHomeDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterDataDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaAttributesDto
@@ -19,7 +23,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.parser.Parser
-import uy.kohesive.injekt.api.get
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -61,6 +64,11 @@ class MangaDexHelper(private val lang: String) {
      * Check if the manga url is a valid uuid
      */
     fun containsUuid(url: String) = url.contains(MDConstants.uuidRegex)
+
+    /**
+     * Check if the string is a valid uuid
+     */
+    fun isUuid(text: String) = text.matches(MDConstants.onlyUuidRegex)
 
     /**
      * Get the manga offset pages are 1 based, so subtract 1
@@ -394,4 +402,33 @@ class MangaDexHelper(private val lang: String) {
                 currentSlug
             }
         }
+
+    /**
+     * Adds a custom [TextWatcher] to the preference's [EditText] that show an
+     * error if the input value contains invalid UUIDs. If the validation fails,
+     * the Ok button is disabled to prevent the user from saving the value.
+     */
+    fun setupEditTextUuidValidator(editText: EditText) {
+        editText.addTextChangedListener(object : TextWatcher {
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(editable: Editable?) {
+                requireNotNull(editable)
+
+                val text = editable.toString()
+
+                val isValid = text.isBlank() || text
+                    .split(",")
+                    .map(String::trim)
+                    .all(::isUuid)
+
+                editText.error = if (!isValid) intl.invalidUuids else null
+                editText.rootView.findViewById<Button>(android.R.id.button1)
+                    ?.isEnabled = editText.error == null
+            }
+        })
+    }
 }
