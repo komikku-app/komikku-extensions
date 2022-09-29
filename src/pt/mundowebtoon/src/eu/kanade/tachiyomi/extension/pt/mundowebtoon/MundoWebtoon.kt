@@ -11,10 +11,12 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
@@ -33,6 +35,7 @@ class MundoWebtoon : ParsedHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(::sanitizeHtmlIntercept)
         .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 
@@ -44,7 +47,7 @@ class MundoWebtoon : ParsedHttpSource() {
     override fun popularMangaRequest(page: Int): Request = GET(baseUrl, headers)
 
     override fun popularMangaSelector(): String =
-        "div.section:contains(Mais Lídos) + div.section div.andro_product"
+        "div.section:contains(mais lídos) + div.section div.andro_product"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("h6.andro_product-title small").text().withoutLanguage()
@@ -91,31 +94,24 @@ class MundoWebtoon : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector(): String? = null
 
-    override fun mangaDetailsParse(response: Response): SManga {
-        val fixedHtml = response.body!!.string().replace("\t", " ")
-        val document = Jsoup.parse(fixedHtml, response.request.url.toString())
-
-        return mangaDetailsParse(document)
-    }
-
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val infoElement = document.select("div.andro_product-single-content").first()!!
+        val infoElement = document.selectFirst("div.andro_product-single-content")!!
 
         title = infoElement.select("div.mangaTitulo h3").text().withoutLanguage()
-        author = infoElement.select("div.BlDataItem:contains(Autor) a")
+        author = infoElement.select("div.BlDataItem a[href*=autor]")
             ?.joinToString(", ") { it.text() }
-        artist = infoElement.select("div.BlDataItem:contains(Artista) a")
+        artist = infoElement.select("div.BlDataItem a[href*=artista]")
             ?.joinToString(", ") { it.text() }
-        genre = infoElement.select("div.col-md-12:contains(Gêneros) a.label-warning")
+        genre = infoElement.select("div.col-md-12 a.label-warning[href*=genero]")
             .filter { it.text().isNotEmpty() }
-            .joinToString { it.text() }
-        status = infoElement.select("div.BlDataItem:contains(Status) a").firstOrNull()
+            .joinToString { it.text().trim() }
+        status = infoElement.selectFirst("div.BlDataItem a[href*=status]")
             ?.text()?.toStatus() ?: SManga.UNKNOWN
         description = infoElement.select("div.andro_product-excerpt").text()
         thumbnail_url = document.select("div.andro_product-single-thumb img").srcAttr()
     }
 
-    override fun chapterListSelector() = "div#CapitulosLista div.CapitulosListaItem"
+    override fun chapterListSelector() = "div.CapitulosListaTodos div.CapitulosListaItem"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = element.selectFirst("h5").ownText()
@@ -162,6 +158,27 @@ class MundoWebtoon : ParsedHttpSource() {
         return GET(page.imageUrl!!, newHeaders)
     }
 
+    private fun sanitizeHtmlIntercept(chain: Interceptor.Chain): Response {
+        val response = chain.proceed(chain.request())
+
+        if (!response.headers["Content-Type"].orEmpty().contains("text/html")) {
+            return response
+        }
+
+        val newBody = response.body!!.string()
+            .replace("\t", "")
+            .replace(SCRIPT_REGEX, "")
+            .replace(HEAD_REGEX, "<head></head>")
+            .replace(COMMENT_REGEX, "")
+            .toResponseBody(HTML_MEDIA_TYPE)
+
+        response.close()
+
+        return response.newBuilder()
+            .body(newBody)
+            .build()
+    }
+
     private fun Elements.srcAttr(): String =
         attr(if (hasAttr("data-src")) "data-src" else "src")
 
@@ -185,6 +202,13 @@ class MundoWebtoon : ParsedHttpSource() {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7,es;q=0.6,gl;q=0.5"
 
         private val FLAG_REGEX = "\\((Pt[-/]br|Scan)\\)".toRegex(RegexOption.IGNORE_CASE)
+        private val SCRIPT_REGEX = "<script>.*</script>"
+            .toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
+        private val HEAD_REGEX = "<head>.*</head>"
+            .toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
+        private val COMMENT_REGEX = "<!--.*-->".toRegex(RegexOption.MULTILINE)
+
+        private val HTML_MEDIA_TYPE = "text/html".toMediaType()
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("(dd/MM/yyyy)", Locale.ENGLISH)
