@@ -44,13 +44,7 @@ data class AuthorDto(
 
 @Serializable
 data class ImgDto(
-    val srcset: ImgsDto,
-)
-
-@Serializable
-data class ImgsDto(
-    val large: String,
-    val small: String,
+    val name: String,
 )
 
 @Serializable

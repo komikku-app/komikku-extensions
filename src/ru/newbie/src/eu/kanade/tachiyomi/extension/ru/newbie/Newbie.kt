@@ -103,9 +103,7 @@ class Newbie : ConfigurableSource, HttpSource() {
             // Do not change the title name to ensure work with a multilingual catalog!
             title = if (isEng.equals("rus")) o.title.ru else o.title.en
             url = "$id"
-            thumbnail_url = if (image.srcset.large.isNotEmpty()) {
-                "$IMAGE_URL/${image.srcset.large}"
-            } else "$IMAGE_URL/${image.srcset.small}"
+            thumbnail_url = "$IMAGE_URL/${image.name}"
         }
     }
 
@@ -254,7 +252,7 @@ class Newbie : ConfigurableSource, HttpSource() {
             // Do not change the title name to ensure work with a multilingual catalog!
             title = if (isEng.equals("rus")) o.title.ru else o.title.en
             url = "$id"
-            thumbnail_url = "$IMAGE_URL/${image.srcset.large}"
+            thumbnail_url = "$IMAGE_URL/${image.name}"
             author = o.author?.name
             artist = o.artist?.name
             val mediaNameLanguage = if (isEng.equals("rus")) o.title.en else o.title.ru
