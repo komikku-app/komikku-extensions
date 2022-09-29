@@ -23,12 +23,14 @@ data class ReaperSeriesDto(
 ) {
 
     fun toSManga(): SManga = SManga.create().apply {
+        val descriptionBody = this@ReaperSeriesDto.description?.let(Jsoup::parseBodyFragment)
+
         title = this@ReaperSeriesDto.title
         author = this@ReaperSeriesDto.author?.trim()
         artist = this@ReaperSeriesDto.studio?.trim()
-        description = this@ReaperSeriesDto.description
-            ?.let { Jsoup.parseBodyFragment(it).select("p") }
+        description = descriptionBody?.select("p")
             ?.joinToString("\n\n") { it.text() }
+            ?.ifEmpty { descriptionBody.text().replace("\n", "\n\n") }
         genre = tags.orEmpty()
             .sortedBy(ReaperTagDto::name)
             .joinToString { it.name }
