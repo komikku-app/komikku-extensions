@@ -37,7 +37,8 @@ class DynastyDoujins : DynastyScans() {
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create().apply {
-            title = document.selectFirst("div.tags > h2.tag-title > b").text().substringAfter("Doujins › ")
+            title = document.selectFirst("div#main > h2 > b").text().substringAfter("Doujins › ")
+            description = document.select("div#main > div.description")?.text()
             thumbnail_url = document.select("a.thumbnail img").firstOrNull()?.attr("abs:src")
                 ?.replace("/thumb/", "/medium/")
         }
@@ -45,7 +46,7 @@ class DynastyDoujins : DynastyScans() {
         return manga
     }
 
-    override fun chapterListSelector() = "div.span9 > dl.chapter-list > dd"
+    override fun chapterListSelector() = "div#main > dl.chapter-list > dd"
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
