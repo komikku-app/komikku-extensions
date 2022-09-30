@@ -72,6 +72,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Mareceh", "https://mareceh.com", "id", isNsfw = true, pkgName = "mangceh", overrideVersionCode = 10),
         SingleLang("Martial Manga", "https://martialmanga.com", "es"),
         SingleLang("MasterKomik", "https://masterkomik.com", "id", overrideVersionCode = 1),
+        SingleLang("MELOKOMIK", "https://melokomik.xyz", "id"),
         SingleLang("Miau Scan", "https://miauscan.com", "es"),
         SingleLang("Mihentai", "https://mihentai.com", "all", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Mode Scanlator", "https://modescanlator.com", "pt-BR", overrideVersionCode = 8),
