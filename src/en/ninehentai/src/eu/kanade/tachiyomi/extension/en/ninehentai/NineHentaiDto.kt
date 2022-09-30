@@ -1,5 +1,6 @@
-package eu.kanade.tachiyomi.extension.all.ninehentai
+package eu.kanade.tachiyomi.extension.en.ninehentai
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -45,6 +46,17 @@ data class SearchRequest(
     val sort: Int,
     val pages: Range,
     val tag: Items
+)
+
+@Serializable
+data class SearchRequestPayload(
+    val search: SearchRequest
+)
+
+@Serializable
+data class SearchResponse(
+    @SerialName("total_count") val totalCount: Int,
+    val results: List<Manga>
 )
 
 @Serializable

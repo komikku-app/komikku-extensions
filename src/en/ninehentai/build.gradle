@@ -4,9 +4,9 @@ apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'NineHentai'
-    pkgNameSuffix = 'all.ninehentai'
+    pkgNameSuffix = 'en.ninehentai'
     extClass = '.NineHentai'
-    extVersionCode = 14
+    extVersionCode = 1
     isNsfw = true
 }
 

@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.all.ninehentai
+package eu.kanade.tachiyomi.extension.en.ninehentai
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
