@@ -363,7 +363,12 @@ abstract class MangaThemesia(
         )
     )
 
-    protected class Genre(name: String, val value: String) : Filter.TriState(name)
+    protected class Genre(
+        name: String,
+        val value: String,
+        state: Int = STATE_IGNORE
+    ) : Filter.TriState(name, state)
+
     protected class GenreListFilter(genres: List<Genre>) : Filter.Group<Genre>("Genre", genres)
 
     private var genrelist: List<Genre>? = null
