@@ -1,15 +1,34 @@
 package eu.kanade.tachiyomi.extension.en.silentmangaaudition
 
+import eu.kanade.tachiyomi.source.model.SManga
+
 data class SmaEntry(
     val name: String,
     val url: String,
     val chapterListUrl: String,
     val thumbnailUrl: String
-)
+) {
+
+    fun toSManga(index: Int): SManga = SManga.create().apply {
+        title = name
+        author = "Various artists"
+        status = SManga.COMPLETED
+        description = "The theme is… " + name.substringAfter(" ") + "."
+        thumbnail_url = thumbnailUrl
+        url = "${this@SmaEntry.url},$chapterListUrl,$index"
+        initialized = true
+    }
+}
 
 val SMA_ENTRIES = listOf(
     SmaEntry(
-        "SMA-16 “MOMENTS of FEAR, JOY, or LOVE",
+        "SMA-17 “MOMENTS of HASTE, RAGE or SMILES”",
+        "/sma17-silent-manga-audition-2022-results-announcement",
+        "/v/sma17/bones-by-rimui/?lang=en",
+        "https://www.manga-audition.com/wp/wp-content/themes/gridlove-child/assets/img/award-result/sma17/header_sp.png"
+    ),
+    SmaEntry(
+        "SMA-16 “MOMENTS of FEAR, JOY, or LOVE”",
         "/sma16-silent-manga-audition-2021-results-announcement",
         "/v/sma16/lacrimosa-by-laica-chrose/?lang=en",
         "https://www.manga-audition.com/wp/wp-content/uploads/2021/11/hero_sp_new.jpg"

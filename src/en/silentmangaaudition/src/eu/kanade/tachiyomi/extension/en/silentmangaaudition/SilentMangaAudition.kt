@@ -48,7 +48,6 @@ class SilentMangaAudition : HttpSource() {
         val index = manga.url.substringAfterLast(",").toInt()
         val entry = SMA_ENTRIES[index]
 
-        // Fill all the data again because in backup only the title and the url are stored.
         return Observable.just(entry.toSManga(index))
     }
 
@@ -103,15 +102,6 @@ class SilentMangaAudition : HttpSource() {
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    private fun SmaEntry.toSManga(index: Int): SManga = SManga.create().apply {
-        title = name
-        author = "Various artists"
-        status = SManga.COMPLETED
-        description = "The theme is… " + name.substringAfter(" ") + "."
-        thumbnail_url = thumbnailUrl
-        url = "${this@toSManga.url},$chapterListUrl,$index"
-    }
-
     override fun popularMangaRequest(page: Int): Request = throw UnsupportedOperationException("Not used")
 
     override fun popularMangaParse(response: Response): MangasPage = throw UnsupportedOperationException("Not used")
@@ -130,6 +120,6 @@ class SilentMangaAudition : HttpSource() {
         private const val SMACMAG_URL = "https://smacmag.net"
 
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36"
     }
 }

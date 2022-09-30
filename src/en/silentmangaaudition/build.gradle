@@ -5,7 +5,7 @@ ext {
     extName = 'Silent Manga Audition'
     pkgNameSuffix = 'en.silentmangaaudition'
     extClass = '.SilentMangaAudition'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 apply from: "$rootDir/common.gradle"
