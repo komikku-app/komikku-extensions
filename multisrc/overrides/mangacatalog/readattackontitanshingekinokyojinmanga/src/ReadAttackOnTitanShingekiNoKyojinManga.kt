@@ -4,7 +4,7 @@ import eu.kanade.tachiyomi.multisrc.mangacatalog.MangaCatalog
 import eu.kanade.tachiyomi.source.model.SChapter
 import org.jsoup.nodes.Element
 
-class ReadAttackOnTitanShingekiNoKyojinManga : MangaCatalog("Read Attack on Titan Shingeki no Kyojin Manga", "https://ww7.readsnk.com", "en") {
+class ReadAttackOnTitanShingekiNoKyojinManga : MangaCatalog("Read Attack on Titan Shingeki no Kyojin Manga", "https://ww8.readsnk.com", "en") {
     override val sourceList = listOf(
         Pair("Shingeki No Kyojin", "$baseUrl/manga/shingeki-no-kyojin/"),
         Pair("Colored", "$baseUrl/manga/shingeki-no-kyojin-colored/"),
@@ -20,17 +20,14 @@ class ReadAttackOnTitanShingekiNoKyojinManga : MangaCatalog("Read Attack on Tita
         Pair("No Regrets Colored", "$baseUrl/manga/attack-on-titan-no-regrets-colored/"),
     ).sortedBy { it.first }.distinctBy { it.second }
 
-    override fun chapterListSelector(): String = "div.w-full > .bg-white > .flex"
+    override fun chapterListSelector(): String = "div.w-full div.grid div.col-span-3"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        val name1 = element.select(".flex > a.text-gray-900").text()
-        val name2 = element.select(".flex > div.text-xs").text()
-        if (name2 == "") {
-            name = name1
-        } else {
-            name = "$name1 - $name2"
-        }
-        url = element.select(".ml-auto div.flex a").attr("abs:href")
-        date_upload = System.currentTimeMillis()
+        val urlElemnt = element.selectFirst("a")
+        name = listOfNotNull(
+            urlElemnt.text(),
+            element.selectFirst("div.xs").text().takeUnless { it.isBlank() }
+        ).joinToString(" - ") { it.trim() }
+        url = urlElemnt.attr("abs:href")
     }
 }
