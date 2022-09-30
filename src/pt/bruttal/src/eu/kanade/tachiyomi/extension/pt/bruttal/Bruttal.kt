@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -23,7 +24,7 @@ class Bruttal : HttpSource() {
 
     override val name = "Bruttal"
 
-    override val baseUrl = "https://originals.omelete.com.br"
+    override val baseUrl = BRUTTAL_URL
 
     override val lang = "pt-BR"
 
@@ -44,34 +45,40 @@ class Bruttal : HttpSource() {
             .add("Accept", "application/json, text/plain, */*")
             .build()
 
-        return GET("$baseUrl/bruttal/data/home.json", newHeaders)
+        return GET("$baseUrl/data/home.json", newHeaders)
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val homeDto = json.decodeFromString<BruttalHomeDto>(response.body!!.string())
-
-        val titles = homeDto.list.map(::popularMangaFromObject)
+        val titles = response.parseAs<BruttalHomeDto>().list
+            .map(BruttalComicBookDto::toSManga)
 
         return MangasPage(titles, false)
     }
 
-    private fun popularMangaFromObject(comicbook: BruttalComicBookDto): SManga = SManga.create().apply {
-        title = comicbook.title
-        thumbnail_url = "$baseUrl/bruttal/" + comicbook.imageMobile.removePrefix("./")
-        url = "/bruttal" + comicbook.url
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val newHeaders = headersBuilder()
+            .add("Accept", "application/json, text/plain, */*")
+            .build()
+
+        val jsonUrl = "$baseUrl/data/home.json".toHttpUrl().newBuilder()
+            .addQueryParameter("q", query)
+            .toString()
+
+        return GET(jsonUrl, newHeaders)
     }
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        return super.fetchSearchManga(page, query, filters)
-            .map { mp ->
-                val filteredTitles = mp.mangas.filter { it.title.contains(query, true) }
-                MangasPage(filteredTitles, mp.hasNextPage)
-            }
+    override fun searchMangaParse(response: Response): MangasPage {
+        val query = response.request.url.queryParameter("q").orEmpty()
+
+        var titles = response.parseAs<BruttalHomeDto>().list
+            .map(BruttalComicBookDto::toSManga)
+
+        if (query.isNotEmpty()) {
+            titles = titles.filter { it.title.contains(query, ignoreCase = true) }
+        }
+
+        return MangasPage(titles, false)
     }
-
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = popularMangaRequest(page)
-
-    override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
 
     // Workaround to allow "Open in browser" use the real URL.
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
@@ -88,50 +95,32 @@ class Bruttal : HttpSource() {
             .set("Referer", baseUrl + manga.url)
             .build()
 
-        return GET("$baseUrl/bruttal/data/comicbooks.json", newHeaders)
+        return GET("$baseUrl/data/comicbooks.json", newHeaders)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val comicBooks = json.decodeFromString<List<BruttalComicBookDto>>(response.body!!.string())
-
         val comicBookUrl = response.request.header("Referer")!!
             .substringAfter("/bruttal")
-        val currentComicBook = comicBooks.first { it.url == comicBookUrl }
 
-        return SManga.create().apply {
-            title = currentComicBook.title
-            thumbnail_url = "$baseUrl/bruttal/" + currentComicBook.imageMobile.removePrefix("./")
-            description = currentComicBook.synopsis +
-                (if (currentComicBook.soonText.isEmpty()) "" else "\n\n${currentComicBook.soonText}")
-            artist = currentComicBook.illustrator
-            author = currentComicBook.author
-            genre = currentComicBook.keywords.replace("; ", ", ")
-            status = SManga.ONGOING
-        }
+        return response.parseAs<List<BruttalComicBookDto>>()
+            .first { it.url == comicBookUrl }
+            .toSManga()
     }
 
     // Chapters are available in the same url of the manga details.
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsApiRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val comicBooks = json.decodeFromString<List<BruttalComicBookDto>>(response.body!!.string())
+        val comicBooks = response.parseAs<List<BruttalComicBookDto>>()
 
         val comicBookUrl = response.request.header("Referer")!!
             .substringAfter("/bruttal")
         val currentComicBook = comicBooks.first { it.url == comicBookUrl }
 
         return currentComicBook.seasons
-            .flatMap { it.chapters }
-            .map(::chapterFromObject)
+            .flatMap(BruttalSeasonDto::chapters)
+            .map(BruttalChapterDto::toSChapter)
             .reversed()
-    }
-
-    private fun chapterFromObject(chapter: BruttalChapterDto): SChapter = SChapter.create().apply {
-        name = chapter.title
-        chapter_number = chapter.shareTitle
-            .removePrefix("Capítulo ")
-            .toFloatOrNull() ?: -1f
-        url = "/bruttal" + chapter.url
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
@@ -140,11 +129,11 @@ class Bruttal : HttpSource() {
             .set("Referer", baseUrl + chapter.url)
             .build()
 
-        return GET("$baseUrl/bruttal/data/comicbooks.json", newHeaders)
+        return GET("$baseUrl/data/comicbooks.json", newHeaders)
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val comicBooks = json.decodeFromString<List<BruttalComicBookDto>>(response.body!!.string())
+        val comicBooks = response.parseAs<List<BruttalComicBookDto>>()
 
         val chapterUrl = response.request.header("Referer")!!
         val comicBookSlug = chapterUrl
@@ -164,15 +153,13 @@ class Bruttal : HttpSource() {
         }
 
         return currentChapter.images
-            .mapIndexed { i, bruttalImage ->
-                val imageUrl = "$baseUrl/bruttal/" + bruttalImage.image.removePrefix("./")
+            .mapIndexed { i, imageDto ->
+                val imageUrl = "$baseUrl/${imageDto.image.removePrefix("./")}"
                 Page(i, chapterUrl, imageUrl)
             }
     }
 
-    override fun fetchImageUrl(page: Page): Observable<String> {
-        return Observable.just(page.imageUrl!!)
-    }
+    override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
 
     override fun imageUrlParse(response: Response): String = ""
 
@@ -185,12 +172,20 @@ class Bruttal : HttpSource() {
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesRequest(page: Int): Request =
+        throw UnsupportedOperationException("Not used")
 
-    override fun latestUpdatesParse(response: Response): MangasPage = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesParse(response: Response): MangasPage =
+        throw UnsupportedOperationException("Not used")
+
+    private inline fun <reified T> Response.parseAs(): T = use {
+        json.decodeFromString(body?.string().orEmpty())
+    }
 
     companion object {
+        const val BRUTTAL_URL = "https://originals.omelete.com.br/bruttal"
+
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36"
     }
 }
