@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.mangaplus
 
+import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -76,18 +78,29 @@ data class TitleDetailView(
         get() = firstChapterList.size + lastChapterList.size
 
     private val isReEdition: Boolean
-        get() = viewingPeriodDescription.contains(MangaPlus.REEDITION_REGEX)
+        get() = viewingPeriodDescription.contains(REEDITION_REGEX)
 
-    val isCompleted: Boolean
-        get() = nonAppearanceInfo.contains(MangaPlus.COMPLETED_REGEX) || isOneShot
+    private val isCompleted: Boolean
+        get() = nonAppearanceInfo.contains(COMPLETED_REGEX) || isOneShot
 
-    val genres: List<String>
+    private val genres: List<String>
         get() = listOfNotNull(
             "Simulrelease".takeIf { isSimulReleased && !isReEdition && !isOneShot },
             "One-shot".takeIf { isOneShot },
             "Re-edition".takeIf { isReEdition },
             "Webtoon".takeIf { isWebtoon }
         )
+
+    fun toSManga(): SManga = title.toSManga().apply {
+        description = overview + "\n\n" + viewingPeriodDescription
+        status = if (isCompleted) SManga.COMPLETED else SManga.ONGOING
+        genre = genres.joinToString()
+    }
+
+    companion object {
+        private val COMPLETED_REGEX = "completado|complete|completo".toRegex()
+        private val REEDITION_REGEX = "revival|remasterizada".toRegex()
+    }
 }
 
 @Serializable
@@ -106,7 +119,16 @@ data class Title(
     val landscapeImageUrl: String,
     val viewCount: Int = 0,
     val language: Language? = Language.ENGLISH
-)
+) {
+
+    fun toSManga(): SManga = SManga.create().apply {
+        title = name
+        author = this@Title.author.replace(" / ", ", ")
+        artist = author
+        thumbnail_url = portraitImageUrl
+        url = "#/titles/$titleId"
+    }
+}
 
 enum class Language {
     ENGLISH,
@@ -142,7 +164,15 @@ data class Chapter(
     val startTimeStamp: Int,
     val endTimeStamp: Int,
     val isVerticalOnly: Boolean = false
-)
+) {
+
+    fun toSChapter(): SChapter = SChapter.create().apply {
+        name = "${this@Chapter.name} - $subTitle"
+        date_upload = 1000L * startTimeStamp
+        url = "#/viewer/$chapterId"
+        chapter_number = this@Chapter.name.substringAfter("#").toFloatOrNull() ?: -1f
+    }
+}
 
 @Serializable
 data class MangaPlusPage(val mangaPage: MangaPage? = null)

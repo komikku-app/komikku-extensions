@@ -91,13 +91,7 @@ class MangaPlus(
         titleList = result.success.titleRankingView!!.titles
             .filter { it.language == langCode }
 
-        val mangas = titleList!!.map {
-            SManga.create().apply {
-                title = it.name
-                thumbnail_url = it.portraitImageUrl
-                url = "#/titles/${it.titleId}"
-            }
-        }
+        val mangas = titleList!!.map(Title::toSManga)
 
         return MangasPage(mangas, false)
     }
@@ -131,22 +125,16 @@ class MangaPlus(
             .flatMap(OriginalTitleGroup::titles)
             .map(UpdatedTitle::title)
             .filter { it.language == langCode }
-            .map {
-                SManga.create().apply {
-                    title = it.name
-                    thumbnail_url = it.portraitImageUrl
-                    url = "#/titles/${it.titleId}"
-                }
-            }
+            .map(Title::toSManga)
             .distinctBy(SManga::title)
 
         return MangasPage(mangas, false)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        if (query.startsWith(PREFIX_ID_SEARCH) && query.matches(ID_SEARCH_PATTERN)) {
+        if (query.matches(ID_SEARCH_PATTERN)) {
             return titleDetailsRequest(query.removePrefix(PREFIX_ID_SEARCH))
-        } else if (query.startsWith(PREFIX_CHAPTER_ID_SEARCH) && query.matches(CHAPTER_ID_SEARCH_PATTERN)) {
+        } else if (query.matches(CHAPTER_ID_SEARCH_PATTERN)) {
             return mangaViewerRequest(query.removePrefix(PREFIX_CHAPTER_ID_SEARCH))
         }
 
@@ -173,13 +161,7 @@ class MangaPlus(
                 .takeIf { it.language == langCode }
                 ?: return MangasPage(emptyList(), hasNextPage = false)
 
-            val manga = SManga.create().apply {
-                title = mangaPlusTitle.name
-                thumbnail_url = mangaPlusTitle.portraitImageUrl
-                url = "#/titles/${mangaPlusTitle.titleId}"
-            }
-
-            return MangasPage(listOf(manga), hasNextPage = false)
+            return MangasPage(listOf(mangaPlusTitle.toSManga()), hasNextPage = false)
         }
 
         if (result.success.mangaViewer != null) {
@@ -202,7 +184,9 @@ class MangaPlus(
                     titleResult.error!!.langPopup(langCode)?.body ?: intl.unknownError
                 }
 
-                titleDetailsParse(titleResult.success.titleDetailView!!)
+                titleResult.success.titleDetailView!!
+                    .takeIf { it.title.language == langCode }
+                    ?.toSManga()
             }
 
             return MangasPage(listOfNotNull(manga), hasNextPage = false)
@@ -218,13 +202,7 @@ class MangaPlus(
                     title.author.contains(filter, ignoreCase = true)
             }
 
-        val mangas = titleList!!.map {
-            SManga.create().apply {
-                title = it.name
-                thumbnail_url = it.portraitImageUrl
-                url = "#/titles/${it.titleId}"
-            }
-        }
+        val mangas = titleList!!.map(Title::toSManga)
 
         return MangasPage(mangas, hasNextPage = false)
     }
@@ -266,25 +244,11 @@ class MangaPlus(
             }
         }
 
-        return titleDetailsParse(result.success.titleDetailView!!)
+        val titleDetails = result.success.titleDetailView!!
+            .takeIf { it.title.language == langCode }
             ?: throw Exception(intl.notAvailable)
-    }
 
-    private fun titleDetailsParse(details: TitleDetailView): SManga? {
-        val titleObj = details.title
-
-        val manga = SManga.create().apply {
-            title = titleObj.name
-            author = titleObj.author.replace(" / ", ", ")
-            artist = author
-            description = details.overview + "\n\n" + details.viewingPeriodDescription
-            status = if (details.isCompleted) SManga.COMPLETED else SManga.ONGOING
-            genre = details.genres.joinToString()
-            thumbnail_url = titleObj.portraitImageUrl
-            url = "#/titles/${titleObj.titleId}"
-        }
-
-        return manga.takeIf { titleObj.language == langCode }
+        return titleDetails.toSManga()
     }
 
     override fun chapterListRequest(manga: SManga): Request = titleDetailsRequest(manga.url)
@@ -309,14 +273,7 @@ class MangaPlus(
         return chapters.reversed()
             // If the subTitle is null, then the chapter time expired.
             .filter { it.subTitle != null }
-            .map {
-                SChapter.create().apply {
-                    name = "${it.name} - ${it.subTitle}"
-                    date_upload = 1000L * it.startTimeStamp
-                    url = "#/viewer/${it.chapterId}"
-                    chapter_number = it.name.substringAfter("#").toFloatOrNull() ?: -1f
-                }
-            }
+            .map(Chapter::toSChapter)
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
@@ -483,7 +440,7 @@ class MangaPlus(
     companion object {
         private const val API_URL = "https://jumpg-webapi.tokyo-cdn.com/api"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36"
 
         private const val QUALITY_PREF_KEY = "imageResolution"
         private val QUALITY_PREF_ENTRY_VALUES = arrayOf("low", "high", "super_high")
@@ -491,9 +448,6 @@ class MangaPlus(
 
         private const val SPLIT_PREF_KEY = "splitImage"
         private const val SPLIT_PREF_DEFAULT_VALUE = true
-
-        val COMPLETED_REGEX = "completado|complete|completo".toRegex()
-        val REEDITION_REGEX = "revival|remasterizada".toRegex()
 
         private const val NOT_FOUND_SUBJECT = "Not Found"
 
