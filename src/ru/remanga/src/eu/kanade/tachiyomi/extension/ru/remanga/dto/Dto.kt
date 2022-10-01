@@ -114,5 +114,5 @@ data class ChunksPageDto(
 @Serializable
 data class UserDto(
     val id: Long,
-    val access_token: String
+    val access_token: String? = null
 )
