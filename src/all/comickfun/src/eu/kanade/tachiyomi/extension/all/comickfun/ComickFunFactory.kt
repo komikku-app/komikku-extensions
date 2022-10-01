@@ -12,6 +12,7 @@ val legacyLanguageMappings = mapOf(
 
 class ComickFunFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
+        "all",
         "en",
         "pt-br",
         "ru",

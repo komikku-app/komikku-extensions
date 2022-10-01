@@ -19,8 +19,7 @@ import java.text.SimpleDateFormat
 
 const val API_BASE = "https://api.comick.fun"
 
-abstract class ComickFun(override val lang: String, private val comickFunLang: String) :
-    HttpSource() {
+abstract class ComickFun(override val lang: String, private val comickFunLang: String) : HttpSource() {
 
     override val name = "Comick.fun"
 
@@ -42,14 +41,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     override val client: OkHttpClient = network.client.newBuilder().rateLimit(4, 1).build()
 
-    override fun getFilterList() = FilterList(
-        getFilters()
-    )
-
-    private val DATE_FORMATTER by lazy {
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZ")
-    }
-
     /** Popular Manga **/
     override fun popularMangaRequest(page: Int): Request {
         return GET(
@@ -58,7 +49,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                 addQueryParameter("sort", "user_follow_count")
                 addQueryParameter("page", "$page")
                 addQueryParameter("tachiyomi", "true")
-            }.toString(), headers
+            }.toString(),
+            headers
         )
     }
 
@@ -71,7 +63,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                     title = data.title
                     thumbnail_url = data.cover_url
                 }
-            }, true
+            },
+            hasNextPage = true
         )
     }
 
@@ -80,11 +73,12 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         return GET(
             API_BASE.toHttpUrl().newBuilder().apply {
                 addPathSegment("chapter")
-                addQueryParameter("lang", comickFunLang)
+                if (comickFunLang != "all") addQueryParameter("lang", comickFunLang)
                 addQueryParameter("page", "$page")
                 addQueryParameter("order", "new")
                 addQueryParameter("tachiyomi", "true")
-            }.toString(), headers
+            }.toString(),
+            headers
         )
     }
 
@@ -97,7 +91,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                     title = data.md_comics.title
                     thumbnail_url = data.md_comics.cover_url
                 }
-            }, true
+            },
+            hasNextPage = true
         )
     }
 
@@ -191,7 +186,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                     title = data.title
                     thumbnail_url = data.cover_url
                 }
-            }, result.size >= 50
+            },
+            hasNextPage = result.size >= 50
         )
     }
 
@@ -200,7 +196,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         return GET(
             "$API_BASE${manga.url}".toHttpUrl().newBuilder().apply {
                 addQueryParameter("tachiyomi", "true")
-            }.toString(), headers
+            }.toString(),
+            headers
         )
     }
 
@@ -223,7 +220,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         return GET(
             "$API_BASE${manga.url}".toHttpUrl().newBuilder().apply {
                 addQueryParameter("tachiyomi", "true")
-            }.toString(), headers
+            }.toString(),
+            headers
         )
     }
 
@@ -235,11 +233,12 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                     addPathSegment("comic")
                     addPathSegments(mangaData.comic.id.toString())
                     addPathSegments("chapter")
-                    addQueryParameter("lang", comickFunLang)
+                    if (comickFunLang != "all") addQueryParameter("lang", comickFunLang)
                     addQueryParameter(
                         "limit", mangaData.comic.chapter_count.toString()
                     )
-                }.toString(), headers
+                }.toString(),
+                headers
             )
         ).execute()
         val result = json.decodeFromString<ChapterList>(chapterData.body!!.string())
@@ -253,6 +252,10 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         }
     }
 
+    private val DATE_FORMATTER by lazy {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZ")
+    }
+
     /** Chapter Pages **/
     override fun pageListRequest(chapter: SChapter): Request {
         val chapterHid = chapter.url.substringAfterLast("/").substringBefore("-")
@@ -261,7 +264,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                 addPathSegment("chapter")
                 addPathSegment(chapterHid)
                 addQueryParameter("tachiyomi", "true")
-            }.toString(), headers
+            }.toString(),
+            headers
         )
     }
 
@@ -280,4 +284,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     override fun imageUrlParse(response: Response): String {
         return ""
     }
+
+    override fun getFilterList() = FilterList(
+        getFilters()
+    )
 }
