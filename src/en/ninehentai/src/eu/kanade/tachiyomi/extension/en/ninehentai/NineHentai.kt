@@ -282,7 +282,7 @@ class NineHentai : HttpSource() {
         }
 
         return (1..totalPages).map {
-            Page(it, "", "$imageUrl/$it.jpg")
+            Page(it - 1, "", "$imageUrl/$it.jpg")
         }
     }
 
