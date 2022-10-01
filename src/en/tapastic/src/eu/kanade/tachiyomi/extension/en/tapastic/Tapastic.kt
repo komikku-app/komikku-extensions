@@ -117,6 +117,7 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", "https://m.tapas.io")
+        .set("User-Agent", USER_AGENT)
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val chapterVisibilityPref = SwitchPreferenceCompat(screen.context).apply {
@@ -519,6 +520,7 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
         private const val CHAPTER_VIS_PREF_KEY = "lockedChapterVisibility"
         private const val SHOW_LOCK_PREF_KEY = "showChapterLock"
         private const val SHOW_AUTHORS_NOTES_KEY = "showAuthorsNotes"
+        private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0"
     }
 
     // TODO: Split off into library file or something, because Webtoons is using the exact same TextInterceptor
