@@ -187,6 +187,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Lord Manga", "https://lordmanga.com", "en"),
         SingleLang("LovableSubs", "https://lovablesubs.com", "tr", overrideVersionCode = 1),
         SingleLang("Lumine Scans", "https://luminescans.xyz", "en", overrideVersionCode = 1),
+        SingleLang("LuxManga", "https://luxmanga.com", "en"),
         SingleLang("MadaraDex", "https://madaradex.org", "en", isNsfw = true),
         SingleLang("Manga Action", "https://mangaaction.com", "en", overrideVersionCode = 2),
         SingleLang("Manga Bilgini", "https://mangabilgini.com", "tr"),
