@@ -83,6 +83,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Coven Scan", "https://covenscan.com", "pt-BR", isNsfw = true),
         SingleLang("Cronos Scan", "https://cronosscan.net", "pt-BR", overrideVersionCode = 1),
         SingleLang("DapRob", "https://daprob.com", "es"),
+        SingleLang("Dark Scans", "https://darkscans.com", "en"),
         SingleLang("Decadence Scans", "https://reader.decadencescans.com", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("DiamondFansub", "https://diamondfansub.com", "tr", overrideVersionCode = 1),
         SingleLang("Disaster Scans", "https://disasterscans.com", "en", overrideVersionCode = 2),
