@@ -25,7 +25,7 @@ class DmzjUrlActivity : Activity() {
             }
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"
-                putExtra("query", "${Dmzj.PREFIX_ID_SEARCH}$titleId")
+                putExtra("query", "$PREFIX_ID_SEARCH$titleId")
                 putExtra("filter", packageName)
             }
 

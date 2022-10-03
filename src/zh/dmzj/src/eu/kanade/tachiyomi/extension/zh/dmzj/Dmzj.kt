@@ -2,36 +2,20 @@ package eu.kanade.tachiyomi.extension.zh.dmzj
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.net.Uri
-import android.util.Base64
-import androidx.preference.ListPreference
-import androidx.preference.Preference
+import android.util.Log
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.extension.zh.dmzj.protobuf.ComicDetailResponse
-import eu.kanade.tachiyomi.extension.zh.dmzj.utils.HttpGetFailoverInterceptor
-import eu.kanade.tachiyomi.extension.zh.dmzj.utils.RSA
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
-import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromByteArray
-import kotlinx.serialization.protobuf.ProtoBuf
-import okhttp3.Headers
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.json.JSONArray
-import org.json.JSONObject
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -45,603 +29,201 @@ class Dmzj : ConfigurableSource, HttpSource() {
     override val supportsLatest = true
     override val name = "动漫之家"
     override val baseUrl = "https://m.dmzj.com"
-    private val v3apiUrl = "https://v3api.dmzj.com"
-    private val v3ChapterApiUrl = "https://nnv3api.muwai.com"
-
-    // v3api now shutdown the functionality to fetch manga detail and chapter list, so move these logic to v4api
-    private val v4apiUrl = "https://nnv4api.muwai.com" // https://v4api.dmzj1.com
-    private val apiUrl = "https://api.dmzj.com"
-    private val oldPageListApiUrl = "http://api.m.dmzj.com" // this domain has an expired certificate
-    private val webviewPageListApiUrl = "https://m.dmzj.com/chapinfo"
-    private val imageCDNUrl = "https://images.dmzj.com"
-    private val imageSmallCDNUrl = "https://imgsmall.dmzj.com"
-
-    private fun cleanUrl(url: String) = if (url.startsWith("//"))
-        "https:$url"
-    else url
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val httpGetFailoverInterceptor = HttpGetFailoverInterceptor()
-
     override val client: OkHttpClient = network.client.newBuilder()
-        .addInterceptor(httpGetFailoverInterceptor)
-        .rateLimitHost(
-            apiUrl.toHttpUrlOrNull()!!,
-            preferences.getString(API_RATELIMIT_PREF, "5")!!.toInt()
-        )
-        .rateLimitHost(
-            v3apiUrl.toHttpUrlOrNull()!!,
-            preferences.getString(API_RATELIMIT_PREF, "5")!!.toInt()
-        )
-        .rateLimitHost(
-            v4apiUrl.toHttpUrlOrNull()!!,
-            preferences.getString(API_RATELIMIT_PREF, "5")!!.toInt()
-        )
-        .rateLimitHost(
-            imageCDNUrl.toHttpUrlOrNull()!!,
-            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt()
-        )
-        .rateLimitHost(
-            imageSmallCDNUrl.toHttpUrlOrNull()!!,
-            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, "5")!!.toInt()
-        )
+        .addInterceptor(ImageUrlInterceptor)
+        .addInterceptor(CommentsInterceptor)
+        .rateLimit(4)
         .build()
 
-    override fun headersBuilder() = Headers.Builder().apply {
-        set("Referer", "https://www.dmzj.com/")
-        set(
-            "User-Agent",
-            "Mozilla/5.0 (Linux; Android 10) " +
-                "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/88.0.4324.93 " +
-                "Mobile Safari/537.36 " +
-                "Tachiyomi/1.0"
-        )
+    // API v4 randomly fails
+    private val retryClient = network.client.newBuilder()
+        .addInterceptor(RetryInterceptor)
+        .rateLimit(2)
+        .build()
+
+    private fun fetchIdBySlug(slug: String): String {
+        val request = GET("https://manhua.dmzj.com/$slug/", headers)
+        val html = client.newCall(request).execute().body!!.string()
+        val start = "g_comic_id = \""
+        val startIndex = html.indexOf(start) + start.length
+        val endIndex = html.indexOf('"', startIndex)
+        return html.substring(startIndex, endIndex)
     }
 
-    // for simple searches (query only, no filters)
-    private fun simpleSearchJsonParse(json: String): MangasPage {
-        val arr = JSONArray(json)
-        val ret = ArrayList<SManga>(arr.length())
-        for (i in 0 until arr.length()) {
-            val obj = arr.getJSONObject(i)
-            val cid = obj.getString("id")
-            ret.add(
-                SManga.create().apply {
-                    title = obj.getString("comic_name")
-                    thumbnail_url = cleanUrl(obj.getString("comic_cover"))
-                    author = obj.optString("comic_author")
-                    url = "/comic/comic_$cid.json?version=2.7.019"
-                }
-            )
+    private fun fetchMangaInfoV4(id: String): ApiV4.MangaDto? {
+        val response = retryClient.newCall(GET(ApiV4.mangaInfoUrl(id), headers)).execute()
+        return when (val result = ApiV4.parseMangaInfo(response)) {
+            is ApiV4.ParseResult.Ok -> {
+                val manga = result.manga
+                if (manga.isLicensed) preferences.addLicensed(id)
+                manga
+            }
+            is ApiV4.ParseResult.Error -> {
+                Log.e("DMZJ", "no data for manga $id: ${result.message}")
+                preferences.addHidden(id)
+                null
+            }
         }
-        return MangasPage(ret, false)
     }
 
-    // for popular, latest, and filtered search
-    private fun mangaFromJSON(json: String): MangasPage {
-        val arr = JSONArray(json)
-        val ret = ArrayList<SManga>(arr.length())
-        for (i in 0 until arr.length()) {
-            val obj = arr.getJSONObject(i)
-            val cid = obj.getString("id")
-            ret.add(
-                SManga.create().apply {
-                    title = obj.getString("title")
-                    thumbnail_url = obj.getString("cover")
-                    author = obj.optString("authors")
-                    status = when (obj.getString("status")) {
-                        "已完结" -> SManga.COMPLETED
-                        "连载中" -> SManga.ONGOING
-                        else -> SManga.UNKNOWN
-                    }
-                    url = "/comic/comic_$cid.json?version=2.7.019"
-                }
-            )
-        }
-        return MangasPage(ret, arr.length() != 0)
-    }
+    override fun popularMangaRequest(page: Int) = GET(ApiV3.popularMangaUrl(page), headers)
 
-    private fun customUrlBuilder(baseUrl: String): HttpUrl.Builder {
-        val rightNow = System.currentTimeMillis() / 1000
-        return baseUrl.toHttpUrlOrNull()!!.newBuilder()
-            .addQueryParameter("channel", "android")
-            .addQueryParameter("version", "3.0.0")
-            .addQueryParameter("timestamp", rightNow.toInt().toString())
-    }
+    override fun popularMangaParse(response: Response) = ApiV3.parsePage(response)
 
-    private fun decryptProtobufData(rawData: String): ByteArray {
-        return RSA.decrypt(Base64.decode(rawData, Base64.DEFAULT), privateKey)
-    }
+    override fun latestUpdatesRequest(page: Int) = GET(ApiV3.latestUpdatesUrl(page), headers)
 
-    override fun popularMangaRequest(page: Int) = GET("$v3apiUrl/classify/0/0/${page - 1}.json")
-
-    override fun popularMangaParse(response: Response) = searchMangaParse(response)
-
-    override fun latestUpdatesRequest(page: Int) = GET("$v3apiUrl/classify/0/1/${page - 1}.json")
-
-    override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
+    override fun latestUpdatesParse(response: Response) = ApiV3.parsePage(response)
 
     private fun searchMangaById(id: String): MangasPage {
-        val comicNumberID = if (checkComicIdIsNumericalRegex.matches(id)) {
+        val idNumber = if (id.all { it.isDigit() }) {
             id
         } else {
             // Chinese Pinyin ID
-            val document = client.newCall(GET("$baseUrl/info/$id.html", headers)).execute().asJsoup()
-            extractComicIdFromWebpageRegex.find(
-                document.select("#Subscribe").attr("onclick")
-            )!!.groups[1]!!.value // onclick="addSubscribe('{comicNumberID}')"
+            fetchIdBySlug(id)
         }
 
-        val sManga = try {
-            val r = client.newCall(GET("$v4apiUrl/comic/detail/$comicNumberID.json", headers)).execute()
-            mangaDetailsParse(r)
-        } catch (_: Exception) {
-            val r = client.newCall(GET("$apiUrl/dynamic/comicinfo/$comicNumberID.json", headers)).execute()
-            mangaDetailsParse(r)
-        }
-        // Change url format to as same as mangaFromJSON, which used by popularMangaParse and latestUpdatesParse.
-        // manga.url being used as key to identity a manga in tachiyomi, so if url format don't match popularMangaParse and latestUpdatesParse,
-        // tachiyomi will mark them as unsubscribe in popularManga and latestUpdates page.
-        sManga.url = "/comic/comic_$comicNumberID.json?version=2.7.019"
+        val sManga = fetchMangaDetails(idNumber)
 
         return MangasPage(listOf(sManga), false)
     }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        return if (query.startsWith(PREFIX_ID_SEARCH)) {
+        return if (query.isEmpty()) {
+            val ranking = filters.filterIsInstance<RankingGroup>().firstOrNull()
+            if (ranking != null && ranking.isEnabled) {
+                val call = retryClient.newCall(GET(ApiV4.rankingUrl(page, ranking), headers))
+                return Observable.fromCallable {
+                    val result = ApiV4.parseRanking(call.execute())
+                    // result has no manga ID if filtered by certain genres; this can be slow
+                    for (manga in result.mangas) if (manga.url.startsWith(PREFIX_ID_SEARCH)) {
+                        manga.url = getMangaUrl(fetchIdBySlug(manga.url.removePrefix(PREFIX_ID_SEARCH)))
+                    }
+                    result
+                }
+            }
+            val call = client.newCall(GET(ApiV3.pageUrl(page, filters), headers))
+            Observable.fromCallable { ApiV3.parsePage(call.execute()) }
+        } else if (query.startsWith(PREFIX_ID_SEARCH)) {
             // ID may be numbers or Chinese pinyin
             val id = query.removePrefix(PREFIX_ID_SEARCH).removeSuffix(".html")
-            Observable.just(searchMangaById(id))
+            Observable.fromCallable { searchMangaById(id) }
         } else {
-            client.newCall(searchMangaRequest(page, query, filters))
-                .asObservableSuccess()
-                .map { response ->
-                    searchMangaParse(response)
+            val request = GET(ApiSearch.textSearchUrl(query), headers)
+            Observable.fromCallable {
+                // this API fails randomly, and might return empty list
+                repeat(8) {
+                    val result = ApiSearch.parsePage(client.newCall(request).execute())
+                    if (result.mangas.isNotEmpty()) return@fromCallable result
                 }
+                throw Exception("搜索出错或无结果")
+            }
         }
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        if (query != "") {
-            val uri = Uri.parse("http://s.acg.dmzj.com/comicsum/search.php").buildUpon()
-            uri.appendQueryParameter("s", query)
-            return GET(uri.toString())
-        } else {
-            var params = filters.map {
-                if (it !is SortFilter && it is UriPartFilter) {
-                    it.toUriPart()
-                } else ""
-            }.filter { it != "" }.joinToString("-")
-            if (params == "") {
-                params = "0"
-            }
-
-            val order = filters.filterIsInstance<SortFilter>().joinToString("") { (it as UriPartFilter).toUriPart() }
-
-            return GET("$v3apiUrl/classify/$params/$order/${page - 1}.json")
-        }
+        throw UnsupportedOperationException()
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val body = response.body!!.string()
-
-        return if (body.contains("g_search_data")) {
-            simpleSearchJsonParse(body.substringAfter("=").trim().removeSuffix(";"))
-        } else {
-            mangaFromJSON(body)
-        }
+        throw UnsupportedOperationException()
     }
 
     // Bypass mangaDetailsRequest, fetch api url directly
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        val cid = extractComicIdFromMangaUrlRegex.find(manga.url)!!.groups[1]!!.value
-        return try {
-            // Not using client.newCall().asObservableSuccess() to ensure we can catch exception here.
-            val response = client.newCall(
-                GET(
-                    customUrlBuilder("$v4apiUrl/comic/detail/$cid").build().toString(), headers
-                )
-            ).execute()
-            val sManga = mangaDetailsParse(response).apply { initialized = true }
-            Observable.just(sManga)
-        } catch (e: Exception) {
-            val response = client.newCall(GET("$apiUrl/dynamic/comicinfo/$cid.json", headers)).execute()
-            val sManga = mangaDetailsParse(response).apply { initialized = true }
-            Observable.just(sManga)
-        } catch (e: Exception) {
-            Observable.error(e)
+        val id = manga.url.extractMangaId()
+        return Observable.fromCallable { fetchMangaDetails(id) }
+    }
+
+    private fun fetchMangaDetails(id: String): SManga {
+        if (id !in preferences.hiddenList) {
+            fetchMangaInfoV4(id)?.run { return toSManga() }
         }
+        val response = client.newCall(GET(ApiV3.mangaInfoUrlV1(id), headers)).execute()
+        return ApiV3.parseMangaDetailsV1(response)
     }
 
     // Workaround to allow "Open in browser" use human readable webpage url.
+    // headers are not needed
     override fun mangaDetailsRequest(manga: SManga): Request {
-        val cid = extractComicIdFromMangaUrlRegex.find(manga.url)!!.groups[1]!!.value
+        val cid = manga.url.extractMangaId()
         return GET("$baseUrl/info/$cid.html")
     }
 
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
-        val responseBody = response.body!!.string()
-        if (response.request.url.toString().startsWith(v4apiUrl)) {
-            val pb = ProtoBuf.decodeFromByteArray<ComicDetailResponse>(decryptProtobufData(responseBody))
-            val pbData = pb.Data
-            title = pbData.Title
-            thumbnail_url = pbData.Cover
-            author = pbData.Authors.joinToString(separator = ", ") { it.TagName }
-            genre = pbData.TypesTypes.joinToString(separator = ", ") { it.TagName }
-
-            status = when (pbData.Status[0].TagName) {
-                "已完结" -> SManga.COMPLETED
-                "连载中" -> SManga.ONGOING
-                else -> SManga.UNKNOWN
-            }
-            description = pbData.Description
-        } else {
-            val obj = JSONObject(responseBody)
-            val data = obj.getJSONObject("data").getJSONObject("info")
-            title = data.getString("title")
-            thumbnail_url = data.getString("cover")
-            author = data.getString("authors")
-            genre = data.getString("types").replace("/", ", ")
-            status = when (data.getString("status")) {
-                "连载中" -> SManga.ONGOING
-                "已完结" -> SManga.COMPLETED
-                else -> SManga.UNKNOWN
-            }
-            description = data.getString("description")
-        }
+        throw UnsupportedOperationException()
     }
 
     override fun chapterListRequest(manga: SManga): Request = throw UnsupportedOperationException("Not used.")
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val cid = extractComicIdFromMangaUrlRegex.find(manga.url)!!.groups[1]!!.value
-        return if (manga.status != SManga.LICENSED) {
-            try {
-                val response =
-                    client.newCall(
-                        GET(
-                            customUrlBuilder("$v4apiUrl/comic/detail/$cid").build().toString(),
-                            headers
-                        )
-                    ).execute()
-                Observable.just(chapterListParse(response))
-            } catch (e: Exception) {
-                val response = client.newCall(GET("$apiUrl/dynamic/comicinfo/$cid.json", headers)).execute()
-                Observable.just(chapterListParse(response))
-            } catch (e: Exception) {
-                Observable.error(e)
+        return Observable.fromCallable {
+            val id = manga.url.extractMangaId()
+            if (id !in preferences.licensedList && id !in preferences.hiddenList) {
+                val result = fetchMangaInfoV4(id)
+                if (result != null && !result.isLicensed) {
+                    return@fromCallable result.parseChapterList()
+                }
             }
-        } else {
-            Observable.error(Exception("Licensed - No chapters to show"))
+            val response = client.newCall(GET(ApiV3.mangaInfoUrlV1(id), headers)).execute()
+            ApiV3.parseChapterListV1(response)
         }
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val ret = ArrayList<SChapter>()
-        val responseBody = response.body!!.string()
-        if (response.request.url.toString().startsWith(v4apiUrl)) {
-            val pb = ProtoBuf.decodeFromByteArray<ComicDetailResponse>(decryptProtobufData(responseBody))
-            val mangaPBData = pb.Data
-            // v4api can contain multiple series of chapters.
-            if (mangaPBData.Chapters.isEmpty()) {
-                throw Exception("empty chapter list")
-            }
-            mangaPBData.Chapters.forEach { chapterList ->
-                for (i in chapterList.Data.indices) {
-                    val chapter = chapterList.Data[i]
-                    ret.add(
-                        SChapter.create().apply {
-                            name = "${chapterList.Title}: ${chapter.ChapterTitle}"
-                            date_upload = chapter.Updatetime * 1000
-                            url = "${mangaPBData.Id}/${chapter.ChapterId}"
-                        }
-                    )
-                }
-            }
-        } else {
-            // get chapter info from old api
-            // Old api may only contain one series of chapters
-            val obj = JSONObject(responseBody)
-            val chaptersList = obj.getJSONObject("data").getJSONArray("list")
-            for (i in 0 until chaptersList.length()) {
-                val chapter = chaptersList.getJSONObject(i)
-                ret.add(
-                    SChapter.create().apply {
-                        name = chapter.getString("chapter_name")
-                        date_upload = chapter.getString("updatetime").toLong() * 1000
-                        url = "${chapter.getString("comic_id")}/${chapter.getString("id")}"
-                    }
-                )
-            }
-        }
-        return ret
+        throw UnsupportedOperationException()
     }
 
-    override fun pageListRequest(chapter: SChapter) = throw UnsupportedOperationException("Not used.")
+    // for WebView, headers are not needed
+    override fun pageListRequest(chapter: SChapter) = GET("$baseUrl/view/${chapter.url}.html")
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
-        return try {
-            // webpage api
-            val response = client.newCall(GET("$webviewPageListApiUrl/${chapter.url}.html", headers)).execute()
-            Observable.just(pageListParse(response, chapter))
-        } catch (e: Exception) {
-            // api.m.dmzj.com
-            val response = client.newCall(GET("$oldPageListApiUrl/comic/chapter/${chapter.url}.html", headers)).execute()
-            Observable.just(pageListParse(response, chapter))
-        } catch (e: Exception) {
-            // v3api
-            val response = client.newCall(
-                GET(
-                    customUrlBuilder("$v3ChapterApiUrl/chapter/${chapter.url}.json").build().toString(),
-                    headers
-                )
-            ).execute()
-            Observable.just(pageListParse(response, chapter))
-        } catch (e: Exception) {
-            Observable.error(e)
+        val path = chapter.url
+        return Observable.fromCallable {
+            val response = retryClient.newCall(GET(ApiV4.chapterImagesUrl(path), headers)).execute()
+            val result = ApiV4.parseChapterImages(response)
+            if (preferences.showChapterComments) {
+                result.add(Page(result.size, COMMENTS_FLAG, ApiV3.chapterCommentsUrl(path)))
+            }
+            result
         }
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        return pageListParse(response, null)
+        throw UnsupportedOperationException()
     }
 
-    private fun pageListParse(response: Response, chapter: SChapter?): List<Page> {
-        val requestUrl = response.request.url.toString()
-        val responseBody = response.body!!.string()
-        val arr = if (
-            requestUrl.startsWith(webviewPageListApiUrl) ||
-            requestUrl.startsWith(v3ChapterApiUrl)
-        ) {
-            // webpage api or v3api
-            JSONObject(responseBody).getJSONArray("page_url")
-        } else if (requestUrl.startsWith(oldPageListApiUrl)) {
-            try {
-                val obj = JSONObject(responseBody)
-                obj.getJSONObject("chapter").getJSONArray("page_url")
-            } catch (e: org.json.JSONException) {
-                // JSON data from api.m.dmzj.com may be incomplete, extract page_url list using regex
-                val extractPageList = extractPageListRegex.find(responseBody)?.value
-                if (extractPageList != null) {
-                    JSONObject("{$extractPageList}").getJSONArray("page_url")
-                } else {
-                    // The responseBody content is a sentence, for example, "The comic does not exist".
-                    throw Exception(responseBody)
-                }
-            }
-        } else {
-            throw Exception("can't parse response")
-        }
-        val ret = ArrayList<Page>(arr.length())
-        for (i in 0 until arr.length()) {
-            // Seems image urls from webpage api and api.m.dmzj.com may be URL encoded multiple times
-            val imageUrl = Uri.decode(Uri.decode(arr.getString(i)))
-                .replace("http:", "https:")
-                .replace("dmzj1.com", "dmzj.com")
-            // Use url to store lo-res image url
-            val url = if (chapter != null && chapter.url != "") {
-                // imageUrl be like: https://image.dmzj.com/m/manga_name/chapter_name/file_name.jpg
-                // Path node before manga_name is the initial letter of pinyin of the manga name,
-                // which is also used for small images.
-                val imgUrl = imageUrl.toHttpUrlOrNull()
-                if (imgUrl != null) {
-                    val initial = imgUrl.encodedPath.trim('/').substringBefore('/')
-                    "$imageSmallCDNUrl/$initial/${chapter.url}/$i.jpg"
-                } else ""
-            } else ""
-            ret.add(Page(i, url, imageUrl))
-        }
-        return ret
-    }
-
-    private fun String.encoded(): String {
-        return this.chunked(1)
-            .joinToString("") { if (it in setOf("%", " ", "+", "#")) Uri.encode(it) else it }
-            .let { if (it.endsWith(".jp")) "${it}g" else it }
-    }
-
+    // see https://github.com/tachiyomiorg/tachiyomi-extensions/issues/10475
     override fun imageRequest(page: Page): Request {
-        return when (preferences.getString(IMAGE_SOURCE_PREF, "")) {
-            ImageSource.ORIG_RES_ONLY.name -> GET(page.imageUrl!!.encoded(), headers)
-            ImageSource.LOW_RES_ONLY.name -> GET(page.url, headers)
-            else -> GET(page.imageUrl!!.encoded(), headers).newBuilder()
-                .addHeader(HttpGetFailoverInterceptor.RETRY_WITH_HEADER, page.url)
+        val url = page.url
+        val imageUrl = page.imageUrl!!
+        if (url == COMMENTS_FLAG) {
+            return GET(imageUrl, headers).newBuilder()
+                .tag(CommentsInterceptor.Tag::class.java, CommentsInterceptor.Tag())
                 .build()
         }
+        val fallbackUrl = when (preferences.imageQuality) {
+            AUTO_RES -> url
+            ORIGINAL_RES -> null
+            LOW_RES -> return GET(url, headers)
+            else -> url
+        }
+        return GET(imageUrl, headers).newBuilder()
+            .tag(ImageUrlInterceptor.Tag::class.java, ImageUrlInterceptor.Tag(fallbackUrl))
+            .build()
     }
 
     // Unused, we can get image urls directly from the chapter page
     override fun imageUrlParse(response: Response) =
         throw UnsupportedOperationException("This method should not be called!")
 
-    override fun getFilterList() = FilterList(
-        SortFilter(),
-        GenreGroup(),
-        StatusFilter(),
-        TypeFilter(),
-        ReaderFilter()
-    )
-
-    private class GenreGroup : UriPartFilter(
-        "分类",
-        arrayOf(
-            Pair("全部", ""),
-            Pair("冒险", "4"),
-            Pair("百合", "3243"),
-            Pair("生活", "3242"),
-            Pair("四格", "17"),
-            Pair("伪娘", "3244"),
-            Pair("悬疑", "3245"),
-            Pair("后宫", "3249"),
-            Pair("热血", "3248"),
-            Pair("耽美", "3246"),
-            Pair("其他", "16"),
-            Pair("恐怖", "14"),
-            Pair("科幻", "7"),
-            Pair("格斗", "6"),
-            Pair("欢乐向", "5"),
-            Pair("爱情", "8"),
-            Pair("侦探", "9"),
-            Pair("校园", "13"),
-            Pair("神鬼", "12"),
-            Pair("魔法", "11"),
-            Pair("竞技", "10"),
-            Pair("历史", "3250"),
-            Pair("战争", "3251"),
-            Pair("魔幻", "5806"),
-            Pair("扶她", "5345"),
-            Pair("东方", "5077"),
-            Pair("奇幻", "5848"),
-            Pair("轻小说", "6316"),
-            Pair("仙侠", "7900"),
-            Pair("搞笑", "7568"),
-            Pair("颜艺", "6437"),
-            Pair("性转换", "4518"),
-            Pair("高清单行", "4459"),
-            Pair("治愈", "3254"),
-            Pair("宅系", "3253"),
-            Pair("萌系", "3252"),
-            Pair("励志", "3255"),
-            Pair("节操", "6219"),
-            Pair("职场", "3328"),
-            Pair("西方魔幻", "3365"),
-            Pair("音乐舞蹈", "3326"),
-            Pair("机战", "3325")
-        )
-    )
-
-    private class StatusFilter : UriPartFilter(
-        "连载状态",
-        arrayOf(
-            Pair("全部", ""),
-            Pair("连载", "2309"),
-            Pair("完结", "2310")
-        )
-    )
-
-    private class TypeFilter : UriPartFilter(
-        "地区",
-        arrayOf(
-            Pair("全部", ""),
-            Pair("日本", "2304"),
-            Pair("韩国", "2305"),
-            Pair("欧美", "2306"),
-            Pair("港台", "2307"),
-            Pair("内地", "2308"),
-            Pair("其他", "8453")
-        )
-    )
-
-    private class SortFilter : UriPartFilter(
-        "排序",
-        arrayOf(
-            Pair("人气", "0"),
-            Pair("更新", "1")
-        )
-    )
-
-    private class ReaderFilter : UriPartFilter(
-        "读者",
-        arrayOf(
-            Pair("全部", ""),
-            Pair("少年", "3262"),
-            Pair("少女", "3263"),
-            Pair("青年", "3264")
-        )
-    )
-
-    private open class UriPartFilter(
-        displayName: String,
-        val vals: Array<Pair<String, String>>,
-        defaultValue: Int = 0
-    ) :
-        Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), defaultValue) {
-        open fun toUriPart() = vals[state].second
-    }
+    override fun getFilterList() = getFilterListInternal()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val apiRateLimitPreference = ListPreference(screen.context).apply {
-            key = API_RATELIMIT_PREF
-            title = API_RATELIMIT_PREF_TITLE
-            summary = API_RATELIMIT_PREF_SUMMARY
-            entries = ENTRIES_ARRAY
-            entryValues = ENTRIES_ARRAY
-
-            setDefaultValue("5")
-            setOnPreferenceChangeListener(onStringPreferenceChangeListener(API_RATELIMIT_PREF))
-        }
-
-        val imgCDNRateLimitPreference = ListPreference(screen.context).apply {
-            key = IMAGE_CDN_RATELIMIT_PREF
-            title = IMAGE_CDN_RATELIMIT_PREF_TITLE
-            summary = IMAGE_CDN_RATELIMIT_PREF_SUMMARY
-            entries = ENTRIES_ARRAY
-            entryValues = ENTRIES_ARRAY
-
-            setDefaultValue("5")
-            setOnPreferenceChangeListener(onStringPreferenceChangeListener(IMAGE_CDN_RATELIMIT_PREF))
-        }
-
-        val imgSourcePreference = ListPreference(screen.context).apply {
-            key = IMAGE_SOURCE_PREF
-            title = IMAGE_SOURCE_PREF_TITLE
-            summary = IMAGE_SOURCE_PREF_SUMMARY
-            entries = enumValues<ImageSource>().map { "${it.desc} (${it.name})" }.toTypedArray()
-            entryValues = enumValues<ImageSource>().map { it.name }.toTypedArray()
-
-            setDefaultValue(ImageSource.PREFER_ORIG_RES.name)
-            setOnPreferenceChangeListener(onStringPreferenceChangeListener(IMAGE_SOURCE_PREF))
-        }
-
-        screen.addPreference(apiRateLimitPreference)
-        screen.addPreference(imgCDNRateLimitPreference)
-        screen.addPreference(imgSourcePreference)
-    }
-
-    private fun onStringPreferenceChangeListener(key: String): Preference.OnPreferenceChangeListener {
-        return Preference.OnPreferenceChangeListener { _, newValue ->
-            try {
-                val setting = preferences.edit().putString(key, newValue as String).commit()
-                setting
-            } catch (e: Exception) {
-                e.printStackTrace()
-                false
-            }
-        }
-    }
-
-    private enum class ImageSource(val desc: String) {
-        PREFER_ORIG_RES("优先标清"), // "Prefer Original Resolution"
-        ORIG_RES_ONLY("只用标清"), // "Original Resolution Only"
-        LOW_RES_ONLY("只用低清"), // "Low Resolution Only"
-    }
-
-    companion object {
-        private const val API_RATELIMIT_PREF = "apiRatelimitPreference"
-        private const val API_RATELIMIT_PREF_TITLE = "主站每秒连接数限制" // "Ratelimit permits per second for main website"
-        private const val API_RATELIMIT_PREF_SUMMARY = "此值影响向动漫之家网站发起连接请求的数量。调低此值可能减少发生HTTP 429（连接请求过多）错误的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s" // "This value affects network request amount to dmzj's url. Lower this value may reduce the chance to get HTTP 429 error, but loading speed will be slower too. Tachiyomi restart required. Current value: %s"
-
-        private const val IMAGE_CDN_RATELIMIT_PREF = "imgCDNRatelimitPreference"
-        private const val IMAGE_CDN_RATELIMIT_PREF_TITLE = "图片CDN每秒连接数限制" // "Ratelimit permits per second for image CDN"
-        private const val IMAGE_CDN_RATELIMIT_PREF_SUMMARY = "此值影响加载图片时发起连接请求的数量。调低此值可能减小图片加载错误的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s" // "This value affects network request amount for loading image. Lower this value may reduce the chance to get error when loading image, but loading speed will be slower too. Tachiyomi restart required. Current value: %s"
-
-        private const val IMAGE_SOURCE_PREF = "imageSourcePreference"
-        private const val IMAGE_SOURCE_PREF_TITLE = "图源偏好" // "Image source preference"
-        private const val IMAGE_SOURCE_PREF_SUMMARY = "此值影响图片的加载来源。可以选择只用标清图源，只用低清图源，或优先尝试标清图源再回退到低清图源。部分漫画章节可能只能在低清图源下观看。不需要重启软件。\n当前值：%s" // "This value affects image load source. You can choose to use original resolution image source only, or use low resolution image source only, or try original resolution image source before fallback to low resolution image source. Some manga chapters may only be available from low resolution image source. Tachiyomi restart not required. Current value: %s"
-
-        private val extractComicIdFromWebpageRegex = Regex("""addSubscribe\((\d+)\)""")
-        private val checkComicIdIsNumericalRegex = Regex("""^\d+$""")
-        private val extractComicIdFromMangaUrlRegex = Regex("""(\d+)\.(json|html)""") // Get comic ID from manga.url
-        private val extractPageListRegex = Regex(""""page_url".+?]""")
-
-        private val ENTRIES_ARRAY = (1..10).map { i -> i.toString() }.toTypedArray()
-        const val PREFIX_ID_SEARCH = "id:"
-
-        private const val privateKey =
-            "MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAK8nNR1lTnIfIes6oRWJNj3mB6OssDGx0uGMpgpbVCpf6+VwnuI2stmhZNoQcM417Iz7WqlPzbUmu9R4dEKmLGEEqOhOdVaeh9Xk2IPPjqIu5TbkLZRxkY3dJM1htbz57d/roesJLkZXqssfG5EJauNc+RcABTfLb4IiFjSMlTsnAgMBAAECgYEAiz/pi2hKOJKlvcTL4jpHJGjn8+lL3wZX+LeAHkXDoTjHa47g0knYYQteCbv+YwMeAGupBWiLy5RyyhXFoGNKbbnvftMYK56hH+iqxjtDLnjSDKWnhcB7089sNKaEM9Ilil6uxWMrMMBH9v2PLdYsqMBHqPutKu/SigeGPeiB7VECQQDizVlNv67go99QAIv2n/ga4e0wLizVuaNBXE88AdOnaZ0LOTeniVEqvPtgUk63zbjl0P/pzQzyjitwe6HoCAIpAkEAxbOtnCm1uKEp5HsNaXEJTwE7WQf7PrLD4+BpGtNKkgja6f6F4ld4QZ2TQ6qvsCizSGJrjOpNdjVGJ7bgYMcczwJBALvJWPLmDi7ToFfGTB0EsNHZVKE66kZ/8Stx+ezueke4S556XplqOflQBjbnj2PigwBN/0afT+QZUOBOjWzoDJkCQClzo+oDQMvGVs9GEajS/32mJ3hiWQZrWvEzgzYRqSf3XVcEe7PaXSd8z3y3lACeeACsShqQoc8wGlaHXIJOHTcCQQCZw5127ZGs8ZDTSrogrH73Kw/HvX55wGAeirKYcv28eauveCG7iyFR0PFB/P/EDZnyb+ifvyEFlucPUI0+Y87F"
+        getPreferencesInternal(screen.context, preferences).forEach(screen::addPreference)
     }
 }
