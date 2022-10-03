@@ -75,7 +75,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Martial Manga", "https://martialmanga.com", "es"),
         SingleLang("MasterKomik", "https://masterkomik.com", "id", overrideVersionCode = 1),
         SingleLang("MELOKOMIK", "https://melokomik.xyz", "id"),
-        SingleLang("Mihentai", "https://mihentai.com", "all", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("Mihentai", "https://mihentai.com", "all", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Mode Scanlator", "https://modescanlator.com", "pt-BR", overrideVersionCode = 8),
         SingleLang("Nekomik", "https://nekomik.com", "id"),
         SingleLang("Ngomik", "https://ngomik.net", "id", overrideVersionCode = 1),
