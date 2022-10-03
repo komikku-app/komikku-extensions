@@ -30,13 +30,13 @@ fun parseStatus(status: String): Int = when (status) {
     else -> SManga.UNKNOWN
 }
 
+private val chapterNameRegex = Regex("""(?:连载版?)?(\d[.\d]*)([话卷])?""")
+
 fun String.formatChapterName(): String {
-    val replaced = removePrefix("连载")
-    if (!replaced[0].isDigit()) return replaced
-    return when (replaced.last()) {
-        '话', '卷' -> "第$replaced"
-        else -> replaced
-    }
+    val match = chapterNameRegex.matchEntire(this) ?: return this
+    val (number, optionalType) = match.destructured
+    val type = optionalType.ifEmpty { "话" }
+    return "第$number$type"
 }
 
 fun String.toHttps() = "https:" + substringAfter(':')
