@@ -186,7 +186,7 @@ abstract class LibGroup(
             isEng.equals("eng") && el.jsonObject["eng_name"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> el.jsonObject["eng_name"]!!.jsonPrimitive.content
             else -> el.jsonObject["name"]!!.jsonPrimitive.content
         }
-        thumbnail_url = if (el.jsonObject["covers"] != null) baseUrl + el.jsonObject["covers"]!!.jsonObject["default"]!!.jsonPrimitive.content
+        thumbnail_url = if (el.jsonObject["coverImage"] != null) baseUrl + el.jsonObject["coverImage"]!!.jsonPrimitive.content
         else baseUrl + "/uploads/cover/" + slug + "/cover/" + el.jsonObject["cover"]!!.jsonPrimitive.content + "_250x350.jpg"
         url = "/$slug"
     }
@@ -313,7 +313,7 @@ abstract class LibGroup(
             sortChaptersByTranslator(sortingList, chaptersList, slug, branches)
         } else {
             chaptersList
-                ?.filter { it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
+                ?.filter { it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 && it.jsonObject["price"]?.jsonPrimitive?.intOrNull == 0 }
                 ?.map { chapterFromElement(it, sortingList, slug, null, null, teams, chaptersList) }
         }
 
