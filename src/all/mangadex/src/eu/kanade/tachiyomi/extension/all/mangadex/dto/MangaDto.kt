@@ -47,7 +47,7 @@ data class MangaAttributesDto(
     val title: JsonElement,
     val altTitles: JsonElement,
     val description: JsonElement,
-    val originalLanguage: String,
+    val originalLanguage: String?,
     val lastVolume: String?,
     val lastChapter: String?,
     val contentRating: String?,

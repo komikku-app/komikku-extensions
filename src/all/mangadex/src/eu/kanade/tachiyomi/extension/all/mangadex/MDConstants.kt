@@ -40,7 +40,7 @@ object MDConstants {
     const val prefixUsrSearch = "usr:"
     const val prefixListSearch = "list:"
 
-    const val coverQualityPref = "thumbnailQuality"
+    private const val coverQualityPref = "thumbnailQuality"
 
     fun getCoverQualityPreferenceKey(dexLang: String): String {
         return "${coverQualityPref}_$dexLang"
@@ -53,7 +53,7 @@ object MDConstants {
 
     fun getCoverQualityPreferenceDefaultValue() = getCoverQualityPreferenceEntryValues()[0]
 
-    const val dataSaverPref = "dataSaverV5"
+    private const val dataSaverPref = "dataSaverV5"
 
     fun getDataSaverPreferenceKey(dexLang: String): String {
         return "${dataSaverPref}_$dexLang"
@@ -108,9 +108,9 @@ object MDConstants {
         return "${hasSanitizedUuidsPref}_$dexLang"
     }
 
-    const val tagGroupContent = "content"
-    const val tagGroupFormat = "format"
-    const val tagGroupGenre = "genre"
-    const val tagGroupTheme = "theme"
+    private const val tagGroupContent = "content"
+    private const val tagGroupFormat = "format"
+    private const val tagGroupGenre = "genre"
+    private const val tagGroupTheme = "theme"
     val tagGroupsOrder = arrayOf(tagGroupContent, tagGroupFormat, tagGroupGenre, tagGroupTheme)
 }
