@@ -118,7 +118,7 @@ class KomikCast : MangaThemesia(
 
     override fun pageListParse(document: Document): List<Page> {
         var doc = document
-        var cssQuery = "div#chapter_body .main-reading-area img.size-full"
+        var cssQuery = "div#chapter_body .main-reading-area img"
         val imageListRegex = Regex("chapterImages = (.*) \\|\\|")
         val imageListMatchResult = imageListRegex.find(document.toString())
 
