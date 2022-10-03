@@ -1,3 +1,16 @@
+## 1.3.43
+
+Minimum Komga version required: `0.151.0`
+
+### Fix
+
+* Requests failing if address preference is saved with a trailing slash
+
+### Features
+
+* Add URL validation in the address preferences
+* Use a URL-focused keyboard when available while editing the address preferences
+
 ## 1.3.42
 
 Minimum Komga version required: `0.151.0`

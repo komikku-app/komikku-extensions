@@ -2,9 +2,14 @@ package eu.kanade.tachiyomi.extension.all.komga
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.text.Editable
 import android.text.InputType
+import android.text.TextWatcher
 import android.util.Log
+import android.widget.Button
 import android.widget.Toast
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.extension.all.komga.dto.AuthorDto
 import eu.kanade.tachiyomi.extension.all.komga.dto.BookDto
@@ -393,9 +398,9 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
         (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
     }
 
-    override val baseUrl by lazy { getPrefBaseUrl() }
-    private val username by lazy { getPrefUsername() }
-    private val password by lazy { getPrefPassword() }
+    override val baseUrl by lazy { preferences.baseUrl }
+    private val username by lazy { preferences.username }
+    private val password by lazy { preferences.password }
     private val json: Json by injectLazy()
 
     override fun headersBuilder(): Headers.Builder =
@@ -420,23 +425,66 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
             .dns(Dns.SYSTEM) // don't use DNS over HTTPS as it breaks IP addressing
             .build()
 
-    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-        screen.addPreference(screen.editTextPreference(ADDRESS_TITLE, ADDRESS_DEFAULT, baseUrl))
-        screen.addPreference(screen.editTextPreference(USERNAME_TITLE, USERNAME_DEFAULT, username))
-        screen.addPreference(screen.editTextPreference(PASSWORD_TITLE, PASSWORD_DEFAULT, password, true))
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        screen.addEditTextPreference(
+            title = ADDRESS_TITLE,
+            default = ADDRESS_DEFAULT,
+            value = baseUrl,
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI,
+            validate = { it.toHttpUrlOrNull() != null },
+            validationMessage = "The URL is invalid or malformed"
+        )
+        screen.addEditTextPreference(
+            title = USERNAME_TITLE,
+            default = USERNAME_DEFAULT,
+            value = username
+        )
+        screen.addEditTextPreference(
+            title = PASSWORD_TITLE,
+            default = PASSWORD_DEFAULT,
+            value = password,
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        )
     }
 
-    private fun androidx.preference.PreferenceScreen.editTextPreference(title: String, default: String, value: String, isPassword: Boolean = false): androidx.preference.EditTextPreference {
-        return androidx.preference.EditTextPreference(context).apply {
+    private fun PreferenceScreen.addEditTextPreference(
+        title: String,
+        default: String,
+        value: String,
+        inputType: Int? = null,
+        validate: ((String) -> Boolean)? = null,
+        validationMessage: String? = null
+    ) {
+        val preference = EditTextPreference(context).apply {
             key = title
             this.title = title
             summary = value
             this.setDefaultValue(default)
             dialogTitle = title
 
-            if (isPassword) {
-                setOnBindEditTextListener {
-                    it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setOnBindEditTextListener { editText ->
+                if (inputType != null) {
+                    editText.inputType = inputType
+                }
+
+                if (validate != null) {
+                    editText.addTextChangedListener(object : TextWatcher {
+                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+                        override fun afterTextChanged(editable: Editable?) {
+                            requireNotNull(editable)
+
+                            val text = editable.toString()
+
+                            val isValid = text.isBlank() || validate(text)
+
+                            editText.error = if (!isValid) validationMessage else null
+                            editText.rootView.findViewById<Button>(android.R.id.button1)
+                                ?.isEnabled = editText.error == null
+                        }
+                    })
                 }
             }
 
@@ -451,11 +499,18 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
                 }
             }
         }
+
+        addPreference(preference)
     }
 
-    private fun getPrefBaseUrl(): String = preferences.getString(ADDRESS_TITLE, ADDRESS_DEFAULT)!!
-    private fun getPrefUsername(): String = preferences.getString(USERNAME_TITLE, USERNAME_DEFAULT)!!
-    private fun getPrefPassword(): String = preferences.getString(PASSWORD_TITLE, PASSWORD_DEFAULT)!!
+    private val SharedPreferences.baseUrl
+        get() = getString(ADDRESS_TITLE, ADDRESS_DEFAULT)!!.removeSuffix("/")
+
+    private val SharedPreferences.username
+        get() = getString(USERNAME_TITLE, USERNAME_DEFAULT)!!
+
+    private val SharedPreferences.password
+        get() = getString(PASSWORD_TITLE, PASSWORD_DEFAULT)!!
 
     init {
         if (baseUrl.isNotBlank()) {
