@@ -56,14 +56,14 @@ class KemonoPostDto(
 ) {
     val images: List<String>
         get() = buildList(attachments.size + 1) {
-            file.path?.let { add(it) }
-            attachments.mapTo(this) { it.path }
+            if (file.path != null) add(KemonoAttachmentDto(file.name!!, file.path))
+            addAll(attachments)
         }.filter {
-            when (it.substringAfterLast('.').lowercase()) {
+            when (it.name.substringAfterLast('.').lowercase()) {
                 "png", "jpg", "gif", "jpeg", "webp" -> true
                 else -> false
             }
-        }.distinct()
+        }.distinctBy { it.path }.map { it.toString() }
 
     fun toSChapter() = SChapter.create().apply {
         url = "/$service/user/$user/post/$id"
@@ -78,10 +78,12 @@ class KemonoPostDto(
 }
 
 @Serializable
-class KemonoFileDto(val path: String? = null)
+class KemonoFileDto(val name: String? = null, val path: String? = null)
 
 @Serializable
-class KemonoAttachmentDto(val path: String)
+class KemonoAttachmentDto(val name: String, val path: String) {
+    override fun toString() = "$path?f=$name"
+}
 
 private fun getApiDateFormat() =
     SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH)

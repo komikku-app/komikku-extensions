@@ -20,7 +20,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Element
 import org.jsoup.select.Evaluator
 import rx.Observable
-import rx.Single
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -34,6 +33,9 @@ open class Kemono(
     override val supportsLatest = true
 
     override val client = network.client.newBuilder().rateLimit(2).build()
+
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
 
     private val json: Json by injectLazy()
 
@@ -69,7 +71,7 @@ open class Kemono(
 
     override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = Single.create<MangasPage> { subscriber ->
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = Observable.fromCallable {
         val baseUrl = this.baseUrl
         val response = client.newCall(GET("$baseUrl/api/creators", headers)).execute()
         val result = response.parseAs<List<KemonoCreatorDto>>()
@@ -77,8 +79,8 @@ open class Kemono(
             .sortedByDescending { it.updatedDate }
             .map { it.toSManga(baseUrl) }
             .filterUnsupported()
-        subscriber.onSuccess(MangasPage(result, false))
-    }.toObservable()
+        MangasPage(result, false)
+    }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = throw UnsupportedOperationException("Not used.")
     override fun searchMangaParse(response: Response) = throw UnsupportedOperationException("Not used.")
@@ -87,7 +89,7 @@ open class Kemono(
 
     override fun mangaDetailsParse(response: Response) = throw UnsupportedOperationException("Not used.")
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Single.create<List<SChapter>> {
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
         KemonoPostDto.dateFormat.timeZone = when (manga.author) {
             "Pixiv Fanbox", "Fantia" -> TimeZone.getTimeZone("GMT+09:00")
             else -> TimeZone.getTimeZone("GMT")
@@ -104,8 +106,8 @@ open class Kemono(
             offset += POST_PAGE_SIZE
             hasNextPage = page.size == POST_PAGE_SIZE
         }
-        it.onSuccess(result)
-    }.toObservable()
+        result
+    }
 
     override fun chapterListParse(response: Response) = throw UnsupportedOperationException("Not used.")
 
