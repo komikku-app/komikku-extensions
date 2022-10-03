@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.comickfun
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -15,6 +16,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import rx.Observable
 import java.text.SimpleDateFormat
 
 const val API_BASE = "https://api.comick.fun"
@@ -192,18 +194,26 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     /** Manga Details **/
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        return client.newCall(
+            GET(
+                "$API_BASE${manga.url}".toHttpUrl().newBuilder().apply {
+                    addQueryParameter("tachiyomi", "true")
+                }.toString(),
+                headers
+            )
+        ).asObservableSuccess()
+            .map { response -> mangaDetailsParse(response).apply { initialized = true } }
+    }
+
     override fun mangaDetailsRequest(manga: SManga): Request {
-        return GET(
-            "$API_BASE${manga.url}".toHttpUrl().newBuilder().apply {
-                addQueryParameter("tachiyomi", "true")
-            }.toString(),
-            headers
-        )
+        return GET("$baseUrl${manga.url}".toHttpUrl().toString())
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
         val mangaData = json.decodeFromString<MangaDetails>(response.body!!.string())
         return SManga.create().apply {
+            url = "$baseUrl/comic/${mangaData.comic.slug}"
             title = mangaData.comic.title
             artist = mangaData.artists.joinToString { it.name.trim() }
             author = mangaData.authors.joinToString { it.name.trim() }
@@ -211,7 +221,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
             genre = mangaData.genres.joinToString { it.name.trim() }
             status = parseStatus(mangaData.comic.status)
             thumbnail_url = mangaData.comic.cover_url
-            initialized = true
         }
     }
 
