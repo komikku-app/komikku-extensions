@@ -174,6 +174,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Kissmanga.in", "https://kissmanga.in", "en", className = "KissmangaIn", overrideVersionCode = 2),
         SingleLang("KlikManga", "https://klikmanga.id", "id", overrideVersionCode = 2),
         SingleLang("Kokomanga", "https://kokomanga.com", "en"),
+        SingleLang("KomikRame", "https://komikra.me", "id"),
         SingleLang("Kun Manga", "https://kunmanga.com", "en", overrideVersionCode = 1),
         SingleLang("Lady Manga", "https://ladymanga.com", "en"),
         SingleLang("Lala Manga", "https://lalamanga.com", "en", isNsfw = true),
