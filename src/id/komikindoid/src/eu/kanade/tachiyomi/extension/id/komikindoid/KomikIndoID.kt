@@ -54,10 +54,8 @@ class KomikIndoID : ParsedHttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val builtUrl = if (page == 1) "$baseUrl/daftar-komik/" else "$baseUrl/daftar-komik/page/$page/?order="
-        val url = builtUrl.toHttpUrlOrNull()!!.newBuilder()
-        url.addQueryParameter("title", query)
-        url.addQueryParameter("page", page.toString())
+        val url = "$baseUrl/daftar-manga/page/$page/".toHttpUrlOrNull()!!.newBuilder()
+            .addQueryParameter("title", query)
         filters.forEach { filter ->
             when (filter) {
                 is AuthorFilter -> {
@@ -87,7 +85,7 @@ class KomikIndoID : ParsedHttpSource() {
                 }
             }
         }
-        return GET(url.build().toString(), headers)
+        return GET(url.toString(), headers)
     }
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select("div.infoanime").first()
