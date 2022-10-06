@@ -315,8 +315,7 @@ class MangaPlus(
         return result.success.mangaViewer!!.pages
             .mapNotNull(MangaPlusPage::mangaPage)
             .mapIndexed { i, page ->
-                val encryptionKey = if (page.encryptionKey == null) "" else
-                    "&encryptionKey=${page.encryptionKey}"
+                val encryptionKey = if (page.encryptionKey == null) "" else "#${page.encryptionKey}"
                 Page(i, referer, page.imageUrl + encryptionKey)
             }
     }
@@ -342,16 +341,6 @@ class MangaPlus(
             entryValues = QUALITY_PREF_ENTRY_VALUES
             setDefaultValue(QUALITY_PREF_DEFAULT_VALUE)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-
-                preferences.edit()
-                    .putString("${QUALITY_PREF_KEY}_$lang", entry)
-                    .commit()
-            }
         }
 
         val splitPref = SwitchPreferenceCompat(screen.context).apply {
@@ -359,14 +348,6 @@ class MangaPlus(
             title = intl.splitDoublePages
             summary = intl.splitDoublePagesSummary
             setDefaultValue(SPLIT_PREF_DEFAULT_VALUE)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-
-                preferences.edit()
-                    .putBoolean("${SPLIT_PREF_KEY}_$lang", checkValue)
-                    .commit()
-            }
         }
 
         screen.addPreference(qualityPref)
@@ -374,41 +355,21 @@ class MangaPlus(
     }
 
     private fun imageIntercept(chain: Interceptor.Chain): Response {
-        var request = chain.request()
-
-        if (request.url.queryParameter("encryptionKey") == null)
-            return chain.proceed(request)
-
-        val encryptionKey = request.url.queryParameter("encryptionKey")!!
-
-        // Change the url and remove the encryptionKey to avoid detection.
-        val newUrl = request.url.newBuilder()
-            .removeAllQueryParameters("encryptionKey")
-            .build()
-        request = request.newBuilder()
-            .url(newUrl)
-            .build()
-
+        val request = chain.request()
         val response = chain.proceed(request)
+        val encryptionKey = request.url.fragment
+
+        if (encryptionKey.isNullOrEmpty()) {
+            return response
+        }
 
         val contentType = response.header("Content-Type", "image/jpeg")!!
-        val image = decodeImage(encryptionKey, response.body!!.bytes())
+        val image = response.body!!.bytes().decodeXorCipher(encryptionKey)
         val body = image.toResponseBody(contentType.toMediaTypeOrNull())
 
         return response.newBuilder()
             .body(body)
             .build()
-    }
-
-    private fun decodeImage(encryptionKey: String, imageBytes: ByteArray): ByteArray {
-        val keyStream = encryptionKey
-            .chunked(2)
-            .map { it.toInt(16) }
-
-        return imageBytes
-            .mapIndexed { i, byte -> byte.toInt() xor keyStream[i % keyStream.size] }
-            .map(Int::toByte)
-            .toByteArray()
     }
 
     private fun thumbnailIntercept(chain: Interceptor.Chain): Response {
@@ -431,6 +392,15 @@ class MangaPlus(
         }
 
         return response
+    }
+
+    private fun ByteArray.decodeXorCipher(key: String): ByteArray {
+        val keyStream = key.chunked(2)
+            .map { it.toInt(16) }
+
+        return mapIndexed { i, byte -> byte.toInt() xor keyStream[i % keyStream.size] }
+            .map(Int::toByte)
+            .toByteArray()
     }
 
     private fun Response.asMangaPlusResponse(): MangaPlusResponse = use {
