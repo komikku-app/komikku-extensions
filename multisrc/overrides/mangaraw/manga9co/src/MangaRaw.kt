@@ -21,6 +21,7 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
     override val supportsLatest = true
     override val baseUrl: String
     private val selectors: Selectors
+    private val needUrlSanitize: Boolean
 
     init {
         val mirrors = MIRRORS
@@ -28,6 +29,7 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
             .getString(MIRROR_PREF, "0")!!.toInt().coerceAtMost(mirrors.size - 1)
         baseUrl = "https://" + mirrors[mirrorIndex]
         selectors = getSelectors(mirrorIndex)
+        needUrlSanitize = needUrlSanitize(mirrorIndex)
     }
 
     override fun String.sanitizeTitle() = substringBeforeLast('(').trimEnd()
@@ -35,6 +37,10 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/top/?page=$page", headers)
     override fun popularMangaSelector() = selectors.listMangaSelector
     override fun popularMangaNextPageSelector() = ".nextpostslink"
+
+    override fun popularMangaFromElement(element: Element) = super.popularMangaFromElement(element).apply {
+        if (needUrlSanitize) url = mangaSlugRegex.replaceFirst(url, "/")
+    }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
         GET("$baseUrl/?s=$query&page=$page", headers)
@@ -55,7 +61,9 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
         ListPreference(screen.context).apply {
             key = MIRROR_PREF
             title = "Mirror"
-            summary = "Requires app restart to take effect\nSelected: %s"
+            summary = "%s\n" +
+                "Requires app restart to take effect\n" +
+                "Note: 'mangaraw.to' might fail to load images because of Cloudflare protection"
             entries = MIRRORS
             entryValues = MIRRORS.indices.map { it.toString() }.toTypedArray()
             setDefaultValue("0")

@@ -8,11 +8,11 @@ class MangaRawGenerator : ThemeSourceGenerator {
 
     override val themePkg = "mangaraw"
 
-    override val baseVersionCode = 2
+    override val baseVersionCode = 4
 
     override val sources = listOf(
-        SingleLang("SyoSetu", "https://syosetu.top", "ja", overrideVersionCode = 1),
-        SingleLang("MangaRaw", "https://manga9.co", "ja", pkgName = "manga9co", overrideVersionCode = 1),
+        SingleLang("SyoSetu", "https://syosetu.top", "ja"),
+        SingleLang("MangaRaw", "https://manga9.co", "ja", pkgName = "manga9co"),
     )
 
     companion object {

@@ -14,9 +14,12 @@ class SyoSetu : MangaRawTheme("SyoSetu", "https://syosetu.top") {
 
     override val supportsLatest = false
 
-    override fun String.sanitizeTitle() =
-        substring(0, lastIndexOf("RAW", ignoreCase = true))
+    override fun String.sanitizeTitle(): String {
+        val index = lastIndexOf("RAW", ignoreCase = true)
+        if (index == -1) return this
+        return substring(0, index)
             .trimEnd('(', ' ', ',')
+    }
 
     override fun popularMangaSelector() = "article"
     override fun popularMangaNextPageSelector() = ".next.page-numbers"

@@ -15,12 +15,14 @@ abstract class MangaRawTheme(
     override val lang: String = "ja"
 ) : ParsedHttpSource() {
 
-    override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
+    override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
+
+    override val client = network.cloudflareClient
 
     protected abstract fun String.sanitizeTitle(): String
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        url = element.selectFirst(Evaluator.Tag("a")).attr("href").removePrefix(baseUrl)
+        setUrlWithoutDomain(element.selectFirst(Evaluator.Tag("a")).attr("href"))
         title = element.selectFirst(Evaluator.Tag("h3")).text().sanitizeTitle()
         thumbnail_url = element.selectFirst(Evaluator.Tag("img"))?.absUrl("data-src")
     }
@@ -58,7 +60,7 @@ abstract class MangaRawTheme(
     protected abstract fun String.sanitizeChapter(): String
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        url = element.attr("href").removePrefix(baseUrl)
+        setUrlWithoutDomain(element.attr("href"))
         name = element.text().sanitizeChapter()
     }
 
