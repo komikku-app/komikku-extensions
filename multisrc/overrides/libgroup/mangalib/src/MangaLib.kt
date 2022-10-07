@@ -52,8 +52,11 @@ class MangaLib : LibGroup("MangaLib", "https://mangalib.me", "ru") {
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is AgeList -> filter.state.forEach { age ->
-                    if (age.state) {
-                        url.addQueryParameter("caution[]", age.id)
+                    if (age.state != Filter.TriState.STATE_IGNORE) {
+                        url.addQueryParameter(
+                            if (age.isIncluded()) "caution[include][]" else "caution[exclude][]",
+                            age.id
+                        )
                     }
                 }
                 is TagList -> filter.state.forEach { tag ->
@@ -71,10 +74,9 @@ class MangaLib : LibGroup("MangaLib", "https://mangalib.me", "ru") {
 
     // Filters
     private class SearchFilter(name: String, val id: String) : Filter.TriState(name)
-    private class CheckFilter(name: String, val id: String) : Filter.CheckBox(name)
 
     private class TagList(tags: List<SearchFilter>) : Filter.Group<SearchFilter>("Теги", tags)
-    private class AgeList(ages: List<CheckFilter>) : Filter.Group<CheckFilter>("Возрастное ограничение", ages)
+    private class AgeList(ages: List<SearchFilter>) : Filter.Group<SearchFilter>("Возрастное ограничение", ages)
 
     override fun getFilterList(): FilterList {
         val filters = super.getFilterList().toMutableList()
@@ -185,9 +187,9 @@ class MangaLib : LibGroup("MangaLib", "https://mangalib.me", "ru") {
     )
 
     private fun getAgeList() = listOf(
-        CheckFilter("Отсутствует", "0"),
-        CheckFilter("16+", "1"),
-        CheckFilter("18+", "2")
+        SearchFilter("Отсутствует", "0"),
+        SearchFilter("16+", "1"),
+        SearchFilter("18+", "2")
     )
 
     companion object {

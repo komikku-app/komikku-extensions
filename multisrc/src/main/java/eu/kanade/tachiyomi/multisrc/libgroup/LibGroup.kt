@@ -124,23 +124,15 @@ abstract class LibGroup(
     }
 
     private fun fetchLatestMangaFromApi(page: Int): Observable<MangasPage> {
-        return client.newCall(POST("$baseUrl/latest-updates?page=$page", catalogHeaders()))
+        return client.newCall(POST("$baseUrl/filterlist?dir=desc&sort=last_chapter_at&page=$page", catalogHeaders()))
             .asObservableSuccess()
             .map { response ->
                 latestUpdatesParse(response)
             }
     }
 
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        val resBody = response.body!!.string()
-        val result = json.decodeFromString<JsonObject>(resBody)
-        val itemsLatest = result["data"]?.jsonArray?.map { popularMangaFromElement(it) }
-        if (itemsLatest != null) {
-            val hasNextPage = result["next_page_url"]?.jsonPrimitive?.contentOrNull != null
-            return MangasPage(itemsLatest, hasNextPage)
-        }
-        return MangasPage(emptyList(), false)
-    }
+    override fun latestUpdatesParse(response: Response) =
+        popularMangaParse(response)
 
     // Popular
     override fun popularMangaRequest(page: Int) = GET(baseUrl, headers)
