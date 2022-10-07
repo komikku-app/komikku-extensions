@@ -30,6 +30,6 @@ class FlameScansAr : FlameScans("https://ar.flamescans.org", "ar", "/series") {
 
 class FlameScansEn : FlameScans("https://flamescans.org", "en", "/series") {
     override val client: OkHttpClient = super.client.newBuilder()
-        .rateLimit(1, 3, TimeUnit.SECONDS)
+        .rateLimit(2, 7, TimeUnit.SECONDS)
         .build()
 }
