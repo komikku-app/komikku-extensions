@@ -68,7 +68,7 @@ class MangaDexHelper(private val lang: String) {
     /**
      * Check if the string is a valid uuid
      */
-    fun isUuid(text: String) = MDConstants.uuidRegex.matchEntire(text) != null
+    fun isUuid(text: String) = MDConstants.uuidRegex matches text
 
     /**
      * Get the manga offset pages are 1 based, so subtract 1
