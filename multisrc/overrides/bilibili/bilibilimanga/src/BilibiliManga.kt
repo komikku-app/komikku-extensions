@@ -36,8 +36,12 @@ class BilibiliManga : Bilibili(
 
     override val defaultLatestSort: Int = 1
 
-    override fun getAllSortOptions(): Array<String> =
-        arrayOf(intl.sortPopular, intl.sortUpdated, intl.sortFollowers, intl.sortAdded)
+    override fun getAllSortOptions(): Array<BilibiliTag> = arrayOf(
+        BilibiliTag(intl.sortPopular, 0),
+        BilibiliTag(intl.sortUpdated, 1),
+        BilibiliTag(intl.sortFollowers, 2),
+        BilibiliTag(intl.sortAdded, 3)
+    )
 
     override fun getAllPrices(): Array<String> =
         arrayOf(intl.priceAll, intl.priceFree, intl.pricePaid, intl.priceWaitForFree)

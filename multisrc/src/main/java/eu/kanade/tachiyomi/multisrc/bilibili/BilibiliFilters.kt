@@ -6,20 +6,21 @@ data class BilibiliTag(val name: String, val id: Int) {
     override fun toString(): String = name
 }
 
-class GenreFilter(label: String, genres: Array<BilibiliTag>) :
-    Filter.Select<BilibiliTag>(label, genres) {
-    val selected: BilibiliTag
-        get() = values[state]
+open class EnhancedSelect<T>(name: String, values: Array<T>, state: Int = 0) :
+    Filter.Select<T>(name, values, state) {
+
+    val selected: T?
+        get() = values.getOrNull(state)
 }
+
+class GenreFilter(label: String, genres: Array<BilibiliTag>) :
+    EnhancedSelect<BilibiliTag>(label, genres)
 
 class AreaFilter(label: String, genres: Array<BilibiliTag>) :
-    Filter.Select<BilibiliTag>(label, genres) {
-    val selected: BilibiliTag
-        get() = values[state]
-}
+    EnhancedSelect<BilibiliTag>(label, genres)
 
-class SortFilter(label: String, options: Array<String>, state: Int = 0) :
-    Filter.Select<String>(label, options, state)
+class SortFilter(label: String, options: Array<BilibiliTag>, state: Int = 0) :
+    EnhancedSelect<BilibiliTag>(label, options, state)
 
 class StatusFilter(label: String, statuses: Array<String>) :
     Filter.Select<String>(label, statuses)

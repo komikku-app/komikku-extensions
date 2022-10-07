@@ -23,13 +23,18 @@ data class BilibiliComicDto(
     @SerialName("ep_list") val episodeList: List<BilibiliEpisodeDto> = emptyList(),
     val id: Int = 0,
     @SerialName("is_finish") val isFinish: Int = 0,
+    @SerialName("temp_stop_update") val isOnHiatus: Boolean = false,
     @SerialName("season_id") val seasonId: Int = 0,
     val styles: List<String> = emptyList(),
     val title: String,
+    @SerialName("update_weekday") val updateWeekdays: List<Int> = emptyList(),
     @SerialName("vertical_cover") val verticalCover: String = ""
 ) {
     val hasPaidChapters: Boolean
-        get() = episodeList.any { episode -> episode.payMode == 1 && episode.payGold > 0 }
+        get() = paidChaptersCount > 0
+
+    val paidChaptersCount: Int
+        get() = episodeList.filter { episode -> episode.payMode == 1 && episode.payGold > 0 }.size
 
     fun genres(paidLabel: String, emoji: String): List<String> =
         (if (hasPaidChapters) listOf("$emoji $paidLabel") else emptyList()) + styles
@@ -54,8 +59,17 @@ data class BilibiliReader(
 
 @Serializable
 data class BilibiliImageDto(
-    val path: String
-)
+    val path: String,
+    @SerialName("x") val width: Int,
+    @SerialName("y") val height: Int
+) {
+
+    fun url(quality: String, format: String): String {
+        val imageWidth = if (quality == "raw+") "${width}w" else quality
+
+        return "$path@$imageWidth.$format"
+    }
+}
 
 @Serializable
 data class BilibiliPageDto(

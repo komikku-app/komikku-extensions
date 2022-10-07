@@ -1,6 +1,16 @@
 package eu.kanade.tachiyomi.multisrc.bilibili
 
-class BilibiliIntl(lang: String) {
+import java.text.DateFormatSymbols
+import java.text.NumberFormat
+import java.util.Locale
+
+class BilibiliIntl(private val lang: String) {
+
+    private val locale by lazy { Locale.forLanguageTag(lang) }
+
+    private val dateFormatSymbols by lazy { DateFormatSymbols(locale) }
+
+    private val numberFormat by lazy { NumberFormat.getInstance(locale) }
 
     val statusLabel: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE -> "进度"
@@ -39,18 +49,20 @@ class BilibiliIntl(lang: String) {
         else -> "Ep. "
     }
 
-    val hasPaidChaptersWarning: String = when (lang) {
+    fun hasPaidChaptersWarning(chapterCount: Int): String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE ->
-            "${Bilibili.EMOJI_WARNING} 此漫画的付费章节已从章节列表中过滤。如果您已购买章节，请在 WebView " +
-                "登录并刷新章节列表以阅读已购章节。"
+            "${Bilibili.EMOJI_WARNING} 此漫画有 ${chapterCount.localized} 个付费章节，已在目录中隐藏。" +
+                "如果你已购买，请在 WebView 登录并刷新目录，即可阅读已购章节。"
         SPANISH ->
-            "${Bilibili.EMOJI_WARNING} ADVERTENCIA: Esta serie tiene capítulos pagos que fueron " +
-                "filtrados de la lista de capítulos. Si ya compró y tiene alguno en su cuenta, " +
-                "inicie sesión en WebView y actualice la lista de capítulos para leerlos."
+            "${Bilibili.EMOJI_WARNING} ADVERTENCIA: Esta serie tiene ${chapterCount.localized} " +
+                "capítulos pagos que fueron filtrados de la lista de capítulos. Si ya has " +
+                "desbloqueado y tiene alguno en su cuenta, inicie sesión en WebView y " +
+                "actualice la lista de capítulos para leerlos."
         else ->
-            "${Bilibili.EMOJI_WARNING} WARNING: This series has paid chapters that were filtered " +
-                "out from the chapter list. If you have already bought and have any in your " +
-                "account, sign in through WebView and refresh the chapter list to read them."
+            "${Bilibili.EMOJI_WARNING} WARNING: This series has ${chapterCount.localized} paid " +
+                "chapters that were filtered out from the chapter list. If you have already " +
+                "unlocked and have any in your account, sign in through WebView and refresh " +
+                "the chapter list to read them."
     }
 
     val imageQualityPrefTitle: String = when (lang) {
@@ -61,8 +73,8 @@ class BilibiliIntl(lang: String) {
     }
 
     val imageQualityPrefEntries: Array<String> = when (lang) {
-        CHINESE, SIMPLIFIED_CHINESE -> arrayOf("原图", "高", "低")
-        else -> arrayOf("Raw", "HD", "SD")
+        CHINESE, SIMPLIFIED_CHINESE -> arrayOf("原图+", "原图 (1600w)", "高 (1000w)", "低 (800w)")
+        else -> arrayOf("Raw+", "Raw (1600w)", "HD (1000w)", "SD (800w)")
     }
 
     val imageFormatPrefTitle: String = when (lang) {
@@ -166,6 +178,37 @@ class BilibiliIntl(lang: String) {
         SPANISH -> "Erro al obtener la credencial para leer el capítulo."
         else -> "Failed to get the credential to read the chapter."
     }
+
+    val informationTitle: String = when (lang) {
+        CHINESE, SIMPLIFIED_CHINESE -> "信息"
+        SPANISH -> "Información"
+        else -> "Information"
+    }
+
+    val totalChapterCount: String = when (lang) {
+        CHINESE, SIMPLIFIED_CHINESE -> "章节总数"
+        SPANISH -> "Número total de capítulos"
+        else -> "Total chapter count"
+    }
+
+    val updatedEvery: String = when (lang) {
+        CHINESE, SIMPLIFIED_CHINESE -> "每周更新时间"
+        SPANISH -> "Actualizado en"
+        else -> "Updated every"
+    }
+
+    fun getWeekdays(dayIndexes: List<Int>): String {
+        val weekdays = dateFormatSymbols.weekdays
+            .filter(String::isNotBlank)
+            .map { dayName -> dayName.replaceFirstChar { it.uppercase(locale) } }
+
+        return dayIndexes.joinToString { weekdays[it] }
+    }
+
+    fun localize(value: Int) = value.localized
+
+    private val Int.localized: String
+        get() = numberFormat.format(this)
 
     companion object {
         const val CHINESE = "zh"
