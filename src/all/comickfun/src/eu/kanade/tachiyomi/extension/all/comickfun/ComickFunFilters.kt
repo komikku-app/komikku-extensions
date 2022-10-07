@@ -10,7 +10,7 @@ internal fun getFilters(): FilterList {
         GenreFilter("Genre", getGenresList),
         DemographicFilter("Demographic", getDemographicList),
         TypeFilter("Type", getTypeList),
-        SortFilter("Short", getSortsList),
+        SortFilter("Sort", getSortsList),
         CreatedAtFilter("Created At", getCreatedAtList),
         MinimumFilter("Minimum Chapters"),
         Filter.Header("From Year, ex: 2010"),
