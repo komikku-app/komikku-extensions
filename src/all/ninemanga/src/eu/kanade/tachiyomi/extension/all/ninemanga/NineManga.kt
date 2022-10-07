@@ -51,6 +51,9 @@ open class NineManga(
 
     override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
 
+    // for cleaning manga title from chapter name
+    private var mangaTitleForCleaning = ""
+
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         document.select("div.bookintro").let {
             title = it.select("li > span:not([class])").text().removeSuffix(" Manga")
@@ -59,6 +62,8 @@ open class NineManga(
             status = parseStatus(it.select("li a.red").first().text())
             description = it.select("p[itemprop=description]").text()
             thumbnail_url = it.select("img[itemprop=image]").attr("abs:src")
+
+            mangaTitleForCleaning = "$title "
         }
     }
 
@@ -76,7 +81,7 @@ open class NineManga(
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         element.select("a.chapter_list_a").let {
-            name = it.text()
+            name = it.text().replace(mangaTitleForCleaning, "", true)
             url = it.attr("href").substringAfter(baseUrl).replace("%20", " ")
         }
         date_upload = parseChapterDate(element.select("span").text())
