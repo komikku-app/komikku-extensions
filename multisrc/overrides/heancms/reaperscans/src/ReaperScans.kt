@@ -8,7 +8,7 @@ import okhttp3.OkHttpClient
 
 class ReaperScans : HeanCms(
     "Reaper Scans",
-    "https://reaperscans.com.br",
+    "https://reaperscans.net",
     "pt-BR"
 ) {
 
