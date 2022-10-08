@@ -1,10 +1,12 @@
 package eu.kanade.tachiyomi.extension.all.leviatanscans
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import okhttp3.OkHttpClient
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -17,6 +19,11 @@ class LeviatanScansFactory : SourceFactory {
 }
 
 class LeviatanScansEN : Madara("Leviatan Scans", "https://en.leviatanscans.com", "en", SimpleDateFormat("MMM dd, yyyy", Locale.US)) {
+
+    override val client: OkHttpClient = super.client.newBuilder()
+        .rateLimit(1, 2)
+        .build()
+
     override val useNewChapterEndpoint: Boolean = true
 
     override fun popularMangaFromElement(element: Element) =
