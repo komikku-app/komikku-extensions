@@ -6,11 +6,7 @@ ext {
     extName = 'ManHuaGui'
     pkgNameSuffix = 'zh.manhuagui'
     extClass = '.Manhuagui'
-    extVersionCode = 15
-}
-
-dependencies {
-    compileOnly libs.bundles.coroutines
+    extVersionCode = 16
 }
 
 apply from: "$rootDir/common.gradle"

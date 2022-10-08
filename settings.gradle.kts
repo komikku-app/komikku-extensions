@@ -1,13 +1,9 @@
 include(":core")
 
-include(":lib-dataimage")
-project(":lib-dataimage").projectDir = File("lib/dataimage")
-
-include(":lib-unpacker")
-project(":lib-unpacker").projectDir = File("lib/unpacker")
-
-include(":lib-cryptoaes")
-project(":lib-cryptoaes").projectDir = File("lib/cryptoaes")
+listOf("dataimage", "unpacker", "cryptoaes").forEach {
+    include(":lib-$it")
+    project(":lib-$it").projectDir = File("lib/$it")
+}
 
 if (System.getenv("CI") == null || System.getenv("CI_MODULE_GEN") == "true") {
     // Local development (full project build)
