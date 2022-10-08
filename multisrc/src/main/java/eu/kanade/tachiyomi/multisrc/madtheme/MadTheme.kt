@@ -18,6 +18,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -203,7 +204,11 @@ abstract class MadTheme(
     override fun chapterListSelector(): String = "#chapter-list > li"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        setUrlWithoutDomain(element.select("a").first()!!.attr("abs:href"))
+        // Not using setUrlWithoutDomain() to support external chapters
+        url = element.selectFirst("a")
+            .absUrl("href")
+            .removePrefix(baseUrl)
+
         name = element.select(".chapter-title").first()!!.text()
         date_upload = parseChapterDate(element.select(".chapter-update").first()?.text())
         chapter_number = name.substringAfterLast(' ').toFloatOrNull() ?: -1f
@@ -255,6 +260,15 @@ abstract class MadTheme(
     }
 
     // Image
+    override fun pageListRequest(chapter: SChapter): Request {
+        return if (chapter.url.toHttpUrlOrNull() != null) {
+            // External chapter
+            GET(chapter.url, headers)
+        } else {
+            super.pageListRequest(chapter)
+        }
+    }
+
     override fun imageUrlParse(document: Document): String =
         throw UnsupportedOperationException("Not used.")
 
