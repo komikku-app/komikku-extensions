@@ -30,6 +30,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Locale
 
 class ReaperScansFactory : SourceFactory {
@@ -115,8 +116,21 @@ class ReaperScansEn : ParsedHttpSource() {
             "On hold" -> SManga.ON_HIATUS
             "Complete" -> SManga.COMPLETED
             "Ongoing" -> SManga.ONGOING
+            "Dropped" -> SManga.CANCELLED
             else -> SManga.UNKNOWN
         }
+
+        val genreList = mutableListOf<String>()
+        val seriesType = when (document.select("dt:contains(Source Language)").next().text()) {
+            "Korean" -> "Manhwa"
+            "Chinese" -> "Manhua"
+            "Japanese" -> "Manga"
+            else -> null
+        }
+
+        seriesType?.let { genreList.add(it) }
+
+        genre = genreList.takeIf { genreList.isNotEmpty() }?.joinToString(",")
         description = document.select("section > div:nth-child(1) > div > p").first().text()
     }
 
@@ -202,6 +216,7 @@ class ReaperScansEn : ParsedHttpSource() {
             select("a").first()?.let { urlElement ->
                 chapter.setUrlWithoutDomain(urlElement.attr("abs:href"))
                 chapter.name = urlElement.select("p").first().text()
+                urlElement.select("p").takeIf { it.size > 1 }?.let { chapter.date_upload = parseRelativeDate(it[1].text()) }
             }
         }
 
@@ -285,6 +300,25 @@ class ReaperScansEn : ParsedHttpSource() {
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
+
+    // Parses dates in this form:
+    // 21 horas ago
+    // Taken from multisrc/madara/Madara.kt
+    private fun parseRelativeDate(date: String): Long {
+        val number = Regex("""(\d+)""").find(date)?.value?.toIntOrNull() ?: return 0
+        val cal = Calendar.getInstance()
+
+        return when {
+            date.contains("day") -> cal.apply { add(Calendar.DAY_OF_MONTH, -number) }.timeInMillis
+            date.contains("hour") -> cal.apply { add(Calendar.HOUR, -number) }.timeInMillis
+            date.contains("minute") -> cal.apply { add(Calendar.MINUTE, -number) }.timeInMillis
+            date.contains("second") -> cal.apply { add(Calendar.SECOND, -number) }.timeInMillis
+            date.contains("week") -> cal.apply { add(Calendar.DAY_OF_MONTH, -number * 7) }.timeInMillis
+            date.contains("month") -> cal.apply { add(Calendar.MONTH, -number) }.timeInMillis
+            date.contains("year") -> cal.apply { add(Calendar.YEAR, -number) }.timeInMillis
+            else -> 0
+        }
+    }
 }
 
 class ReaperScansTr : ReaperScans(
