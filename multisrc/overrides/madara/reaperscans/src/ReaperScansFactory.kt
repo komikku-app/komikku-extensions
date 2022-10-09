@@ -12,9 +12,14 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
@@ -146,19 +151,31 @@ class ReaperScansEn : ParsedHttpSource() {
         }
 
         if (csrfToken != null && initialProps is JsonObject) {
-            var csrf = csrfToken
             var serverMemo = initialProps["serverMemo"]!!.jsonObject
-            var fingerprint = initialProps["fingerprint"]!!
+            val fingerprint = initialProps["fingerprint"]!!
 
             var nextPage = 2
             while (document.select(popularMangaNextPageSelector()).isNotEmpty()) {
                 val payload = buildJsonObject {
                     put("fingerprint", fingerprint)
                     put("serverMemo", serverMemo)
-                    put("updates", json.parseToJsonElement("[{\"type\":\"callMethod\",\"payload\":{\"id\":\"9jhcg\",\"method\":\"gotoPage\",\"params\":[$nextPage,\"page\"]}}]"))
+//                    put("updates", json.parseToJsonElement("[{\"type\":\"callMethod\",\"payload\":{\"id\":\"9jhcg\",\"method\":\"gotoPage\",\"params\":[$nextPage,\"page\"]}}]"))
+                    putJsonArray("updates") {
+                        addJsonObject {
+                            put("type", "callMethod")
+                            putJsonObject("payload") {
+                                put("id", "9jhcg")
+                                put("method", "gotoPage")
+                                putJsonArray("params") {
+                                    add(nextPage)
+                                    add("page")
+                                }
+                            }
+                        }
+                    }
                 }.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
 
-                val request = Request.Builder().url("$baseUrl/livewire/message/frontend.comic-chapters-list").method("POST", payload).addHeader("x-csrf-token", csrf).addHeader("x-livewire", "true").build()
+                val request = Request.Builder().url("$baseUrl/livewire/message/frontend.comic-chapters-list").method("POST", payload).addHeader("x-csrf-token", csrfToken).addHeader("x-livewire", "true").build()
 
                 val response1 = client.newCall(request).execute()
                 val responseText = response1.body!!.string()
@@ -218,13 +235,23 @@ class ReaperScansEn : ParsedHttpSource() {
         }
 
         if (csrfToken != null && initialProps is JsonObject) {
-            var serverMemo = initialProps["serverMemo"]!!.jsonObject
-            var fingerprint = initialProps["fingerprint"]!!
+            val serverMemo = initialProps["serverMemo"]!!.jsonObject
+            val fingerprint = initialProps["fingerprint"]!!
 
             val payload = buildJsonObject {
                 put("fingerprint", fingerprint)
                 put("serverMemo", serverMemo)
-                put("updates", json.parseToJsonElement("[{\"type\":\"syncInput\",\"payload\":{\"id\":\"03r6\",\"name\":\"query\",\"value\":\"$query\"}}]"))
+//                put("updates", json.parseToJsonElement("[{\"type\":\"syncInput\",\"payload\":{\"id\":\"03r6\",\"name\":\"query\",\"value\":\"$query\"}}]"))
+                putJsonArray("updates") {
+                    addJsonObject {
+                        put("type", "syncInput")
+                        putJsonObject("payload") {
+                            put("id", "03r6")
+                            put("name", "query")
+                            put("value", query)
+                        }
+                    }
+                }
             }.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
 
             return Request.Builder().url("$baseUrl/livewire/message/frontend.global-search").method("POST", payload).addHeader("x-csrf-token", csrfToken).addHeader("x-livewire", "true").build()
