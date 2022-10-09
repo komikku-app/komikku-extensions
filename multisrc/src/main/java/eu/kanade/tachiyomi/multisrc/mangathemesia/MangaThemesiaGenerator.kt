@@ -36,6 +36,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Gabut Scans", "https://gabutscans.com", "id", overrideVersionCode = 1),
         SingleLang("Gecenin Lordu", "https://geceninlordu.com", "tr", overrideVersionCode = 1),
         SingleLang("GoGoManga", "https://gogomanga.fun", "en", overrideVersionCode = 1),
+        SingleLang("Gremory Mangas", "https://gremorymangas.com", "es"),
         SingleLang("Hanuman Scan", "https://hanumanscan.com", "en"),
         SingleLang("Imagine Scan", "https://imaginescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Imperfect Comics", "https://imperfectcomic.org", "en", overrideVersionCode = 9),
