@@ -294,7 +294,7 @@ class ReaperScansEn : ParsedHttpSource() {
     override fun pageListRequest(chapter: SChapter): Request = GET("$baseUrl${chapter.url}")
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("p.py-4 > img").mapIndexed { index, element ->
+        return document.select("img.max-w-full").mapIndexed { index, element ->
             Page(index, "", element.attr("src"))
         }
     }
