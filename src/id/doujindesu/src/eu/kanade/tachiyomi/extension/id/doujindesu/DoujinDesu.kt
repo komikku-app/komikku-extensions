@@ -30,8 +30,8 @@ class DoujinDesu : ParsedHttpSource() {
     }
 
     private fun parseStatus(status: String) = when {
-        status.lowercase(Locale.US).contains("finished") -> SManga.ONGOING
-        status.lowercase(Locale.US).contains("publishing") -> SManga.COMPLETED
+        status.lowercase(Locale.US).contains("publishing") -> SManga.ONGOING
+        status.lowercase(Locale.US).contains("finished") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
@@ -41,9 +41,9 @@ class DoujinDesu : ParsedHttpSource() {
         }
     }
 
-    private class Genre(title: String, val key: String) : Filter.TriState(title) {
+    private class Genre(name: String, val id: String = name) : Filter.CheckBox(name) {
         override fun toString(): String {
-            return name
+            return id
         }
     }
 
@@ -62,7 +62,6 @@ class DoujinDesu : ParsedHttpSource() {
     private val orderBy = arrayOf(
         Order("All", ""),
         Order("A-Z", "title"),
-        Order("Z-A", "titlereverse"),
         Order("Latest Update", "update"),
         Order("Latest Added", "latest"),
         Order("Popular", "popular")
@@ -74,130 +73,192 @@ class DoujinDesu : ParsedHttpSource() {
         Status("Finished", "Finished")
     )
 
-    private val genreList = arrayOf(
-        Genre("All", ""),
-        Genre("Age Regression", "age-regression"),
-        Genre("Ahegao", "ahegao"),
-        Genre("All The Way Through", "all-the-way-through"),
-        Genre("Amputee", "amputee"),
-        Genre("Anal", "anal"),
-        Genre("Anorexia", "anorexia"),
-        Genre("Apron", "apron"),
-        Genre("Artist CG", "artist-cg"),
-        Genre("Aunt", "aunt"),
-        Genre("Bald", "bald"),
-        Genre("Bestiality", "bestiality"),
-        Genre("Big As", "big-as"),
-        Genre("Big Ass", "big-ass"),
-        Genre("Big Breast", "big-breast"),
-        Genre("Big Penis", "big-penis"),
-        Genre("Bike Shorts", "bike-shorts"),
-        Genre("Bikini", "bikini"),
-        Genre("Birth", "birth"),
-        Genre("Bisexual", "bisexual"),
-        Genre("Blackmail", "blackmail"),
-        Genre("Blindfold", "blindfold"),
-        Genre("Bloomers", "bloomers"),
-        Genre("Blowjob", "blowjob"),
-        Genre("Body Swap", "body-swap"),
-        Genre("Bodysuit", "bodysuit"),
-        Genre("Bondage", "bondage"),
-        Genre("Business Suit", "business-suit"),
-        Genre("Cheating", "cheating"),
-        Genre("Collar", "collar"),
-        Genre("Condom", "condom"),
-        Genre("Cousin", "cousin"),
-        Genre("Crossdressing", "crossdressing"),
-        Genre("Cunnilingus", "cunnilingus"),
-        Genre("Dark Skin", "dark-skin"),
-        Genre("Daughter", "daughter"),
-        Genre("Defloartion", "defloartion"),
-        Genre("Defloration", "defloration"),
-        Genre("Demon", "demon"),
-        Genre("Demon Girl", "demon-girl"),
-        Genre("Dick Growth", "dick-growth"),
-        Genre("DILF", "dilf"),
-        Genre("Double Penetration", "double-penetration"),
-        Genre("Drugs", "drugs"),
-        Genre("Drunk", "drunk"),
-        Genre("Elf", "elf"),
-        Genre("Emotionless Sex", "emotionless-sex"),
-        Genre("Exhibitionism", "exhibitionism"),
-        Genre("Eyepatch", "eyepatch"),
-        Genre("Fantasy", "fantasy"),
-        Genre("Females Only", "females-only"),
-        Genre("Femdom", "femdom"),
-        Genre("Filming", "filming"),
-        Genre("Fingering", "fingering"),
-        Genre("Footjob", "footjob"),
-        Genre("Full Color", "full-color"),
-        Genre("Furry", "furry"),
-        Genre("Futanari", "futanari"),
-        Genre("Garter Belt", "garter-belt"),
-        Genre("Gender Bender", "gender-bender"),
-        Genre("Ghost", "ghost"),
-        Genre("Glasses", "glasses"),
-        Genre("Gore", "gore"),
-        Genre("Group", "group"),
-        Genre("Guro", "guro"),
-        Genre("Gyaru", "gyaru"),
-        Genre("Hairy", "hairy"),
-        Genre("Handjob", "handjob"),
-        Genre("Harem", "harem"),
-        Genre("Horns", "horns"),
-        Genre("Huge Breast", "huge-breast"),
-        Genre("Humiliation", "humiliation"),
-        Genre("Impregnation", "impregnation"),
-        Genre("Incest", "incest"),
-        Genre("Inflation", "inflation"),
-        Genre("Insect", "insect"),
-        Genre("Inseki", "inseki"),
-        Genre("Inverted Nipples", "inverted-nipples"),
-        Genre("Invisible", "invisible"),
-        Genre("Kemomimi", "kemomimi"),
-        Genre("Kimono", "kimono"),
-        Genre("Lactation", "lactation"),
-        Genre("Leotard", "leotard"),
-        Genre("Lingerie", "lingerie"),
-        Genre("Loli", "loli"),
-        Genre("Lolipai", "lolipai"),
-        Genre("Maid", "maid"),
-        Genre("Males Only", "males-only"),
-        Genre("Masturbation", "masturbation"),
-        Genre("Miko", "miko"),
-        Genre("MILF", "milf"),
-        Genre("Mind Break", "mind-break"),
-        Genre("Mind Control", "mind-control"),
-        Genre("Minigirl", "minigirl"),
-        Genre("Miniguy", "miniguy"),
-        Genre("Monster", "monster"),
-        Genre("Monster Girl", "monster-girl"),
-        Genre("Mother", "mother"),
-        Genre("Multi-work Series", "multi-work-series"),
-        Genre("Muscle", "muscle")
-    )
-
     private val categoryNames = arrayOf(
         Category("All", ""),
-        Category("Manga", "Manga"),
-        Category("Manhua", "Manhua"),
         Category("Doujinshi", "Doujinshi"),
+        Category("Manga", "Manga"),
         Category("Manhwa", "Manhwa")
+    )
+
+    private fun genreList() = listOf(
+        Genre("Age Progression"),
+        Genre("Age Regression"),
+        Genre("Ahegao"),
+        Genre("All The Way Through"),
+        Genre("Amputee"),
+        Genre("Anal"),
+        Genre("Anorexia"),
+        Genre("Apron"),
+        Genre("Artist CG"),
+        Genre("Aunt"),
+        Genre("Bald"),
+        Genre("Bestiality"),
+        Genre("Big Ass"),
+        Genre("Big Breast"),
+        Genre("Big Penis"),
+        Genre("Bike Shorts"),
+        Genre("Bikini"),
+        Genre("Birth"),
+        Genre("Bisexual"),
+        Genre("Blackmail"),
+        Genre("Blindfold"),
+        Genre("Bloomers"),
+        Genre("Blowjob"),
+        Genre("Body Swap"),
+        Genre("Bodysuit"),
+        Genre("Bondage"),
+        Genre("Bowjob"),
+        Genre("Business Suit"),
+        Genre("Cheating"),
+        Genre("Collar"),
+        Genre("Collor"),
+        Genre("Condom"),
+        Genre("Cousin"),
+        Genre("Crossdressing"),
+        Genre("Cunnilingus"),
+        Genre("Dark Skin"),
+        Genre("Daughter"),
+        Genre("Defloartion"),
+        Genre("Demon"),
+        Genre("Demon Girl"),
+        Genre("Dick Growth"),
+        Genre("DILF"),
+        Genre("Double Penetration"),
+        Genre("Drugs"),
+        Genre("Drunk"),
+        Genre("Elf"),
+        Genre("Emotionless Sex"),
+        Genre("Exhibitionism"),
+        Genre("Eyepatch"),
+        Genre("Females Only"),
+        Genre("Femdom"),
+        Genre("Filming"),
+        Genre("Fingering"),
+        Genre("Footjob"),
+        Genre("Full Color"),
+        Genre("Furry"),
+        Genre("Futanari"),
+        Genre("Garter Belt"),
+        Genre("Gender Bender"),
+        Genre("Ghost"),
+        Genre("Glasses"),
+        Genre("Gore"),
+        Genre("Group"),
+        Genre("Guro"),
+        Genre("Gyaru"),
+        Genre("Hairy"),
+        Genre("Handjob"),
+        Genre("Harem"),
+        Genre("Horns"),
+        Genre("Huge Breast"),
+        Genre("Huge Penis"),
+        Genre("Humiliation"),
+        Genre("Impregnation"),
+        Genre("Incest"),
+        Genre("Inflation"),
+        Genre("Insect"),
+        Genre("Inseki"),
+        Genre("Inverted Nipples"),
+        Genre("Invisible"),
+        Genre("Kemomimi"),
+        Genre("Kimono"),
+        Genre("Lactation"),
+        Genre("Leotard"),
+        Genre("Lingerie"),
+        Genre("Loli"),
+        Genre("Lolipai"),
+        Genre("Maid"),
+        Genre("Males"),
+        Genre("Males Only"),
+        Genre("Masturbation"),
+        Genre("Miko"),
+        Genre("MILF"),
+        Genre("Mind Break"),
+        Genre("Mind Control"),
+        Genre("Minigirl"),
+        Genre("Miniguy"),
+        Genre("Monster"),
+        Genre("Monster Girl"),
+        Genre("Mother"),
+        Genre("Multi-work Series"),
+        Genre("Muscle"),
+        Genre("Nakadashi"),
+        Genre("Necrophilia"),
+        Genre("Netorare"),
+        Genre("Niece"),
+        Genre("Nipple Fuck"),
+        Genre("Nurse"),
+        Genre("Old Man"),
+        Genre("Only"),
+        Genre("Oyakodon"),
+        Genre("Paizuri"),
+        Genre("Pantyhose"),
+        Genre("Possession"),
+        Genre("Pregnant"),
+        Genre("Prostitution"),
+        Genre("Rape"),
+        Genre("Rimjob"),
+        Genre("Scat"),
+        Genre("School Uniform"),
+        Genre("Sex Toys"),
+        Genre("Shemale"),
+        Genre("Shota"),
+        Genre("Sister"),
+        Genre("Sleeping"),
+        Genre("Slime"),
+        Genre("Small Breast"),
+        Genre("Snuff"),
+        Genre("Sole Female"),
+        Genre("Sole Male"),
+        Genre("Stocking"),
+        Genre("Story Arc"),
+        Genre("Sumata"),
+        Genre("Sweating"),
+        Genre("Swimsuit"),
+        Genre("Tanlines"),
+        Genre("Teacher"),
+        Genre("Tentacles"),
+        Genre("Tomboy"),
+        Genre("Tomgirl"),
+        Genre("Torture"),
+        Genre("Twins"),
+        Genre("Twintails"),
+        Genre("Uncensored"),
+        Genre("Unusual Pupils"),
+        Genre("Virginity"),
+        Genre("Webtoon"),
+        Genre("Widow"),
+        Genre("X-Ray"),
+        Genre("Yandere"),
+        Genre("Yaoi"),
+        Genre("Yuri")
     )
 
     private class CategoryNames(categories: Array<Category>) : Filter.Select<Category>("Category", categories, 0)
     private class OrderBy(orders: Array<Order>) : Filter.Select<Order>("Order", orders, 0)
-    private class GenreList(genres: Array<Genre>) : Filter.Select<Genre>("Genre", genres, 0)
+    private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genre", genres)
     private class StatusList(statuses: Array<Status>) : Filter.Select<Status>("Status", statuses, 0)
 
     private fun basicInformationFromElement(element: Element): SManga {
         val manga = SManga.create()
-
-        manga.title = element.select("div > div > a").attr("alt")
-        manga.setUrlWithoutDomain(element.select("div > div > a").attr("href"))
-        manga.thumbnail_url = element.select("div > div > a > div > img").attr("src")
+        element.select("a").let {
+            manga.title = it.attr("title")
+            manga.setUrlWithoutDomain(it.attr("href"))
+        }
+        element.select("a > figure.thumbnail > img").first()?.let {
+            manga.thumbnail_url = imageFromElement(it)
+        }
 
         return manga
+    }
+
+    protected open fun imageFromElement(element: Element): String? {
+        return when {
+            element.hasAttr("data-src") -> element.attr("abs:data-src")
+            element.hasAttr("data-lazy-src") -> element.attr("abs:data-lazy-src")
+            element.hasAttr("srcset") -> element.attr("abs:srcset").substringBefore(" ")
+            else -> element.attr("abs:src")
+        }
     }
 
     private fun getNumberFromString(epsStr: String): String {
@@ -218,7 +279,7 @@ class DoujinDesu : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga = basicInformationFromElement(element)
 
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/komik-list/page/$page/?&order=popular")
+        return GET("$baseUrl/manga/page/$page/?&order=popular", headers)
     }
 
     // Latest
@@ -226,40 +287,43 @@ class DoujinDesu : ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SManga = basicInformationFromElement(element)
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/komik-list/page/$page/?order=update")
+        return GET("$baseUrl/manga/page/$page/?order=update", headers)
     }
 
     // Element Selectors
 
-    override fun latestUpdatesSelector(): String = "#main > div.relat > article"
-    override fun popularMangaSelector(): String = "#main > div.relat > article"
-    override fun searchMangaSelector(): String = "#main > div.relat > article"
+    override fun latestUpdatesSelector(): String = "#archives > div.entries > article"
+    override fun popularMangaSelector(): String = "#archives > div.entries > article"
+    override fun searchMangaSelector(): String = "#archives > div.entries > article"
 
-    override fun popularMangaNextPageSelector(): String = "#nextpagination"
+    override fun popularMangaNextPageSelector(): String = "nav.pagination > ul > li.last > a"
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     // Search & FIlter
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var url = "$baseUrl/komik-list/page/$page/".toHttpUrlOrNull()?.newBuilder()!!.addQueryParameter("title", query)
+        var url = "$baseUrl/manga/page/$page/".toHttpUrlOrNull()?.newBuilder()!!.addQueryParameter("title", query)
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is CategoryNames -> {
                     val category = filter.values[filter.state]
-                    url.addQueryParameter("type", category.key)
+                    url.addQueryParameter("typex", category.key)
                 }
                 is OrderBy -> {
                     val order = filter.values[filter.state]
                     url.addQueryParameter("order", order.key)
                 }
                 is GenreList -> {
-                    val genre = filter.values[filter.state]
-                    url.addQueryParameter("genre", genre.key)
+                    filter.state
+                        .filter { it.state }
+                        .let { list ->
+                            if (list.isNotEmpty()) { list.forEach { genre -> url.addQueryParameter("genre[]", genre.id) } }
+                        }
                 }
                 is StatusList -> {
                     val status = filter.values[filter.state]
-                    url.addQueryParameter("status", status.key)
+                    url.addQueryParameter("statusx", status.key)
                 }
             }
         }
@@ -269,25 +333,33 @@ class DoujinDesu : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga = basicInformationFromElement(element)
 
     override fun getFilterList() = FilterList(
+        Filter.Header("NB: Filter diabaikan jika memakai pencarian teks!"),
+        Filter.Separator(),
+        StatusList(statusList),
         CategoryNames(categoryNames),
         OrderBy(orderBy),
-        GenreList(genreList),
-        StatusList(statusList)
+        GenreList(genreList())
     )
 
     // Detail Parse
 
     override fun mangaDetailsParse(document: Document): SManga {
+        val infoElement = document.select("section.metadata").first()
         val manga = SManga.create()
         manga.description = when {
-            document.select("div.infox > div.entry-content.entry-content-single > p").isEmpty() -> "No description specified"
-            else -> document.select("div.infox > div.entry-content.entry-content-single > p").first().text()
+            document.select("section.metadata > div.pb-2 > p:nth-child(1)").isEmpty() -> "Tidak ada deskripsi yang tersedia bosque"
+            else -> document.select("section.metadata > div.pb-2 > p:nth-child(1)").first().text()
         }
-        manga.author = document.select("div.infox > div.spe > span:nth-child(5)").text()
-        manga.genre = document.select("div.genre-info > a[itemprop=genre]").joinToString { it.text() }
-        manga.status = parseStatus(document.select("div.infox > div.spe > span:nth-child(1)").text())
-        manga.thumbnail_url = document.select("div.thumb > img").attr("src")
-        manga.artist = document.select("div.infox > div.spe > span:nth-child(6)").text()
+        val genres = mutableListOf<String>()
+        infoElement.select("div.tags > a").forEach { element ->
+            val genre = element.text()
+            genres.add(genre)
+        }
+        manga.author = document.select("section.metadata > table:nth-child(2) > tbody > tr.pages > td:contains(Author) + td:nth-child(2) > a").joinToString { it.text() }
+        manga.genre = infoElement.select("div.tags > a").joinToString { it.text() }
+        manga.status = parseStatus(document.select("section.metadata > table:nth-child(2) > tbody > tr:nth-child(1) > td:nth-child(2) > a").first().text())
+        manga.thumbnail_url = document.select("figure.thumbnail > img").attr("src")
+        manga.artist = document.select("section.metadata > table:nth-child(2) > tbody > tr.pages > td:contains(Character) + td:nth-child(2) > a").joinToString { it.text() }
 
         return manga
     }
@@ -314,7 +386,7 @@ class DoujinDesu : ParsedHttpSource() {
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("div.reader-area > img").mapIndexed { i, element ->
+        return document.select("#reader > div.main > div > img").mapIndexed { i, element ->
             Page(i, "", element.attr("src"))
         }
     }
