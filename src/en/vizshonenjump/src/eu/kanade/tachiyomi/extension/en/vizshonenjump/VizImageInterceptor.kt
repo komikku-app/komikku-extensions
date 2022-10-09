@@ -22,23 +22,23 @@ class VizImageInterceptor : Interceptor {
         if (chain.request().url.queryParameter(SIGNATURE) == null)
             return response
 
-        val image = decodeImage(response.body!!.byteStream())
+        val image = response.body!!.byteStream().decodeImage()
         val body = image.toResponseBody(MEDIA_TYPE)
         return response.newBuilder()
             .body(body)
             .build()
     }
 
-    private fun decodeImage(image: InputStream): ByteArray {
+    private fun InputStream.decodeImage(): ByteArray {
         // See: https://stackoverflow.com/a/5924132
         // See: https://github.com/tachiyomiorg/tachiyomi-extensions/issues/2678#issuecomment-645857603
         val byteOutputStream = ByteArrayOutputStream()
-        image.copyTo(byteOutputStream)
+        copyTo(byteOutputStream)
 
         val byteInputStreamForImage = ByteArrayInputStream(byteOutputStream.toByteArray())
         val byteInputStreamForMetadata = ByteArrayInputStream(byteOutputStream.toByteArray())
 
-        val imageData = getImageData(byteInputStreamForMetadata)
+        val imageData = byteInputStreamForMetadata.getImageData()
             ?: return byteOutputStream.toByteArray()
 
         val input = BitmapFactory.decodeStream(byteInputStreamForImage)
@@ -127,8 +127,8 @@ class VizImageInterceptor : Interceptor {
         drawBitmap(from, srcRect, dstRect, null)
     }
 
-    private fun getImageData(inputStream: InputStream): ImageData? {
-        val metadata = ImageMetadataReader.readMetadata(inputStream)
+    private fun ByteArrayInputStream.getImageData(): ImageData? {
+        val metadata = ImageMetadataReader.readMetadata(this)
 
         val sizeDir = metadata.directories.firstOrNull {
             it.containsTag(ExifSubIFDDirectory.TAG_IMAGE_WIDTH) &&
