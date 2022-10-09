@@ -12,6 +12,7 @@ class ZMangaGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 1
 
     override val sources = listOf(
+        SingleLang("KomikIndo.info", "http://komikindo.info", "id", isNsfw = true, className = "KomikIndoInfo"),
         SingleLang("Komikita", "https://komikita.org", "id"),
         SingleLang("KomikPlay", "https://komikplay.com", "id", overrideVersionCode = 1),
         SingleLang("Maid - Manga", "https://www.maid.my.id", "id", overrideVersionCode = 10, className = "MaidManga"),
