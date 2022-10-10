@@ -7,7 +7,7 @@ import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class MangasOrigines : Madara("Mangas Origines", "https://mangas-origines.fr", "fr", SimpleDateFormat("dd MMM yyyy", Locale("fr"))) {
+class MangasOrigines : Madara("Mangas Origines", "https://mangas-origines.fr", "fr", SimpleDateFormat("dd/MM/yyyy", Locale("fr"))) {
     override val useNewChapterEndpoint = true
 
     private fun String.removeFireEmoji() = this.substringAfter("\uD83D\uDD25 ")
@@ -34,7 +34,7 @@ class MangasOrigines : Madara("Mangas Origines", "https://mangas-origines.fr", "
             }.joinToString().takeIf { it.isNotBlank() }?.let {
                 manga.artist = it
             }
-            select("div.description-summary div.summary__content").let {
+            select("div.manga-excerpt").let {
                 if (it.select("p").text().isNotEmpty()) {
                     manga.description = it.select("p").joinToString(separator = "\n\n") { p ->
                         p.text().replace("<br>", "\n")
@@ -47,12 +47,15 @@ class MangasOrigines : Madara("Mangas Origines", "https://mangas-origines.fr", "
                 manga.thumbnail_url = imageFromElement(it)
             }
             select("div.summary-content").last()?.let {
-                manga.status = when (it.text()) {
-                    // I don't know what's the corresponding for COMPLETED and LICENSED
-                    // There's no support for "Canceled" or "On Hold"
-                    "Terminé ⚫" -> SManga.COMPLETED
-                    "En cours \uD83D\uDFE2" -> SManga.ONGOING
-                    else -> SManga.UNKNOWN
+                manga.status = with(it.text()) {
+                    when {
+                        // There's no support for LICENSED and PUBLISHING_FINISHED
+                        contains("Complété") -> SManga.COMPLETED
+                        contains("Annulé") -> SManga.CANCELLED
+                        contains("En pause") -> SManga.ON_HIATUS
+                        contains("En cours") -> SManga.ONGOING
+                        else -> SManga.UNKNOWN
+                    }
                 }
             }
             val genres = select("div.genres-content a")
@@ -76,7 +79,7 @@ class MangasOrigines : Madara("Mangas Origines", "https://mangas-origines.fr", "
             manga.genre = genres.toList().joinToString(", ") { it.capitalize(Locale.ROOT) }
 
             // add alternative name to manga description
-            document.select(altNameSelector).firstOrNull()?.ownText()?.let {
+            document.select("div.summary-heading:contains(Autre) + .summary-content").firstOrNull()?.ownText()?.let {
                 if (it.isBlank().not() && it.notUpdating()) {
                     manga.description = when {
                         manga.description.isNullOrBlank() -> altName + it
