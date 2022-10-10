@@ -34,7 +34,7 @@ data class Comic(
     val id: Int,
     val title: String,
     val slug: String,
-    val desc: String,
+    val desc: String = "N/A",
     val status: Int,
     val chapter_count: Int?,
     val cover_url: String
