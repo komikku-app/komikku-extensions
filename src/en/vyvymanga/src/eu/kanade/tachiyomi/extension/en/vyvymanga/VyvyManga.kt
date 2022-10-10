@@ -28,7 +28,7 @@ class VyvyManga : ParsedHttpSource() {
 
     // Popular
     override fun popularMangaRequest(page: Int): Request =
-        GET("$baseUrl/search", headers)
+        GET("$baseUrl/search" + if (page != 1) "?page=$page" else "", headers)
 
     override fun popularMangaSelector(): String =
         searchMangaSelector()
@@ -62,7 +62,7 @@ class VyvyManga : ParsedHttpSource() {
 
     // Latest
     override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/search?q=&completed=&sort=updated_at", headers)
+        GET("$baseUrl/search?sort=updated_at" + if (page != 1) "&page=$page" else "", headers)
 
     override fun latestUpdatesSelector(): String =
         searchMangaSelector()
@@ -94,7 +94,7 @@ class VyvyManga : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         url = element.absUrl("href")
-        name = element.ownText()
+        name = element.selectFirst("span").text()
         date_upload = parseChapterDate(element.selectFirst("> p")?.text())
     }
 
