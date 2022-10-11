@@ -46,7 +46,7 @@ class ManhwaFreak : MangaThemesia("Manhwa Freak", "https://manhwafreak.com", "en
     }
 
     // chapter list
-    override fun chapterListSelector() = ".chapter-li a"
+    override fun chapterListSelector() = ".chapter-li a:not(:has(svg))"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         val urlElements = element.select("a")
