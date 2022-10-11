@@ -38,16 +38,15 @@ class WebtoonsID : Webtoons("Webtoons.com", "https://www.webtoons.com", "id") {
 }
 class WebtoonsTH : Webtoons("Webtoons.com", "https://www.webtoons.com", "th", dateFormat = SimpleDateFormat("d MMM yyyy", Locale("th")))
 class WebtoonsES : Webtoons("Webtoons.com", "https://www.webtoons.com", "es") {
-    // Android seems to be unable to parse es dates like Indonesian; we'll use a short hard-coded table
-    // instead.
+    // Android seems to be unable to parse es dates like Indonesian; we'll use a short hard-coded table instead.
     private val dateMap: Array<String> = arrayOf(
-        "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+        "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"
     )
 
     override fun chapterParseDate(date: String): Long {
-        val expr = Regex("""(\d+)-([a-z]{3})-(\d{4})""").find(date) ?: return 0
+        val expr = Regex("""(\d+)-([A-Za-z]{3})-(\d{4})""").find(date) ?: return 0
         val (_, day, monthString, year) = expr.groupValues
-        val monthIndex = dateMap.indexOf(monthString)
+        val monthIndex = dateMap.indexOf(monthString.lowercase(Locale("es")))
         return GregorianCalendar(year.toInt(), monthIndex, day.toInt()).time.time
     }
 }
