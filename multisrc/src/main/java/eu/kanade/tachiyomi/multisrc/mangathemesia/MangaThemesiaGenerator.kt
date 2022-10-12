@@ -120,6 +120,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("White Cloud Pavilion (New)", "https://www.whitecloudpavilion.com", "en", pkgName = "whitecloudpavilionnew", className = "WhiteCloudPavilion"),
         SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 10),
         SingleLang("xCaliBR Scans", "https://xcalibrscans.com", "en", overrideVersionCode = 4),
+        SingleLang("مانجا نون", "https://manganoon.com", "ar", className = "MangaNoon"),
     )
 
     companion object {
