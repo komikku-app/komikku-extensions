@@ -48,7 +48,7 @@ object ApiV3 {
     class MangaDto(
         private val id: JsonPrimitive, // can be int or string
         private val title: String,
-        private val authors: String,
+        private val authors: String?,
         private val status: String,
         private val cover: String,
         private val types: String,
@@ -57,7 +57,7 @@ object ApiV3 {
         fun toSManga() = SManga.create().apply {
             url = getMangaUrl(id.content)
             title = this@MangaDto.title
-            author = authors.formatList()
+            author = authors?.formatList()
             genre = types.formatList()
             status = parseStatus(this@MangaDto.status)
             thumbnail_url = cover
