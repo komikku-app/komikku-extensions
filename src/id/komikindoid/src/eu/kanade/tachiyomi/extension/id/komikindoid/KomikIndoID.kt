@@ -178,7 +178,7 @@ class KomikIndoID : ParsedHttpSource() {
         val pages = mutableListOf<Page>()
         var i = 0
         document.select("div.imgch img").forEach { element ->
-            val url = element.attr("src")
+            val url = element.attr("onError").substringAfter("src='").substringBefore("';")
             i++
             if (url.isNotEmpty()) {
                 pages.add(Page(i, "", url))
