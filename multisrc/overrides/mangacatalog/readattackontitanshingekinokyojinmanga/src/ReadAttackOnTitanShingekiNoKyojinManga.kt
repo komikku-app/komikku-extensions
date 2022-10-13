@@ -26,7 +26,7 @@ class ReadAttackOnTitanShingekiNoKyojinManga : MangaCatalog("Read Attack on Tita
         val urlElemnt = element.selectFirst("a")
         name = listOfNotNull(
             urlElemnt.text(),
-            element.selectFirst("div.xs").text().takeUnless { it.isBlank() }
+            element.selectFirst("div.text-xs").text().takeUnless { it.isBlank() }
         ).joinToString(" - ") { it.trim() }
         url = urlElemnt.attr("abs:href")
     }
