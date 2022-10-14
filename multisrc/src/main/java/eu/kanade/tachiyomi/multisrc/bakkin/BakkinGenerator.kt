@@ -12,7 +12,8 @@ class BakkinGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("Bakkin", "https://bakkin.moe/reader/", "en"),
-        SingleLang("Bakkin Self-hosted", "", "en", className = "BakkinSelfHosted")
+        SingleLang("Bakkin Self-hosted", "", "en", className = "BakkinSelfHosted"),
+        SingleLang("UltraLight Scans", "https://readlight.org/", "en", className = "UltraLightScans")
     )
 
     companion object {
