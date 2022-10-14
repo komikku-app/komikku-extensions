@@ -19,6 +19,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -41,6 +42,8 @@ class ReaperScans : ParsedHttpSource() {
     override val supportsLatest = false
 
     private val json: Json by injectLazy()
+
+    override val client: OkHttpClient = network.cloudflareClient
 
     // Popular
 
