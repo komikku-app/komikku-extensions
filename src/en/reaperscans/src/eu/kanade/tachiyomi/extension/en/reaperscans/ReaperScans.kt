@@ -39,14 +39,13 @@ class ReaperScans : ParsedHttpSource() {
 
     override val id = 5177220001642863679
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private val json: Json by injectLazy()
 
     override val client: OkHttpClient = network.cloudflareClient
 
     // Popular
-
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/comics?page=$page", headers)
 
     override fun popularMangaNextPageSelector(): String = "button[wire:click*=nextPage]"
@@ -64,17 +63,23 @@ class ReaperScans : ParsedHttpSource() {
     }
 
     // Latest
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/latest/comics?page=$page", headers)
 
-    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesNextPageSelector(): String = "button[wire:click*=nextPage]"
 
-    override fun latestUpdatesSelector() = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesSelector(): String = ".grid > div"
 
-    override fun latestUpdatesFromElement(element: Element): SManga = throw UnsupportedOperationException("Not used")
-
-    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesFromElement(element: Element): SManga {
+        return SManga.create().apply {
+            element.select("p > a").let {
+                title = it.text().trim()
+                setUrlWithoutDomain(it.attr("href"))
+            }
+            thumbnail_url = element.select("img").attr("src")
+        }
+    }
 
     // Details
-
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         thumbnail_url = document.select("div > img").first().attr("abs:src")
         title = document.select("h1").first().text()
@@ -94,7 +99,6 @@ class ReaperScans : ParsedHttpSource() {
             "Japanese" -> "Manga"
             else -> null
         }
-
         seriesType?.let { genreList.add(it) }
 
         genre = genreList.takeIf { genreList.isNotEmpty() }?.joinToString(",")
@@ -102,7 +106,6 @@ class ReaperScans : ParsedHttpSource() {
     }
 
     // Chapters
-
     override fun chapterListSelector() = "ul > li"
 
     /**
@@ -172,35 +175,31 @@ class ReaperScans : ParsedHttpSource() {
                 nextPage++
             }
         }
-
         return chapters
     }
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-
         with(element) {
             select("a").first()?.let { urlElement ->
                 chapter.setUrlWithoutDomain(urlElement.attr("abs:href"))
                 chapter.name = urlElement.select("p").first().text()
-                urlElement.select("p").takeIf { it.size > 1 }?.let { chapter.date_upload = parseRelativeDate(it[1].text()) }
+                urlElement.select("p").takeIf { it.size > 1 }?.let {
+                    chapter.date_upload = parseRelativeDate(it[1].text())
+                }
             }
         }
-
         return chapter
     }
 
     // Search
-
     override fun searchMangaSelector(): String = "a[href*=/comics/]"
 
     override fun searchMangaFromElement(element: Element) = SManga.create().apply {
         setUrlWithoutDomain(element.attr("href"))
-
         element.select("img").first()?.let {
             thumbnail_url = it.attr("abs:src")
         }
-
         title = element.select("p").first().text()
     }
 
@@ -244,20 +243,15 @@ class ReaperScans : ParsedHttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage {
         val responseText = response.body!!.string()
-
         val responseJson = json.parseToJsonElement(responseText).jsonObject
-
         val document = Jsoup.parse(responseJson["effects"]!!.jsonObject.get("html")?.jsonPrimitive?.content)
-
         val mangas = document.select(searchMangaSelector()).map { element ->
             searchMangaFromElement(element)
         }
-
         return MangasPage(mangas, false)
     }
 
     // Page
-
     override fun pageListRequest(chapter: SChapter): Request = GET("$baseUrl${chapter.url}")
 
     override fun pageListParse(document: Document): List<Page> {
@@ -287,4 +281,3 @@ class ReaperScans : ParsedHttpSource() {
         }
     }
 }
-
