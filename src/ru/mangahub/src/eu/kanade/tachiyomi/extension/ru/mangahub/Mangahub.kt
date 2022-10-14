@@ -19,6 +19,8 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 
 open class Mangahub : ParsedHttpSource() {
 
@@ -30,9 +32,16 @@ open class Mangahub : ParsedHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.client.newBuilder()
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimit(2)
         .build()
+
+    private val userAgentRandomizer = "${Random.nextInt().absoluteValue}"
+
+    override fun headersBuilder() = Headers.Builder().apply {
+        add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 Edg/100.0.$userAgentRandomizer")
+        add("Referer", baseUrl)
+    }
 
     private val json: Json by injectLazy()
 
@@ -48,16 +57,16 @@ open class Mangahub : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("div.comic-grid-image").attr("data-background-image")
-        manga.title = element.select("a.comic-grid-name").text()
-        manga.setUrlWithoutDomain(element.select("a.comic-grid-name").attr("href"))
+        manga.thumbnail_url = baseUrl + element.select("div.fast-view-layer-scale").attr("data-background-image")
+        manga.title = element.select("a.fw-medium").text()
+        manga.setUrlWithoutDomain(element.select("a.fw-medium").attr("href"))
         return manga
     }
 
     override fun latestUpdatesFromElement(element: Element): SManga =
         popularMangaFromElement(element)
 
-    override fun popularMangaNextPageSelector() = "li.next > a"
+    override fun popularMangaNextPageSelector() = ".page-link:contains(→)"
 
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
@@ -65,15 +74,10 @@ open class Mangahub : ParsedHttpSource() {
         return GET("$baseUrl/search/manga?query=$query&sort=rating_short&page=$page")
     }
 
-    override fun searchMangaSelector() = "div.comic-grid-col-xl"
+    override fun searchMangaSelector() = popularMangaSelector()
 
-    override fun searchMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        manga.thumbnail_url = element.select("div.comic-grid-image").attr("data-background-image")
-        manga.title = element.select("a.comic-grid-name").text()
-        manga.setUrlWithoutDomain(element.select("a.comic-grid-name").attr("href"))
-        return manga
-    }
+    override fun searchMangaFromElement(element: Element): SManga =
+        popularMangaFromElement(element)
 
     override fun searchMangaNextPageSelector(): String? = popularMangaNextPageSelector()
 
@@ -87,7 +91,7 @@ open class Mangahub : ParsedHttpSource() {
         manga.genre = document.select(".tags").text().replace(" ", ", ")
         manga.description = document.select("div.markdown-style").text()
         manga.status = parseStatus(document.select("div.detail-attr:contains(перевод):eq(0)").toString())
-        manga.thumbnail_url = document.select("img.cover-detail").attr("src")
+        manga.thumbnail_url = baseUrl + document.select("img.cover-detail").attr("src")
         return manga
     }
 
