@@ -1,6 +1,5 @@
-## Missing sources
+## Removed sources
 
-This list was previously maintained in https://github.com/tachiyomiorg/tachiyomi-extensions/issues/3475.
 
 ### Too difficult to maintain
 
