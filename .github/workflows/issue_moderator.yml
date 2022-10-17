@@ -43,7 +43,7 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(team\\s*x|tqneplus|manga\\s*disk|komiktap|gourmet\\s*scans|manga\\s*crimson|mangawow|voidscans|hikari\\s*scans|mangagegecesi|piedpiperfb|knightnoscanlations|ahstudios|mangagecesi|nartag|xxx\\s*yaoi|yaoi\\s*fan\\s*clube|luminous|dragontea|manhwaid\\.org|hunters\\s*scan|mnhaestate|swat\\s*manga|manga\\s*swat|reset(?:\\s*|-)scan|aresmanga|manga-flix\\.com).*",
+                "regex": ".*(team\\s*x|tqneplus|manga\\s*disk|komiktap|gourmet\\s*scans|manga\\s*crimson|mangawow|voidscans|hikari\\s*scans|mangagegecesi|piedpiperfb|knightnoscanlations|ahstudios|mangagecesi|nartag|xxx\\s*yaoi|yaoi\\s*fan\\s*clube|luminous|dragontea|manhwaid\\.org|hunters\\s*scan|mnhaestate|swat\\s*manga|manga\\s*swat|reset(?:\\s*|-)scan|aresmanga|manga-flix\\.com|astra\\s*scans|manganoon).*",
                 "ignoreCase": true,
                 "message": "{match} will not be added back as the Scanlator team has requested it to be removed. Read #3475 for more information"
               }
