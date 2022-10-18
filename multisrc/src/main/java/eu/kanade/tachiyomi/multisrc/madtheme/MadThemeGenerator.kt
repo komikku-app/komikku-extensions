@@ -18,7 +18,6 @@ class MadThemeGenerator : ThemeSourceGenerator {
         SingleLang("MangaCute", "https://mangacute.com", "en", isNsfw = true),
         SingleLang("MangaFab", "https://mangafab.com", "en", isNsfw = true),
         SingleLang("MangaForest", "https://mangaforest.com", "en", isNsfw = true),
-        SingleLang("MangaMax", "https://mangamax.net", "en", isNsfw = true),
         SingleLang("MangaPuma", "https://mangapuma.com", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("MangaSaga", "https://mangasaga.com", "en", isNsfw = true),
         SingleLang("MangaSpin", "https://mangaspin.com", "en", isNsfw = true),

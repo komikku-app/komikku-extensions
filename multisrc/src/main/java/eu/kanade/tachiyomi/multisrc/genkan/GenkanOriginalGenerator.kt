@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.genkan
 
-import generator.ThemeSourceData.SingleLang
+import generator.ThemeSourceData
 import generator.ThemeSourceGenerator
 
 class GenkanOriginalGenerator : ThemeSourceGenerator {
@@ -11,10 +11,7 @@ class GenkanOriginalGenerator : ThemeSourceGenerator {
 
     override val baseVersionCode: Int = 1
 
-    override val sources = listOf(
-        SingleLang("Hatigarm Scans", "https://hatigarmscanz.net", "en", overrideVersionCode = 1),
-        SingleLang("Method Scans", "https://methodscans.com", "en", overrideVersionCode = 1)
-    )
+    override val sources = emptyList<ThemeSourceData>()
 
     companion object {
         @JvmStatic

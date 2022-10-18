@@ -13,7 +13,6 @@ class GenkanGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("Hunlight Scans", "https://hunlight-scans.info", "en"),
-        SingleLang("Edelgarde Scans", "https://edelgardescans.com", "en"),
         SingleLang("LynxScans", "https://lynxscans.com", "en", overrideVersionCode = 3),
     )
 

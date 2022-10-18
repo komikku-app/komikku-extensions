@@ -12,12 +12,7 @@ class PaprikaGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 1
 
     override val sources = listOf(
-//        SingleLang("MangaStream.xyz", "http://mangastream.xyz", "en", className = "MangaStreamXYZ"),
-        SingleLang("ReadMangaFox", "http://readmangafox.xyz", "en"),
-//            SingleLang("MangaZuki.xyz", "http://mangazuki.xyz", "en", className = "MangaZuki"),
-//            SingleLang("MangaTensei", "http://www.mangatensei.com", "en"),
         SingleLang("MangaNelos.com", "http://manganelos.com", "en", className = "MangaNelosCom", overrideVersionCode = 1),
-        SingleLang("MangaDogs.fun", "http://mangadogs.fun", "en", className = "MangaDogsFun"),
         SingleLang("MangaHere.today", "http://mangahere.today", "en", className = "MangaHereToday"),
     )
 
