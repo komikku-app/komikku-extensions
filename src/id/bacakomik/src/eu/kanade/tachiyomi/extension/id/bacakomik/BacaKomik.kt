@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-class Bacakomik : ParsedHttpSource() {
+class BacaKomik : ParsedHttpSource() {
     override val name = "BacaKomik"
     override val baseUrl = "https://bacakomik.co"
     override val lang = "id"
