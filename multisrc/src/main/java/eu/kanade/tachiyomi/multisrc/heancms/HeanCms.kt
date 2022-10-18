@@ -78,7 +78,7 @@ abstract class HeanCms(
             return MangasPage(mangaList, result.meta?.hasNextPage ?: false)
         }
 
-        val mangaList = response.parseAs<List<HeanCmsSeriesDto>>()
+        val mangaList = json.parseAs<List<HeanCmsSeriesDto>>()
             .map { it.toSManga(apiUrl, coverPath) }
 
         fetchAllTitles()
@@ -153,7 +153,7 @@ abstract class HeanCms(
             return MangasPage(mangaList, result.meta?.hasNextPage ?: false)
         }
 
-        var mangaList = response.parseAs<List<HeanCmsSeriesDto>>()
+        var mangaList = json.parseAs<List<HeanCmsSeriesDto>>()
             .map { it.toSManga(apiUrl, coverPath) }
 
         if (query.isNotBlank()) {
@@ -324,7 +324,7 @@ abstract class HeanCms(
     }
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromString(it.body?.string().orEmpty())
+        it.body?.string().orEmpty().parseAs()
     }
 
     private inline fun <reified T> String.parseAs(): T = json.decodeFromString(this)
