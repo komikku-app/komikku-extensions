@@ -18,12 +18,17 @@ import java.util.Calendar
 import java.util.Locale
 
 class Bacakomik : ParsedHttpSource() {
-    override val name = "Bacakomik"
+    override val name = "BacaKomik"
     override val baseUrl = "https://bacakomik.co"
     override val lang = "id"
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
     private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+
+    // similar/modified theme of "https://komikindo.id"
+
+    // Formerly "Bacakomik" -> now "BacaKomik"
+    override val id = 4383360263234319058
 
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/daftar-manga/page/$page/?order=popular", headers)
@@ -181,7 +186,7 @@ class Bacakomik : ParsedHttpSource() {
         val pages = mutableListOf<Page>()
         var i = 0
         document.select("div.imgch-auh img").forEach { element ->
-            val url = element.attr("src")
+            val url = element.attr("onError").substringAfter("src='").substringBefore("';")
             i++
             if (url.isNotEmpty()) {
                 pages.add(Page(i, "", url))
