@@ -116,6 +116,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     private val count = 30
 
     private var branches = mutableMapOf<String, List<BranchesDto>>()
+    private var dirManga = ""
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/api/search/catalog/?ordering=-rating&count=$count&page=$page", headers)
 
@@ -320,6 +321,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val series = json.decodeFromString<SeriesWrapperDto<MangaDetDto>>(response.body!!.string())
         branches[series.content.en_name] = series.content.branches
+        dirManga = series.content.dir
         return series.content.toSManga()
     }
 
@@ -390,7 +392,7 @@ class Remanga : ConfigurableSource, HttpSource() {
             SChapter.create().apply {
                 chapter_number = chapter.chapter.split(".").take(2).joinToString(".").toFloat()
                 name = chapterName(chapter)
-                url = "/api/titles/chapters/${chapter.id}"
+                url = "/manga/$dirManga/ch${chapter.id}"
                 date_upload = parseDate(chapter.upload_date)
                 scanlator = if (chapter.publishers.isNotEmpty()) {
                     chapter.publishers.joinToString { it.name }
@@ -425,6 +427,10 @@ class Remanga : ConfigurableSource, HttpSource() {
             }
             return result
         }
+    }
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        return GET(baseUrl + "/api/titles/chapters/" + chapter.url.substringAfterLast("/ch"), headers)
     }
 
     override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
