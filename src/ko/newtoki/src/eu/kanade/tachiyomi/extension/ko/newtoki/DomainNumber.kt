@@ -15,12 +15,12 @@ import java.io.IOException
  * It was merged after shutdown of ManaMoa.
  * This is by the head of Manamoa, as they decided to move to Newtoki.
  *
- * Updated on 2022-09-21, see `domain_log.md`.
+ * Updated on 2022-10-16, see `domain_log.md`.
  * To avoid going too fast and to utilize redirections,
  * the number is decremented by 1 initially,
- * and increments every 9.2 days which is a bit slower than the average.
+ * and increments every 9 days which is a bit slower than the average.
  */
-val fallbackDomainNumber get() = (154 - 1) + ((System.currentTimeMillis() - 1663723150_000) / 794880_000).toInt()
+val fallbackDomainNumber get() = (158 - 1) + ((System.currentTimeMillis() - 1665882000_000) / 777600_000).toInt()
 
 var domainNumber = ""
     get() {
@@ -52,13 +52,16 @@ object DomainInterceptor : Interceptor {
             chain.proceed(request)
         } catch (e: IOException) {
             if (chain.call().isCanceled()) throw e
+            Log.e("NewToki", "failed to fetch ${request.url}", e)
 
             val newDomainNumber = try {
-                val document = chain.proceed(GET("https://t.me/s/newtoki3")).asJsoup()
-                val description = document.selectFirst("meta[property=og:description]").attr("content")
+                val document = chain.proceed(GET("https://t.me/s/newtoki5")).asJsoup()
+                val description = document.select("a[href^=https://newtoki]").last()!!.attr("href")
                 numberRegex.find(description)!!.value
             } catch (_: Throwable) {
-                fallbackDomainNumber.toString()
+                fallbackDomainNumber
+                    .also { if (it <= domainNumber.toInt()) throw e }
+                    .toString()
             }
             domainNumber = newDomainNumber
 
