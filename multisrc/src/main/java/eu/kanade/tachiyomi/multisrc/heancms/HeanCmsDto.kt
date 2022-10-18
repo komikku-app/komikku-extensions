@@ -9,6 +9,22 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Serializable
+data class HeanCmsSearchDto(
+    val data: List<HeanCmsSeriesDto> = emptyList(),
+    val meta: HeanCmsSearchMetaDto? = null
+)
+
+@Serializable
+data class HeanCmsSearchMetaDto(
+    @SerialName("current_page") val currentPage: Int,
+    @SerialName("last_page") val lastPage: Int
+) {
+
+    val hasNextPage: Boolean
+        get() = currentPage < lastPage
+}
+
+@Serializable
 data class HeanCmsSeriesDto(
     val id: Int,
     @SerialName("series_slug") val slug: String,
@@ -23,7 +39,7 @@ data class HeanCmsSeriesDto(
     val chapters: List<HeanCmsChapterDto>? = emptyList()
 ) {
 
-    fun toSManga(apiUrl: String): SManga = SManga.create().apply {
+    fun toSManga(apiUrl: String, coverPath: String): SManga = SManga.create().apply {
         val descriptionBody = this@HeanCmsSeriesDto.description?.let(Jsoup::parseBodyFragment)
 
         title = this@HeanCmsSeriesDto.title
@@ -35,7 +51,7 @@ data class HeanCmsSeriesDto(
         genre = tags.orEmpty()
             .sortedBy(HeanCmsTagDto::name)
             .joinToString { it.name }
-        thumbnail_url = "$apiUrl/cover/$thumbnail"
+        thumbnail_url = "$apiUrl/$coverPath$thumbnail"
         status = when (this@HeanCmsSeriesDto.status) {
             "Ongoing" -> SManga.ONGOING
             "Hiatus" -> SManga.ON_HIATUS
@@ -84,8 +100,9 @@ data class HeanCmsReaderContentDto(
 )
 
 @Serializable
-data class HeanCmsSearchDto(
+data class HeanCmsSearchPayloadDto(
     val order: String,
+    val page: Int,
     @SerialName("order_by") val orderBy: String,
     @SerialName("series_status") val status: String,
     @SerialName("series_type") val type: String,

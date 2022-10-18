@@ -37,6 +37,10 @@ abstract class HeanCms(
 
     protected val intl by lazy { HeanCmsIntl(lang) }
 
+    protected open val fetchAllTitles: Boolean = false
+
+    protected open val coverPath: String = "cover/"
+
     private var seriesSlugMap: Map<String, String>? = null
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
@@ -44,7 +48,8 @@ abstract class HeanCms(
         .add("Referer", "$baseUrl/")
 
     override fun popularMangaRequest(page: Int): Request {
-        val payloadObj = HeanCmsSearchDto(
+        val payloadObj = HeanCmsSearchPayloadDto(
+            page = page,
             order = "desc",
             orderBy = "total_views",
             status = "Ongoing",
@@ -62,8 +67,19 @@ abstract class HeanCms(
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
+        val json = response.body?.string().orEmpty()
+
+        if (json.startsWith("{")) {
+            val result = json.parseAs<HeanCmsSearchDto>()
+            val mangaList = result.data.map { it.toSManga(apiUrl, coverPath) }
+
+            fetchAllTitles()
+
+            return MangasPage(mangaList, result.meta?.hasNextPage ?: false)
+        }
+
         val mangaList = response.parseAs<List<HeanCmsSeriesDto>>()
-            .map { it.toSManga(apiUrl) }
+            .map { it.toSManga(apiUrl, coverPath) }
 
         fetchAllTitles()
 
@@ -71,7 +87,8 @@ abstract class HeanCms(
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val payloadObj = HeanCmsSearchDto(
+        val payloadObj = HeanCmsSearchPayloadDto(
+            page = page,
             order = "desc",
             orderBy = "latest",
             status = "Ongoing",
@@ -93,7 +110,8 @@ abstract class HeanCms(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val sortByFilter = filters.firstInstanceOrNull<SortByFilter>()
 
-        val payloadObj = HeanCmsSearchDto(
+        val payloadObj = HeanCmsSearchPayloadDto(
+            page = page,
             order = if (sortByFilter?.state?.ascending == true) "asc" else "desc",
             orderBy = sortByFilter?.selected ?: "total_views",
             status = filters.firstInstanceOrNull<StatusFilter>()?.selected?.value ?: "Ongoing",
@@ -119,10 +137,24 @@ abstract class HeanCms(
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
+        val json = response.body?.string().orEmpty()
         val query = response.request.url.queryParameter("q").orEmpty()
 
+        if (json.startsWith("{")) {
+            val result = json.parseAs<HeanCmsSearchDto>()
+            var mangaList = result.data.map { it.toSManga(apiUrl, coverPath) }
+
+            if (query.isNotBlank()) {
+                mangaList = mangaList.filter { it.title.contains(query, ignoreCase = true) }
+            }
+
+            fetchAllTitles()
+
+            return MangasPage(mangaList, result.meta?.hasNextPage ?: false)
+        }
+
         var mangaList = response.parseAs<List<HeanCmsSeriesDto>>()
-            .map { it.toSManga(apiUrl) }
+            .map { it.toSManga(apiUrl, coverPath) }
 
         if (query.isNotBlank()) {
             mangaList = mangaList.filter { it.title.contains(query, ignoreCase = true) }
@@ -158,7 +190,7 @@ abstract class HeanCms(
 
     override fun mangaDetailsParse(response: Response): SManga {
         val result = runCatching { response.parseAs<HeanCmsSeriesDto>() }
-        val seriesDetails = result.getOrNull()?.toSManga(apiUrl)
+        val seriesDetails = result.getOrNull()?.toSManga(apiUrl, coverPath)
             ?: throw Exception(intl.urlChangedError(name))
 
         return seriesDetails.apply {
@@ -220,20 +252,40 @@ abstract class HeanCms(
     protected open fun getGenreList(): List<Genre> = emptyList()
 
     protected open fun fetchAllTitles() {
-        if (!seriesSlugMap.isNullOrEmpty()) {
+        if (!seriesSlugMap.isNullOrEmpty() || !fetchAllTitles) {
             return
         }
 
         val result = runCatching {
-            client.newCall(allTitlesRequest()).execute()
-                .let { parseAllTitles(it) }
+            var hasNextPage = true
+            var page = 1
+            val tempMap = mutableMapOf<String, String>()
+
+            while (hasNextPage) {
+                val response = client.newCall(allTitlesRequest(page)).execute()
+                val json = response.body?.string().orEmpty()
+
+                if (json.startsWith("{")) {
+                    val result = json.parseAs<HeanCmsSearchDto>()
+                    tempMap.putAll(parseAllTitles(result.data))
+                    hasNextPage = result.meta?.hasNextPage ?: false
+                    page++
+                } else {
+                    val result = json.parseAs<List<HeanCmsSeriesDto>>()
+                    tempMap.putAll(parseAllTitles(result))
+                    hasNextPage = false
+                }
+            }
+
+            tempMap.toMap()
         }
 
         seriesSlugMap = result.getOrNull()
     }
 
-    protected open fun allTitlesRequest(): Request {
-        val payloadObj = HeanCmsSearchDto(
+    protected open fun allTitlesRequest(page: Int): Request {
+        val payloadObj = HeanCmsSearchPayloadDto(
+            page = page,
             order = "desc",
             orderBy = "total_views",
             status = "",
@@ -250,8 +302,8 @@ abstract class HeanCms(
         return POST("$apiUrl/series/querysearch", apiHeaders, payload)
     }
 
-    protected open fun parseAllTitles(response: Response): Map<String, String> {
-        return response.parseAs<List<HeanCmsSeriesDto>>()
+    protected open fun parseAllTitles(result: List<HeanCmsSeriesDto>): Map<String, String> {
+        return result
             .filter { it.type == "Comic" }
             .associateBy(
                 keySelector = { it.slug.replace(TIMESTAMP_REGEX, "") },
@@ -274,6 +326,8 @@ abstract class HeanCms(
     private inline fun <reified T> Response.parseAs(): T = use {
         json.decodeFromString(it.body?.string().orEmpty())
     }
+
+    private inline fun <reified T> String.parseAs(): T = json.decodeFromString(this)
 
     private inline fun <reified R> List<*>.firstInstanceOrNull(): R? =
         filterIsInstance<R>().firstOrNull()
