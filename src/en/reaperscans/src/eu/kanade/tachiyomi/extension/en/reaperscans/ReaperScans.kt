@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.en.reaperscans
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -15,6 +16,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
@@ -29,6 +32,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 class ReaperScans : ParsedHttpSource() {
 
@@ -44,7 +48,9 @@ class ReaperScans : ParsedHttpSource() {
 
     private val json: Json by injectLazy()
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .rateLimit(1, 2, TimeUnit.SECONDS)
+        .build()
 
     // Popular
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/comics?page=$page", headers)
@@ -87,12 +93,15 @@ class ReaperScans : ParsedHttpSource() {
 
         val csrfToken = soup.selectFirst("meta[name=csrf-token]")?.attr("content")
 
-        val livewareData = soup.selectFirst("div[wire:initial-data*=frontend.global-search]")
+        val livewareData = soup.selectFirst("div[wire:initial-data*=comics]")
             ?.attr("wire:initial-data")
             ?.parseJson<LiveWireDataDto>()
 
         if (csrfToken == null) error("Couldn't find csrf-token")
         if (livewareData == null) error("Couldn't find LiveWireData")
+
+        val routeName = livewareData.fingerprint["name"]?.jsonPrimitive?.contentOrNull
+            ?: error("Couldn't find routeName")
 
         val payload = buildJsonObject {
             put("fingerprint", livewareData.fingerprint)
@@ -114,7 +123,7 @@ class ReaperScans : ParsedHttpSource() {
             .add("x-livewire", "true")
             .build()
 
-        return POST("$baseUrl/livewire/message/frontend.global-search", headers, payload)
+        return POST("$baseUrl/livewire/message/$routeName", headers, payload)
     }
 
     override fun searchMangaSelector(): String = "a[href*=/comics/]"
@@ -175,12 +184,15 @@ class ReaperScans : ParsedHttpSource() {
 
         val csrfToken = document.selectFirst("meta[name=csrf-token]")?.attr("content")
 
-        val livewareData = document.selectFirst("div[wire:initial-data*=frontend.comic-chapters-list]")
+        val livewareData = document.selectFirst("div[wire:initial-data*=Models\\\\Comic]")
             ?.attr("wire:initial-data")
             ?.parseJson<LiveWireDataDto>()
 
         if (csrfToken == null) error("Couldn't find csrf-token")
         if (livewareData == null) error("Couldn't find LiveWireData")
+
+        val routeName = livewareData.fingerprint["name"]?.jsonPrimitive?.contentOrNull
+            ?: error("Couldn't find routeName")
 
         val fingerprint = livewareData.fingerprint
         var serverMemo = livewareData.serverMemo
@@ -213,7 +225,7 @@ class ReaperScans : ParsedHttpSource() {
                     .add("x-livewire", "true")
                     .build()
 
-                val request = POST("$baseUrl/livewire/message/frontend.comic-chapters-list", headers, payload)
+                val request = POST("$baseUrl/livewire/message/$routeName", headers, payload)
 
                 val responseData = client.newCall(request).execute().parseJson<LiveWireResponseDto>()
 
