@@ -10,7 +10,6 @@
 - Mangá Host https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7065
 - HQ Dragon https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7065
 - YES Mangás https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7065
-- HeroScan https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
 - ManhuaScan https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
 - ManhwaHot https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
 - Tsuki Mangás https://github.com/tachiyomiorg/tachiyomi-extensions/pull/8609
@@ -28,15 +27,12 @@
 
 - TeamX/tqneplus https://github.com/tachiyomiorg/tachiyomi-extensions/issues/4875
 - JuinJutsuReader https://github.com/tachiyomiorg/tachiyomi-extensions/issues/2958
-- Manga disk https://github.com/tachiyomiorg/tachiyomi-extensions/issues/4430
 - KomikTap.in https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6133
 - Gourmet Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6192
-- Manga Crimson/MangaWOW https://github.com/tachiyomiorg/tachiyomi-extensions/issues/591
 - voidscans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6418
 - Hikari Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6611
 - Mangawow https://github.com/tachiyomiorg/tachiyomi-extensions/issues/5367
 - Mangagecesi https://github.com/tachiyomiorg/tachiyomi-extensions/issues/5367
-- PiedPiperfb https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6927
 - KomikTap https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6133
 - Knightnoscanlation https://github.com/tachiyomiorg/tachiyomi-extensions/issues/4240
 - Plot-twistnf-scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/4242

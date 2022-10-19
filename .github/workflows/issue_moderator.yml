@@ -37,13 +37,13 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(mangago|mangafox|hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|heroscan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|cocomanga|hitomi\\.la|copymanga|neox|1manga\\.co|mangafox\\.fun|mangahere\\.onl|manga\\s*hub|mangakakalot\\.fun|manganel(?!o)|mangaonline\\.fun|mangapanda\\.onl|mangareader\\.site|mangatoday|manga\\.town|onemanga\\.info|koushoku).*",
+                "regex": ".*(mangago|mangafox|hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|cocomanga|hitomi\\.la|copymanga|neox|1manga\\.co|mangafox\\.fun|mangahere\\.onl|manga\\s*hub|mangakakalot\\.fun|manganel(?!o)|mangaonline\\.fun|mangapanda\\.onl|mangareader\\.site|mangatoday|manga\\.town|onemanga\\.info|koushoku).*",
                 "ignoreCase": true,
                 "message": "{match} will not be added back as it is too difficult to maintain. Read #3475 for more information"
               },
               {
                 "type": "both",
-                "regex": ".*(team\\s*x|tqneplus|manga\\s*disk|komiktap|gourmet\\s*scans|manga\\s*crimson|mangawow|voidscans|hikari\\s*scans|mangagegecesi|piedpiperfb|knightnoscanlations|ahstudios|mangagecesi|nartag|xxx\\s*yaoi|yaoi\\s*fan\\s*clube|luminous|dragontea|manhwaid\\.org|hunters\\s*scan|mnhaestate|swat\\s*manga|manga\\s*swat|reset(?:\\s*|-)scan|aresmanga|manga-flix\\.com|astra\\s*scans|manganoon).*",
+                "regex": ".*(team\\s*x|tqneplus|komiktap|gourmet\\s*scans|mangawow|voidscans|hikari\\s*scans|mangagegecesi|knightnoscanlations|ahstudios|mangagecesi|nartag|xxx\\s*yaoi|yaoi\\s*fan\\s*clube|luminous|dragontea|manhwaid\\.org|hunters\\s*scan|mnhaestate|swat\\s*manga|manga\\s*swat|reset(?:\\s*|-)scan|aresmanga|manga-flix\\.com|astra\\s*scans|manganoon).*",
                 "ignoreCase": true,
                 "message": "{match} will not be added back as the Scanlator team has requested it to be removed. Read #3475 for more information"
               }
