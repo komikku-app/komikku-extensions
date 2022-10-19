@@ -48,7 +48,7 @@ class Nudemoon : ParsedHttpSource() {
                 .build()
 
             chain.proceed(newReq)
-        }.build()!!
+        }.build()
 
     override fun popularMangaRequest(page: Int): Request =
         GET("$baseUrl/all_manga?views&rowstart=${30 * (page - 1)}", headers)
@@ -64,12 +64,10 @@ class Nudemoon : ParsedHttpSource() {
             var genres = ""
             var order = ""
             for (filter in if (filters.isEmpty()) getFilterList() else filters) {
-                when (filter) {
-                    is GenreList -> {
-                        filter.state.forEach { f ->
-                            if (f.state) {
-                                genres += f.id + '+'
-                            }
+                if (filter is GenreList) {
+                    filter.state.forEach { f ->
+                        if (f.state) {
+                            genres += f.id + '+'
                         }
                     }
                 }
@@ -77,21 +75,21 @@ class Nudemoon : ParsedHttpSource() {
 
             if (genres.isNotEmpty()) {
                 for (filter in filters) {
-                    when (filter) {
-                        is OrderBy -> {
-                            // The site has no ascending order
-                            order = arrayOf("&date", "&views", "&like")[filter.state!!.index]
-                        }
+                    if (filter is OrderBy) {
+                        // The site has no ascending order
+                        order = arrayOf("&date", "&views", "&like")[filter.state!!.index]
                     }
                 }
                 "$baseUrl/tags/${genres.dropLast(1)}$order&rowstart=${30 * (page - 1)}"
             } else {
                 for (filter in filters) {
-                    when (filter) {
-                        is OrderBy -> {
-                            // The site has no ascending order
-                            order = arrayOf("all_manga?date", "all_manga?views", "all_manga?like")[filter.state!!.index]
-                        }
+                    if (filter is OrderBy) {
+                        // The site has no ascending order
+                        order = arrayOf(
+                            "all_manga?date",
+                            "all_manga?views",
+                            "all_manga?like"
+                        )[filter.state!!.index]
                     }
                 }
                 "$baseUrl/$order&rowstart=${30 * (page - 1)}"
@@ -135,41 +133,35 @@ class Nudemoon : ParsedHttpSource() {
         manga.author = document.select("table.news_pic2 a[href*=mangaka]").text()
         manga.genre = document.select("table.news_pic2 div.tag-links a").joinToString { it.text() }
         manga.description = document.select(".description").text()
-        manga.thumbnail_url = document.selectFirst("div.gallery-item img.textbox").attr("abs:data-src")
+        manga.thumbnail_url = document.selectFirst("meta[property=og:image]").attr("abs:content")
 
         return manga
     }
 
     override fun chapterListRequest(manga: SManga): Request {
-        val mangaDocument: Document
-        client.newCall(
-            GET(baseUrl + manga.url, headers)
-        ).execute().run {
-            if (!isSuccessful) {
-                close()
-                throw Exception("HTTP error $code")
-            }
-            mangaDocument = this.asJsoup()
-        }
-
-        val chapterUrl = if (mangaDocument.select("td.button a:contains(Все главы)").isNotEmpty())
-            mangaDocument.select("td.button a:contains(Все главы)").attr("href")
-        else
-            manga.url
-
-        return GET(baseUrl + chapterUrl, headers)
+        return GET(baseUrl + manga.url, headers)
     }
 
     override fun chapterListSelector() = popularMangaSelector()
 
     override fun chapterListParse(response: Response): List<SChapter> = mutableListOf<SChapter>().apply {
-        val responseUrl = response.request.url.toString()
         val document = response.asJsoup()
 
-        if (!responseUrl.contains("/vse_glavy/")) {
+        if (document.select("td.button a:contains(Все главы)").isEmpty()) {
             add(chapterFromElement(document))
         } else {
-            document.select("table.news_pic2").forEach {
+            var pageListDocument: Document
+            val pageListLink = document.select("td.button a:contains(Все главы)").attr("href")
+            client.newCall(
+                GET(baseUrl + pageListLink, headers)
+            ).execute().run {
+                if (!isSuccessful) {
+                    close()
+                    throw Exception("HTTP error $code")
+                }
+                pageListDocument = this.asJsoup()
+            }
+            pageListDocument.select("table.news_pic2").sortedByDescending { it.selectFirst("tr[valign=top] a:has(h2) h2").text() }.forEach {
                 val chapter = SChapter.create()
                 val nameAndUrl = it.select("tr[valign=top] a:has(h2)")
                 chapter.name = nameAndUrl.select("h2").text()
@@ -178,7 +170,7 @@ class Nudemoon : ParsedHttpSource() {
                 chapter.date_upload = it.selectFirst("tr[valign=top] td[align=left] span.small2").text().let {
                     textDate ->
                     try {
-                        SimpleDateFormat("dd MMMM yyyy", Locale("ru")).parse(textDate)?.time ?: 0L
+                        SimpleDateFormat("d MMMM yyyy", Locale("ru")).parse(textDate.replace("Май", "Мая"))?.time ?: 0L
                     } catch (e: Exception) {
                         0
                     }
@@ -194,14 +186,14 @@ class Nudemoon : ParsedHttpSource() {
         val chapter = SChapter.create()
 
         val chapterName = element.select("table td.bg_style1 h1").text()
-        var chapterUrl = element.baseUri()
+        val chapterUrl = element.baseUri()
 
         chapter.setUrlWithoutDomain(chapterUrl)
         chapter.name = chapterName
         chapter.scanlator = element.select("table.news_pic2 a[href*=perevod]").text()
         chapter.date_upload = element.select("table.news_pic2 span.small2:contains(/)").text().let {
             try {
-                SimpleDateFormat("dd/MM/yyyy", Locale("ru")).parse(it)?.time ?: 0L
+                SimpleDateFormat("d/MM/yyyy", Locale("ru")).parse(it)?.time ?: 0L
             } catch (e: Exception) {
                 0
             }
@@ -220,7 +212,7 @@ class Nudemoon : ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> = throw Exception("Not Used")
 
-    private class Genre(name: String, val id: String = name.replace(' ', '_')) : Filter.CheckBox(name.capitalize())
+    private class Genre(name: String, val id: String = name.replace(' ', '_')) : Filter.CheckBox(name.replaceFirstChar { it.uppercaseChar() })
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Тэги", genres)
     private class OrderBy : Filter.Sort(
         "Сортировка",
