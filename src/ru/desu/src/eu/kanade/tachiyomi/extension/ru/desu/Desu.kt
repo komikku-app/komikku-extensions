@@ -24,7 +24,6 @@ import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
-import java.text.DecimalFormat
 
 class Desu : HttpSource() {
     override val name = "Desu"
@@ -206,14 +205,16 @@ class Desu : HttpSource() {
         val objChapter = obj["chapters"]!!
         return objChapter.jsonObject["list"]!!.jsonArray.map {
             val chapterObj = it.jsonObject
-            val ch = chapterObj["ch"]!!.jsonPrimitive.float
-            val fullNumStr = "${chapterObj["vol"]!!.jsonPrimitive.int}. Глава " + DecimalFormat("#,###.##").format(ch).replace(",", ".")
+            val ch = chapterObj["ch"]!!.jsonPrimitive.content
+            val vol = chapterObj["vol"]!!.jsonPrimitive.content
+            val fullNumStr = "$vol. Глава $ch"
             val title = chapterObj["title"]!!.jsonPrimitive.contentOrNull ?: ""
 
             SChapter.create().apply {
                 name = "$fullNumStr $title"
-                url = "/$cid/chapter/${chapterObj["id"]!!.jsonPrimitive.int}"
-                chapter_number = ch
+                // #apiChapter - JSON API url to automatically delete when chapter is opened in browser
+                url = "/manga/$cid/vol$vol/ch$ch/rus" + "#apiChapter/$cid/chapter/${chapterObj["id"]!!.jsonPrimitive.int}"
+                chapter_number = ch.toFloatOrNull() ?: -1f
                 date_upload = chapterObj["date"]!!.jsonPrimitive.long * 1000L
             }
         }.filter { it.chapter_number <= objChapter.jsonObject["last"]!!.jsonObject["ch"]!!.jsonPrimitive.float }
@@ -222,7 +223,7 @@ class Desu : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = titleDetailsRequest(manga)
 
     override fun pageListRequest(chapter: SChapter): Request {
-        return GET(baseUrl + API_URL + chapter.url, headers)
+        return GET(baseUrl + API_URL + chapter.url.substringAfterLast("#apiChapter"), headers)
     }
 
     override fun pageListParse(response: Response): List<Page> {
