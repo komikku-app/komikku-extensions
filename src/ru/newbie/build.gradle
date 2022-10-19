@@ -6,7 +6,7 @@ ext {
     extName = 'NewManga(Newbie)'
     pkgNameSuffix = 'ru.newbie'
     extClass = '.Newbie'
-    extVersionCode = 13
+    extVersionCode = 14
 }
 
 dependencies {

@@ -318,13 +318,15 @@ class Newbie : ConfigurableSource, HttpSource() {
                 client.newCall(chapterListRequest(branchId))
                     .asObservableSuccess()
                     .map { response ->
-                        chapterListParse(response)
+                        chapterListParse(response, manga, branchId)
                     }
             }
         }
     }
 
-    override fun chapterListParse(response: Response): List<SChapter> {
+    override fun chapterListParse(response: Response) = throw UnsupportedOperationException("chapterListParse(response: Response, manga: SManga)")
+
+    private fun chapterListParse(response: Response, manga: SManga, branch: Long): List<SChapter> {
         var chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body!!.string()).items
         if (!preferences.getBoolean(PAID_PREF, false)) {
             chapters = chapters.filter { it.is_available }
@@ -333,13 +335,13 @@ class Newbie : ConfigurableSource, HttpSource() {
             SChapter.create().apply {
                 chapter_number = chapter.number
                 name = chapterName(chapter)
-                url = "/chapters/${chapter.id}/pages"
+                url = "/p/${manga.url}/$branch/r/${chapter.id}"
                 date_upload = parseDate(chapter.created_at)
                 scanlator = chapter.translator
             }
         }
     }
-    override fun chapterListRequest(manga: SManga): Request = throw NotImplementedError("Unused")
+    override fun chapterListRequest(manga: SManga): Request = throw UnsupportedOperationException("chapterListRequest(branch: Long)")
     private fun chapterListRequest(branch: Long): Request {
         return GET(
             "$API_URL/branches/$branch/chapters?reverse=true&size=1000000",
@@ -349,15 +351,15 @@ class Newbie : ConfigurableSource, HttpSource() {
 
     @TargetApi(Build.VERSION_CODES.N)
     override fun pageListRequest(chapter: SChapter): Request {
-        return GET(API_URL + chapter.url, headers)
+        return GET(API_URL + "/chapters/${chapter.url.substringAfterLast("/")}/pages", headers)
     }
 
-    private fun pageListParse(response: Response, chapter: SChapter): List<Page> {
+    private fun pageListParse(response: Response, urlRequest: String): List<Page> {
         val pages = json.decodeFromString<List<PageDto>>(response.body?.string()!!)
         val result = mutableListOf<Page>()
         pages.forEach { page ->
             (1..page.slices!!).map { i ->
-                result.add(Page(result.size, API_URL + chapter.url + "/${page.id}?slice=$i"))
+                result.add(Page(result.size, urlRequest + "/${page.id}?slice=$i"))
             }
         }
         return result
@@ -368,7 +370,7 @@ class Newbie : ConfigurableSource, HttpSource() {
         return client.newCall(pageListRequest(chapter))
             .asObservableSuccess()
             .map { response ->
-                pageListParse(response, chapter)
+                pageListParse(response, pageListRequest(chapter).url.toString())
             }
     }
 
