@@ -116,7 +116,6 @@ class Remanga : ConfigurableSource, HttpSource() {
     private val count = 30
 
     private var branches = mutableMapOf<String, List<BranchesDto>>()
-    private var dirManga = ""
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/api/search/catalog/?ordering=-rating&count=$count&page=$page", headers)
 
@@ -321,7 +320,6 @@ class Remanga : ConfigurableSource, HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val series = json.decodeFromString<SeriesWrapperDto<MangaDetDto>>(response.body!!.string())
         branches[series.content.en_name] = series.content.branches
-        dirManga = series.content.dir
         return series.content.toSManga()
     }
 
@@ -352,7 +350,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 val selectedBranch = branch.maxByOrNull { selector(it) }!!
                 return (1..(selectedBranch.count_chapters / 100 + 1)).map {
                     val response = chapterListRequest(selectedBranch.id, it)
-                    chapterListParse(response)
+                    chapterListParse(response, manga)
                 }.let { Observable.just(it.flatten()) }
             }
         }
@@ -383,7 +381,9 @@ class Remanga : ConfigurableSource, HttpSource() {
         return chapterName
     }
 
-    override fun chapterListParse(response: Response): List<SChapter> {
+    override fun chapterListParse(response: Response) = throw UnsupportedOperationException("chapterListParse(response: Response, manga: SManga)")
+
+    private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
         var chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body!!.string()).content
         if (!preferences.getBoolean(PAID_PREF, false)) {
             chapters = chapters.filter { !it.is_paid or (it.is_bought == true) }
@@ -392,7 +392,7 @@ class Remanga : ConfigurableSource, HttpSource() {
             SChapter.create().apply {
                 chapter_number = chapter.chapter.split(".").take(2).joinToString(".").toFloat()
                 name = chapterName(chapter)
-                url = "/manga/$dirManga/ch${chapter.id}"
+                url = "/manga/${manga.url.substringAfterLast("/api/titles/")}ch${chapter.id}"
                 date_upload = parseDate(chapter.upload_date)
                 scanlator = if (chapter.publishers.isNotEmpty()) {
                     chapter.publishers.joinToString { it.name }

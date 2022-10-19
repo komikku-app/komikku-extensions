@@ -6,7 +6,7 @@ ext {
     extName = 'Remanga'
     pkgNameSuffix = 'ru.remanga'
     extClass = '.Remanga'
-    extVersionCode = 56
+    extVersionCode = 57
 }
 
 dependencies {
