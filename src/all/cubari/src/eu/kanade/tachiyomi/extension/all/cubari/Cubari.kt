@@ -349,8 +349,11 @@ open class Cubari(override val lang: String) : HttpSource() {
             title = jsonObj["title"]!!.jsonPrimitive.content
             artist = jsonObj["artist"]?.jsonPrimitive?.content ?: ARTIST_FALLBACK
             author = jsonObj["author"]?.jsonPrimitive?.content ?: AUTHOR_FALLBACK
-            description = jsonObj["description"]?.jsonPrimitive?.content?.substringBefore("Tags: ") ?: DESCRIPTION_FALLBACK
-            genre = jsonObj["description"]?.jsonPrimitive?.content?.substringAfter("Tags: ")
+
+            val descriptionFull = jsonObj["description"]?.jsonPrimitive?.content
+            description = descriptionFull?.substringBefore("Tags: ") ?: DESCRIPTION_FALLBACK
+            genre = if (descriptionFull!!.contains("Tags: ")) descriptionFull?.substringAfter("Tags: ") else ""
+
             url = mangaReference?.url ?: jsonObj["url"]!!.jsonPrimitive.content
             thumbnail_url = jsonObj["coverUrl"]?.jsonPrimitive?.content
                 ?: jsonObj["cover"]?.jsonPrimitive?.content ?: ""
