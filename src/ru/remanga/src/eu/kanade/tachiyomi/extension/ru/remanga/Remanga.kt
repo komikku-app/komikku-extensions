@@ -153,7 +153,6 @@ class Remanga : ConfigurableSource, HttpSource() {
                         thumbnail_url = "$baseUrl/icon.png"
                     }
                 )
-
             return MangasPage(mangas, page.props.page < page.props.total_pages)
         }
     }
@@ -340,11 +339,11 @@ class Remanga : ConfigurableSource, HttpSource() {
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         val branch = branches.getOrElse(manga.title) { mangaBranches(manga) }
         return when {
+            manga.status == SManga.LICENSED && branch.isEmpty() -> {
+                Observable.error(Exception("Лицензировано - Нет глав"))
+            }
             branch.isEmpty() -> {
                 return Observable.just(listOf())
-            }
-            manga.status == SManga.LICENSED -> {
-                Observable.error(Exception("Лицензировано - Нет глав"))
             }
             else -> {
                 val selectedBranch = branch.maxByOrNull { selector(it) }!!
