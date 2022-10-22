@@ -199,7 +199,7 @@ class MangaPlus(
             .filter { it.language == langCode }
             .filter { title ->
                 title.name.contains(filter, ignoreCase = true) ||
-                    title.author.contains(filter, ignoreCase = true)
+                    title.author.orEmpty().contains(filter, ignoreCase = true)
             }
 
         val mangas = titleList!!.map(Title::toSManga)

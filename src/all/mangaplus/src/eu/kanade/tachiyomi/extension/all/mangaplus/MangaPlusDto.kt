@@ -56,7 +56,7 @@ data class WebHomeViewV3(val groups: List<UpdatedTitleV2Group> = emptyList())
 data class TitleDetailView(
     val title: Title,
     val titleImageUrl: String,
-    val overview: String,
+    val overview: String? = null,
     val backgroundImageUrl: String,
     val nextTimeStamp: Int = 0,
     val viewingPeriodDescription: String = "",
@@ -92,7 +92,7 @@ data class TitleDetailView(
         )
 
     fun toSManga(): SManga = title.toSManga().apply {
-        description = overview + "\n\n" + viewingPeriodDescription
+        description = (overview.orEmpty() + "\n\n" + viewingPeriodDescription).trim()
         status = if (isCompleted) SManga.COMPLETED else SManga.ONGOING
         genre = genres.joinToString()
     }
@@ -114,7 +114,7 @@ data class MangaViewer(
 data class Title(
     val titleId: Int,
     val name: String,
-    val author: String,
+    val author: String? = null,
     val portraitImageUrl: String,
     val landscapeImageUrl: String,
     val viewCount: Int = 0,
@@ -123,7 +123,7 @@ data class Title(
 
     fun toSManga(): SManga = SManga.create().apply {
         title = name
-        author = this@Title.author.replace(" / ", ", ")
+        author = this@Title.author?.replace(" / ", ", ")
         artist = author
         thumbnail_url = portraitImageUrl
         url = "#/titles/$titleId"
