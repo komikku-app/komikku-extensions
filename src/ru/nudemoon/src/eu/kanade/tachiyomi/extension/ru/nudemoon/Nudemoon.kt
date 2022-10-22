@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.ru.nudemoon
 
+import android.webkit.CookieManager
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -25,6 +26,12 @@ class Nudemoon : ParsedHttpSource() {
     override val lang = "ru"
 
     override val supportsLatest = true
+
+    private val cookieManager by lazy { CookieManager.getInstance() }
+
+    init {
+        cookieManager.setCookie(baseUrl, "nm_mobile=1; Domain=" + baseUrl.split("//")[1])
+    }
 
     private val cookiesHeader by lazy {
         val cookies = mutableMapOf<String, String>()
@@ -145,13 +152,16 @@ class Nudemoon : ParsedHttpSource() {
     override fun chapterListSelector() = popularMangaSelector()
 
     override fun chapterListParse(response: Response): List<SChapter> = mutableListOf<SChapter>().apply {
+        val floatRegex = Regex("^([+-]?\\d*\\.?\\d*)\$")
         val document = response.asJsoup()
 
-        if (document.select("td.button a:contains(Все главы)").isEmpty()) {
+        val allPageElement = document.select("td.button a:contains(Все главы)")
+
+        if (allPageElement.isEmpty()) {
             add(chapterFromElement(document))
         } else {
             var pageListDocument: Document
-            val pageListLink = document.select("td.button a:contains(Все главы)").attr("href")
+            val pageListLink = allPageElement.attr("href")
             client.newCall(
                 GET(baseUrl + pageListLink, headers)
             ).execute().run {
@@ -161,24 +171,26 @@ class Nudemoon : ParsedHttpSource() {
                 }
                 pageListDocument = this.asJsoup()
             }
-            pageListDocument.select("table.news_pic2").sortedByDescending { it.selectFirst("tr[valign=top] a:has(h2) h2").text() }.forEach {
-                val chapter = SChapter.create()
-                val nameAndUrl = it.select("tr[valign=top] a:has(h2)")
-                chapter.name = nameAndUrl.select("h2").text()
-                chapter.setUrlWithoutDomain(nameAndUrl.attr("abs:href"))
-                chapter.scanlator = it.select("tr[valign=top] td[align=left] a[href*=perevod]").text()
-                chapter.date_upload = it.selectFirst("tr[valign=top] td[align=left] span.small2").text().let {
-                    textDate ->
-                    try {
-                        SimpleDateFormat("d MMMM yyyy", Locale("ru")).parse(textDate.replace("Май", "Мая"))?.time ?: 0L
-                    } catch (e: Exception) {
-                        0
-                    }
+            pageListDocument.select("table.news_pic2")
+                .forEach {
+                    val chapter = SChapter.create()
+                    val nameAndUrl = it.select("tr[valign=top] a:has(h2)")
+                    chapter.name = nameAndUrl.select("h2").text()
+                    chapter.setUrlWithoutDomain(nameAndUrl.attr("abs:href"))
+                    val informBlock = it.select("tr[valign=top] td[align=left]")
+                    chapter.scanlator = informBlock.select("a[href*=perevod]").text()
+                    chapter.date_upload = informBlock.select("span.small2")
+                        .text().replace("Май", "Мая").let {
+                            textDate ->
+                            try {
+                                SimpleDateFormat("d MMMM yyyy", Locale("ru")).parse(textDate)?.time ?: 0L
+                            } catch (e: Exception) {
+                                0
+                            }
+                        }
+                    chapter.chapter_number = floatRegex.find(chapter.name).toString().toFloatOrNull() ?: -1f
+                    add(chapter)
                 }
-                val floatRegex = Regex("^([+-]?\\d*\\.?\\d*)\$")
-                chapter.chapter_number = floatRegex.find(chapter.name).toString().toFloatOrNull() ?: -1f
-                add(chapter)
-            }
         }
     }
 
