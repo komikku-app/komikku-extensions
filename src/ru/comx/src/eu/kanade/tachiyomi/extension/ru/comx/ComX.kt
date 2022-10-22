@@ -122,7 +122,7 @@ class ComX : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = baseUrl + element.select("img").first().attr("src")
+        manga.thumbnail_url = baseUrl + element.select("img").first().attr("data-src")
         element.select(".readed__title a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text().split(" / ").first()
@@ -148,7 +148,7 @@ class ComX : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = baseUrl + element.select("img").first().attr("src")
+        manga.thumbnail_url = baseUrl + element.select("img").first().attr("src").replace("mini/mini", "mini/mid")
         element.select("a.latest__title").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text().split(" / ").first()
@@ -257,7 +257,7 @@ class ComX : ParsedHttpSource() {
         manga.status = parseStatus(infoElement.select(".page__list li:contains(Статус)").text())
 
         manga.description = infoElement.select(".page__header h1").text().replace(" / ", " | ").split(" | ").first() + "\n" + ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" + Jsoup.parse(infoElement.select(".page__text ").first().html().replace("<br>", "REPLACbR")).text().replace("REPLACbR", "\n")
-        val src = infoElement.select(".img-wide img").attr("src")
+        val src = infoElement.select(".img-wide img").attr("data-src")
         if (src.contains("://")) {
             manga.thumbnail_url = src
         } else {
