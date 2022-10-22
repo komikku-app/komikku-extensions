@@ -253,7 +253,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("MangaManiacs", "https://mangamaniacs.org", "en", isNsfw = true),
         SingleLang("MangaMe", "https://mangame.org", "en", overrideVersionCode = 1),
         SingleLang("MangaPT", "https://mangapt.com", "es", isNsfw = true),
-        SingleLang("MangaRabic", "https://mangarabic.com", "ar"),
+        SingleLang("MangaRabic", "https://mangaarabics.com", "ar", overrideVersionCode = 1),
         SingleLang("MangaRead.org", "https://www.mangaread.org", "en", className = "MangaReadOrg", overrideVersionCode = 1),
         SingleLang("MangaRolls", "https://mangarolls.com", "en"),
         SingleLang("Mangas Origines X", "https://x.mangas-origines.fr", "fr", isNsfw = true),
