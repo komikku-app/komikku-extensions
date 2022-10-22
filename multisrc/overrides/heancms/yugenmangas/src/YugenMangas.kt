@@ -8,6 +8,8 @@ class YugenMangas : HeanCms("YugenMangas", "https://yugenmangas.com", "es") {
     // Site changed from Madara to HeanCms.
     override val versionId = 2
 
+    override val coverPath: String = ""
+
     override fun getGenreList(): List<Genre> = listOf(
         Genre("+18", 1),
         Genre("Acción", 36),
