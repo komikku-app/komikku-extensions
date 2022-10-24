@@ -95,7 +95,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Emperor Scan", "https://emperorscan.com/", "es"),
         SingleLang("Empire Webtoon", "https://webtoonempire.com", "ar", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Eromiau", "https://www.eromiau.com", "es", isNsfw = true),
-        SingleLang("Esomanga", "http://esomanga.com", "tr"),
+        SingleLang("Esomanga", "https://esomanga.com", "tr", overrideVersionCode = 1),
         SingleLang("Estufa de Cristal", "https://scanestufadecristal.site", "pt-BR", className = "EstufaDeCristal"),
         SingleLang("EvaScans", "https://evascans.com", "tr"),
         SingleLang("FaeStorm", "https://faestormmanga.com", "tr"),
