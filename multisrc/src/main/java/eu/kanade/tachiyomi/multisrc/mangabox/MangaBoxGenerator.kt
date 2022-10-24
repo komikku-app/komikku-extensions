@@ -16,7 +16,7 @@ class MangaBoxGenerator : ThemeSourceGenerator {
         SingleLang("Manganato", "https://manganato.com", "en", overrideVersionCode = 2, pkgName = "manganelo"),
         SingleLang("Mangabat", "https://m.mangabat.com", "en", overrideVersionCode = 4),
         SingleLang("Mangakakalots (unoriginal)", "https://mangakakalots.com", "en", overrideVersionCode = 1, className = "Mangakakalots", pkgName = "mangakakalots"),
-        SingleLang("Mangairo", "https://h.mangairo.com", "en", overrideVersionCode = 3),
+        SingleLang("Mangairo", "https://h.mangairo.com", "en", isNsfw = true, overrideVersionCode = 4),
     )
 
     companion object {

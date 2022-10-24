@@ -22,7 +22,6 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("Kirei Cake", "https://reader.kireicake.com", "en"),
         SingleLang("Kirishima Fansub", "https://www.kirishimafansub.net", "es"),
         SingleLang("Le Cercle du Scan", "https://lel.lecercleduscan.com", "fr", className = "LeCercleDuScan", overrideVersionCode = 1),
-        SingleLang("LetItGo Scans", "https://reader.letitgo.scans.today", "en", overrideVersionCode = 1),
         SingleLang("Lilyreader", "https://manga.smuglo.li", "en"),
         SingleLang("Mabushimajo", "http://mabushimajo.com", "tr"),
         SingleLang("MangaScouts", "http://onlinereader.mangascouts.org", "de", overrideVersionCode = 1),
@@ -33,7 +32,6 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("Rama", "https://www.ramareader.it", "it"),
         SingleLang("Silent Sky", "https://reader.silentsky-scans.net", "en"),
         SingleLang("Wanted Team", "https://reader.onepiecenakama.pl", "pl"),
-        SingleLang("Yuri-ism", "https://www.yuri-ism.net", "en", className = "YuriIsm"),
         SingleLang("Zandy no Fansub", "https://zandynofansub.aishiteru.org", "en"),
         SingleLang("Русификация", "https://rusmanga.ru", "ru", className = "Russification"),
     )
