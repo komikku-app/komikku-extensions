@@ -77,21 +77,21 @@ class MangaRok : ParsedHttpSource() {
 
     // Details
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        title = document.selectFirst("h1").text()
+        title = document.selectFirst("h1.title").text()
         thumbnail_url = document.selectFirst("img.athumbnail").attr("abs:data-src")
 
         val table = document.selectFirst(".table:not(.is-hoverable)")
-        artist = table.selectFirst("tr > td:first-child:contains(Artist:) + td > a").text()
-        author = table.selectFirst("tr > td:first-child:contains(Author:) + td > a").text()
+        artist = table.selectFirst("tr > td:first-child:contains(Artist:) + td > a")?.text()
+        author = table.selectFirst("tr > td:first-child:contains(Author:) + td > a")?.text()
 
         val altNames = table.select("tr > td:first-child:contains(Alt names:) + td > span")
             .map { it.text().trimEnd(',') }
 
-        description = document.selectFirst("h2 + .content")!!.text() +
+        description = (document.select("div.content")[1].selectFirst("p")?.text() ?: "") +
             (altNames.takeIf { it.isNotEmpty() }?.let { "\n\nAlt name(s): ${it.joinToString()}" } ?: "")
 
         // Includes "Genre", "Demographic", and "Content"
-        genre = table.select(".tag.is-info")
+        genre = table.select("tr > td:first-child:contains(Genre:) + td > span")
             .joinToString { it.text() }
     }
 
