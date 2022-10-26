@@ -47,6 +47,5 @@
 - Reset Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13168
 - MangaSwat https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13171
 - Manga-Flix https://github.com/tachiyomiorg/tachiyomi-extensions/issues/12843
-- Aresmanga https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13430
 - Astra Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13845
 - Manganoon https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13866
