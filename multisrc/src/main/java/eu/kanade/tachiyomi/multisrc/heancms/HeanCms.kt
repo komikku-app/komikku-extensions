@@ -174,6 +174,16 @@ abstract class HeanCms(
             }
     }
 
+    override fun mangaDetailsRequest(manga: SManga): Request {
+        val seriesSlug = manga.url
+            .substringAfterLast("/")
+            .replace(TIMESTAMP_REGEX, "")
+
+        val currentSlug = seriesSlugMap?.get(seriesSlug) ?: seriesSlug
+
+        return GET("$baseUrl/series/$currentSlug", headers)
+    }
+
     private fun seriesDetailsRequest(manga: SManga): Request {
         val seriesSlug = manga.url
             .substringAfterLast("/")
