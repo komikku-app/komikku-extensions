@@ -366,6 +366,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("RWBY Scan", "https://rwbyscan.site", "pt-BR", isNsfw = true, className = "RwbyScan"),
         SingleLang("Rüya Manga", "https://www.ruyamanga.com", "tr", className = "RuyaManga", overrideVersionCode = 1),
         SingleLang("S2Manga", "https://s2manga.com", "en", overrideVersionCode = 1),
+        SingleLang("Sagrado Império da Britannia", "https://imperiodabritannia.com", "pt-BR", className = "ImperioDaBritannia"),
         SingleLang("SamuraiScan", "https://samuraiscan.com", "es", overrideVersionCode = 1),
         SingleLang("Sawamics", "https://sawamics.com", "en"),
         SingleLang("ScamberTraslator", "https://scambertraslator.com", "es"),
