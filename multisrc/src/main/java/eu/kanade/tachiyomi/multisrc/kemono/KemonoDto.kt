@@ -14,6 +14,7 @@ class KemonoCreatorDto(
     val name: String,
     private val service: String,
     private val updated: JsonPrimitive,
+    val favorited: Int = -1,
 ) {
     val updatedDate get() = when {
         updated.isString -> dateFormat.parse(updated.content)?.time ?: 0

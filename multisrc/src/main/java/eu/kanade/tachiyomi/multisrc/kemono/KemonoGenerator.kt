@@ -6,7 +6,7 @@ import generator.ThemeSourceGenerator
 class KemonoGenerator : ThemeSourceGenerator {
     override val themeClass = "Kemono"
     override val themePkg = "kemono"
-    override val baseVersionCode = 3
+    override val baseVersionCode = 4
     override val sources = listOf(
         SingleLang("Kemono", "https://kemono.party", "all", isNsfw = true),
         SingleLang("Coomer", "https://coomer.party", "all", isNsfw = true)
