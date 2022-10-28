@@ -60,12 +60,14 @@ internal val SITE_ENTRIES_ARRAY_DESCRIPTION = arrayOf(
     "主站", "海外分流",
     "中国大陆总站", "中国大陆分流",
     "东南亚线路1", "东南亚线路2",
+    "中国大陆分流2",
 )
 
 // List is based on https://jmcomic.bet/
 // Please also update AndroidManifest
 internal val SITE_ENTRIES_ARRAY = arrayOf(
     "18comic.vip", "18comic.org",
-    "jmcomic.asia", "jmcomic1.city",
+    "jmcomic.win", "jmcomic1.win",
     "jmcomic.me", "jmcomic1.me",
+    "jmcomic1.moe",
 )

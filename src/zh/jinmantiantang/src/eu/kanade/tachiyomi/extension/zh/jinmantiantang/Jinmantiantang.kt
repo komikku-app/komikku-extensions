@@ -176,11 +176,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     // 查询作者信息
     private fun selectAuthor(document: Document): String {
         val element = document.select("div.panel-body div.tag-block")[3]
-        return if (element.select("a").size == 0) {
-            "未知"
-        } else {
-            element.select("a").text().trim().replace(" ", ", ")
-        }
+        return element.select(".btn-primary").joinToString { it.text() }
     }
 
     // 查询漫画状态和类别信息
