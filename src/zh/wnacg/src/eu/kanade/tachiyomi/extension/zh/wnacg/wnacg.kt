@@ -63,6 +63,7 @@ class wnacg : ParsedHttpSource() {
         manga.url = link.attr("href")
         manga.title = link.text()
         manga.thumbnail_url = element.selectFirst("img").absUrl("src")
+            .replaceBefore(':', "http")
         // maybe the local cache cause the old source (url) can not be update. but the image can be update on detailpage.
         // ps. new machine can be load img normal.
 
@@ -83,7 +84,7 @@ class wnacg : ParsedHttpSource() {
         manga.artist = document.selectFirst("div.uwuinfo p")?.text() ?: "Unknown"
         manga.author = document.selectFirst("div.uwuinfo p")?.text() ?: "Unknown"
         manga.thumbnail_url =
-            "https://" + document.selectFirst("div.uwthumb img").attr("src").replace("//", "")
+            "http:" + document.selectFirst("div.uwthumb img").attr("src")
         manga.description =
             document.selectFirst("div.asTBcell p")?.html()?.replace("<br>", "\n")
 
@@ -103,7 +104,7 @@ class wnacg : ParsedHttpSource() {
         val galleryaid =
             response.body!!.string()
         return regex.findAll(galleryaid).mapIndexedTo(ArrayList()) { index, match ->
-            Page(index, imageUrl = "https:" + match.value)
+            Page(index, imageUrl = "http:" + match.value)
         }
     }
 
