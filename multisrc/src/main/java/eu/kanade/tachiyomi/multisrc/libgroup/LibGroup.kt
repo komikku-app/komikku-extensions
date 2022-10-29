@@ -463,7 +463,7 @@ abstract class LibGroup(
 
     private fun checkImage(url: String): Boolean {
         val response = client.newCall(Request.Builder().url(url).head().headers(headers).build()).execute()
-        return response.isSuccessful && (response.header("content-length", "0")?.toInt()!! > 320)
+        return response.isSuccessful && (response.header("content-length", "0")?.toInt()!! > 600)
     }
 
     override fun fetchImageUrl(page: Page): Observable<String> {
