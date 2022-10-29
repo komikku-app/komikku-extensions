@@ -47,6 +47,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.io.IOException
 import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -57,6 +58,8 @@ import kotlin.random.Random
 class Remanga : ConfigurableSource, HttpSource() {
 
     override val name = "Remanga"
+
+    override val id: Long = 8983242087533137528
 
     override val lang = "ru"
 
@@ -88,6 +91,9 @@ class Remanga : ConfigurableSource, HttpSource() {
             ?.let { cookie -> URLDecoder.decode(cookie.value, "UTF-8") }
             ?.let { jsonString -> json.decodeFromString<UserDto>(jsonString) }
             ?: return chain.proceed(request)
+
+        if (authCookie.access_token == null)
+            throw IOException("Авторизация слетела. Очистите cookies и переавторизуйтесь.")
 
         USER_ID = authCookie.id.toString()
         val authRequest = request.newBuilder()
