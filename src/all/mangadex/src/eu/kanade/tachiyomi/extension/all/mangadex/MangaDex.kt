@@ -9,10 +9,13 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AggregateDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.AggregateVolume
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AtHomeDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterListDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.CoverListDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ListDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDataDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaListDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.RelationshipDto
@@ -26,7 +29,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import okhttp3.CacheControl
 import okhttp3.Headers
@@ -97,9 +99,10 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         val hasMoreResults = mangaListDto.limit + mangaListDto.offset < mangaListDto.total
 
         val coverSuffix = preferences.coverQuality
+        val firstVolumeCovers = fetchFirstVolumeCovers(mangaListDto.data).orEmpty()
 
         val mangaList = mangaListDto.data.map { mangaDataDto ->
-            val fileName = mangaDataDto.relationships
+            val fileName = firstVolumeCovers[mangaDataDto.id] ?: mangaDataDto.relationships
                 .firstOrNull { it.type.equals(MDConstants.coverArt, true) }
                 ?.attributes?.fileName
             helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
@@ -129,13 +132,14 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         val mangaRequest = GET(mangaUrl.build().toString(), headers, CacheControl.FORCE_NETWORK)
         val mangaResponse = client.newCall(mangaRequest).execute()
         val mangaListDto = mangaResponse.parseAs<MangaListDto>()
+        val firstVolumeCovers = fetchFirstVolumeCovers(mangaListDto.data).orEmpty()
 
         val mangaDtoMap = mangaListDto.data.associateBy({ it.id }, { it })
 
         val coverSuffix = preferences.coverQuality
 
         val mangaList = mangaIds.mapNotNull { mangaDtoMap[it] }.map { mangaDataDto ->
-            val fileName = mangaDataDto.relationships
+            val fileName = firstVolumeCovers[mangaDataDto.id] ?: mangaDataDto.relationships
                 .firstOrNull { it.type.equals(MDConstants.coverArt, true) }
                 ?.attributes?.fileName
             helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
@@ -182,7 +186,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                     .map { searchMangaListRequest(it, page) }
 
             else ->
-                return super.fetchSearchManga(page, query, filters)
+                return super.fetchSearchManga(page, query.trim(), filters)
         }
     }
 
@@ -292,11 +296,12 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         }
 
         val mangaListDto = response.parseAs<MangaListDto>()
+        val firstVolumeCovers = fetchFirstVolumeCovers(mangaListDto.data).orEmpty()
 
         val coverSuffix = preferences.coverQuality
 
         val mangaList = mangaListDto.data.map { mangaDataDto ->
-            val fileName = mangaDataDto.relationships
+            val fileName = firstVolumeCovers[mangaDataDto.id] ?: mangaDataDto.relationships
                 .firstOrNull { it.type.equals(MDConstants.coverArt, true) }
                 ?.attributes?.fileName
             helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
@@ -365,33 +370,74 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         return helper.createManga(
             manga.data,
             fetchSimpleChapterList(manga, dexLang),
+            fetchFirstVolumeCover(manga),
             dexLang,
             preferences.coverQuality
         )
     }
 
     /**
-     * get a quick-n-dirty list of the chapters to be used in determining the manga status.
-     * uses the 'aggregate' endpoint
+     * Get a quick-n-dirty list of the chapters to be used in determining the manga status.
+     * Uses the 'aggregate' endpoint.
+     *
      * @see MangaDexHelper.getPublicationStatus
      * @see AggregateDto
      */
-    private fun fetchSimpleChapterList(manga: MangaDto, langCode: String): List<String> {
+    private fun fetchSimpleChapterList(manga: MangaDto, langCode: String): Map<String, AggregateVolume> {
         val url = "${MDConstants.apiMangaUrl}/${manga.data.id}/aggregate?translatedLanguage[]=$langCode"
         val response = client.newCall(GET(url, headers)).execute()
-        val chapters: AggregateDto
 
-        try {
-            chapters = response.parseAs()
-        } catch (e: SerializationException) {
-            return emptyList()
+        return runCatching { response.parseAs<AggregateDto>() }
+            .getOrNull()?.volumes.orEmpty()
+    }
+
+    /**
+     * Attempt to get the first volume cover if the setting is enabled.
+     * Uses the 'covers' endpoint.
+     *
+     * @see CoverListDto
+     */
+    private fun fetchFirstVolumeCover(manga: MangaDto): String? {
+        return fetchFirstVolumeCovers(listOf(manga.data))?.get(manga.data.id)
+    }
+
+    /**
+     * Attempt to get the first volume cover if the setting is enabled.
+     * Uses the 'covers' endpoint.
+     *
+     * @see CoverListDto
+     */
+    private fun fetchFirstVolumeCovers(mangaList: List<MangaDataDto>): Map<String, String>? {
+        if (!preferences.tryUsingFirstVolumeCover) {
+            return null
         }
 
-        if (chapters.volumes.isNullOrEmpty()) return emptyList()
+        val mangaMap = mangaList.associate { it.id to it.attributes }
+            .filterValues { !it.originalLanguage.isNullOrEmpty() }
+        val locales = mangaList.mapNotNull { it.attributes.originalLanguage }.distinct()
+        val limit = (mangaMap.size * locales.size).coerceAtMost(100)
 
-        return chapters.volumes.values
-            .flatMap { it.chapters.values }
-            .map { it.chapter }
+        val apiUrl = "${MDConstants.apiUrl}/cover".toHttpUrl().newBuilder()
+            .addQueryParameter("order[volume]", "asc")
+            .addQueryParameter("manga[]", mangaMap.keys)
+            .addQueryParameter("locales[]", locales.toSet())
+            .addQueryParameter("limit", limit.toString())
+            .addQueryParameter("offset", "0")
+            .toString()
+
+        val result = runCatching {
+            client.newCall(GET(apiUrl, headers)).execute().parseAs<CoverListDto>().data
+        }
+
+        val covers = result.getOrNull() ?: return null
+
+        return covers
+            .groupBy { it.relationships.find { r -> r.type == MDConstants.manga }!!.id }
+            .mapValues {
+                it.value.find { c -> c.attributes?.locale == mangaMap[it.key]?.originalLanguage }
+            }
+            .filterValues { !it?.attributes?.fileName.isNullOrEmpty() }
+            .mapValues { it.value!!.attributes!!.fileName!! }
     }
 
     // Chapter list section
@@ -525,6 +571,21 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             }
         }
 
+        val tryUsingFirstVolumeCoverPref = SwitchPreferenceCompat(screen.context).apply {
+            key = MDConstants.getTryUsingFirstVolumeCoverPrefKey(dexLang)
+            title = helper.intl.tryUsingFirstVolumeCover
+            summary = helper.intl.tryUsingFirstVolumeCoverSummary
+            setDefaultValue(MDConstants.tryUsingFirstVolumeCoverDefault)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+
+                preferences.edit()
+                    .putBoolean(MDConstants.getDataSaverPreferenceKey(dexLang), checkValue)
+                    .commit()
+            }
+        }
+
         val dataSaverPref = SwitchPreferenceCompat(screen.context).apply {
             key = MDConstants.getDataSaverPreferenceKey(dexLang)
             title = helper.intl.dataSaver
@@ -636,6 +697,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         }
 
         screen.addPreference(coverQualityPref)
+        screen.addPreference(tryUsingFirstVolumeCoverPref)
         screen.addPreference(dataSaverPref)
         screen.addPreference(standardHttpsPortPref)
         screen.addPreference(contentRatingPref)
@@ -679,6 +741,12 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
     private val SharedPreferences.coverQuality
         get() = getString(MDConstants.getCoverQualityPreferenceKey(dexLang), "")
+
+    private val SharedPreferences.tryUsingFirstVolumeCover
+        get() = getBoolean(
+            MDConstants.getTryUsingFirstVolumeCoverPrefKey(dexLang),
+            MDConstants.tryUsingFirstVolumeCoverDefault
+        )
 
     private val SharedPreferences.blockedGroups
         get() = getString(MDConstants.getBlockedGroupsPrefKey(dexLang), "")

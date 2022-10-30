@@ -5,18 +5,18 @@ import android.text.TextWatcher
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.AggregateVolume
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AtHomeDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterDataDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaAttributesDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDataDto
-import eu.kanade.tachiyomi.extension.all.mangadex.dto.asMdMap
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.toLocalizedString
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
 import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -27,7 +27,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class MangaDexHelper(private val lang: String) {
+class MangaDexHelper(lang: String) {
 
     val mdFilters = MangaDexFilters()
 
@@ -98,7 +98,11 @@ class MangaDexHelper(private val lang: String) {
      * Maps dex status to Tachi status.
      * Adapted from the MangaDex handler from TachiyomiSY.
      */
-    fun getPublicationStatus(attr: MangaAttributesDto, chapters: List<String>): Int {
+    fun getPublicationStatus(attr: MangaAttributesDto, volumes: Map<String, AggregateVolume>): Int {
+        val chaptersList = volumes.values
+            .flatMap { it.chapters.values }
+            .map { it.chapter }
+
         val tempStatus = when (attr.status) {
             "ongoing" -> SManga.ONGOING
             "cancelled" -> SManga.CANCELLED
@@ -110,10 +114,13 @@ class MangaDexHelper(private val lang: String) {
         val publishedOrCancelled = tempStatus == SManga.PUBLISHING_FINISHED ||
             tempStatus == SManga.CANCELLED
 
-        return if (chapters.contains(attr.lastChapter) && publishedOrCancelled) {
-            SManga.COMPLETED
-        } else {
-            tempStatus
+        val isOneShot = attr.tags.any { it.id == MDConstants.tagOneShotUuid } &&
+            attr.tags.none { it.id == MDConstants.tagAnthologyUuid }
+
+        return when {
+            chaptersList.contains(attr.lastChapter) && publishedOrCancelled -> SManga.COMPLETED
+            isOneShot && volumes["none"]?.chapters?.get("none") != null -> SManga.COMPLETED
+            else -> tempStatus
         }
     }
 
@@ -210,15 +217,14 @@ class MangaDexHelper(private val lang: String) {
     ): SManga {
         return SManga.create().apply {
             url = "/manga/${mangaDataDto.id}"
-            val titleMap = mangaDataDto.attributes.title.asMdMap()
+            val titleMap = mangaDataDto.attributes.title.toLocalizedString()
             val dirtyTitle = titleMap[lang]
                 ?: titleMap["en"]
                 ?: titleMap["ja-ro"]
-                ?: mangaDataDto.attributes.altTitles.jsonArray
-                    .find {
-                        val altTitle = it.asMdMap()
-                        (altTitle[lang] ?: altTitle["en"]) != null
-                    }?.asMdMap()?.values?.singleOrNull()
+                ?: mangaDataDto.attributes.altTitles
+                    .map { it.toLocalizedString() }
+                    .find { (it[lang] ?: it["en"]) !== null }
+                    ?.values?.singleOrNull()
                 ?: titleMap["ja"] // romaji titles are sometimes ja (and are not altTitles)
                 ?: titleMap.values.firstOrNull() // use literally anything from title as a last resort
             title = cleanString(dirtyTitle ?: "")
@@ -237,7 +243,8 @@ class MangaDexHelper(private val lang: String) {
      */
     fun createManga(
         mangaDataDto: MangaDataDto,
-        chapters: List<String>,
+        chapters: Map<String, AggregateVolume>,
+        firstVolumeCover: String?,
         lang: String,
         coverSuffix: String?
     ): SManga {
@@ -275,7 +282,7 @@ class MangaDexHelper(private val lang: String) {
                 .mapNotNull { it.attributes!!.name }
                 .distinct()
 
-            val coverFileName = mangaDataDto.relationships
+            val coverFileName = firstVolumeCover ?: mangaDataDto.relationships
                 .firstOrNull { it.type.equals(MDConstants.coverArt, true) }
                 ?.attributes?.fileName
 
@@ -293,7 +300,7 @@ class MangaDexHelper(private val lang: String) {
             val genreList = MDConstants.tagGroupsOrder.flatMap { genresMap[it].orEmpty() } +
                 nonGenres.filterNotNull()
 
-            val desc = attr.description.asMdMap()
+            val desc = attr.description.toLocalizedString()
 
             return createBasicManga(mangaDataDto, coverFileName, coverSuffix, lang).apply {
                 description = cleanString(desc[lang] ?: desc["en"] ?: "")

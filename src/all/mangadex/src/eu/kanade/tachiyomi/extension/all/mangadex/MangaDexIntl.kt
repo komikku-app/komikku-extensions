@@ -96,18 +96,18 @@ class MangaDexIntl(lang: String) {
         BRAZILIAN_PORTUGUESE, PORTUGUESE ->
             "Ative para fazer requisições em somente servidores de imagem que usem a porta 443. " +
                 "Isso permite com que usuários com regras mais restritas de firewall possam acessar " +
-                "as imagens do MangaDex."
+                "as imagens do $MANGADEX_NAME."
         SPANISH_LATAM, SPANISH ->
             "Habilite esta opción solicitar las imágenes a los servidores que usan el puerto 443. " +
                 "Esto permite a los usuarios con restricciones estrictas de firewall acceder " +
-                "a las imagenes en MangaDex"
+                "a las imagenes en $MANGADEX_NAME"
         RUSSIAN ->
             "Запрашивает изображения только с серверов которые используют порт 443. " +
                 "Это позволяет пользователям со строгими правилами брандмауэра загружать " +
-                "изображения с Mangadex."
+                "изображения с $MANGADEX_NAME."
         else ->
             "Enable to only request image servers that use port 443. This allows users with " +
-                "stricter firewall restrictions to access MangaDex images"
+                "stricter firewall restrictions to access $MANGADEX_NAME images"
     }
 
     val contentRating: String = when (availableLang) {
@@ -263,6 +263,20 @@ class MangaDexIntl(lang: String) {
         else ->
             "Chapters from blocked uploaders will not show up in Latest or Manga feed. " +
                 "Enter as a Comma-separated list of uploader UUIDs"
+    }
+
+    val tryUsingFirstVolumeCover: String = when (availableLang) {
+        BRAZILIAN_PORTUGUESE, PORTUGUESE -> "Tentar usar a capa do primeiro volume como capa"
+        else -> "Attempt to use the first volume cover as cover"
+    }
+
+    val tryUsingFirstVolumeCoverSummary: String = when (availableLang) {
+        BRAZILIAN_PORTUGUESE, PORTUGUESE ->
+            "Pode ser necessário atualizar os itens já adicionados na biblioteca. " +
+                "Alternativamente, limpe o banco de dados para as novas capas aparecerem."
+        else ->
+            "May need to manually refresh entries already in library. " +
+                "Otherwise, clear database to have new covers to show up."
     }
 
     val publicationDemographic: String = when (availableLang) {
@@ -748,7 +762,7 @@ class MangaDexIntl(lang: String) {
         BRAZILIAN_PORTUGUESE, PORTUGUESE -> "Pós-apocalíptico"
         SPANISH_LATAM, SPANISH -> "Post-Apocalíptico"
         RUSSIAN -> "Постапокалиптика"
-        else -> "Post-Apocalypytic"
+        else -> "Post-Apocalyptic"
     }
 
     val themePsychological: String = when (availableLang) {

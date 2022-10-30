@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.mangadex.dto
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -45,7 +46,7 @@ data class MangaDataDto(
 @Serializable
 data class MangaAttributesDto(
     val title: JsonElement,
-    val altTitles: JsonElement,
+    val altTitles: JsonArray,
     val description: JsonElement,
     val originalLanguage: String?,
     val lastVolume: String?,
@@ -67,8 +68,14 @@ data class TagAttributesDto(
     val group: String
 )
 
-fun JsonElement.asMdMap(): Map<String, String> {
-    return runCatching {
-        (this as JsonObject).map { it.key to (it.value.jsonPrimitive.contentOrNull ?: "") }.toMap()
-    }.getOrElse { emptyMap() }
+typealias LocalizedString = Map<String, String>
+
+/**
+ * Temporary workaround while Dex API still returns arrays instead of objects
+ * in the places that uses [LocalizedString].
+ */
+fun JsonElement.toLocalizedString(): LocalizedString {
+    return (this as? JsonObject)?.entries
+        ?.associate { (key, value) -> key to (value.jsonPrimitive.contentOrNull ?: "") }
+        .orEmpty()
 }
