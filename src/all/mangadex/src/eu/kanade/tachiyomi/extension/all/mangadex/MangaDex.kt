@@ -251,7 +251,11 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             }
         }
 
-        val finalUrl = helper.mdFilters.addFiltersToUrl(tempUrl, filters, dexLang)
+        val finalUrl = helper.mdFilters.addFiltersToUrl(
+            url = tempUrl,
+            filters = filters.ifEmpty { getFilterList() },
+            dexLang = dexLang
+        )
 
         return GET(finalUrl, headers, CacheControl.FORCE_NETWORK)
     }
@@ -408,7 +412,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
      * @see CoverListDto
      */
     private fun fetchFirstVolumeCovers(mangaList: List<MangaDataDto>): Map<String, String>? {
-        if (!preferences.tryUsingFirstVolumeCover) {
+        if (!preferences.tryUsingFirstVolumeCover || mangaList.isEmpty()) {
             return null
         }
 
