@@ -581,7 +581,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                 val checkValue = newValue as Boolean
 
                 preferences.edit()
-                    .putBoolean(MDConstants.getDataSaverPreferenceKey(dexLang), checkValue)
+                    .putBoolean(MDConstants.getTryUsingFirstVolumeCoverPrefKey(dexLang), checkValue)
                     .commit()
             }
         }
