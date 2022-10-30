@@ -88,6 +88,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Phoenix Fansub", "https://phoenixfansub.com", "es", overrideVersionCode = 2),
         SingleLang("Pi Scans", "https://piscans.com", "id"),
         SingleLang("PMScans", "https://rackusreads.com", "en", overrideVersionCode = 3),
+        SingleLang("Raiki Scan", "https://raikiscan.com", "es"),
         SingleLang("Rawkuma", "https://rawkuma.com/", "ja"),
         SingleLang("Readkomik", "https://readkomik.com", "en", className = "ReadKomik", overrideVersionCode = 1),
         SingleLang("Realm Scans", "https://realmscans.com", "en", overrideVersionCode = 3),
