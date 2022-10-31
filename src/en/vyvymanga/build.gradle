@@ -5,7 +5,8 @@ ext {
     extName = 'VyvyManga'
     pkgNameSuffix = 'en.vyvymanga'
     extClass = '.VyvyManga'
-    extVersionCode = 2
+    extVersionCode = 3
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
