@@ -1,3 +1,5 @@
+package eu.kanade.tachiyomi.extension.ru.remanga.dto
+
 import kotlinx.serialization.Serializable
 
 @Serializable

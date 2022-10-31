@@ -1,16 +1,5 @@
 package eu.kanade.tachiyomi.extension.ru.remanga
 
-import BookDto
-import BranchesDto
-import ChunksPageDto
-import LibraryDto
-import MangaDetDto
-import MyLibraryDto
-import PageDto
-import PageWrapperDto
-import SeriesWrapperDto
-import TagsDto
-import UserDto
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.Application
@@ -18,6 +7,17 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.widget.Toast
 import androidx.preference.ListPreference
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.BookDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.BranchesDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.ChunksPageDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.LibraryDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.MangaDetDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.MyLibraryDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.PageDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.PageWrapperDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.SeriesWrapperDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.TagsDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.UserDto
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess

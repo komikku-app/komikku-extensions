@@ -1,15 +1,5 @@
 package eu.kanade.tachiyomi.extension.ru.newbie
 
-import BookDto
-import BranchesDto
-import LibraryDto
-import MangaDetDto
-import PageDto
-import PageWrapperDto
-import SearchLibraryDto
-import SearchWrapperDto
-import SeriesWrapperDto
-import SubSearchDto
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.Application
@@ -17,6 +7,16 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.widget.Toast
 import androidx.preference.ListPreference
+import eu.kanade.tachiyomi.extension.ru.newbie.dto.BookDto
+import eu.kanade.tachiyomi.extension.ru.newbie.dto.BranchesDto
+import eu.kanade.tachiyomi.extension.ru.newbie.dto.LibraryDto
+import eu.kanade.tachiyomi.extension.ru.newbie.dto.MangaDetDto
+import eu.kanade.tachiyomi.extension.ru.newbie.dto.PageDto
+import eu.kanade.tachiyomi.extension.ru.newbie.dto.PageWrapperDto
+import eu.kanade.tachiyomi.extension.ru.newbie.dto.SearchLibraryDto
+import eu.kanade.tachiyomi.extension.ru.newbie.dto.SearchWrapperDto
+import eu.kanade.tachiyomi.extension.ru.newbie.dto.SeriesWrapperDto
+import eu.kanade.tachiyomi.extension.ru.newbie.dto.SubSearchDto
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess

@@ -1,3 +1,5 @@
+package eu.kanade.tachiyomi.extension.ru.newbie.dto
+
 import kotlinx.serialization.Serializable
 
 // Catalog API
