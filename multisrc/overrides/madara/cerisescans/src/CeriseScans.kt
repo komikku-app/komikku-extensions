@@ -9,12 +9,14 @@ import java.util.concurrent.TimeUnit
 
 class CeriseScans : Madara(
     "Cerise Scans",
-    "https://cerisescans.com",
+    "https://cerisescan.com",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
+
+    override val useNewChapterEndpoint = true
 }
