@@ -193,7 +193,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Manga Keyfi", "https://mangakeyfi.net", "tr"),
         SingleLang("Manga Kio", "https://mangakio.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Manga Kiss", "https://mangakiss.org", "en", overrideVersionCode = 1),
-        SingleLang("Manga Leveling", "https://mangaleveling.com", "en"),
+        SingleLang("Manga Leveling", "https://mangaleveling.com", "en", overrideVersionCode = 1),
         SingleLang("Manga Lord", "https://mangalord.com", "en", overrideVersionCode = 1),
         SingleLang("Manga Mitsu", "https://mangamitsu.com", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Manga One Love", "https://mangaonelove.site/", "ru", isNsfw = true),
