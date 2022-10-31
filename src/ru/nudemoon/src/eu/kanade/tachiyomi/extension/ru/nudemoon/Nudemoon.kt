@@ -116,7 +116,7 @@ class Nudemoon : ParsedHttpSource() {
 
         manga.thumbnail_url = element.select("img.news_pic2").attr("abs:src")
         element.select("a:has(h2)").let {
-            manga.title = it.text()
+            manga.title = it.text().substringBefore(" / ").substringBefore(" №")
             manga.setUrlWithoutDomain(it.attr("href"))
         }
 
@@ -137,8 +137,10 @@ class Nudemoon : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
-        manga.author = document.select("table.news_pic2 a[href*=mangaka]").text()
-        manga.genre = document.select("table.news_pic2 div.tag-links a").joinToString { it.text() }
+        val infoElement = document.select("table.news_pic2").first()
+        manga.title = document.select("h1").first().text().substringBefore(" / ").substringBefore(" №")
+        manga.author = infoElement.select("a[href*=mangaka]").text()
+        manga.genre = infoElement.select("div.tag-links a").joinToString { it.text() }
         manga.description = document.select(".description").text()
         manga.thumbnail_url = document.selectFirst("meta[property=og:image]").attr("abs:content")
 
@@ -152,7 +154,6 @@ class Nudemoon : ParsedHttpSource() {
     override fun chapterListSelector() = popularMangaSelector()
 
     override fun chapterListParse(response: Response): List<SChapter> = mutableListOf<SChapter>().apply {
-        val floatRegex = Regex("^([+-]?\\d*\\.?\\d*)\$")
         val document = response.asJsoup()
 
         val allPageElement = document.select("td.button a:contains(Все главы)")
@@ -175,7 +176,8 @@ class Nudemoon : ParsedHttpSource() {
                 .forEach {
                     val chapter = SChapter.create()
                     val nameAndUrl = it.select("tr[valign=top] a:has(h2)")
-                    chapter.name = nameAndUrl.select("h2").text()
+                    val chapterName = nameAndUrl.select("h2").text()
+                    chapter.name = chapterName
                     chapter.setUrlWithoutDomain(nameAndUrl.attr("abs:href"))
                     val informBlock = it.select("tr[valign=top] td[align=left]")
                     chapter.scanlator = informBlock.select("a[href*=perevod]").text()
@@ -188,7 +190,7 @@ class Nudemoon : ParsedHttpSource() {
                                 0
                             }
                         }
-                    chapter.chapter_number = floatRegex.find(chapter.name).toString().toFloatOrNull() ?: -1f
+                    chapter.chapter_number = chapterName.substringAfter("№").substringBefore(" ").toFloatOrNull() ?: -1f
                     add(chapter)
                 }
         }
@@ -201,7 +203,7 @@ class Nudemoon : ParsedHttpSource() {
         val chapterUrl = element.baseUri()
 
         chapter.setUrlWithoutDomain(chapterUrl)
-        chapter.name = chapterName
+        chapter.name = "$chapterName Сингл"
         chapter.scanlator = element.select("table.news_pic2 a[href*=perevod]").text()
         chapter.date_upload = element.select("table.news_pic2 span.small2:contains(/)").text().let {
             try {
@@ -210,6 +212,7 @@ class Nudemoon : ParsedHttpSource() {
                 0
             }
         }
+        chapter.chapter_number = 0F
 
         return chapter
     }
