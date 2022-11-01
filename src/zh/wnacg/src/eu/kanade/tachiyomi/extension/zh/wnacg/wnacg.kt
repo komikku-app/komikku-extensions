@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -45,7 +46,11 @@ class wnacg : ParsedHttpSource() {
             }
             return popularMangaRequest(page)
         }
-        return GET("$baseUrl/search/index.php?q=$query&p=$page", headers)
+        val builder = "$baseUrl/search/index.php".toHttpUrl().newBuilder()
+            .addQueryParameter("s", "create_time_DESC")
+            .addQueryParameter("q", query)
+            .addQueryParameter("p", page.toString())
+        return GET(builder.toString(), headers)
     }
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
