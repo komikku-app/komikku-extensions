@@ -189,6 +189,8 @@ abstract class HeanCms(
             .substringAfterLast("/")
             .replace(TIMESTAMP_REGEX, "")
 
+        fetchAllTitles()
+
         val currentSlug = seriesSlugMap?.get(seriesSlug) ?: seriesSlug
 
         val apiHeaders = headersBuilder()
