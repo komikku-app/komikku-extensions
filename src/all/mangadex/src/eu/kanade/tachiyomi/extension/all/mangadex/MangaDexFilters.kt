@@ -1,6 +1,9 @@
 package eu.kanade.tachiyomi.extension.all.mangadex
 
 import android.content.SharedPreferences
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.ContentRatingDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.PublicationDemographicDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.StatusDto
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import okhttp3.HttpUrl
@@ -108,21 +111,17 @@ class MangaDexFilters {
         )
 
         return listOf(
-            ContentRating(intl.contentRatingSafe, MDConstants.contentRatingPrefValSafe).apply {
-                state = contentRatings
-                    ?.contains(MDConstants.contentRatingPrefValSafe) ?: true
+            ContentRating(intl.contentRatingSafe, ContentRatingDto.SAFE.value).apply {
+                state = contentRatings?.contains(MDConstants.contentRatingPrefValSafe) ?: true
             },
-            ContentRating(intl.contentRatingSuggestive, MDConstants.contentRatingPrefValSuggestive).apply {
-                state = contentRatings
-                    ?.contains(MDConstants.contentRatingPrefValSuggestive) ?: true
+            ContentRating(intl.contentRatingSuggestive, ContentRatingDto.SUGGESTIVE.value).apply {
+                state = contentRatings?.contains(MDConstants.contentRatingPrefValSuggestive) ?: true
             },
-            ContentRating(intl.contentRatingErotica, MDConstants.contentRatingPrefValErotica).apply {
-                state = contentRatings
-                    ?.contains(MDConstants.contentRatingPrefValErotica) ?: false
+            ContentRating(intl.contentRatingErotica, ContentRatingDto.EROTICA.value).apply {
+                state = contentRatings?.contains(MDConstants.contentRatingPrefValErotica) ?: false
             },
-            ContentRating(intl.contentRatingPornographic, MDConstants.contentRatingPrefValPornographic).apply {
-                state = contentRatings
-                    ?.contains(MDConstants.contentRatingPrefValPornographic) ?: false
+            ContentRating(intl.contentRatingPornographic, ContentRatingDto.PORNOGRAPHIC.value).apply {
+                state = contentRatings?.contains(MDConstants.contentRatingPrefValPornographic) ?: false
             },
         )
     }
@@ -142,11 +141,11 @@ class MangaDexFilters {
     }
 
     private fun getDemographics(intl: MangaDexIntl) = listOf(
-        Demographic(intl.publicationDemographicNone, "none"),
-        Demographic(intl.publicationDemographicShounen, "shounen"),
-        Demographic(intl.publicationDemographicShoujo, "shoujo"),
-        Demographic(intl.publicationDemographicSeinen, "seinen"),
-        Demographic(intl.publicationDemographicJosei, "josei")
+        Demographic(intl.publicationDemographicNone, PublicationDemographicDto.NONE.value),
+        Demographic(intl.publicationDemographicShounen, PublicationDemographicDto.SHOUNEN.value),
+        Demographic(intl.publicationDemographicShoujo, PublicationDemographicDto.SHOUJO.value),
+        Demographic(intl.publicationDemographicSeinen, PublicationDemographicDto.SEINEN.value),
+        Demographic(intl.publicationDemographicJosei, PublicationDemographicDto.JOSEI.value)
     )
 
     private class Status(name: String, val value: String) : Filter.CheckBox(name)
@@ -164,10 +163,10 @@ class MangaDexFilters {
     }
 
     private fun getStatus(intl: MangaDexIntl) = listOf(
-        Status(intl.statusOngoing, "ongoing"),
-        Status(intl.statusCompleted, "completed"),
-        Status(intl.statusHiatus, "hiatus"),
-        Status(intl.statusCancelled, "cancelled"),
+        Status(intl.statusOngoing, StatusDto.ONGOING.value),
+        Status(intl.statusCompleted, StatusDto.COMPLETED.value),
+        Status(intl.statusHiatus, StatusDto.HIATUS.value),
+        Status(intl.statusCancelled, StatusDto.CANCELLED.value),
     )
 
     data class Sortable(val title: String, val value: String) {

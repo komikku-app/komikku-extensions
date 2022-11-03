@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.mangadex
 
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.ContentRatingDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.PublicationDemographicDto
 import java.text.Collator
 import java.util.Locale
 
@@ -162,18 +164,18 @@ class MangaDexIntl(lang: String) {
         else -> "Pornographic"
     }
 
-    private val contentRatingMap: Map<String, String> = mapOf(
-        "safe" to contentRatingSafe,
-        "suggestive" to contentRatingSuggestive,
-        "erotica" to contentRatingErotica,
-        "pornographic" to contentRatingPornographic
+    private val contentRatingMap: Map<ContentRatingDto, String> = mapOf(
+        ContentRatingDto.SAFE to contentRatingSafe,
+        ContentRatingDto.SUGGESTIVE to contentRatingSuggestive,
+        ContentRatingDto.EROTICA to contentRatingErotica,
+        ContentRatingDto.PORNOGRAPHIC to contentRatingPornographic
     )
 
-    fun contentRatingGenre(contentRatingKey: String): String = when (availableLang) {
-        BRAZILIAN_PORTUGUESE, PORTUGUESE -> "Classificação: ${contentRatingMap[contentRatingKey]}"
-        SPANISH_LATAM, SPANISH -> "Clasificación: ${contentRatingMap[contentRatingKey]}"
-        RUSSIAN -> "Рейтинг контента: ${contentRatingMap[contentRatingKey]}"
-        else -> "$contentRating: ${contentRatingMap[contentRatingKey]}"
+    fun contentRatingGenre(contentRating: ContentRatingDto): String = when (availableLang) {
+        BRAZILIAN_PORTUGUESE, PORTUGUESE -> "Classificação: ${contentRatingMap[contentRating]}"
+        SPANISH_LATAM, SPANISH -> "Clasificación: ${contentRatingMap[contentRating]}"
+        RUSSIAN -> "Рейтинг контента: ${contentRatingMap[contentRating]}"
+        else -> "${this.contentRating}: ${contentRatingMap[contentRating]}"
     }
 
     val originalLanguage: String = when (availableLang) {
@@ -311,6 +313,14 @@ class MangaDexIntl(lang: String) {
     val publicationDemographicJosei: String = when (availableLang) {
         RUSSIAN -> "Дзёсэй"
         else -> "Josei"
+    }
+
+    fun publicationDemographic(demographic: PublicationDemographicDto): String = when (demographic) {
+        PublicationDemographicDto.NONE -> publicationDemographicNone
+        PublicationDemographicDto.SHOUNEN -> publicationDemographicShounen
+        PublicationDemographicDto.SHOUJO -> publicationDemographicShoujo
+        PublicationDemographicDto.SEINEN -> publicationDemographicSeinen
+        PublicationDemographicDto.JOSEI -> publicationDemographicJosei
     }
 
     val status: String = when (availableLang) {

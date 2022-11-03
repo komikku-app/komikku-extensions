@@ -13,12 +13,12 @@ import eu.kanade.tachiyomi.extension.all.mangadex.dto.AggregateVolume
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AtHomeDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ChapterListDto
-import eu.kanade.tachiyomi.extension.all.mangadex.dto.CoverListDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.CoverArtDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.CoverArtListDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ListDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDataDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaListDto
-import eu.kanade.tachiyomi.extension.all.mangadex.dto.RelationshipDto
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -103,7 +103,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
         val mangaList = mangaListDto.data.map { mangaDataDto ->
             val fileName = firstVolumeCovers[mangaDataDto.id] ?: mangaDataDto.relationships
-                .firstOrNull { it.type.equals(MDConstants.coverArt, true) }
+                .filterIsInstance<CoverArtDto>()
+                .firstOrNull()
                 ?.attributes?.fileName
             helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
         }
@@ -118,7 +119,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
         val mangaIds = chapterListDto.data
             .flatMap { it.relationships }
-            .filter { it.type == MDConstants.manga }
+            .filterIsInstance<MangaDataDto>()
             .map { it.id }
             .distinct()
             .toSet()
@@ -140,7 +141,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
         val mangaList = mangaIds.mapNotNull { mangaDtoMap[it] }.map { mangaDataDto ->
             val fileName = firstVolumeCovers[mangaDataDto.id] ?: mangaDataDto.relationships
-                .firstOrNull { it.type.equals(MDConstants.coverArt, true) }
+                .filterIsInstance<CoverArtDto>()
+                .firstOrNull()
                 ?.attributes?.fileName
             helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
         }
@@ -162,6 +164,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                 MDConstants.defaultBlockedGroups + preferences.blockedGroups
             )
             .addQueryParameter("excludedUploaders[]", preferences.blockedUploaders)
+            .addQueryParameter("includeFuturePublishAt", "0")
+            .addQueryParameter("includeEmptyPages", "0")
 
         return GET(url.build().toString(), headers, CacheControl.FORCE_NETWORK)
     }
@@ -169,24 +173,39 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     // SEARCH section
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        when {
+        return when {
             query.startsWith(MDConstants.prefixChSearch) ->
-                return getMangaIdFromChapterId(query.removePrefix(MDConstants.prefixChSearch)).flatMap { manga_id ->
-                    super.fetchSearchManga(page, MDConstants.prefixIdSearch + manga_id, filters)
-                }
+                getMangaIdFromChapterId(query.removePrefix(MDConstants.prefixChSearch))
+                    .flatMap { mangaId ->
+                        super.fetchSearchManga(
+                            page = page,
+                            query = MDConstants.prefixIdSearch + mangaId,
+                            filters = filters
+                        )
+                    }
 
             query.startsWith(MDConstants.prefixUsrSearch) ->
-                return client.newCall(searchMangaUploaderRequest(page, query.removePrefix(MDConstants.prefixUsrSearch)))
+                client
+                    .newCall(
+                        request = searchMangaUploaderRequest(
+                            page = page,
+                            uploader = query.removePrefix(MDConstants.prefixUsrSearch)
+                        )
+                    )
                     .asObservableSuccess()
                     .map { latestUpdatesParse(it) }
 
             query.startsWith(MDConstants.prefixListSearch) ->
-                return client.newCall(GET(MDConstants.apiListUrl + "/" + query.removePrefix(MDConstants.prefixListSearch), headers, CacheControl.FORCE_NETWORK))
+                client
+                    .newCall(
+                        request = searchMangaListRequest(
+                            list = query.removePrefix(MDConstants.prefixListSearch)
+                        )
+                    )
                     .asObservableSuccess()
-                    .map { searchMangaListRequest(it, page) }
+                    .map { searchMangaListParse(it, page) }
 
-            else ->
-                return super.fetchSearchManga(page, query.trim(), filters)
+            else -> super.fetchSearchManga(page, query.trim(), filters)
         }
     }
 
@@ -198,8 +217,9 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                     throw Exception(helper.intl.unableToProcessChapterRequest(response.code))
                 }
 
-                response.parseAs<ChapterDto>().data.relationships
-                    .find { it.type == MDConstants.manga }!!.id
+                response.parseAs<ChapterDto>().data!!.relationships
+                    .filterIsInstance<MangaDataDto>()
+                    .firstOrNull()!!.id
             }
     }
 
@@ -223,23 +243,21 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             }
 
             query.startsWith(MDConstants.prefixGrpSearch) -> {
-                val groupID = query.removePrefix(MDConstants.prefixGrpSearch)
-                if (!helper.containsUuid(groupID)) {
+                val groupId = query.removePrefix(MDConstants.prefixGrpSearch)
+                if (!helper.containsUuid(groupId)) {
                     throw Exception(helper.intl.invalidGroupId)
                 }
 
-                tempUrl.addQueryParameter("group", groupID)
+                tempUrl.addQueryParameter("group", groupId)
             }
 
             query.startsWith(MDConstants.prefixAuthSearch) -> {
-                val authorID = query.removePrefix(MDConstants.prefixAuthSearch)
-                if (!helper.containsUuid(authorID)) {
+                val authorId = query.removePrefix(MDConstants.prefixAuthSearch)
+                if (!helper.containsUuid(authorId)) {
                     throw Exception(helper.intl.invalidAuthorId)
                 }
 
-                tempUrl
-                    .addQueryParameter("authors[]", authorID)
-                    .addQueryParameter("artists[]", authorID)
+                tempUrl.addQueryParameter("authorOrArtist", authorId)
             }
 
             else -> {
@@ -262,9 +280,13 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
     override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
 
-    private fun searchMangaListRequest(response: Response, page: Int): MangasPage {
+    private fun searchMangaListRequest(list: String): Request {
+        return GET("${MDConstants.apiListUrl}/$list", headers, CacheControl.FORCE_NETWORK)
+    }
+
+    private fun searchMangaListParse(response: Response, page: Int): MangasPage {
         val listDto = response.parseAs<ListDto>()
-        val listDtoFiltered = listDto.data.relationships.filter { it.type != "Manga" }
+        val listDtoFiltered = listDto.data!!.relationships.filterIsInstance<MangaDataDto>()
         val amount = listDtoFiltered.count()
 
         if (amount < 1) {
@@ -280,7 +302,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
         val ids = listDtoFiltered
             .filterIndexed { i, _ -> i >= minIndex && i < (minIndex + MDConstants.mangaLimit) }
-            .map(RelationshipDto::id)
+            .map(MangaDataDto::id)
             .toSet()
 
         url.addQueryParameter("ids[]", ids)
@@ -306,7 +328,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
         val mangaList = mangaListDto.data.map { mangaDataDto ->
             val fileName = firstVolumeCovers[mangaDataDto.id] ?: mangaDataDto.relationships
-                .firstOrNull { it.type.equals(MDConstants.coverArt, true) }
+                .filterIsInstance<CoverArtDto>()
+                .firstOrNull()
                 ?.attributes?.fileName
             helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
         }
@@ -321,6 +344,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             .addQueryParameter("translatedLanguage[]", dexLang)
             .addQueryParameter("order[publishAt]", "desc")
             .addQueryParameter("includeFutureUpdates", "0")
+            .addQueryParameter("includeFuturePublishAt", "0")
+            .addQueryParameter("includeEmptyPages", "0")
             .addQueryParameter("uploader", uploader)
             .addQueryParameter("originalLanguage[]", preferences.originalLanguages)
             .addQueryParameter("contentRating[]", preferences.contentRating)
@@ -372,7 +397,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         val manga = response.parseAs<MangaDto>()
 
         return helper.createManga(
-            manga.data,
+            manga.data!!,
             fetchSimpleChapterList(manga, dexLang),
             fetchFirstVolumeCover(manga),
             dexLang,
@@ -388,7 +413,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
      * @see AggregateDto
      */
     private fun fetchSimpleChapterList(manga: MangaDto, langCode: String): Map<String, AggregateVolume> {
-        val url = "${MDConstants.apiMangaUrl}/${manga.data.id}/aggregate?translatedLanguage[]=$langCode"
+        val url = "${MDConstants.apiMangaUrl}/${manga.data!!.id}/aggregate?translatedLanguage[]=$langCode"
         val response = client.newCall(GET(url, headers)).execute()
 
         return runCatching { response.parseAs<AggregateDto>() }
@@ -399,26 +424,26 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
      * Attempt to get the first volume cover if the setting is enabled.
      * Uses the 'covers' endpoint.
      *
-     * @see CoverListDto
+     * @see CoverArtListDto
      */
     private fun fetchFirstVolumeCover(manga: MangaDto): String? {
-        return fetchFirstVolumeCovers(listOf(manga.data))?.get(manga.data.id)
+        return fetchFirstVolumeCovers(listOf(manga.data!!))?.get(manga.data.id)
     }
 
     /**
      * Attempt to get the first volume cover if the setting is enabled.
      * Uses the 'covers' endpoint.
      *
-     * @see CoverListDto
+     * @see CoverArtListDto
      */
     private fun fetchFirstVolumeCovers(mangaList: List<MangaDataDto>): Map<String, String>? {
         if (!preferences.tryUsingFirstVolumeCover || mangaList.isEmpty()) {
             return null
         }
 
-        val mangaMap = mangaList.associate { it.id to it.attributes }
+        val mangaMap = mangaList.associate { it.id to it.attributes!! }
             .filterValues { !it.originalLanguage.isNullOrEmpty() }
-        val locales = mangaList.mapNotNull { it.attributes.originalLanguage }.distinct()
+        val locales = mangaList.mapNotNull { it.attributes!!.originalLanguage }.distinct()
         val limit = (mangaMap.size * locales.size).coerceAtMost(100)
 
         val apiUrl = "${MDConstants.apiUrl}/cover".toHttpUrl().newBuilder()
@@ -430,13 +455,16 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             .toString()
 
         val result = runCatching {
-            client.newCall(GET(apiUrl, headers)).execute().parseAs<CoverListDto>().data
+            client.newCall(GET(apiUrl, headers)).execute().parseAs<CoverArtListDto>().data
         }
 
         val covers = result.getOrNull() ?: return null
 
         return covers
-            .groupBy { it.relationships.find { r -> r.type == MDConstants.manga }!!.id }
+            .groupBy {
+                it.relationships.filterIsInstance<MangaDataDto>()
+                    .firstOrNull()!!.id
+            }
             .mapValues {
                 it.value.find { c -> c.attributes?.locale == mangaMap[it.key]?.originalLanguage }
             }
@@ -502,16 +530,13 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                 hasMoreResults = (limit + offset) < newChapterList.total
             }
 
-            val now = Date().time
-
-            return chapterListResults
-                .mapNotNull { helper.createChapter(it) }
-                .filter { it.date_upload <= now }
+            return chapterListResults.mapNotNull(helper::createChapter)
         } catch (e: Exception) {
             Log.e("MangaDex", "error parsing chapter list", e)
             throw e
         }
     }
+
     override fun pageListRequest(chapter: SChapter): Request {
         if (!helper.containsUuid(chapter.url)) {
             throw Exception(helper.intl.migrateWarning)

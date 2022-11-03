@@ -12,12 +12,15 @@ object MDConstants {
     const val mangaLimit = 20
     const val latestChapterLimit = 100
 
+    const val chapter = "chapter"
     const val manga = "manga"
     const val coverArt = "cover_art"
-    const val scanlator = "scanlation_group"
-    const val uploader = "user"
+    const val scanlationGroup = "scanlation_group"
+    const val user = "user"
     const val author = "author"
     const val artist = "artist"
+    const val tag = "tag"
+    const val list = "custom_list"
     const val legacyNoGroupId = "00e03853-1b96-4f41-9542-c71b8692033b"
 
     const val cdnUrl = "https://uploads.mangadex.org"

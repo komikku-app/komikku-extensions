@@ -1,28 +1,16 @@
 package eu.kanade.tachiyomi.extension.all.mangadex.dto
 
+import eu.kanade.tachiyomi.extension.all.mangadex.MDConstants
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class ChapterListDto(
-    val limit: Int,
-    val offset: Int,
-    val total: Int,
-    val data: List<ChapterDataDto>,
-)
+typealias ChapterListDto = PaginatedResponseDto<ChapterDataDto>
+
+typealias ChapterDto = ResponseDto<ChapterDataDto>
 
 @Serializable
-data class ChapterDto(
-    val result: String,
-    val data: ChapterDataDto,
-)
-
-@Serializable
-data class ChapterDataDto(
-    val id: String,
-    val type: String,
-    val attributes: ChapterAttributesDto,
-    val relationships: List<RelationshipDto>,
-)
+@SerialName(MDConstants.chapter)
+data class ChapterDataDto(override val attributes: ChapterAttributesDto? = null) : EntityDto()
 
 @Serializable
 data class ChapterAttributesDto(
@@ -32,4 +20,4 @@ data class ChapterAttributesDto(
     val pages: Int,
     val publishAt: String,
     val externalUrl: String?,
-)
+) : AttributesDto()
