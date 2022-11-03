@@ -319,6 +319,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("MR Yaoi Fansub", "https://mrtenzus.com", "pt-BR", isNsfw = true, className = "MrYaoiFansub", overrideVersionCode = 1),
         SingleLang("Muctau", "https://www.bibimanga.com", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("MurimScan", "https://murimscan.run", "en", isNsfw = true),
+        SingleLang("My Manhwa", "https://mymanhwa.net", "en"),
         SingleLang("My Universe Scanlator", "https://muscan.com.br", "pt-BR"),
         SingleLang("Mystical Merries", "https://mysticalmerries.com", "en", overrideVersionCode = 2),
         SingleLang("NeatManga", "https://neatmanga.com", "en", overrideVersionCode = 2),
