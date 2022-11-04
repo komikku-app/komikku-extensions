@@ -304,9 +304,9 @@ abstract class MangaThemesia(
     }
 
     // Filters
-    private class AuthorFilter : Filter.Text("Author")
+    protected class AuthorFilter : Filter.Text("Author")
 
-    private class YearFilter : Filter.Text("Year")
+    protected class YearFilter : Filter.Text("Year")
 
     open class SelectFilter(
         displayName: String,
