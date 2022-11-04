@@ -303,7 +303,7 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
                 var images = ${json.encodeToJsonElement(urls)};
                 beau(images);
                 images;
-                """.trimIndent()
+            """.trimIndent()
             (it.evaluate(script) as Array<Any>).map { it as String }.toList()
         }
     }

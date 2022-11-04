@@ -172,7 +172,7 @@ class Nekopost : ParsedHttpSource() {
 
     override fun popularMangaRequest(page: Int): Request {
         if (page <= 1) existingProject.clear()
-        //API has a bug that sometime it returns null on first page
+        // API has a bug that sometime it returns null on first page
         return GET("$latestMangaEndpoint/${if (firstPageNulled) page else page - 1 }", headers)
     }
 
@@ -194,7 +194,7 @@ class Nekopost : ParsedHttpSource() {
                     }
                 }
         } else {
-            firstPageNulled = true //API has a bug that sometime it returns null on first page
+            firstPageNulled = true // API has a bug that sometime it returns null on first page
             return MangasPage(emptyList(), hasNextPage = false)
         }
 

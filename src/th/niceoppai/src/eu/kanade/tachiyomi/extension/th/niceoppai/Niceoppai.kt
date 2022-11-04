@@ -87,7 +87,6 @@ class Niceoppai : ParsedHttpSource() {
                     }
 
                 MangasPage(mangas, false)
-
             }
     }
 

@@ -156,14 +156,14 @@ class Hiveworks : ParsedHttpSource() {
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         val url = manga.url
-        return client.newCall(GET(baseUrl, headers)) //Bypasses mangaDetailsRequest
+        return client.newCall(GET(baseUrl, headers)) // Bypasses mangaDetailsRequest
             .asObservableSuccess()
             .map { response ->
                 mangaDetailsParse(response, url).apply { initialized = true }
             }
     }
 
-    override fun mangaDetailsRequest(manga: SManga) = GET(manga.url, headers) //Used to open proper page in webview
+    override fun mangaDetailsRequest(manga: SManga) = GET(manga.url, headers) // Used to open proper page in webview
     override fun mangaDetailsParse(document: Document): SManga = throw Exception("Not Used")
     private fun mangaDetailsParse(response: Response, url: String): SManga {
         val document = response.asJsoup()
