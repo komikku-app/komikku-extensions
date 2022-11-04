@@ -182,18 +182,18 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
             val genreArray = arrayOf(
                 "Any",
                 "Action",
-                "Boys Love",
+                "BL",
                 "Comedy",
                 "Drama",
                 "Fantasy",
-                "Girls Love",
+                "GL",
                 "Gaming",
                 "Horror",
                 "LGBTQ+",
                 "Mystery",
                 "Romance",
-                "Science Fiction",
-                "Slice of Life"
+                "Science fiction",
+                "Slice of life"
             )
         }
     }
@@ -281,11 +281,17 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
         artist = author
         status = document.select("div.schedule span.schedule-label").text().toStatus()
         val announcementName: String? = document.select("div.series-announcement div.announcement__text p").text()
-        val announcementText: String? = document.select("div.announcement__body p.js-announcement-text").text()
-        description = if (announcementName.isNullOrEmpty() || announcementText.isNullOrEmpty()) {
-            document.select("div.row-body span.description__body").text()
+
+        if (announcementName!!.contains("Hiatus")) {
+            status = SManga.ON_HIATUS
+            description = document.select("div.row-body span.description__body").text()
         } else {
-            announcementName.plus("\n") + announcementText.plus("\n\n") + document.select("div.row-body span.description__body").text()
+            val announcementText: String? = document.select("div.announcement__body p.js-announcement-text").text()
+            description = if (announcementName.isNullOrEmpty() || announcementText.isNullOrEmpty()) {
+                document.select("div.row-body span.description__body").text()
+            } else {
+                announcementName.plus("\n") + announcementText.plus("\n\n") + document.select("div.row-body span.description__body").text()
+            }
         }
     }
 
