@@ -4,8 +4,12 @@ import eu.kanade.tachiyomi.multisrc.bilibili.Bilibili
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliComicDto
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliIntl
 import eu.kanade.tachiyomi.multisrc.bilibili.BilibiliTag
+import eu.kanade.tachiyomi.multisrc.bilibili.SortFilter
+import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SChapter
 import okhttp3.Headers
+import okhttp3.Request
 import okhttp3.Response
 
 class BilibiliManga : Bilibili(
@@ -19,6 +23,16 @@ class BilibiliManga : Bilibili(
     override fun headersBuilder() = Headers.Builder().apply {
         add("User-Agent", DEFAULT_USER_AGENT)
     }
+
+    override fun latestUpdatesRequest(page: Int): Request = searchMangaRequest(
+        page = page,
+        query = "",
+        filters = FilterList(
+            SortFilter("", getAllSortOptions(), defaultLatestSort)
+        )
+    )
+
+    override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.parseAs<BilibiliComicDto>()
