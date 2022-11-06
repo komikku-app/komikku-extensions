@@ -40,7 +40,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Imagine Scan", "https://imaginescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Imperfect Comics", "https://imperfectcomic.org", "en", overrideVersionCode = 9),
         SingleLang("InariManga", "https://inarimanga.com", "es"),
-        SingleLang("Infernal Void Scans", "https://void-scans.com", "en", overrideVersionCode = 4),
+        SingleLang("Infernal Void Scans", "https://void-scans.com", "en", overrideVersionCode = 5),
         SingleLang("Kanzenin", "https://kanzenin.xyz", "id", isNsfw = true),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 6),
         SingleLang("KlanKomik", "https://klankomik.com", "id", overrideVersionCode = 1),
