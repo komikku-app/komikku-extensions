@@ -89,40 +89,15 @@ abstract class Bilibili(
 
     override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        val jsonPayload = buildJsonObject { put("day", dayOfWeek) }
-        val requestBody = jsonPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
+    override fun latestUpdatesRequest(page: Int): Request = searchMangaRequest(
+        page = page,
+        query = "",
+        filters = FilterList(
+            SortFilter("", getAllSortOptions(), defaultLatestSort)
+        )
+    )
 
-        val newHeaders = headersBuilder()
-            .add("Content-Length", requestBody.contentLength().toString())
-            .add("Content-Type", requestBody.contentType().toString())
-            .set("Referer", "$baseUrl/schedule")
-            .build()
-
-        val apiUrl = "$baseUrl/$API_COMIC_V1_COMIC_ENDPOINT/GetSchedule".toHttpUrl().newBuilder()
-            .addCommonParameters()
-            .toString()
-
-        return POST(apiUrl, newHeaders, requestBody)
-    }
-
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = response.parseAs<BilibiliSearchDto>()
-
-        if (result.code != 0) {
-            return MangasPage(emptyList(), hasNextPage = false)
-        }
-
-        val comicList = result.data!!.list.map(::latestMangaFromObject)
-
-        return MangasPage(comicList, hasNextPage = false)
-    }
-
-    protected open fun latestMangaFromObject(comic: BilibiliComicDto): SManga = SManga.create().apply {
-        title = comic.title
-        thumbnail_url = comic.verticalCover + THUMBNAIL_RESOLUTION
-        url = "/detail/mc${comic.comicId}"
-    }
+    override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.startsWith(PREFIX_ID_SEARCH) && query.matches(ID_SEARCH_PATTERN)) {
