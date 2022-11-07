@@ -43,12 +43,6 @@ class BilibiliIntl(private val lang: String) {
         else -> "Price"
     }
 
-    val episodePrefix: String = when (lang) {
-        CHINESE, SIMPLIFIED_CHINESE -> ""
-        SPANISH -> "Cap. "
-        else -> "Ep. "
-    }
-
     fun hasPaidChaptersWarning(chapterCount: Int): String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE ->
             "${Bilibili.EMOJI_WARNING} 此漫画有 ${chapterCount.localized} 个付费章节，已在目录中隐藏。" +
@@ -73,8 +67,8 @@ class BilibiliIntl(private val lang: String) {
     }
 
     val imageQualityPrefEntries: Array<String> = when (lang) {
-        CHINESE, SIMPLIFIED_CHINESE -> arrayOf("原图+", "原图 (1600w)", "高 (1000w)", "低 (800w)")
-        else -> arrayOf("Raw+", "Raw (1600w)", "HD (1000w)", "SD (800w)")
+        CHINESE, SIMPLIFIED_CHINESE -> arrayOf("原图", "高清 (1600w)", "标清 (1000w)", "低清 (800w)")
+        else -> arrayOf("Raw", "HD (1600w)", "SD (1000w)", "Low (800w)")
     }
 
     val imageFormatPrefTitle: String = when (lang) {
@@ -191,18 +185,27 @@ class BilibiliIntl(private val lang: String) {
         else -> "Total chapter count"
     }
 
-    val updatedEvery: String = when (lang) {
-        CHINESE, SIMPLIFIED_CHINESE -> "每周更新时间"
-        SPANISH -> "Actualizado en"
-        else -> "Updated every"
+    private val updatesDaily: String = when (lang) {
+        CHINESE, SIMPLIFIED_CHINESE -> "每日更新"
+        SPANISH -> "Actualizaciones diarias"
+        else -> "Updates daily"
     }
 
-    fun getWeekdays(dayIndexes: List<Int>): String {
-        val weekdays = dateFormatSymbols.weekdays
-            .filter(String::isNotBlank)
-            .map { dayName -> dayName.replaceFirstChar { it.uppercase(locale) } }
+    private fun updatesEvery(days: String): String = when (lang) {
+        CHINESE, SIMPLIFIED_CHINESE -> "${days}更新"
+        SPANISH -> "Actualizaciones todos los $days"
+        else -> "Updates every $days"
+    }
 
-        return dayIndexes.joinToString { weekdays[it] }
+    fun getUpdateDays(dayIndexes: List<Int>): String {
+        val shortWeekDays = dateFormatSymbols.shortWeekdays.filterNot(String::isBlank)
+        if (dayIndexes.size == shortWeekDays.size) return updatesDaily
+        val shortWeekDaysUpperCased = shortWeekDays.map {
+            it.replaceFirstChar { char -> char.uppercase(locale) }
+        }
+
+        val days = dayIndexes.joinToString { shortWeekDaysUpperCased[it] }
+        return updatesEvery(days)
     }
 
     fun localize(value: Int) = value.localized

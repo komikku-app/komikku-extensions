@@ -65,7 +65,7 @@ data class BilibiliImageDto(
 ) {
 
     fun url(quality: String, format: String): String {
-        val imageWidth = if (quality == "raw+") "${width}w" else quality
+        val imageWidth = if (quality == "raw") "${width}w" else quality
 
         return "$path@$imageWidth.$format"
     }

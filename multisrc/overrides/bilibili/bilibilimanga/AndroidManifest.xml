@@ -14,15 +14,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data
-                    android:host="manga.bilibili.com"
-                    android:pathPattern="/detail/mc..*"
-                    android:scheme="https" />
+                <data android:scheme="https" />
 
-                <data
-                    android:host="manga.bilibili.com"
-                    android:pathPattern="/m/detail/mc..*"
-                    android:scheme="https" />
+                <data android:host="manga.bilibili.com" />
+
+                <data android:pathPattern="/detail/mc..*" />
+                <data android:pathPattern="/m/detail/mc..*" />
             </intent-filter>
         </activity>
     </application>

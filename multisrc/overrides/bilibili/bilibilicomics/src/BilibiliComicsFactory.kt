@@ -31,6 +31,7 @@ import okhttp3.Response
 import okio.Buffer
 import java.io.IOException
 import java.net.URLDecoder
+import java.util.Calendar
 
 class BilibiliComicsFactory : SourceFactory {
     override fun createSources() = listOf(
@@ -66,6 +67,9 @@ abstract class BilibiliComics(lang: String) : Bilibili(
         get() = "https://$globalApiSubDomain.bilibilicomics.com"
 
     private var accessTokenCookie: BilibiliAccessTokenCookie? = null
+
+    private val dayOfWeek: Int
+        get() = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1
 
     override fun latestUpdatesRequest(page: Int): Request {
         val jsonPayload = buildJsonObject { put("day", dayOfWeek) }
