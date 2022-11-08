@@ -20,6 +20,7 @@ import eu.kanade.tachiyomi.extension.ru.newbie.dto.SubSearchDto
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -31,6 +32,7 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -86,6 +88,7 @@ class Newbie : ConfigurableSource, HttpSource() {
 
     override val client: OkHttpClient =
         network.cloudflareClient.newBuilder()
+            .rateLimitHost(API_URL.toHttpUrl(), 2)
             .addInterceptor { imageContentTypeIntercept(it) }
             .build()
 
