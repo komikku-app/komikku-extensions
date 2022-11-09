@@ -14,7 +14,7 @@ class SinMHGenerator : ThemeSourceGenerator {
         ),
         SingleLang(
             name = "Imitui Manhua", baseUrl = "https://www.imitui.com", lang = "zh",
-            className = "Imitui", sourceName = "爱米推漫画", overrideVersionCode = 2
+            className = "Imitui", sourceName = "爱米推漫画", overrideVersionCode = 3
         ),
         SingleLang( // This site blocks IP outside China
             name = "YKMH", baseUrl = "http://www.ykmh.com", lang = "zh", className = "YKMH",
