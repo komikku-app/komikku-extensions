@@ -21,6 +21,7 @@ import eu.kanade.tachiyomi.extension.ru.remanga.dto.UserDto
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -115,6 +116,8 @@ class Remanga : ConfigurableSource, HttpSource() {
     }
     override val client: OkHttpClient =
         network.cloudflareClient.newBuilder()
+            .rateLimitHost("https://img3.reimg.org".toHttpUrl(), 2)
+            .rateLimitHost("https://img5.reimg.org".toHttpUrl(), 2)
             .addInterceptor { imageContentTypeIntercept(it) }
             .addInterceptor { authIntercept(it) }
             .build()
