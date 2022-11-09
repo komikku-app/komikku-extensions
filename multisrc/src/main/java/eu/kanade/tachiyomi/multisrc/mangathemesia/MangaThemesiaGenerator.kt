@@ -37,6 +37,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("GoGoManga", "https://gogomanga.fun", "en", overrideVersionCode = 1),
         SingleLang("Gremory Mangas", "https://gremorymangas.com", "es"),
         SingleLang("Hanuman Scan", "https://hanumanscan.com", "en"),
+        SingleLang("Heroxia", "https://heroxia.com", "id", isNsfw = true),
         SingleLang("Imagine Scan", "https://imaginescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Imperfect Comics", "https://imperfectcomic.org", "en", overrideVersionCode = 9),
         SingleLang("InariManga", "https://inarimanga.com", "es"),
