@@ -23,7 +23,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Evaluator
 import rx.Observable
-import rx.Single
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
@@ -57,11 +56,12 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        return if (document.select(".l-box > .pure-g").size == 1) { // only latest chapters
-            document.select(".l-box > .pure-g > div")
+        val fullListTitle = document.selectFirst(".section-title:containsOwn(章节目录)")
+        return if (fullListTitle == null) { // only latest chapters
+            document.select(Evaluator.Class("comics-chapters"))
         } else {
             // chapters are listed oldest to newest in the source
-            document.select(".l-box > .pure-g[id^=chapter] > div").reversed()
+            fullListTitle.parent().select(Evaluator.Class("comics-chapters")).reversed()
         }.map { chapterFromElement(it) }.apply {
             val chapterOrderPref = preferences.getString(CHAPTER_ORDER_PREF, CHAPTER_ORDER_DISABLED)
             if (chapterOrderPref != CHAPTER_ORDER_DISABLED) {
@@ -132,28 +132,22 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
         }
     }
 
-    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = Single.create<List<Page>> {
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = Observable.fromCallable {
         val pageNumberSelector = Evaluator.Class("comic-text__amp")
         val pageList = ArrayList<Page>(0)
         var url = baseUrl + chapter.url
-        var pageCount = 0
         var i = 0
-        do {
+        while (true) {
             val document = client.newCall(GET(url, headers)).execute().asJsoup()
-            if (i == 0) {
-                pageCount = document.selectFirst(pageNumberSelector)
-                    ?.run { text().substringAfter('/').toInt() } ?: break
-                pageList.ensureCapacity(pageCount)
-            }
             document.select(".comic-contain amp-img").dropWhile { element ->
                 element.selectFirst(pageNumberSelector).text().substringBefore('/').toInt() <= i
             }.mapTo(pageList) { element ->
                 Page(i++, imageUrl = element.attr("src"))
             }
             url = document.selectFirst(Evaluator.Id("next-chapter"))?.attr("href") ?: break
-        } while (i < pageCount)
-        it.onSuccess(pageList)
-    }.toObservable()
+        }
+        pageList
+    }
 
     override fun pageListParse(document: Document) = throw UnsupportedOperationException("Not used.")
 
