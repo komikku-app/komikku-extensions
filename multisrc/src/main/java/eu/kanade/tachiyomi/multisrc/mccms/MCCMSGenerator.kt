@@ -24,10 +24,6 @@ class MCCMSGenerator : ThemeSourceGenerator {
             name = "Pupu Manhua", baseUrl = "https://app.manhuaorg.com", lang = "zh",
             className = "Manhuaorg", sourceName = "朴朴漫画", overrideVersionCode = 2
         ),
-        SingleLang(
-            name = "PPHanman", baseUrl = "https://pphm.xyz", lang = "zh", isNsfw = true,
-            className = "PPHanman", sourceName = "PP韩漫", overrideVersionCode = 0
-        ),
     )
 
     companion object {
