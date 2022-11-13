@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.vi.blogtruyen
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -34,7 +35,9 @@ class BlogTruyen : ParsedHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .rateLimit(1)
+        .build()
 
     private val json: Json by injectLazy()
 
