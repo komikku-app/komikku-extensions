@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Page
 import org.jsoup.nodes.Document
 
-class MangKomik : MangaThemesia("MangKomik", "https://mangkomik.com", "id") {
+class MangKomik : MangaThemesia("MangKomik", "https://mangkomik.net", "id") {
     override val hasProjectPage = true
 
     override fun pageListParse(document: Document): List<Page> {
