@@ -1,11 +1,13 @@
 package eu.kanade.tachiyomi.extension.uk.mangainua
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -44,7 +46,7 @@ class Mangainua : ParsedHttpSource() {
     }
     override fun popularMangaNextPageSelector() = "not used"
 
-    // Latest
+    // Latest (using for search)
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/page/$page/")
     }
@@ -55,16 +57,38 @@ class Mangainua : ParsedHttpSource() {
                 setUrlWithoutDomain(it.attr("href"))
                 title = it.text()
             }
-            thumbnail_url = element.select("img").attr("abs:data-src")
+            thumbnail_url = element.select("div.card--big img").attr("abs:data-src")
         }
     }
     override fun latestUpdatesNextPageSelector() = "a:contains(Наступна)"
 
     // Search
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = throw UnsupportedOperationException("Not supported / Не підтримується")
-    override fun searchMangaSelector() = popularMangaSelector()
-    override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
-    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        if (query.length > 2 ) {
+            return POST(
+                "$baseUrl/index.php?do=search",
+                body = FormBody.Builder()
+                    .add("do", "search")
+                    .add("subaction", "search")
+                    .add("story", query)
+                    .add("search_start", page.toString())
+                    .build(),
+                headers = headers
+            )
+        } else return throw UnsupportedOperationException("Запит має містити щонайменше 3 символи / The query must contain at least 3 characters")
+    }
+
+    override fun searchMangaSelector() = latestUpdatesSelector()
+    override fun searchMangaFromElement(element: Element): SManga {
+        return SManga.create().apply {
+            element.select("h3.card__title a").first().let {
+                setUrlWithoutDomain(it.attr("href"))
+                title = it.text()
+            }
+            thumbnail_url = element.select("div.card--big img").attr("abs:src")
+        }
+    }
+    override fun searchMangaNextPageSelector() = latestUpdatesNextPageSelector()
 
     // Manga Details
     override fun mangaDetailsParse(document: Document): SManga {
