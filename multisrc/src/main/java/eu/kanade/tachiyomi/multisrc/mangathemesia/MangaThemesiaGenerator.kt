@@ -18,7 +18,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         MultiLang("Flame Scans", "https://flamescans.org", listOf("ar", "en"), className = "FlameScansFactory", pkgName = "flamescans", overrideVersionCode = 2),
         MultiLang("Komik Lab", "https://komiklab.com", listOf("en", "id"), className = "KomikLabFactory", pkgName = "komiklab", overrideVersionCode = 1),
         MultiLang("Miau Scan", "https://miauscan.com", listOf("es", "pt-BR")),
-        SingleLang("Alpha Scans", "https://alpha-scans.org", "en", overrideVersionCode = 1),
         SingleLang("Animated Glitched Scans", "https://anigliscans.com", "en"),
         SingleLang("Arcane scan", "https://arcanescan.fr", "fr"),
         SingleLang("Arena Scans", "https://arenascans.net", "en"),
