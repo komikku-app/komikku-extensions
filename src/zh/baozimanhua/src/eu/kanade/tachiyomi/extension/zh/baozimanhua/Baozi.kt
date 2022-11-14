@@ -144,7 +144,10 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             }.mapTo(pageList) { element ->
                 Page(i++, imageUrl = element.attr("src"))
             }
-            url = document.selectFirst(Evaluator.Id("next-chapter"))?.attr("href") ?: break
+            url = document.selectFirst(Evaluator.Id("next-chapter"))
+                ?.takeIf { it.text() == "下一页" }
+                ?.attr("href")
+                ?: break
         }
         pageList
     }
