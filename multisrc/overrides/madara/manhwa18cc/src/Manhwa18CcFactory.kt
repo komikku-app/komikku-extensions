@@ -75,8 +75,8 @@ abstract class Manhwa18Cc(
 
     override val pageListParseSelector = "div.read-content img"
 
-    override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        document.select(pageListParseSelector).mapIndexed { index, element ->
+    override fun pageListParse(document: Document): List<Page> {
+        return document.select(pageListParseSelector).mapIndexed { index, element ->
             Page(
                 index,
                 document.location(),
