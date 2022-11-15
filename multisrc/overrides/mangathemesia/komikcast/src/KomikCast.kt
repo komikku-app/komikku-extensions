@@ -71,6 +71,7 @@ class KomikCast : MangaThemesia(
     override val seriesAltNameSelector = ".komik_info-content-native"
     override val seriesGenreSelector = ".komik_info-content-genre a"
     override val seriesThumbnailSelector = ".komik_info-content-thumbnail img"
+    override val seriesStatusSelector = ".komik_info-content-info:contains(Status)"
 
     override fun chapterListSelector() = "div.komik_info-chapters li"
 
