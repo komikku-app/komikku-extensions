@@ -51,7 +51,7 @@ jobs:
                 "type": "both",
                 "regex": ".*failed to bypass cloudflare.*",
                 "ignoreCase": true,
-                "message": "Please refer to the \"Solving Cloudflare issues\" section and the two following sections at https://tachiyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues. Some sources intentionally have a higher Cloudflare protection level to block apps like Tachiyomi. Try changing the user agent string by following the aforementioned guide, but this is a last measure; if it doesn't work, migrate to other sources or wait until they lower their protection."
+                "message": "Please refer to the **Solving Cloudflare issues** section and the two following sections at https://tachiyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues. Some sources intentionally have a higher Cloudflare protection level to block apps like Tachiyomi. Try changing the user agent string by following the aforementioned guide, but this is a last measure; if it doesn't work, migrate to other sources or wait until they lower their protection."
               }
             ]
           auto-close-ignore-label: do-not-autoclose
