@@ -33,25 +33,25 @@ jobs:
               {
                 "type": "title",
                 "regex": ".*(Source name|Short description).*",
-                "message": "You did not fill out the description in the title"
+                "message": "You did not fill out the description in the title."
               },
               {
                 "type": "both",
                 "regex": ".*(mangago|mangafox|hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|cocomanga|hitomi\\.la|copymanga|neox|1manga\\.co|mangafox\\.fun|mangahere\\.onl|manga\\s*hub|mangakakalot\\.fun|manganel(?!o)|mangaonline\\.fun|mangapanda\\.onl|mangareader\\.site|mangatoday|manga\\.town|onemanga\\.info|koushoku).*",
                 "ignoreCase": true,
-                "message": "{match} will not be added back as it is too difficult to maintain. Read #3475 for more information"
+                "message": "{match} will not be added back as it is too difficult to maintain. Read #3475 for more information."
               },
               {
                 "type": "both",
                 "regex": ".*(team\\s*x|tqneplus|komiktap|gourmet\\s*scans|mangawow|voidscans|hikari\\s*scans|mangagegecesi|knightnoscanlations|ahstudios|mangagecesi|nartag|xxx\\s*yaoi|yaoi\\s*fan\\s*clube|luminous|dragontea|manhwaid\\.org|hunters\\s*scan|mnhaestate|swat\\s*manga|manga\\s*swat|reset(?:\\s*|-)scan|manga-flix\\.com|astra\\s*scans|manganoon|manga(?:-|\\s*)pro).*",
                 "ignoreCase": true,
-                "message": "{match} will not be added back as the Scanlator team has requested it to be removed. Read #3475 for more information"
+                "message": "{match} will not be added back as the scanlator team has requested it to be removed. Read #3475 for more information."
               },
               {
                 "type": "both",
-                "regex": ".*failed to bypass cloudflare.*",
+                "regex": ".*failed to bypass cloudfl?are.*",
                 "ignoreCase": true,
-                "message": "Please refer to the **Solving Cloudflare issues** section and the two following sections at https://tachiyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues. Some sources intentionally have a higher Cloudflare protection level to block apps like Tachiyomi. Try changing the user agent string by following the aforementioned guide, but this is a last measure; if it doesn't work, migrate to other sources or wait until they lower their protection."
+                "message": "Refer to the **Solving Cloudflare issues** section at https://tachiyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues"
               }
             ]
           auto-close-ignore-label: do-not-autoclose
