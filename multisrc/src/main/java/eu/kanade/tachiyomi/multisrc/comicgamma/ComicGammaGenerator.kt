@@ -6,7 +6,7 @@ import generator.ThemeSourceGenerator
 class ComicGammaGenerator : ThemeSourceGenerator {
     override val themeClass = "ComicGamma"
     override val themePkg = "comicgamma"
-    override val baseVersionCode = 3
+    override val baseVersionCode = 6
     override val sources = listOf(
         SingleLang(
             name = "Web Comic Gamma",
@@ -16,7 +16,7 @@ class ComicGammaGenerator : ThemeSourceGenerator {
             className = "WebComicGamma",
             pkgName = "webcomicgamma",
             sourceName = "Web Comic Gamma",
-            overrideVersionCode = 2,
+            overrideVersionCode = 0,
         ),
         SingleLang(
             name = "Web Comic Gamma Plus",
