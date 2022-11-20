@@ -47,7 +47,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
         level = preferences.getString(BaoziBanner.PREF, DEFAULT_LEVEL)!!.toInt()
     )
 
-    override val client = network.client.newBuilder()
+    override val client = network.cloudflareClient.newBuilder()
         .rateLimit(2)
         .addInterceptor(bannerInterceptor)
         .build()
@@ -145,7 +145,10 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
                 Page(i++, imageUrl = element.attr("src"))
             }
             url = document.selectFirst(Evaluator.Id("next-chapter"))
-                ?.takeIf { it.text() == "下一页" }
+                ?.takeIf {
+                    val text = it.text()
+                    text == "下一页" || text == "下一頁"
+                }
                 ?.attr("href")
                 ?: break
         }
