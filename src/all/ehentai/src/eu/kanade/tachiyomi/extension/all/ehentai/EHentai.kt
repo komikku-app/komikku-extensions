@@ -90,7 +90,7 @@ abstract class EHentai(
         }
 
         // Add to page if required
-        val hasNextPage = doc.select("a[onclick=return false]").last()?.text() == ">"
+        val hasNextPage = doc.select("a#unext[href]").hasText()
 
         return MangasPage(parsedMangas, hasNextPage)
     }
@@ -183,7 +183,7 @@ abstract class EHentai(
     private fun exGet(url: String, page: Int? = null, additionalHeaders: Headers? = null, cache: Boolean = true): Request {
         return GET(
             page?.let {
-                addParam(url, "page", (page - 1).toString())
+                addParam(url, "next", lastMangaId)
             } ?: url,
             additionalHeaders?.let { header ->
                 val headers = headers.newBuilder()
