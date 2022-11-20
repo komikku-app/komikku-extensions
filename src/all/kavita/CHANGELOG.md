@@ -1,3 +1,9 @@
+## 1.3.8
+
+### Fix
+
+* Fixed `Expected URL scheme 'http' or 'https` when downloading
+
 ## 1.3.7
 
 ### Features
@@ -6,6 +12,7 @@
 * New Filter: Year release filter
 
 ### Fix
+
 * Filters can now be used together with search
 * Epub and pdfs no longer show in format filter (currently not supported)
 

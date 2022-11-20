@@ -6,7 +6,7 @@ ext {
     extName = 'Kavita'
     pkgNameSuffix = 'all.kavita'
     extClass = '.KavitaFactory'
-    extVersionCode = 7
+    extVersionCode = 8
 }
 
 dependencies {
