@@ -14,6 +14,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
@@ -32,6 +33,9 @@ class ComicFx : ParsedHttpSource() {
     override val lang = "id"
     override val supportsLatest = true
 
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36")
+
     // Popular
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/filterList?page=$page&sortBy=name&asc=true", headers)
@@ -41,7 +45,7 @@ class ComicFx : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select(".media-left a img").attr("src")
+        manga.thumbnail_url = element.select(".media-left a img").attr("abs:data-src")
         manga.title = element.select(".media-body .media-heading a strong").text()
         val item = element.select(".media-left a")
         manga.setUrlWithoutDomain(item.attr("href"))
@@ -60,7 +64,7 @@ class ComicFx : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select(".komik-img a .batas img").attr("src")
+        manga.thumbnail_url = element.select(".komik-img a .batas img").attr("abs:data-src")
         manga.title = element.select(".komik-des a h3").text()
         val item = element.select("div.komik-img a")
         manga.setUrlWithoutDomain(item.attr("href"))
@@ -129,11 +133,12 @@ class ComicFx : ParsedHttpSource() {
 
     // Details
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        author = document.select("#author a").text()
-        artist = document.select(".infolengkap span:contains(Artist) a").text()
+        author = document.select("#author").text()
+        artist = document.select(".infolengkap span:contains(Artist) a, #artist").text()
         status = parseStatus(document.select(".infolengkap span:contains(status) i").text())
         description = document.select("div.sinopsis p").text()
-        genre = document.select(".infolengkap span:contains(Genre) a").joinToString { it.text() }
+        genre = document.select(".genre-komik a").joinToString { it.text() }
+        thumbnail_url = document.select(".thumb img").attr("abs:src")
     }
 
     protected fun parseStatus(element: String?): Int = when {
@@ -188,7 +193,7 @@ class ComicFx : ParsedHttpSource() {
         val pages = mutableListOf<Page>()
 
         document.select("#all img").mapIndexed { i, element ->
-            val image = element.attr("data-src")
+            val image = element.attr("abs:src")
             if (image != "") {
                 pages.add(Page(i, "", image))
             }

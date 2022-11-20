@@ -6,7 +6,7 @@ ext {
     extName = 'Comic Fx'
     pkgNameSuffix = 'id.comicfx'
     extClass = '.ComicFx'
-    extVersionCode = 3
+    extVersionCode = 4
 }
 
 apply from: "$rootDir/common.gradle"
