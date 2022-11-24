@@ -6,7 +6,7 @@ ext {
     extName = 'Desu'
     pkgNameSuffix = 'ru.desu'
     extClass = '.Desu'
-    extVersionCode = 19
+    extVersionCode = 20
 }
 
 apply from: "$rootDir/common.gradle"

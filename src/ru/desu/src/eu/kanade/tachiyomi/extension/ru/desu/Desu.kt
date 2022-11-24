@@ -203,7 +203,7 @@ class Desu : HttpSource() {
 
         val cid = obj["id"]!!.jsonPrimitive.int
         val objChapter = obj["chapters"]!!
-        return objChapter.jsonObject["list"]!!.jsonArray.map {
+        return objChapter.jsonObject["list"]!!.jsonArray.filterNot { it.jsonObject["vol"]!!.jsonPrimitive.floatOrNull!! == objChapter.jsonObject["last"]!!.jsonObject["vol"]!!.jsonPrimitive.float && it.jsonObject["ch"]!!.jsonPrimitive.floatOrNull!! > objChapter.jsonObject["last"]!!.jsonObject["ch"]!!.jsonPrimitive.float }.map {
             val chapterObj = it.jsonObject
             val ch = chapterObj["ch"]!!.jsonPrimitive.content
             val vol = chapterObj["vol"]!!.jsonPrimitive.content
@@ -217,7 +217,7 @@ class Desu : HttpSource() {
                 chapter_number = ch.toFloatOrNull() ?: -1f
                 date_upload = chapterObj["date"]!!.jsonPrimitive.long * 1000L
             }
-        }.filter { it.chapter_number <= objChapter.jsonObject["last"]!!.jsonObject["ch"]!!.jsonPrimitive.float }
+        }
     }
 
     override fun chapterListRequest(manga: SManga): Request = titleDetailsRequest(manga)
