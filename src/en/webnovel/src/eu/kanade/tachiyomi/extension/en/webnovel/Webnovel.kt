@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl
@@ -17,6 +18,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
@@ -214,22 +216,42 @@ class Webnovel : HttpSource() {
         return pageListRequest(comicId, chapterId)
     }
 
-    private fun pageListRequest(comicId: String, chapterId: String): Request {
-        return GET("$baseApiUrl/comic/getContent?comicId=$comicId&chapterId=$chapterId")
+    private val pageRequestHeaders by lazy {
+        headers.newBuilder().set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:108.0) Gecko/20100101 Firefox/108.0").build()
     }
 
-    // LinkedHashMap with a capacity of 25. When exceeding the capacity the oldest entry is removed.
-    private val chapterPageCache = object : LinkedHashMap<Long, List<ChapterPageDto>>() {
+    private fun pageListRequest(comicId: String, chapterId: String): Request {
+        return GET("$baseUrl/comic/$comicId/$chapterId", pageRequestHeaders)
+    }
 
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, List<ChapterPageDto>>?): Boolean {
+    data class ChapterPage(
+        val id: String,
+        val url: String
+    )
+
+    // LinkedHashMap with a capacity of 25. When exceeding the capacity the oldest entry is removed.
+    private val chapterPageCache = object : LinkedHashMap<String, List<ChapterPage>>() {
+
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<ChapterPage>>?): Boolean {
             return size > 25
         }
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val chapterContent = response.checkAndParseAs<ChapterContentResponseDto>().chapterContent
-        chapterPageCache[chapterContent.chapterId] = chapterContent.chapterPage
-        return chapterContent.chapterPage.mapIndexed { i, page -> Page(i, imageUrl = page.url) }
+        val document = response.asJsoup()
+        val chapterId = response.request.url.pathSegments[2]
+        return document.parseToChapterPage(chapterId).mapIndexed { i, chapterPage ->
+            Page(i, imageUrl = chapterPage.url)
+        }
+    }
+
+    private fun Document.parseToChapterPage(chapterId: String): List<ChapterPage> {
+        return select("#comicPageContainer img").map {
+            ChapterPage(
+                id = it.attr("data-page"),
+                url = it.attr("data-original")
+            )
+        }.also { chapterPageCache[chapterId] = it }
     }
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not Used")
@@ -290,16 +312,15 @@ class Webnovel : HttpSource() {
 
         // Page url is not valid anymore so we check if cache has updated one
         val pageId = pageFileName.substringBefore("!")
-        val cachedPageUrl = chapterPageCache[chapterId.toLong()]?.firstOrNull { it.id == pageId }?.url
+        val cachedPageUrl = chapterPageCache[chapterId]?.firstOrNull { it.id == pageId }?.url
         if (cachedPageUrl != null && isPageUrlStillValid(cachedPageUrl.toHttpUrl())) return chain.proceed(originalRequest)
 
-        // Time to get it from api
+        // Time to get it from site
         val pageListResponse = chain.proceed(pageListRequest(comicId, chapterId))
-        val chapterContent = pageListResponse.checkAndParseAs<ChapterContentResponseDto>().chapterContent
+        val chapterPages = pageListResponse.asJsoup().parseToChapterPage(chapterId)
         pageListResponse.close()
-        chapterPageCache[chapterContent.chapterId] = chapterContent.chapterPage
 
-        val newPageUrl = chapterContent.chapterPage.firstOrNull { it.id == pageId }?.url?.toHttpUrl()
+        val newPageUrl = chapterPages.firstOrNull { it.id == pageId }?.url?.toHttpUrl()
             ?: throw IOException("Couldn't regenerate expired image url")
 
         val newRequest = originalRequest.newBuilder().url(newPageUrl).build()

@@ -6,7 +6,7 @@ ext {
     extName = 'Webnovel.com'
     pkgNameSuffix = 'en.webnovel'
     extClass = '.Webnovel'
-    extVersionCode = 5
+    extVersionCode = 6
 }
 
 apply from: "$rootDir/common.gradle"

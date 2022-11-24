@@ -60,20 +60,3 @@ data class ComicChapterDto(
     val chapterLevel: Int,
     val userLevel: Int,
 )
-
-@Serializable
-data class ChapterContentResponseDto(
-    @SerialName("chapterInfo") val chapterContent: ChapterContentDto
-)
-
-@Serializable
-data class ChapterContentDto(
-    val chapterId: Long,
-    val chapterPage: List<ChapterPageDto>
-)
-
-@Serializable
-data class ChapterPageDto(
-    @SerialName("pageId") val id: String,
-    val url: String
-)
