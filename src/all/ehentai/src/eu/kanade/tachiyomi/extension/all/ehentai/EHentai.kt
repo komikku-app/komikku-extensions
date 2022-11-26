@@ -165,9 +165,22 @@ abstract class EHentai(
             .joinToString(",")
             .let { if (it.isNotEmpty()) ",$it" else it }
         uri.appendQueryParameter("f_search", modifiedQuery)
+        //when attempting to search with no genres selected, will auto select all genres
+        filters.filterIsInstance<GenreGroup>().firstOrNull()?.state?.let {
+            //variable to to check is any genres are selected
+            val check = it.any { option -> option.state }  // or it.any(GenreOption::state)
+            //if no genres are selected by the user set all genres to on
+            if (!check) {
+                for (i in it) {
+                    (i as GenreOption).state = true
+                }
+            }
+        }
+
         filters.forEach {
             if (it is UriFilter) it.addToUri(uri)
         }
+
         if (uri.toString().contains("f_spf") || uri.toString().contains("f_spt")) {
             if (page > 1) uri.appendQueryParameter("from", lastMangaId)
         }
@@ -182,7 +195,7 @@ abstract class EHentai(
     override fun latestUpdatesParse(response: Response) = genericMangaParse(response)
 
     private fun exGet(url: String, page: Int? = null, additionalHeaders: Headers? = null, cache: Boolean = true): Request {
-        //pages no longer exist, if app attempts to go to the first page after a request, do not include the page append
+        // pages no longer exist, if app attempts to go to the first page after a request, do not include the page append
         val pageIndex = if (page == 1) null else page
         return GET(
             pageIndex?.let {
@@ -373,7 +386,7 @@ abstract class EHentai(
         EnforceLanguageFilter(getEnforceLanguagePref()),
         Watched(),
         GenreGroup(),
-        TagFilter("Misc Tags", triStateBoxesFrom(miscTags), ""),
+        TagFilter("Misc Tags", triStateBoxesFrom(miscTags), "other"),
         TagFilter("Female Tags", triStateBoxesFrom(femaleTags), "female"),
         TagFilter("Male Tags", triStateBoxesFrom(maleTags), "male"),
         AdvancedGroup()
