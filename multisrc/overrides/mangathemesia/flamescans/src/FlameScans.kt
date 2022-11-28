@@ -163,32 +163,21 @@ open class FlameScans(
         val turnTempUrlToPerm = preferences.getBoolean(getPermanentMangaUrlPreferenceKey(), true)
         if (!turnTempUrlToPerm) return this
 
-        val sMangaTitleFirstWord = this.title.split(" ")[0]
-        if (!this.url.contains("/$sMangaTitleFirstWord", ignoreCase = true)) {
-            this.url = this.url.replaceFirst(TEMP_TO_PERM_URL_REGEX, "$1")
-        }
+        val path = this.url.removePrefix("/").removeSuffix("/").split("/")
+        path.lastOrNull()?.let { slug -> this.url = "$mangaUrlDirectory/${deobfuscateSlug(slug)}/" }
+
         return this
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val sManga = manga.tempUrlToPermIfNeeded()
-        return super.fetchChapterList(sManga).map { sChapterList ->
-            sChapterList.map { it.tempUrlToPermIfNeeded(sManga) }
-        }
-    }
+    override fun fetchChapterList(manga: SManga) = super.fetchChapterList(manga.tempUrlToPermIfNeeded())
+        .map { sChapterList -> sChapterList.map { it.tempUrlToPermIfNeeded() } }
 
-    private fun SChapter.tempUrlToPermIfNeeded(manga: SManga): SChapter {
+    private fun SChapter.tempUrlToPermIfNeeded(): SChapter {
         val turnTempUrlToPerm = preferences.getBoolean(getPermanentChapterUrlPreferenceKey(), true)
         if (!turnTempUrlToPerm) return this
 
-        val sChapterNameFirstWord = this.name.split(" ")[0]
-        val sMangaTitleFirstWord = manga.title.split(" ")[0]
-        if (
-            !this.url.contains("/$sChapterNameFirstWord", ignoreCase = true) &&
-            !this.url.contains("/$sMangaTitleFirstWord", ignoreCase = true)
-        ) {
-            this.url = this.url.replaceFirst(TEMP_TO_PERM_URL_REGEX, "$1")
-        }
+        val path = this.url.removePrefix("/").removeSuffix("/").split("/")
+        path.lastOrNull()?.let { slug -> this.url = "/${deobfuscateSlug(slug)}/" }
         return this
     }
 
@@ -241,9 +230,20 @@ open class FlameScans(
 
         private const val PREF_PERM_CHAPTER_URL_KEY_PREFIX = "pref_permanent_chapter_url"
         private const val PREF_PERM_CHAPTER_URL_TITLE = "Permanent Chapter URL"
-        private const val PREF_PERM_CHAPTER_URL_SUMMARY = "Turns all chapter urls into permanent one."
+        private const val PREF_PERM_CHAPTER_URL_SUMMARY = "Turns all chapter urls into permanent ones."
 
-        private val TEMP_TO_PERM_URL_REGEX = Regex("""(/)\d+-""")
+        /**
+         *
+         * De-obfuscates the slug of a series or chapter to the permanent slug
+         *   * For a series: "12345678-this-is-a-series" -> "this-is-a-series"
+         *   * For a chapter: "12345678-this-is-a-series-chapter-1" -> "this-is-a-series-chapter-1"
+         *
+         * @param obfuscated_slug the obfuscated slug of a series or chapter
+         *
+         * @return
+         */
+        private fun deobfuscateSlug(obfuscated_slug: String) = obfuscated_slug
+            .replaceFirst(Regex("""^\d+-"""), "")
 
         private val MEDIA_TYPE = "image/png".toMediaType()
     }
