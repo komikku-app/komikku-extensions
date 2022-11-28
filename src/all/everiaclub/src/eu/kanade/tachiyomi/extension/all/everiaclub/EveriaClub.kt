@@ -29,7 +29,6 @@ class EveriaClub() : ParsedHttpSource() {
     }
 
     override fun latestUpdatesNextPageSelector() = ".next"
-
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/page/$page/")
     }
@@ -37,22 +36,31 @@ class EveriaClub() : ParsedHttpSource() {
     override fun latestUpdatesSelector() = ".posts-wrapper > article"
 
     // Popular
-    override fun popularMangaFromElement(element: Element) = latestUpdatesFromElement(element)
-    override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
+    override fun popularMangaFromElement(element: Element): SManga {
+        val manga = SManga.create()
+        manga.thumbnail_url = element.select("img").attr("abs:src")
+        manga.title = element.select("h3").text()
+        manga.setUrlWithoutDomain(element.select("h3 > a").attr("abs:href"))
+        return manga
+    }
+
+    override fun popularMangaNextPageSelector(): String? = null
     override fun popularMangaRequest(page: Int) = latestUpdatesRequest(page)
-    override fun popularMangaSelector() = latestUpdatesSelector()
+    override fun popularMangaSelector() = ".wli_popular_posts-class li"
 
     // Search
-
     override fun searchMangaFromElement(element: Element) = latestUpdatesFromElement(element)
     override fun searchMangaNextPageSelector() = latestUpdatesNextPageSelector()
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val tagFilter = filters.findInstance<TagFilter>()!!
-        val categoryFilter = filters.findInstance<CategoryFilter>()!!
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val tagFilter = filterList.findInstance<TagFilter>()!!
+        val categoryFilter = filterList.findInstance<CategoryFilter>()!!
         return when {
-            query.isNotEmpty() -> GET("$baseUrl/page/$page/?s=$query")
-            categoryFilter.state.isNotEmpty() -> GET("$baseUrl/category/${categoryFilter.state}/page/$page/")
-            tagFilter.state.isNotEmpty() -> GET("$baseUrl/tag/${tagFilter.state}/page/$page/")
+            query.isEmpty() && categoryFilter.state != 0 -> GET("$baseUrl/category/${categoryFilter.toUriPart()}/page/$page/")
+            query.isEmpty() && tagFilter.state.isNotEmpty() -> GET("$baseUrl/tag/${tagFilter.state}/page/$page/")
+            query.isNotEmpty() && categoryFilter.state != 0 -> GET("$baseUrl/category/${categoryFilter.toUriPart()}/?paged=$page&s=$query")
+            query.isNotEmpty() && tagFilter.state.isNotEmpty() -> GET("$baseUrl/tag/${tagFilter.state}/?paged=$page&s=$query")
+            query.isNotEmpty() -> GET("$baseUrl/?paged=$page&s=$query")
             else -> latestUpdatesRequest(page)
         }
     }
@@ -84,7 +92,6 @@ class EveriaClub() : ParsedHttpSource() {
     override fun chapterListSelector() = "html"
 
     // Pages
-
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
         document.select(".wp-block-gallery img").forEachIndexed { i, it ->
@@ -94,18 +101,36 @@ class EveriaClub() : ParsedHttpSource() {
         return pages
     }
 
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
+    override fun imageUrlParse(document: Document): String =
+        throw UnsupportedOperationException("Not used")
 
     // Filters
     override fun getFilterList(): FilterList = FilterList(
-        Filter.Header("NOTE: Ignored if using text search!"),
-        Filter.Header("NOTE: Do not use them together!"),
+        Filter.Header("NOTE: Only one filter will be applied!"),
         Filter.Separator(),
         CategoryFilter(),
         TagFilter(),
     )
 
-    class CategoryFilter : Filter.Text("Category")
+    open class UriPartFilter(
+        displayName: String, private val valuePair: Array<Pair<String, String>>
+    ) : Filter.Select<String>(displayName, valuePair.map { it.first }.toTypedArray()) {
+        fun toUriPart() = valuePair[state].second
+    }
+
+    class CategoryFilter : UriPartFilter(
+        "Category", arrayOf(
+            Pair("Any", ""),
+            Pair("Gravure", "/gravure"),
+            Pair("Aidol", "/aidol"),
+            Pair("Magazine", "/magazine"),
+            Pair("Korea", "/korea"),
+            Pair("Thailand", "/thailand"),
+            Pair("Chinese", "/chinese"),
+            Pair("Cosplay", "/cosplay"),
+        )
+    )
+
     class TagFilter : Filter.Text("Tag")
 
     private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T
@@ -114,9 +139,7 @@ class EveriaClub() : ParsedHttpSource() {
         // At this point(4/12/22), this works with every everiaclub doc
         val regex = "[0-9]{4}\\/[0-9]{2}\\/[0-9]{2}".toRegex()
         val match = regex.find(str)
-
-        return runCatching { DATE_FORMAT.parse(match!!.value)?.time }
-            .getOrNull() ?: 0L
+        return runCatching { DATE_FORMAT.parse(match!!.value)?.time }.getOrNull() ?: 0L
     }
 
     companion object {
