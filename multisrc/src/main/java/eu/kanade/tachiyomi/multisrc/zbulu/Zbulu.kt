@@ -34,7 +34,6 @@ abstract class Zbulu(
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:75.0) Gecko/20100101 Firefox/75.0")
         .add("Content-Encoding", "identity")
 
     // Decreases calls, helps with Cloudflare
@@ -122,7 +121,7 @@ abstract class Zbulu(
 
     // Chapters
 
-    override fun chapterListSelector() = "div.go-border"
+    override fun chapterListSelector() = ".chapters-wrapper div.go-border, .items-chapters a"
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val chapters = mutableListOf<SChapter>()
@@ -140,10 +139,8 @@ abstract class Zbulu(
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
-            element.select("a").let {
-                setUrlWithoutDomain(it.attr("href").addTrailingSlash())
-                name = it.text()
-            }
+            setUrlWithoutDomain(element.select("a").attr("href"))
+            name = element.select("h2").text()
             date_upload = element.select("div.chapter-date")?.text().toDate()
         }
     }
