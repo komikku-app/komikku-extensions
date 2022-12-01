@@ -95,13 +95,14 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
         return popularMangaFromElement(element)
     }
 
-    override fun popularMangaNextPageSelector() = "li > a:contains(Next)"
+    override fun popularMangaNextPageSelector() = "ul.pager > li > a:contains(Next)"
 
-    override fun latestUpdatesNextPageSelector(): String = "ul.pager > li > a:contains(Next)"
+    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val form = FormBody.Builder().apply {
             add("comicName", query)
+            add("page", page.toString())
 
             for (filter in if (filters.isEmpty()) getFilterList() else filters) {
                 when (filter) {
@@ -120,7 +121,7 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
         return popularMangaFromElement(element)
     }
 
-    override fun searchMangaNextPageSelector(): String? = null
+    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select("div.barContent").first()
