@@ -30,6 +30,7 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -147,6 +148,19 @@ class ReaperScans : ParsedHttpSource() {
             }
             title = element.select("p").first().text()
         }
+    }
+
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        if (query.startsWith(PREFIX_ID_SEARCH)) {
+            val realUrl = "/comics/" + query.removePrefix(PREFIX_ID_SEARCH)
+            val manga = SManga.create().apply {
+                url = realUrl
+            }
+            return fetchMangaDetails(manga).map {
+                MangasPage(listOf(it.apply { url = realUrl }), false)
+            }
+        }
+        return super.fetchSearchManga(page, query, filters)
     }
 
     // Details
@@ -317,5 +331,6 @@ class ReaperScans : ParsedHttpSource() {
 
     companion object {
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+        const val PREFIX_ID_SEARCH = "id:"
     }
 }
