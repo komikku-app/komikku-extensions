@@ -23,7 +23,7 @@ import java.util.Locale
 
 class HentaiVN : ParsedHttpSource() {
 
-    override val baseUrl = "https://hentaivn.la"
+    override val baseUrl = "https://hentaivn.in"
     override val lang = "vi"
     override val name = "HentaiVN"
     override val supportsLatest = true
@@ -73,7 +73,7 @@ class HentaiVN : ParsedHttpSource() {
 
     override fun chapterListRequest(manga: SManga): Request {
         val mangaId = manga.url.substringAfterLast("/").substringBefore('-')
-        return GET("https://hentaivn.fun/list-showchapter.php?idchapshow=$mangaId", headers)
+        return GET("$baseUrl/list-showchapter.php?idchapshow=$mangaId", headers)
     }
 
     override fun imageUrlParse(document: Document) = ""
