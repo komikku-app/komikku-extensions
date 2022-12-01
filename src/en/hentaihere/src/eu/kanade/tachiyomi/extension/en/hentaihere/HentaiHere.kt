@@ -153,7 +153,7 @@ class HentaiHere : ParsedHttpSource() {
         val contents = document.select("#info .text-info:contains(Content:) ~ a")
         val licensed = categories.find { it.text() == "Licensed" }
 
-        title = document.select("*[itemprop='name']").first()!!.text()
+        title = document.select("h4 > a").first()!!.ownText()
         author = document.select("#info .text-info:contains(Artist:) ~ a")
             .joinToString { it.text() }
 
