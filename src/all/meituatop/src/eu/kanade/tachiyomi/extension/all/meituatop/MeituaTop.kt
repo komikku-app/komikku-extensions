@@ -25,7 +25,7 @@ class MeituaTop : HttpSource() {
 
     override val baseUrl = "https://meitu1.one"
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/arttype/22b-$page.html", headers)
+    override fun popularMangaRequest(page: Int) = GET("$baseUrl/arttype/0b-$page.html", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
@@ -63,7 +63,7 @@ class MeituaTop : HttpSource() {
         }
 
         val filter = filters.filterIsInstance<RegionFilter>().firstOrNull() ?: return popularMangaRequest(page)
-        return GET("$baseUrl/arttype/${21 + filter.state}a-$page.html", headers)
+        return GET("$baseUrl/arttype/${21 + filter.state}b-$page.html", headers)
     }
 
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
