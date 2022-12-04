@@ -21,7 +21,7 @@ class ManhwasNet : HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        return document.select(".listing-chapters_wrap .chapter-link a").map { chapterAnchor ->
+        return document.select(".fa-book.d-inline-flex").map { chapterAnchor ->
             val chapterUrl = getUrlWithoutDomain(chapterAnchor.attr("href"))
             val chapterName = chapterUrl.substringAfterLast("-")
             val chapter = SChapter.create()
@@ -38,8 +38,9 @@ class ManhwasNet : HttpSource() {
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        val content = document.selectFirst(".d-flex[style=\"flex-wrap:wrap;\"]")
-        val manhwas = parseManhwas(content)
+        val content18 = document.select(".list-unstyled.row").get(0)
+        val content15 = document.select(".list-unstyled.row").get(1)
+        val manhwas = parseManhwas(content18) + parseManhwas(content15)
         return MangasPage(manhwas, false)
     }
 
@@ -49,16 +50,14 @@ class ManhwasNet : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
-        val profileManga = document.selectFirst(".profile-manga")
-
+        val profileManga = document.selectFirst(".anime-single")
         val manhwa = SManga.create()
-        manhwa.title = profileManga.selectFirst(".post-title h1").text()
-        manhwa.thumbnail_url = profileManga.selectFirst(".summary_image img").attr("src")
-        manhwa.description = profileManga.selectFirst(".description-summary p").text()
-
-        val status = profileManga.selectFirst(".post-status .post-content_item:nth-child(2)").text()
+        manhwa.title = profileManga.selectFirst(".title").text()
+        manhwa.thumbnail_url = profileManga.selectFirst("img").attr("src")
+        manhwa.description = profileManga.selectFirst(".sinopsis").text().substringAfter(manhwa.title + " ")
+        val status = profileManga.select(".anime-type-peli.text-white").text()
         manhwa.status = SManga.ONGOING
-        if (!status.contains("publishing")) manhwa.status = SManga.COMPLETED
+        if (!status.contains("Publicándose")) manhwa.status = SManga.COMPLETED
 
         return manhwa
     }
@@ -66,7 +65,10 @@ class ManhwasNet : HttpSource() {
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
         return document.select("#chapter_imgs img").mapIndexed { i, img ->
-            val url = img.attr("src")
+            var url = img.attr("src")
+            if (url.toString().equals("/discord.jpg")) {
+                url = "$baseUrl/discord.jpg"
+            }
             Page(i, imageUrl = url)
         }
     }
@@ -98,20 +100,19 @@ class ManhwasNet : HttpSource() {
 
     private fun parseLibraryMangas(response: Response): MangasPage {
         val document = response.asJsoup()
-        val content = document.selectFirst(".d-flex[style=\"flex-wrap:wrap;\"]")
+        val content = document.selectFirst(".animes")
         val manhwas = parseManhwas(content)
         val hasNextPage = document.selectFirst(".pagination .page-link[rel=\"next\"]") != null
         return MangasPage(manhwas, hasNextPage)
     }
 
     private fun parseManhwas(element: Element): List<SManga> {
-        return element.select(".series-card").map { seriesCard ->
-            val seriesCol = seriesCard.parent()
+        return element.select(".anime").map { anime ->
             val manhwa = SManga.create()
-            manhwa.title = seriesCol.selectFirst(".series-title").text().trim()
-            manhwa.thumbnail_url = seriesCard.selectFirst(".thumb-img").attr("src")
+            manhwa.title = anime.selectFirst(".title").text().trim()
+            manhwa.thumbnail_url = anime.selectFirst("img").attr("src")
             manhwa.url = getUrlWithoutDomain(
-                transformUrl(seriesCard.selectFirst("a").attr("href"))
+                transformUrl(anime.select("a").attr("href"))
             )
             manhwa
         }
