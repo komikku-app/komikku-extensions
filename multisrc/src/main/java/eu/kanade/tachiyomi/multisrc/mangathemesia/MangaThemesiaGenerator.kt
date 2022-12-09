@@ -99,7 +99,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Senpai Ediciones", "http://senpaiediciones.com", "es"),
         SingleLang("Shadow Mangas", "https://shadowmangas.com", "es"),
         SingleLang("Shea Manga", "https://sheakomik.com", "id", overrideVersionCode = 4),
-        SingleLang("Shooting Star Scans", "https://shootingstarscans.com", "en", overrideVersionCode = 3),
         SingleLang("Silence Scan", "https://silencescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 5),
         SingleLang("Snudae Scans", "https://snudaescans.com", "en", isNsfw = true, className = "BatotoScans", overrideVersionCode = 1),
         SingleLang("Summer Fansub", "https://smmr.in", "pt-BR", isNsfw = true),
