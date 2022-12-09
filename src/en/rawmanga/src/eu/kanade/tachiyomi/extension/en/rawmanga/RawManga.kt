@@ -88,7 +88,7 @@ class RawManga : ParsedHttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val mangaId = response.asJsoup().selectFirst(".btn-danger").attr("onclick")
-            .substringAfter("(").substringBefore(")")
+            .substringAfter("showAllCHaps(").substringBefore(")")
 
         val chapters = client.newCall(GET("$baseUrl/pieces/chaps.php?mng=$mangaId", headers)).execute()
 
