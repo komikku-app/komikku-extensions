@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
-class Hentai20 : Madara("Hentai20", "https://hentai20s.com", "en") {
+class Hentai20 : Madara("Hentai20", "https://hentai20.io", "en") {
 
     override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(1, 1, TimeUnit.SECONDS)
