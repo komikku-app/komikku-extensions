@@ -16,7 +16,7 @@ class MangaDto(
     private val update_time: JsonPrimitive? = null,
     private val image: String,
     private val auther: String,
-    private val desc: String,
+    private val desc: String?,
     private val mhstatus: Int,
     private val keyword: String,
 ) {
@@ -33,14 +33,14 @@ class MangaDto(
         thumbnail_url = image.toImageUrl()
         val rawUpdateTime = update_time
         if (rawUpdateTime == null) {
-            description = desc.trim()
+            description = desc?.trim()
             return@apply
         }
         val updateTime = when {
             rawUpdateTime.isString -> rawUpdateTime.content
             else -> dateFormat.format(Date(rawUpdateTime.long * 1000))
         }
-        description = "更新时间：$updateTime\n\n${desc.trim()}"
+        description = "更新时间：$updateTime\n\n${desc?.trim()}"
         initialized = true
     }
 }
