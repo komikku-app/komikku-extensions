@@ -76,7 +76,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Comictoon", "https://comictoonthaith-new.com", "th", isNsfw = true),
         SingleLang("Cookie Kiara", "https://18.kiara.cool", "en", isNsfw = true),
         SingleLang("CopyPasteScan", "https://copypastescan.xyz", "es", overrideVersionCode = 1),
-        SingleLang("Coven Scan", "https://covenscan.com", "pt-BR", isNsfw = true),
         SingleLang("Cronos Scan", "https://cronosscan.net", "pt-BR", overrideVersionCode = 1),
         SingleLang("DapRob", "https://daprob.com", "es"),
         SingleLang("Dark Scans", "https://darkscans.com", "en"),

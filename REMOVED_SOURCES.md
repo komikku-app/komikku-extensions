@@ -49,3 +49,5 @@
 - Astra Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13845
 - Manganoon https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13866
 - MangaPro https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13989
+- Coven Scan https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14499
+
