@@ -502,7 +502,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
             pages.add(
                 Page(
                     index = i,
-                    imageUrl = "$apiUrl/Reader/image?chapterId=$chapterId&page=$i"
+                    imageUrl = "$apiUrl/Reader/image?chapterId=$chapterId&page=$i&extractPdf=true"
                 )
             )
         }
@@ -708,6 +708,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                         listOf(
                             "Image",
                             "Archive",
+                            "Pdf",
                             "Unknown",
                         ).map { FormatFilter(it) }
                     )

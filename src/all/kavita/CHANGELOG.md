@@ -1,5 +1,11 @@
 ## 1.3.8
 
+### Features
+
+* Added pdf support
+
+## 1.3.8
+
 ### Fix
 
 * Fixed `Expected URL scheme 'http' or 'https` when downloading
