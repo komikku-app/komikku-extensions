@@ -111,7 +111,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Fukushuu no Yuusha", "https://fny-scantrad.com", "fr", overrideVersionCode = 2),
         SingleLang("Furio Scans", "https://furioscans.com", "pt-BR", overrideVersionCode = 4),
         SingleLang("Fusion Scanlation", "https://fusionscanlation.com", "es", className = "FusionScanlation", overrideVersionCode = 3),
-        SingleLang("GalaxyDegenScans", "https://gdstmp.site", "en", overrideVersionCode = 3),
+        SingleLang("GalaxyDegenScans", "https://gdscans.com", "en", overrideVersionCode = 4),
         SingleLang("Gatemanga", "https://gatemanga.com", "ar", overrideVersionCode = 1),
         SingleLang("GeassToon", "https://geasstoon.com", "tr"),
         SingleLang("Gemanga", "https://gemanga.com", "ar", overrideVersionCode = 2),
