@@ -37,11 +37,14 @@ class BoyLove : HttpSource(), ConfigurableSource {
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences =
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    override val baseUrl = run {
+        val preferences: SharedPreferences =
+            Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-    override val baseUrl = "https://" + preferences.getString(MIRROR_PREF, "0")!!.toInt()
-        .coerceIn(0, MIRRORS.size - 1).let { MIRRORS[it] }
+        val mirrors = MIRRORS
+        val index = preferences.getString(MIRROR_PREF, "0")!!.toInt().coerceIn(0, mirrors.size - 1)
+        "https://" + mirrors[index]
+    }
 
     override val client = network.cloudflareClient.newBuilder()
         .rateLimit(2)
@@ -112,6 +115,7 @@ class BoyLove : HttpSource(), ConfigurableSource {
             val images = root.select(Evaluator.Class("reader-cartoon-image"))
             val urlList = if (images.isEmpty()) {
                 root.select(Evaluator.Tag("img")).map { it.attr("src").trim().toImageUrl() }
+                    .filterNot { it.endsWith(".gif") }
             } else {
                 images.map { it.child(0) }
                     .filter { it.attr("src").endsWith("load.png") }
@@ -166,8 +170,9 @@ class BoyLove : HttpSource(), ConfigurableSource {
             key = MIRROR_PREF
             title = "镜像网址"
             summary = "选择要使用的镜像网址，重启生效"
-            entries = MIRRORS_DESC
-            entryValues = MIRROR_INDICES
+            val desc = MIRRORS_DESC
+            entries = desc
+            entryValues = Array(desc.size, Int::toString)
             setDefaultValue("0")
         }.let { screen.addPreference(it) }
     }
@@ -176,8 +181,7 @@ class BoyLove : HttpSource(), ConfigurableSource {
         private const val MIRROR_PREF = "MIRROR"
 
         // redirect URL: https://fuhouse.club/bl
-        private val MIRRORS = arrayOf("boylove.live", "boylove3.cc", "boylove.cc")
-        private val MIRRORS_DESC = arrayOf("boylove.live (大陆地区)", "boylove3.cc", "boylove.cc (非大陆地区)")
-        private val MIRROR_INDICES = arrayOf("0", "1", "2")
+        private val MIRRORS get() = arrayOf("boylov.xyz", "boylove3.cc", "boylove.cc")
+        private val MIRRORS_DESC get() = arrayOf("boylov.xyz (大陆地区)", "boylove3.cc", "boylove.cc (非大陆地区)")
     }
 }

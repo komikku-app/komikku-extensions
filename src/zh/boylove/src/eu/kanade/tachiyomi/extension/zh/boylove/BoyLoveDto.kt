@@ -49,8 +49,7 @@ fun String.toImageUrl() =
     if (startsWith("http")) {
         this
     } else {
-        val i = (hashCode() and 1) + 1 // 1 or 2
-        "https://blcnimghost$i.cc$this"
+        "https://proxy.boylove3.cc$this"
     }
 
 @Serializable
