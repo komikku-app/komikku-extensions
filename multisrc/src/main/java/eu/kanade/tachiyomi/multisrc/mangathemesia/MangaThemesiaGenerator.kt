@@ -113,7 +113,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Uzay Manga", "https://uzaymanga.com", "tr", overrideVersionCode = 4),
         SingleLang("Walpurgi Scan", "https://www.walpurgiscan.com", "it", overrideVersionCode = 6, className = "WalpurgisScan", pkgName = "walpurgisscan"),
         SingleLang("West Manga", "https://westmanga.info", "id", overrideVersionCode = 1),
-        SingleLang("White Cloud Pavilion (New)", "https://www.whitecloudpavilion.com", "en", pkgName = "whitecloudpavilionnew", className = "WhiteCloudPavilion"),
         SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 10),
         SingleLang("xCaliBR Scans", "https://xcalibrscans.com", "en", overrideVersionCode = 4),
     )
