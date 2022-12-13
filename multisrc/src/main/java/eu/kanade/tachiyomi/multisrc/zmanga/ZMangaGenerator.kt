@@ -16,6 +16,7 @@ class ZMangaGenerator : ThemeSourceGenerator {
         SingleLang("Komikita", "https://komikita.org", "id"),
         SingleLang("KomikPlay", "https://komikplay.com", "id", overrideVersionCode = 1),
         SingleLang("Maid - Manga", "https://www.maid.my.id", "id", overrideVersionCode = 10, className = "MaidManga"),
+        SingleLang("Neumanga", "https://neumanga.net", "id"),
         SingleLang("Sekte Komik", "https://sektekomik.com", "id", overrideVersionCode = 25),
     )
 
