@@ -1,7 +1,12 @@
 package eu.kanade.tachiyomi.extension.zh.zerobyw
 
+import android.app.Application
+import android.content.SharedPreferences
 import android.net.Uri
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -12,19 +17,28 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class Zerobyw : ParsedHttpSource() {
+class Zerobyw : ParsedHttpSource(), ConfigurableSource {
     override val name: String = "zero搬运网"
     override val lang: String = "zh"
     override val supportsLatest: Boolean = false
+    private val preferences: SharedPreferences =
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+
+
     // Url can be found at https://cdn.jsdelivr.net/gh/zerozzz123456/1/url.json
-    override val baseUrl: String = "http://www.zerobywblac.com"
+    // or just search for "zerobyw" in google
+    private val defaultBaseUrl = "http://www.zerobywblac.com"
+
+    override val baseUrl = preferences.getString("ZEROBYW_BASEURL", defaultBaseUrl)!!
 
     // Popular
     // Website does not provide popular manga, this is actually latest manga
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/plugin.php?id=jameson_manhua&c=index&a=ku&&page=$page", headers)
-    override fun popularMangaNextPageSelector(): String? = "div.pg > a.nxt"
+    override fun popularMangaNextPageSelector(): String = "div.pg > a.nxt"
     override fun popularMangaSelector(): String = "div.uk-card"
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = getTitle(element.select("p.mt5 > a").text())
@@ -192,5 +206,16 @@ class Zerobyw : ParsedHttpSource() {
         } else {
             title.substringBefore("【")
         }
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        EditTextPreference(screen.context)
+            .apply {
+                key = "ZEROBYW_BASEURL"
+                title = "zerobyw网址"
+                setDefaultValue(defaultBaseUrl)
+                summary = "可在 https://cdn.jsdelivr.net/gh/zerozzz123456/1/url.json 中找到网址，或者通过google搜索\"zerobyw\"得到"
+            }
+            .let { screen.addPreference(it) }
     }
 }
