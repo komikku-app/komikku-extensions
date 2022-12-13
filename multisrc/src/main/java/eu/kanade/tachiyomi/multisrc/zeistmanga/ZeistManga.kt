@@ -25,13 +25,14 @@ abstract class ZeistManga(
 ) : ParsedHttpSource() {
 
     override val supportsLatest = false
-    private val json: Json by injectLazy()
+    val json: Json by injectLazy()
+    open val chapterFeedRegex = """clwd\.run\('([^']+)'""".toRegex()
+    open val scriptSelector = "#clwd > script"
+    open val imgSelector = "img[src]"
+    open val imgSelectorAttr = "src"
 
-    override fun chapterListParse(response: Response): List<SChapter> {
-        val document = response.asJsoup()
-
-        // Find chapter feed name (ZeistManga v5)
-        val script = document.selectFirst("#clwd > script")
+    open fun getChaptersUrl(doc: Document): String {
+        val script = doc.selectFirst(scriptSelector)
         val feed = chapterFeedRegex
             .find(script.html())
             ?.groupValues?.get(1)
@@ -41,9 +42,16 @@ abstract class ZeistManga(
             .addQueryParameter("start-index", "2") // Only get chapters
             .addQueryParameter("max-results", "999999") // Get all chapters
             .build()
+        return url.toString()
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val document = response.asJsoup()
+
+        val url = getChaptersUrl(document)
 
         // Call JSON API
-        val req = GET(url.toString(), headers)
+        val req = GET(url, headers)
         val res = client.newCall(req).execute()
 
         // Parse JSON API response
@@ -104,15 +112,15 @@ abstract class ZeistManga(
         return SManga.create().apply {
             title = profileManga.selectFirst("h1.mt-0.mb-6.fs-20").text()
             thumbnail_url = profileManga.selectFirst("img").attr("src")
-            description = profileManga.selectFirst("#synopsis").text()
+            description = profileManga.select("#synopsis").text()
             status = SManga.UNKNOWN
         }
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val images = document.selectFirst(".check-box")
-        return images.select("img").mapIndexed { i, img ->
-            Page(i, "", img.attr("src"))
+        val images = document.selectFirst("div.check-box")
+        return images.select(imgSelector).mapIndexed { i, img ->
+            Page(i, "", img.attr(imgSelectorAttr))
         }
     }
 
@@ -167,6 +175,5 @@ abstract class ZeistManga(
 
     companion object {
         private const val maxResults = 20
-        private val chapterFeedRegex = """clwd\.run\('([^']+)'""".toRegex()
     }
 }
