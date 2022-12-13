@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import kotlinx.serialization.Serializable
 
 @Serializable
-class ChapterDto(val chapterid: String, val chaptername: String) {
+class ChapterDto(private val chapterid: String, private val chaptername: String) {
     fun toSChapter(path: String) = SChapter.create().apply {
         url = "$path$chapterid.html"
         name = chaptername
