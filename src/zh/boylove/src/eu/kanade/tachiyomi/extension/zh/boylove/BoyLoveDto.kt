@@ -66,7 +66,7 @@ class ChapterDto(
 private val dateFormat by lazy { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH) }
 
 @Serializable
-class ListPageDto<T>(val lastPage: Boolean, val list: List<T>)
+class ListPageDto<T>(val lastPage: Boolean, val list: List<T> = emptyList())
 
 @Serializable
 class ResultDto<T>(val result: T)
