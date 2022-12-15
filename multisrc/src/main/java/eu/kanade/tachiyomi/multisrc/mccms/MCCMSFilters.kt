@@ -14,17 +14,31 @@ open class MCCMSFilter(
 }
 
 class SortFilter : MCCMSFilter("排序", SORT_NAMES, SORT_QUERIES)
+class WebSortFilter : MCCMSFilter("排序", SORT_NAMES, SORT_QUERIES_WEB)
 
 private val SORT_NAMES = arrayOf("热门人气", "更新时间", "评分")
 private val SORT_QUERIES = arrayOf("order=hits", "order=addtime", "order=score")
+private val SORT_QUERIES_WEB = arrayOf("order/hits", "order/addtime", "order/score")
 
 class StatusFilter : MCCMSFilter("进度", STATUS_NAMES, STATUS_QUERIES)
+class WebStatusFilter : MCCMSFilter("进度", STATUS_NAMES, STATUS_QUERIES_WEB)
 
-private val STATUS_NAMES = arrayOf("全部", "连载(有缺漏)", "完结(有缺漏)")
+private val STATUS_NAMES = arrayOf("全部", "连载", "完结")
 private val STATUS_QUERIES = arrayOf("", "serialize=连载", "serialize=完结")
+private val STATUS_QUERIES_WEB = arrayOf("", "finish/1", "finish/2")
 
 class GenreFilter(private val values: Array<String>, private val queries: Array<String>) {
-    val filter get() = MCCMSFilter("标签(搜索文本时无效)", values, queries, isTypeQuery = true)
+
+    private val apiQueries get() = queries.run {
+        Array(size) { i -> "type[tags]=" + this[i] }
+    }
+
+    private val webQueries get() = queries.run {
+        Array(size) { i -> "tags/" + this[i] }
+    }
+
+    val filter get() = MCCMSFilter("标签(搜索文本时无效)", values, apiQueries, isTypeQuery = true)
+    val webFilter get() = MCCMSFilter("标签", values, webQueries, isTypeQuery = true)
 }
 
 class GenreData(hasCategoryPage: Boolean) {
@@ -49,7 +63,7 @@ internal fun parseGenres(document: Document, genreData: GenreData) {
         add(Pair("全部", ""))
         genres.mapTo(this) {
             val tagId = it.attr("href").substringAfterLast('/')
-            Pair(it.text(), "type[tags]=$tagId")
+            Pair(it.text(), tagId)
         }
     }
     genreData.genreFilter = GenreFilter(
@@ -69,6 +83,20 @@ internal fun getFilters(genreData: GenreData): FilterList {
             add(genreData.genreFilter.filter)
         } else {
             add(Filter.Header("点击“重置”尝试刷新标签分类"))
+        }
+    }
+    return FilterList(list)
+}
+
+internal fun getWebFilters(genreData: GenreData): FilterList {
+    val list = buildList(4) {
+        add(Filter.Header("分类筛选（搜索时无效）"))
+        add(WebStatusFilter())
+        add(WebSortFilter())
+        when (genreData.status) {
+            GenreData.NO_DATA -> return@buildList
+            GenreData.FETCHED -> add(genreData.genreFilter.webFilter)
+            else -> add(Filter.Header("点击“重置”尝试刷新标签分类"))
         }
     }
     return FilterList(list)
