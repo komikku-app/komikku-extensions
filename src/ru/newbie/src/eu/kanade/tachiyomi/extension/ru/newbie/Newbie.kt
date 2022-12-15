@@ -382,11 +382,7 @@ class Newbie : ConfigurableSource, HttpSource() {
     }
 
     override fun fetchImageUrl(page: Page): Observable<String> {
-        val bodyLength = client.newCall(GET(page.url, headers)).execute().body!!.contentLength()
-        return if (bodyLength > 320)
-            Observable.just(page.url)
-        else
-            Observable.just("$baseUrl/error-page/img/logo-fullsize.png")
+        return Observable.just(page.url)
     }
 
     override fun imageUrlRequest(page: Page): Request = throw NotImplementedError("Unused")
