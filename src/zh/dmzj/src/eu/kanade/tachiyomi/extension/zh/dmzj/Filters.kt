@@ -3,11 +3,11 @@ package eu.kanade.tachiyomi.extension.zh.dmzj
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 
-fun getFilterListInternal() = FilterList(
+fun getFilterListInternal(isMultiGenre: Boolean) = FilterList(
     RankingGroup(),
     Filter.Separator(),
     Filter.Header("分类筛选（查看排行榜、搜索文本时无效）"),
-    GenreGroup(),
+    if (isMultiGenre) GenreGroup() else GenreSelectFilter(),
     StatusFilter(),
     ReaderFilter(),
     RegionFilter(),
@@ -76,6 +76,8 @@ fun parseFilters(filters: FilterList): String {
 }
 
 private interface TagFilter : UriPartFilter
+
+private class GenreSelectFilter : TagFilter, SelectFilter("题材", genres)
 
 private class GenreGroup : TagFilter, Filter.Group<GenreFilter>(
     "题材（作品需包含勾选的所有项目）",

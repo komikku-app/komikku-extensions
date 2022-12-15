@@ -28,6 +28,13 @@ fun getPreferencesInternal(context: Context, preferences: SharedPreferences) = a
         setDefaultValue(false)
     },
 
+    SwitchPreferenceCompat(context).apply {
+        key = MULTI_GENRE_FILTER_PREF
+        title = "分类筛选时允许勾选多个题材"
+        summary = "可以更精细地筛选出同时符合多个题材的作品。"
+        setDefaultValue(false)
+    },
+
     MultiSelectListPreference(context).setupIdList(
         LICENSED_LIST_PREF,
         "特殊漫画 ID 列表 (1)",
@@ -44,6 +51,8 @@ fun getPreferencesInternal(context: Context, preferences: SharedPreferences) = a
 val SharedPreferences.imageQuality get() = getString(IMAGE_QUALITY_PREF, AUTO_RES)!!
 
 val SharedPreferences.showChapterComments get() = getBoolean(CHAPTER_COMMENTS_PREF, false)
+
+val SharedPreferences.isMultiGenreFilter get() = getBoolean(MULTI_GENRE_FILTER_PREF, false)
 
 val SharedPreferences.licensedList: Set<String> get() = getStringSet(LICENSED_LIST_PREF, emptySet())!!
 val SharedPreferences.hiddenList: Set<String> get() = getStringSet(HIDDEN_LIST_PREF, emptySet())!!
@@ -82,6 +91,7 @@ const val ORIGINAL_RES = "ORIG_RES_ONLY"
 const val LOW_RES = "LOW_RES_ONLY"
 
 private const val CHAPTER_COMMENTS_PREF = "chapterComments"
+private const val MULTI_GENRE_FILTER_PREF = "multiGenreFilter"
 
 private const val LICENSED_LIST_PREF = "licensedList"
 private const val HIDDEN_LIST_PREF = "hiddenList"

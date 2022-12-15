@@ -116,7 +116,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
             val request = GET(ApiSearch.textSearchUrl(query), headers)
             Observable.fromCallable {
                 // this API fails randomly, and might return empty list
-                repeat(8) {
+                repeat(5) {
                     val result = ApiSearch.parsePage(client.newCall(request).execute())
                     if (result.mangas.isNotEmpty()) return@fromCallable result
                 }
@@ -221,7 +221,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
     override fun imageUrlParse(response: Response) =
         throw UnsupportedOperationException("This method should not be called!")
 
-    override fun getFilterList() = getFilterListInternal()
+    override fun getFilterList() = getFilterListInternal(preferences.isMultiGenreFilter)
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         getPreferencesInternal(screen.context, preferences).forEach(screen::addPreference)
