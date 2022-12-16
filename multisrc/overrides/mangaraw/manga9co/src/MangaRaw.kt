@@ -1,17 +1,21 @@
 package eu.kanade.tachiyomi.extension.ja.manga9co
 
 import android.app.Application
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.multisrc.mangaraw.MangaRawTheme
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.Page
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Evaluator
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import kotlin.random.Random
 
 class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
     // See https://github.com/tachiyomiorg/tachiyomi-extensions/commits/master/src/ja/mangaraw
@@ -22,14 +26,22 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
     override val baseUrl: String
     private val selectors: Selectors
     private val needUrlSanitize: Boolean
+    private val isPagesShuffled: Boolean
 
     init {
         val mirrors = MIRRORS
-        val mirrorIndex = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-            .getString(MIRROR_PREF, "0")!!.toInt().coerceAtMost(mirrors.size - 1)
+        val preferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+        var mirrorIndex = preferences.getString(MIRROR_PREF, "-1")!!.toInt()
+
+        if (mirrorIndex !in mirrors.indices) {
+            mirrorIndex = Random.nextInt(RANDOM_MIRROR_FROM, RANDOM_MIRROR_UNTIL)
+            preferences.edit().putString(MIRROR_PREF, mirrorIndex.toString()).apply()
+        }
+
         baseUrl = "https://" + mirrors[mirrorIndex]
         selectors = getSelectors(mirrorIndex)
         needUrlSanitize = needUrlSanitize(mirrorIndex)
+        isPagesShuffled = isPagesShuffled(mirrorIndex)
     }
 
     override fun String.sanitizeTitle() = substringBeforeLast('(').trimEnd()
@@ -57,13 +69,26 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
 
     override fun pageSelector() = Evaluator.Class("card-wrap")
 
+    override fun pageListParse(response: Response): List<Page> {
+        if (!isPagesShuffled) return super.pageListParse(response)
+        val html = response.body!!.string()
+        val startText = "let ads = '"
+        val startIndex = html.indexOf(startText) + startText.length
+        val endIndex = html.indexOf('\'', startIndex)
+        val base64 = html.substring(startIndex, endIndex)
+        val decoded = String(Base64.decode(base64, Base64.DEFAULT))
+        return decoded.split(",").mapIndexed { index, imageUrl ->
+            Page(index, imageUrl = imageUrl)
+        }
+    }
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = MIRROR_PREF
             title = "Mirror"
             summary = "%s\n" +
                 "Requires app restart to take effect\n" +
-                "Note: 'mangaraw.to' might fail to load images because of Cloudflare protection"
+                PROMPT
             entries = MIRRORS
             entryValues = MIRRORS.indices.map { it.toString() }.toTypedArray()
             setDefaultValue("0")
