@@ -30,6 +30,7 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.random.Random
 
 class SixMH : HttpSource(), ConfigurableSource {
     override val name = "6漫画"
@@ -43,7 +44,11 @@ class SixMH : HttpSource(), ConfigurableSource {
     init {
         val preferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
         val mirrors = MIRRORS
-        val index = preferences.getString(MIRROR_PREF, "0")!!.toInt().coerceAtMost(mirrors.size - 1)
+        var index = preferences.getString(MIRROR_PREF, "-1")!!.toInt()
+        if (index !in mirrors.indices) {
+            index = Random.nextInt(0, mirrors.size)
+            preferences.edit().putString(MIRROR_PREF, index.toString()).apply()
+        }
         val domain = mirrors[index]
 
         mirrorIndex = index
