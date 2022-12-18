@@ -17,6 +17,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -187,7 +188,12 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         // impossible to search a manga and use the filters
         return if (query.isNotEmpty()) {
-            GET("$baseUrl/search?q=$query", headers)
+            val baseUrl = baseUrl.replace("webmota.com", "baozimh.com")
+            val url = baseUrl.toHttpUrl().newBuilder()
+                .addEncodedPathSegment("search")
+                .addQueryParameter("q", query)
+                .toString()
+            GET(url, headers)
         } else {
             val parts = filters.filterIsInstance<UriPartFilter>().joinToString("&") { it.toUriPart() }
             GET("$baseUrl/classify?page=$page&$parts", headers)
@@ -220,7 +226,8 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             entries = MIRRORS
             entryValues = MIRRORS
             summary = "已选择：%s\n" +
-                "重启生效，切换简繁体后需要迁移才能刷新漫画标题。"
+                "重启生效，切换简繁体后需要迁移才能刷新漫画标题。\n" +
+                "搜索漫画时自动使用 baozimh.com 域名以避免出错。"
             setDefaultValue(MIRRORS[0])
         }.let { screen.addPreference(it) }
 
