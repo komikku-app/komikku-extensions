@@ -65,24 +65,57 @@ class KomikIndoID : ParsedHttpSource() {
                 is YearFilter -> {
                     url.addQueryParameter("yearx", filter.state)
                 }
-                is StatusFilter -> {
-                    val status = when (filter.state) {
-                        Filter.TriState.STATE_INCLUDE -> "completed"
-                        Filter.TriState.STATE_EXCLUDE -> "ongoing"
-                        else -> ""
-                    }
-                    url.addQueryParameter("status", status)
-                }
-                is TypeFilter -> {
-                    url.addQueryParameter("type", filter.toUriPart())
-                }
-                is SortByFilter -> {
+                is SortFilter -> {
                     url.addQueryParameter("order", filter.toUriPart())
                 }
-                is GenreListFilter -> {
-                    filter.state
-                        .filter { it.state != Filter.TriState.STATE_IGNORE }
-                        .forEach { url.addQueryParameter("genre[]", it.id) }
+                is OriginalLanguageFilter -> {
+                    filter.state.forEach { lang ->
+                        if (lang.state) {
+                            url.addQueryParameter("type[]", lang.id)
+                        }
+                    }
+                }
+                is FormatFilter -> {
+                    filter.state.forEach { format ->
+                        if (format.state) {
+                            url.addQueryParameter("format[]", format.id)
+                        }
+                    }
+                }
+                is DemographicFilter -> {
+                    filter.state.forEach { demographic ->
+                        if (demographic.state) {
+                            url.addQueryParameter("demografis[]", demographic.id)
+                        }
+                    }
+                }
+                is StatusFilter -> {
+                    filter.state.forEach { status ->
+                        if (status.state) {
+                            url.addQueryParameter("status[]", status.id)
+                        }
+                    }
+                }
+                is ContentRatingFilter -> {
+                    filter.state.forEach { rating ->
+                        if (rating.state) {
+                            url.addQueryParameter("konten[]", rating.id)
+                        }
+                    }
+                }
+                is ThemeFilter -> {
+                    filter.state.forEach { theme ->
+                        if (theme.state) {
+                            url.addQueryParameter("tema[]", theme.id)
+                        }
+                    }
+                }
+                is GenreFilter -> {
+                    filter.state.forEach { genre ->
+                        if (genre.state) {
+                            url.addQueryParameter("genre[]", genre.id)
+                        }
+                    }
                 }
             }
         }
@@ -91,12 +124,12 @@ class KomikIndoID : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select("div.infoanime").first()
         val descElement = document.select("div.desc > .entry-content.entry-content-single").first()
-        val sepName = infoElement.select(".infox > .spe > span:nth-child(2)").last()
         val manga = SManga.create()
         // need authorCleaner to take "pengarang:" string to remove it from author
         val authorCleaner = document.select(".infox .spe b:contains(Pengarang)").text()
         manga.author = document.select(".infox .spe span:contains(Pengarang)").text().substringAfter(authorCleaner)
-        manga.artist = manga.author
+        val artistCleaner = document.select(".infox .spe b:contains(Ilustrator)").text()
+        manga.artist = document.select(".infox .spe span:contains(Ilustrator)").text().substringAfter(artistCleaner)
         val genres = mutableListOf<String>()
         infoElement.select(".infox > .genre-info > a").forEach { element ->
             val genre = element.text()
@@ -104,8 +137,8 @@ class KomikIndoID : ParsedHttpSource() {
         }
         manga.genre = genres.joinToString(", ")
         manga.status = parseStatus(infoElement.select(".infox > .spe > span:nth-child(1)").text())
-        manga.description = descElement.select("p").text()
-        manga.thumbnail_url = document.select(".thumb > img:nth-child(1)").attr("src")
+        manga.description = descElement.select("p").text().substringAfter("bercerita tentang ")
+        manga.thumbnail_url = document.select(".thumb > img:nth-child(1)").attr("src").substringBeforeLast("?")
         return manga
     }
 
@@ -127,7 +160,7 @@ class KomikIndoID : ParsedHttpSource() {
     }
 
     fun parseChapterDate(date: String): Long {
-        return if (date.contains("lalu")) {
+        return if (date.contains("yang lalu")) {
             val value = date.split(' ')[0].toInt()
             when {
                 "detik" in date -> Calendar.getInstance().apply {
@@ -190,25 +223,28 @@ class KomikIndoID : ParsedHttpSource() {
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
 
+    override fun getFilterList() = FilterList(
+        SortFilter(),
+        Filter.Header("NOTE: Ignored if using text search!"),
+        AuthorFilter(),
+        YearFilter(),
+        Filter.Separator(),
+        OriginalLanguageFilter(getOriginalLanguage()),
+        FormatFilter(getFormat()),
+        DemographicFilter(getDemographic()),
+        StatusFilter(getStatus()),
+        ContentRatingFilter(getContentRating()),
+        ThemeFilter(getTheme()),
+        GenreFilter(getGenre())
+    )
+
     private class AuthorFilter : Filter.Text("Author")
 
     private class YearFilter : Filter.Text("Year")
 
-    private class TypeFilter : UriPartFilter(
-        "Type",
-        arrayOf(
-            Pair("Default", ""),
-            Pair("Manga", "Manga"),
-            Pair("Manhwa", "Manhwa"),
-            Pair("Manhua", "Manhua"),
-            Pair("Comic", "Comic")
-        )
-    )
-
-    private class SortByFilter : UriPartFilter(
+    private class SortFilter : UriPartFilter(
         "Sort By",
         arrayOf(
-            Pair("Default", ""),
             Pair("A-Z", "title"),
             Pair("Z-A", "titlereverse"),
             Pair("Latest Update", "update"),
@@ -217,30 +253,100 @@ class KomikIndoID : ParsedHttpSource() {
         )
     )
 
-    private class StatusFilter : UriPartFilter(
-        "Status",
-        arrayOf(
-            Pair("All", ""),
-            Pair("Ongoing", "ongoing"),
-            Pair("Completed", "completed")
-        )
+    private class OriginalLanguage(name: String, val id: String = name) : Filter.CheckBox(name)
+    private class OriginalLanguageFilter(originalLanguage: List<OriginalLanguage>) :
+        Filter.Group<OriginalLanguage>("Original language", originalLanguage)
+    private fun getOriginalLanguage() = listOf(
+        OriginalLanguage("Japanese (Manga)", "Manga"),
+        OriginalLanguage("Chinese (Manhua)", "Manhua"),
+        OriginalLanguage("Korean (Manhwa)", "Manhwa")
     )
 
-    private class Genre(name: String, val id: String = name) : Filter.TriState(name)
-    private class GenreListFilter(genres: List<Genre>) : Filter.Group<Genre>("Genre", genres)
-
-    override fun getFilterList() = FilterList(
-        Filter.Header("NOTE: Ignored if using text search!"),
-        Filter.Separator(),
-        AuthorFilter(),
-        YearFilter(),
-        StatusFilter(),
-        TypeFilter(),
-        SortByFilter(),
-        GenreListFilter(getGenreList())
+    private class Format(name: String, val id: String = name) : Filter.CheckBox(name)
+    private class FormatFilter(formatList: List<Format>) :
+        Filter.Group<Format>("Format", formatList)
+    private fun getFormat() = listOf(
+        Format("Black & White", "0"),
+        Format("Full Color", "1")
     )
 
-    private fun getGenreList() = listOf(
+    private class Demographic(name: String, val id: String = name) : Filter.CheckBox(name)
+    private class DemographicFilter(demographicList: List<Demographic>) :
+        Filter.Group<Demographic>("Publication Demographic", demographicList)
+    private fun getDemographic() = listOf(
+        Demographic("Josei", "josei"),
+        Demographic("Seinen", "seinen"),
+        Demographic("Shoujo", "shoujo"),
+        Demographic("Shounen", "shounen")
+    )
+
+    private class Status(name: String, val id: String = name) : Filter.CheckBox(name)
+    private class StatusFilter(statusList: List<Status>) :
+        Filter.Group<Status>("Status", statusList)
+    private fun getStatus() = listOf(
+        Status("Ongoing", "Ongoing"),
+        Status("Completed", "Completed")
+    )
+
+    private class ContentRating(name: String, val id: String = name) : Filter.CheckBox(name)
+    private class ContentRatingFilter(contentRating: List<ContentRating>) :
+        Filter.Group<ContentRating>("Content Rating", contentRating)
+    private fun getContentRating() = listOf(
+        ContentRating("Ecchi", "ecchi"),
+        ContentRating("Gore", "gore"),
+        ContentRating("Sexual Violence", "sexual-violence"),
+        ContentRating("Smut", "smut")
+    )
+
+    private class Theme(name: String, val id: String = name) : Filter.CheckBox(name)
+    private class ThemeFilter(themeList: List<Theme>) :
+        Filter.Group<Theme>("Story Theme", themeList)
+    private fun getTheme() = listOf(
+        Theme("Alien", "aliens"),
+        Theme("Animal", "animals"),
+        Theme("Cooking", "cooking"),
+        Theme("Crossdressing", "crossdressing"),
+        Theme("Delinquent", "delinquents"),
+        Theme("Demon", "demons"),
+        Theme("Ecchi", "ecchi"),
+        Theme("Gal", "gyaru"),
+        Theme("Genderswap", "genderswap"),
+        Theme("Ghost", "ghosts"),
+        Theme("Harem", "harem"),
+        Theme("Incest", "incest"),
+        Theme("Loli", "loli"),
+        Theme("Mafia", "mafia"),
+        Theme("Magic", "magic"),
+        Theme("Martial Arts", "martial-arts"),
+        Theme("Military", "military"),
+        Theme("Monster Girls", "monster-girls"),
+        Theme("Monsters", "monsters"),
+        Theme("Music", "music"),
+        Theme("Ninja", "ninja"),
+        Theme("Office Workers", "office-workers"),
+        Theme("Police", "police"),
+        Theme("Post-Apocalyptic", "post-apocalyptic"),
+        Theme("Reincarnation", "reincarnation"),
+        Theme("Reverse Harem", "reverse-harem"),
+        Theme("Samurai", "samurai"),
+        Theme("School Life", "school-life"),
+        Theme("Shota", "shota"),
+        Theme("Smut", "smut"),
+        Theme("Supernatural", "supernatural"),
+        Theme("Survival", "survival"),
+        Theme("Time Travel", "time-travel"),
+        Theme("Traditional Games", "traditional-games"),
+        Theme("Vampires", "vampires"),
+        Theme("Video Games", "video-games"),
+        Theme("Villainess", "villainess"),
+        Theme("Virtual Reality", "virtual-reality"),
+        Theme("Zombies", "zombies")
+    )
+
+    private class Genre(name: String, val id: String = name) : Filter.CheckBox(name)
+    private class GenreFilter(genreList: List<Genre>) :
+        Filter.Group<Genre>("Genre", genreList)
+    private fun getGenre() = listOf(
         Genre("Action", "action"),
         Genre("Adventure", "adventure"),
         Genre("Comedy", "comedy"),
