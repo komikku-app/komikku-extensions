@@ -54,7 +54,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            thumbnail_url = element.select(".inner_thumb img").attr("src")
+            thumbnail_url = element.select(".inner_thumb img").attr("data-src")
             with(element.select(".caption a")) {
                 url = this.attr("href")
                 title = this.text()
