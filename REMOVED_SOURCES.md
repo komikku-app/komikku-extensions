@@ -49,4 +49,4 @@
 - Manganoon https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13866
 - MangaPro https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13989
 - Coven Scan https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14499
-
+- ShinobiScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14457
