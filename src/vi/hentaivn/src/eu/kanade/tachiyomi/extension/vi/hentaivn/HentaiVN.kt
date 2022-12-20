@@ -167,7 +167,7 @@ class HentaiVN : ParsedHttpSource() {
     private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/tim-kiem-truyen.html?key=$id", headers)
     private fun searchMangaByIdParse(response: Response, ids: String): MangasPage {
         val details = mangaDetailsParse(response)
-        details.url = "$baseUrl/$ids-doc-truyen-id.html"
+        details.url = "/$ids-doc-truyen-id.html"
         return MangasPage(listOf(details), false)
     }
 
