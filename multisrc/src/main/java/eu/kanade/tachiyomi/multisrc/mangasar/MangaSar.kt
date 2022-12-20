@@ -50,7 +50,7 @@ abstract class MangaSar(
         .add("Accept-Language", ACCEPT_LANGUAGE)
         .add("Referer", "$baseUrl/")
 
-    private fun apiHeadersBuilder(): Headers.Builder = headersBuilder()
+    protected fun apiHeadersBuilder(): Headers.Builder = headersBuilder()
         .set("Accept", ACCEPT)
         .add("X-Requested-With", "XMLHttpRequest")
 
@@ -100,12 +100,12 @@ abstract class MangaSar(
             .map(::latestUpdatesFromObject)
             .distinctBy { it.url }
 
-        val hasNextPage = result.page.toInt() < result.totalPage
+        val hasNextPage = result.page.toInt() < result.totalPage!!
 
         return MangasPage(latestMangas, hasNextPage)
     }
 
-    private fun latestUpdatesFromObject(release: MangaSarReleaseDto) = SManga.create().apply {
+    protected fun latestUpdatesFromObject(release: MangaSarReleaseDto) = SManga.create().apply {
         title = release.name.withoutEntities()
         thumbnail_url = release.image
         url = release.link
@@ -200,7 +200,7 @@ abstract class MangaSar(
         setUrlWithoutDomain(chapter.link)
     }
 
-    private fun pageListApiRequest(chapterUrl: String, serieId: String, token: String): Request {
+    protected open fun pageListApiRequest(chapterUrl: String, serieId: String, token: String): Request {
         val newHeaders = apiHeadersBuilder()
             .set("Referer", chapterUrl)
             .build()
@@ -296,6 +296,6 @@ abstract class MangaSar(
 
         private val DATE_FORMATTER by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH) }
 
-        private const val TOKEN_NOT_FOUND = "Não foi possível obter o token de leitura."
+        const val TOKEN_NOT_FOUND = "Não foi possível obter o token de leitura."
     }
 }

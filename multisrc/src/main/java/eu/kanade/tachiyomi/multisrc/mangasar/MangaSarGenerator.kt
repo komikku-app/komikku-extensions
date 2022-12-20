@@ -14,7 +14,8 @@ class MangaSarGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang("Fire Mangás", "https://firemangas.com", "pt-BR", className = "FireMangas"),
         SingleLang("Mangazim", "https://mangazim.com", "pt-BR"),
-        SingleLang("Meus Mangás", "https://meusmangas.net", "pt-BR", isNsfw = true, className = "MeusMangas", overrideVersionCode = 2)
+        SingleLang("MangásUp", "https://mangasup.net", "pt-BR", className = "MangasUp"),
+        SingleLang("Seemangas", "https://seemangas.com", "pt-BR", isNsfw = true)
     )
 
     companion object {

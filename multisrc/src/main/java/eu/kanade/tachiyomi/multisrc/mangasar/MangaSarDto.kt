@@ -2,13 +2,14 @@ package eu.kanade.tachiyomi.multisrc.mangasar
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class MangaSarLatestDto(
     val page: String,
-    val releases: List<MangaSarReleaseDto> = emptyList(),
-    @SerialName("total_page") val totalPage: Int
+    @JsonNames("lancamentos") val releases: List<MangaSarReleaseDto> = emptyList(),
+    @SerialName("total_page") val totalPage: Int? = 0
 )
 
 @Serializable
