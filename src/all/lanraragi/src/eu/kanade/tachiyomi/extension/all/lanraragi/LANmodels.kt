@@ -18,7 +18,6 @@ data class ArchivePage(
 @Serializable
 data class ArchiveSearchResult(
     val data: List<Archive>,
-    val draw: Int,
     val recordsFiltered: Int,
     val recordsTotal: Int
 )
