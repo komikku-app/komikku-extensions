@@ -9,12 +9,7 @@ import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class PojokManga : Madara(
-    "Pojok Manga",
-    "https://pojokmanga.com",
-    "id",
-    SimpleDateFormat("MMM dd, yyyy", Locale.US)
-) {
+class PojokManga : Madara("Pojok Manga", "https://pojokmanga.net", "id", SimpleDateFormat("MMM dd, yyyy", Locale.US)) {
 
     override val useLoadMoreSearch = false
 

@@ -339,7 +339,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Pian Manga", "https://pianmanga.com", "en", isNsfw = true),
         SingleLang("Pirulito Rosa", "https://pirulitorosa.site", "pt-BR", isNsfw = true),
         SingleLang("Platinum Crown", "https://platinumscans.com", "en", overrideVersionCode = 1),
-        SingleLang("Pojok Manga", "https://pojokmanga.com", "id", overrideVersionCode = 3),
+        SingleLang("Pojok Manga", "https://pojokmanga.net", "id", overrideVersionCode = 4),
         SingleLang("PoManga", "https://pomanga.com", "en"),
         SingleLang("PornComix", "https://www.porncomixonline.net", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Pornwha", "https://pornwha.com", "en", isNsfw = true, overrideVersionCode = 1),
