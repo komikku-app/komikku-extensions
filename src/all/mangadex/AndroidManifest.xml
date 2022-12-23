@@ -15,6 +15,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:host="mangadex.org" />
+                <data android:host="canary.mangadex.dev" />
                 <data android:scheme="https" />
 
                 <data android:pathPattern="/title/..*" />
