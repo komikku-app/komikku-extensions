@@ -43,7 +43,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Infernal Void Scans", "https://void-scans.com", "en", overrideVersionCode = 5),
         SingleLang("Kanzenin", "https://kanzenin.xyz", "id", isNsfw = true),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 6),
-        SingleLang("KlanKomik", "https://klankomik.com", "id", overrideVersionCode = 1),
         SingleLang("Komik AV", "https://komikav.com", "id", overrideVersionCode = 1),
         SingleLang("Komik Cast", "https://komikcast.site", "id", overrideVersionCode = 18),
         SingleLang("Komik Station", "https://komikstation.co", "id", overrideVersionCode = 3),
