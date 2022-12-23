@@ -264,14 +264,11 @@ class MangaDexHelper(lang: String) {
         return SManga.create().apply {
             url = "/manga/${mangaDataDto.id}"
             val titleMap = mangaDataDto.attributes!!.title
-            val dirtyTitle = titleMap[lang]
-                ?: titleMap["en"]
-                ?: titleMap["ja-ro"]
+            val dirtyTitle =
+                titleMap.values.firstOrNull() // use literally anything from title as first resort
                 ?: mangaDataDto.attributes.altTitles
                     .find { (it[lang] ?: it["en"]) !== null }
-                    ?.values?.singleOrNull()
-                ?: titleMap["ja"] // romaji titles are sometimes ja (and are not altTitles)
-                ?: titleMap.values.firstOrNull() // use literally anything from title as a last resort
+                    ?.values?.singleOrNull()  // find something else from alt titles
             title = cleanString(dirtyTitle ?: "")
 
             coverFileName?.let {
