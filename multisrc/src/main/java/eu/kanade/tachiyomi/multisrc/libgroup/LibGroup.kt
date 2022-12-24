@@ -82,7 +82,9 @@ abstract class LibGroup(
         .addInterceptor { chain ->
             val response = chain.proceed(chain.request())
             if (response.code == 419)
-                throw IOException("HTTP error ${response.code}. Для завершения авторизации необходимо перезапустить приложение с полной остановкой.")
+                throw IOException("HTTP error ${response.code}. Проверьте сайт. Для завершения авторизации необходимо перезапустить приложение с полной остановкой.")
+            if (response.code == 404)
+                throw IOException("HTTP error ${response.code}. Проверьте сайт. Попробуйте авторизоваться через WebView и обновите список глав.")
             return@addInterceptor response
         }
         .build()
@@ -300,13 +302,15 @@ abstract class LibGroup(
         val branches = data["chapters"]!!.jsonObject["branches"]!!.jsonArray.reversed()
         val teams = data["chapters"]!!.jsonObject["teams"]!!.jsonArray
         val sortingList = preferences.getString(SORTING_PREF, "ms_mixing")
+        val auth = data["auth"]!!.jsonPrimitive.content
+        val userId = if (auth == "true") data["user"]!!.jsonObject["id"]!!.jsonPrimitive.content else "not"
 
         val chapters: List<SChapter>? = if (branches.isNotEmpty()) {
-            sortChaptersByTranslator(sortingList, chaptersList, slug, branches)
+            sortChaptersByTranslator(sortingList, chaptersList, slug, userId, branches)
         } else {
             chaptersList
                 ?.filter { it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 && it.jsonObject["price"]?.jsonPrimitive?.intOrNull == 0 }
-                ?.map { chapterFromElement(it, sortingList, slug, null, null, teams, chaptersList) }
+                ?.map { chapterFromElement(it, sortingList, slug, userId, null, null, teams, chaptersList) }
         }
 
         return chapters ?: emptyList()
@@ -325,7 +329,7 @@ abstract class LibGroup(
     }
 
     private fun sortChaptersByTranslator
-    (sortingList: String?, chaptersList: JsonArray?, slug: String, branches: List<JsonElement>): List<SChapter>? {
+    (sortingList: String?, chaptersList: JsonArray?, slug: String, userId: String, branches: List<JsonElement>): List<SChapter>? {
         var chapters: List<SChapter>? = null
         val volume = "(?<=/v)[0-9]+(?=/c[0-9]+)".toRegex()
         val tempChaptersList = mutableListOf<SChapter>()
@@ -341,7 +345,7 @@ abstract class LibGroup(
             else "Неизвестный"
             chapters = chaptersList
                 ?.filter { it.jsonObject["branch_id"]?.jsonPrimitive?.intOrNull == teamId && it.jsonObject["status"]?.jsonPrimitive?.intOrNull != 2 }
-                ?.map { chapterFromElement(it, sortingList, slug, teamId, branches) }
+                ?.map { chapterFromElement(it, sortingList, slug, userId, teamId, branches) }
             when (sortingList) {
                 "ms_mixing" -> {
                     chapters?.let {
@@ -363,16 +367,17 @@ abstract class LibGroup(
     }
 
     private fun chapterFromElement
-    (chapterItem: JsonElement, sortingList: String?, slug: String, teamIdParam: Int? = null, branches: List<JsonElement>? = null, teams: List<JsonElement>? = null, chaptersList: JsonArray? = null): SChapter {
+    (chapterItem: JsonElement, sortingList: String?, slug: String, userId: String, teamIdParam: Int? = null, branches: List<JsonElement>? = null, teams: List<JsonElement>? = null, chaptersList: JsonArray? = null): SChapter {
         val chapter = SChapter.create()
 
         val volume = chapterItem.jsonObject["chapter_volume"]!!.jsonPrimitive.int
         val number = chapterItem.jsonObject["chapter_number"]!!.jsonPrimitive.content
         val chapterScanlatorId = chapterItem.jsonObject["chapter_scanlator_id"]!!.jsonPrimitive.int
         val isScanlatorId = teams?.filter { it.jsonObject["id"]?.jsonPrimitive?.intOrNull == chapterScanlatorId }
-        val teamId = if (teamIdParam != null) "?bid=$teamIdParam" else ""
 
-        val url = "$baseUrl/$slug/v$volume/c$number$teamId"
+        val teamId = if (teamIdParam != null) "&bid=$teamIdParam" else ""
+
+        val url = "$baseUrl/$slug/v$volume/c$number?ui=$userId$teamId"
 
         chapter.setUrlWithoutDomain(url)
 
