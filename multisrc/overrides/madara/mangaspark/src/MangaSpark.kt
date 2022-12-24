@@ -21,4 +21,6 @@ class MangaSpark : Madara("MangaSpark", "https://mangaspark.com", "ar") {
 
         return manga
     }
+
+    override val chapterUrlSuffix = ""
 }

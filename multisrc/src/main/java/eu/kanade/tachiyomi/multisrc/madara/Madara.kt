@@ -818,6 +818,7 @@ abstract class Madara(
 
     open val chapterUrlSelector = "a"
 
+    // can cause some issue for some site. blocked by cloudflare when opening the chapter pages
     open val chapterUrlSuffix = "?style=list"
 
     override fun chapterFromElement(element: Element): SChapter {

@@ -26,4 +26,6 @@ class MangaStarz : Madara("Manga Starz", "https://mangastarz.com", "ar") {
 
         return manga
     }
+
+    override val chapterUrlSuffix = ""
 }
