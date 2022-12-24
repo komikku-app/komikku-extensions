@@ -279,6 +279,8 @@ abstract class GroupLe(
             }
             if (!url.contains("://"))
                 url = "https:$url"
+            if (url.contains("one-way.work")) // domain that does not need a token
+                url = url.substringBefore("?")
             pages.add(Page(i++, "", url.replace("//resh", "//h")))
         }
         return pages
