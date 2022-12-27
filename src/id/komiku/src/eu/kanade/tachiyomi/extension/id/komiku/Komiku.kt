@@ -21,6 +21,8 @@ class Komiku : ParsedHttpSource() {
 
     override val baseUrl = "https://komiku.id"
 
+    private val baseUrlData = "https://data.komiku.id"
+
     override val lang = "id"
 
     override val supportsLatest = true
@@ -31,10 +33,10 @@ class Komiku : ParsedHttpSource() {
     override fun popularMangaSelector() = "div.bge"
 
     override fun popularMangaRequest(page: Int): Request {
-        if (page == 1) {
-            return GET("$baseUrl/other/hot/?orderby=meta_value_num", headers)
+        return if (page == 1) {
+            GET("$baseUrl/other/hot/?orderby=meta_value_num", headers)
         } else {
-            return GET("$baseUrl/other/hot/page/$page/?orderby=meta_value_num", headers)
+            GET("$baseUrl/other/hot/page/$page/?orderby=meta_value_num", headers)
         }
     }
 
@@ -79,7 +81,7 @@ class Komiku : ParsedHttpSource() {
     override fun searchMangaSelector() = popularMangaSelector()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var url = "$baseUrl/pustaka/page/$page/".toHttpUrlOrNull()?.newBuilder()!!.addQueryParameter("s", query)
+        var url = "$baseUrlData/page/$page/?post_type=manga".toHttpUrlOrNull()?.newBuilder()!!.addQueryParameter("s", query)
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is CategoryNames -> {
