@@ -106,7 +106,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Surya Scans", "https://suryascans.com", "en"),
         SingleLang("Sushi-Scan", "https://sushiscan.ru", "fr", className = "SushiScan", overrideVersionCode = 1),
         SingleLang("Tarot Scans", "https://www.tarotscans.com", "tr"),
-        SingleLang("Tempest Manga", "https://manga.tempestfansub.com", "tr"),
         SingleLang("The Apollo Team", "https://theapollo.team", "en"),
         SingleLang("Tsundoku Traduções", "https://tsundoku.com.br", "pt-BR", className = "TsundokuTraducoes", overrideVersionCode = 9),
         SingleLang("TukangKomik", "https://tukangkomik.com", "id"),
