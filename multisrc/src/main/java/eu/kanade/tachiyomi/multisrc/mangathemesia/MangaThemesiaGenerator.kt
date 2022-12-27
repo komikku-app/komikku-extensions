@@ -105,7 +105,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Snudae Scans", "https://snudaescans.com", "en", isNsfw = true, className = "BatotoScans", overrideVersionCode = 1),
         SingleLang("Summer Fansub", "https://smmr.in", "pt-BR", isNsfw = true),
         SingleLang("Surya Scans", "https://suryascans.com", "en"),
-        SingleLang("Sushi-Scan", "https://sushiscan.su", "fr", className = "SushiScan"),
+        SingleLang("Sushi-Scan", "https://sushiscan.ru", "fr", className = "SushiScan", overrideVersionCode = 1),
         SingleLang("Tarot Scans", "https://www.tarotscans.com", "tr"),
         SingleLang("Tempest Manga", "https://manga.tempestfansub.com", "tr"),
         SingleLang("The Apollo Team", "https://theapollo.team", "en"),

@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class SushiScan : MangaThemesia("Sushi-Scan", "https://sushiscan.su", "fr", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.FRENCH)) {
+class SushiScan : MangaThemesia("Sushi-Scan", "https://sushiscan.ru", "fr", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.FRENCH)) {
     override val altNamePrefix = "Nom alternatif : "
     override val seriesStatusSelector = ".tsinfo .imptdt:contains(Statut)"
     override val seriesArtistSelector = ".tsinfo .imptdt:contains(Dessinateur) i"
