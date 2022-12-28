@@ -49,7 +49,7 @@ fun String.toImageUrl() =
     if (startsWith("http")) {
         this
     } else {
-        "https://proxy.boylove3.cc$this"
+        "https://blcnimghost2.cc$this"
     }
 
 @Serializable
