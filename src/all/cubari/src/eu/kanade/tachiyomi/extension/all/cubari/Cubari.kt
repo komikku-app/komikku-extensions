@@ -352,7 +352,13 @@ open class Cubari(override val lang: String) : HttpSource() {
 
             val descriptionFull = jsonObj["description"]?.jsonPrimitive?.content
             description = descriptionFull?.substringBefore("Tags: ") ?: DESCRIPTION_FALLBACK
-            genre = if (descriptionFull!!.contains("Tags: ")) descriptionFull?.substringAfter("Tags: ") else ""
+            genre = descriptionFull?.let {
+                if (it.contains("Tags: ")) {
+                    it.substringAfter("Tags: ")
+                } else {
+                    ""
+                }
+            } ?: ""
 
             url = mangaReference?.url ?: jsonObj["url"]!!.jsonPrimitive.content
             thumbnail_url = jsonObj["coverUrl"]?.jsonPrimitive?.content
