@@ -21,7 +21,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Animated Glitched Scans", "https://anigliscans.com", "en"),
         SingleLang("Arcane scan", "https://arcanescan.fr", "fr"),
         SingleLang("Arena Scans", "https://arenascans.net", "en"),
-        SingleLang("ARESManga", "https://aresmanga.com", "ar", pkgName = "iimanga", overrideVersionCode = 2),
+        SingleLang("ARESManga", "https://aresmanga.net", "ar", pkgName = "iimanga", overrideVersionCode = 3),
         SingleLang("Azure Scans", "https://azuremanga.com", "en", overrideVersionCode = 1),
         SingleLang("Boosei", "https://boosei.net", "id", overrideVersionCode = 2),
         SingleLang("Clayrer", "https://clayrer.net", "es"),
