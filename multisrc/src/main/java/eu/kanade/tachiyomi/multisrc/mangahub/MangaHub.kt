@@ -61,9 +61,9 @@ abstract class MangaHub(
             val uaResponse = chain.proceed(GET(UA_DB_URL))
 
             if (uaResponse.isSuccessful) {
-                // only using chrome, apparently they refuse to load(403) if not chrome
-                val chromeUserAgentString = json.decodeFromString<List<String>>(uaResponse.body!!.string())
-                    .filter { it.contains("chrome", ignoreCase = true) }
+                // only using desktop chromium-based browsers, apparently they refuse to load(403) if not chrome(ium)
+                val uaList = json.decodeFromString<Map<String, List<String>>>(uaResponse.body!!.string())
+                val chromeUserAgentString = uaList["desktop"]!!.filter { it.contains("chrome", ignoreCase = true) }
                 userAgent = chromeUserAgentString.random()
                 checkedUa = true
             }
