@@ -10,6 +10,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import org.jsoup.nodes.Element
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -52,26 +53,32 @@ class YugenMangas : Madara(
     private var checkedUa = false
 
     private fun uaIntercept(chain: Interceptor.Chain): Response {
-        if (userAgent == null && !checkedUa) {
-            val uaResponse = chain.proceed(GET(UA_DB_URL))
+        try {
+            if (userAgent == null && !checkedUa) {
+                val uaResponse = chain.proceed(GET(UA_DB_URL))
 
-            if (uaResponse.isSuccessful) {
-                userAgent = json.decodeFromString<List<String>>(uaResponse.body!!.string()).random()
-                checkedUa = true
+                if (uaResponse.isSuccessful) {
+                    val uaMap =
+                        json.decodeFromString<Map<String, List<String>>>(uaResponse.body!!.string())
+                    userAgent = uaMap["desktop"]?.random()
+                    checkedUa = true
+                }
+
+                uaResponse.close()
             }
 
-            uaResponse.close()
+            if (userAgent != null) {
+                val newRequest = chain.request().newBuilder()
+                    .header("User-Agent", userAgent!!)
+                    .build()
+
+                return chain.proceed(newRequest)
+            }
+
+            return chain.proceed(chain.request())
+        } catch (e: Exception) {
+            throw IOException(e.message)
         }
-
-        if (userAgent != null) {
-            val newRequest = chain.request().newBuilder()
-                .header("User-Agent", userAgent!!)
-                .build()
-
-            return chain.proceed(newRequest)
-        }
-
-        return chain.proceed(chain.request())
     }
 
     companion object {
