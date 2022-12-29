@@ -82,7 +82,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Decadence Scans", "https://reader.decadencescans.com", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("DiamondFansub", "https://diamondfansub.com", "tr", overrideVersionCode = 1),
         SingleLang("Disaster Scans", "https://disasterscans.com", "en", overrideVersionCode = 2),
-        SingleLang("Diskus Scan", "https://diskusscan.com", "pt-BR", overrideVersionCode = 1),
         SingleLang("DokkoManga", "https://dokkomanga.xyz", "es"),
         SingleLang("DoujinHentai", "https://doujinhentai.net", "es", isNsfw = true, overrideVersionCode = 1),
         SingleLang("DragonTranslation", "https://dragontranslation.com", "es", isNsfw = true, overrideVersionCode = 4),
