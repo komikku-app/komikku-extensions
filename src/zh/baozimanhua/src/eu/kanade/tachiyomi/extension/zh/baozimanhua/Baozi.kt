@@ -51,7 +51,11 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
     override val client = network.cloudflareClient.newBuilder()
         .rateLimit(2)
         .addInterceptor(bannerInterceptor)
+        .addNetworkInterceptor(MissingImageInterceptor)
         .build()
+
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
 
     override fun chapterListSelector() = throw UnsupportedOperationException("Not used.")
 
