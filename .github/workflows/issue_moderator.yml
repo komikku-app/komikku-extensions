@@ -49,7 +49,7 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*failed to bypass cloudfl?are.*",
+                "regex": ".*(?:failed|can\\s*(?:no|')?t|unable|get past|blocked by) (?:to )?(?:bypass|penetrate)?\\s*cloudfl?are.*",
                 "ignoreCase": true,
                 "message": "Refer to the **Solving Cloudflare issues** section at https://tachiyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues"
               }
