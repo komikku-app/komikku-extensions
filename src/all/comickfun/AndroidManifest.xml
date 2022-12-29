@@ -15,11 +15,11 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="comick.fun"
+                    android:host="comick.app"
                     android:pathPattern="/comic/.*/..*"
                     android:scheme="https" />
                 <data
-                    android:host="comick.fun"
+                    android:host="comick.app"
                     android:pathPattern="/comic/..*"
                     android:scheme="https" />
             </intent-filter>

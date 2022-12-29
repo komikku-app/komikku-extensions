@@ -19,13 +19,13 @@ import okhttp3.Response
 import rx.Observable
 import java.text.SimpleDateFormat
 
-const val API_BASE = "https://api.comick.fun"
+const val API_BASE = "https://api.comick.app"
 
 abstract class ComickFun(override val lang: String, private val comickFunLang: String) : HttpSource() {
 
-    override val name = "Comick.fun"
+    override val name = "Comick"
 
-    override val baseUrl = "https://comick.fun"
+    override val baseUrl = "https://comick.app"
 
     override val supportsLatest = true
 
@@ -189,7 +189,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                     thumbnail_url = data.cover_url
                 }
             },
-            hasNextPage = result.size >= 50
+            hasNextPage = result.size >= 30
         )
     }
 
