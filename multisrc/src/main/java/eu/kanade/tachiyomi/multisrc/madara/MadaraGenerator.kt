@@ -32,6 +32,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Akuma no Tenshi", "https://akumanotenshi.com", "pt-BR", className = "AkumaNoTenshi"),
         SingleLang("AkuManga", "https://akumanga.com", "ar", overrideVersionCode = 1),
         SingleLang("Akuzenai Arts", "https://akuzenaiarts.org", "en"),
+        SingleLang("Aleatória Scan", "https://aleatoriascan.xyz", "pt-BR", className = "AleatoriaScan"),
         SingleLang("AllPornComic", "https://allporncomic.com", "en", isNsfw = true),
         SingleLang("AllTopManga", "https://alltopmanga.com", "en", isNsfw = true),
         SingleLang("Aln Scans", "https://alnscans.com", "en"),
