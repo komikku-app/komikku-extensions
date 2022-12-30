@@ -3,10 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = 'MangaMx'
+    extName = 'MangaOni'
     pkgNameSuffix = 'es.mangamx'
-    extClass = '.MangaMx'
-    extVersionCode = 13
+    extClass = '.MangaOni'
+    extVersionCode = 14
     isNsfw = true
 }
 

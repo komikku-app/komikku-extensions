@@ -29,11 +29,13 @@ import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-open class MangaMx : ConfigurableSource, ParsedHttpSource() {
+open class MangaOni : ConfigurableSource, ParsedHttpSource() {
 
-    override val name = "MangaMx"
+    override val name = "MangaOni"
 
-    override val baseUrl = "https://manga-mx.com"
+    override val id: Long = 2202687009511923782
+
+    override val baseUrl = "https://manga-oni.com"
 
     override val lang = "es"
 
@@ -152,9 +154,12 @@ open class MangaMx : ConfigurableSource, ParsedHttpSource() {
 
             return MangasPage(mangas, hasNextPage)
         } else {
-            val result = json.decodeFromString<ResponseDto>(response.body!!.string())
-            if (result.mangaList.isEmpty()) throw Exception("Término de búsqueda demasiado corto")
+            val jsonString = response.body?.string().orEmpty()
+            val result = json.decodeFromString<ResponseDto>(jsonString)
 
+            if (result.mangaList.isEmpty()) {
+                return MangasPage(emptyList(), hasNextPage = false)
+            }
             val mangaList = result.mangaList
                 .map(::searchMangaFromObject)
 
