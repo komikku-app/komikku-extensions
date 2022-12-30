@@ -24,11 +24,11 @@ class MangaSee : NepNep("MangaSee", "https://mangasee123.com", "en") {
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.startsWith("id:")) {
             val id = query.substringAfter("id:")
-            return client.newCall(GET("$baseUrl/manga/$id/"))
+            return client.newCall(GET("$baseUrl/manga/$id"))
                 .asObservableSuccess()
                 .map { response ->
                     val manga = mangaDetailsParse(response)
-                    manga.url = "/manga/$id/"
+                    manga.url = "/manga/$id"
                     MangasPage(listOf(manga), false)
                 }
         }
