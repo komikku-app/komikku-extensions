@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 class MangaRawClub : ParsedHttpSource() {
 
     override val id = 734865402529567092
-    override val name = "mcreader.net"
+    override val name = "MReader"
     override val baseUrl = "https://www.mreader.co"
     override val lang = "en"
     override val supportsLatest = true
