@@ -71,7 +71,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Manhwa Freak", "https://manhwafreak.com", "en", overrideVersionCode = 1),
         SingleLang("ManhwaDesu", "https://manhwadesu.co", "id", isNsfw = true, overrideVersionCode = 2),
         SingleLang("ManhwaIndo", "https://manhwaindo.id", "id", isNsfw = true, overrideVersionCode = 2),
-        SingleLang("ManhwaLand.mom", "https://manhwaland.guru", "id", isNsfw = true, className = "ManhwaLandMom", overrideVersionCode = 2),
+        SingleLang("ManhwaLand.mom", "https://manhwaland.guru", "id", isNsfw = true, className = "ManhwaLandMom", overrideVersionCode = 3),
         SingleLang("ManhwaList", "https://manhwalist.com", "id", overrideVersionCode = 1),
         SingleLang("Manhwax", "https://manhwax.com", "en", isNsfw = true),
         SingleLang("Mareceh", "https://mareceh.com", "id", isNsfw = true, pkgName = "mangceh", overrideVersionCode = 10),
