@@ -6,13 +6,11 @@ import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
 class KumaPoi : MangaThemesia("KumaPoi", "https://kumapoi.me", "id") {
-
- override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .rateLimit(4)
         .build()
 
- override val hasProjectPage = true
-
-    }
+    override val hasProjectPage = true
+}
