@@ -188,13 +188,10 @@ abstract class MangaWorld(
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val pages = mutableListOf<Page>()
-        document.select("div#page img.page-image").forEachIndexed { i, it ->
+        return document.select("div#page img.page-image").mapIndexed { index, it ->
             val url = it.attr("src")
-            if (url.isNotEmpty())
-                pages.add(Page(i, imageUrl = url))
+            Page(index, imageUrl = url)
         }
-        return pages
     }
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
