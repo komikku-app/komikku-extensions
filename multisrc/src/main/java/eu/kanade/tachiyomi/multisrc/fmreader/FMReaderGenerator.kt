@@ -20,7 +20,7 @@ class FMReaderGenerator : ThemeSourceGenerator {
         SingleLang("Manga-TR", "https://manga-tr.com", "tr", className = "MangaTR", overrideVersionCode = 1),
         SingleLang("ManhuaRock", "https://manhuarock.net", "vi", overrideVersionCode = 1),
         SingleLang("Manhwa18", "https://manhwa18.com", "en", isNsfw = true, overrideVersionCode = 2),
-        SingleLang("Say Truyen", "https://saytruyen.net", "vi", overrideVersionCode = 2),
+        SingleLang("Say Truyen", "https://saytruyenvip.com", "vi", overrideVersionCode = 3),
         SingleLang("WeLoveManga", "https://weloma.art", "ja", pkgName = "rawlh", overrideVersionCode = 4),
         SingleLang("Manga1000", "https://manga1000.top", "ja"),
         SingleLang("WeLoveMangaOne", "https://welovemanga.one", "ja"),
