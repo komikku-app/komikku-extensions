@@ -7,7 +7,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class SekteDoujin : MangaThemesia("Sekte Doujin", "https://sektedoujin.club", "id", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id"))) {
+class SekteDoujin : MangaThemesia("Sekte Doujin", "https://sektedoujin.lol", "id", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id"))) {
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
