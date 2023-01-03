@@ -44,6 +44,5 @@
 - Reset Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13168
 - SetsuScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/11040
 - ShinobiScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14457
-- TeamX/tqneplus https://github.com/tachiyomiorg/tachiyomi-extensions/issues/4875
 - XXX Yaoi https://github.com/tachiyomiorg/tachiyomi-extensions/issues/9535
 - Yaoi Fan Clube https://github.com/tachiyomiorg/tachiyomi-extensions/issues/9605
