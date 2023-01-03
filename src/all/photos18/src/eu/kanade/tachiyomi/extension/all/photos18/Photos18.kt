@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -34,6 +35,10 @@ class Photos18 : HttpSource(), ConfigurableSource {
     private fun String.stripLang() = removePrefix("/zh-hans")
 
     override val client = network.client.newBuilder().followRedirects(false).build()
+
+    override fun headersBuilder() = Headers.Builder().apply {
+        add("Referer", baseUrl)
+    }
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrlWithLang/sort/views?page=$page", headers)
 
