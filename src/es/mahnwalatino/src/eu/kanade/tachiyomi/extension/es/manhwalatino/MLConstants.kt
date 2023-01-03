@@ -31,7 +31,7 @@ object MLConstants {
     const val latestUpdatesSelectorThumbnailUrl = "div.slider__thumb_item > a > img"
     const val latestUpdatesSelectorTitle = "div.slider__content h4"
     const val latestUpdatesSelectorUrl = "div.slider__content h4 a"
-    const val chapterListParseSelector = "li.wp-manga-chapter"
+    const val chapterListParseSelector = "li.vireimanga-chapter"
     const val chapterLinkParser = "a"
     const val chapterReleaseDateLinkParser = "span.chapter-release-date a"
     const val chapterReleaseDateIParser = "span.chapter-release-date i"
