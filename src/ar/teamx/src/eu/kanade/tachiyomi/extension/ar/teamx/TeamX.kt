@@ -150,6 +150,8 @@ class TeamX : ParsedHttpSource() {
         return allChapters
     }
 
+    val chapterFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
+
     override fun chapterListSelector() = "div.eplister ul a"
 
     override fun chapterFromElement(element: Element): SChapter {
@@ -169,24 +171,22 @@ class TeamX : ParsedHttpSource() {
         }
     }
 
+
     private fun parseChapterDate(date: String): Long {
         return kotlin.runCatching {
-            SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault()).parse(date)?.time
-        }
-            .getOrNull() ?: 0
+            chapterFormat.parse(date)?.time
+        }.getOrNull() ?: 0
     }
 
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select("div.image_list img").mapIndexed { i, img ->
-            Page(
-                i,
-                "",
-                img.absUrl("src")
-            )
+            Page(i, "", img.absUrl("src"))
         }
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
+
+
 }
