@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.CookieJar
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -31,6 +32,7 @@ class HentaiVN : ParsedHttpSource() {
     override val supportsLatest = true
 
     private val searchUrl = "$baseUrl/forum/search-plus.php"
+    private val searchByAuthorUrl = "$baseUrl/tim-kiem-tac-gia.html"
     private val searchClient = network.cloudflareClient
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
@@ -172,7 +174,18 @@ class HentaiVN : ParsedHttpSource() {
     }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        val authorFilter = (if (filters.isEmpty()) getFilterList() else filters).find { it is Author } as Author
         return when {
+            authorFilter.state.isNotEmpty() -> client.newCall(
+                GET(
+                    searchByAuthorUrl.toHttpUrl().newBuilder()
+                        .addQueryParameter("key", authorFilter.state)
+                        .build().toString(),
+                    headers
+                )
+            )
+                .asObservableSuccess()
+                .map { response -> latestUpdatesParse(response) }
             query.startsWith(PREFIX_ID_SEARCH) -> {
                 val ids = query.removePrefix(PREFIX_ID_SEARCH)
                 client.newCall(searchMangaByIdRequest(ids))
@@ -205,6 +218,7 @@ class HentaiVN : ParsedHttpSource() {
                     val group = getGroupList()[filter.state]
                     url.addQueryParameter("group", group.id)
                 }
+                else -> return@forEach
             }
         }
 
@@ -213,6 +227,7 @@ class HentaiVN : ParsedHttpSource() {
 
     override fun searchMangaSelector() = ".search-ul .search-li"
 
+    private class Author : Filter.Text("Tác giả")
     private class TextField(name: String, val key: String) : Filter.Text(name)
     private class Genre(name: String, val id: String) : Filter.CheckBox(name)
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Thể loại", genres)
@@ -224,10 +239,12 @@ class HentaiVN : ParsedHttpSource() {
     private class GroupList(groups: Array<TransGroup>) : Filter.Select<TransGroup>("Nhóm dịch", groups)
 
     override fun getFilterList() = FilterList(
+        Filter.Header("Bộ lọc tác giả không dùng được với các bộ lọc khác!"),
+        Author(),
         TextField("Doujinshi", "dou"),
         TextField("Nhân vật", "char"),
         GenreList(getGenreList()),
-        GroupList(getGroupList())
+        GroupList(getGroupList()),
     )
 
     // jQuery.makeArray($('#container > div > div > div.box-box.textbox > form > ul:nth-child(7) > li').map((i, e) => `Genre("${e.textContent}", "${e.children[0].value}")`)).join(',\n')
