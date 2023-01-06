@@ -35,12 +35,13 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
 class Tachidesk : ConfigurableSource, UnmeteredSource, HttpSource() {
-    override val name = "Tachidesk"
+    override val name = "Suwayomi"
+    override val id = 3100117499901280806L
     override val baseUrl by lazy { getPrefBaseUrl() }
     private val baseLogin by lazy { getPrefBaseLogin() }
     private val basePassword by lazy { getPrefBasePassword() }
 
-    override val lang = "en"
+    override val lang = "all"
     override val supportsLatest = false
 
     private val json: Json by injectLazy()
