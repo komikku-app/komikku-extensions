@@ -6,7 +6,7 @@ ext {
     extName = 'Reaper Scans'
     pkgNameSuffix = 'en.reaperscans'
     extClass = '.ReaperScans'
-    extVersionCode = 40
+    extVersionCode = 41
 }
 
 apply from: "$rootDir/common.gradle"

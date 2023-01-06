@@ -276,7 +276,7 @@ class ReaperScans : ParsedHttpSource() {
     // Page
     override fun pageListParse(document: Document): List<Page> {
         return document.select("img.max-w-full").mapIndexed { index, element ->
-            Page(index, imageUrl = element.attr("src"))
+            Page(index, imageUrl = element.attr("abs:src"))
         }
     }
 
