@@ -24,7 +24,7 @@ class AsuraScansEn : AsuraScans("https://asura.gg", "en", SimpleDateFormat("MMM 
     override fun pageListParse(document: Document): List<Page> {
         return document.select(pageSelector)
             .filterNot { it.attr("src").isNullOrEmpty() }
-            .mapIndexed { i, img -> Page(i, "", img.attr("src")) }
+            .mapIndexed { i, img -> Page(i, "", img.attr("abs:src")) }
     }
 }
 
