@@ -99,17 +99,22 @@ class TeamX : ParsedHttpSource() {
     // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        if (page == 1) titlesAdded.clear()
-        return GET("$baseUrl/series" + "?search=$query" + (if (page > 1) "&page=$page" else ""), headers)
+        return GET("$baseUrl/ajax/search?keyword=$query", headers)
     }
 
-    override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
+    override fun searchMangaSelector() = "li.list-group-item"
 
-    override fun searchMangaSelector() = popularMangaSelector()
+    override fun searchMangaFromElement(element: Element): SManga {
+        return SManga.create().apply {
+            val urlAndText = element.select("div.ms-2 a")
+            title = urlAndText.text()
+            setUrlWithoutDomain(urlAndText.first().absUrl("href"))
+            thumbnail_url = element.select("a img").first().absUrl("src")
+        }
+    }
 
-    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
-
-    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
+    // doesnt matter as there is no next page
+    override fun searchMangaNextPageSelector(): String? = null
 
     // Details
 
@@ -126,31 +131,33 @@ class TeamX : ParsedHttpSource() {
     }
 
     // Chapters
-    private fun chapterNextPageSelector() = "span.nextx_text a:contains(»)"
+    private fun chapterNextPageSelector() = popularMangaNextPageSelector()
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val allChapters = mutableListOf<SChapter>()
+        val allElements = mutableListOf<Element>()
         var document = response.asJsoup()
 
         while (true) {
-            val pageChapters = document.select(chapterListSelector()).map { chapterFromElement(it) }
+            val pageChapters = document.select(chapterListSelector())
             if (pageChapters.isEmpty())
                 break
 
-            allChapters += pageChapters
+            allElements += pageChapters
 
             val hasNextPage = document.select(chapterNextPageSelector()).isNotEmpty()
-            if (!hasNextPage)
+            if (!hasNextPage) {
                 break
+            }
 
             val nextUrl = document.select(chapterNextPageSelector()).attr("href")
+
             document = client.newCall(GET(nextUrl, headers)).execute().asJsoup()
         }
 
-        return allChapters
+        return allElements.map { chapterFromElement(it) }
     }
 
-    val chapterFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
+    private val chapterFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
 
     override fun chapterListSelector() = "div.eplister ul a"
 
@@ -171,7 +178,6 @@ class TeamX : ParsedHttpSource() {
         }
     }
 
-
     private fun parseChapterDate(date: String): Long {
         return kotlin.runCatching {
             chapterFormat.parse(date)?.time
@@ -187,6 +193,4 @@ class TeamX : ParsedHttpSource() {
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
-
-
 }
