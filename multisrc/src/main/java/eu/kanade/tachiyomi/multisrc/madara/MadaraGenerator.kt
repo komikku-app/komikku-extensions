@@ -409,7 +409,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Tortuga Ceviri", "https://tortuga-ceviri.com", "tr"),
         SingleLang("Trap Scans", "https://trapscans.com", "en"),
         SingleLang("TreeManga", "https://treemanga.com", "en", overrideVersionCode = 1),
-        SingleLang("TritiniaScans", "https://tritinia.org", "en", overrideVersionCode = 2),
+        SingleLang("TritiniaScans", "https://tritinia.com", "en", overrideVersionCode = 3),
         SingleLang("Tudo Quadrinhos", "https://tudoquadrinhos.com.br", "pt-BR"),
         SingleLang("TuManga.net", "https://tumanga.net", "es", className = "TuMangaNet"),
         SingleLang("Tumangaonline.site", "https://tumangaonline.site", "es", isNsfw = true, className = "TumangaonlineSite", pkgName = "tumangaonlinesite"),
