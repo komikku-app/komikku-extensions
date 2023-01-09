@@ -27,8 +27,8 @@ internal fun getSelectors(mirrorIndex: Int) = when (mirrorIndex) {
 internal fun needUrlSanitize(mirrorIndex: Int) = mirrorIndex == 2
 
 internal fun isPagesShuffled(mirrorIndex: Int) = when (mirrorIndex) {
-    1, 3 -> true
-    else -> false
+    0 -> false
+    else -> true
 }
 
 internal val mangaSlugRegex = Regex("""^/mz[a-z]{4}-""")

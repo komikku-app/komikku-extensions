@@ -1,9 +1,9 @@
 package eu.kanade.tachiyomi.extension.ja.manga9co
 
 import android.app.Application
-import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.multisrc.mangaraw.ImageListParser
 import eu.kanade.tachiyomi.multisrc.mangaraw.MangaRawTheme
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -72,12 +72,8 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
     override fun pageListParse(response: Response): List<Page> {
         if (!isPagesShuffled) return super.pageListParse(response)
         val html = response.body!!.string()
-        val startText = "let ads = '"
-        val startIndex = html.indexOf(startText) + startText.length
-        val endIndex = html.indexOf('\'', startIndex)
-        val base64 = html.substring(startIndex, endIndex)
-        val decoded = String(Base64.decode(base64, Base64.DEFAULT))
-        return decoded.split(",").mapIndexed { index, imageUrl ->
+        val imageList = ImageListParser(html, 32).getImageList() ?: return emptyList()
+        return imageList.mapIndexed { index, imageUrl ->
             Page(index, imageUrl = imageUrl)
         }
     }

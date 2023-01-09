@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.ja.mangarawru
 
+import eu.kanade.tachiyomi.multisrc.mangaraw.ImageListParser
 import eu.kanade.tachiyomi.multisrc.mangaraw.MangaRawTheme
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList

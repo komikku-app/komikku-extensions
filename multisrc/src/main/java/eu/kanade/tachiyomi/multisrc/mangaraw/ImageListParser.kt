@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.ja.mangarawru
+package eu.kanade.tachiyomi.multisrc.mangaraw
 
 import kotlin.math.pow
 
