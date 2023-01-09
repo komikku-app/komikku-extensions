@@ -9,13 +9,13 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Serializable
-data class HeanCmsSearchDto(
+data class HeanCmsQuerySearchDto(
     val data: List<HeanCmsSeriesDto> = emptyList(),
-    val meta: HeanCmsSearchMetaDto? = null
+    val meta: HeanCmsQuerySearchMetaDto? = null
 )
 
 @Serializable
-data class HeanCmsSearchMetaDto(
+data class HeanCmsQuerySearchMetaDto(
     @SerialName("current_page") val currentPage: Int,
     @SerialName("last_page") val lastPage: Int
 ) {
@@ -23,6 +23,14 @@ data class HeanCmsSearchMetaDto(
     val hasNextPage: Boolean
         get() = currentPage < lastPage
 }
+
+@Serializable
+data class HeanCmsSearchDto(
+    val description: String? = null,
+    @SerialName("series_slug") val slug: String,
+    @SerialName("series_type") val type: String,
+    val title: String
+)
 
 @Serializable
 data class HeanCmsSeriesDto(
@@ -100,11 +108,16 @@ data class HeanCmsReaderContentDto(
 )
 
 @Serializable
-data class HeanCmsSearchPayloadDto(
+data class HeanCmsQuerySearchPayloadDto(
     val order: String,
     val page: Int,
     @SerialName("order_by") val orderBy: String,
     @SerialName("series_status") val status: String,
     @SerialName("series_type") val type: String,
     @SerialName("tags_ids") val tagIds: List<Int> = emptyList()
+)
+
+@Serializable
+data class HeanCmsSearchPayloadDto(
+    val term: String,
 )

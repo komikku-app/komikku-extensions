@@ -64,6 +64,12 @@ class HeanCmsIntl(lang: String) {
         else -> "Recently added"
     }
 
+    val filterWarning: String = when (availableLang) {
+        BRAZILIAN_PORTUGUESE -> "Os filtros serão ignorados se a busca não estiver vazia."
+        SPANISH -> "Los filtros serán ignorados si la búsqueda no está vacía."
+        else -> "Filters will be ignored if the search is not empty."
+    }
+
     fun urlChangedError(sourceName: String): String = when (availableLang) {
         BRAZILIAN_PORTUGUESE ->
             "A URL da série mudou. Migre de $sourceName " +

@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.multisrc.heancms
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -41,14 +42,14 @@ abstract class HeanCms(
 
     protected open val coverPath: String = "cover/"
 
-    private var seriesSlugMap: Map<String, String>? = null
+    private var seriesSlugMap: Map<String, HeanCmsTitle>? = null
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Origin", baseUrl)
         .add("Referer", "$baseUrl/")
 
     override fun popularMangaRequest(page: Int): Request {
-        val payloadObj = HeanCmsSearchPayloadDto(
+        val payloadObj = HeanCmsQuerySearchPayloadDto(
             page = page,
             order = "desc",
             orderBy = "total_views",
@@ -70,7 +71,7 @@ abstract class HeanCms(
         val json = response.body?.string().orEmpty()
 
         if (json.startsWith("{")) {
-            val result = json.parseAs<HeanCmsSearchDto>()
+            val result = json.parseAs<HeanCmsQuerySearchDto>()
             val mangaList = result.data.map { it.toSManga(apiUrl, coverPath) }
 
             fetchAllTitles()
@@ -87,7 +88,7 @@ abstract class HeanCms(
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val payloadObj = HeanCmsSearchPayloadDto(
+        val payloadObj = HeanCmsQuerySearchPayloadDto(
             page = page,
             order = "desc",
             orderBy = "latest",
@@ -110,7 +111,7 @@ abstract class HeanCms(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val sortByFilter = filters.firstInstanceOrNull<SortByFilter>()
 
-        val payloadObj = HeanCmsSearchPayloadDto(
+        val payloadObj = HeanCmsQuerySearchPayloadDto(
             page = page,
             order = if (sortByFilter?.state?.ascending == true) "asc" else "desc",
             orderBy = sortByFilter?.selected ?: "total_views",
@@ -122,15 +123,25 @@ abstract class HeanCms(
                 .orEmpty()
         )
 
+        val searchPayloadObj = HeanCmsSearchPayloadDto(
+            term = query
+        )
+
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
+        val searchPayload = json.encodeToString(searchPayloadObj).toRequestBody(JSON_MEDIA_TYPE)
 
         val apiHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
             .add("Content-Type", payload.contentType().toString())
             .build()
 
+        if (query.isNotBlank()) {
+            val apiUrl = "$apiUrl/series/search".toHttpUrl().newBuilder()
+                .toString()
+            return POST(apiUrl, apiHeaders, searchPayload)
+        }
+
         val apiUrl = "$apiUrl/series/querysearch".toHttpUrl().newBuilder()
-            .addQueryParameter("q", query)
             .toString()
 
         return POST(apiUrl, apiHeaders, payload)
@@ -138,31 +149,52 @@ abstract class HeanCms(
 
     override fun searchMangaParse(response: Response): MangasPage {
         val json = response.body?.string().orEmpty()
-        val query = response.request.url.queryParameter("q").orEmpty()
+
+        if (response.request.url.pathSegments.last() == "search") {
+            val result = json.parseAs<List<HeanCmsSearchDto>>()
+            val mangaList = result
+                .filter { it.type == "Comic" }
+                .map {
+                    createSearchResult(it.slug.replace(TIMESTAMP_REGEX, ""), it.title)
+                }
+
+            fetchAllTitles()
+
+            return MangasPage(mangaList, false)
+        }
 
         if (json.startsWith("{")) {
-            val result = json.parseAs<HeanCmsSearchDto>()
-            var mangaList = result.data.map { it.toSManga(apiUrl, coverPath) }
-
-            if (query.isNotBlank()) {
-                mangaList = mangaList.filter { it.title.contains(query, ignoreCase = true) }
-            }
+            val result = json.parseAs<HeanCmsQuerySearchDto>()
+            val mangaList = result.data.map { it.toSManga(apiUrl, coverPath) }
 
             fetchAllTitles()
 
             return MangasPage(mangaList, result.meta?.hasNextPage ?: false)
         }
 
-        var mangaList = json.parseAs<List<HeanCmsSeriesDto>>()
+        val mangaList = json.parseAs<List<HeanCmsSeriesDto>>()
             .map { it.toSManga(apiUrl, coverPath) }
-
-        if (query.isNotBlank()) {
-            mangaList = mangaList.filter { it.title.contains(query, ignoreCase = true) }
-        }
 
         fetchAllTitles()
 
         return MangasPage(mangaList, hasNextPage = false)
+    }
+
+    private fun createSearchResult(slug: String, title: String): SManga {
+        val theSeries = seriesSlugMap?.get(slug)
+
+        return SManga.create().apply {
+            url = "/series/$slug"
+            this.title = title
+            thumbnail_url = "$apiUrl/$coverPath${theSeries?.thumbnailUrl}"
+            this.status = when (theSeries?.status) {
+                "Ongoing" -> SManga.ONGOING
+                "Hiatus" -> SManga.ON_HIATUS
+                "Dropped" -> SManga.CANCELLED
+                "Completed", "Finished" -> SManga.COMPLETED
+                else -> SManga.UNKNOWN
+            }
+        }
     }
 
     // Workaround to allow "Open in browser" use the real URL.
@@ -179,7 +211,7 @@ abstract class HeanCms(
             .substringAfterLast("/")
             .replace(TIMESTAMP_REGEX, "")
 
-        val currentSlug = seriesSlugMap?.get(seriesSlug) ?: seriesSlug
+        val currentSlug = seriesSlugMap?.get(seriesSlug)?.slug ?: seriesSlug
 
         return GET("$baseUrl/series/$currentSlug", headers)
     }
@@ -191,7 +223,7 @@ abstract class HeanCms(
 
         fetchAllTitles()
 
-        val currentSlug = seriesSlugMap?.get(seriesSlug) ?: seriesSlug
+        val currentSlug = seriesSlugMap?.get(seriesSlug)?.slug ?: seriesSlug
 
         val apiHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
@@ -271,14 +303,14 @@ abstract class HeanCms(
         val result = runCatching {
             var hasNextPage = true
             var page = 1
-            val tempMap = mutableMapOf<String, String>()
+            val tempMap = mutableMapOf<String, HeanCmsTitle>()
 
             while (hasNextPage) {
                 val response = client.newCall(allTitlesRequest(page)).execute()
                 val json = response.body?.string().orEmpty()
 
                 if (json.startsWith("{")) {
-                    val result = json.parseAs<HeanCmsSearchDto>()
+                    val result = json.parseAs<HeanCmsQuerySearchDto>()
                     tempMap.putAll(parseAllTitles(result.data))
                     hasNextPage = result.meta?.hasNextPage ?: false
                     page++
@@ -296,7 +328,7 @@ abstract class HeanCms(
     }
 
     protected open fun allTitlesRequest(page: Int): Request {
-        val payloadObj = HeanCmsSearchPayloadDto(
+        val payloadObj = HeanCmsQuerySearchPayloadDto(
             page = page,
             order = "desc",
             orderBy = "total_views",
@@ -314,12 +346,18 @@ abstract class HeanCms(
         return POST("$apiUrl/series/querysearch", apiHeaders, payload)
     }
 
-    protected open fun parseAllTitles(result: List<HeanCmsSeriesDto>): Map<String, String> {
+    protected open fun parseAllTitles(result: List<HeanCmsSeriesDto>): Map<String, HeanCmsTitle> {
         return result
             .filter { it.type == "Comic" }
             .associateBy(
                 keySelector = { it.slug.replace(TIMESTAMP_REGEX, "") },
-                valueTransform = HeanCmsSeriesDto::slug
+                valueTransform = {
+                    HeanCmsTitle(
+                        it.slug,
+                        it.thumbnail,
+                        it.status.orEmpty()
+                    )
+                }
             )
     }
 
@@ -327,6 +365,7 @@ abstract class HeanCms(
         val genres = getGenreList()
 
         val filters = listOfNotNull(
+            Filter.Header(intl.filterWarning),
             StatusFilter(intl.statusFilterTitle, getStatusList()),
             SortByFilter(intl.sortByFilterTitle, getSortProperties()),
             GenreFilter(intl.genreFilterTitle, genres).takeIf { genres.isNotEmpty() }
@@ -352,4 +391,10 @@ abstract class HeanCms(
 
         val TIMESTAMP_REGEX = "-\\d+$".toRegex()
     }
+
+    data class HeanCmsTitle(
+        val slug: String,
+        val thumbnailUrl: String,
+        val status: String
+    )
 }
