@@ -185,12 +185,12 @@ abstract class FMReader(
     // languages: en, vi, tr
     fun parseStatus(status: String?): Int {
         val completedWords = setOf(
-            "completed", "complete", "incomplete",
+            "completed", "complete",
             "đã hoàn thành", "hoàn thành",
             "tamamlandı"
         )
         val ongoingWords = setOf(
-            "ongoing", "on going", "updating",
+            "ongoing", "on going", "updating", "incomplete",
             "chưa hoàn thành", "đang cập nhật", "Đang tiến hành",
             "devam ediyor", "Çevirisi Bırakıldı", "Çevirisi Yok"
         )
