@@ -1,22 +1,10 @@
 package eu.kanade.tachiyomi.extension.fr.japscan
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.content.SharedPreferences
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
+import android.util.Base64
 import android.util.Log
-import android.view.View
-import android.webkit.JavascriptInterface
-import android.webkit.ValueCallback
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -34,23 +22,17 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.CyclicBarrier
 
 class Japscan : ConfigurableSource, ParsedHttpSource() {
 
@@ -70,79 +52,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    internal class JsObject(private val latch: CountDownLatch, var width: Int = 0, var height: Int = 0) {
-        @JavascriptInterface
-        fun passSize(widthjs: Int, ratio: Float) {
-            Log.d("japscan", "wvsc js returned $widthjs, $ratio")
-            width = widthjs
-            height = (width.toFloat() / ratio).toInt()
-            latch.countDown()
-        }
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder().addInterceptor { chain ->
-        val indicator = "&wvsc"
-        val cleanupjs = "var checkExist=setInterval(function(){if(document.getElementsByTagName('CNV-VV').length){clearInterval(checkExist);var e=document.body,a=e.children;for(e.appendChild(document.getElementsByTagName('CNV-VV')[0]);'CNV-VV'!=a[0].tagName;)e.removeChild(a[0]);for(var t of[].slice.call(a[0].all_canvas))t.style.maxWidth='100%';window.android.passSize(a[0].all_canvas[0].width,a[0].all_canvas[0].width/a[0].all_canvas[0].height)}},100);"
-        val request = chain.request()
-        val url = request.url.toString()
-
-        val newRequest = request.newBuilder()
-            .url(url.substringBefore(indicator))
-            .build()
-        val response = chain.proceed(newRequest)
-        if (!url.endsWith(indicator)) return@addInterceptor response
-        // Webview screenshotting code
-        val handler = Handler(Looper.getMainLooper())
-        val latch = CountDownLatch(1)
-        var webView: WebView? = null
-        var height = 0
-        var width = 0
-        val jsinterface = JsObject(latch)
-        Log.d("japscan", "init wvsc")
-        handler.post {
-            val webview = WebView(Injekt.get<Application>())
-            webView = webview
-            webview.settings.javaScriptEnabled = true
-            webview.settings.domStorageEnabled = true
-            webview.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-            webview.settings.useWideViewPort = false
-            webview.settings.loadWithOverviewMode = false
-            webview.settings.userAgentString = webview.settings.userAgentString.replace("Mobile", "eliboM").replace("Android", "diordnA")
-            webview.addJavascriptInterface(jsinterface, "android")
-            var retries = 1
-            webview.webChromeClient = object : WebChromeClient() {
-                @SuppressLint("NewApi")
-                override fun onProgressChanged(view: WebView, progress: Int) {
-                    if (progress == 100 && retries--> 0) {
-                        Log.d("japscan", "wvsc loading finished")
-                        view.evaluateJavascript(cleanupjs) {}
-                    }
-                }
-            }
-            webview.loadUrl(url.replace("&wvsc", ""))
-        }
-
-        latch.await()
-        width = jsinterface.width
-        height = jsinterface.height
-        // webView!!.isDrawingCacheEnabled = true
-
-        webView!!.measure(width, height)
-        webView!!.layout(0, 0, width, height)
-        Thread.sleep(350)
-
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        webView!!.draw(canvas)
-
-        // val bitmap: Bitmap = webView!!.drawingCache
-        val output = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
-        val rb = output.toByteArray().toResponseBody("image/png".toMediaTypeOrNull())
-        handler.post { webView!!.destroy() }
-        response.newBuilder().body(rb).build()
-    }.build()
+    override val client: OkHttpClient = network.cloudflareClient
 
     companion object {
         val dateFormat by lazy {
@@ -344,100 +254,56 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        // no webview screenshot needed anymore :
-        // document.getElementsByTag("option").mapIndexed { i, it -> Page(i, "", baseUrl + it.attr("value") + "&wvsc") }
+        /*
+            JapScan stores chapter metadata in a `#data` element, and in the `data-data` attribute.
 
-        val zjsurl = document.getElementsByTag("script").first { it.attr("src").contains("zjs", ignoreCase = true) }.attr("src")
+            This data is scrambled base64, and to unscramble it this code searches in the ZJS for
+            two strings of length 62 (base64 minus `+` and `/`), creating a character map.
+
+            Since figuring out how to properly map characters would be more effort than I want to
+            put in, this just flips around the charsets if the first attempt didn't succeed.
+         */
+        val zjsurl = document.getElementsByTag("script").first {
+            it.attr("src").contains("zjs", ignoreCase = true)
+        }.attr("src")
         Log.d("japscan", "ZJS at $zjsurl")
         val zjs = client.newCall(GET(baseUrl + zjsurl, headers)).execute().body!!.string()
-        Log.d("japscan", "webtoon, netdumping initiated")
 
-        val pagesElement = document.getElementById("pages")
-        var pagecount = pagesElement.getElementsByTag("option").size
+        val strings = zjs
+            .substringAfter("= [")
+            .substringBefore("];")
+            .split(",")
+            .map { it.trim().removeSurrounding("'").reversed() }
 
-        Log.d("japscan", "fallback $pagecount")
-
-        if (pagecount == 0) {
-            Log.d("japscan", "pagecount not found, fallback 1")
-            val element = document.select(".card:first-child .card-body p").toString()
-
-            val regex = """Pages<\/span>: ([0-9]+)<\/p>""".toRegex()
-            val matchResult = regex.find(element)
-
-            val (pagecountFromRegex) = matchResult!!.destructured
-
-            pagecount = pagecountFromRegex.toInt()
-
-            Log.d("japscan", "fallback pagecount with regex, result: $pagecount")
+        val stringLookupTables = strings.filter {
+            it.length == 62 &&
+                it.toCharArray().sorted().joinToString("") == "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         }
 
-        val pages = ArrayList<Page>()
-        val handler = Handler(Looper.getMainLooper())
-        val checkNew = ArrayList<String>(pagecount)
-        var maxIter = pagecount
-        var isSinglePage = false
-        if ((zjs.lowercase(Locale.ROOT).split("new image").size - 1) == 1) {
-            isSinglePage = true
-            maxIter = 1
+        if (stringLookupTables.size > 2) {
+            throw Exception("Expected only two lookup tables in ZJS")
         }
-        var webView: WebView? = null
-        val dummyimage = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
-        val dummystream = ByteArrayOutputStream()
-        dummyimage.compress(Bitmap.CompressFormat.JPEG, 100, dummystream)
-        val barrier = CyclicBarrier(2)
+        Log.d("japscan", "lookup tables: $stringLookupTables")
 
-        for (i in 0 until maxIter) {
-            handler.post {
-                if (webView == null) {
-                    val webview = WebView(Injekt.get<Application>())
-                    webView = webview
-                    webview.settings.javaScriptEnabled = true
-                    webview.settings.domStorageEnabled = true
-                    webview.settings.userAgentString = webview.settings.userAgentString.replace("Mobile", "eliboM").replace("Android", "diordnA")
-                    webview.webViewClient = object : WebViewClient() {
-                        override fun onPageFinished(view: WebView, url: String?) {
-                            if (pagecount === 0) {
-                                Log.d("japscan", "pagecount not found, fallback 2")
-                                Log.d("japscan", "dynamic page count detected, loading it through JS")
-                                super.onPageFinished(view, url)
-                                view.evaluateJavascript(
-                                    "(function() { return document.getElementById('pages').length; })();",
-                                    object : ValueCallback<String> {
-                                        override fun onReceiveValue(numberOfPages: String?) {
-                                            pagecount = numberOfPages!!.toInt()
-                                        }
-                                    }
-                                )
-                            }
-                        }
+        val scrambledData = document.getElementById("data").attr("data-data")
 
-                        override fun shouldInterceptRequest(
-                            view: WebView,
-                            request: WebResourceRequest
-                        ): WebResourceResponse? {
-                            if (request.url.toString().startsWith("https://cdn.statically.io/img/c.japscan.ws/") && !checkNew.contains(request.url.toString())) {
-                                checkNew.add(request.url.toString())
-                                pages.add(Page(pages.size, "", request.url.toString()))
-                                Log.d("japscan", "intercepted ${request.url}")
-                                if (pages.size == pagecount || !isSinglePage) {
-                                    barrier.await()
-                                }
-                                return WebResourceResponse("image/jpeg", "UTF-8", ByteArrayInputStream(dummystream.toByteArray()))
-                            }
-                            return super.shouldInterceptRequest(view, request)
-                        }
-                    }
+        for (i in 0..1) {
+            Log.d("japscan", "descramble attempt $i")
+            val otherIndice = if (i == 0) 1 else 0
+            val lookupTable = stringLookupTables[i].zip(stringLookupTables[otherIndice]).toMap()
+            try {
+                val unscrambledData = scrambledData.map { lookupTable[it] ?: it }.joinToString("")
+                val decoded = Base64.decode(unscrambledData, Base64.DEFAULT).toString(Charsets.UTF_8)
+
+                val data = json.parseToJsonElement(decoded).jsonObject
+
+                return data["imagesLink"]!!.jsonArray.mapIndexed { idx, it ->
+                    Page(idx, imageUrl = it.jsonPrimitive.content)
                 }
-                if (isSinglePage) {
-                    webView?.loadUrl(baseUrl + document.select("li[^data-]").first().dataset()["chapter-url"])
-                } else {
-                    webView?.loadUrl(baseUrl + pagesElement.getElementsByTag("option")[i].attr("value"))
-                }
-            }
-            barrier.await()
+            } catch (_: Exception) {}
         }
-        handler.post { webView!!.destroy() }
-        return pages
+
+        throw Exception("Both descrambling attempts failed")
     }
 
     override fun imageUrlParse(document: Document): String = ""
