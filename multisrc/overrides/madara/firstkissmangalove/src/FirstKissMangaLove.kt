@@ -11,6 +11,6 @@ class FirstKissMangaLove : Madara(
 ) {
 
     override val client = network.cloudflareClient.newBuilder()
-        .rateLimit(1, 2, TimeUnit.SECONDS)
+        .rateLimit(1, 3, TimeUnit.SECONDS)
         .build()
 }
