@@ -41,6 +41,8 @@ class DynastyChapters : DynastyScans() {
         }
 
         val genreElements = document.select(".tags a")
+        val doujinElements = document.select("a[href*=doujins]")
+        genreElements.addAll(doujinElements)
         parseGenres(genreElements, manga)
 
         return manga

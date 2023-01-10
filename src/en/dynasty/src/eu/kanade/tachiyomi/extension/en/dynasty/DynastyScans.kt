@@ -130,7 +130,10 @@ abstract class DynastyScans : ParsedHttpSource() {
     }
 
     protected fun parseGenres(document: Document, manga: SManga, select: String = "div.tags > div.tag-tags a") {
-        parseGenres(document.select(select), manga)
+        val tagElements = document.select(select)
+        val doujinElements = document.select("div.tags >  h2.tag-title > small > a[href*=doujins]")
+        tagElements.addAll(doujinElements)
+        parseGenres(tagElements, manga)
     }
 
     protected fun parseGenres(elements: Elements, manga: SManga) {
