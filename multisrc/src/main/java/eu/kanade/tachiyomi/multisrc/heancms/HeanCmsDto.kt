@@ -30,7 +30,24 @@ data class HeanCmsSearchDto(
     @SerialName("series_slug") val slug: String,
     @SerialName("series_type") val type: String,
     val title: String
-)
+) {
+
+    fun toSManga(
+        apiUrl: String,
+        coverPath: String,
+        slugMap: Map<String, HeanCms.HeanCmsTitle>
+    ): SManga = SManga.create().apply {
+        val slugOnly = slug.replace(HeanCms.TIMESTAMP_REGEX, "")
+        val thumbnailFileName = slugMap[slugOnly]?.thumbnailFileName.orEmpty()
+
+        title = this@HeanCmsSearchDto.title
+        thumbnail_url = when {
+            thumbnailFileName.isNotEmpty() -> "$apiUrl/$coverPath$thumbnailFileName"
+            else -> ""
+        }
+        url = "/series/$slugOnly"
+    }
+}
 
 @Serializable
 data class HeanCmsSeriesDto(
@@ -60,13 +77,7 @@ data class HeanCmsSeriesDto(
             .sortedBy(HeanCmsTagDto::name)
             .joinToString { it.name }
         thumbnail_url = "$apiUrl/$coverPath$thumbnail"
-        status = when (this@HeanCmsSeriesDto.status) {
-            "Ongoing" -> SManga.ONGOING
-            "Hiatus" -> SManga.ON_HIATUS
-            "Dropped" -> SManga.CANCELLED
-            "Completed", "Finished" -> SManga.COMPLETED
-            else -> SManga.UNKNOWN
-        }
+        status = this@HeanCmsSeriesDto.status?.toStatus() ?: SManga.UNKNOWN
         url = "/series/${slug.replace(HeanCms.TIMESTAMP_REGEX, "")}"
     }
 }
@@ -118,6 +129,12 @@ data class HeanCmsQuerySearchPayloadDto(
 )
 
 @Serializable
-data class HeanCmsSearchPayloadDto(
-    val term: String,
-)
+data class HeanCmsSearchPayloadDto(val term: String)
+
+fun String.toStatus(): Int = when (this) {
+    "Ongoing" -> SManga.ONGOING
+    "Hiatus" -> SManga.ON_HIATUS
+    "Dropped" -> SManga.CANCELLED
+    "Completed", "Finished" -> SManga.COMPLETED
+    else -> SManga.UNKNOWN
+}

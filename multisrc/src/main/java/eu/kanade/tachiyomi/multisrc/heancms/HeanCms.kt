@@ -14,7 +14,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -109,6 +108,23 @@ abstract class HeanCms(
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        /**
+         * Their query search endpoint doesn't return the thumbnails, so we need to do
+         * later an special parsing to get the thumbnails as well from the slug map.
+         */
+        if (query.isNotBlank()) {
+            val searchPayloadObj = HeanCmsSearchPayloadDto(query)
+            val searchPayload = json.encodeToString(searchPayloadObj)
+                .toRequestBody(JSON_MEDIA_TYPE)
+
+            val apiHeaders = headersBuilder()
+                .add("Accept", ACCEPT_JSON)
+                .add("Content-Type", searchPayload.contentType().toString())
+                .build()
+
+            return POST("$apiUrl/series/search", apiHeaders, searchPayload)
+        }
+
         val sortByFilter = filters.firstInstanceOrNull<SortByFilter>()
 
         val payloadObj = HeanCmsQuerySearchPayloadDto(
@@ -123,42 +139,26 @@ abstract class HeanCms(
                 .orEmpty()
         )
 
-        val searchPayloadObj = HeanCmsSearchPayloadDto(
-            term = query
-        )
-
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
-        val searchPayload = json.encodeToString(searchPayloadObj).toRequestBody(JSON_MEDIA_TYPE)
 
         val apiHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
             .add("Content-Type", payload.contentType().toString())
             .build()
 
-        if (query.isNotBlank()) {
-            val apiUrl = "$apiUrl/series/search".toHttpUrl().newBuilder()
-                .toString()
-            return POST(apiUrl, apiHeaders, searchPayload)
-        }
-
-        val apiUrl = "$apiUrl/series/querysearch".toHttpUrl().newBuilder()
-            .toString()
-
-        return POST(apiUrl, apiHeaders, payload)
+        return POST("$apiUrl/series/querysearch", apiHeaders, payload)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
         val json = response.body?.string().orEmpty()
 
         if (response.request.url.pathSegments.last() == "search") {
+            fetchAllTitles()
+
             val result = json.parseAs<List<HeanCmsSearchDto>>()
             val mangaList = result
                 .filter { it.type == "Comic" }
-                .map {
-                    createSearchResult(it.slug.replace(TIMESTAMP_REGEX, ""), it.title)
-                }
-
-            fetchAllTitles()
+                .map { it.toSManga(apiUrl, coverPath, seriesSlugMap.orEmpty()) }
 
             return MangasPage(mangaList, false)
         }
@@ -178,23 +178,6 @@ abstract class HeanCms(
         fetchAllTitles()
 
         return MangasPage(mangaList, hasNextPage = false)
-    }
-
-    private fun createSearchResult(slug: String, title: String): SManga {
-        val theSeries = seriesSlugMap?.get(slug)
-
-        return SManga.create().apply {
-            url = "/series/$slug"
-            this.title = title
-            thumbnail_url = "$apiUrl/$coverPath${theSeries?.thumbnailUrl}"
-            this.status = when (theSeries?.status) {
-                "Ongoing" -> SManga.ONGOING
-                "Hiatus" -> SManga.ON_HIATUS
-                "Dropped" -> SManga.CANCELLED
-                "Completed", "Finished" -> SManga.COMPLETED
-                else -> SManga.UNKNOWN
-            }
-        }
     }
 
     // Workaround to allow "Open in browser" use the real URL.
@@ -223,13 +206,15 @@ abstract class HeanCms(
 
         fetchAllTitles()
 
-        val currentSlug = seriesSlugMap?.get(seriesSlug)?.slug ?: seriesSlug
+        val seriesDetails = seriesSlugMap?.get(seriesSlug)
+        val currentSlug = seriesDetails?.slug ?: seriesSlug
+        val currentStatus = seriesDetails?.status ?: SManga.UNKNOWN
 
         val apiHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
             .build()
 
-        return GET("$apiUrl/series/$currentSlug#${manga.status}", apiHeaders)
+        return GET("$apiUrl/series/$currentSlug#$currentStatus", apiHeaders)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
@@ -247,9 +232,11 @@ abstract class HeanCms(
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.parseAs<HeanCmsSeriesDto>()
         val seriesSlug = response.request.url.pathSegments.last()
+        val currentTimestamp = System.currentTimeMillis()
 
         return result.chapters.orEmpty()
             .map { it.toSChapter(seriesSlug) }
+            .filter { it.date_upload <= currentTimestamp }
             .reversed()
     }
 
@@ -265,7 +252,9 @@ abstract class HeanCms(
 
     override fun pageListParse(response: Response): List<Page> {
         return response.parseAs<HeanCmsReaderDto>().content?.images.orEmpty()
-            .mapIndexed { i, url -> Page(i, "", "$apiUrl/$url") }
+            .mapIndexed { i, url ->
+                Page(i, imageUrl = if (url.startsWith("http")) url else "$apiUrl/$url")
+            }
     }
 
     override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
@@ -353,9 +342,9 @@ abstract class HeanCms(
                 keySelector = { it.slug.replace(TIMESTAMP_REGEX, "") },
                 valueTransform = {
                     HeanCmsTitle(
-                        it.slug,
-                        it.thumbnail,
-                        it.status.orEmpty()
+                        slug = it.slug,
+                        thumbnailFileName = it.thumbnail,
+                        status = it.status?.toStatus() ?: SManga.UNKNOWN
                     )
                 }
             )
@@ -383,6 +372,12 @@ abstract class HeanCms(
     private inline fun <reified R> List<*>.firstInstanceOrNull(): R? =
         filterIsInstance<R>().firstOrNull()
 
+    /**
+     * Used to store the current slugs for sources that change it periodically and for the
+     * search that doesn't return the thumbnail URLs.
+     */
+    data class HeanCmsTitle(val slug: String, val thumbnailFileName: String, val status: Int)
+
     companion object {
         private const val ACCEPT_IMAGE = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
         private const val ACCEPT_JSON = "application/json, text/plain, */*"
@@ -391,10 +386,4 @@ abstract class HeanCms(
 
         val TIMESTAMP_REGEX = "-\\d+$".toRegex()
     }
-
-    data class HeanCmsTitle(
-        val slug: String,
-        val thumbnailUrl: String,
-        val status: String
-    )
 }
