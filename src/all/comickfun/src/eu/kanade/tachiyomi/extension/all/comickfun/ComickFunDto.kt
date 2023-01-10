@@ -4,20 +4,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Manga(
+    val hid: String,
     val slug: String,
     val title: String,
-    val cover_url: String
-)
-
-@Serializable
-data class LatestChapters(
-    val md_comics: MdComics
-)
-
-@Serializable
-data class MdComics(
-    val title: String,
-    val slug: String,
     val cover_url: String
 )
 
@@ -85,5 +74,5 @@ data class ChapterPageData(
 
 @Serializable
 data class Page(
-    val url: String
+    val url: String? = null
 )

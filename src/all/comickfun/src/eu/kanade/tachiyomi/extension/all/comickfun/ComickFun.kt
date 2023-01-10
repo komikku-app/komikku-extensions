@@ -11,6 +11,8 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -19,7 +21,7 @@ import okhttp3.Response
 import rx.Observable
 import java.text.SimpleDateFormat
 
-const val API_BASE = "https://api.comick.app"
+const val API_BASE = "https://api.comick.fun"
 
 abstract class ComickFun(override val lang: String, private val comickFunLang: String) : HttpSource() {
 
@@ -47,8 +49,9 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     override fun popularMangaRequest(page: Int): Request {
         return GET(
             API_BASE.toHttpUrl().newBuilder().apply {
+                addPathSegment("v1.0")
                 addPathSegment("search")
-                addQueryParameter("sort", "user_follow_count")
+                addQueryParameter("sort", "follow")
                 addQueryParameter("page", "$page")
                 addQueryParameter("tachiyomi", "true")
             }.toString(),
@@ -74,10 +77,11 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     override fun latestUpdatesRequest(page: Int): Request {
         return GET(
             API_BASE.toHttpUrl().newBuilder().apply {
-                addPathSegment("chapter")
+                addPathSegment("v1.0")
+                addPathSegment("search")
                 if (comickFunLang != "all") addQueryParameter("lang", comickFunLang)
+                addQueryParameter("sort", "uploaded")
                 addQueryParameter("page", "$page")
-                addQueryParameter("order", "new")
                 addQueryParameter("tachiyomi", "true")
             }.toString(),
             headers
@@ -85,13 +89,13 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<List<LatestChapters>>(response.body!!.string())
+        val result = json.decodeFromString<List<Manga>>(response.body!!.string())
         return MangasPage(
             result.map { data ->
                 SManga.create().apply {
-                    url = "/comic/${data.md_comics.slug}"
-                    title = data.md_comics.title
-                    thumbnail_url = data.md_comics.cover_url
+                    url = "/comic/${data.slug}"
+                    title = data.title
+                    thumbnail_url = data.cover_url
                 }
             },
             hasNextPage = true
@@ -236,12 +240,13 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val mangaData = json.decodeFromString<MangaDetails>(response.body!!.string())
+        val mangaHid = findCurrentSlug(mangaData.comic.slug)
         val chapterData = client.newCall(
             GET(
                 API_BASE.toHttpUrl().newBuilder().apply {
                     addPathSegment("comic")
-                    addPathSegments(mangaData.comic.id.toString())
-                    addPathSegments("chapter")
+                    addPathSegments(mangaHid)
+                    addPathSegments("chapters")
                     if (comickFunLang != "all") addQueryParameter("lang", comickFunLang)
                     addQueryParameter(
                         "limit", mangaData.comic.chapter_count.toString()
@@ -280,8 +285,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     override fun pageListParse(response: Response): List<Page> {
         val result = json.decodeFromString<PageList>(response.body!!.string())
-        return result.chapter.images.mapIndexed { index, data ->
-            Page(index = index, imageUrl = data.url)
+        return result.chapter.images.mapIndexedNotNull { index, data ->
+            if (data.url == null) null else Page(index = index, imageUrl = data.url)
         }
     }
 
@@ -297,4 +302,22 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     override fun getFilterList() = FilterList(
         getFilters()
     )
+
+    /** Map the slug to comic ID as slug might be changes by comic ID will not. **/
+    // TODO: Cleanup once ext-lib 1.4 is released.
+    private fun findCurrentSlug(oldSlug: String): String {
+        val response = client.newCall(
+            GET(
+                API_BASE.toHttpUrl().newBuilder().apply {
+                    addPathSegment("tachiyomi")
+                    addPathSegment("mapping")
+                    addQueryParameter("slugs", oldSlug)
+                }.toString(),
+                headers
+            )
+        ).execute()
+
+        /** If the API does not contain the ID for the slug, return the slug back **/
+        return json.parseToJsonElement(response.body!!.string()).jsonObject[oldSlug]!!.jsonPrimitive.content
+    }
 }
