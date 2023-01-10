@@ -20,7 +20,7 @@ class CuuTruyenUrlActivity : Activity() {
                 startActivity(
                     Intent().apply {
                         action = "eu.kanade.tachiyomi.SEARCH"
-                        putExtra("query", "id:$id")
+                        putExtra("query", "${CuuTruyen.PREFIX_ID_SEARCH}$id")
                         putExtra("filter", packageName)
                     }
                 )

@@ -55,6 +55,6 @@ data class PageDto(
         val url = imageUrl.toHttpUrl().newBuilder().apply {
             addQueryParameter(CuuTruyenImageInterceptor.KEY, dto.drmData)
         }.build().toString()
-        return Page(dto.order, "", url)
+        return Page(dto.order, imageUrl = url)
     }
 }

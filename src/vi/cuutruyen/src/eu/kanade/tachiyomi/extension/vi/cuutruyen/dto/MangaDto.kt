@@ -39,9 +39,7 @@ data class MangaDto(
         if (dto.team != null) {
             description += "Nhóm dịch: ${dto.team.name}\n\n"
         }
-        if (dto.description != null) {
-            description += dto.description
-        }
+        description += dto.description ?: ""
 
         thumbnail_url = dto.coverUrl
         if (coverQuality == "cover_url") {

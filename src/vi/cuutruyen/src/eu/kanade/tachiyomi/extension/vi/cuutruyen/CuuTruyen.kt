@@ -20,13 +20,13 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.CacheControl
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 
 class CuuTruyen : HttpSource(), ConfigurableSource {
 
@@ -43,8 +43,9 @@ class CuuTruyen : HttpSource(), ConfigurableSource {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun headersBuilder() = Headers.Builder()
-        .add("Referer", "$baseUrl/")
+    private val json: Json by injectLazy()
+
+    override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
 
     override val client = network.client.newBuilder()
         .rateLimit(3)
@@ -94,12 +95,16 @@ class CuuTruyen : HttpSource(), ConfigurableSource {
                 if (id.toIntOrNull() == null) {
                     throw Exception("ID tìm kiếm không hợp lệ (phải là một số).")
                 }
+                val url = "/mangas/$id"
                 fetchMangaDetails(
                     SManga.create().apply {
-                        url = "/mangas/$id"
+                        this.url = url
                     }
                 )
-                    .map { MangasPage(listOf(it), false) }
+                    .map {
+                        it.url = url
+                        MangasPage(listOf(it), false)
+                    }
             }
             else -> super.fetchSearchManga(page, query, filters)
         }
@@ -153,11 +158,7 @@ class CuuTruyen : HttpSource(), ConfigurableSource {
         return chapterDto.data.pages!!.map { it.toPage() }
     }
 
-    override fun imageUrlParse(response: Response): String = throw Exception("Not used")
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used")
 
     private inline fun <reified T> Response.parseAs(): T = use {
         json.decodeFromString(body?.string().orEmpty())
