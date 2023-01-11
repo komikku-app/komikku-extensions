@@ -67,14 +67,24 @@ class KemonoPostDto(
         }.distinctBy { it.path }.map { it.toString() }
 
     fun toSChapter() = SChapter.create().apply {
+        val postDate = dateFormat.parse(edited ?: published ?: added)
+
         url = "/$service/user/$user/post/$id"
-        name = title
-        date_upload = dateFormat.parse(edited ?: published ?: added)?.time ?: 0
+        date_upload = postDate?.time ?: 0
+        name = title.ifBlank {
+            val postDateString = when {
+                postDate != null && postDate.time != 0L -> chapterNameDateFormat.format(postDate)
+                else -> "unknown date"
+            }
+
+            "Post from $postDateString"
+        }
         chapter_number = -2f
     }
 
     companion object {
         val dateFormat by lazy { getApiDateFormat() }
+        val chapterNameDateFormat by lazy { getChapterNameDateFormat() }
     }
 }
 
@@ -88,3 +98,6 @@ class KemonoAttachmentDto(val name: String, val path: String) {
 
 private fun getApiDateFormat() =
     SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH)
+
+private fun getChapterNameDateFormat() =
+    SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss", Locale.ENGLISH)
