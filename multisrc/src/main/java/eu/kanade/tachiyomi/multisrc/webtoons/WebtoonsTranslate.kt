@@ -7,7 +7,6 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.contentOrNull
@@ -24,7 +23,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import uy.kohesive.injekt.injectLazy
 
 open class WebtoonsTranslate(
     override val name: String,
@@ -41,8 +39,6 @@ open class WebtoonsTranslate(
     private val thumbnailBaseUrl = "https://mwebtoon-phinf.pstatic.net"
 
     private val pageSize = 24
-
-    private val json: Json by injectLazy()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .removeAll("Referer")

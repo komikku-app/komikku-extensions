@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.all.webtoons
 
-import eu.kanade.tachiyomi.multisrc.webtoons.Webtoons
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 import java.text.SimpleDateFormat
@@ -18,8 +17,8 @@ class WebtoonsFactory : SourceFactory {
         WebtoonsDE(),
     )
 }
-class WebtoonsEN : Webtoons("Webtoons.com", "https://www.webtoons.com", "en")
-class WebtoonsID : Webtoons("Webtoons.com", "https://www.webtoons.com", "id") {
+class WebtoonsEN : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "en")
+class WebtoonsID : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "id") {
     // Override ID as part of the name was removed to be more consiten with other enteries
     override val id: Long = 8749627068478740298
 
@@ -36,8 +35,8 @@ class WebtoonsID : Webtoons("Webtoons.com", "https://www.webtoons.com", "id") {
         return GregorianCalendar(year.toInt(), monthIndex, day.toInt()).time.time
     }
 }
-class WebtoonsTH : Webtoons("Webtoons.com", "https://www.webtoons.com", "th", dateFormat = SimpleDateFormat("d MMM yyyy", Locale("th")))
-class WebtoonsES : Webtoons("Webtoons.com", "https://www.webtoons.com", "es") {
+class WebtoonsTH : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "th", dateFormat = SimpleDateFormat("d MMM yyyy", Locale("th")))
+class WebtoonsES : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "es") {
     // Android seems to be unable to parse es dates like Indonesian; we'll use a short hard-coded table instead.
     private val dateMap: Array<String> = arrayOf(
         "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"
@@ -50,9 +49,9 @@ class WebtoonsES : Webtoons("Webtoons.com", "https://www.webtoons.com", "es") {
         return GregorianCalendar(year.toInt(), monthIndex, day.toInt()).time.time
     }
 }
-class WebtoonsFR : Webtoons("Webtoons.com", "https://www.webtoons.com", "fr", dateFormat = SimpleDateFormat("d MMM yyyy", Locale.FRENCH))
-class WebtoonsZH : Webtoons("Webtoons.com", "https://www.webtoons.com", "zh-Hant", "zh-hant", "zh_TW", SimpleDateFormat("yyyy/MM/dd", Locale.TRADITIONAL_CHINESE)) {
+class WebtoonsFR : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "fr", dateFormat = SimpleDateFormat("d MMM yyyy", Locale.FRENCH))
+class WebtoonsZH : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "zh-Hant", "zh-hant", "zh_TW", SimpleDateFormat("yyyy/MM/dd", Locale.TRADITIONAL_CHINESE)) {
     // Due to lang code getting more specific
     override val id: Long = 2959982438613576472
 }
-class WebtoonsDE : Webtoons("Webtoons.com", "https://www.webtoons.com", "de", dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN))
+class WebtoonsDE : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "de", dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN))

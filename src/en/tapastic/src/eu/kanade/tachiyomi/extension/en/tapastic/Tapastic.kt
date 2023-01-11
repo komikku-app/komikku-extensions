@@ -2,18 +2,12 @@ package eu.kanade.tachiyomi.extension.en.tapastic
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.graphics.Bitmap
-import android.graphics.Bitmap.CompressFormat
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Typeface
 import android.net.Uri
-import android.text.Layout
-import android.text.StaticLayout
-import android.text.TextPaint
 import android.webkit.CookieManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.lib.textinterceptor.TextInterceptor
+import eu.kanade.tachiyomi.lib.textinterceptor.TextInterceptorHelper
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
@@ -33,20 +27,15 @@ import okhttp3.CookieJar
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -108,7 +97,7 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
                 }
             }
         )
-        .addInterceptor(TextInterceptor)
+        .addInterceptor(TextInterceptor())
         .build()
 
     private val preferences: SharedPreferences by lazy {
@@ -372,7 +361,7 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
 
                 pages = pages + Page(
                     pages.size, "",
-                    "http://note/" + Uri.encode(creator) + "/" + Uri.encode(episodeStory)
+                    TextInterceptorHelper.createUrl(creator, episodeStory)
                 )
             }
         }
@@ -527,101 +516,5 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
         private const val SHOW_LOCK_PREF_KEY = "showChapterLock"
         private const val SHOW_AUTHORS_NOTES_KEY = "showAuthorsNotes"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0"
-    }
-
-    // TODO: Split off into library file or something, because Webtoons is using the exact same TextInterceptor
-    //  multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/webtoons/Webtoons.kt
-    object TextInterceptor : Interceptor {
-        // With help from:
-        // https://github.com/tachiyomiorg/tachiyomi-extensions/pull/13304#issuecomment-1234532897
-        // https://medium.com/over-engineering/drawing-multiline-text-to-canvas-on-android-9b98f0bfa16a
-
-        // Designer values:
-        private const val WIDTH: Int = 1000
-        private const val X_PADDING: Float = 50f
-        private const val Y_PADDING: Float = 25f
-        private const val HEADING_FONT_SIZE: Float = 36f
-        private const val BODY_FONT_SIZE: Float = 30f
-        private const val SPACING_MULT: Float = 1.1f
-        private const val SPACING_ADD: Float = 2f
-
-        // No need to touch this one:
-        private const val HOST = "note"
-
-        override fun intercept(chain: Interceptor.Chain): Response {
-            val request = chain.request()
-            val url = request.url
-            if (url.host != HOST) return chain.proceed(request)
-
-            val creator = textFixer("Author's Notes from ${url.pathSegments[0]}")
-            val story = textFixer(url.pathSegments[1])
-
-            // Heading
-            val paintHeading = TextPaint().apply {
-                color = Color.BLACK
-                textSize = HEADING_FONT_SIZE
-                typeface = Typeface.DEFAULT_BOLD
-                isAntiAlias = true
-            }
-
-            @Suppress("DEPRECATION")
-            val heading: StaticLayout = StaticLayout(
-                creator, paintHeading, (WIDTH - 2 * X_PADDING).toInt(),
-                Layout.Alignment.ALIGN_NORMAL, SPACING_MULT, SPACING_ADD, true
-            )
-
-            // Body
-            val paintBody = TextPaint().apply {
-                color = Color.BLACK
-                textSize = BODY_FONT_SIZE
-                typeface = Typeface.DEFAULT
-                isAntiAlias = true
-            }
-
-            @Suppress("DEPRECATION")
-            val body: StaticLayout = StaticLayout(
-                story, paintBody, (WIDTH - 2 * X_PADDING).toInt(),
-                Layout.Alignment.ALIGN_NORMAL, SPACING_MULT, SPACING_ADD, true
-            )
-
-            // Image building
-            val imgHeight: Int = (heading.height + body.height + 2 * Y_PADDING).toInt()
-            val bitmap: Bitmap = Bitmap.createBitmap(WIDTH, imgHeight, Bitmap.Config.ARGB_8888)
-            val canvas: Canvas = Canvas(bitmap)
-
-            // Image drawing
-            canvas.drawColor(Color.WHITE)
-            heading.draw(canvas, X_PADDING, Y_PADDING)
-            body.draw(canvas, X_PADDING, Y_PADDING + heading.height.toFloat())
-
-            // Image converting & returning
-            val stream: ByteArrayOutputStream = ByteArrayOutputStream()
-            bitmap.compress(CompressFormat.PNG, 0, stream)
-            val responseBody = stream.toByteArray().toResponseBody("image/png".toMediaType())
-            return Response.Builder()
-                .request(request)
-                .protocol(Protocol.HTTP_1_1)
-                .code(200)
-                .message("OK")
-                .body(responseBody)
-                .build()
-        }
-
-        private fun textFixer(t: String): String {
-            return t
-                .replace("&amp;", "&")
-                .replace("&#39;", "'")
-                .replace("&quot;", "\"")
-                .replace("&lt;", "<")
-                .replace("&gt;", ">")
-                .replace("\\s*<br>\\s*".toRegex(), "\n")
-        }
-
-        private fun StaticLayout.draw(canvas: Canvas, x: Float, y: Float) {
-            canvas.save()
-            canvas.translate(x, y)
-            this.draw(canvas)
-            canvas.restore()
-        }
     }
 }
