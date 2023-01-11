@@ -11,8 +11,8 @@ class MangaDexFactory : SourceFactory {
         MangaDexBulgarian(),
         MangaDexBurmese(),
         MangaDexCatalan(),
-        MangaDexChineseSimp(),
-        MangaDexChineseTrad(),
+        MangaDexChineseSimplified(),
+        MangaDexChineseTraditional(),
         MangaDexCzech(),
         MangaDexDanish(),
         MangaDexDutch(),
@@ -42,7 +42,7 @@ class MangaDexFactory : SourceFactory {
         MangaDexRomanian(),
         MangaDexRussian(),
         MangaDexSerboCroatian(),
-        MangaDexSpanishLTAM(),
+        MangaDexSpanishLatinAmerica(),
         MangaDexSpanishSpain(),
         MangaDexSwedish(),
         MangaDexTamil(),
@@ -58,8 +58,8 @@ class MangaDexBengali : MangaDex("bn", "bn")
 class MangaDexBulgarian : MangaDex("bg", "bg")
 class MangaDexBurmese : MangaDex("my", "my")
 class MangaDexCatalan : MangaDex("ca", "ca")
-class MangaDexChineseSimp : MangaDex("zh-Hans", "zh")
-class MangaDexChineseTrad : MangaDex("zh-Hant", "zh-hk")
+class MangaDexChineseSimplified : MangaDex("zh-Hans", "zh")
+class MangaDexChineseTraditional : MangaDex("zh-Hant", "zh-hk")
 class MangaDexCzech : MangaDex("cs", "cs")
 class MangaDexDanish : MangaDex("da", "da")
 class MangaDexDutch : MangaDex("nl", "nl")
@@ -90,7 +90,7 @@ class MangaDexPortuguesePortugal : MangaDex("pt", "pt")
 class MangaDexRomanian : MangaDex("ro", "ro")
 class MangaDexRussian : MangaDex("ru", "ru")
 class MangaDexSerboCroatian : MangaDex("sh", "sh")
-class MangaDexSpanishLTAM : MangaDex("es-419", "es-la")
+class MangaDexSpanishLatinAmerica : MangaDex("es-419", "es-la")
 class MangaDexSpanishSpain : MangaDex("es", "es")
 class MangaDexSwedish : MangaDex("sv", "sv")
 class MangaDexTamil : MangaDex("ta", "ta")

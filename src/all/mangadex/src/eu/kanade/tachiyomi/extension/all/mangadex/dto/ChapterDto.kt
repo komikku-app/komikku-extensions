@@ -20,4 +20,11 @@ data class ChapterAttributesDto(
     val pages: Int,
     val publishAt: String,
     val externalUrl: String?,
-) : AttributesDto()
+) : AttributesDto() {
+
+    /**
+     * Returns true if the chapter is from an external website and have no pages.
+     */
+    val isInvalid: Boolean
+        get() = externalUrl != null && pages == 0
+}

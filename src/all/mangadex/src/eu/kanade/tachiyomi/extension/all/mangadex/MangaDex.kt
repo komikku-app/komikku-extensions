@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
@@ -20,6 +19,7 @@ import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDataDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.MangaListDto
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -71,7 +71,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         preferences.sanitizeExistingUuidPrefs()
     }
 
-    // POPULAR Manga Section
+    // Popular manga section
 
     override fun popularMangaRequest(page: Int): Request {
         val url = MDConstants.apiMangaUrl.toHttpUrl().newBuilder()
@@ -112,7 +112,11 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         return MangasPage(mangaList, hasMoreResults)
     }
 
-    // LATEST section API can't sort by date yet so not implemented
+    // Latest manga section
+
+    /**
+     * The API endpoint can't sort by date yet, so not implemented.
+     */
     override fun latestUpdatesParse(response: Response): MangasPage {
         val chapterListDto = response.parseAs<ChapterListDto>()
         val hasMoreResults = chapterListDto.limit + chapterListDto.offset < chapterListDto.total
@@ -170,7 +174,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         return GET(url.build().toString(), headers, CacheControl.FORCE_NETWORK)
     }
 
-    // SEARCH section
+    // Search manga section
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         return when {
@@ -211,7 +215,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
     private fun getMangaIdFromChapterId(id: String): Observable<String> {
         return client.newCall(GET("${MDConstants.apiChapterUrl}/$id", headers))
-            .asObservableSuccess()
+            .asObservable()
             .map { response ->
                 if (response.isSuccessful.not()) {
                     throw Exception(helper.intl.unableToProcessChapterRequest(response.code))
@@ -317,6 +321,9 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     }
 
     private fun searchMangaListParse(response: Response): List<SManga> {
+        // This check will be used as the source is doing additional requests to this
+        // that are not parsed by the asObservableSuccess() method. It should throw the
+        // HttpException from the app if it becomes available in a future version of extensions-lib.
         if (response.isSuccessful.not()) {
             throw Exception("HTTP error ${response.code}")
         }
@@ -360,7 +367,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
     // Manga Details section
 
-    // Shenanigans to allow "open in webview" to show a webpage instead of JSON
+    // Workaround to allow "Open in WebView" to show a webpage instead of JSON.
+    // TODO: Replace with getMangaUrl when the repository is using extensions-lib 1.4
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         return client.newCall(apiMangaDetailsRequest(manga))
             .asObservableSuccess()
@@ -370,7 +378,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     }
 
     override fun mangaDetailsRequest(manga: SManga): Request {
-        // remove once redirect for /manga is fixed
+        // TODO: Remove once redirect for /manga is fixed.
         val title = manga.title
         val url = "${baseUrl}${manga.url.replace("manga", "title")}"
         val shareUrl = "$url/" + helper.titleToSlug(title)
@@ -378,7 +386,9 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     }
 
     /**
-     * get manga details url throws exception if the url is the old format so people migrate
+     * Get the API endpoint URL for the entry details.
+     *
+     * @throws Exception if the url is the old format so people migrate
      */
     private fun apiMangaDetailsRequest(manga: SManga): Request {
         if (!helper.containsUuid(manga.url.trim())) {
@@ -473,21 +483,24 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     }
 
     // Chapter list section
+
     /**
-     * get chapter list if manga url is old format throws exception
+     * Get the API endpoint URL for the first page of chapter list.
+     *
+     * @throws Exception if the url is the old format so people migrate
      */
     override fun chapterListRequest(manga: SManga): Request {
         if (!helper.containsUuid(manga.url)) {
             throw Exception(helper.intl.migrateWarning)
         }
 
-        return actualChapterListRequest(helper.getUUIDFromUrl(manga.url), 0)
+        return paginatedChapterListRequest(helper.getUUIDFromUrl(manga.url), 0)
     }
 
     /**
-     * Required because api is paged
+     * Required because the chapter list API endpoint is paginated.
      */
-    private fun actualChapterListRequest(mangaId: String, offset: Int): Request {
+    private fun paginatedChapterListRequest(mangaId: String, offset: Int): Request {
         val url = helper.getChapterEndpoint(mangaId, offset, dexLang).toHttpUrl().newBuilder()
             .addQueryParameter("contentRating[]", "safe")
             .addQueryParameter("contentRating[]", "suggestive")
@@ -504,37 +517,34 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             return emptyList()
         }
 
-        try {
-            val chapterListResponse = response.parseAs<ChapterListDto>()
+        val chapterListResponse = response.parseAs<ChapterListDto>()
 
-            val chapterListResults = chapterListResponse.data.toMutableList()
+        val chapterListResults = chapterListResponse.data.toMutableList()
 
-            val mangaId = response.request.url.toString()
-                .substringBefore("/feed")
-                .substringAfter("${MDConstants.apiMangaUrl}/")
+        val mangaId = response.request.url.toString()
+            .substringBefore("/feed")
+            .substringAfter("${MDConstants.apiMangaUrl}/")
 
-            val limit = chapterListResponse.limit
+        val limit = chapterListResponse.limit
 
-            var offset = chapterListResponse.offset
+        var offset = chapterListResponse.offset
 
-            var hasMoreResults = (limit + offset) < chapterListResponse.total
+        var hasMoreResults = (limit + offset) < chapterListResponse.total
 
-            // Max results that can be returned is 500 so need to make more API
-            // calls if limit + offset > total chapters
-            while (hasMoreResults) {
-                offset += limit
-                val newRequest = actualChapterListRequest(mangaId, offset)
-                val newResponse = client.newCall(newRequest).execute()
-                val newChapterList = newResponse.parseAs<ChapterListDto>()
-                chapterListResults.addAll(newChapterList.data)
-                hasMoreResults = (limit + offset) < newChapterList.total
-            }
-
-            return chapterListResults.mapNotNull(helper::createChapter)
-        } catch (e: Exception) {
-            Log.e("MangaDex", "error parsing chapter list", e)
-            throw e
+        // Max results that can be returned is 500 so need to make more API
+        // calls if limit + offset > total chapters
+        while (hasMoreResults) {
+            offset += limit
+            val newRequest = paginatedChapterListRequest(mangaId, offset)
+            val newResponse = client.newCall(newRequest).execute()
+            val newChapterList = newResponse.parseAs<ChapterListDto>()
+            chapterListResults.addAll(newChapterList.data)
+            hasMoreResults = (limit + offset) < newChapterList.total
         }
+
+        return chapterListResults
+            .filterNot { it.attributes!!.isInvalid }
+            .map(helper::createChapter)
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
@@ -557,7 +567,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         val atHomeDto = response.parseAs<AtHomeDto>()
         val host = atHomeDto.baseUrl
 
-        // have to add the time, and url to the page because pages timeout within 30mins now
+        // Have to add the time, and url to the page because pages timeout within 30 minutes now.
         val now = Date().time
 
         val hash = atHomeDto.chapter.hash
@@ -801,6 +811,11 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     private val SharedPreferences.useDataSaver
         get() = getBoolean(MDConstants.getDataSaverPreferenceKey(dexLang), false)
 
+    /**
+     * Previous versions of the extension allowed invalid UUID values to be stored in the
+     * preferences. This method clear invalid UUIDs in case the user have updated from
+     * a previous version with that behaviour.
+     */
     private fun SharedPreferences.sanitizeExistingUuidPrefs() {
         if (getBoolean(MDConstants.getHasSanitizedUuidsPrefKey(dexLang), false)) {
             return
