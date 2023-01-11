@@ -6,7 +6,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jsoup.Jsoup
 import java.text.SimpleDateFormat
-import java.util.Locale
 
 @Serializable
 data class HeanCmsQuerySearchDto(
@@ -94,17 +93,11 @@ data class HeanCmsChapterDto(
     @SerialName("created_at") val createdAt: String,
 ) {
 
-    fun toSChapter(seriesSlug: String): SChapter = SChapter.create().apply {
+    fun toSChapter(seriesSlug: String, dateFormat: SimpleDateFormat): SChapter = SChapter.create().apply {
         name = this@HeanCmsChapterDto.name.trim()
-        date_upload = runCatching { DATE_FORMAT.parse(createdAt.substringBefore("."))?.time }
+        date_upload = runCatching { dateFormat.parse(createdAt)?.time }
             .getOrNull() ?: 0L
         url = "/series/$seriesSlug/$slug#$id"
-    }
-
-    companion object {
-        private val DATE_FORMAT by lazy {
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-        }
     }
 }
 

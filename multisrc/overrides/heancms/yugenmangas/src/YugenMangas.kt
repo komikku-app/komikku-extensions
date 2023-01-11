@@ -2,6 +2,8 @@ package eu.kanade.tachiyomi.extension.es.yugenmangas
 
 import eu.kanade.tachiyomi.multisrc.heancms.Genre
 import eu.kanade.tachiyomi.multisrc.heancms.HeanCms
+import java.text.SimpleDateFormat
+import java.util.TimeZone
 
 class YugenMangas : HeanCms("YugenMangas", "https://yugenmangas.com", "es") {
 
@@ -9,6 +11,10 @@ class YugenMangas : HeanCms("YugenMangas", "https://yugenmangas.com", "es") {
     override val versionId = 2
 
     override val coverPath: String = ""
+
+    override val dateFormat: SimpleDateFormat = super.dateFormat.apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
 
     override fun getGenreList(): List<Genre> = listOf(
         Genre("+18", 1),

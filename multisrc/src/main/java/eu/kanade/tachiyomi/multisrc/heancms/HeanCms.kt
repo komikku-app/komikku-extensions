@@ -21,6 +21,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 abstract class HeanCms(
     override val name: String,
@@ -40,6 +42,8 @@ abstract class HeanCms(
     protected open val fetchAllTitles: Boolean = true
 
     protected open val coverPath: String = "cover/"
+
+    protected open val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", Locale.US)
 
     private var seriesSlugMap: Map<String, HeanCmsTitle>? = null
 
@@ -235,7 +239,7 @@ abstract class HeanCms(
         val currentTimestamp = System.currentTimeMillis()
 
         return result.chapters.orEmpty()
-            .map { it.toSChapter(seriesSlug) }
+            .map { it.toSChapter(seriesSlug, dateFormat) }
             .filter { it.date_upload <= currentTimestamp }
             .reversed()
     }
