@@ -10,7 +10,6 @@
 - Koushoku https://github.com/tachiyomiorg/tachiyomi-extensions/pull/13329
 - Mangá Host https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7065
 - Mangá Livre and Leitor.net https://github.com/tachiyomiorg/tachiyomi-extensions/pull/8679
-- mangago.me https://github.com/tachiyomiorg/tachiyomi-extensions/issues/988
 - MangaYabu! https://github.com/tachiyomiorg/tachiyomi-extensions/pull/9336
 - ManhuaScan https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
 - ManhwaHot https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
