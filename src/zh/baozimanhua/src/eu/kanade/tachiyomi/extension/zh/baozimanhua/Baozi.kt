@@ -61,7 +61,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val fullListTitle = document.selectFirst(".section-title:containsOwn(章节目录)")
+        val fullListTitle = document.selectFirst(".section-title:containsOwn(章节目录), .section-title:containsOwn(章節目錄)")
         return if (fullListTitle == null) { // only latest chapters
             document.select(Evaluator.Class("comics-chapters"))
         } else {
@@ -123,15 +123,13 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
 
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            title = document.select("h1.comics-detail__title").text().trim()
+            title = document.select("h1.comics-detail__title").text()
             thumbnail_url = document.select("div.pure-g div > amp-img").attr("src").trim()
-            author = document.select("h2.comics-detail__author").text().trim()
-            description = document.select("p.comics-detail__desc").text().trim()
-            status = when (document.selectFirst("div.tag-list > span.tag").text().trim()) {
-                "连载中" -> SManga.ONGOING
-                "已完结" -> SManga.COMPLETED
-                "連載中" -> SManga.ONGOING
-                "已完結" -> SManga.COMPLETED
+            author = document.select("h2.comics-detail__author").text()
+            description = document.select("p.comics-detail__desc").text()
+            status = when (document.selectFirst("div.tag-list > span.tag").text()) {
+                "连载中", "連載中" -> SManga.ONGOING
+                "已完结", "已完結" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
             }
         }
