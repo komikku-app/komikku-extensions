@@ -27,7 +27,7 @@
                     android:pathPattern="/album/..*"
                     android:scheme="https" />
                 <data
-                    android:host="jmcomic1.win"
+                    android:host="jmcomic2.onl"
                     android:pathPattern="/album/..*"
                     android:scheme="https" />
                 <data

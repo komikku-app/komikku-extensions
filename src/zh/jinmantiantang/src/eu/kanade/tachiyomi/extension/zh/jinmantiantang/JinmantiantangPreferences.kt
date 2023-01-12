@@ -8,8 +8,8 @@ internal fun getPreferenceList(context: Context) = arrayOf(
     ListPreference(context).apply {
         key = MAINSITE_RATELIMIT_PREF
         title = "在限制时间内（下个设置项）允许的请求数量。"
-        entries = (1..10).map { i -> i.toString() }.toTypedArray()
-        entryValues = (1..10).map { i -> i.toString() }.toTypedArray()
+        entries = Array(10) { "${it + 1}" }
+        entryValues = Array(10) { "${it + 1}" }
         summary = "此值影响更新书架时发起连接请求的数量。调低此值可能减小IP被屏蔽的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s"
 
         setDefaultValue(MAINSITE_RATELIMIT_PREF_DEFAULT)
@@ -18,18 +18,19 @@ internal fun getPreferenceList(context: Context) = arrayOf(
     ListPreference(context).apply {
         key = MAINSITE_RATELIMIT_PERIOD
         title = "限制持续时间。单位秒"
-        entries = (1..60).map { i -> i.toString() }.toTypedArray()
-        entryValues = (1..60).map { i -> i.toString() }.toTypedArray()
+        entries = Array(60) { "${it + 1}" }
+        entryValues = Array(60) { "${it + 1}" }
         summary = "此值影响更新书架时请求的间隔时间。调大此值可能减小IP被屏蔽的几率，但更新时间也会变慢。需要重启软件以生效。\n当前值：%s"
 
         setDefaultValue(MAINSITE_RATELIMIT_PERIOD_DEFAULT)
     },
 
     ListPreference(context).apply {
+        val count = SITE_ENTRIES_ARRAY.size
         key = USE_MIRROR_URL_PREF
         title = "使用镜像网址"
-        entries = SITE_ENTRIES_ARRAY_DESCRIPTION
-        entryValues = SITE_ENTRIES_ARRAY.indices.map { it.toString() }.toTypedArray()
+        entries = Array(count) { "${SITE_ENTRIES_ARRAY_DESCRIPTION[it]} (${SITE_ENTRIES_ARRAY[it]})" }
+        entryValues = Array(count) { "$it" }
         summary = "使用镜像网址。需要重启软件以生效。"
 
         setDefaultValue("0")
@@ -58,16 +59,16 @@ internal const val USE_MIRROR_URL_PREF = "useMirrorWebsitePreference"
 
 internal val SITE_ENTRIES_ARRAY_DESCRIPTION = arrayOf(
     "主站", "海外分流",
-    "中国大陆线路1", "中国大陆线路2",
+    "中国大陆线路1", "中国大陆线路2/已被墙",
     "东南亚线路1", "东南亚线路2",
     "中国大陆线路3",
 )
 
-// List is based on https://jmcomic.bet/
+// List is based on https://jmcomic1.bet/
 // Please also update AndroidManifest
 internal val SITE_ENTRIES_ARRAY = arrayOf(
     "18comic.vip", "18comic.org",
-    "jmcomic.onl", "jmcomic1.win",
+    "jmcomic.onl", "jmcomic2.onl",
     "jmcomic.me", "jmcomic1.me",
     "jmcomic1.onl",
 )
