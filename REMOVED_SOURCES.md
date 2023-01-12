@@ -4,7 +4,6 @@
 
 - CocoManga (COCO漫画) https://github.com/tachiyomiorg/tachiyomi-extensions/pull/11445
 - CopyManga (拷贝漫画) https://github.com/tachiyomiorg/tachiyomi-extensions/pull/12376
-- fanfox.net (MangaFox) https://github.com/tachiyomiorg/tachiyomi-extensions/issues/988
 - Hitomi.la https://github.com/tachiyomiorg/tachiyomi-extensions/pull/11613
 - HQ Dragon https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7065
 - Koushoku https://github.com/tachiyomiorg/tachiyomi-extensions/pull/13329
