@@ -83,6 +83,9 @@ data class TitleDetailView(
     private val isCompleted: Boolean
         get() = nonAppearanceInfo.contains(COMPLETED_REGEX) || isOneShot
 
+    private val isOnHiatus: Boolean
+        get() = nonAppearanceInfo.contains(HIATUS_REGEX)
+
     private val genres: List<String>
         get() = listOfNotNull(
             "Simulrelease".takeIf { isSimulReleased && !isReEdition && !isOneShot },
@@ -93,12 +96,17 @@ data class TitleDetailView(
 
     fun toSManga(): SManga = title.toSManga().apply {
         description = (overview.orEmpty() + "\n\n" + viewingPeriodDescription).trim()
-        status = if (isCompleted) SManga.COMPLETED else SManga.ONGOING
+        status = when {
+            isCompleted -> SManga.COMPLETED
+            isOnHiatus -> SManga.ON_HIATUS
+            else -> SManga.ONGOING
+        }
         genre = genres.joinToString()
     }
 
     companion object {
         private val COMPLETED_REGEX = "completado|complete|completo".toRegex()
+        private val HIATUS_REGEX = "on a hiatus".toRegex(RegexOption.IGNORE_CASE)
         private val REEDITION_REGEX = "revival|remasterizada".toRegex()
     }
 }
@@ -165,6 +173,9 @@ data class Chapter(
     val endTimeStamp: Int,
     val isVerticalOnly: Boolean = false
 ) {
+
+    val isExpired: Boolean
+        get() = subTitle == null
 
     fun toSChapter(): SChapter = SChapter.create().apply {
         name = "${this@Chapter.name} - $subTitle"
