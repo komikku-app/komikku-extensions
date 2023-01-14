@@ -35,6 +35,7 @@
 - Mangagecesi https://github.com/tachiyomiorg/tachiyomi-extensions/issues/5367
 - Manganoon https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13866
 - MangaPro https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13989
+- MangaSwat https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13171
 - Mangawow https://github.com/tachiyomiorg/tachiyomi-extensions/issues/5367
 - Manhwaid.org https://github.com/tachiyomiorg/tachiyomi-extensions/issues/10751
 - NarTag https://github.com/tachiyomiorg/tachiyomi-extensions/issues/8038
