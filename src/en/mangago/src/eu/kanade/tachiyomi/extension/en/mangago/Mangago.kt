@@ -79,7 +79,7 @@ class Mangago : ParsedHttpSource() {
         title = linkElement.attr("title")
 
         val thumbnailElem = linkElement.selectFirst("img")
-        thumbnail_url = thumbnailElem.attr("abs:src").ifBlank { thumbnailElem.attr("abs:data-src") }
+        thumbnail_url = thumbnailElem.attr("abs:data-src").ifBlank { thumbnailElem.attr("abs:src") }
     }
 
     override fun popularMangaRequest(page: Int): Request =
