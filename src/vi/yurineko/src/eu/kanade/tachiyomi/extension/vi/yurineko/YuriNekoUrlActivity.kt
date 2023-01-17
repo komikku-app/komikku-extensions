@@ -8,29 +8,26 @@ import android.util.Log
 import kotlin.system.exitProcess
 
 class YuriNekoUrlActivity : Activity() {
-    private fun prefixDeterminer(path: String): String? = when (path) {
-        "manga" -> YuriNeko.PREFIX_ID_SEARCH
-        "origin" -> YuriNeko.PREFIX_DOUJIN_SEARCH
-        "author" -> YuriNeko.PREFIX_AUTHOR_SEARCH
-        "tag" -> YuriNeko.PREFIX_TAG_SEARCH
-        "couple" -> YuriNeko.PREFIX_COUPLE_SEARCH
-        "team" -> YuriNeko.PREFIX_TEAM_SEARCH
-        else -> null
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
-        if (pathSegments != null &&
-            pathSegments.size > 2 &&
-            prefixDeterminer(pathSegments[1]) != null
-        ) {
-            val id = pathSegments[2]
+        if (pathSegments != null && pathSegments.size > 1) {
+            val id = pathSegments[1]
             try {
                 startActivity(
                     Intent().apply {
                         action = "eu.kanade.tachiyomi.SEARCH"
-                        putExtra("query", "${prefixDeterminer(pathSegments[1])}$id")
+                        with(pathSegments[0]) {
+                            when {
+                                equals("manga") -> putExtra("query", "${YuriNeko.PREFIX_ID_SEARCH}$id")
+                                equals("origin") -> putExtra("query", "${YuriNeko.PREFIX_DOUJIN_SEARCH}$id")
+                                equals("author") -> putExtra("query", "${YuriNeko.PREFIX_AUTHOR_SEARCH}$id")
+                                equals("tag") -> putExtra("query", "${YuriNeko.PREFIX_TAG_SEARCH}$id")
+                                equals("couple") -> putExtra("query", "${YuriNeko.PREFIX_COUPLE_SEARCH}$id")
+                                equals("team") -> putExtra("query", "${YuriNeko.PREFIX_TEAM_SEARCH}$id")
+                                else -> putExtra("query", "${YuriNeko.PREFIX_ID_SEARCH}$id")
+                            }
+                        }
                         putExtra("filter", packageName)
                     }
                 )

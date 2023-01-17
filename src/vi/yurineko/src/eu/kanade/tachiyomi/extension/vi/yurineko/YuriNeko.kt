@@ -42,19 +42,11 @@ class YuriNeko : HttpSource() {
 
     override val client = network.cloudflareClient.newBuilder()
         .rateLimit(3, 1, TimeUnit.SECONDS)
-        .addInterceptor { authIntercept(it) }
-        .addInterceptor { chain ->
-            val response = chain.proceed(chain.request())
+        .addInterceptor(::authIntercept)
+        .addInterceptor(::errorIntercept)
+        .build()
 
-            if (response.code >= 400 && response.body != null) {
-                val error = response.parseAs<ErrorResponseDto>()
-                response.close()
-                throw IOException("${error.message}\nĐăng nhập qua WebView và thử lại.")
-            }
-            response
-        }.build()
-
-    override fun headersBuilder() = Headers.Builder().add("Referer", baseUrl)
+    override fun headersBuilder() = Headers.Builder().add("Referer", "$baseUrl/")
 
     private fun authIntercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -69,6 +61,20 @@ class YuriNeko : HttpSource() {
             addHeader("Authorization", "Bearer ${authCookie.token}")
         }.build()
         return chain.proceed(authRequest)
+    }
+    private fun errorIntercept(chain: Interceptor.Chain): Response {
+        val response = chain.proceed(chain.request())
+
+        if (response.code >= 400 && response.body != null) {
+            val error = try {
+                response.parseAs<ErrorResponseDto>()
+            } catch (_: Throwable) {
+                return response
+            }
+            response.close()
+            throw IOException("${error.message}\nĐăng nhập qua WebView và thử lại.")
+        }
+        return response
     }
 
     override fun popularMangaRequest(page: Int): Request = GET(
