@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.vi.blogtruyen
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -14,13 +15,15 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.FormBody
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -41,172 +44,263 @@ class BlogTruyen : ParsedHttpSource() {
 
     private val json: Json by injectLazy()
 
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", baseUrl)
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.ENGLISH)
 
-    override fun popularMangaSelector() = "div.list span.tiptip.fs-12.ellipsis"
-
-    override fun latestUpdatesSelector() = "section.list-mainpage.listview > div > div > div > div.fl-l"
-
-    override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/ajax/Search/AjaxLoadListManga?key=tatca&orderBy=3&p=$page", headers)
+    companion object {
+        const val PREFIX_ID_SEARCH = "id:"
     }
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/page-$page", headers)
-    }
+    override fun headersBuilder(): Headers.Builder =
+        super.headersBuilder().add("Referer", "$baseUrl/")
+
+    override fun popularMangaRequest(page: Int): Request =
+        GET("$baseUrl/ajax/Search/AjaxLoadListManga?key=tatca&orderBy=3&p=$page", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
 
-        val imgURL = document.select("img").map { it.attr("abs:src") }
-        val mangas = document.select(popularMangaSelector()).mapIndexed { index, element -> popularMangaFromElement(element, imgURL[index]) }
-
-        val hasNextPage = popularMangaNextPageSelector().let { selector ->
-            document.select(selector).first()
-        } != null
-
-        return MangasPage(mangas, hasNextPage)
-    }
-
-    private fun popularMangaFromElement(element: Element, imgURL: String): SManga {
-        val manga = SManga.create()
-        element.select("a").first().let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.text().trim()
-            manga.thumbnail_url = imgURL
+        val manga = document.select(popularMangaSelector()).map {
+            val tiptip = it.attr("data-tiptip")
+            popularMangaFromElement(it, document.getElementById(tiptip))
         }
-        return manga
+
+        val hasNextPage = document.selectFirst(popularMangaNextPageSelector()) != null
+
+        return MangasPage(manga, hasNextPage)
     }
 
-    override fun popularMangaFromElement(element: Element): SManga = throw Exception("Not Used")
+    override fun popularMangaSelector() = ".list .tiptip"
 
-    override fun latestUpdatesFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        element.select("a").first().let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = element.select("img").first().attr("alt").toString().trim()
-            manga.thumbnail_url = element.select("img").first().attr("abs:src")
+    override fun popularMangaFromElement(element: Element): SManga =
+        throw UnsupportedOperationException("Not used")
+
+    private fun popularMangaFromElement(element: Element, tiptip: Element) = SManga.create().apply {
+        val anchor = element.selectFirst("a")
+        setUrlWithoutDomain(anchor.attr("href"))
+        title = anchor.attr("title").replace("truyện tranh ", "").trim()
+
+        thumbnail_url = tiptip.selectFirst("img").attr("abs:src")
+        description = tiptip.selectFirst(".al-j").text()
+    }
+
+    override fun popularMangaNextPageSelector() = ".paging:last-child:not(.current_page)"
+
+    override fun latestUpdatesRequest(page: Int): Request =
+        GET("$baseUrl/ajax/Search/AjaxLoadListManga?key=tatca&orderBy=5&p=$page", headers)
+
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+
+        val manga = document.select(latestUpdatesSelector()).map {
+            val tiptip = it.attr("data-tiptip")
+            latestUpdatesFromElement(it, document.getElementById(tiptip))
         }
-        return manga
+
+        val hasNextPage = document.selectFirst(latestUpdatesNextPageSelector()) != null
+
+        return MangasPage(manga, hasNextPage)
     }
 
-    override fun popularMangaNextPageSelector() = "div.paging:last-child:not(.current_page)"
+    override fun latestUpdatesSelector() = popularMangaSelector()
 
-    override fun latestUpdatesNextPageSelector() = "ul.pagination.paging.list-unstyled > li:nth-last-child(2) > a"
+    private fun latestUpdatesFromElement(element: Element, tiptip: Element): SManga =
+        popularMangaFromElement(element, tiptip)
+
+    override fun latestUpdatesFromElement(element: Element): SManga =
+        throw UnsupportedOperationException("Not used")
+
+    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
+
+    override fun fetchSearchManga(
+        page: Int,
+        query: String,
+        filters: FilterList
+    ): Observable<MangasPage> {
+        return when {
+            query.startsWith(PREFIX_ID_SEARCH) -> {
+                val id = query.removePrefix(PREFIX_ID_SEARCH).trim()
+                if (!id.startsWith("/")) {
+                    throw Exception("ID tìm kiếm không hợp lệ")
+                }
+
+                fetchMangaDetails(
+                    SManga.create().apply {
+                        url = id
+                    }
+                )
+                    .map { MangasPage(listOf(it.apply { url = id }), false) }
+            }
+            else -> super.fetchSearchManga(page, query, filters)
+        }
+    }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var temp = "$baseUrl/timkiem/nangcao/1/0"
-        val genres = mutableListOf<Int>()
-        val genresEx = mutableListOf<Int>()
-        var aut = ""
-        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-            when (filter) {
-                is GenreList -> filter.state.forEach {
-                    genre ->
-                    when (genre.state) {
-                        Filter.TriState.STATE_INCLUDE -> genres.add(genre.id)
-                        Filter.TriState.STATE_EXCLUDE -> genresEx.add(genre.id)
+        val url = "$baseUrl/timkiem/nangcao/1".toHttpUrl().newBuilder().apply {
+            addQueryParameter("txt", query)
+            addQueryParameter("page", page.toString())
+
+            val genres = mutableListOf<Int>()
+            val genresEx = mutableListOf<Int>()
+            var status = 0
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is GenreList -> filter.state.forEach {
+                        when (it.state) {
+                            Filter.TriState.STATE_INCLUDE -> genres.add(it.id)
+                            Filter.TriState.STATE_EXCLUDE -> genresEx.add(it.id)
+                            else -> {}
+                        }
                     }
-                }
-                is Author -> {
-                    if (filter.state.isNotEmpty()) {
-                        aut = filter.state
+                    is Author -> {
+                        addQueryParameter("aut", filter.state)
                     }
+                    is Scanlator -> {
+                        addQueryParameter("gr", filter.state)
+                    }
+                    is Status -> {
+                        status = filter.state
+                    }
+                    else -> {}
                 }
             }
-        }
-        temp = if (genres.isNotEmpty()) temp + "/" + genres.joinToString(",")
-        else "$temp/-1"
-        temp = if (genresEx.isNotEmpty()) temp + "/" + genresEx.joinToString(",")
-        else "$temp/-1"
-        val url = temp.toHttpUrlOrNull()!!.newBuilder()
-        url.addQueryParameter("txt", query)
-        if (aut.isNotEmpty()) url.addQueryParameter("aut", aut)
-        url.addQueryParameter("p", page.toString())
-        return GET(url.toString().replace("m.", ""), headers)
+
+            addPathSegment(status.toString())
+            addPathSegment(genres.joinToString(","))
+            addPathSegment(genresEx.joinToString(","))
+        }.build().toString()
+        return GET(url, headers)
     }
 
-    override fun searchMangaSelector() = "div.list > p:has(a)"
+    override fun searchMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
 
-    override fun searchMangaFromElement(element: Element): SManga {
-        return SManga.create().apply {
-            element.select("a").let {
-                setUrlWithoutDomain(it.attr("href"))
-                title = it.text()
+        val manga = document.select(searchMangaSelector()).map {
+            val tiptip = it.attr("data-tiptip")
+            searchMangaFromElement(it, document.getElementById(tiptip))
+        }
+
+        val hasNextPage = document.selectFirst(searchMangaNextPageSelector()) != null
+
+        return MangasPage(manga, hasNextPage)
+    }
+
+    override fun searchMangaSelector() = popularMangaSelector()
+
+    override fun searchMangaFromElement(element: Element): SManga =
+        throw UnsupportedOperationException("Not used")
+
+    private fun searchMangaFromElement(element: Element, tiptip: Element) =
+        popularMangaFromElement(element, tiptip)
+
+    override fun searchMangaNextPageSelector() = ".pagination .glyphicon-step-forward"
+
+    override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
+        val anchor = document.selectFirst(".entry-title a")
+        setUrlWithoutDomain(anchor.attr("href"))
+        title = anchor.attr("title")
+            .replace("truyện tranh ", "")
+            .trim()
+
+        thumbnail_url = document.select(".thumbnail img").attr("abs:src")
+        author = document.select("a.color-green.label.label-info").joinToString { it.text() }
+        genre = document.select("span.category a").joinToString { it.text() }
+        status = parseStatus(
+            document.select("span.color-red:not(.bold)").text()
+        )
+
+        description = document.selectFirst(".manga-detail .detail .content").let {
+            if (it.select("p").any()) {
+                it.select("p").joinToString("\n", transform = ::brToNewline)
+            } else {
+                brToNewline(it)
             }
-            thumbnail_url = element.nextElementSibling().select("img").attr("abs:src")
         }
     }
 
-    override fun searchMangaNextPageSelector() = "ul.pagination i.glyphicon.glyphicon-step-forward.red"
-
-    override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.description").first()
-        val title = document.select(".entry-title").first()
-        val manga = SManga.create()
-        manga.title = title.select(".entry-title a").first().text()
-        manga.author = infoElement.select("p:contains(Tác giả) > a").first()?.text()
-        manga.genre = infoElement.select("span.category a").joinToString { it.text() }
-        manga.description = document.select("div.detail > div.content").text()
-        manga.status = infoElement.select("p:contains(Trạng thái) > span.color-red").first()?.text().orEmpty().let { parseStatus(it) }
-        manga.thumbnail_url = document.select("div.thumbnail > img").first()?.attr("src")
-        return manga
+    private fun brToNewline(element: Element): String {
+        return element.run {
+            select("br").prepend("\\n")
+            text().replace("\\n", "\n").replace("\n ", "\n")
+        }
     }
 
     private fun parseStatus(status: String) = when {
         status.contains("Đang tiến hành") -> SManga.ONGOING
         status.contains("Đã hoàn thành") -> SManga.COMPLETED
+        status.contains("Tạm ngưng") -> SManga.ON_HIATUS
         else -> SManga.UNKNOWN
     }
 
     override fun chapterListSelector() = "div.list-wrap > p"
 
-    override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("span > a").first()
+    override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
+        val anchor = element.select("span > a").first()
 
-        val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(urlElement.attr("href"))
-        chapter.name = urlElement.attr("title").trim()
-        chapter.date_upload = element.select("span.publishedDate").first()?.text()?.let {
-            SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.ENGLISH).parse(it)?.time ?: 0
-        } ?: 0
-        return chapter
+        setUrlWithoutDomain(anchor.attr("href"))
+        name = anchor.attr("title").trim()
+        date_upload = kotlin.runCatching {
+            dateFormat.parse(
+                element.selectFirst("span.publishedDate").text()
+            )?.time
+        }.getOrNull() ?: 0L
     }
 
-    override fun pageListRequest(chapter: SChapter) = GET(baseUrl + chapter.url, headers)
+    private fun countViewRequest(mangaId: String, chapterId: String): Request = POST(
+        "$baseUrl/Chapter/UpdateView",
+        headers,
+        FormBody.Builder()
+            .add("mangaId", mangaId)
+            .add("chapterId", chapterId)
+            .build()
+    )
+
+    private fun countView(document: Document) {
+        val mangaId = document.getElementById("MangaId").attr("value")
+        val chapterId = document.getElementById("ChapterId").attr("value")
+        kotlin.runCatching {
+            client.newCall(countViewRequest(mangaId, chapterId)).execute().close()
+        }
+    }
 
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
-        val pageUrl = document.select("link[rel=canonical]").attr("href")
-        document.select("article#content > img").forEachIndexed { i, e ->
-            pages.add(Page(i, pageUrl, e.attr("src")))
+
+        document.select("#content > img").forEachIndexed { i, e ->
+            pages.add(Page(i, imageUrl = e.attr("abs:src")))
         }
 
         // Some chapters use js script to render images
-        val script = document.select("article#content > script").lastOrNull()
-        if (script != null && script.data().contains("listImageCaption")) {
-            val imagesStr = script.data().split(";")[0].split("=").last().trim()
-            val imageArr = json.parseToJsonElement(imagesStr).jsonArray
-            for (image in imageArr) {
-                val imageUrl = image.jsonObject["url"]!!.jsonPrimitive.content
-                pages.add(Page(pages.size, pageUrl, imageUrl))
+        document.select("#content > script:containsData(listImageCaption)").lastOrNull()
+            ?.let { script ->
+                val imagesStr = script.data().substringBefore(";").substringAfterLast("=").trim()
+                val imageArr = json.parseToJsonElement(imagesStr).jsonArray
+                imageArr.forEach {
+                    val imageUrl = it.jsonObject["url"]!!.jsonPrimitive.content
+                    pages.add(Page(pages.size, imageUrl = imageUrl))
+                }
             }
-        }
 
+        countView(document)
         return pages
     }
 
-    override fun imageUrlParse(document: Document) = ""
+    override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
 
-    private class Status : Filter.Select<String>("Status", arrayOf("Sao cũng được", "Đang tiến hành", "Đã hoàn thành", "Tạm ngưng"))
+    private class Status : Filter.Select<String>(
+        "Status",
+        arrayOf("Sao cũng được", "Đang tiến hành", "Đã hoàn thành", "Tạm ngưng")
+    )
+
     private class Author : Filter.Text("Tác giả")
+    private class Scanlator : Filter.Text("Nhóm dịch")
     private class Genre(name: String, val id: Int) : Filter.TriState(name)
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Thể loại", genres)
 
     override fun getFilterList() = FilterList(
+        Author(),
+        Scanlator(),
         Status(),
         GenreList(getGenreList()),
-        Author()
     )
 
     private fun getGenreList() = listOf(
