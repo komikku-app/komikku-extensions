@@ -68,7 +68,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Cerise Scans", "https://cerisescan.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("Chibi Manga", "https://www.cmreader.info", "en", overrideVersionCode = 1),
         SingleLang("Clover Manga", "https://clover-manga.com", "tr", overrideVersionCode = 2),
-        SingleLang("Coffee Manga", "https://coffeemanga.com", "en"),
+        SingleLang("Coffee Manga", "https://coffeemanga.io", "en", overrideVersionCode = 1),
         SingleLang("Colored Manga", "https://coloredmanga.com", "en", overrideVersionCode = 1),
         SingleLang("ComicKiba", "https://comickiba.com", "en", overrideVersionCode = 1),
         SingleLang("Comics Valley", "https://comicsvalley.com", "hi", isNsfw = true, overrideVersionCode = 1),
