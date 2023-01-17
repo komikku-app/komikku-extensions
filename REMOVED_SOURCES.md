@@ -10,6 +10,7 @@
 - Mangá Host https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7065
 - Mangá Livre and Leitor.net https://github.com/tachiyomiorg/tachiyomi-extensions/pull/8679
 - MangaDig https://github.com/tachiyomiorg/tachiyomi-extensions/pull/14974
+- Mangas.pw (Mangas.in) https://github.com/tachiyomiorg/tachiyomi-extensions/pull/9489
 - MangaYabu! https://github.com/tachiyomiorg/tachiyomi-extensions/pull/9336
 - ManhuaScan https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
 - ManhwaHot https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
