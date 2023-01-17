@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.multisrc.madtheme
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
-import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -41,11 +40,7 @@ abstract class MadTheme(
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .rateLimitHost("https://s1.mbcdnv1.xyz".toHttpUrl(), 1, 1)
-        .rateLimitHost("https://s1.mbcdnv2.xyz".toHttpUrl(), 1, 1)
-        .rateLimitHost("https://s1.mbcdnv3.xyz".toHttpUrl(), 1, 1)
-        .rateLimitHost("https://s1.mbcdnv4.xyz".toHttpUrl(), 1, 1)
-        .rateLimitHost("https://s1.mbcdnv5.xyz".toHttpUrl(), 1, 1)
+        .rateLimit(1, 1)
         .build()
 
     // TODO: better cookie sharing
@@ -180,7 +175,7 @@ abstract class MadTheme(
             return super.chapterListParse(response)
         }
 
-        // Try to use message from site
+        // Try to show message/error from site
         response.body?.let { body ->
             json.decodeFromString<JsonObject>(body.string())["message"]
                 ?.jsonPrimitive
@@ -219,43 +214,25 @@ abstract class MadTheme(
         val html = document.html()!!
 
         if (!html.contains("var mainServer = \"")) {
-            // No fancy CDN
+            // No fancy CDN, all images are available directly in <img> tags
             return document.select("#chapter-images img").mapIndexed { index, element ->
-                Page(index, "", element.attr("abs:data-src"))
+                Page(index, imageUrl = element.attr("abs:data-src"))
             }
         }
 
-        val scheme = baseUrl.toHttpUrl().scheme + "://"
-
-        val mainCdn = html
+        // While the site may support multiple CDN hosts, we have opted to ignore those
+        val mainServer = html
             .substringAfter("var mainServer = \"")
             .substringBefore("\"")
+        val schemePrefix = if (mainServer.startsWith("//")) "https:" else ""
 
-        val mainCdnHttp = (scheme + mainCdn).toHttpUrl()
-        CDN_URL = scheme + mainCdnHttp.host
-        CDN_PATH = mainCdnHttp.encodedPath
-
-        val chImages = html
+        val chapImages = html
             .substringAfter("var chapImages = '")
             .substringBefore("'")
             .split(',')
 
-        if (html.contains("var multiServers = true")) {
-            val altCDNs = json.decodeFromString<List<String>>(
-                html
-                    .substringAfter("var imageServers = ")
-                    .substringBefore("\n")
-            )
-            CDN_URL_ALT = altCDNs.mapNotNull {
-                val url = scheme + it
-                if (!(CDN_URL!!).contains(url)) url else null
-            }
-        }
-
-        // Disabling alt CDNs until fallback can be implemented
-        val allCDN = listOf(CDN_URL) // + CDN_URL_ALT
-        return chImages.mapIndexed { index, img ->
-            Page(index, "", allCDN.random() + CDN_PATH + img)
+        return chapImages.mapIndexed { index, path ->
+            Page(index, imageUrl = "$schemePrefix$mainServer$path")
         }
     }
 
@@ -357,12 +334,5 @@ abstract class MadTheme(
     ) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), state) {
         fun toUriPart() = vals[state].second
-    }
-
-    open var CDN_URL: String? = null
-
-    companion object {
-        private var CDN_URL_ALT: List<String> = listOf()
-        private var CDN_PATH: String? = null
     }
 }
