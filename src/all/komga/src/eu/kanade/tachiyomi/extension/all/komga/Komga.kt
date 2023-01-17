@@ -46,8 +46,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.security.MessageDigest
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, HttpSource() {
@@ -302,26 +300,26 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
 
     private fun parseDate(date: String?): Long =
         if (date == null)
-            Date().time
+            0
         else {
             try {
-                SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(date).time
+                KomgaHelper.formatterDate.parse(date)?.time ?: 0
             } catch (ex: Exception) {
-                Date().time
+                0
             }
         }
 
     private fun parseDateTime(date: String?): Long =
         if (date == null)
-            Date().time
+            0
         else {
             try {
-                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(date).time
+                KomgaHelper.formatterDateTime.parse(date)?.time ?: 0
             } catch (ex: Exception) {
                 try {
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S", Locale.US).parse(date).time
+                    KomgaHelper.formatterDateTimeMilli.parse(date)?.time ?: 0
                 } catch (ex: Exception) {
-                    Date().time
+                    0
                 }
             }
         }
