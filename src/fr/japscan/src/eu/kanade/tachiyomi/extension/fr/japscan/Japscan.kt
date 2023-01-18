@@ -7,6 +7,7 @@ import android.util.Base64
 import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -52,7 +53,9 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .rateLimit(1, 2)
+        .build()
 
     companion object {
         val dateFormat by lazy {
@@ -127,6 +130,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
                 when (filter) {
                     is TextField -> uri.appendPath(((page - 1) + filter.state.toInt()).toString())
                     is PageList -> uri.appendPath(((page - 1) + filter.values[filter.state]).toString())
+                    else -> {}
                 }
             }
             return GET(uri.toString(), headers)
@@ -143,14 +147,14 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
                 val searchResponse = client.newCall(searchRequest).execute()
 
                 if (!searchResponse.isSuccessful) {
-                    throw Exception("Unexpected code ${searchResponse.code}")
+                    throw Exception("Code ${searchResponse.code} inattendu")
                 }
 
                 val jsonResult = json.parseToJsonElement(searchResponse.body!!.string()).jsonArray
 
                 if (jsonResult.isEmpty()) {
                     Log.d("japscan", "Search not returning anything, using duckduckgo")
-                    throw Exception("No data")
+                    throw Exception("Pas de données")
                 }
 
                 return searchRequest
@@ -235,7 +239,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
     // Those have a span.badge "SPOILER" or "RAW". The additional pseudo selector makes sure to exclude these from the chapter list.
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("a").first()
+        val urlElement = element.selectFirst("a")
 
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
@@ -269,19 +273,19 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
         Log.d("japscan", "ZJS at $zjsurl")
         val zjs = client.newCall(GET(baseUrl + zjsurl, headers)).execute().body!!.string()
 
-        val strings = zjs
+        val stringLookupTables = zjs
             .substringAfter("= [")
             .substringBefore("];")
             .split(",")
-            .map { it.trim().removeSurrounding("'").reversed() }
+            .mapNotNull {
+                it.trim().removeSurrounding("'").takeIf { unquoted ->
+                    unquoted.length == 62 &&
+                        unquoted.toCharArray().sorted().joinToString("") == "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+                }
+            }
 
-        val stringLookupTables = strings.filter {
-            it.length == 62 &&
-                it.toCharArray().sorted().joinToString("") == "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        }
-
-        if (stringLookupTables.size > 2) {
-            throw Exception("Expected only two lookup tables in ZJS")
+        if (stringLookupTables.size != 2) {
+            throw Exception("Attendait 2 chaînes de recherche dans ZJS, a trouvé ${stringLookupTables.size}")
         }
         Log.d("japscan", "lookup tables: $stringLookupTables")
 
@@ -300,10 +304,10 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
                 return data["imagesLink"]!!.jsonArray.mapIndexed { idx, it ->
                     Page(idx, imageUrl = it.jsonPrimitive.content)
                 }
-            } catch (_: Exception) {}
+            } catch (_: Throwable) {}
         }
 
-        throw Exception("Both descrambling attempts failed")
+        throw Exception("Les deux tentatives de désembrouillage ont échoué")
     }
 
     override fun imageUrlParse(document: Document): String = ""
