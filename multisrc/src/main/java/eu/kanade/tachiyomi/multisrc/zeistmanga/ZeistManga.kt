@@ -42,6 +42,7 @@ abstract class ZeistManga(
             .addQueryParameter("start-index", "2") // Only get chapters
             .addQueryParameter("max-results", "999999") // Get all chapters
             .build()
+
         return url.toString()
     }
 
@@ -167,7 +168,7 @@ abstract class ZeistManga(
 
     override fun searchMangaNextPageSelector(): String? = null
 
-    private fun apiUrl(feed: String = "Series"): HttpUrl.Builder {
+    open fun apiUrl(feed: String = "Series"): HttpUrl.Builder {
         return "$baseUrl/feeds/posts/default/-/".toHttpUrl().newBuilder()
             .addPathSegment(feed)
             .addQueryParameter("alt", "json")

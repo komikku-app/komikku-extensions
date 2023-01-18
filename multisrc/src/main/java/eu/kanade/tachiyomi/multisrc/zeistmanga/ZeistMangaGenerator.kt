@@ -9,7 +9,7 @@ class ZeistMangaGenerator : ThemeSourceGenerator {
 
     override val themeClass = "ZeistManga"
 
-    override val baseVersionCode: Int = 2
+    override val baseVersionCode: Int = 3
 
     override val sources = listOf(
         SingleLang("DatGarScanlation", "https://datgarscanlation.blogspot.com", "es"),
