@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit
 
 class FlameScansFactory : SourceFactory {
     override fun createSources() = listOf(
-        FlameScansAr(),
         FlameScansEn()
     )
 }
