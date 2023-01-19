@@ -87,7 +87,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
 
     override fun popularMangaNextPageSelector(): String? = null
 
-    override fun popularMangaSelector() = "#top_mangas_week li > span"
+    override fun popularMangaSelector() = "#top_mangas_week li"
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
@@ -117,7 +117,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
 
     override fun latestUpdatesNextPageSelector(): String? = null
 
-    override fun latestUpdatesSelector() = "#chapters > div > h3.text-truncate"
+    override fun latestUpdatesSelector() = "#chapters h3.text-truncate, #chapters_list h3.text-truncate"
 
     override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
 
@@ -207,12 +207,13 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div#main > .card > .card-body").first()
+        val infoElement = document.selectFirst("#main .card-body")
 
         val manga = SManga.create()
-        manga.thumbnail_url = "$baseUrl/${infoElement.select(".d-flex > div.m-2:eq(0) > img").attr("src")}"
+        manga.thumbnail_url = infoElement.select("img").attr("abs:src")
 
-        infoElement.select(".d-flex > div.m-2:eq(1) > p.mb-2").forEachIndexed { _, el ->
+        val infoRows = infoElement.select(".row, .d-flex")
+        infoRows.select("p").forEach { el ->
             when (el.select("span").text().trim()) {
                 "Auteur(s):" -> manga.author = el.text().replace("Auteur(s):", "").trim()
                 "Artiste(s):" -> manga.artist = el.text().replace("Artiste(s):", "").trim()
@@ -222,7 +223,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
                 }
             }
         }
-        manga.description = infoElement.select("> p").text().orEmpty()
+        manga.description = infoElement.select("div:contains(Synopsis) + p").text().orEmpty()
 
         return manga
     }
@@ -257,6 +258,10 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
         }
     }
 
+    private val decodingStringsRe: Regex = Regex("""'([\dA-Z]{62})'""", RegexOption.IGNORE_CASE)
+
+    private val sortedLookupString: List<Char> = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray().toList()
+
     override fun pageListParse(document: Document): List<Page> {
         /*
             JapScan stores chapter metadata in a `#data` element, and in the `data-data` attribute.
@@ -273,16 +278,11 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
         Log.d("japscan", "ZJS at $zjsurl")
         val zjs = client.newCall(GET(baseUrl + zjsurl, headers)).execute().body!!.string()
 
-        val stringLookupTables = zjs
-            .substringAfter("= [")
-            .substringBefore("];")
-            .split(",")
-            .mapNotNull {
-                it.trim().removeSurrounding("'").takeIf { unquoted ->
-                    unquoted.length == 62 &&
-                        unquoted.toCharArray().sorted().joinToString("") == "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-                }
+        val stringLookupTables = decodingStringsRe.findAll(zjs).mapNotNull {
+            it.groupValues[1].takeIf {
+                it.toCharArray().sorted() == sortedLookupString
             }
+        }.toList()
 
         if (stringLookupTables.size != 2) {
             throw Exception("Attendait 2 chaînes de recherche dans ZJS, a trouvé ${stringLookupTables.size}")
@@ -297,6 +297,12 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
             val lookupTable = stringLookupTables[i].zip(stringLookupTables[otherIndice]).toMap()
             try {
                 val unscrambledData = scrambledData.map { lookupTable[it] ?: it }.joinToString("")
+                if (!unscrambledData.startsWith("ey")) {
+                    // `ey` is the Base64 representation of a curly bracket. Since we're expecting a
+                    // JSON object, we're counting this attempt as failed if it doesn't start with a
+                    // curly bracket.
+                    continue
+                }
                 val decoded = Base64.decode(unscrambledData, Base64.DEFAULT).toString(Charsets.UTF_8)
 
                 val data = json.parseToJsonElement(decoded).jsonObject
