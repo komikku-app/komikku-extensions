@@ -86,30 +86,17 @@ class BlogTruyen : ParsedHttpSource() {
     override fun popularMangaNextPageSelector() = ".paging:last-child:not(.current_page)"
 
     override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/ajax/Search/AjaxLoadListManga?key=tatca&orderBy=5&p=$page", headers)
+        GET(baseUrl + if (page != 1) "/page-$page" else "", headers)
 
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        val document = response.asJsoup()
+    override fun latestUpdatesSelector() = ".storyitem .fl-l"
 
-        val manga = document.select(latestUpdatesSelector()).map {
-            val tiptip = it.attr("data-tiptip")
-            latestUpdatesFromElement(it, document.getElementById(tiptip))
-        }
-
-        val hasNextPage = document.selectFirst(latestUpdatesNextPageSelector()) != null
-
-        return MangasPage(manga, hasNextPage)
+    override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
+        setUrlWithoutDomain(element.select("a").attr("href"))
+        title = element.select("a").attr("title")
+        thumbnail_url = element.select("img").attr("abs:src")
     }
 
-    override fun latestUpdatesSelector() = popularMangaSelector()
-
-    private fun latestUpdatesFromElement(element: Element, tiptip: Element): SManga =
-        popularMangaFromElement(element, tiptip)
-
-    override fun latestUpdatesFromElement(element: Element): SManga =
-        throw UnsupportedOperationException("Not used")
-
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
+    override fun latestUpdatesNextPageSelector() = "select.slcPaging option:last-child:not([selected])"
 
     override fun fetchSearchManga(
         page: Int,
@@ -137,7 +124,7 @@ class BlogTruyen : ParsedHttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = "$baseUrl/timkiem/nangcao/1".toHttpUrl().newBuilder().apply {
             addQueryParameter("txt", query)
-            addQueryParameter("page", page.toString())
+            addQueryParameter("p", page.toString())
 
             val genres = mutableListOf<Int>()
             val genresEx = mutableListOf<Int>()

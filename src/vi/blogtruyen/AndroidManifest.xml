@@ -12,8 +12,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:host="blogtruyen.vn" />
-                <data android:host="*.blogtruyen.vn" />
-                <data android:pathPattern="/..*"
+                <data android:host="m.blogtruyen.vn" />
+                <data android:pathPattern="/..*/..*"
                     android:scheme="https" />
             </intent-filter>
         </activity>
