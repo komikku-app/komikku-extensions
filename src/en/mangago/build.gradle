@@ -5,7 +5,7 @@ ext {
     extName = 'Mangago'
     pkgNameSuffix = 'en.mangago'
     extClass = '.Mangago'
-    extVersionCode = 9
+    extVersionCode = 10
     isNsfw = true
 }
 
