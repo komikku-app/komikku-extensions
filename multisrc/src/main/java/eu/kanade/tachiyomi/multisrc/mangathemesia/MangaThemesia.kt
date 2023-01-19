@@ -160,7 +160,7 @@ abstract class MangaThemesia(
             title = seriesDetails.selectFirst(seriesTitleSelector)?.text().orEmpty()
             artist = seriesDetails.selectFirst(seriesArtistSelector)?.ownText().removeEmptyPlaceholder()
             author = seriesDetails.selectFirst(seriesAuthorSelector)?.ownText().removeEmptyPlaceholder()
-            description = seriesDetails.select(seriesDescriptionSelector).joinToString("\n") { it.text() }
+            description = seriesDetails.select(seriesDescriptionSelector).joinToString("\n") { it.text() }.trim()
             // Add alternative name to manga description
             val altName = seriesDetails.selectFirst(seriesAltNameSelector)?.ownText().takeIf { it.isNullOrBlank().not() }
             altName?.let {
