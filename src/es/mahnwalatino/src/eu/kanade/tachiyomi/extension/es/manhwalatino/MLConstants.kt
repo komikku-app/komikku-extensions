@@ -31,10 +31,10 @@ object MLConstants {
     const val latestUpdatesSelectorThumbnailUrl = "div.slider__thumb_item > a > img"
     const val latestUpdatesSelectorTitle = "div.slider__content h4"
     const val latestUpdatesSelectorUrl = "div.slider__content h4 a"
-    const val chapterListParseSelector = "li.vireimanga-chapter"
+    const val chapterListParseSelector = "div.listing-chapters_wrap > ul > li"
     const val chapterLinkParser = "a"
     const val chapterReleaseDateLinkParser = "span.chapter-release-date a"
     const val chapterReleaseDateIParser = "span.chapter-release-date i"
-    const val pageListParseSelector = "div.page-break.no-gaps img"
+    const val pageListParseSelector = "div.read-container img"
     const val imageAttribute = "abs:data-src"
 }
