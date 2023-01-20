@@ -49,9 +49,9 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(?:failed|can\\s*(?:no|')?t|unable|get past|blocked by) (?:to )?(?:bypass|penetrate)?\\s*cloudfl?are.*",
+                "regex": ".*(?:fail(?:ed|ure)?|can\\s*(?:no|')?t|unable|get past|(?<!n[o']?t )blocked by|error) (?:to )?(?:bypass|penetrate)?.*cloudfl?are.*",
                 "ignoreCase": true,
-                "message": "Refer to the **Solving Cloudflare issues** section at https://tachiyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues"
+                "message": "Refer to the **Solving Cloudflare issues** section at https://tachiyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues. If it doesn't work, migrate to other sources or wait until they lower their protection."
               }
             ]
           auto-close-ignore-label: do-not-autoclose
