@@ -143,33 +143,33 @@ class Mangago : ParsedHttpSource() {
         return GET(url, headers)
     }
 
-    override fun searchMangaSelector() = "$genreListingSelector, .pic_list .box"
+    override fun searchMangaSelector() = "$genreListingSelector, .pic_list > li"
 
     override fun searchMangaFromElement(element: Element) = mangaFromElement(element)
 
     override fun searchMangaNextPageSelector() = genreListingNextPageSelector
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        title = document.selectFirst(".w-title h1").text()
         document.getElementById("information").let {
-            title = it.selectFirst(".w-title h1").text()
             thumbnail_url = it.selectFirst("img").attr("abs:src")
             description = it.selectFirst(".manga_summary").text()
-            it.select(".manga_info li").forEach { el ->
-                when (el.selectFirst("b").text().trim().lowercase()) {
+            it.select(".manga_info li, .manga_right tr").forEach { el ->
+                when (el.selectFirst("b, label").text().lowercase()) {
                     "alternative:" -> description += "\n\n${el.text()}"
-                    "status:" -> when (el.selectFirst("span").text().trim().lowercase()) {
+                    "status:" -> status = when (el.selectFirst("span").text().lowercase()) {
                         "ongoing" -> SManga.ONGOING
                         "completed" -> SManga.COMPLETED
                         else -> SManga.UNKNOWN
                     }
-                    "author(s):" -> author = el.select("a").joinToString { it.text() }
+                    "author(s):", "author:" -> author = el.select("a").joinToString { it.text() }
                     "genre(s):" -> genre = el.select("a").joinToString { it.text() }
                 }
             }
         }
     }
 
-    override fun chapterListSelector() = "table > tbody > tr"
+    override fun chapterListSelector() = "table#chapter_table > tbody > tr, table.uk-table > tbody > tr"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         val link = element.getElementsByTag("a")
