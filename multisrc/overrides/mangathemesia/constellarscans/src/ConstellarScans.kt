@@ -99,6 +99,18 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
 
     private fun descrambleImage(image: InputStream, key: String): ByteArray {
         val bitmap = BitmapFactory.decodeStream(image)
+        val invertingPaint = Paint().apply {
+            colorFilter = ColorMatrixColorFilter(
+                ColorMatrix(
+                    floatArrayOf(
+                        -1.0f, 0.0f, 0.0f, 0.0f, 255.0f,
+                        0.0f, -1.0f, 0.0f, 0.0f, 255.0f,
+                        0.0f, 0.0f, -1.0f, 0.0f, 255.0f,
+                        0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+                    )
+                )
+            )
+        }
 
         val result = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(result)
@@ -128,24 +140,10 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
     }
 
     private fun md5sum(input: String): String {
-        val digest = MessageDigest.getInstance("MD5")
-        digest.update(input.toByteArray())
-        return digest.digest()
+        val md = MessageDigest.getInstance("MD5")
+        return md.digest(input.toByteArray())
             .asUByteArray()
             .joinToString("") { it.toString(16).padStart(2, '0') }
-    }
-
-    private val invertingPaint = Paint().apply {
-        colorFilter = ColorMatrixColorFilter(
-            ColorMatrix(
-                floatArrayOf(
-                    -1.0f, 0.0f, 0.0f, 0.0f, 255.0f,
-                    0.0f, -1.0f, 0.0f, 0.0f, 255.0f,
-                    0.0f, 0.0f, -1.0f, 0.0f, 255.0f,
-                    0.0f, 0.0f, 0.0f, 1.0f, 0.0f
-                )
-            )
-        )
     }
 
     private val encodedUploadsPath = "$baseUrl/wp-content/uploads/encoded"
