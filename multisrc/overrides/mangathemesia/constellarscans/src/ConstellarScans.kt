@@ -8,9 +8,15 @@ import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.Rect
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.Request
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
 import java.io.ByteArrayOutputStream
@@ -39,9 +45,27 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
             response.newBuilder()
                 .body(body)
                 .build()
-        }.build()
+        }
+        .build()
 
     override val seriesStatusSelector = ".status"
+
+    private val mobileUserAgent by lazy {
+        val req = GET(UA_DB_URL)
+        val resp = client.newCall(req).execute()
+        val mobileUaList = resp.body!!.use {
+            json.parseToJsonElement(it.string()).jsonObject["mobile"]!!.jsonArray.map {
+                it.jsonPrimitive.content
+            }
+        }
+
+        mobileUaList.random().trim()
+    }
+
+    override fun pageListRequest(chapter: SChapter): Request =
+        super.pageListRequest(chapter).newBuilder()
+            .header("User-Agent", mobileUserAgent)
+            .build()
 
     override fun pageListParse(document: Document): List<Page> {
         val pageList = super.pageListParse(document)
@@ -150,6 +174,7 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
 
     companion object {
         const val DESCRAMBLE = "descramble"
+        const val UA_DB_URL = "https://tachiyomiorg.github.io/user-agents/user-agents.json"
         const val LOOKUP_STRING =
             " !\"#${'$'}%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}"
         const val LOOKUP_STRING_ALNUM =
