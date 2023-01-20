@@ -48,7 +48,7 @@ import uy.kohesive.injekt.injectLazy
 import java.security.MessageDigest
 import java.util.Locale
 
-open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, HttpSource() {
+open class Komga(private val suffix: String = "") : ConfigurableSource, UnmeteredSource, HttpSource() {
     override fun popularMangaRequest(page: Int): Request =
         GET("$baseUrl/api/v1/series?page=${page - 1}&deleted=false&sort=metadata.titleSort,asc", headers)
 
@@ -384,19 +384,15 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
     private var publishers = emptySet<String>()
     private var authors = emptyMap<String, List<AuthorDto>>() // roles to list of authors
 
-    override val name = "Komga${if (suffix.isNotBlank()) " ($suffix)" else ""}"
-    override val lang = "all"
-    override val supportsLatest = true
-    private val LOG_TAG = "extension.all.komga${if (suffix.isNotBlank()) ".$suffix" else ""}"
-
     // keep the previous ID when lang was "en", so that preferences and manga bindings are not lost
     override val id by lazy {
-        val key = "${name.lowercase()}/en/$versionId"
+        val key = "komga${if (suffix.isNotBlank()) " ($suffix)" else ""}/en/$versionId"
         val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
         (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
     }
 
-    override val baseUrl by lazy { preferences.baseUrl }
+    private val displayName by lazy { preferences.displayName }
+    final override val baseUrl by lazy { preferences.baseUrl }
     private val username by lazy { preferences.username }
     private val password by lazy { preferences.password }
     private val json: Json by injectLazy()
@@ -408,6 +404,11 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
+
+    override val name = "Komga${displayName.ifBlank { suffix }.let { if (it.isNotBlank()) " ($it)" else "" }}"
+    override val lang = "all"
+    override val supportsLatest = true
+    private val LOG_TAG = "extension.all.komga${if (suffix.isNotBlank()) ".$suffix" else ""}"
 
     override val client: OkHttpClient =
         network.client.newBuilder()
@@ -425,38 +426,48 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         screen.addEditTextPreference(
-            title = ADDRESS_TITLE,
+            title = "Source display name",
+            default = suffix,
+            summary = displayName.ifBlank { "Here you can change the source displayed suffix" },
+            key = PREF_DISPLAYNAME
+        )
+        screen.addEditTextPreference(
+            title = "Address",
             default = ADDRESS_DEFAULT,
-            value = baseUrl,
+            summary = baseUrl.ifBlank { "The server address" },
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI,
             validate = { it.toHttpUrlOrNull() != null },
-            validationMessage = "The URL is invalid or malformed"
+            validationMessage = "The URL is invalid or malformed",
+            key = PREF_ADDRESS
         )
         screen.addEditTextPreference(
-            title = USERNAME_TITLE,
+            title = "Username",
             default = USERNAME_DEFAULT,
-            value = username
+            summary = username.ifBlank { "The user account email" },
+            key = PREF_USERNAME
         )
         screen.addEditTextPreference(
-            title = PASSWORD_TITLE,
+            title = "Password",
             default = PASSWORD_DEFAULT,
-            value = password,
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            summary = if (password.isBlank()) "The user account password" else "*".repeat(password.length),
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD,
+            key = PREF_PASSWORD
         )
     }
 
     private fun PreferenceScreen.addEditTextPreference(
         title: String,
         default: String,
-        value: String,
+        summary: String,
         inputType: Int? = null,
         validate: ((String) -> Boolean)? = null,
-        validationMessage: String? = null
+        validationMessage: String? = null,
+        key: String = title,
     ) {
         val preference = EditTextPreference(context).apply {
-            key = title
+            this.key = key
             this.title = title
-            summary = value
+            this.summary = summary
             this.setDefaultValue(default)
             dialogTitle = title
 
@@ -488,7 +499,7 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
 
             setOnPreferenceChangeListener { _, newValue ->
                 try {
-                    val res = preferences.edit().putString(title, newValue as String).commit()
+                    val res = preferences.edit().putString(this.key, newValue as String).commit()
                     Toast.makeText(context, "Restart Tachiyomi to apply new setting.", Toast.LENGTH_LONG).show()
                     res
                 } catch (e: Exception) {
@@ -501,14 +512,17 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
         addPreference(preference)
     }
 
+    private val SharedPreferences.displayName
+        get() = getString(PREF_DISPLAYNAME, "")!!
+
     private val SharedPreferences.baseUrl
-        get() = getString(ADDRESS_TITLE, ADDRESS_DEFAULT)!!.removeSuffix("/")
+        get() = getString(PREF_ADDRESS, ADDRESS_DEFAULT)!!.removeSuffix("/")
 
     private val SharedPreferences.username
-        get() = getString(USERNAME_TITLE, USERNAME_DEFAULT)!!
+        get() = getString(PREF_USERNAME, USERNAME_DEFAULT)!!
 
     private val SharedPreferences.password
-        get() = getString(PASSWORD_TITLE, PASSWORD_DEFAULT)!!
+        get() = getString(PREF_PASSWORD, PASSWORD_DEFAULT)!!
 
     init {
         if (baseUrl.isNotBlank()) {
@@ -640,11 +654,12 @@ open class Komga(suffix: String = "") : ConfigurableSource, UnmeteredSource, Htt
     }
 
     companion object {
-        private const val ADDRESS_TITLE = "Address"
+        private const val PREF_DISPLAYNAME = "Source display name"
+        private const val PREF_ADDRESS = "Address"
         private const val ADDRESS_DEFAULT = ""
-        private const val USERNAME_TITLE = "Username"
+        private const val PREF_USERNAME = "Username"
         private const val USERNAME_DEFAULT = ""
-        private const val PASSWORD_TITLE = "Password"
+        private const val PREF_PASSWORD = "Password"
         private const val PASSWORD_DEFAULT = ""
 
         private val supportedImageTypes = listOf("image/jpeg", "image/png", "image/gif", "image/webp", "image/jxl")

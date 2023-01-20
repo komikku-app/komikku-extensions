@@ -1,3 +1,11 @@
+## 1.3.45
+
+Minimum Komga version required: `0.151.0`
+
+### Feat
+
+* Edit source display name
+
 ## 1.3.44
 
 Minimum Komga version required: `0.151.0`
