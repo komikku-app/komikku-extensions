@@ -26,7 +26,7 @@ class Junmeitu : ParsedHttpSource() {
     private val json: Json by injectLazy()
 
     // old pref ["MIRROR_all" => arrayOf("https://junmeitu.com", "https://meijuntu.com")]
-    override val baseUrl = "https://junmeitu.com"
+    override val baseUrl = "https://meijuntu.com"
 
     // Latest
     override fun latestUpdatesFromElement(element: Element): SManga {
@@ -87,8 +87,8 @@ class Junmeitu : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(element.select(".position a:last-child").first().attr("abs:href"))
-        chapter.chapter_number = 0F
-        chapter.name = element.select(".news-title,.title").text()
+        chapter.chapter_number = -2f
+        chapter.name = "Gallery"
         return chapter
     }
 
