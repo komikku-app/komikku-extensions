@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -48,6 +49,9 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         }
         .build()
 
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
+
     override val seriesStatusSelector = ".status"
 
     private val mobileUserAgent by lazy {
@@ -65,6 +69,10 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
     override fun pageListRequest(chapter: SChapter): Request =
         super.pageListRequest(chapter).newBuilder()
             .header("User-Agent", mobileUserAgent)
+            .header("Sec-Fetch-Site", "same-origin")
+            .header("Sec-Fetch-Mode", "navigate")
+            .header("Sec-Fetch-Dest", "document")
+            .header("Sec-Fetch-User", "?1")
             .build()
 
     override fun pageListParse(document: Document): List<Page> {
@@ -94,7 +102,7 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
     private fun decodeDeviceLimitedChapter(document: Document): List<Page> {
         val script = document.selectFirst("script:containsData(ts_reader[_)").data()
         val fullKey = DESCRAMBLING_KEY_RE.find(script)?.groupValues?.get(1)
-            ?: throw Exception("Could not find suitable decryption key. Try opening the chapter again.")
+            ?: throw Exception("Did not receive suitable decryption key. Try opening the chapter again.")
 
         val shiftBy = fullKey.substring(32..33).toInt(16)
         val key = fullKey.substring(0..31) + fullKey.substring(34)
@@ -166,8 +174,7 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
     private fun md5sum(input: String): String {
         val md = MessageDigest.getInstance("MD5")
         return md.digest(input.toByteArray())
-            .asUByteArray()
-            .joinToString("") { it.toString(16).padStart(2, '0') }
+            .joinToString("") { "%02x".format(it) }
     }
 
     private val encodedUploadsPath = "$baseUrl/wp-content/uploads/encoded"
