@@ -19,6 +19,9 @@ class EveriaClub() : ParsedHttpSource() {
     override val name = "Everia.club"
     override val supportsLatest = true
 
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
+
     // Latest
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
@@ -96,7 +99,7 @@ class EveriaClub() : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
         document.select("article img").forEachIndexed { i, it ->
-            val itUrl = it.attr("src")
+            val itUrl = it.attr("data-src").ifEmpty { it.attr("src") }
             pages.add(Page(i, itUrl, itUrl))
         }
         return pages
