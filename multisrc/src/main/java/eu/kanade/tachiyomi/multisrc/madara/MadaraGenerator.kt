@@ -333,7 +333,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("OlympusScan.top", "https://olympusscan.top", "es", className = "OlympusScanTop"),
         SingleLang("Painful Nightz Scan", "https://painfulnightz.com", "en", overrideVersionCode = 1),
         SingleLang("Petrotechsociety", "https://www.petrotechsociety.org", "en", isNsfw = true),
-        SingleLang("Pian Manga", "https://pianmanga.com", "en", isNsfw = true),
+        SingleLang("Pian Manga", "https://pianmanga.me", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Pirulito Rosa", "https://pirulitorosa.site", "pt-BR", isNsfw = true),
         SingleLang("Platinum Crown", "https://platinumscans.com", "en", overrideVersionCode = 1),
         SingleLang("Pojok Manga", "https://pojokmanga.net", "id", overrideVersionCode = 4),
