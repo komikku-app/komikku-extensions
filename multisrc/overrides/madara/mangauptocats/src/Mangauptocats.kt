@@ -6,7 +6,7 @@ import java.util.Locale
 
 class Mangauptocats : Madara(
     "Mangauptocats",
-    "https://mangauptocats.com",
+    "https://manga-uptocats.com",
     "th",
     SimpleDateFormat("d MMMM yyyy", Locale("th"))
 )
