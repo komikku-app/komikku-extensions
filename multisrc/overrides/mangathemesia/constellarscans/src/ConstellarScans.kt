@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
@@ -49,30 +50,44 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         }
         .build()
 
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", "$baseUrl/")
+        .add("Accept-Language", "en-US,en;q=0.9")
+        .add("DNT", "1")
+        .add("User-Agent", mobileUserAgent)
+        .add("Upgrade-Insecure-Requests", "1")
 
     override val seriesStatusSelector = ".status"
 
     private val mobileUserAgent by lazy {
         val req = GET(UA_DB_URL)
-        val resp = client.newCall(req).execute()
-        val mobileUaList = resp.body!!.use {
-            json.parseToJsonElement(it.string()).jsonObject["mobile"]!!.jsonArray.map {
-                it.jsonPrimitive.content
+        val data = client.newCall(req).execute().body!!.use {
+            json.parseToJsonElement(it.string()).jsonArray
+        }.mapNotNull {
+            it.jsonObject["user-agent"]?.jsonPrimitive?.content?.takeIf {
+                it.startsWith("Mozilla/5.0") &&
+                    (
+                        it.contains("iPhone") &&
+                            (it.contains("FxiOS") || it.contains("CriOS")) ||
+                            it.contains("Android") &&
+                            (it.contains("EdgA") || it.contains("Chrome") || it.contains("Firefox"))
+                        )
             }
         }
-
-        mobileUaList.random().trim()
+        data.random()
     }
 
     override fun pageListRequest(chapter: SChapter): Request =
         super.pageListRequest(chapter).newBuilder()
-            .header("User-Agent", mobileUserAgent)
+            .header(
+                "Accept",
+                "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+            )
             .header("Sec-Fetch-Site", "same-origin")
             .header("Sec-Fetch-Mode", "navigate")
             .header("Sec-Fetch-Dest", "document")
             .header("Sec-Fetch-User", "?1")
+            .cacheControl(CacheControl.FORCE_NETWORK)
             .build()
 
     override fun pageListParse(document: Document): List<Page> {
@@ -87,6 +102,13 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
             else -> pageList
         }
     }
+
+    override fun imageRequest(page: Page): Request = super.imageRequest(page).newBuilder()
+        .header("Accept", "image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+        .header("Sec-Fetch-Dest", "image")
+        .header("Sec-Fetch-Mode", "no-cors")
+        .header("Sec-Fetch-Site", "same-origin")
+        .build()
 
     private fun descramblePageUrls(pages: List<Page>): List<Page> {
         return pages.map {
@@ -119,10 +141,11 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
 
         val pages = mutableListOf<Page>()
         for (i in 1..imageCount) {
+            val filename = i.toString().padStart(5, '0')
             pages.add(
                 Page(
                     i,
-                    imageUrl = "$encodedUploadsPath/$fragment/${i.toString().padStart(5, '0')}.webp#$DESCRAMBLE"
+                    imageUrl = "$encodedUploadsPath/$fragment/$filename.webp#$DESCRAMBLE"
                 )
             )
         }
@@ -181,14 +204,19 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
 
     companion object {
         const val DESCRAMBLE = "descramble"
-        const val UA_DB_URL = "https://tachiyomiorg.github.io/user-agents/user-agents.json"
+
+        const val UA_DB_URL =
+            "https://cdn.jsdelivr.net/gh/mimmi20/browscap-helper@30a83c095688f40b9eaca0165a479c661e5a7fbe/tests/0002999.json"
+
         const val LOOKUP_STRING =
             " !\"#${'$'}%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}"
         const val LOOKUP_STRING_ALNUM =
             "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
         val NOT_DIGIT_RE = Regex("""\D""")
 
         // The decoding algorithm looks for a hex number in 32..33, so we write our regex accordingly
-        val DESCRAMBLING_KEY_RE = Regex("""'([\da-z]{32}[\da-f]{2}[\da-z]+)'""", RegexOption.IGNORE_CASE)
+        val DESCRAMBLING_KEY_RE =
+            Regex("""'([\da-z]{32}[\da-f]{2}[\da-z]+)'""", RegexOption.IGNORE_CASE)
     }
 }
