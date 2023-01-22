@@ -10,7 +10,7 @@ class OtakuSanctuaryHelper(private val lang: String) {
         else -> lang
     }
 
-    fun processUrl(url: String, vi: String): String {
+    fun processUrl(url: String, vi: String = ""): String {
         var url = url.replace("_h_", "http")
             .replace("_e_", "/extendContent/Manga")
             .replace("_r_", "/extendContent/MangaRaw")
@@ -31,7 +31,7 @@ class OtakuSanctuaryHelper(private val lang: String) {
                 url
             }
             "[IS1]" -> {
-                var url = url.replace("[IS1]", "https://imagepi.otakuscan.net/")
+                val url = url.replace("[IS1]", "https://imagepi.otakuscan.net/")
                 if (url.contains("vi") && url.contains("otakusan.net_")) {
                     url
                 } else {

@@ -9,8 +9,8 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
@@ -92,9 +92,9 @@ open class OtakuSanctuary(
         return MangasPage(parseMangaCollection(collection), collection.size >= 24)
     }
 
-    override fun latestUpdatesRequest(page: Int) = throw Exception("Unused")
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException("Not used")
 
-    override fun latestUpdatesParse(response: Response) = throw Exception("Unused")
+    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException("Not used")
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request =
         GET(
@@ -181,8 +181,45 @@ open class OtakuSanctuary(
         val vi = document.select("#dataip").attr("value")
         val numericId = document.select("#inpit-c").attr("data-chapter-id")
 
-        val rawPagesArray = try {
-            val data = json.parseToJsonElement(
+        val data = json.parseToJsonElement(
+            client.newCall(
+                POST(
+                    "$baseUrl/Manga/UpdateView",
+                    headers,
+                    FormBody.Builder().add("chapId", numericId).build()
+                )
+            ).execute().body!!.string()
+        ).jsonObject
+
+        if (data["view"] != null) {
+            val usingservers = mutableListOf(0, 0, 0)
+
+            val isSuccess = data["isSuccess"]!!.jsonArray.map { it.jsonPrimitive.content }
+            return json.parseToJsonElement(data["view"]!!.jsonPrimitive.content).jsonArray.mapIndexed { idx, it ->
+                var url = helper.processUrl(it.jsonPrimitive.content).removePrefix("image:")
+                val indexServer = getIndexLessServer(usingservers)
+
+                if (url.contains("ImageSyncing") || url.contains("FetchService") || url.contains("otakusan.net_") && (url.contains("extendContent") || url.contains("/Extend")) && !url.contains("fetcher.otakusan.net") && !url.contains("image3.otakusan.net") && !url.contains("image3.otakuscan.net") && !url.contains("[GDP]") && !url.contains("[GDT]")) {
+                    if (url.startsWith("/api/Value/")) {
+                        val serverUrl = if (helper.otakusanLang() == "us" && indexServer == 1) {
+                            US_SERVERS[0]
+                        } else {
+                            SERVERS[indexServer]
+                        }
+                        url = "$serverUrl$url"
+                    }
+
+                    if (url.contains("otakusan.net_") && !url.contains("fetcher.otakuscan.net")) {
+                        url += "#${isSuccess[idx]}"
+                    }
+
+                    usingservers[indexServer] += 1
+                }
+
+                Page(idx, imageUrl = url)
+            }
+        } else {
+            val alternate = json.parseToJsonElement(
                 client.newCall(
                     POST(
                         "$baseUrl/Manga/CheckingAlternate",
@@ -190,25 +227,46 @@ open class OtakuSanctuary(
                         FormBody.Builder().add("chapId", numericId).build()
                     )
                 ).execute().body!!.string()
-            )
+            ).jsonObject
+            val content = alternate["Content"]?.jsonPrimitive?.content
+                ?: throw Exception("No pages found")
+            return json.parseToJsonElement(content).jsonArray.mapIndexed { idx, it ->
+                Page(idx, imageUrl = helper.processUrl(it.jsonPrimitive.content, vi))
+            }
+        }
+    }
 
-            data.jsonObject["Content"]!!.jsonPrimitive.content
-        } catch (_: Exception) {
-            val data = json.parseToJsonElement(
-                client.newCall(
-                    POST(
-                        "$baseUrl/Manga/UpdateView",
-                        headers,
-                        FormBody.Builder().add("chapId", numericId).build()
-                    )
-                ).execute().body!!.string()
-            )
+    override fun imageRequest(page: Page): Request {
+        val request = super.imageRequest(page)
+        val url = request.url.toString()
 
-            data.jsonObject["view"]!!.jsonPrimitive.content
+        val newRequest = request.newBuilder()
+
+        if (url.contains("ImageSyncing") || url.contains("FetchService") || url.contains("otakusan.net_") && (url.contains("extendContent") || url.contains("/Extend")) && !url.contains("fetcher.otakusan.net") && !url.contains("image3.otakusan.net") && !url.contains("image3.otakuscan.net") && !url.contains("[GDP]") && !url.contains("[GDT]")) {
+            if (url.contains("otakusan.net_") && !url.contains("fetcher.otakuscan.net")) {
+                newRequest.header("page-sign", request.url.fragment!!)
+            } else {
+                newRequest.header("page-lang", "vn-lang")
+            }
         }
 
-        return json.decodeFromString<List<String>>(rawPagesArray).mapIndexed { idx, it ->
-            Page(idx, imageUrl = helper.processUrl(it, vi))
+        return newRequest.build()
+    }
+
+    private fun getIndexLessServer(usingservers: List<Int>): Int {
+        var minIndex = usingservers[0]
+        var minNumber = usingservers[0]
+        for (i in 1 until 3) {
+            if (usingservers[i] <= minNumber) {
+                minIndex = i
+                minNumber = usingservers[i]
+            }
         }
+        return minIndex
+    }
+
+    companion object {
+        val SERVERS = listOf("https://image2.otakuscan.net", "https://shopotaku.net", "https://image.otakuscan.net")
+        val US_SERVERS = listOf("https://image3.shopotaku.net", "https://image2.otakuscan.net")
     }
 }
