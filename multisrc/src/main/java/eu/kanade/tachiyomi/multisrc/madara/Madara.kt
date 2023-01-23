@@ -358,6 +358,7 @@ abstract class Madara(
                             if (list.isNotEmpty()) { list.forEach { genre -> url.addQueryParameter("genre[]", genre.id) } }
                         }
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)
@@ -488,6 +489,7 @@ abstract class Madara(
                             taxQueryIdx++
                         }
                     }
+                    else -> {}
                 }
             }
         }
@@ -816,7 +818,7 @@ abstract class Madara(
     }
     open val updatingRegex = "Updating|Atualizando".toRegex(RegexOption.IGNORE_CASE)
 
-    public fun String.notUpdating(): Boolean {
+    fun String.notUpdating(): Boolean {
         return this.contains(updatingRegex).not()
     }
 
