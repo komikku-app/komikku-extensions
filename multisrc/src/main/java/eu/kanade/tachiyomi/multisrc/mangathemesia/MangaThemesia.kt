@@ -71,11 +71,11 @@ abstract class MangaThemesia(
 
         return fetchMangaDetails(
             SManga.create()
-                .apply { this.url = "$mangaUrlDirectory/$mangaPath" }
+                .apply { this.url = "$mangaUrlDirectory/$mangaPath/" }
         )
             .map {
                 // Isn't set in returned manga
-                it.url = "$mangaUrlDirectory/$id"
+                it.url = "$mangaUrlDirectory/$mangaPath/"
                 MangasPage(listOf(it), false)
             }
     }
@@ -120,6 +120,7 @@ abstract class MangaThemesia(
                 else -> { /* Do Nothing */ }
             }
         }
+        url.addPathSegment("")
         return GET(url.toString())
     }
 

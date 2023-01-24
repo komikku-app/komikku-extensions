@@ -30,7 +30,7 @@ import java.security.MessageDigest
 class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarscans.com", "en") {
 
     override val client = super.client.newBuilder()
-        .rateLimit(1, 2)
+        .rateLimit(1, 3)
         .addInterceptor { chain ->
             val response = chain.proceed(chain.request())
 
@@ -97,24 +97,22 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
             ?: return super.pageListParse(document)
         val descrambledData = descrambleString(tsData).trim()
 
-        val match = DESCRAMBLING_KEY_RE.find(descrambledData)?.value
-        if (match != null) {
-            Log.d("constellarscans", "device-limited chapter, key: $match")
-            return decodeDeviceLimitedChapter(match)
-        }
-
-        val imageListJson =
-            JSON_IMAGE_LIST_REGEX.find(descrambledData)?.groupValues?.get(1).orEmpty()
-        val imageList = try {
-            json.parseToJsonElement(imageListJson).jsonArray
+        // check if the object can be parsed with JSON, else assume it is encrypted
+        //
+        // done because constellarscans have shit code and would sometimes give us an invalid key
+        // for no reason
+        return try {
+            val parsedTsData = json.parseToJsonElement(descrambledData).jsonObject
+            val imageList = parsedTsData["sources"]!!.jsonArray[0].jsonObject["images"]!!.jsonArray
+            imageList.mapIndexed { idx, it ->
+                Page(idx, imageUrl = it.jsonPrimitive.content)
+            }
         } catch (_: IllegalArgumentException) {
-            emptyList()
+            val match = DESCRAMBLING_KEY_RE.find(descrambledData)?.value
+                ?: throw Exception("Did not receive valid decryption key. Try opening the chapter again.")
+            Log.d("constellarscans", "device-limited chapter: $match")
+            decodeDeviceLimitedChapter(match)
         }
-        val scriptPages = imageList.mapIndexed { i, jsonEl ->
-            Page(i, imageUrl = jsonEl.jsonPrimitive.content)
-        }
-
-        return scriptPages
     }
 
     override fun imageRequest(page: Page): Request = super.imageRequest(page).newBuilder()
