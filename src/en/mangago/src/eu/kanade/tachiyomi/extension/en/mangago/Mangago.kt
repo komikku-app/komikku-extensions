@@ -245,8 +245,8 @@ class Mangago : ParsedHttpSource() {
 
     override fun getFilterList(): FilterList = FilterList(
         Filter.Header("Ignored if using text search"),
-        StatusFilterGroup(),
         SortFilter(),
+        StatusFilterGroup(),
         GenreFilterGroup(),
     )
 
@@ -254,7 +254,7 @@ class Mangago : ParsedHttpSource() {
         fun addToUrl(builder: HttpUrl.Builder)
     }
 
-    private class StatusFilter(name: String, val query: String) : UriFilter, Filter.CheckBox(name) {
+    private class StatusFilter(name: String, val query: String, state: Boolean) : UriFilter, Filter.CheckBox(name, state) {
         override fun addToUrl(builder: HttpUrl.Builder) {
             builder.addQueryParameter(query, if (state) "1" else "0")
         }
@@ -263,8 +263,8 @@ class Mangago : ParsedHttpSource() {
     private class StatusFilterGroup : UriFilter, Filter.Group<StatusFilter>(
         "Status",
         listOf(
-            StatusFilter("Completed", "f"),
-            StatusFilter("Ongoing", "o")
+            StatusFilter("Completed", "f", true),
+            StatusFilter("Ongoing", "o", true)
         )
     ) {
         override fun addToUrl(builder: HttpUrl.Builder) {
