@@ -25,7 +25,10 @@ class CuuTruyenImageInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
 
-        var drmData = chain.request().url.queryParameter(KEY) ?: return response
+        if (response.request.url.fragment?.contains(KEY) != true) {
+            return response
+        }
+        var drmData = response.request.url.fragment!!.substringAfter("$KEY=")
         drmData = drmData.replace("\n", "\\n")
 
         val image = unscrambleImage(response.body!!.byteStream(), drmData)

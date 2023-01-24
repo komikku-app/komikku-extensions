@@ -52,9 +52,10 @@ data class PageDto(
 ) {
     fun toPage(): Page {
         val dto = this@PageDto
-        val url = imageUrl.toHttpUrl().newBuilder().apply {
-            addQueryParameter(CuuTruyenImageInterceptor.KEY, dto.drmData)
-        }.build().toString()
+        val url = imageUrl.toHttpUrl().newBuilder()
+            .fragment("${CuuTruyenImageInterceptor.KEY}=$drmData")
+            .build()
+            .toString()
         return Page(dto.order, imageUrl = url)
     }
 }

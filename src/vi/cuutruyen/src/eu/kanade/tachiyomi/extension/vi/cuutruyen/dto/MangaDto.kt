@@ -20,11 +20,11 @@ data class TeamDto(
 data class MangaDto(
     val id: Int,
     val name: String,
-    @SerialName("cover_url") val coverUrl: String,
-    @SerialName("cover_mobile_url") val coverMobileUrl: String,
+    @SerialName("cover_url") val coverUrl: String? = null,
+    @SerialName("cover_mobile_url") val coverMobileUrl: String? = null,
 
     val author: AuthorDto? = null,
-    val author_name: String? = null,
+    @SerialName("author_name") val authorName: String? = null,
 
     val description: String? = null,
     val team: TeamDto? = null,
@@ -33,7 +33,7 @@ data class MangaDto(
         val dto = this@MangaDto
         url = "/mangas/${dto.id}"
         title = dto.name
-        author = dto.author?.name ?: dto.author_name
+        author = dto.author?.name ?: dto.authorName
 
         description = ""
         if (dto.team != null) {
