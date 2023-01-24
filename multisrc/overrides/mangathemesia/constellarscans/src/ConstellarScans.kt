@@ -7,6 +7,7 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.Rect
+import android.util.Log
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -23,6 +24,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.lang.IllegalArgumentException
 import java.security.MessageDigest
 
 class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarscans.com", "en") {
@@ -64,13 +66,13 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         val data = client.newCall(req).execute().body!!.use {
             json.parseToJsonElement(it.string()).jsonArray
         }.mapNotNull {
-            it.jsonObject["user-agent"]?.jsonPrimitive?.content?.takeIf {
-                it.startsWith("Mozilla/5.0") &&
+            it.jsonObject["user-agent"]?.jsonPrimitive?.content?.takeIf { ua ->
+                ua.startsWith("Mozilla/5.0") &&
                     (
-                        it.contains("iPhone") &&
-                            (it.contains("FxiOS") || it.contains("CriOS")) ||
-                            it.contains("Android") &&
-                            (it.contains("EdgA") || it.contains("Chrome") || it.contains("Firefox"))
+                        ua.contains("iPhone") &&
+                            (ua.contains("FxiOS") || ua.contains("CriOS")) ||
+                            ua.contains("Android") &&
+                            (ua.contains("EdgA") || ua.contains("Chrome") || ua.contains("Firefox"))
                         )
             }
         }
@@ -91,16 +93,28 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
             .build()
 
     override fun pageListParse(document: Document): List<Page> {
-        val pageList = super.pageListParse(document)
-        return when {
-            document.selectFirst("script:containsData(_code)") != null -> descramblePageUrls(
-                pageList
-            )
-            document.selectFirst("script:containsData(ts_reader[_)") != null -> decodeDeviceLimitedChapter(
-                document
-            )
-            else -> pageList
+        val tsData = TS_DATA_RE.find(document.select("script").html())?.groupValues?.get(1)
+            ?: return super.pageListParse(document)
+        val descrambledData = descrambleString(tsData).trim()
+
+        val match = DESCRAMBLING_KEY_RE.find(descrambledData)?.value
+        if (match != null) {
+            Log.d("constellarscans", "device-limited chapter, key: $match")
+            return decodeDeviceLimitedChapter(match)
         }
+
+        val imageListJson =
+            JSON_IMAGE_LIST_REGEX.find(descrambledData)?.groupValues?.get(1).orEmpty()
+        val imageList = try {
+            json.parseToJsonElement(imageListJson).jsonArray
+        } catch (_: IllegalArgumentException) {
+            emptyList()
+        }
+        val scriptPages = imageList.mapIndexed { i, jsonEl ->
+            Page(i, imageUrl = jsonEl.jsonPrimitive.content)
+        }
+
+        return scriptPages
     }
 
     override fun imageRequest(page: Page): Request = super.imageRequest(page).newBuilder()
@@ -110,21 +124,15 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         .header("Sec-Fetch-Site", "same-origin")
         .build()
 
-    private fun descramblePageUrls(pages: List<Page>): List<Page> {
-        return pages.map {
-            val lastSegment = it.imageUrl!!.split('/').last()
-            val filename = lastSegment
-                .replace(NOT_DIGIT_RE, "")
-                .chunked(2)
-                .joinToString("") { LOOKUP_STRING[it.toInt()].toString() }
-            Page(it.index, imageUrl = it.imageUrl!!.replace(lastSegment, filename))
-        }
-    }
+    private fun descrambleString(input: String): String =
+        input.replace(NOT_DIGIT_RE, "")
+            .chunked(2)
+            .joinToString("") { (it.toInt() + 32).toChar().toString() }
 
-    private fun decodeDeviceLimitedChapter(document: Document): List<Page> {
-        val script = document.selectFirst("script:containsData(ts_reader[_)").data()
-        val fullKey = DESCRAMBLING_KEY_RE.find(script)?.groupValues?.get(1)
-            ?: throw Exception("Did not receive suitable decryption key. Try opening the chapter again.")
+    private fun decodeDeviceLimitedChapter(fullKey: String): List<Page> {
+        if (!DESCRAMBLING_KEY_RE.matches(fullKey)) {
+            throw IllegalArgumentException("Did not receive suitable decryption key. Try opening the chapter again.")
+        }
 
         val shiftBy = fullKey.substring(32..33).toInt(16)
         val key = fullKey.substring(0..31) + fullKey.substring(34)
@@ -204,19 +212,21 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
 
     companion object {
         const val DESCRAMBLE = "descramble"
-
         const val UA_DB_URL =
             "https://cdn.jsdelivr.net/gh/mimmi20/browscap-helper@30a83c095688f40b9eaca0165a479c661e5a7fbe/tests/0002999.json"
-
-        const val LOOKUP_STRING =
-            " !\"#${'$'}%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}"
         const val LOOKUP_STRING_ALNUM =
             "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-
         val NOT_DIGIT_RE = Regex("""\D""")
+
+        // We know that `ts_reader.run` accepts a JSON object, which contains `{"`, or in Constellar's
+        // encoding scheme, 91 02.
+        val TS_DATA_RE = Regex(
+            """['"]([\da-z]*?9[a-z]*?1[a-z]*?0[a-z]*?2[\da-z]+?)['"]""",
+            RegexOption.IGNORE_CASE
+        )
 
         // The decoding algorithm looks for a hex number in 32..33, so we write our regex accordingly
         val DESCRAMBLING_KEY_RE =
-            Regex("""'([\da-z]{32}[\da-f]{2}[\da-z]+)'""", RegexOption.IGNORE_CASE)
+            Regex("""[\da-z]{32}[\da-f]{2}[\da-z]+""", RegexOption.IGNORE_CASE)
     }
 }
