@@ -26,9 +26,11 @@ class ImmortalUpdates : Madara("Immortal Updates", "https://immortalupdates.com"
     override val client = super.client.newBuilder().addInterceptor { chain ->
         val response = chain.proceed(chain.request())
 
-        val args = response.request.url.queryParameter("iu_descramble")
-            ?.split(",")
-            ?: return@addInterceptor response
+        if (response.request.url.fragment?.contains(DESCRAMBLE) != true) {
+            return@addInterceptor response
+        }
+        val fragment = response.request.url.fragment!!
+        val args = fragment.substringAfter("$DESCRAMBLE=").split(",")
 
         val image = unscrambleImage(response.body!!.byteStream(), args)
         val body = image.toResponseBody("image/jpeg".toMediaTypeOrNull())
@@ -56,8 +58,9 @@ class ImmortalUpdates : Madara("Immortal Updates", "https://immortalupdates.com"
             val page = pageList.firstOrNull { it.imageUrl!!.contains(filenameFragment, ignoreCase = true) }
                 ?: return@forEach
             val newPageUrl = page.imageUrl!!.toHttpUrl().newBuilder()
-                .addQueryParameter("iu_descramble", args)
-                .build().toString()
+                .fragment("$DESCRAMBLE=$args")
+                .build()
+                .toString()
             pageList[page.index] = Page(page.index, document.location(), newPageUrl)
         }
         pageList.remove(unscramblingCallsPage)
@@ -121,19 +124,21 @@ class ImmortalUpdates : Madara("Immortal Updates", "https://immortalupdates.com"
             }
         }
 
-        val invertingPaint = Paint().apply {
-            colorFilter = ColorMatrixColorFilter(
-                ColorMatrix(
-                    floatArrayOf(
-                        -1.0f, 0.0f, 0.0f, 0.0f, 255.0f,
-                        0.0f, -1.0f, 0.0f, 0.0f, 255.0f,
-                        0.0f, 0.0f, -1.0f, 0.0f, 255.0f,
-                        0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+        if (isBackgroundBlack) {
+            val invertingPaint = Paint().apply {
+                colorFilter = ColorMatrixColorFilter(
+                    ColorMatrix(
+                        floatArrayOf(
+                            -1.0f, 0.0f, 0.0f, 0.0f, 255.0f,
+                            0.0f, -1.0f, 0.0f, 0.0f, 255.0f,
+                            0.0f, 0.0f, -1.0f, 0.0f, 255.0f,
+                            0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+                        )
                     )
                 )
-            )
+            }
+            canvas.drawBitmap(result, 0f, 0f, invertingPaint)
         }
-        canvas.drawBitmap(result, 0f, 0f, invertingPaint)
 
         val output = ByteArrayOutputStream()
         result.compress(Bitmap.CompressFormat.JPEG, 90, output)
@@ -197,5 +202,9 @@ class ImmortalUpdates : Madara("Immortal Updates", "https://immortalupdates.com"
                 "?"
             )
         }
+    }
+
+    companion object {
+        const val DESCRAMBLE = "descramble"
     }
 }
