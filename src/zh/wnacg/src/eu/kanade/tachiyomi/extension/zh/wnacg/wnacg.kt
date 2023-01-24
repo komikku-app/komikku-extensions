@@ -18,7 +18,7 @@ import rx.Observable
 // URL can be found at https://www.wnacglink.top/
 class wnacg : ParsedHttpSource() {
     override val name = "紳士漫畫"
-    override val baseUrl = "https://www.htmanga.top"
+    override val baseUrl = "https://www.htcomic.top"
     override val lang = "zh"
     override val supportsLatest = false
 
