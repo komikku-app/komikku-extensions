@@ -22,10 +22,15 @@ class EveriaClub() : ParsedHttpSource() {
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
 
+    private val Element.imgSrc: String
+        get() = attr("data-lazy-src")
+            .ifEmpty { attr("data-src") }
+            .ifEmpty { attr("src") }
+
     // Latest
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("img").attr("abs:src")
+        manga.thumbnail_url = element.selectFirst("img").imgSrc
         manga.title = element.select(".entry-title").text()
         manga.setUrlWithoutDomain(element.select(".entry-title > a").attr("abs:href"))
         return manga
@@ -41,7 +46,7 @@ class EveriaClub() : ParsedHttpSource() {
     // Popular
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("img").attr("abs:src")
+        manga.thumbnail_url = element.selectFirst("img").imgSrc
         manga.title = element.select("h3").text()
         manga.setUrlWithoutDomain(element.select("h3 > a").attr("abs:href"))
         return manga
@@ -98,8 +103,9 @@ class EveriaClub() : ParsedHttpSource() {
     // Pages
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
+        document.select("noscript").remove()
         document.select("article img").forEachIndexed { i, it ->
-            val itUrl = it.attr("data-src").ifEmpty { it.attr("src") }
+            val itUrl = it.imgSrc
             pages.add(Page(i, itUrl, itUrl))
         }
         return pages
