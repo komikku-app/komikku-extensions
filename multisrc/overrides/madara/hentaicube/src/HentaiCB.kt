@@ -17,14 +17,14 @@ class HentaiCB : Madara("Hentai CB", "https://hentaicb.xyz", "vi", SimpleDateFor
     }
     override fun popularMangaRequest(page: Int): Request {
         return GET(
-            "$baseUrl/manga/?m_orderby=trending",
+            "$baseUrl/manga/page/$page/?m_orderby=views",
             formHeaders,
             CacheControl.FORCE_NETWORK
         )
     }
     override fun latestUpdatesRequest(page: Int): Request {
         return GET(
-            "$baseUrl/manga/?m_orderby=latest",
+            "$baseUrl/manga/page/$page/?m_orderby=latest",
             formHeaders,
             CacheControl.FORCE_NETWORK
         )
