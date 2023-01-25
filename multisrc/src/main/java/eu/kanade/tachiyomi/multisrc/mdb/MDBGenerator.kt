@@ -9,7 +9,6 @@ class MDBGenerator : ThemeSourceGenerator {
     override val baseVersionCode = 2
     override val sources = listOf(
         SingleLang("ManhuaDB", "https://www.manhuadb.com", "zh", sourceName = "漫画DB", overrideVersionCode = 4),
-        SingleLang("Maofly", "https://www.maofly.com", "zh", sourceName = "漫画猫", overrideVersionCode = 1),
     )
 
     companion object {
