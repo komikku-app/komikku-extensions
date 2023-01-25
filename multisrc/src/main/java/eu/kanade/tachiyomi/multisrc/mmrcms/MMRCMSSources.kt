@@ -55,8 +55,6 @@ class MMRCMSSources {
             SourceData.Single("Phoenix-Scans", "https://phoenix-scans.pl", "pl", className = "PhoenixScans", overrideVersionCode = 1),
             SourceData.Single("Scan-1", "https://wwv.scan-1.com", "fr", className = "ScanOne", overrideVersionCode = 1),
             SourceData.Single("Lelscan-VF", "https://lelscanvf.com", "fr", className = "LelscanVF", overrideVersionCode = 1),
-            SourceData.Single("Mangazuki Raws", "https://raws.mangazuki.co", "ko", overrideVersionCode = 2, isNsfw = true),
-            SourceData.Single("Mangazuki", "https://mangazuki.co", "en", overrideVersionCode = 2, isNsfw = true),
             SourceData.Single("AnimaRegia", "https://animaregia.net", "pt-BR", overrideVersionCode = 4),
             SourceData.Single("MangaVadisi", "http://manga-v2.mangavadisi.org", "tr", overrideVersionCode = 1),
             SourceData.Single("MangaID", "https://mangaid.click", "id", overrideVersionCode = 1),
@@ -133,7 +131,6 @@ class MMRCMSSources {
 // SourceData("it", "Kingdom Italia Reader", "http://kireader.altervista.org"),
 // SourceData("ja", "IchigoBook", "http://ichigobook.com"),
 // SourceData("ja", "Mangaraw Online", "http://mangaraw.online"
-// SourceData("ja", "Mangazuki RAWS", "https://raws.mangazuki.co"),
 // SourceData("ja", "MangaRAW", "https://www.mgraw.com"),
 // SourceData("ja", "マンガ/漫画 マガジン/雑誌 raw", "http://netabare-manga-raw.com"),
 // SourceData("ru", "NAKAMA", "http://nakama.ru"),
