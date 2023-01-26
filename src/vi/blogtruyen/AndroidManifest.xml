@@ -13,8 +13,34 @@
 
                 <data android:host="blogtruyen.vn" />
                 <data android:host="m.blogtruyen.vn" />
-                <data android:pathPattern="/..*/..*"
-                    android:scheme="https" />
+                <data android:scheme="https" />
+
+                <data android:pathPattern="/tac-gia/..*" />
+                <data android:pathPattern="/nhom-dich/..*" />
+
+                <!--
+                    Try to ensure that the passed URL is a chapter `c{id}` or a manga `{id}`, with `id`
+                    being a number.
+                 -->
+                <data android:pathPattern="/c1.*/..*" />
+                <data android:pathPattern="/c2.*/..*" />
+                <data android:pathPattern="/c3.*/..*" />
+                <data android:pathPattern="/c4.*/..*" />
+                <data android:pathPattern="/c5.*/..*" />
+                <data android:pathPattern="/c6.*/..*" />
+                <data android:pathPattern="/c7.*/..*" />
+                <data android:pathPattern="/c8.*/..*" />
+                <data android:pathPattern="/c9.*/..*" />
+
+                <data android:pathPattern="/1.*/..*" />
+                <data android:pathPattern="/2.*/..*" />
+                <data android:pathPattern="/3.*/..*" />
+                <data android:pathPattern="/4.*/..*" />
+                <data android:pathPattern="/5.*/..*" />
+                <data android:pathPattern="/6.*/..*" />
+                <data android:pathPattern="/7.*/..*" />
+                <data android:pathPattern="/8.*/..*" />
+                <data android:pathPattern="/9.*/..*" />
             </intent-filter>
         </activity>
     </application>

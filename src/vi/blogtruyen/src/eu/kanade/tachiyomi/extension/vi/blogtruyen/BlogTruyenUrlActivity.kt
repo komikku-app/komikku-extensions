@@ -12,12 +12,17 @@ class BlogTruyenUrlActivity : Activity() {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
-            val id = "/${pathSegments[0]}/${pathSegments[1]}"
             try {
                 startActivity(
                     Intent().apply {
                         action = "eu.kanade.tachiyomi.SEARCH"
-                        putExtra("query", "${BlogTruyen.PREFIX_ID_SEARCH}$id")
+                        with(pathSegments[0]) {
+                            when {
+                                equals("tac-gia") -> putExtra("query", "${BlogTruyen.PREFIX_AUTHOR_SEARCH}${pathSegments[1]}")
+                                equals("nhom-dich") -> putExtra("query", "${BlogTruyen.PREFIX_TEAM_SEARCH}${pathSegments[1]}")
+                                else -> putExtra("query", "${BlogTruyen.PREFIX_ID_SEARCH}${pathSegments[0]}/${pathSegments[1]}")
+                            }
+                        }
                         putExtra("filter", packageName)
                     }
                 )

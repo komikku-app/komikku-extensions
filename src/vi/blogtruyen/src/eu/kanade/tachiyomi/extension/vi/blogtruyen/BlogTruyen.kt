@@ -48,6 +48,8 @@ class BlogTruyen : ParsedHttpSource() {
 
     companion object {
         const val PREFIX_ID_SEARCH = "id:"
+        const val PREFIX_AUTHOR_SEARCH = "author:"
+        const val PREFIX_TEAM_SEARCH = "team:"
     }
 
     override fun headersBuilder(): Headers.Builder =
@@ -105,23 +107,53 @@ class BlogTruyen : ParsedHttpSource() {
     ): Observable<MangasPage> {
         return when {
             query.startsWith(PREFIX_ID_SEARCH) -> {
-                val id = query.removePrefix(PREFIX_ID_SEARCH).trim()
-                if (!id.startsWith("/")) {
-                    throw Exception("ID tìm kiếm không hợp lệ")
+                var id = query.removePrefix(PREFIX_ID_SEARCH).trim()
+
+                // it's a chapter, resolve to manga ID
+                if (id.startsWith("c")) {
+                    val document = client.newCall(GET("$baseUrl/$id", headers)).execute().asJsoup()
+                    id = document.selectFirst(".breadcrumbs a:last-child").attr("href").removePrefix("/")
                 }
 
                 fetchMangaDetails(
                     SManga.create().apply {
-                        url = id
+                        url = "/$id"
                     }
                 )
-                    .map { MangasPage(listOf(it.apply { url = id }), false) }
+                    .map { MangasPage(listOf(it.apply { url = "/$id" }), false) }
             }
             else -> super.fetchSearchManga(page, query, filters)
         }
     }
 
+    private fun extractIdFromQuery(prefix: String, query: String): String {
+        val q = query.substringAfter(prefix).trim()
+        return if (q.contains("-")) {
+            q.substringAfterLast("-")
+        } else {
+            q
+        }
+    }
+
+    private val ajaxSearchUrls: Map<String, String> = mapOf(
+        PREFIX_AUTHOR_SEARCH to "Author/AjaxLoadMangaByAuthor?orderBy=3",
+        PREFIX_TEAM_SEARCH to "TranslateTeam/AjaxLoadMangaByTranslateTeam",
+    )
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        ajaxSearchUrls.keys.forEach {
+            if (!query.startsWith(it)) {
+                return@forEach
+            }
+            val id = extractIdFromQuery(it, query)
+            val url = "$baseUrl/ajax/${ajaxSearchUrls[it]}".toHttpUrl().newBuilder()
+                .addQueryParameter("id", id)
+                .addQueryParameter("p", page.toString())
+                .build()
+                .toString()
+            return GET(url, headers)
+        }
+
         val url = "$baseUrl/timkiem/nangcao/1".toHttpUrl().newBuilder().apply {
             addQueryParameter("txt", query)
             addQueryParameter("p", page.toString())
@@ -181,34 +213,75 @@ class BlogTruyen : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector() = ".pagination .glyphicon-step-forward"
 
+    private fun getMangaTitle(document: Document) = document.selectFirst(".entry-title a")
+        .attr("title")
+        .replaceFirst("truyện tranh", "", false)
+        .trim()
+
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val anchor = document.selectFirst(".entry-title a")
         setUrlWithoutDomain(anchor.attr("href"))
-        title = anchor.attr("title")
-            .replace("truyện tranh ", "")
-            .trim()
+        title = getMangaTitle(document)
 
         thumbnail_url = document.select(".thumbnail img").attr("abs:src")
-        author = document.select("a.color-green.label.label-info").joinToString { it.text() }
+        author = document.select("a[href*=tac-gia]").joinToString { it.text() }
         genre = document.select("span.category a").joinToString { it.text() }
         status = parseStatus(
             document.select("span.color-red:not(.bold)").text()
         )
 
-        description = document.selectFirst(".manga-detail .detail .content").let {
-            if (it.select("p").any()) {
-                it.select("p").joinToString("\n", transform = ::brToNewline)
-            } else {
-                brToNewline(it)
+        description = StringBuilder().apply {
+            // the actual synopsis
+            val synopsisBlock = document.selectFirst(".manga-detail .detail .content")
+
+            // replace the facebook blockquote in synopsis with the link (if there is one)
+            val fbElement = synopsisBlock.selectFirst(".fb-page, .fb-group")
+            if (fbElement != null) {
+                val fbLink = fbElement.attr("data-href")
+
+                val node = document.createElement("p")
+                node.appendText(fbLink)
+
+                fbElement.replaceWith(node)
             }
-        }
+            appendLine(synopsisBlock.textWithNewlines().trim())
+            appendLine()
+
+            // other metadata
+            document.select(".description p").forEach {
+                val text = it.text()
+                if (text.contains("Thể loại") ||
+                    text.contains("Tác giả") ||
+                    text.isBlank()
+                ) {
+                    return@forEach
+                }
+
+                if (text.contains("Trạng thái")) {
+                    appendLine(text.substringBefore("Trạng thái").trim())
+                    return@forEach
+                }
+
+                if (text.contains("Nguồn") ||
+                    text.contains("Tham gia update") ||
+                    text.contains("Nhóm dịch")
+                ) {
+                    val key = text.substringBefore(":")
+                    val value = it.select("a").joinToString { el -> el.text() }
+                    appendLine("$key: $value")
+                    return@forEach
+                }
+
+                it.select("a, span").append("\\n")
+                appendLine(it.text().replace("\\n", "\n").replace("\n ", "\n").trim())
+            }
+        }.toString().trim()
     }
 
-    private fun brToNewline(element: Element): String {
-        return element.run {
-            select("br").prepend("\\n")
-            text().replace("\\n", "\n").replace("\n ", "\n")
-        }
+    private fun Element.textWithNewlines() = run {
+        select("p").prepend("\\n")
+        select("br").prepend("\\n")
+        text().replace("\\n", "\n").replace("\n ", "\n")
     }
 
     private fun parseStatus(status: String) = when {
@@ -218,13 +291,21 @@ class BlogTruyen : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
 
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val document = response.asJsoup()
+        val title = getMangaTitle(document)
+        return document.select(chapterListSelector()).map { chapterFromElement(it, title) }
+    }
+
     override fun chapterListSelector() = "div.list-wrap > p"
 
-    override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
+    override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException("Not used")
+
+    private fun chapterFromElement(element: Element, title: String): SChapter = SChapter.create().apply {
         val anchor = element.select("span > a").first()
 
         setUrlWithoutDomain(anchor.attr("href"))
-        name = anchor.attr("title").trim()
+        name = anchor.attr("title").replace(title, "", true).trim()
         date_upload = kotlin.runCatching {
             dateFormat.parse(
                 element.selectFirst("span.publishedDate").text()
