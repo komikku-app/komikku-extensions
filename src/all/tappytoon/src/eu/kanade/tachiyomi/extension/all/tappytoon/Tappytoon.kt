@@ -19,6 +19,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import uy.kohesive.injekt.injectLazy
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -45,11 +46,11 @@ class Tappytoon(override val lang: String) : HttpSource() {
         // Throw JSON error if available
         if (mime == "application/json") {
             res.body?.string()?.let(json::parseToJsonElement)?.run {
-                throw Error(jsonObject["message"]!!.jsonPrimitive.content)
+                throw IOException(jsonObject["message"]!!.jsonPrimitive.content)
             }
         }
         res.close()
-        throw Error("HTTP error ${res.code}")
+        throw IOException("HTTP error ${res.code}")
     }.build()
 
     private val json by injectLazy<Json>()
