@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.vi.hentaivn
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -33,6 +34,7 @@ class HentaiVN : ParsedHttpSource() {
 
     private val searchUrl = "$baseUrl/forum/search-plus.php"
     private val searchByAuthorUrl = "$baseUrl/tim-kiem-tac-gia.html"
+    private val searchAllURL = "$baseUrl/tim-kiem-truyen.html"
     private val searchClient = network.cloudflareClient
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
@@ -46,6 +48,7 @@ class HentaiVN : ParsedHttpSource() {
                 else -> chain.proceed(originalRequest)
             }
         }
+        .rateLimit(3)
         .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
@@ -54,6 +57,34 @@ class HentaiVN : ParsedHttpSource() {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
 
+    //latestUpdates
+    override fun latestUpdatesRequest(page: Int): Request {
+        return GET("$baseUrl/chap-moi.html?page=$page", headers)
+    }
+
+    override fun latestUpdatesSelector() = ".main > .block-left > .block-item > ul > li.item"
+    override fun latestUpdatesNextPageSelector() = "ul.pagination > li:contains(Next)"
+    override fun latestUpdatesFromElement(element: Element): SManga {
+        val manga = SManga.create()
+        element.select(".box-description a").first().let {
+            manga.setUrlWithoutDomain(it.attr("href"))
+            manga.title = it.text().trim()
+        }
+        manga.thumbnail_url = element.select(".box-cover a img").attr("data-src")
+        return manga
+    }
+
+    //Popular
+    override fun popularMangaRequest(page: Int): Request {
+        return GET("$baseUrl/danh-sach.html?page=$page", headers)
+    }
+
+    override fun popularMangaFromElement(element: Element) = latestUpdatesFromElement(element)
+    override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
+    override fun popularMangaSelector() = latestUpdatesSelector()
+
+    //Chapter
+    override fun chapterListSelector() = "table.listing > tbody > tr"
     override fun chapterFromElement(element: Element): SChapter {
         if (element.select("a").isEmpty()) throw Exception(element.select("h2").html())
         val chapter = SChapter.create()
@@ -65,6 +96,11 @@ class HentaiVN : ParsedHttpSource() {
         return chapter
     }
 
+    override fun chapterListRequest(manga: SManga): Request {
+        val mangaId = manga.url.substringAfterLast("/").substringBefore('-')
+        return GET("$baseUrl/list-showchapter.php?idchapshow=$mangaId", headers)
+    }
+
     private fun parseDate(dateString: String): Long {
         return try {
             dateFormat.parse(dateString)?.time ?: 0L
@@ -73,33 +109,9 @@ class HentaiVN : ParsedHttpSource() {
         }
     }
 
-    override fun chapterListSelector() = "table.listing > tbody > tr"
-
-    override fun chapterListRequest(manga: SManga): Request {
-        val mangaId = manga.url.substringAfterLast("/").substringBefore('-')
-        return GET("$baseUrl/list-showchapter.php?idchapshow=$mangaId", headers)
-    }
-
     override fun imageUrlParse(document: Document) = ""
 
-    override fun latestUpdatesFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        element.select(".box-description a").first().let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.text().trim()
-        }
-        manga.thumbnail_url = element.select(".box-cover a img").attr("data-src")
-        return manga
-    }
-
-    override fun latestUpdatesNextPageSelector() = "ul.pagination > li:contains(Next)"
-
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/chap-moi.html?page=$page", headers)
-    }
-
-    override fun latestUpdatesSelector() = ".main > .block-left > .block-item > ul > li.item"
-
+    //Detail
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select(".main > .page-left > .left-info > .page-info")
         val manga = SManga.create()
@@ -107,8 +119,10 @@ class HentaiVN : ParsedHttpSource() {
         manga.author = infoElement.select("p:contains(Tác giả:) a").text()
         manga.description = infoElement.select(":root > p:contains(Nội dung:) + p").text()
         manga.genre = infoElement.select("p:contains(Thể loại:) a").joinToString { it.text() }
-        manga.thumbnail_url = document.select(".main > .page-right > .right-info > .page-ava > img").attr("src")
-        manga.status = parseStatus(infoElement.select("p:contains(Tình Trạng:) a").firstOrNull()?.text())
+        manga.thumbnail_url =
+            document.select(".main > .page-right > .right-info > .page-ava > img").attr("src")
+        manga.status =
+            parseStatus(infoElement.select("p:contains(Tình Trạng:) a").firstOrNull()?.text())
         return manga
     }
 
@@ -119,28 +133,19 @@ class HentaiVN : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
 
+    //Pages
     override fun pageListParse(document: Document): List<Page> {
-        val pages = mutableListOf<Page>()
-        val pageUrl = document.select("link[rel=canonical]").attr("href")
-        document.select("#image > img").forEachIndexed { i, e ->
-            pages.add(Page(i, pageUrl, e.attr("abs:src")))
+        return document.select("#image > img").mapIndexed { i, e ->
+            Page(i, imageUrl = e.attr("abs:src"))
         }
-        return pages
     }
 
-    override fun popularMangaFromElement(element: Element) = latestUpdatesFromElement(element)
-
-    override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
-
-    override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/danh-sach.html?page=$page", headers)
-    }
-
-    override fun popularMangaSelector() = latestUpdatesSelector()
-
+    //Search
     override fun searchMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        if (document.select("p").toString().contains("Bạn chỉ có thể sử dụng chức năng này khi đã đăng ký thành viên"))
+        if (document.select("p").toString()
+                .contains("Bạn chỉ có thể sử dụng chức năng này khi đã đăng ký thành viên")
+        )
             throw Exception("Đăng nhập qua WebView để kích hoạt tìm kiếm")
 
         val mangas = document.select(searchMangaSelector()).map { element ->
@@ -156,36 +161,58 @@ class HentaiVN : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        element.select(".search-des > a").first().let {
+        element.select(".search-des > a, .box-description a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text().trim()
         }
-        manga.thumbnail_url = element.select("div.search-img img").attr("abs:src")
+        manga.thumbnail_url = element.select("div.search-img img, .box-cover a img").attr("abs:src")
         return manga
     }
 
     override fun searchMangaNextPageSelector() = "ul.pagination > li:contains(Cuối)"
 
-    private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/tim-kiem-truyen.html?key=$id", headers)
+    private fun searchMangaByIdRequest(id: String) = GET("$searchAllURL?key=$id", headers)
     private fun searchMangaByIdParse(response: Response, ids: String): MangasPage {
         val details = mangaDetailsParse(response)
         details.url = "/$ids-doc-truyen-id.html"
         return MangasPage(listOf(details), false)
     }
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        val authorFilter = (if (filters.isEmpty()) getFilterList() else filters).find { it is Author } as Author
+    override fun fetchSearchManga(
+        page: Int,
+        query: String,
+        filters: FilterList
+    ): Observable<MangasPage> {
+        val authorFilter =
+            (if (filters.isEmpty()) getFilterList() else filters).find { it is Author } as Author
+        val searchAllFilter =
+            (if (filters.isEmpty()) getFilterList() else filters).find { it is Alls } as Alls
         return when {
             authorFilter.state.isNotEmpty() -> client.newCall(
                 GET(
                     searchByAuthorUrl.toHttpUrl().newBuilder()
                         .addQueryParameter("key", authorFilter.state)
+                        .addQueryParameter("page", page.toString())
                         .build().toString(),
                     headers
                 )
             )
                 .asObservableSuccess()
                 .map { response -> latestUpdatesParse(response) }
+
+            // Some manga that are not searchable in advanced search create this filter to fix
+            searchAllFilter.state.isNotEmpty() -> client.newCall(
+                GET(
+                    searchAllURL.toHttpUrl().newBuilder()
+                        .addQueryParameter("key", searchAllFilter.state)
+                        .addQueryParameter("page", page.toString())
+                        .build().toString(),
+                    headers
+                )
+            )
+                .asObservableSuccess()
+                .map { response -> latestUpdatesParse(response) }
+
             query.startsWith(PREFIX_ID_SEARCH) -> {
                 val ids = query.removePrefix(PREFIX_ID_SEARCH)
                 client.newCall(searchMangaByIdRequest(ids))
@@ -200,12 +227,14 @@ class HentaiVN : ParsedHttpSource() {
             else -> super.fetchSearchManga(page, query, filters)
         }
     }
+
     companion object {
         const val PREFIX_ID_SEARCH = "id:"
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$searchUrl?name=$query&page=$page&dou=&char=&group=0&search=".toHttpUrlOrNull()!!.newBuilder()
+        val url = "$searchUrl?name=$query&page=$page&dou=&char=&group=0&search=".toHttpUrlOrNull()!!
+            .newBuilder()
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is TextField -> url.addQueryParameter(filter.key, filter.state)
@@ -225,8 +254,10 @@ class HentaiVN : ParsedHttpSource() {
         return GET(url.toString(), headers)
     }
 
-    override fun searchMangaSelector() = ".search-ul .search-li"
+    override fun searchMangaSelector() =
+        ".search-ul .search-li, .main > .block-left > .block-item > ul > li.item"
 
+    private class Alls : Filter.Text("Tìm tất cả")
     private class Author : Filter.Text("Tác giả")
     private class TextField(name: String, val key: String) : Filter.Text(name)
     private class Genre(name: String, val id: String) : Filter.CheckBox(name)
@@ -236,10 +267,14 @@ class HentaiVN : ParsedHttpSource() {
             return name
         }
     }
-    private class GroupList(groups: Array<TransGroup>) : Filter.Select<TransGroup>("Nhóm dịch", groups)
+
+    private class GroupList(groups: Array<TransGroup>) :
+        Filter.Select<TransGroup>("Nhóm dịch", groups)
 
     override fun getFilterList() = FilterList(
+        Filter.Header("Bộ lọc tìm tất cả không dùng được với bộ lọc khác!"),
         Filter.Header("Bộ lọc tác giả không dùng được với các bộ lọc khác!"),
+        Alls(),
         Author(),
         TextField("Doujinshi", "dou"),
         TextField("Nhân vật", "char"),
