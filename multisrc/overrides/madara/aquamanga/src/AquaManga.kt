@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.en.aquamanga
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import okhttp3.Headers
 
 class AquaManga : Madara("Aqua Manga", "https://aquamanga.com", "en") {
 
