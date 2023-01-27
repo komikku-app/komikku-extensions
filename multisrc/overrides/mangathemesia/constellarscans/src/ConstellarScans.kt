@@ -8,11 +8,13 @@ import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.Rect
 import android.util.Log
+import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -97,20 +99,14 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         val tsDataEncrypted = TS_DATA_RE.find(obfuscatedCode)?.groupValues?.get(1)
         if (tsDataEncrypted != null) {
             val descrambledData = descrambleString(tsDataEncrypted).trim()
+            Log.d("constellarscans", "decrypted chapter, data: $descrambledData")
             val match = DESCRAMBLING_KEY_RE.find(descrambledData)?.value
                 ?: throw Exception("Did not receive valid decryption key. Try opening the chapter again.")
             Log.d("constellarscans", "device-limited chapter: $match")
             return decodeDeviceLimitedChapter(match)
         }
 
-        val scripts = document.select("script").html()
-        val tsData = JS_FUNC_RE.findAll(obfuscatedCode).firstNotNullOf {
-            val func = it.groupValues[1]
-            val tsDataFuncRe = Regex("""$func\s*\(\s*['"]([\da-z]+?)['"]\s*\)""", RegexOption.IGNORE_CASE)
-            val match = tsDataFuncRe.find(scripts)?.groupValues?.get(1)
-                ?: return@firstNotNullOf null
-            descrambleString(match).trim()
-        }
+        val tsData = descrambleString(getDecryptionKey(document)).trim()
         val tsDataObject = json.parseToJsonElement(tsData).jsonObject
         return tsDataObject["sources"]!!.jsonArray[0].jsonObject["images"]!!.jsonArray.mapIndexed { index, jsonElement ->
             Page(index, imageUrl = jsonElement.jsonPrimitive.content.replace("http://", "https://"))
@@ -124,16 +120,63 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         .header("Sec-Fetch-Site", "same-origin")
         .build()
 
-    private fun sumOfDigits(input: String): Int = input.sumOf { it.toString().toInt() }
+    private var descramblingBytecode: ByteArray? = null
 
-    private fun descrambleString(input: String): String =
-        input.replace(NOT_DIGIT_RE, "")
-            .chunked(6)
-            .map {
-                val charCode = sumOfDigits(it.substring(0..2)) * 10 + sumOfDigits(it.substring(3)) + 32
-                charCode.toChar()
-            }
-            .joinToString("")
+    /**
+     * Also updates `descramblingBytecode` as a side effect
+     */
+    private fun getDecryptionKey(document: Document?): String {
+        val doc = if (document == null) {
+            val req = pageListRequest(
+                SChapter.create().apply {
+                    url = "/the-dignity-of-sister-in-law-chapter-60/"
+                }
+            )
+            client.newCall(req).execute().asJsoup()
+        } else {
+            document
+        }
+
+        val obfuscatedScript = doc.selectFirst("script:containsData(_0x)").data()
+        val scripts = doc.select("script:containsData(_0x) ~ script").html()
+        val (decodingSymbol, tsData) = JS_FUNC_RE.findAll(obfuscatedScript).firstNotNullOf {
+            val func = it.groupValues[1]
+            val tsDataFuncRe = Regex("""$func\s*\(\s*['"]([\da-z]+?)['"]\s*\)""", RegexOption.IGNORE_CASE)
+            val tsData = tsDataFuncRe.find(scripts)?.groupValues?.get(1)
+                ?: return@firstNotNullOf null
+            func to tsData
+        }
+        Log.d("constellarscans", "decoding symbol: $decodingSymbol")
+        descramblingBytecode = QuickJs.create().use {
+            it.compile(
+                """
+                ts_reader = {}
+                ts_reader.run = arg => { throw Error(arg) }
+                JSON.parse = arg => arg
+                ${obfuscatedScript.replace(decodingSymbol, "decode")}
+                """.trimIndent(),
+                "#"
+            )
+        }
+        return tsData
+    }
+
+    private fun descrambleString(input: String): String {
+        if (descramblingBytecode == null) getDecryptionKey(null)
+
+        return QuickJs.create().use {
+            it.execute(descramblingBytecode!!)
+            it.evaluate(
+                """
+                try {
+                    decode("$input")
+                } catch (e) {
+                    e.message
+                }
+                """.trimIndent()
+            )
+        } as String
+    }
 
     private fun decodeDeviceLimitedChapter(fullKey: String): List<Page> {
         if (!DESCRAMBLING_KEY_RE.matches(fullKey)) {
