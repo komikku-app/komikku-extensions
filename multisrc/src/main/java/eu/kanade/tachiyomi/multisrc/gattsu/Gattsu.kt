@@ -112,7 +112,9 @@ abstract class Gattsu(
         setUrlWithoutDomain(element.ownerDocument().location())
     }
 
-    protected open fun pageListSelector(): String = "div.meio div.post-box ul.post-fotos li a > img"
+    protected open fun pageListSelector(): String =
+        "div.meio div.post-box ul.post-fotos li a > img, " +
+            "div.meio div.post-box.listaImagens div.galeriaHtml img"
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select(pageListSelector())
