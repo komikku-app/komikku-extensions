@@ -256,6 +256,14 @@ abstract class HeanCms(
 
     override fun pageListParse(response: Response): List<Page> {
         return response.parseAs<HeanCmsReaderDto>().content?.images.orEmpty()
+            .filterNot { imageUrl ->
+                // Their image server returns HTTP 403 for hidden files that starts
+                // with a dot in the file name. To avoid download errors, these are removed.
+                imageUrl
+                    .removeSuffix("/")
+                    .substringAfterLast("/")
+                    .startsWith(".")
+            }
             .mapIndexed { i, url ->
                 Page(i, imageUrl = if (url.startsWith("http")) url else "$apiUrl/$url")
             }
