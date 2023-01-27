@@ -250,7 +250,11 @@ abstract class GroupLe(
     override fun pageListParse(response: Response): List<Page> {
         val html = response.body!!.string()
 
-        val readerMark = "rm_h.initReader( ["
+        var readerMark = "rm_h.initReader( ["
+
+        if (!html.contains(readerMark)) {
+            readerMark = "rm_h.readerInit( 0,["
+        }
 
         if (!html.contains(readerMark)) {
             throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
