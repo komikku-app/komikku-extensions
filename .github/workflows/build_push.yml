@@ -106,7 +106,7 @@ jobs:
           arguments: assembleRelease
 
       - name: Upload APKs (chunk ${{ matrix.chunk }})
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: "github.repository == 'tachiyomiorg/tachiyomi-extensions'"
         with:
           name: "multisrc-apks-${{ matrix.chunk }}"
@@ -148,7 +148,7 @@ jobs:
           arguments: assembleRelease
 
       - name: Upload APKs (chunk ${{ matrix.chunk }})
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: "github.repository == 'tachiyomiorg/tachiyomi-extensions'"
         with:
           name: "individual-apks-${{ matrix.chunk }}"
@@ -167,7 +167,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download APK artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: ~/apk-artifacts
 
