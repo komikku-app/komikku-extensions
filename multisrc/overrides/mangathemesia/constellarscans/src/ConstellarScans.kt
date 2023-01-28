@@ -91,15 +91,14 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         document.body().prepend(
             """
             |<script>
-            |    var ts_reader = {
-            |        run: function (data) {
-            |            window.$interfaceName.passData(JSON.stringify(data))
-            |       }
-            |    }
+            |    window.ts_reader = new Proxy({}, {
+            |        get(target, prop, receiver) {
+            |            return (param) => window.$interfaceName.passData(JSON.stringify(param))
+            |        }
+            |    })
             |</script>
             """.trimMargin()
         )
-
         val handler = Handler(Looper.getMainLooper())
         val latch = CountDownLatch(1)
         val jsinterface = JsObject(latch)
