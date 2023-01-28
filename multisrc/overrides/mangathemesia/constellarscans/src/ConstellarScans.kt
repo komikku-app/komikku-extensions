@@ -1,57 +1,33 @@
 package eu.kanade.tachiyomi.extension.en.constellarscans
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
-import android.graphics.Paint
-import android.graphics.Rect
+import android.annotation.SuppressLint
+import android.app.Application
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
-import app.cash.quickjs.QuickJs
+import android.view.View
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
-import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.CacheControl
 import okhttp3.Headers
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.lang.IllegalArgumentException
-import java.security.MessageDigest
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+import java.util.concurrent.CountDownLatch
 
 class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarscans.com", "en") {
 
     override val client = super.client.newBuilder()
         .rateLimit(1, 3)
-        .addInterceptor { chain ->
-            val response = chain.proceed(chain.request())
-
-            val url = response.request.url
-            if (url.fragment?.contains(DESCRAMBLE) != true) {
-                return@addInterceptor response
-            }
-
-            val segments = url.pathSegments
-            val filenameWithoutExtension = segments.last().split(".")[0]
-            val fragment = segments[segments.lastIndex - 1]
-            val key = md5sum(fragment + filenameWithoutExtension)
-
-            val image = descrambleImage(response.body!!.byteStream(), key)
-            val body = image.toResponseBody("image/jpeg".toMediaTypeOrNull())
-            response.newBuilder()
-                .body(body)
-                .build()
-        }
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
@@ -94,22 +70,59 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
             .cacheControl(CacheControl.FORCE_NETWORK)
             .build()
 
+    internal class JsObject(private val latch: CountDownLatch, var tsData: String = "") {
+        @JavascriptInterface
+        fun passData(tsData: String) {
+            Log.d("constellarscans", "received ts_reader.run data: $tsData")
+            this.tsData = tsData
+            latch.countDown()
+        }
+    }
+
+    private fun randomString(length: Int = 10): String {
+        val charPool = ('a'..'z') + ('A'..'Z')
+        return List(length) { charPool.random() }.joinToString("")
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
     override fun pageListParse(document: Document): List<Page> {
-        val obfuscatedCode = document.select("script:containsData(_0x)").html()
-        val tsDataEncrypted = TS_DATA_RE.find(obfuscatedCode)?.groupValues?.get(1)
-        if (tsDataEncrypted != null) {
-            val descrambledData = descrambleString(tsDataEncrypted).trim()
-            Log.d("constellarscans", "decrypted chapter, data: $descrambledData")
-            val match = DESCRAMBLING_KEY_RE.find(descrambledData)?.value
-                ?: throw Exception("Did not receive valid decryption key. Try opening the chapter again.")
-            Log.d("constellarscans", "device-limited chapter: $match")
-            return decodeDeviceLimitedChapter(match)
+        val interfaceName = randomString()
+
+        document.body().prepend(
+            """
+            |<script>
+            |    var ts_reader = {
+            |        run: function (data) {
+            |            window.$interfaceName.passData(JSON.stringify(data))
+            |       }
+            |    }
+            |</script>
+            """.trimMargin()
+        )
+
+        val handler = Handler(Looper.getMainLooper())
+        val latch = CountDownLatch(1)
+        val jsinterface = JsObject(latch)
+        var webView: WebView? = null
+        handler.post {
+            val webview = WebView(Injekt.get<Application>())
+            webView = webview
+            webview.settings.javaScriptEnabled = true
+            webview.settings.domStorageEnabled = true
+            webview.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+            webview.settings.useWideViewPort = false
+            webview.settings.loadWithOverviewMode = false
+            webview.settings.userAgentString = mobileUserAgent
+            webview.addJavascriptInterface(jsinterface, interfaceName)
+            Log.d("constellarscans", "starting webview shenanigans")
+            webview.loadDataWithBaseURL(baseUrl, document.toString(), "text/html", "UTF-8", null)
         }
 
-        val tsData = descrambleString(getDecryptionKey(document)).trim()
-        val tsDataObject = json.parseToJsonElement(tsData).jsonObject
-        return tsDataObject["sources"]!!.jsonArray[0].jsonObject["images"]!!.jsonArray.mapIndexed { index, jsonElement ->
-            Page(index, imageUrl = jsonElement.jsonPrimitive.content.replace("http://", "https://"))
+        latch.await()
+        handler.post { webView?.destroy() }
+        val tsData = json.parseToJsonElement(jsinterface.tsData).jsonObject
+        return tsData["sources"]!!.jsonArray[0].jsonObject["images"]!!.jsonArray.mapIndexed { idx, it ->
+            Page(idx, imageUrl = it.jsonPrimitive.content)
         }
     }
 
@@ -120,158 +133,8 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         .header("Sec-Fetch-Site", "same-origin")
         .build()
 
-    private var descramblingBytecode: ByteArray? = null
-
-    /**
-     * Also updates `descramblingBytecode` as a side effect
-     */
-    private fun getDecryptionKey(document: Document?): String {
-        val doc = if (document == null) {
-            val req = pageListRequest(
-                SChapter.create().apply {
-                    url = "/the-dignity-of-sister-in-law-chapter-60/"
-                }
-            )
-            client.newCall(req).execute().asJsoup()
-        } else {
-            document
-        }
-
-        val obfuscatedScript = doc.selectFirst("script:containsData(_0x)").data()
-        val scripts = doc.select("script:containsData(_0x) ~ script").html()
-        val (decodingSymbol, tsData) = JS_FUNC_RE.findAll(obfuscatedScript).firstNotNullOf {
-            val func = it.groupValues[1]
-            val tsDataFuncRe = Regex("""$func\s*\(\s*['"]([\da-z]+?)['"]\s*\)""", RegexOption.IGNORE_CASE)
-            val tsData = tsDataFuncRe.find(scripts)?.groupValues?.get(1)
-                ?: return@firstNotNullOf null
-            func to tsData
-        }
-        Log.d("constellarscans", "decoding symbol: $decodingSymbol")
-        descramblingBytecode = QuickJs.create().use {
-            it.compile(
-                """
-                ts_reader = {}
-                ts_reader.run = arg => { throw Error(arg) }
-                JSON.parse = arg => arg
-                ${obfuscatedScript.replace(decodingSymbol, "decode")}
-                """.trimIndent(),
-                "#"
-            )
-        }
-        return tsData
-    }
-
-    private fun descrambleString(input: String): String {
-        if (descramblingBytecode == null) getDecryptionKey(null)
-
-        return QuickJs.create().use {
-            it.execute(descramblingBytecode!!)
-            it.evaluate(
-                """
-                try {
-                    decode("$input")
-                } catch (e) {
-                    e.message
-                }
-                """.trimIndent()
-            )
-        } as String
-    }
-
-    private fun decodeDeviceLimitedChapter(fullKey: String): List<Page> {
-        if (!DESCRAMBLING_KEY_RE.matches(fullKey)) {
-            throw IllegalArgumentException("Did not receive suitable decryption key. Try opening the chapter again.")
-        }
-
-        val shiftBy = fullKey.substring(32..33).toInt(16)
-        val key = fullKey.substring(0..31) + fullKey.substring(34)
-
-        val fragmentAndImageCount = key.map {
-            var idx = LOOKUP_STRING_ALNUM.indexOf(it) - shiftBy
-            if (idx < 0) {
-                idx += LOOKUP_STRING_ALNUM.length
-            }
-            LOOKUP_STRING_ALNUM[idx]
-        }.joinToString("")
-        val fragment = fragmentAndImageCount.substring(0..31)
-        val imageCount = fragmentAndImageCount.substring(32).toInt()
-
-        val pages = mutableListOf<Page>()
-        for (i in 1..imageCount) {
-            val filename = i.toString().padStart(5, '0')
-            pages.add(
-                Page(
-                    i,
-                    imageUrl = "$encodedUploadsPath/$fragment/$filename.webp#$DESCRAMBLE"
-                )
-            )
-        }
-        return pages
-    }
-
-    private fun descrambleImage(image: InputStream, key: String): ByteArray {
-        val bitmap = BitmapFactory.decodeStream(image)
-        val invertingPaint = Paint().apply {
-            colorFilter = ColorMatrixColorFilter(
-                ColorMatrix(
-                    floatArrayOf(
-                        -1.0f, 0.0f, 0.0f, 0.0f, 255.0f,
-                        0.0f, -1.0f, 0.0f, 0.0f, 255.0f,
-                        0.0f, 0.0f, -1.0f, 0.0f, 255.0f,
-                        0.0f, 0.0f, 0.0f, 1.0f, 0.0f
-                    )
-                )
-            )
-        }
-
-        val result = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(result)
-
-        val sectionCount = (key.last().code % 10) * 2 + 4
-        val remainder = bitmap.height % sectionCount
-        for (i in 0 until sectionCount) {
-            var sectionHeight = bitmap.height / sectionCount
-            var sy = bitmap.height - sectionHeight * (i + 1) - remainder
-            val dy = sectionHeight * i
-
-            if (i == sectionCount - 1) {
-                sectionHeight += remainder
-            } else {
-                sy += remainder
-            }
-
-            val sRect = Rect(0, sy, bitmap.width, sy + sectionHeight)
-            val dRect = Rect(0, dy, bitmap.width, dy + sectionHeight)
-            canvas.drawBitmap(bitmap, sRect, dRect, invertingPaint)
-        }
-
-        val output = ByteArrayOutputStream()
-        result.compress(Bitmap.CompressFormat.JPEG, 90, output)
-
-        return output.toByteArray()
-    }
-
-    private fun md5sum(input: String): String {
-        val md = MessageDigest.getInstance("MD5")
-        return md.digest(input.toByteArray())
-            .joinToString("") { "%02x".format(it) }
-    }
-
-    private val encodedUploadsPath = "$baseUrl/wp-content/uploads/encoded"
-
     companion object {
-        const val DESCRAMBLE = "descramble"
         const val UA_DB_URL =
             "https://cdn.jsdelivr.net/gh/mimmi20/browscap-helper@30a83c095688f40b9eaca0165a479c661e5a7fbe/tests/0002999.json"
-        const val LOOKUP_STRING_ALNUM =
-            "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        val NOT_DIGIT_RE = Regex("""\D""")
-        val JS_FUNC_RE = Regex("""function (.+?)\s*\(""")
-
-        val TS_DATA_RE = Regex("""\(\s*['"]([\da-z]+?)['"]\s*\)""", RegexOption.IGNORE_CASE)
-
-        // The decoding algorithm looks for a hex number in 32..33, so we write our regex accordingly
-        val DESCRAMBLING_KEY_RE =
-            Regex("""[\da-z]{32}[\da-f]{2}[\da-z]+""", RegexOption.IGNORE_CASE)
     }
 }
