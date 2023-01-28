@@ -11,6 +11,7 @@ import android.graphics.Rect
 import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -23,21 +24,23 @@ class ImmortalUpdates : Madara("Immortal Updates", "https://immortalupdates.com"
 
     override val useNewChapterEndpoint: Boolean = true
 
-    override val client = super.client.newBuilder().addInterceptor { chain ->
-        val response = chain.proceed(chain.request())
+    override val client = super.client.newBuilder()
+        .rateLimit(1, 2)
+        .addInterceptor { chain ->
+            val response = chain.proceed(chain.request())
 
-        if (response.request.url.fragment?.contains(DESCRAMBLE) != true) {
-            return@addInterceptor response
-        }
-        val fragment = response.request.url.fragment!!
-        val args = fragment.substringAfter("$DESCRAMBLE=").split(",")
+            if (response.request.url.fragment?.contains(DESCRAMBLE) != true) {
+                return@addInterceptor response
+            }
+            val fragment = response.request.url.fragment!!
+            val args = fragment.substringAfter("$DESCRAMBLE=").split(",")
 
-        val image = unscrambleImage(response.body!!.byteStream(), args)
-        val body = image.toResponseBody("image/jpeg".toMediaTypeOrNull())
-        return@addInterceptor response.newBuilder()
-            .body(body)
-            .build()
-    }.build()
+            val image = unscrambleImage(response.body!!.byteStream(), args)
+            val body = image.toResponseBody("image/jpeg".toMediaTypeOrNull())
+            return@addInterceptor response.newBuilder()
+                .body(body)
+                .build()
+        }.build()
 
     override fun pageListParse(document: Document): List<Page> {
         val pageList = super.pageListParse(document).toMutableList()
@@ -51,11 +54,11 @@ class ImmortalUpdates : Madara("Immortal Updates", "https://immortalupdates.com"
 
         unscramblingCalls.replace("\r", "").split("\n").forEach {
             val args = unfuckJs(it)
-                .substringAfter("(")
+                .substringAfter("get_img(")
                 .substringBefore(")")
 
             val filenameFragment = args.split(",")[0].removeSurrounding("'")
-            val page = pageList.firstOrNull { it.imageUrl!!.contains(filenameFragment, ignoreCase = true) }
+            val page = pageList.firstOrNull { page -> page.imageUrl!!.contains(filenameFragment, ignoreCase = true) }
                 ?: return@forEach
             val newPageUrl = page.imageUrl!!.toHttpUrl().newBuilder()
                 .fragment("$DESCRAMBLE=$args")
