@@ -246,7 +246,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         chapter.name = urlElement.ownText()
         // Using ownText() doesn't include childs' text, like "VUS" or "RAW" badges, in the chapter name.
-        chapter.date_upload = element.select("> span").text().trim().let { parseChapterDate(it) }
+        chapter.date_upload = element.selectFirst("span").text().trim().let { parseChapterDate(it) }
         return chapter
     }
 
