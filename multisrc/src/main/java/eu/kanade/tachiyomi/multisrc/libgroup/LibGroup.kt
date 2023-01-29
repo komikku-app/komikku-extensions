@@ -180,8 +180,10 @@ abstract class LibGroup(
             isEng.equals("eng") && el.jsonObject["eng_name"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> el.jsonObject["eng_name"]!!.jsonPrimitive.content
             else -> el.jsonObject["name"]!!.jsonPrimitive.content
         }
-        thumbnail_url = if (el.jsonObject["coverImage"] != null) baseUrl + el.jsonObject["coverImage"]!!.jsonPrimitive.content
-        else baseUrl + "/uploads/cover/" + slug + "/cover/" + el.jsonObject["cover"]!!.jsonPrimitive.content + "_250x350.jpg"
+        thumbnail_url = if (el.jsonObject["coverImage"] != null) el.jsonObject["coverImage"]!!.jsonPrimitive.content
+        else "/uploads/cover/" + slug + "/cover/" + el.jsonObject["cover"]!!.jsonPrimitive.content + "_250x350.jpg"
+        if (!thumbnail_url!!.contains("://"))
+            thumbnail_url = baseUrl + thumbnail_url
         url = "/$slug"
     }
 
