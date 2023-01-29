@@ -6,7 +6,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.GET
@@ -70,12 +72,11 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
             .cacheControl(CacheControl.FORCE_NETWORK)
             .build()
 
-    internal class JsObject(private val latch: CountDownLatch, var tsData: String = "") {
+    internal class JsObject(val imageList: MutableList<String> = mutableListOf()) {
         @JavascriptInterface
-        fun passData(tsData: String) {
-            Log.d("constellarscans", "received ts_reader.run data: $tsData")
-            this.tsData = tsData
-            latch.countDown()
+        fun passSingleImage(url: String) {
+            Log.d("constellarscans", "received image: $url")
+            imageList.add(url)
         }
     }
 
@@ -90,18 +91,26 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
 
         document.body().prepend(
             """
-            |<script>
-            |    window.ts_reader = new Proxy({}, {
-            |        get(target, prop, receiver) {
-            |            return (param) => window.$interfaceName.passData(JSON.stringify(param))
-            |        }
-            |    })
-            |</script>
-            """.trimMargin()
+                <script>
+                    const observer = new MutationObserver(mutations => {
+                        mutations.forEach((mutation) => {
+                            [...mutation.addedNodes].filter(c => c instanceof HTMLImageElement &&
+                                (
+                                    c.classList.contains("ts-main-image") ||
+                                    c.dataset.index !== undefined ||
+                                    c.dataset.server !== undefined
+                                )
+                            )
+                                .forEach(c => window.$interfaceName.passSingleImage(c.src))
+                        })
+                    })
+                    observer.observe(document.body, { childList: true, subtree: true })
+                </script>
+            """.trimIndent()
         )
         val handler = Handler(Looper.getMainLooper())
         val latch = CountDownLatch(1)
-        val jsinterface = JsObject(latch)
+        val jsInterface = JsObject()
         var webView: WebView? = null
         handler.post {
             val webview = WebView(Injekt.get<Application>())
@@ -112,17 +121,37 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
             webview.settings.useWideViewPort = false
             webview.settings.loadWithOverviewMode = false
             webview.settings.userAgentString = mobileUserAgent
-            webview.addJavascriptInterface(jsinterface, interfaceName)
+            webview.addJavascriptInterface(jsInterface, interfaceName)
+
+            webview.webChromeClient = object : WebChromeClient() {
+                override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                    if (newProgress >= 90) {
+                        latch.countDown()
+                    }
+                }
+
+                override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                    if (consoleMessage == null) { return false }
+                    val logContent = "wv: ${consoleMessage.message()} ${consoleMessage.sourceId()}, line ${consoleMessage.lineNumber()}"
+                    when (consoleMessage.messageLevel()) {
+                        ConsoleMessage.MessageLevel.DEBUG -> Log.d("constellarscans", logContent)
+                        ConsoleMessage.MessageLevel.ERROR -> Log.e("constellarscans", logContent)
+                        ConsoleMessage.MessageLevel.LOG -> Log.i("constellarscans", logContent)
+                        ConsoleMessage.MessageLevel.TIP -> Log.i("constellarscans", logContent)
+                        ConsoleMessage.MessageLevel.WARNING -> Log.w("constellarscans", logContent)
+                        else -> Log.d("constellarscans", logContent)
+                    }
+
+                    return true
+                }
+            }
             Log.d("constellarscans", "starting webview shenanigans")
             webview.loadDataWithBaseURL(baseUrl, document.toString(), "text/html", "UTF-8", null)
         }
 
         latch.await()
         handler.post { webView?.destroy() }
-        val tsData = json.parseToJsonElement(jsinterface.tsData).jsonObject
-        return tsData["sources"]!!.jsonArray[0].jsonObject["images"]!!.jsonArray.mapIndexed { idx, it ->
-            Page(idx, imageUrl = it.jsonPrimitive.content)
-        }
+        return jsInterface.imageList.mapIndexed { idx, it -> Page(idx, imageUrl = it) }
     }
 
     override fun imageRequest(page: Page): Request = super.imageRequest(page).newBuilder()
