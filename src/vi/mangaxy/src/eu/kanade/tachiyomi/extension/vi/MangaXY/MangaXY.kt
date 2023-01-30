@@ -12,6 +12,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -44,19 +45,10 @@ class MangaXY : ParsedHttpSource() {
             .toString(),
         headers
     )
+
     override fun popularMangaSelector() = ".container > .row > div.col-12.col-lg-9 > #tblChap > .thumb"
 
-    override fun latestUpdatesSelector() = popularMangaSelector()
-
-    override fun latestUpdatesRequest(page: Int) = GET(
-        "$baseUrl/search.php".toHttpUrl().newBuilder()
-            .addQueryParameter("act", "search")
-            .addQueryParameter("sort", "chap")
-            .addQueryParameter("view", "thumb")
-            .addQueryParameter("page", page.toString())
-            .toString(),
-        headers
-    )
+    override fun popularMangaNextPageSelector(): String = "div#tblChap p.page a:contains(Cuối)"
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
@@ -74,16 +66,31 @@ class MangaXY : ParsedHttpSource() {
         return manga
     }
 
-    override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
+    override fun latestUpdatesSelector() = popularMangaSelector()
 
-    override fun popularMangaNextPageSelector(): String = "div#tblChap p.page a:contains(Cuối)"
+    override fun latestUpdatesRequest(page: Int) = GET(
+        "$baseUrl/search.php".toHttpUrl().newBuilder()
+            .addQueryParameter("act", "search")
+            .addQueryParameter("sort", "chap")
+            .addQueryParameter("view", "thumb")
+            .addQueryParameter("page", page.toString())
+            .toString(),
+        headers
+    )
+
+    override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
 
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
-    open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>, state: Int = 0) :
+    open class UriPartFilter(
+        displayName: String,
+        private val vals: Array<Pair<String, String>>,
+        state: Int = 0
+    ) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), state) {
         fun toUriPart() = vals[state].second
     }
+
     private class SortByFilter : UriPartFilter(
         "Sắp xếp theo",
         arrayOf(
@@ -95,6 +102,7 @@ class MangaXY : ParsedHttpSource() {
         ),
         2
     )
+
     private class SearchTypeFilter : UriPartFilter(
         "Kiểu tìm",
         arrayOf(
@@ -102,6 +110,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("OR/hoặc", "or"),
         )
     )
+
     private class ForFilter : UriPartFilter(
         "Dành cho",
         arrayOf(
@@ -111,6 +120,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("Con nít", "nit"),
         )
     )
+
     private class AgeFilter : UriPartFilter(
         "Bất kỳ",
         arrayOf(
@@ -123,6 +133,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("= 18", "18"),
         )
     )
+
     private class StatusFilter : UriPartFilter(
         "Tình trạng",
         arrayOf(
@@ -132,6 +143,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("Tạm ngưng", "Drop"),
         )
     )
+
     private class OriginFilter : UriPartFilter(
         "Quốc gia",
         arrayOf(
@@ -142,6 +154,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("Việt Nam", "vietnam"),
         )
     )
+
     private class ReadingModeFilter : UriPartFilter(
         "Kiểu đọc",
         arrayOf(
@@ -151,6 +164,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("Trái qua phải", "xem từ trái qua phải"),
         )
     )
+
     private class YearFilter : Filter.Text("Năm phát hành")
     private class UserFilter : Filter.Text("Đăng bởi thành viên")
     private class AuthorFilter : Filter.Text("Tên tác giả")
@@ -229,12 +243,15 @@ class MangaXY : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val infoElement = document.selectFirst(".tab-content")
         val infoTop = document.selectFirst(".detail-top-wrap")
+        val statusString0 = infoElement.select("div.manga-info > ul > li:nth-child(3) > a").firstOrNull()?.text()
+        val statusString1 = infoElement.select("div.manga-info > ul > li:nth-child(4) > a").firstOrNull()?.text()
+        val statusString2 = infoElement.select("div.manga-info > ul > li:nth-child(5) > a").firstOrNull()?.text()
         title = infoTop.select("h1.comics-title").text()
         author = infoTop.select(".created-by").joinToString { it.text() }
         genre = infoTop.select(".top-comics-type a")
             .filter { it.text().isNotEmpty() }
             .joinToString(", ") { it.text() }
-        description = infoElement.select(".manga-info p").text()
+        description = infoElement.select(".manga-info p").textWithLinebreaks()
         thumbnail_url = infoTop.select(".detail-top-right img")
             .first()
             .attr("style")
@@ -242,12 +259,39 @@ class MangaXY : ParsedHttpSource() {
             .substringBefore("')")
             .replace("//", "https:")
             .replace("http:", "")
-        status = when (infoElement.select(".manga-info ul li a").first().text().trim()) {
-            "Đang tiến hành" -> SManga.ONGOING
-            "Đã Hoàn Thành" -> SManga.COMPLETED
-            "Tạm ngưng" -> SManga.ON_HIATUS
-            else -> SManga.UNKNOWN
+        if (statusString0 == "Tạm ngưng" || statusString0 == "Đã Hoàn Thành" || statusString0 == "Đang tiến hành") {
+            status = when (statusString0) {
+                "Đang tiến hành" -> SManga.ONGOING
+                "Đã Hoàn Thành" -> SManga.COMPLETED
+                "Tạm ngưng" -> SManga.ON_HIATUS
+                null -> SManga.UNKNOWN
+                else -> SManga.UNKNOWN
+            }
         }
+        if (statusString1 == "Tạm ngưng" || statusString1 == "Đã Hoàn Thành" || statusString1 == "Đang tiến hành") {
+            status = when (statusString1) {
+                "Đang tiến hành" -> SManga.ONGOING
+                "Đã Hoàn Thành" -> SManga.COMPLETED
+                "Tạm ngưng" -> SManga.ON_HIATUS
+                null -> SManga.UNKNOWN
+                else -> SManga.UNKNOWN
+            }
+        }
+        if (statusString2 == "Tạm ngưng" || statusString2 == "Đã Hoàn Thành" || statusString2 == "Đang tiến hành") {
+            status = when (statusString2) {
+                "Đang tiến hành" -> SManga.ONGOING
+                "Đã Hoàn Thành" -> SManga.COMPLETED
+                "Tạm ngưng" -> SManga.ON_HIATUS
+                null -> SManga.UNKNOWN
+                else -> SManga.UNKNOWN
+            }
+        }
+    }
+
+    private fun Elements.textWithLinebreaks(): String {
+        this.select("p").prepend("\\n")
+        this.select("br").prepend("\\n")
+        return this.text().replace("\\n", "\n").replace("\n ", "\n")
     }
 
     override fun chapterListSelector() = "#ChapList > .episode-item"
@@ -269,6 +313,7 @@ class MangaXY : ParsedHttpSource() {
 
     open class Genre(name: String, val id: String) : Filter.TriState(name)
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Thể loại", genres)
+
     override fun getFilterList() = FilterList(
         GenreList(getGenreList()),
         SortByFilter(),
