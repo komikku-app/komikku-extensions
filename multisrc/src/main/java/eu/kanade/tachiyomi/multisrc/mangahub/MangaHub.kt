@@ -114,7 +114,7 @@ abstract class MangaHub(
 
     // search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var url = "$baseUrl/search/page/$page".toHttpUrlOrNull()!!.newBuilder()
+        val url = "$baseUrl/search/page/$page".toHttpUrlOrNull()!!.newBuilder()
         url.addQueryParameter("q", query)
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
@@ -126,6 +126,7 @@ abstract class MangaHub(
                     val genre = filter.values[filter.state]
                     url.addQueryParameter("genre", genre.key)
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)
@@ -157,7 +158,7 @@ abstract class MangaHub(
             values.minByOrNull { it.url.length }!!
         }.values.toList()
 
-        val hasNextPage = searchMangaNextPageSelector()?.let { selector ->
+        val hasNextPage = searchMangaNextPageSelector().let { selector ->
             document.select(selector).first()
         } != null
 
@@ -203,9 +204,9 @@ abstract class MangaHub(
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(element.select("a[href*='$baseUrl']").attr("href"))
+        chapter.setUrlWithoutDomain(element.select("a[href*='$baseUrl']").last().attr("href"))
 
-        val titleHeader = element.select(".text-secondary").first()
+        val titleHeader = element.select("._8Qtbo").first()
         val number = titleHeader.select("._3D1SJ").first().text()
         val title = titleHeader.select("._2IG5P").first().text()
 
