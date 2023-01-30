@@ -89,22 +89,16 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
     override fun pageListParse(document: Document): List<Page> {
         val interfaceName = randomString()
 
-        document.body().prepend(
+        document.selectFirst("article").append(
             """
                 <script>
                     const observer = new MutationObserver(mutations => {
-                        mutations.forEach((mutation) => {
-                            [...mutation.addedNodes].filter(c => c instanceof HTMLImageElement &&
-                                (
-                                    c.classList.contains("ts-main-image") ||
-                                    c.dataset.index !== undefined ||
-                                    c.dataset.server !== undefined
-                                )
-                            )
+                        mutations.forEach(mutation => {
+                            [...mutation.addedNodes].filter(c => c instanceof HTMLImageElement && c.src.slice(-3) !== "svg")
                                 .forEach(c => window.$interfaceName.passSingleImage(c.src))
                         })
                     })
-                    observer.observe(document.body, { childList: true, subtree: true })
+                    observer.observe(document.querySelector("article"), { childList: true, subtree: true })
                 </script>
             """.trimIndent()
         )
