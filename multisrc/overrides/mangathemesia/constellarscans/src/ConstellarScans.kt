@@ -10,6 +10,7 @@ import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebView
+import eu.kanade.tachiyomi.lib.dataimage.DataImageInterceptor
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -29,6 +30,7 @@ import java.util.concurrent.CountDownLatch
 class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarscans.com", "en") {
 
     override val client = super.client.newBuilder()
+        .addInterceptor(DataImageInterceptor())
         .rateLimit(1, 3)
         .build()
 
@@ -85,23 +87,15 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         return List(length) { charPool.random() }.joinToString("")
     }
 
+    private val funkyScript by lazy {
+        client.newCall(GET(FUNKY_SCRIPT_URL)).execute().body!!.string()
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun pageListParse(document: Document): List<Page> {
         val interfaceName = randomString()
+        document.body().prepend("<script>${funkyScript.replace("\$interfaceName", interfaceName)}</script>")
 
-        document.selectFirst("article").append(
-            """
-                <script>
-                    const observer = new MutationObserver(mutations => {
-                        mutations.forEach(mutation => {
-                            [...mutation.addedNodes].filter(c => c instanceof HTMLImageElement && c.src.slice(-3) !== "svg")
-                                .forEach(c => window.$interfaceName.passSingleImage(c.src))
-                        })
-                    })
-                    observer.observe(document.querySelector("article"), { childList: true, subtree: true })
-                </script>
-            """.trimIndent()
-        )
         val handler = Handler(Looper.getMainLooper())
         val latch = CountDownLatch(1)
         val jsInterface = JsObject()
@@ -119,7 +113,7 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
 
             webview.webChromeClient = object : WebChromeClient() {
                 override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                    if (newProgress >= 90) {
+                    if (newProgress == 100) {
                         latch.countDown()
                     }
                 }
@@ -158,5 +152,6 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
     companion object {
         const val UA_DB_URL =
             "https://cdn.jsdelivr.net/gh/mimmi20/browscap-helper@30a83c095688f40b9eaca0165a479c661e5a7fbe/tests/0002999.json"
+        val FUNKY_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/@beerpsi/funky-script/constellar.js"
     }
 }
