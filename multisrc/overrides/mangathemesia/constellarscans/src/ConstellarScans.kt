@@ -152,6 +152,6 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
     companion object {
         const val UA_DB_URL =
             "https://cdn.jsdelivr.net/gh/mimmi20/browscap-helper@30a83c095688f40b9eaca0165a479c661e5a7fbe/tests/0002999.json"
-        val FUNKY_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/@beerpsi/funky-script/constellar.js"
+        val FUNKY_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/@beerpsi/funky-script@latest/constellar.js"
     }
 }
