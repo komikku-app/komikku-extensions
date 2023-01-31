@@ -4,6 +4,7 @@ on:
   pull_request:
     paths-ignore:
       - '**.md'
+      - '.github/workflows/issue_moderator.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -50,6 +51,10 @@ jobs:
               isIndividualChanged=1
             elif [[ ${changedFile} == multisrc/* ]]; then
               isMultisrcChanged=1
+            elif [[ ${changedFile} == .github/workflows/issue_moderator.yml ]]; then
+              true
+            elif [[ ${changedFile} == *.md ]]; then
+              true 
             else
               isIndividualChanged=1
               isMultisrcChanged=1
