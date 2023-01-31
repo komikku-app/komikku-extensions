@@ -38,7 +38,7 @@ abstract class MangaHub(
 
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::uaIntercept)
-        .rateLimit(4)
+        .rateLimit(1)
         .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
@@ -204,11 +204,10 @@ abstract class MangaHub(
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(element.select("a[href*='$baseUrl']").last().attr("href"))
+        chapter.setUrlWithoutDomain(element.select("a[href*='$baseUrl/chapter/']").attr("href"))
 
-        val titleHeader = element.select("._8Qtbo").first()
-        val number = titleHeader.select("._3D1SJ").first().text()
-        val title = titleHeader.select("._2IG5P").first().text()
+        val number = element.select(".text-secondary span").first().text()
+        val title = element.select(".text-secondary span").last().text()
 
         chapter.name = "$number $title"
         chapter.date_upload = element.select("small.UovLc").first()?.text()?.let { parseChapterDate(it) } ?: 0
@@ -286,27 +285,14 @@ abstract class MangaHub(
         val urlTemplate = document.select("#mangareader img").attr("abs:src")
         val extension = urlTemplate.substringAfterLast(".")
 
-        // get max pages value from string if exist (usually on manga/page format) example : 1/30
-        val pageStringElement = document.select("._3w1ww")
-        if (pageStringElement.isNotEmpty()) {
-            val pageString = pageStringElement.text()
-            val maxPage = pageString.substringAfterLast('/').toInt()
+        // make some calls to check if the pages exist using findPageCount()
+        // increase or decreasing by using binary search algorithm
+        val maxPage = findPageCount(urlTemplate, extension)
 
-            for (page in 1..maxPage) {
-                val url = urlTemplate.replaceAfterLast("/", "$page.$extension")
-                val pageObject = Page(page - 1, "", url)
-                pages.add(pageObject)
-            }
-        } else {
-            // if there is no max pages string make some calls to check if the pages exist using findPageCount()
-            // increase or decreasing by using binary search algorithm
-            val maxPage = findPageCount(urlTemplate, extension)
-
-            for (page in 1..maxPage) {
-                val url = urlTemplate.replaceAfterLast("/", "$page.$extension")
-                val pageObject = Page(page - 1, "", url)
-                pages.add(pageObject)
-            }
+        for (page in 1..maxPage) {
+            val url = urlTemplate.replaceAfterLast("/", "$page.$extension")
+            val pageObject = Page(page - 1, "", url)
+            pages.add(pageObject)
         }
 
         return pages
