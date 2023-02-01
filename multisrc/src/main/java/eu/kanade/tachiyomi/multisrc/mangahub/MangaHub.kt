@@ -204,12 +204,8 @@ abstract class MangaHub(
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(element.select("a[href*='$baseUrl/chapter/']").attr("href"))
-
-        val number = element.select(".text-secondary span").first().text()
-        val title = element.select(".text-secondary span").last().text()
-
-        chapter.name = "$number $title"
+        chapter.setUrlWithoutDomain(element.select("a[href*='$baseUrl/chapter/']:not([rel=nofollow])").attr("href"))
+        chapter.name = chapter.url.trimEnd('/').substringAfterLast('/').replace('-', ' ')
         chapter.date_upload = element.select("small.UovLc").first()?.text()?.let { parseChapterDate(it) } ?: 0
         return chapter
     }
