@@ -200,14 +200,34 @@ abstract class MangaHub(
     }
 
     // chapters
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val document = response.asJsoup()
+        val head = document.head()
+        return document.select(chapterListSelector()).map { chapterFromElement(it, head) }
+    }
+
     override fun chapterListSelector() = ".tab-content ul li"
 
-    override fun chapterFromElement(element: Element): SChapter {
+    private fun chapterFromElement(element: Element, head: Element): SChapter {
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(element.select("a[href*='$baseUrl/chapter/']:not([rel=nofollow])").attr("href"))
+        val potentialLinks = element.select("a[href*='$baseUrl/chapter/']:not([rel=nofollow])")
+        var visibleLink = ""
+        potentialLinks.forEach { a ->
+            val className = a.className()
+            val styles = head.select("style").html()
+            if (!styles.contains(".$className { display:none; }")) {
+                visibleLink = a.attr("href")
+                return@forEach
+            }
+        }
+        chapter.setUrlWithoutDomain(visibleLink)
         chapter.name = chapter.url.trimEnd('/').substringAfterLast('/').replace('-', ' ')
         chapter.date_upload = element.select("small.UovLc").first()?.text()?.let { parseChapterDate(it) } ?: 0
         return chapter
+    }
+
+    override fun chapterFromElement(element: Element): SChapter {
+        throw UnsupportedOperationException("Not Used")
     }
 
     private fun parseChapterDate(date: String): Long {
