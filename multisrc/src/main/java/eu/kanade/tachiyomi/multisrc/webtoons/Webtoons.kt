@@ -113,7 +113,7 @@ open class Webtoons(
         var maxChild = 0
 
         // For ongoing webtoons rows are ordered by descending popularity, count how many rows there are
-        document.select("div#dailyList > div").forEach { day ->
+        document.select("div#dailyList .daily_section").forEach { day ->
             day.select("li").count().let { rowCount ->
                 if (rowCount > maxChild) maxChild = rowCount
             }
@@ -121,7 +121,7 @@ open class Webtoons(
 
         // Process each row
         for (i in 1..maxChild) {
-            document.select("div#dailyList > div li:nth-child($i) a").map { mangas.add(popularMangaFromElement(it)) }
+            document.select("div#dailyList .daily_section li:nth-child($i) a").map { mangas.add(popularMangaFromElement(it)) }
         }
 
         // Add completed webtoons, no sorting needed
@@ -186,7 +186,7 @@ open class Webtoons(
         return GET(url.toString(), headers)
     }
 
-    override fun searchMangaSelector() = "#content > div.card_wrap.search li a"
+    override fun searchMangaSelector() = "#content > div.card_wrap.search ul:not(#filterLayer) li a"
 
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
