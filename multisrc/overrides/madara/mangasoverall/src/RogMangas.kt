@@ -7,12 +7,15 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class MangasOverall : Madara(
-    "Mangás Overall",
-    "https://mangasoverall.com",
+class RogMangas : Madara(
+    "ROG Mangás",
+    "https://rogmangas.com",
     "pt-BR",
     SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
 ) {
+
+    // Changed their name from Mangás Overall to ROG Mangás.
+    override val id: Long = 7865569692125193686
 
     override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(1, 2, TimeUnit.SECONDS)
