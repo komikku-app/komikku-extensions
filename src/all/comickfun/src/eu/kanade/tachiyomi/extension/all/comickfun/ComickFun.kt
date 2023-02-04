@@ -19,7 +19,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
+import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.Locale
 
 const val API_BASE = "https://api.comick.fun"
 
@@ -260,14 +262,20 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
             SChapter.create().apply {
                 url = "/comic/${mangaData.comic.slug}/${chapter.hid}-chapter-${chapter.chap}-$comickFunLang"
                 name = beautifyChapterName(chapter.vol, chapter.chap, chapter.title)
-                date_upload = DATE_FORMATTER.parse(chapter.created_at)!!.time
+                date_upload = chapter.created_at.let {
+                    try {
+                        DATE_FORMATTER.parse(it)?.time ?: 0L
+                    } catch (e: ParseException) {
+                        0L
+                    }
+                }
                 scanlator = chapter.group_name.joinToString().takeUnless { it.isBlank() }
             }
         }
     }
 
     private val DATE_FORMATTER by lazy {
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZ")
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH)
     }
 
     /** Chapter Pages **/
