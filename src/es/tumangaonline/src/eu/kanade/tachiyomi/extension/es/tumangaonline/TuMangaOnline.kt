@@ -183,17 +183,12 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         // Regular list of chapters
         val chapters = mutableListOf<SChapter>()
         document.select(regularChapterListSelector()).forEach { chapelement ->
-            val chapternumber = chapelement.select("a.btn-collapse").text()
-                .substringBefore(":")
-                .substringAfter("Capítulo")
-                .trim()
-                .toFloat()
-            val chaptername = chapelement.select("div.col-10.text-truncate").text()
+            val chaptername = chapelement.select("div.col-10.text-truncate").text().replace("&nbsp;", " ").trim()
             val scanelement = chapelement.select("ul.chapter-list > li")
             if (getScanlatorPref()) {
-                scanelement.forEach { chapters.add(regularChapterFromElement(it, chaptername, chapternumber)) }
+                scanelement.forEach { chapters.add(regularChapterFromElement(it, chaptername)) }
             } else {
-                scanelement.first { chapters.add(regularChapterFromElement(it, chaptername, chapternumber)) }
+                scanelement.first { chapters.add(regularChapterFromElement(it, chaptername)) }
             }
         }
         return chapters
@@ -209,10 +204,9 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             ?: 0
     }
     private fun regularChapterListSelector() = "div.chapters > ul.list-group li.p-0.list-group-item"
-    private fun regularChapterFromElement(element: Element, chName: String, number: Float) = SChapter.create().apply {
+    private fun regularChapterFromElement(element: Element, chName: String) = SChapter.create().apply {
         url = element.select("div.row > .text-right > a").attr("href")
         name = chName
-        chapter_number = number
         scanlator = element.select("div.col-md-6.text-truncate")?.text()
         date_upload = element.select("span.badge.badge-primary.p-2").first()?.text()?.let { parseChapterDate(it) }
             ?: 0
