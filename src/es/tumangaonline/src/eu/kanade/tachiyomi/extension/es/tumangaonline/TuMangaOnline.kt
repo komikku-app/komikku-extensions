@@ -70,7 +70,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/library?order_item=likes_count&order_dir=desc&filter_by=title$getSFWUrlPart&_pg=1&page=$page", headers)
 
-    override fun popularMangaNextPageSelector() = "a.page-link"
+    override fun popularMangaNextPageSelector() = "a[rel='next']"
 
     override fun popularMangaSelector() = "div.element"
 
@@ -214,18 +214,21 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     private fun parseChapterDate(date: String): Long = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(date)?.time
         ?: 0
     override fun pageListRequest(chapter: SChapter): Request {
-        val currentUrl = client.newCall(GET(chapter.url, headers)).execute().asJsoup().body().baseUri()
-        // Get /cascade instead of /paginate to get all pages at once
+        return GET(chapter.url, headers)
+    }
+    override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
+        val currentUrl = document.body().baseUri()
+
         val newUrl = if (getPageMethodPref() == "cascade" && currentUrl.contains("paginated")) {
             currentUrl.substringBefore("paginated") + "cascade"
         } else if (getPageMethodPref() == "paginated" && currentUrl.contains("cascade")) {
             currentUrl.substringBefore("cascade") + "paginated"
         } else currentUrl
-        return GET(newUrl, headers)
-    }
-    override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
+
+        val doc = client.newCall(GET(newUrl, headers)).execute().asJsoup()
+
         if (getPageMethodPref() == "cascade") {
-            document.select("div.viewer-container img").forEach {
+            doc.select("div.viewer-container img").forEach {
                 add(
                     Page(
                         size,
@@ -238,8 +241,8 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
                 )
             }
         } else {
-            val pageList = document.select("#viewer-pages-select").first().select("option").map { it.attr("value").toInt() }
-            val url = document.baseUri()
+            val pageList = doc.select("#viewer-pages-select").first().select("option").map { it.attr("value").toInt() }
+            val url = doc.baseUri()
             pageList.forEach {
                 add(Page(it, "$url/$it"))
             }
@@ -249,7 +252,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     override fun imageRequest(page: Page) = GET(page.imageUrl!!, headers)
 
     override fun imageUrlParse(document: Document): String {
-        return document.select("div.viewer-container > div.viewer-image-container > img.viewer-image").attr("src")
+        return document.select("div.viewer-container > div.img-container > img.viewer-image").attr("src")
     }
 
     private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/$PREFIX_LIBRARY/$id", headers)

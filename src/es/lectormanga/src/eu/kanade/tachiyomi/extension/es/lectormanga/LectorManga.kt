@@ -77,7 +77,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/library?order_item=likes_count&order_dir=desc&type=&filter_by=title&page=$page", headers)
 
-    override fun popularMangaNextPageSelector() = ".pagination .page-item:not(.disabled) a[rel='next']"
+    override fun popularMangaNextPageSelector() = "a[rel='next']"
 
     override fun popularMangaSelector() = ".col-6 .card"
 
@@ -247,25 +247,26 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
-        val currentUrl = client.newCall(GET(chapter.url, headers)).execute().asJsoup().body().baseUri()
+        return GET(chapter.url, headers)
+    }
 
-        // Get /cascade instead of /paginate to get all pages at once
+    override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
+        val currentUrl = document.body().baseUri()
+
         val newUrl = if (getPageMethodPref() == PAGE_METHOD_PREF_CASCADE && currentUrl.contains(PAGE_METHOD_PREF_PAGINATED)) {
             currentUrl.substringBefore(PAGE_METHOD_PREF_PAGINATED) + PAGE_METHOD_PREF_CASCADE
         } else if (getPageMethodPref() == PAGE_METHOD_PREF_PAGINATED && currentUrl.contains(PAGE_METHOD_PREF_CASCADE)) {
             currentUrl.substringBefore(PAGE_METHOD_PREF_CASCADE) + PAGE_METHOD_PREF_PAGINATED
         } else currentUrl
 
-        return GET(newUrl, headers)
-    }
+        val doc = client.newCall(GET(newUrl, headers)).execute().asJsoup()
 
-    override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
         if (getPageMethodPref() == PAGE_METHOD_PREF_CASCADE) {
-            document.select("div.viewer-image-container img").forEach {
+            doc.select("div.viewer-image-container img").forEach {
                 add(
                     Page(
                         size,
-                        document.baseUri(),
+                        doc.baseUri(),
                         it.let {
                             if (it.hasAttr("data-src")) it.attr("abs:data-src")
                             else it.attr("abs:src")
@@ -274,7 +275,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
                 )
             }
         } else {
-            val body = document.select("script:containsData(var dirPath)").first().data()
+            val body = doc.select("script:containsData(var dirPath)").first().data()
             val path = body.substringAfter("var dirPath = '").substringBefore("'")
 
             body.substringAfter("var images = JSON.parse('[")
@@ -282,7 +283,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
                 .replace("\"", "")
                 .split(",")
                 .forEach {
-                    add(Page(size, document.baseUri(), path + it))
+                    add(Page(size, doc.baseUri(), path + it))
                 }
         }
     }
