@@ -41,7 +41,9 @@ object ScrambledImageInterceptor : Interceptor {
             return BigInteger(1, md.digest(input.toByteArray())).toString(16).padStart(32, '0')
         }
 
-        return if (aid >= 268850) {
+        return if (aid >= 421926) {
+            2 * (md5(aid.toString() + imgIndex).last().toInt() % 8) + 2
+        } else if (aid >= 268850) {
             2 * (md5(aid.toString() + imgIndex).last().toInt() % 10) + 2
         } else {
             10

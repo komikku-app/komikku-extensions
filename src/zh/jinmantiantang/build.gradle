@@ -5,7 +5,7 @@ ext {
     extName = 'Jinman Tiantang'
     pkgNameSuffix = 'zh.jinmantiantang'
     extClass = '.Jinmantiantang'
-    extVersionCode = 33
+    extVersionCode = 34
     isNsfw = true
 }
 
