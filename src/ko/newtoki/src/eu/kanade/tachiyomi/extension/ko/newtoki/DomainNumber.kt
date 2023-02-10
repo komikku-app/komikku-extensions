@@ -20,7 +20,7 @@ import java.io.IOException
  * the number is decremented by 1 initially,
  * and increments every 8 days which is a bit slower than the average.
  */
-val fallbackDomainNumber get() = (217 - 1) + ((System.currentTimeMillis() - 1644282000_000) / 691200_000).toInt()
+val fallbackDomainNumber get() = (217 - 1) + ((System.currentTimeMillis() - 1675818000_000) / 691200_000).toInt()
 
 var domainNumber = ""
     get() {
