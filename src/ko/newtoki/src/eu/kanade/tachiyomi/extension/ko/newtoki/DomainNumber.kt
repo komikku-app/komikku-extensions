@@ -15,12 +15,12 @@ import java.io.IOException
  * It was merged after shutdown of ManaMoa.
  * This is by the head of Manamoa, as they decided to move to Newtoki.
  *
- * Updated on 2022-10-16, see `domain_log.md`.
+ * Updated on 2023-02-10, see `domain_log.md`.
  * To avoid going too fast and to utilize redirections,
  * the number is decremented by 1 initially,
- * and increments every 9 days which is a bit slower than the average.
+ * and increments every 8 days which is a bit slower than the average.
  */
-val fallbackDomainNumber get() = (158 - 1) + ((System.currentTimeMillis() - 1665882000_000) / 777600_000).toInt()
+val fallbackDomainNumber get() = (217 - 1) + ((System.currentTimeMillis() - 1644282000_000) / 691200_000).toInt()
 
 var domainNumber = ""
     get() {
