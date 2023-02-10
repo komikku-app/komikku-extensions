@@ -16,7 +16,7 @@
 
                 <!-- LibUrlActivity sites can be added here. -->
                 <data
-                    android:host="yaoilib.me"
+                    android:host="v1.yaoilib.net"
                     android:pathPattern="/..*/v..*"
                     android:scheme="https" />
             </intent-filter>
