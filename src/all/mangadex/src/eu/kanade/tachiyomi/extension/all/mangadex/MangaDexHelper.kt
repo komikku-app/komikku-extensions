@@ -269,9 +269,9 @@ class MangaDexHelper(lang: String) {
             val titleMap = mangaDataDto.attributes!!.title
             val dirtyTitle =
                 titleMap.values.firstOrNull() // use literally anything from title as first resort
-                ?: mangaDataDto.attributes.altTitles
-                    .find { (it[lang] ?: it["en"]) !== null }
-                    ?.values?.singleOrNull()  // find something else from alt titles
+                    ?: mangaDataDto.attributes.altTitles
+                        .find { (it[lang] ?: it["en"]) !== null }
+                        ?.values?.singleOrNull() // find something else from alt titles
             title = (dirtyTitle ?: "").removeEntitiesAndMarkdown()
 
             coverFileName?.let {

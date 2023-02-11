@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.multisrc.heancms
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -184,26 +183,17 @@ abstract class HeanCms(
         return MangasPage(mangaList, hasNextPage = false)
     }
 
-    // Workaround to allow "Open in browser" use the real URL.
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(seriesDetailsRequest(manga))
-            .asObservableSuccess()
-            .map { response ->
-                mangaDetailsParse(response).apply { initialized = true }
-            }
-    }
-
-    override fun mangaDetailsRequest(manga: SManga): Request {
+    override fun getMangaUrl(manga: SManga): String {
         val seriesSlug = manga.url
             .substringAfterLast("/")
             .replace(TIMESTAMP_REGEX, "")
 
         val currentSlug = seriesSlugMap?.get(seriesSlug)?.slug ?: seriesSlug
 
-        return GET("$baseUrl/series/$currentSlug", headers)
+        return "$baseUrl/series/$currentSlug"
     }
 
-    private fun seriesDetailsRequest(manga: SManga): Request {
+    override fun mangaDetailsRequest(manga: SManga): Request {
         val seriesSlug = manga.url
             .substringAfterLast("/")
             .replace(TIMESTAMP_REGEX, "")
@@ -231,7 +221,7 @@ abstract class HeanCms(
         }
     }
 
-    override fun chapterListRequest(manga: SManga): Request = seriesDetailsRequest(manga)
+    override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.parseAs<HeanCmsSeriesDto>()
@@ -243,6 +233,8 @@ abstract class HeanCms(
             .filter { it.date_upload <= currentTimestamp }
             .reversed()
     }
+
+    override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url
 
     override fun pageListRequest(chapter: SChapter): Request {
         val chapterId = chapter.url.substringAfterLast("#")

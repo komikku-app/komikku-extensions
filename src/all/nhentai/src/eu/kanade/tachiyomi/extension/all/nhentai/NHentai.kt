@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
@@ -222,6 +223,7 @@ open class NHentai(
                 .plus("Favorited by: ${document.select("div#info i.fa-heart + span span").text().removeSurrounding("(", ")")}\n")
                 .plus(getTagDescription(document))
             genre = getTags(document)
+            update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
         }
     }
 

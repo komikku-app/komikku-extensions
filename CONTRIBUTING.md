@@ -236,10 +236,10 @@ apply from: "$rootDir/common.gradle"
 | `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.extension`. The language and the site name should be enough. Remember your extension code implementation must be placed in this package. |
 | `extClass` | Points to the class that implements `Source`. You can use a relative path starting with a dot (the package name is the base path). This is used to find and instantiate the source(s). |
 | `extVersionCode` | The extension version code. This must be a positive integer and incremented with any change to the code. |
-| `libVersion` | (Optional, defaults to `1.3`) The version of the [extensions library](https://github.com/tachiyomiorg/extensions-lib) used. |
+| `libVersion` | (Optional, defaults to `1.4`) The version of the [extensions library](https://github.com/tachiyomiorg/extensions-lib) used. |
 | `isNsfw` | (Optional, defaults to `false`) Flag to indicate that a source contains NSFW content. |
 
-The extension's version name is generated automatically by concatenating `libVersion` and `extVersionCode`. With the example used above, the version would be `1.3.1`.
+The extension's version name is generated automatically by concatenating `libVersion` and `extVersionCode`. With the example used above, the version would be `1.4.1`.
 
 ### Core dependencies
 

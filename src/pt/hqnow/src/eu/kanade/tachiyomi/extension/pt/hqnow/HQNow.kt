@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.pt.hqnow
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -164,16 +163,9 @@ class HQNow : HttpSource() {
         return MangasPage(comicList, hasNextPage = false)
     }
 
-    // Workaround to allow "Open in browser" use the real URL.
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(mangaDetailsApiRequest(manga))
-            .asObservableSuccess()
-            .map { response ->
-                mangaDetailsParse(response).apply { initialized = true }
-            }
-    }
+    override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
 
-    private fun mangaDetailsApiRequest(manga: SManga): Request {
+    override fun mangaDetailsRequest(manga: SManga): Request {
         val comicBookId = manga.url.substringAfter("/hq/").substringBefore("/")
 
         val query = buildQuery {
@@ -219,7 +211,7 @@ class HQNow : HttpSource() {
         status = comicBook.status.orEmpty().toStatus()
     }
 
-    override fun chapterListRequest(manga: SManga): Request = mangaDetailsApiRequest(manga)
+    override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = json.parseToJsonElement(response.body!!.string()).jsonObject
@@ -239,7 +231,7 @@ class HQNow : HttpSource() {
                 "/chapter/${chapter.id}/page/1"
         }
 
-    // Pages
+    override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url
 
     override fun pageListRequest(chapter: SChapter): Request {
         val chapterId = chapter.url.substringAfter("/chapter/").substringBefore("/")

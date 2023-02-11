@@ -367,22 +367,12 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
     // Manga Details section
 
-    // Workaround to allow "Open in WebView" to show a webpage instead of JSON.
-    // TODO: Replace with getMangaUrl when the repository is using extensions-lib 1.4
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(apiMangaDetailsRequest(manga))
-            .asObservableSuccess()
-            .map { response ->
-                mangaDetailsParse(response).apply { initialized = true }
-            }
-    }
-
-    override fun mangaDetailsRequest(manga: SManga): Request {
+    override fun getMangaUrl(manga: SManga): String {
         // TODO: Remove once redirect for /manga is fixed.
         val title = manga.title
         val url = "${baseUrl}${manga.url.replace("manga", "title")}"
-        val shareUrl = "$url/" + helper.titleToSlug(title)
-        return GET(shareUrl, headers)
+
+        return "$url/" + helper.titleToSlug(title)
     }
 
     /**
@@ -390,7 +380,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
      *
      * @throws Exception if the url is the old format so people migrate
      */
-    private fun apiMangaDetailsRequest(manga: SManga): Request {
+    override fun mangaDetailsRequest(manga: SManga): Request {
         if (!helper.containsUuid(manga.url.trim())) {
             throw Exception(helper.intl.migrateWarning)
         }
@@ -546,6 +536,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             .filterNot { it.attributes!!.isInvalid }
             .map(helper::createChapter)
     }
+
+    override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url
 
     override fun pageListRequest(chapter: SChapter): Request {
         if (!helper.containsUuid(chapter.url)) {

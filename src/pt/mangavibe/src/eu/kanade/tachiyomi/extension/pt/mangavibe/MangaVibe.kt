@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.pt.mangavibe
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -160,16 +159,9 @@ class MangaVibe : HttpSource() {
 
     private fun searchMangaFromObject(comic: MangaVibeComicDto): SManga = popularMangaFromObject(comic)
 
-    // Workaround to allow "Open in browser" use the real URL.
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(mangaDetailsApiRequest(manga))
-            .asObservableSuccess()
-            .map { response ->
-                mangaDetailsParse(response).apply { initialized = true }
-            }
-    }
+    override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
 
-    private fun mangaDetailsApiRequest(manga: SManga): Request {
+    override fun mangaDetailsRequest(manga: SManga): Request {
         val comicId = manga.url.substringAfter("/manga/")
             .substringBefore("/")
 

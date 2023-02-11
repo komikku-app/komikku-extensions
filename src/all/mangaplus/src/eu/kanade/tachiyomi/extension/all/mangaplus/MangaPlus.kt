@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -132,9 +131,9 @@ class MangaPlus(
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.matches(ID_SEARCH_PATTERN)) {
-            return titleDetailsRequest(query.removePrefix(PREFIX_ID_SEARCH))
+            return mangaDetailsRequest(query.removePrefix(PREFIX_ID_SEARCH))
         } else if (query.matches(CHAPTER_ID_SEARCH_PATTERN)) {
-            return mangaViewerRequest(query.removePrefix(PREFIX_CHAPTER_ID_SEARCH))
+            return pageListRequest(query.removePrefix(PREFIX_CHAPTER_ID_SEARCH))
         }
 
         val newHeaders = headersBuilder()
@@ -170,7 +169,7 @@ class MangaPlus(
             val cachedTitle = titleCache?.get(titleId)
 
             val title = cachedTitle?.toSManga() ?: run {
-                val titleRequest = titleDetailsRequest(titleId.toString())
+                val titleRequest = mangaDetailsRequest(titleId.toString())
                 val titleResult = client.newCall(titleRequest).execute().asMangaPlusResponse()
 
                 checkNotNull(titleResult.success) {
@@ -201,7 +200,12 @@ class MangaPlus(
         return MangasPage(searchResults.map(Title::toSManga), hasNextPage = false)
     }
 
-    private fun titleDetailsRequest(mangaUrl: String): Request {
+    // Remove the '#' and map to the new url format used in website.
+    override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url.substring(1)
+
+    override fun mangaDetailsRequest(manga: SManga): Request = mangaDetailsRequest(manga.url)
+
+    private fun mangaDetailsRequest(mangaUrl: String): Request {
         val titleId = mangaUrl.substringAfterLast("/")
 
         val newHeaders = headersBuilder()
@@ -209,20 +213,6 @@ class MangaPlus(
             .build()
 
         return GET("$API_URL/title_detail?title_id=$titleId&format=json", newHeaders)
-    }
-
-    // Workaround to allow "Open in browser" use the real URL.
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(titleDetailsRequest(manga.url))
-            .asObservableSuccess()
-            .map { response ->
-                mangaDetailsParse(response).apply { initialized = true }
-            }
-    }
-
-    override fun mangaDetailsRequest(manga: SManga): Request {
-        // Remove the '#' and map to the new url format used in website.
-        return GET(baseUrl + manga.url.substring(1), headers)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
@@ -245,7 +235,7 @@ class MangaPlus(
         return titleDetails.toSManga()
     }
 
-    override fun chapterListRequest(manga: SManga): Request = titleDetailsRequest(manga.url)
+    override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga.url)
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.asMangaPlusResponse()
@@ -269,13 +259,16 @@ class MangaPlus(
             .map(Chapter::toSChapter)
     }
 
+    // Remove the '#' and map to the new url format used in website.
+    override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url.substring(1)
+
     override fun pageListRequest(chapter: SChapter): Request {
         val chapterId = chapter.url.substringAfterLast("/")
 
-        return mangaViewerRequest(chapterId)
+        return pageListRequest(chapterId)
     }
 
-    private fun mangaViewerRequest(chapterId: String): Request {
+    private fun pageListRequest(chapterId: String): Request {
         val newHeaders = headersBuilder()
             .set("Referer", "$baseUrl/viewer/$chapterId")
             .build()

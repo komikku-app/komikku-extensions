@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.pt.nixmangas
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -84,19 +83,12 @@ class NixMangas : HttpSource() {
         return MangasPage(workList, result.mangas.hasNextPage)
     }
 
-    // Workaround to allow "Open in browser" use the real URL.
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(mangaDetailsApiRequest(manga.url))
-            .asObservableSuccess()
-            .map { response ->
-                mangaDetailsParse(response).apply { initialized = true }
-            }
-    }
+    override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
 
-    private fun mangaDetailsApiRequest(mangaUrl: String): Request {
+    override fun mangaDetailsRequest(manga: SManga): Request {
         // Their API doesn't have an endpoint for the manga details, so we
         // use their site wrapped API instead for now.
-        val apiUrl = (baseUrl + mangaUrl).toHttpUrl().newBuilder()
+        val apiUrl = (baseUrl + manga.url).toHttpUrl().newBuilder()
             .addQueryParameter("_data", "routes/__app/obras/\$slug")
             .toString()
 
@@ -109,7 +101,7 @@ class NixMangas : HttpSource() {
         return result.manga.toSManga()
     }
 
-    override fun chapterListRequest(manga: SManga): Request = mangaDetailsApiRequest(manga.url)
+    override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.parseAs<NixMangasDetailsDto>()
@@ -121,6 +113,8 @@ class NixMangas : HttpSource() {
             .filter { it.date_upload <= currentTimeStamp }
             .sortedByDescending(SChapter::chapter_number)
     }
+
+    override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url
 
     override fun pageListRequest(chapter: SChapter): Request {
         val apiUrl = (baseUrl + chapter.url).toHttpUrl().newBuilder()

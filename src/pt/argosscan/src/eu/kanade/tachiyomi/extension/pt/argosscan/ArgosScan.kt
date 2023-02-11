@@ -7,7 +7,6 @@ import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -127,16 +126,9 @@ class ArgosScan : HttpSource(), ConfigurableSource {
 
     override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
 
-    // Workaround to allow "Open in browser" use the real URL.
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(mangaDetailsApiRequest(manga))
-            .asObservableSuccess()
-            .map { response ->
-                mangaDetailsParse(response).apply { initialized = true }
-            }
-    }
+    override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
 
-    private fun mangaDetailsApiRequest(manga: SManga): Request {
+    override fun mangaDetailsRequest(manga: SManga): Request {
         val mangaId = manga.url.substringAfter("obras/").toInt()
 
         val payload = buildMangaDetailsQueryPayload(mangaId)
@@ -172,7 +164,7 @@ class ArgosScan : HttpSource(), ConfigurableSource {
         genre = project.tags.orEmpty().sortedBy(ArgosTagDto::name).joinToString { it.name }
     }
 
-    override fun chapterListRequest(manga: SManga): Request = mangaDetailsApiRequest(manga)
+    override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.parseAs<ArgosResponseDto<ArgosProjectDto>>()
@@ -191,6 +183,8 @@ class ArgosScan : HttpSource(), ConfigurableSource {
         date_upload = chapter.createAt!!.toDate()
         url = "/leitor/${chapter.id}"
     }
+
+    override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url
 
     override fun pageListRequest(chapter: SChapter): Request {
         if (chapter.url.removePrefix("/leitor/").toIntOrNull() != null) {

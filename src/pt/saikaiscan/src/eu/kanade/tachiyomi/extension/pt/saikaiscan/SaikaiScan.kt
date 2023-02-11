@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.pt.saikaiscan
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -105,16 +104,9 @@ class SaikaiScan : HttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
 
-    // Workaround to allow "Open in browser" use the real URL.
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(storyDetailsRequest(manga))
-            .asObservableSuccess()
-            .map { response ->
-                mangaDetailsParse(response).apply { initialized = true }
-            }
-    }
+    override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
 
-    private fun storyDetailsRequest(manga: SManga): Request {
+    override fun mangaDetailsRequest(manga: SManga): Request {
         val storySlug = manga.url.substringAfterLast("/")
 
         val apiHeaders = headersBuilder()
@@ -163,6 +155,8 @@ class SaikaiScan : HttpSource() {
             .map { it.toSChapter(story.slug) }
             .sortedByDescending(SChapter::chapter_number)
     }
+
+    override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url
 
     override fun pageListRequest(chapter: SChapter): Request {
         val releaseId = chapter.url
