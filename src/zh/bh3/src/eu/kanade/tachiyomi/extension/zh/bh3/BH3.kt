@@ -80,7 +80,7 @@ class BH3 : ParsedHttpSource() {
     override fun chapterFromElement(element: Element) = throw Exception("Not Used")
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val jsonResult = json.parseToJsonElement(response.body!!.string()).jsonArray
+        val jsonResult = json.parseToJsonElement(response.body.string()).jsonArray
 
         return jsonResult.map { jsonEl -> createChapter(jsonEl.jsonObject) }
     }

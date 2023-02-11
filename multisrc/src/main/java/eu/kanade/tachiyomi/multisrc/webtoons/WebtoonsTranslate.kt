@@ -62,7 +62,7 @@ open class WebtoonsTranslate(
 
     override fun popularMangaParse(response: Response): MangasPage {
         val offset = response.request.url.queryParameter("offset")!!.toInt()
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = json.parseToJsonElement(response.body.string()).jsonObject
         val responseCode = result["code"]!!.jsonPrimitive.content
 
         if (responseCode != "000") {
@@ -115,7 +115,7 @@ open class WebtoonsTranslate(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = mangaRequest(page, 200)
 
     private fun searchMangaParse(response: Response, query: String): MangasPage {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = json.parseToJsonElement(response.body.string()).jsonObject
         val responseCode = result["code"]!!.jsonPrimitive.content
 
         if (responseCode != "000") {
@@ -177,7 +177,7 @@ open class WebtoonsTranslate(
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = json.parseToJsonElement(response.body.string()).jsonObject
         val responseCode = result["code"]!!.jsonPrimitive.content
 
         if (responseCode != "000") {
@@ -214,7 +214,7 @@ open class WebtoonsTranslate(
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = json.parseToJsonElement(response.body.string()).jsonObject
 
         return result["result"]!!.jsonObject["imageInfo"]!!.jsonArray
             .mapIndexed { i, jsonEl ->

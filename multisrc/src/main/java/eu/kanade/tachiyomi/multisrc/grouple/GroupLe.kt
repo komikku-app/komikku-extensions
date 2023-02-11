@@ -251,7 +251,7 @@ abstract class GroupLe(
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val html = response.body!!.string()
+        val html = response.body.string()
 
         var readerMark = "rm_h.initReader( ["
 

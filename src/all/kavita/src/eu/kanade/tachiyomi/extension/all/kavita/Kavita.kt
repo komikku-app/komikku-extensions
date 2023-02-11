@@ -126,7 +126,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                     Throwable("Error. Request body is empty"),
                 )
             }
-            json.decodeFromString(it.body?.string().orEmpty())
+            json.decodeFromString(it.body.string())
         }
     private inline fun <reified T : Enum<T>> safeValueOf(type: String): T {
         return java.lang.Enum.valueOf(T::class.java, type)
@@ -1175,7 +1175,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                                     emptyList()
                                 }
                             } catch (e: Exception) {
-                                Log.e(LOG_TAG, "[Filter] Error decoding JSON for genres filter -> ${response.body!!}", e)
+                                Log.e(LOG_TAG, "[Filter] Error decoding JSON for genres filter -> ${response.body}", e)
                                 emptyList()
                             }
                         }

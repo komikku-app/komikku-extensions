@@ -47,7 +47,7 @@ class Mango : ConfigurableSource, UnmeteredSource, HttpSource() {
     // Our popular manga are just our library of manga
     override fun popularMangaParse(response: Response): MangasPage {
         val result = try {
-            json.decodeFromString<JsonObject>(response.body!!.string())
+            json.decodeFromString<JsonObject>(response.body.string())
         } catch (e: Exception) {
             apiCookies = ""
             throw Exception("Login Likely Failed. Try Refreshing.")
@@ -122,7 +122,7 @@ class Mango : ConfigurableSource, UnmeteredSource, HttpSource() {
     // This will just return the same thing as the main library endpoint
     override fun mangaDetailsParse(response: Response): SManga {
         val result = try {
-            json.decodeFromString<JsonObject>(response.body!!.string())
+            json.decodeFromString<JsonObject>(response.body.string())
         } catch (e: Exception) {
             apiCookies = ""
             throw Exception("Login Likely Failed. Try Refreshing.")
@@ -140,7 +140,7 @@ class Mango : ConfigurableSource, UnmeteredSource, HttpSource() {
     // The chapter url will contain how many pages the chapter contains for our page list endpoint
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = try {
-            json.decodeFromString<JsonObject>(response.body!!.string())
+            json.decodeFromString<JsonObject>(response.body.string())
         } catch (e: Exception) {
             apiCookies = ""
             throw Exception("Login Likely Failed. Try Refreshing.")

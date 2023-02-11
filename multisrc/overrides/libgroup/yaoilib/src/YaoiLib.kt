@@ -27,7 +27,7 @@ class YaoiLib : LibGroup("YaoiLib", "https://v1.yaoilib.net", "ru") {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (csrfToken.isEmpty()) {
             val tokenResponse = client.newCall(popularMangaRequest(page)).execute()
-            val resBody = tokenResponse.body!!.string()
+            val resBody = tokenResponse.body.string()
             csrfToken = "_token\" content=\"(.*)\"".toRegex().find(resBody)!!.groups[1]!!.value
         }
         val url = super.searchMangaRequest(page, query, filters).url.newBuilder()

@@ -55,7 +55,7 @@ class WuqiManga : SinMH("57漫画", "http://www.wuqimh.net") {
 
     override val imageHost: String by lazy {
         client.newCall(GET("$mobileUrl/templates_pc/default/scripts/configs.js", headers)).execute().let {
-            Regex("""\['(.+?)']""").find(it.body!!.string())!!.groupValues[1].run { "http://$this" }
+            Regex("""\['(.+?)']""").find(it.body.string())!!.groupValues[1].run { "http://$this" }
         }
     }
 

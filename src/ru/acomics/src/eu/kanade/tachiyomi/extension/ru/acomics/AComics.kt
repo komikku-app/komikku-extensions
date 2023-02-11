@@ -42,7 +42,7 @@ class AComics : ParsedHttpSource() {
                 .build()
 
             chain.proceed(newReq)
-        }.build()!!
+        }.build()
 
     override val supportsLatest = true
 

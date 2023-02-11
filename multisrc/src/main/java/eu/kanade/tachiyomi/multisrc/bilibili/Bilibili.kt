@@ -412,7 +412,7 @@ abstract class Bilibili(
     }
 
     protected inline fun <reified T> Response.parseAs(): BilibiliResultDto<T> = use {
-        json.decodeFromString(it.body?.string().orEmpty())
+        json.decodeFromString(it.body.string())
     }
 
     private fun String.toDate(): Long {

@@ -138,7 +138,7 @@ abstract class MangAdventure(
 
     /** Decodes the JSON response as an object. */
     private inline fun <reified T> Response.decode() =
-        json.decodeFromJsonElement<T>(json.parseToJsonElement(body!!.string()))
+        json.decodeFromJsonElement<T>(json.parseToJsonElement(body.string()))
 
     /** Converts a [Series] object to an [SManga]. */
     private fun mangaFromJSON(series: Series) =

@@ -127,7 +127,7 @@ class Mangabz : MangabzTheme("Mangabz", ""), ConfigurableSource {
         }
 
         return client.newCall(GET(page.url, headers)).asObservableSuccess().map {
-            val script = Unpacker.unpack(it.body!!.string())
+            val script = Unpacker.unpack(it.body.string())
             val parser = SubstringExtractor(script)
             val prefix = parser.substringBetween("pix=\"", "\"")
             // 2 pages, or 15 if server cache is ready

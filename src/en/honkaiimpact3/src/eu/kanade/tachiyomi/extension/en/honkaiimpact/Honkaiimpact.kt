@@ -95,7 +95,7 @@ class Honkaiimpact : ParsedHttpSource() {
     override fun chapterListRequest(manga: SManga) = GET(baseUrl + manga.url + "/get_chapter", headers)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val jsonResult = json.parseToJsonElement(response.body!!.string()).jsonArray
+        val jsonResult = json.parseToJsonElement(response.body.string()).jsonArray
 
         return jsonResult.map { jsonEl -> createChapter(jsonEl.jsonObject) }
     }

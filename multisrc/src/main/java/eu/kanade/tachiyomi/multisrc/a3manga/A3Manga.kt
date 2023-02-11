@@ -183,7 +183,7 @@ open class A3Manga(
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
 
     private inline fun <reified T> Response.parseAs(): T {
-        return json.decodeFromString(body?.string().orEmpty())
+        return json.decodeFromString(body.string())
     }
 
     // https://stackoverflow.com/a/66614516

@@ -251,7 +251,7 @@ open class MangaReader(
         )
 
     private fun Response.parseHtmlProperty(): Document {
-        val html = Json.parseToJsonElement(body!!.string()).jsonObject["html"]!!.jsonPrimitive.content
+        val html = Json.parseToJsonElement(body.string()).jsonObject["html"]!!.jsonPrimitive.content
         return Jsoup.parseBodyFragment(html)
     }
 }

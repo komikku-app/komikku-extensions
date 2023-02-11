@@ -20,7 +20,7 @@ object ApiSearch {
             return MangasPage(emptyList(), false)
         }
         // "var g_search_data = [...];"
-        val js = response.body!!.string().run { substring(20, length - 1) }
+        val js = response.body.string().run { substring(20, length - 1) }
         val data: List<MangaDto> = json.decodeFromString(js)
         return MangasPage(data.map { it.toSManga() }, false)
     }

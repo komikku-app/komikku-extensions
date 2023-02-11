@@ -267,7 +267,7 @@ open class BatoTo(
     }
 
     private fun queryHistoryParse(response: Response): MangasPage {
-        val json = json.decodeFromString<JsonObject>(response.body!!.string())
+        val json = json.decodeFromString<JsonObject>(response.body.string())
         val html = json.jsonObject["html"]!!.jsonPrimitive.content
 
         val document = Jsoup.parse(html, response.request.url.toString())
@@ -358,7 +358,7 @@ open class BatoTo(
     }
 
     private fun altChapterParse(response: Response, title: String): List<SChapter> {
-        return Jsoup.parse(response.body!!.string(), response.request.url.toString(), Parser.xmlParser())
+        return Jsoup.parse(response.body.string(), response.request.url.toString(), Parser.xmlParser())
             .select("channel > item").map { item ->
                 SChapter.create().apply {
                     url = item.selectFirst("guid").text()

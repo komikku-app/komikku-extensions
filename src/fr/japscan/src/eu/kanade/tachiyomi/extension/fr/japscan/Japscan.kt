@@ -150,7 +150,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
                     throw Exception("Code ${searchResponse.code} inattendu")
                 }
 
-                val jsonResult = json.parseToJsonElement(searchResponse.body!!.string()).jsonArray
+                val jsonResult = json.parseToJsonElement(searchResponse.body.string()).jsonArray
 
                 if (jsonResult.isEmpty()) {
                     Log.d("japscan", "Search not returning anything, using duckduckgo")
@@ -174,7 +174,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage {
         if ("live-search" in response.request.url.toString()) {
-            val jsonResult = json.parseToJsonElement(response.body!!.string()).jsonArray
+            val jsonResult = json.parseToJsonElement(response.body.string()).jsonArray
 
             val mangaList = jsonResult.map { jsonEl -> searchMangaFromJson(jsonEl.jsonObject) }
 
@@ -276,7 +276,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
             it.attr("src").contains("zjs", ignoreCase = true)
         }.attr("src")
         Log.d("japscan", "ZJS at $zjsurl")
-        val zjs = client.newCall(GET(baseUrl + zjsurl, headers)).execute().body!!.string()
+        val zjs = client.newCall(GET(baseUrl + zjsurl, headers)).execute().body.string()
 
         val stringLookupTables = decodingStringsRe.findAll(zjs).mapNotNull {
             it.groupValues[1].takeIf {

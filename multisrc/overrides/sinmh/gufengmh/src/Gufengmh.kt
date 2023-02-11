@@ -41,7 +41,7 @@ class Gufengmh : SinMH("古风漫画网", "https://www.123gf.com") {
                 val response = client.newCall(GET(baseUrl + prevUrl, headers)).execute()
                 chapter.url = buildString {
                     append(prevUrl, 0, prevUrl.lastIndexOf('/') + 1)
-                    append(ProgressiveParser(response.body!!.string()).substringBetween("""nextChapterData = {"id":""", ","))
+                    append(ProgressiveParser(response.body.string()).substringBetween("""nextChapterData = {"id":""", ","))
                     append(".html")
                 }
             }

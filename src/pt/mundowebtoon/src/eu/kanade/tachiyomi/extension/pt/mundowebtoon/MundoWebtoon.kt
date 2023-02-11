@@ -165,7 +165,7 @@ class MundoWebtoon : ParsedHttpSource() {
             return response
         }
 
-        val newBody = response.body!!.string()
+        val newBody = response.body.string()
             .replace("\t", "")
             .replace(SCRIPT_REGEX, "")
             .replace(HEAD_REGEX, "<head></head>")

@@ -51,7 +51,7 @@ class Kuaikanmanhua : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val body = response.body!!.string()
+        val body = response.body.string()
         val jsonList = json.parseToJsonElement(body).jsonObject["data"]!!
             .jsonObject["topics"]!!
             .jsonArray
@@ -119,7 +119,7 @@ class Kuaikanmanhua : HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val body = response.body!!.string()
+        val body = response.body.string()
         val jsonObj = json.parseToJsonElement(body).jsonObject["data"]!!.jsonObject
         if (jsonObj["hit"] != null) {
             return parseMangaJsonArray(jsonObj["hit"]!!.jsonArray, true)
@@ -139,7 +139,7 @@ class Kuaikanmanhua : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val data = json.parseToJsonElement(response.body!!.string())
+        val data = json.parseToJsonElement(response.body.string())
             .jsonObject["data"]!!
             .jsonObject
 
@@ -160,7 +160,7 @@ class Kuaikanmanhua : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val data = json.parseToJsonElement(response.body!!.string())
+        val data = json.parseToJsonElement(response.body.string())
             .jsonObject["data"]!!
             .jsonObject
         val chaptersJson = data["comics"]!!.jsonArray

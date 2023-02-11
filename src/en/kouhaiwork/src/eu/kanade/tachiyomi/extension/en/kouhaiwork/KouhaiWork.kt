@@ -154,6 +154,6 @@ class KouhaiWork : HttpSource() {
 
     private inline fun <reified T> Response.decode(key: String = "data") =
         json.decodeFromJsonElement<T>(
-            json.parseToJsonElement(body!!.string()).jsonObject[key]!!,
+            json.parseToJsonElement(body.string()).jsonObject[key]!!,
         )
 }

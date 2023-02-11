@@ -153,7 +153,7 @@ abstract class MMRCMS(
     override fun searchMangaParse(response: Response): MangasPage {
         return if (listOf("query", "q").any { it in response.request.url.queryParameterNames }) {
             // If a search query was specified, use search instead!
-            val jsonArray = json.decodeFromString<JsonObject>(response.body!!.string()).let {
+            val jsonArray = json.decodeFromString<JsonObject>(response.body.string()).let {
                 it["suggestions"]!!.jsonArray
             }
             MangasPage(

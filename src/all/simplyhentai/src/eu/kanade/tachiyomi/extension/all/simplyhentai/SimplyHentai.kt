@@ -216,7 +216,7 @@ open class SimplyHentai(override val lang: String) : ConfigurableSource, HttpSou
         get() = preferences.getString("blacklist", "")!!
 
     private inline fun <reified T> Response.decode() =
-        json.decodeFromString<T>(body!!.string())
+        json.decodeFromString<T>(body.string())
 
     override fun imageUrlParse(response: Response) =
         throw UnsupportedOperationException("Not used")

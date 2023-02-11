@@ -305,7 +305,7 @@ class ZeroScans : HttpSource() {
 
     // Helpers
     private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromString(it.body?.string().orEmpty())
+        json.decodeFromString(it.body.string())
     }
 
     private fun comicsDataRequest(): Request {

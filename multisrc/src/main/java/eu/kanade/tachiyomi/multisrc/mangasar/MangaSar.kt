@@ -270,7 +270,7 @@ abstract class MangaSar(
     }
 
     protected inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromString(body?.string().orEmpty())
+        json.decodeFromString(body.string())
     }
 
     protected fun String.toDate(): Long {

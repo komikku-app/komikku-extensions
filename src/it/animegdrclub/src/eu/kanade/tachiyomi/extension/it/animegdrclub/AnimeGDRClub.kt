@@ -65,7 +65,7 @@ class AnimeGDRClub : ParsedHttpSource() {
                 }
             }
 
-            return GET("${if (status.isNotEmpty()) "$baseUrl/serie.php#stati=$status" else url}", headers)
+            return GET(if (status.isNotEmpty()) "$baseUrl/serie.php#stati=$status" else url.toString(), headers)
         }
     }
     //endregion
@@ -80,12 +80,12 @@ class AnimeGDRClub : ParsedHttpSource() {
 
         if ((encFrags[0].isNotEmpty()) and (encFrags[0] != "null")) {
             nume = 1
-            if (encFrags[0].startsWith("stati=")) {
-                sele = encFrags.map {
+            sele = if (encFrags[0].startsWith("stati=")) {
+                encFrags.joinToString(", ") {
                     ".${it.replace("stati=", "")} > .manga"
-                }.joinToString(", ")
+                }
             } else {
-                sele = "div.manga:contains(${encFrags.joinToString("-")})"
+                "div.manga:contains(${encFrags.joinToString("-")})"
             }
         }
 
@@ -136,9 +136,9 @@ class AnimeGDRClub : ParsedHttpSource() {
             infoElement.text().contains("Interrotto") -> SManga.ON_HIATUS
             else -> SManga.UNKNOWN
         }
-        manga.genre = infoElement.select("span.generi > a").map {
+        manga.genre = infoElement.select("span.generi > a").joinToString(", ") {
             it.text()
-        }.joinToString(", ")
+        }
         manga.description = document.select("span.trama")?.text()?.substringAfter("Trama: ")
 
         return manga

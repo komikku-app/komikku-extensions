@@ -36,8 +36,8 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
                 val response = chain.proceed(chain.request())
                 if (!response.headers("Content-Type").toString().contains("text/html")) return response
 
-                val responseContentType = response.body!!.contentType()
-                val responseString = response.body!!.string()
+                val responseContentType = response.body.contentType()
+                val responseString = response.body.string()
 
                 if (responseString.contains("Overload... Please use the advanced search")) {
                     response.close()

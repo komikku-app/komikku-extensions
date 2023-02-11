@@ -41,7 +41,7 @@ class BrewingScans : HttpSource() {
         response.toMangasPage { sortedByDescending { it.view_count } }
 
     override fun pageListParse(response: Response) =
-        json.decodeFromString<List<String>>(response.body!!.string())
+        json.decodeFromString<List<String>>(response.body.string())
             .mapIndexed { idx, url -> Page(idx, "", url) }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList) =
@@ -51,7 +51,7 @@ class BrewingScans : HttpSource() {
 
     override fun fetchMangaDetails(manga: SManga) =
         client.newCall(chapterListRequest(manga)).asObservableSuccess().map { res ->
-            val series = json.decodeFromString<BrewingSeries>(res.body!!.string())
+            val series = json.decodeFromString<BrewingSeries>(res.body.string())
             manga.description = series.description
             manga.author = series.author
             manga.artist = series.artist
@@ -63,7 +63,7 @@ class BrewingScans : HttpSource() {
 
     override fun fetchChapterList(manga: SManga) =
         client.newCall(chapterListRequest(manga)).asObservableSuccess().map { res ->
-            json.decodeFromString<BrewingSeries>(res.body!!.string()).chapters.map {
+            json.decodeFromString<BrewingSeries>(res.body.string()).chapters.map {
                 SChapter.create().apply {
                     url = "${manga.url}/chapter/${it.key}"
                     chapter_number = it.key.toFloat()
@@ -75,7 +75,7 @@ class BrewingScans : HttpSource() {
     private inline fun Response.toMangasPage(
         crossinline func: Collection<BrewingSeries>.() -> List<BrewingSeries>,
     ) =
-        json.decodeFromString<Map<String, BrewingSeries>>(body!!.string())
+        json.decodeFromString<Map<String, BrewingSeries>>(body.string())
             .values.func().map {
                 SManga.create().apply {
                     url = it.id!!

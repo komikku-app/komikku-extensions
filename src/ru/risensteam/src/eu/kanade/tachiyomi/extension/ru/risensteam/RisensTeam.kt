@@ -60,7 +60,7 @@ class RisensTeam : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val mangas = json.decodeFromString<JsonArray>(response.body!!.string())
+        val mangas = json.decodeFromString<JsonArray>(response.body.string())
             .map { json -> mangaFromJson(json) }
 
         return MangasPage(mangas, false)
@@ -100,7 +100,7 @@ class RisensTeam : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        return mangaFromJson(json.decodeFromString<JsonObject>(response.body!!.string()))
+        return mangaFromJson(json.decodeFromString<JsonObject>(response.body.string()))
     }
 
     // Chapters
@@ -108,7 +108,7 @@ class RisensTeam : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = apiMangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        return json.decodeFromString<JsonObject>(response.body!!.string())["entities"]!!.jsonArray.map { json ->
+        return json.decodeFromString<JsonObject>(response.body.string())["entities"]!!.jsonArray.map { json ->
             SChapter.create().apply {
                 url = json.jsonObject["id"]!!.jsonPrimitive.int.toString()
                 name = listOfNotNull(json.jsonObject["label"]!!.jsonPrimitive.contentOrNull, json.jsonObject["name"]!!.jsonPrimitive.contentOrNull).joinToString(" - ")
@@ -137,7 +137,7 @@ class RisensTeam : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        return json.decodeFromString<JsonArray>(response.body!!.string())
+        return json.decodeFromString<JsonArray>(response.body.string())
             .mapIndexed { i, json -> Page(i, "", json.jsonPrimitive.content) }
     }
 

@@ -81,7 +81,7 @@ class Iqiyi : ParsedHttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        return json.parseToJsonElement(response.body!!.string())
+        return json.parseToJsonElement(response.body.string())
             .jsonObject["data"]!!.jsonObject["episodes"]!!.jsonArray.map {
             SChapter.create().apply {
                 val comicId = it.jsonObject["comicId"]!!.jsonPrimitive.content

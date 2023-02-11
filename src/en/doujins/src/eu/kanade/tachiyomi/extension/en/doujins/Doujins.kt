@@ -64,7 +64,7 @@ class Doujins : HttpSource() {
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         return MangasPage(
-            json.decodeFromString<JsonObject>(response.body!!.string())["folders"]!!.jsonArray.map {
+            json.decodeFromString<JsonObject>(response.body.string())["folders"]!!.jsonArray.map {
                 SManga.create().apply {
                     setUrlWithoutDomain(it.jsonObject["link"]!!.jsonPrimitive.content)
                     title = it.jsonObject["name"]!!.jsonPrimitive.content

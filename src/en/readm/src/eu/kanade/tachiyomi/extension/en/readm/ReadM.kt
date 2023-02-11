@@ -81,7 +81,7 @@ class ReadM : ParsedHttpSource() {
     override fun searchMangaSelector(): String = throw Exception("Not used")
     override fun searchMangaFromElement(element: Element): SManga = throw Exception("Not used")
 
-    override fun searchMangaParse(response: Response) = json.parseToJsonElement(response.body!!.string()).jsonObject["manga"]?.jsonArray?.map {
+    override fun searchMangaParse(response: Response) = json.parseToJsonElement(response.body.string()).jsonObject["manga"]?.jsonArray?.map {
         val obj = it.jsonObject
         SManga.create().apply {
             title = obj["title"]!!.jsonPrimitive.content

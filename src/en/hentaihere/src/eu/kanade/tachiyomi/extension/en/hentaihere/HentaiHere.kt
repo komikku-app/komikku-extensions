@@ -198,7 +198,7 @@ class HentaiHere : ParsedHttpSource() {
     // Pages
     override fun pageListParse(response: Response): List<Page> =
         json.decodeFromString<List<String>>(
-            response.body!!.string()
+            response.body.string()
                 .substringAfter("var rff_imageList = ")
                 .substringBefore(";"),
         ).mapIndexed { i, imagePath ->

@@ -60,7 +60,7 @@ class MangaVibe : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<MangaVibePopularDto>(response.body!!.string())
+        val result = json.decodeFromString<MangaVibePopularDto>(response.body.string())
 
         if (result.data.isNullOrEmpty()) {
             return MangasPage(emptyList(), hasNextPage = false)
@@ -95,7 +95,7 @@ class MangaVibe : HttpSource() {
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<MangaVibeLatestDto>(response.body!!.string())
+        val result = json.decodeFromString<MangaVibeLatestDto>(response.body.string())
 
         if (result.data.isNullOrEmpty()) {
             return MangasPage(emptyList(), hasNextPage = false)
@@ -137,7 +137,7 @@ class MangaVibe : HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<MangaVibePopularDto>(response.body!!.string())
+        val result = json.decodeFromString<MangaVibePopularDto>(response.body.string())
 
         if (result.data.isNullOrEmpty()) {
             return MangasPage(emptyList(), hasNextPage = false)
@@ -175,7 +175,7 @@ class MangaVibe : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val result = json.decodeFromString<MangaVibePopularDto>(response.body!!.string())
+        val result = json.decodeFromString<MangaVibePopularDto>(response.body.string())
 
         if (result.data.isNullOrEmpty()) {
             throw Exception(COULD_NOT_PARSE_THE_MANGA)
@@ -208,7 +208,7 @@ class MangaVibe : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = json.decodeFromString<MangaVibeChapterListDto>(response.body!!.string())
+        val result = json.decodeFromString<MangaVibeChapterListDto>(response.body.string())
 
         if (result.data.isNullOrEmpty()) {
             return emptyList()
@@ -292,8 +292,8 @@ class MangaVibe : HttpSource() {
         }
 
         val response = chain.proceed(chain.request())
-        val responseContentType = response.body!!.contentType()
-        val responseString = response.body!!.string()
+        val responseContentType = response.body.contentType()
+        val responseString = response.body.string()
 
         directoryCache[directoryType] = responseString
 

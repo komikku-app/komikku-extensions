@@ -35,36 +35,6 @@ class ManhwaLatinoSiteParser(
     }
 
     /**
-     * Type of manga
-     */
-    enum class MangaType {
-        ALL, ADULT, GAY, FIN;
-
-        // Static Enum Function
-        companion object {
-            fun isForAdults(mangaTypes: List<MangaType>): Boolean {
-                for (type in mangaTypes) {
-                    when (type) {
-                        ADULT, GAY -> return true
-                        else -> {}
-                    }
-                }
-                return false
-            }
-        }
-
-        // CSS Class to search in the title of the manga
-        fun getBadge(): String {
-            return when (this) {
-                ADULT -> "adult"
-                GAY -> "gay"
-                FIN -> "fin"
-                ALL -> ""
-            }
-        }
-    }
-
-    /**
      * Type of search ( FREE, FILTER)
      */
     private var searchType = SearchType.SEARCH_FREE
@@ -154,7 +124,6 @@ class ManhwaLatinoSiteParser(
         val manga = SManga.create()
 
         val titleElements = document.select("#manga-title h1")
-        val mangaType = getMangaBadges(titleElements)
         val descriptionList =
             document.select(MLConstants.mangaDetailsDescriptionHTMLSelector).map { it.text() }
         val author = document.select(MLConstants.mangaDetailsAuthorHTMLSelector).text()
@@ -172,29 +141,6 @@ class ManhwaLatinoSiteParser(
         manga.genre = genreTagList.joinToString(", ")
         manga.status = findMangaStatus(tagList, document.select(MLConstants.mangaDetailsAttributes))
         return manga
-    }
-
-    /**
-     * Types of the Manga
-     * Return aList with all Types from a Manga
-     *  for example Adults, Gay
-     *  if the list is empty the manga is for everyone
-     */
-    private fun getMangaBadges(titleBadges: Elements): List<MangaType> {
-        val types = mutableListOf<MangaType>()
-
-        for (badge in titleBadges.select("span")) {
-            if (badge.hasClass(MangaType.ADULT.getBadge())) {
-                types.add(MangaType.ADULT)
-            }
-            if (badge.hasClass(MangaType.GAY.getBadge())) {
-                types.add(MangaType.GAY)
-            }
-            if (badge.hasClass(MangaType.FIN.getBadge())) {
-                types.add(MangaType.FIN)
-            }
-        }
-        return types
     }
 
     private fun findMangaStatus(tagList: List<String>, elements: Elements): Int {

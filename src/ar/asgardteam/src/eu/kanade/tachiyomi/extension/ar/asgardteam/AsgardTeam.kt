@@ -151,7 +151,7 @@ class AsgardTeam : ParsedHttpSource() {
 
     private class TypeFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("Type", vals)
 
-    open fun getTypeFilter(): Array<Pair<String?, String>> = arrayOf(
+    private fun getTypeFilter(): Array<Pair<String?, String>> = arrayOf(
         Pair("", "<select>"),
         Pair("3", "صينية (مانها)"),
         Pair("2", "مانجا (يابانية)"),

@@ -86,7 +86,7 @@ abstract class CommitStrip(
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         // create a new call to parse the no of pages in the site
         // example responseString - Page 1 of 11
-        val responseString = client.newCall(GET("${manga.url}", headers)).execute().run {
+        val responseString = client.newCall(GET(manga.url, headers)).execute().run {
             asJsoup().selectFirst(".wp-pagenavi .pages")?.text() ?: "1"
         }
         // use regex to get the last number (i.e. 11 above)
@@ -120,7 +120,7 @@ abstract class CommitStrip(
 
         // get the chapter date from the url
         val date = Regex("\\d{4}\\/\\d{2}\\/\\d{2}").find(url)?.value
-        val parsedDate = SimpleDateFormat("yyyy/MM/dd", Locale.US).parse(date)
+        val parsedDate = date?.let { SimpleDateFormat("yyyy/MM/dd", Locale.US).parse(it) }
         date_upload = parsedDate?.time ?: 0L
 
         name = element.select("span").text()
@@ -129,7 +129,7 @@ abstract class CommitStrip(
     // Page
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
-        return client.newCall(GET("${chapter.url}", headers)).execute().run {
+        return client.newCall(GET(chapter.url, headers)).execute().run {
             asJsoup().select(".entry-content p img").attr("src")
         }.let {
             Observable.just(listOf(Page(0, "", it)))

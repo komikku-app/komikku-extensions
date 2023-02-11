@@ -110,7 +110,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         val possibleType = urlRequest.substringAfterLast("/").substringBefore("?").split(".")
         return if (urlRequest.contains("/images/") and (possibleType.size == 2)) {
             val realType = possibleType[1]
-            val image = response.body?.byteString()?.toResponseBody("image/$realType".toMediaType())
+            val image = response.body.byteString().toResponseBody("image/$realType".toMediaType())
             response.newBuilder().body(image).build()
         } else {
             response
@@ -138,14 +138,14 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage {
         if (response.request.url.toString().contains("/bookmarks/")) {
-            val page = json.decodeFromString<PageWrapperDto<MyLibraryDto>>(response.body!!.string())
+            val page = json.decodeFromString<PageWrapperDto<MyLibraryDto>>(response.body.string())
             val mangas = page.content.map {
                 it.title.toSManga()
             }
 
             return MangasPage(mangas, page.props.page < page.props.total_pages)
         } else {
-            val page = json.decodeFromString<PageWrapperDto<LibraryDto>>(response.body!!.string())
+            val page = json.decodeFromString<PageWrapperDto<LibraryDto>>(response.body.string())
             var content = page.content
             if (preferences.getBoolean(isLib_PREF, false)) {
                 content = content.filter { it.bookmark_type.isNullOrEmpty() }
@@ -332,13 +332,13 @@ class Remanga : ConfigurableSource, HttpSource() {
         return GET(baseUrl.replace("api.", "") + "/manga/" + manga.url.substringAfter("/api/titles/", "/"), headers)
     }
     override fun mangaDetailsParse(response: Response): SManga {
-        val series = json.decodeFromString<SeriesWrapperDto<MangaDetDto>>(response.body!!.string())
+        val series = json.decodeFromString<SeriesWrapperDto<MangaDetDto>>(response.body.string())
         branches[series.content.en_name] = series.content.branches
         return series.content.toSManga()
     }
 
     private fun mangaBranches(manga: SManga): List<BranchesDto> {
-        val responseString = client.newCall(GET(baseUrl + manga.url)).execute().body?.string() ?: return emptyList()
+        val responseString = client.newCall(GET(baseUrl + manga.url)).execute().body.string()
         // manga requiring login return "content" as a JsonArray instead of the JsonObject we expect
         val content = json.decodeFromString<JsonObject>(responseString)["content"]
         return if (content is JsonObject) {
@@ -399,7 +399,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     override fun chapterListParse(response: Response) = throw UnsupportedOperationException("chapterListParse(response: Response, manga: SManga)")
 
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
-        var chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body!!.string()).content
+        var chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body.string()).content
         if (!preferences.getBoolean(PAID_PREF, false)) {
             chapters = chapters.filter { !it.is_paid or (it.is_bought == true) }
         }
@@ -427,7 +427,7 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     @TargetApi(Build.VERSION_CODES.N)
     override fun pageListParse(response: Response): List<Page> {
-        val body = response.body?.string()!!
+        val body = response.body.string()
         val heightEmptyChunks = 10
         return try {
             val page = json.decodeFromString<SeriesWrapperDto<PageDto>>(body)

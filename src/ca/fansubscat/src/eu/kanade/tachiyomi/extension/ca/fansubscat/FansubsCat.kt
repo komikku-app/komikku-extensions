@@ -46,7 +46,7 @@ class FansubsCat : HttpSource() {
     private val apiBaseUrl = "https://api.fansubs.cat"
 
     private fun parseMangaFromJson(response: Response): MangasPage {
-        val jsonObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val jsonObject = json.decodeFromString<JsonObject>(response.body.string())
 
         val mangas = jsonObject["result"]!!.jsonArray.map { json ->
             SManga.create().apply {
@@ -64,7 +64,7 @@ class FansubsCat : HttpSource() {
     }
 
     private fun parseChapterListFromJson(response: Response): List<SChapter> {
-        val jsonObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val jsonObject = json.decodeFromString<JsonObject>(response.body.string())
 
         return jsonObject["result"]!!.jsonArray.map { json ->
             SChapter.create().apply {
@@ -78,7 +78,7 @@ class FansubsCat : HttpSource() {
     }
 
     private fun parsePageListFromJson(response: Response): List<Page> {
-        val jsonObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val jsonObject = json.decodeFromString<JsonObject>(response.body.string())
 
         return jsonObject["result"]!!.jsonArray.mapIndexed { i, it ->
             Page(i, it.jsonObject["url"]!!.jsonPrimitive.content, it.jsonObject["url"]!!.jsonPrimitive.content)
@@ -126,7 +126,7 @@ class FansubsCat : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val jsonObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val jsonObject = json.decodeFromString<JsonObject>(response.body.string())
         val resultObject = jsonObject.jsonObject["result"]!!.jsonObject
 
         return SManga.create().apply {

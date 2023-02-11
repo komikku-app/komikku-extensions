@@ -52,7 +52,7 @@ object ApiV4 {
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> Response.decrypt(type: KType): T {
-        val bytes = RSA.decrypt(body!!.string(), cipher)
+        val bytes = RSA.decrypt(body.string(), cipher)
         val deserializer = serializer(type) as KSerializer<T>
         return ProtoBuf.decodeFromByteArray(deserializer, bytes)
     }

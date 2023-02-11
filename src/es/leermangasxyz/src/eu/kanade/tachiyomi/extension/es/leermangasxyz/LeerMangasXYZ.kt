@@ -10,7 +10,6 @@ import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import java.lang.RuntimeException
 import java.net.URLEncoder
 
 open class LeerMangasXYZ : ParsedHttpSource() {
@@ -120,5 +119,3 @@ open class LeerMangasXYZ : ParsedHttpSource() {
 
     override fun chapterListSelector(): String = "table#chaptersTable tbody tr"
 }
-
-fun Element.selectFirst(cssSelector: String) = this.select(cssSelector).first()

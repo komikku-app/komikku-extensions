@@ -12,7 +12,7 @@ const val PREFIX_ID_SEARCH = "id:"
 val json: Json by injectLazy()
 
 inline fun <reified T> Response.parseAs(): T {
-    return json.decodeFromString(body!!.string())
+    return json.decodeFromString(body.string())
 }
 
 fun getMangaUrl(id: String) = "/comic/comic_$id.json?version=2.7.019"

@@ -48,7 +48,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
 
     private fun fetchIdBySlug(slug: String): String {
         val request = GET("https://manhua.dmzj.com/$slug/", headers)
-        val html = client.newCall(request).execute().body!!.string()
+        val html = client.newCall(request).execute().body.string()
         val start = "g_comic_id = \""
         val startIndex = html.indexOf(start) + start.length
         val endIndex = html.indexOf('"', startIndex)

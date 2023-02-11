@@ -23,7 +23,7 @@ class VizImageInterceptor : Interceptor {
             return response
         }
 
-        val image = response.body!!.byteStream().decodeImage()
+        val image = response.body.byteStream().decodeImage()
         val body = image.toResponseBody(MEDIA_TYPE)
         return response.newBuilder()
             .body(body)

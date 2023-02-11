@@ -41,7 +41,7 @@ abstract class PizzaReader(
         GET("$apiUrl/comics", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<PizzaResultsDto>(response.body!!.string())
+        val result = json.decodeFromString<PizzaResultsDto>(response.body.string())
 
         val comicList = result.comics
             .map(::popularMangaFromObject)
@@ -58,7 +58,7 @@ abstract class PizzaReader(
     override fun latestUpdatesRequest(page: Int): Request = popularMangaRequest(page)
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<PizzaResultsDto>(response.body!!.string())
+        val result = json.decodeFromString<PizzaResultsDto>(response.body.string())
 
         val comicList = result.comics
             .filter { comic -> comic.lastChapter != null }
@@ -85,7 +85,7 @@ abstract class PizzaReader(
             .map { mangaDetailsParse(it).apply { initialized = true } }
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val result = json.decodeFromString<PizzaResultDto>(response.body!!.string())
+        val result = json.decodeFromString<PizzaResultDto>(response.body.string())
         val comic = result.comic!!
 
         title = comic.title
@@ -100,7 +100,7 @@ abstract class PizzaReader(
     override fun chapterListRequest(manga: SManga) = GET(apiUrl + manga.url, headers)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = json.decodeFromString<PizzaResultDto>(response.body!!.string())
+        val result = json.decodeFromString<PizzaResultDto>(response.body.string())
         val comic = result.comic!!
 
         return comic.chapters
@@ -120,7 +120,7 @@ abstract class PizzaReader(
     override fun pageListRequest(chapter: SChapter) = GET(apiUrl + chapter.url, headers)
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = json.decodeFromString<PizzaReaderDto>(response.body!!.string())
+        val result = json.decodeFromString<PizzaReaderDto>(response.body.string())
 
         return result.chapter!!.pages.mapIndexed { i, page -> Page(i, "", page) }
     }

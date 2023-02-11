@@ -92,7 +92,7 @@ class Xinmeitulu : ParsedHttpSource() {
         private fun contentTypeIntercept(chain: Interceptor.Chain): Response {
             val response = chain.proceed(chain.request())
             if (response.header("content-type")?.startsWith("image") == true) {
-                val body = response.body!!.source().asResponseBody(jpegMediaType)
+                val body = response.body.source().asResponseBody(jpegMediaType)
                 return response.newBuilder().body(body).build()
             }
             return response

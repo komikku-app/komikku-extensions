@@ -92,7 +92,7 @@ class RemoteStorageUtils {
             return if (transparent) {
                 response
             } else {
-                response.newBuilder().body(jsInterface.payload.toResponseBody(response.body?.contentType())).build()
+                response.newBuilder().body(jsInterface.payload.toResponseBody(response.body.contentType())).build()
             }
         }
     }

@@ -40,13 +40,13 @@ class Tappytoon(override val lang: String) : HttpSource() {
             }
             // Fix image content type
             val type = IMG_CONTENT_TYPE.toMediaType()
-            val body = res.body!!.bytes().toResponseBody(type)
+            val body = res.body.bytes().toResponseBody(type)
             return@addInterceptor res.newBuilder().body(body)
                 .header("Content-Type", IMG_CONTENT_TYPE).build()
         }
         // Throw JSON error if available
         if (mime == "application/json") {
-            res.body?.string()?.let(json::parseToJsonElement)?.run {
+            res.body.string().let(json::parseToJsonElement).run {
                 throw IOException(jsonObject["message"]!!.jsonPrimitive.content)
             }
         }
@@ -185,7 +185,7 @@ class Tappytoon(override val lang: String) : HttpSource() {
     )
 
     private inline fun <reified T> Response.parse() =
-        json.decodeFromJsonElement<T>(json.parseToJsonElement(body!!.string()))
+        json.decodeFromJsonElement<T>(json.parseToJsonElement(body.string()))
 
     class Genre(values: Array<String>) : Filter.Select<String>("Genre", values)
 

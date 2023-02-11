@@ -23,7 +23,7 @@ object ScrambledImageInterceptor : Interceptor {
 // 章节ID:220980(包含)之后的漫画(2020.10.27之后)图片进行了分割getRows倒序处理
         val aid = url.substring(url.indexOf("photos/") + 7, url.lastIndexOf("/")).toInt()
         val imgIndex: String = url.substringAfterLast("/").substringBefore(".")
-        val res = response.body!!.byteStream().use {
+        val res = response.body.byteStream().use {
             decodeImage(it, getRows(aid, imgIndex))
         }
         val outputBytes = res.toResponseBody(jpegMediaType)
@@ -42,9 +42,9 @@ object ScrambledImageInterceptor : Interceptor {
         }
 
         return if (aid >= 421926) {
-            2 * (md5(aid.toString() + imgIndex).last().toInt() % 8) + 2
+            2 * (md5(aid.toString() + imgIndex).last().code % 8) + 2
         } else if (aid >= 268850) {
-            2 * (md5(aid.toString() + imgIndex).last().toInt() % 10) + 2
+            2 * (md5(aid.toString() + imgIndex).last().code % 10) + 2
         } else {
             10
         }

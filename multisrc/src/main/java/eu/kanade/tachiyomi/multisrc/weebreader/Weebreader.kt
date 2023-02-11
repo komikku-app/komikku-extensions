@@ -36,7 +36,7 @@ abstract class Weebreader(
     override fun latestUpdatesRequest(page: Int): Request = popularMangaRequest(page)
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val titlesJson = json.parseToJsonElement(response.body!!.string()).jsonArray
+        val titlesJson = json.parseToJsonElement(response.body.string()).jsonArray
 
         val mangaList = titlesJson
             .mapNotNull {
@@ -61,7 +61,7 @@ abstract class Weebreader(
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/api/titles")
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val titlesJson = json.parseToJsonElement(response.body!!.string()).jsonArray
+        val titlesJson = json.parseToJsonElement(response.body.string()).jsonArray
 
         val mangaList = titlesJson.mapNotNull {
             val manga = it.jsonObject
@@ -87,7 +87,7 @@ abstract class Weebreader(
     override fun mangaDetailsRequest(manga: SManga) = GET("$baseUrl/titles/${manga.url}")
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val titleJson = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val titleJson = json.parseToJsonElement(response.body.string()).jsonObject
 
         if (titleJson["type"]!!.jsonPrimitive.content != "Comic") {
             throw UnsupportedOperationException("Tachiyomi only supports Comics.")
@@ -108,7 +108,7 @@ abstract class Weebreader(
     override fun chapterListRequest(manga: SManga) = GET("$baseUrl/api/titles/${manga.url}")
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val titleJson = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val titleJson = json.parseToJsonElement(response.body.string()).jsonObject
 
         if (titleJson["type"]!!.jsonPrimitive.content != "Comic") {
             throw UnsupportedOperationException("Tachiyomi only supports Comics.")
@@ -129,7 +129,7 @@ abstract class Weebreader(
     override fun pageListRequest(chapter: SChapter): Request = GET("$baseUrl/api/chapters/${chapter.url.substring(37, 73)}")
 
     override fun pageListParse(response: Response): List<Page> {
-        val jsonObject = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val jsonObject = json.parseToJsonElement(response.body.string()).jsonObject
 
         return jsonObject["pages"]!!.jsonArray.map {
             val item = it.jsonObject

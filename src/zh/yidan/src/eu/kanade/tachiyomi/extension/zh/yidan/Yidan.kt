@@ -113,7 +113,7 @@ class Yidan : HttpSource(), ConfigurableSource {
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromStream<ResponseDto<T>>(body!!.byteStream()).data
+        json.decodeFromStream<ResponseDto<T>>(body.byteStream()).data
     }
 
     override fun getFilterList() = getFilterListInternal()

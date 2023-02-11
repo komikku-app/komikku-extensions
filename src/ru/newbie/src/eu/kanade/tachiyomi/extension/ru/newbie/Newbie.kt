@@ -82,7 +82,7 @@ class Newbie : ConfigurableSource, HttpSource() {
         }
 
         val response = chain.proceed(chain.request())
-        val image = response.body?.byteString()?.toResponseBody("image/*".toMediaType())
+        val image = response.body.byteString().toResponseBody("image/*".toMediaType())
         return response.newBuilder().body(image).build()
     }
 
@@ -97,7 +97,7 @@ class Newbie : ConfigurableSource, HttpSource() {
     override fun popularMangaRequest(page: Int) = GET("$API_URL/projects/popular?scale=month&size=$count&page=$page", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val page = json.decodeFromString<PageWrapperDto<LibraryDto>>(response.body!!.string())
+        val page = json.decodeFromString<PageWrapperDto<LibraryDto>>(response.body.string())
         val mangas = page.items.map {
             it.toSManga()
         }
@@ -119,7 +119,7 @@ class Newbie : ConfigurableSource, HttpSource() {
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val page = json.decodeFromString<SearchWrapperDto<SubSearchDto<SearchLibraryDto>>>(response.body!!.string())
+        val page = json.decodeFromString<SearchWrapperDto<SubSearchDto<SearchLibraryDto>>>(response.body.string())
         val mangas = page.result.hits.map {
             it.toSearchManga()
         }
@@ -290,7 +290,7 @@ class Newbie : ConfigurableSource, HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val series = json.decodeFromString<MangaDetDto>(response.body!!.string())
+        val series = json.decodeFromString<MangaDetDto>(response.body.string())
         branches[series.title.en] = series.branches
         return series.toSManga()
     }
@@ -309,7 +309,7 @@ class Newbie : ConfigurableSource, HttpSource() {
 
     private fun mangaBranches(manga: SManga): List<BranchesDto> {
         val response = client.newCall(titleDetailsRequest(manga)).execute()
-        val series = json.decodeFromString<MangaDetDto>(response.body!!.string())
+        val series = json.decodeFromString<MangaDetDto>(response.body.string())
         branches[series.title.en] = series.branches
         return series.branches
     }
@@ -338,7 +338,7 @@ class Newbie : ConfigurableSource, HttpSource() {
     override fun chapterListParse(response: Response) = throw UnsupportedOperationException("chapterListParse(response: Response, manga: SManga)")
 
     private fun chapterListParse(response: Response, manga: SManga, branch: Long): List<SChapter> {
-        var chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body!!.string()).items
+        var chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body.string()).items
         if (!preferences.getBoolean(PAID_PREF, false)) {
             chapters = chapters.filter { it.is_available }
         }
@@ -366,7 +366,7 @@ class Newbie : ConfigurableSource, HttpSource() {
     }
 
     private fun pageListParse(response: Response, urlRequest: String): List<Page> {
-        val pages = json.decodeFromString<List<PageDto>>(response.body?.string()!!)
+        val pages = json.decodeFromString<List<PageDto>>(response.body.string())
         val result = mutableListOf<Page>()
         pages.forEach { page ->
             (1..page.slices!!).map { i ->

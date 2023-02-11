@@ -36,9 +36,9 @@ class EarlyManga : ParsedHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    protected open val userAgentRandomizer1 = "${Random.nextInt(9).absoluteValue}"
-    protected open val userAgentRandomizer2 = "${Random.nextInt(10,99).absoluteValue}"
-    protected open val userAgentRandomizer3 = "${Random.nextInt(100,999).absoluteValue}"
+    private val userAgentRandomizer1 = "${Random.nextInt(9).absoluteValue}"
+    private val userAgentRandomizer2 = "${Random.nextInt(10,99).absoluteValue}"
+    private val userAgentRandomizer3 = "${Random.nextInt(100,999).absoluteValue}"
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add(

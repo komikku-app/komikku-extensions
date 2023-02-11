@@ -125,7 +125,7 @@ class Junmeitu : ParsedHttpSource() {
     }
 
     override fun imageUrlParse(response: Response): String {
-        val page: PageDto = json.decodeFromString(response.body!!.string())
+        val page: PageDto = json.decodeFromString(response.body.string())
         val img = Jsoup.parseBodyFragment(page.pic).body().child(0)
         return img.attr("src")
     }

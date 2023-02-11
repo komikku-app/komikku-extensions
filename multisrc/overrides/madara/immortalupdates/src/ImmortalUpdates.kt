@@ -35,7 +35,7 @@ class ImmortalUpdates : Madara("Immortal Updates", "https://immortalupdates.com"
             val fragment = response.request.url.fragment!!
             val args = fragment.substringAfter("$DESCRAMBLE=").split(",")
 
-            val image = unscrambleImage(response.body!!.byteStream(), args)
+            val image = unscrambleImage(response.body.byteStream(), args)
             val body = image.toResponseBody("image/jpeg".toMediaTypeOrNull())
             return@addInterceptor response.newBuilder()
                 .body(body)
@@ -50,7 +50,7 @@ class ImmortalUpdates : Madara("Immortal Updates", "https://immortalupdates.com"
 
         val unscramblingCalls = client.newCall(GET(unscramblingCallsPage.imageUrl!!, headers))
             .execute()
-            .use { it.body!!.string() }
+            .use { it.body.string() }
 
         unscramblingCalls.replace("\r", "").split("\n").filter { !it.isNullOrBlank() }.forEach {
             val args = unfuckJs(it)

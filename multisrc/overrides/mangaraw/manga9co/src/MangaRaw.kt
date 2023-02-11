@@ -71,7 +71,7 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
 
     override fun pageListParse(response: Response): List<Page> {
         if (!isPagesShuffled) return super.pageListParse(response)
-        val html = response.body!!.string()
+        val html = response.body.string()
         val imageList = ImageListParser(html, 32).getImageList() ?: return emptyList()
         return imageList.mapIndexed { index, imageUrl ->
             Page(index, imageUrl = imageUrl)

@@ -155,7 +155,7 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
 
             return MangasPage(mangas, hasNextPage)
         } else {
-            val jsonString = response.body?.string().orEmpty()
+            val jsonString = response.body.string()
             val result = json.decodeFromString<ResponseDto>(jsonString)
 
             if (result.mangaList.isEmpty()) {

@@ -281,7 +281,7 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
     private val objRegex = Regex("""var _load_pages = (\[.*])""")
 
     override fun pageListParse(response: Response): List<Page> {
-        val obj = objRegex.find(response.body!!.string())?.groupValues?.get(1)
+        val obj = objRegex.find(response.body.string())?.groupValues?.get(1)
             ?: throw Exception("_load_pages not found - ${response.request.url}")
 
         return json.parseToJsonElement(obj).jsonArray.mapIndexed { i, it ->

@@ -83,8 +83,7 @@ class Nekopost : ParsedHttpSource() {
         return client.newCall(GET("$projectDataEndpoint/${manga.url}", headers))
             .asObservableSuccess()
             .map { response ->
-                val responseBody =
-                    response.body ?: throw Error("Unable to fetch manga detail of ${manga.title}")
+                val responseBody = response.body
                 val projectInfo: RawProjectInfo = json.decodeFromString(responseBody.string())
 
                 manga.apply {
@@ -114,9 +113,7 @@ class Nekopost : ParsedHttpSource() {
             client.newCall(GET("$projectDataEndpoint/${manga.url}", headers))
                 .asObservableSuccess()
                 .map { response ->
-                    val responseBody =
-                        response.body
-                            ?: throw Error("Unable to fetch manga detail of ${manga.title}")
+                    val responseBody = response.body
                     val projectInfo: RawProjectInfo = json.decodeFromString(responseBody.string())
 
                     manga.status = getStatus(projectInfo.projectInfo.status)
@@ -149,9 +146,7 @@ class Nekopost : ParsedHttpSource() {
         return client.newCall(GET("$fileHost/collectManga/${chapter.url}", headers))
             .asObservableSuccess()
             .map { response ->
-                val responseBody =
-                    response.body
-                        ?: throw Error("Unable to fetch page list of chapter ${chapter.chapter_number}")
+                val responseBody = response.body
                 val chapterInfo: RawChapterInfo = json.decodeFromString(responseBody.string())
 
                 chapterInfo.pageItem.map { page ->
@@ -177,7 +172,7 @@ class Nekopost : ParsedHttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val responseBody = response.body ?: throw Error("Unable to fetch mangas")
+        val responseBody = response.body
         val projectList: RawProjectSummaryList = json.decodeFromString(responseBody.string())
 
         val mangaList: List<SManga> = if (projectList.listChapter != null) {
@@ -222,7 +217,7 @@ class Nekopost : ParsedHttpSource() {
         return client.newCall(GET("$fileHost/dataJson/dataProjectName.json"))
             .asObservableSuccess()
             .map { response ->
-                val responseBody = response.body ?: throw Error("Unable to fetch title list")
+                val responseBody = response.body
                 val projectList: List<RawProjectNameListItem> =
                     json.decodeFromString(responseBody.string())
 

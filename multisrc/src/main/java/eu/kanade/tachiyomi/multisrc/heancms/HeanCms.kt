@@ -70,7 +70,7 @@ abstract class HeanCms(
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val json = response.body?.string().orEmpty()
+        val json = response.body.string()
 
         if (json.startsWith("{")) {
             val result = json.parseAs<HeanCmsQuerySearchDto>()
@@ -153,7 +153,7 @@ abstract class HeanCms(
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val json = response.body?.string().orEmpty()
+        val json = response.body.string()
 
         if (response.request.url.pathSegments.last() == "search") {
             fetchAllTitles()
@@ -300,7 +300,7 @@ abstract class HeanCms(
 
             while (hasNextPage) {
                 val response = client.newCall(allTitlesRequest(page)).execute()
-                val json = response.body?.string().orEmpty()
+                val json = response.body.string()
 
                 if (json.startsWith("{")) {
                     val result = json.parseAs<HeanCmsQuerySearchDto>()
@@ -368,7 +368,7 @@ abstract class HeanCms(
     }
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        it.body?.string().orEmpty().parseAs()
+        it.body.string().parseAs()
     }
 
     private inline fun <reified T> String.parseAs(): T = json.decodeFromString(this)

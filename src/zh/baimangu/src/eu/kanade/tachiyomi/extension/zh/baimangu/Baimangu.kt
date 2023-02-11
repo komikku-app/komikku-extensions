@@ -197,7 +197,7 @@ class Baimangu : ConfigurableSource, ParsedHttpSource() {
             throw Error("Failed to request OScript URL")
         }
 
-        val content = oScriptResp.body!!.string()
+        val content = oScriptResp.body.string()
         return extractPagesFromOScript(content)
     }
 

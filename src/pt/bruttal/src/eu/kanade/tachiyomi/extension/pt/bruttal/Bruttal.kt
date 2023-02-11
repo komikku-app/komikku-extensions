@@ -179,7 +179,7 @@ class Bruttal : HttpSource() {
         throw UnsupportedOperationException("Not used")
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromString(body?.string().orEmpty())
+        json.decodeFromString(body.string())
     }
 
     companion object {

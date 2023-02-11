@@ -295,7 +295,7 @@ class ArgosScan : HttpSource(), ConfigurableSource {
                 throw IOException(CLOUDFLARE_ERROR)
             }
 
-            val loginResult = json.parseToJsonElement(loginResponse.body!!.string()).jsonObject
+            val loginResult = json.parseToJsonElement(loginResponse.body.string()).jsonObject
 
             if (loginResult["errors"] != null) {
                 loginResponse.close()
@@ -340,7 +340,7 @@ class ArgosScan : HttpSource(), ConfigurableSource {
     }
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromString(it.body?.string().orEmpty())
+        json.decodeFromString(it.body.string())
     }
 
     private fun String.toDate(): Long {

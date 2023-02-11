@@ -350,7 +350,7 @@ class MangaPlus(
         }
 
         val contentType = response.headers["Content-Type"] ?: "image/jpeg"
-        val image = response.body!!.bytes().decodeXorCipher(encryptionKey)
+        val image = response.body.bytes().decodeXorCipher(encryptionKey)
         val body = image.toResponseBody(contentType.toMediaTypeOrNull())
 
         return response.newBuilder()
@@ -390,7 +390,7 @@ class MangaPlus(
     }
 
     private fun Response.asMangaPlusResponse(): MangaPlusResponse = use {
-        json.decodeFromString(body?.string().orEmpty())
+        json.decodeFromString(body.string())
     }
 
     private val SharedPreferences.imageQuality: String

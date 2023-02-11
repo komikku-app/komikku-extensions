@@ -282,7 +282,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
 
     private fun decryptResponse(response: Response): JsonObject {
         val encryptedData =
-            json.decodeFromString<JsonObject>(response.body!!.string())["data"]!!.jsonPrimitive.content
+            json.decodeFromString<JsonObject>(response.body.string())["data"]!!.jsonPrimitive.content
         val decryptedData = decrypt(encryptedData)
         return json.decodeFromString(decryptedData)
     }

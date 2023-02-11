@@ -49,7 +49,7 @@ abstract class BakkinReaderX(
             rx.Observable.just(block(seriesCache))!!
         } else {
             client.newCall(GET(mainUrl, headers)).asObservableSuccess().map {
-                seriesCache = json.parseToJsonElement(it.body!!.string())
+                seriesCache = json.parseToJsonElement(it.body.string())
                     .jsonObject.values.map(json::decodeFromJsonElement)
                 block(seriesCache)
             }!!

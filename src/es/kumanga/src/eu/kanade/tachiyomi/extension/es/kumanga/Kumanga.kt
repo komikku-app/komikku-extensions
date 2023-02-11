@@ -101,7 +101,7 @@ class Kumanga : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val jsonResult = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val jsonResult = json.parseToJsonElement(response.body.string()).jsonObject
 
         val mangaList = jsonResult["contents"]!!.jsonArray
             .map { jsonEl -> parseMangaFromJson(jsonEl.jsonObject) }

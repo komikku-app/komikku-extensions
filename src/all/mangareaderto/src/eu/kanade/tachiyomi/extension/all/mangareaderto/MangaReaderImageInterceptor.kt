@@ -26,7 +26,7 @@ object MangaReaderImageInterceptor : Interceptor {
         // TODO: remove the query parameter check (legacy) in later versions
         if (url.fragment != SCRAMBLED && url.queryParameter("shuffled") == null) return response
 
-        val image = descramble(response.body!!.byteStream())
+        val image = descramble(response.body.byteStream())
         val body = image.toResponseBody("image/jpeg".toMediaType())
         return response.newBuilder()
             .body(body)

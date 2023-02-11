@@ -69,7 +69,7 @@ class MangaTube : ParsedHttpSource() {
     // for future reference: if adding filters, advanced search might use a different key
     private fun parseMangaFromJson(response: Response, hasNextPage: Boolean): MangasPage {
         var titleKey = "manga_title"
-        val mangas = json.decodeFromString<JsonObject>(response.body!!.string())
+        val mangas = json.decodeFromString<JsonObject>(response.body.string())
             .let { it["success"] ?: it["suggestions"].also { titleKey = "value" } }!!
             .jsonArray
             .map { json ->

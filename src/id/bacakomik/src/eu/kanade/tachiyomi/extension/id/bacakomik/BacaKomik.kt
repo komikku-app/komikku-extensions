@@ -99,7 +99,6 @@ class BacaKomik : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select("div.infoanime").first()
         val descElement = document.select("div.desc > .entry-content.entry-content-single").first()
-        val sepName = infoElement.select(".infox > .spe > span:nth-child(2)").last()
         val manga = SManga.create()
         // need authorCleaner to take "pengarang:" string to remove it from author
         val authorCleaner = document.select(".infox .spe b:contains(Pengarang)").text()

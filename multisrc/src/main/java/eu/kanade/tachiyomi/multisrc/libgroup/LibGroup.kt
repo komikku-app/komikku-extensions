@@ -70,7 +70,7 @@ abstract class LibGroup(
         val possibleType = urlRequest.substringAfterLast("/").substringBefore("?").split(".")
         return if (urlRequest.contains("/chapters/") and (possibleType.size == 2)) {
             val realType = possibleType[1]
-            val image = response.body?.byteString()?.toResponseBody("image/$realType".toMediaType())
+            val image = response.body.byteString().toResponseBody("image/$realType".toMediaType())
             response.newBuilder().body(image).build()
         } else {
             response
@@ -120,7 +120,7 @@ abstract class LibGroup(
                 .asObservableSuccess()
                 .flatMap { response ->
                     // Obtain token
-                    val resBody = response.body!!.string()
+                    val resBody = response.body.string()
                     csrfToken = "_token\" content=\"(.*)\"".toRegex().find(resBody)!!.groups[1]!!.value
                     return@flatMap fetchLatestMangaFromApi(page)
                 }
@@ -147,7 +147,7 @@ abstract class LibGroup(
                 .asObservableSuccess()
                 .flatMap { response ->
                     // Obtain token
-                    val resBody = response.body!!.string()
+                    val resBody = response.body.string()
                     csrfToken = "_token\" content=\"(.*)\"".toRegex().find(resBody)!!.groups[1]!!.value
                     return@flatMap fetchPopularMangaFromApi(page)
                 }
@@ -164,7 +164,7 @@ abstract class LibGroup(
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val resBody = response.body!!.string()
+        val resBody = response.body.string()
         val result = json.decodeFromString<JsonObject>(resBody)
         val items = result["items"]!!.jsonObject
         val popularMangas = items["data"]?.jsonArray?.map { popularMangaFromElement(it) }
@@ -266,15 +266,15 @@ abstract class LibGroup(
         }
         manga.genre = category + ", " + rawAgeStop + ", " + genres.joinToString { it.trim() }
 
-        val altName = if (dataManga!!.jsonObject["altNames"]?.jsonArray.orEmpty().isNotEmpty()) {
+        val altName = if (dataManga.jsonObject["altNames"]?.jsonArray.orEmpty().isNotEmpty()) {
             "Альтернативные названия:\n" + dataManga.jsonObject["altNames"]!!.jsonArray.joinToString(" / ") { it.jsonPrimitive.content } + "\n\n"
         } else {
             ""
         }
 
         val mediaNameLanguage = when {
-            isEng.equals("eng") && dataManga!!.jsonObject["rusName"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> dataManga.jsonObject["rusName"]!!.jsonPrimitive.content + "\n"
-            isEng.equals("rus") && dataManga!!.jsonObject["engName"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> dataManga.jsonObject["engName"]!!.jsonPrimitive.content + "\n"
+            isEng.equals("eng") && dataManga.jsonObject["rusName"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> dataManga.jsonObject["rusName"]!!.jsonPrimitive.content + "\n"
+            isEng.equals("rus") && dataManga.jsonObject["engName"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() -> dataManga.jsonObject["engName"]!!.jsonPrimitive.content + "\n"
             else -> ""
         }
         manga.description = mediaNameLanguage + ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" + altName + document.select(".media-description__text").text()
@@ -536,7 +536,7 @@ abstract class LibGroup(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (csrfToken.isEmpty()) {
             val tokenResponse = client.newCall(popularMangaRequest(page)).execute()
-            val resBody = tokenResponse.body!!.string()
+            val resBody = tokenResponse.body.string()
             csrfToken = "_token\" content=\"(.*)\"".toRegex().find(resBody)!!.groups[1]!!.value
         }
         val url = "$baseUrl/filterlist?page=$page".toHttpUrlOrNull()!!.newBuilder()

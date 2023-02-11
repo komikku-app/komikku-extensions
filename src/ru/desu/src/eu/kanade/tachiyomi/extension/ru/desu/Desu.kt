@@ -163,7 +163,7 @@ class Desu : HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val res = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val res = json.parseToJsonElement(response.body.string()).jsonObject
         val obj = res["response"]!!.jsonArray
         val nav = res["pageNavParams"]!!.jsonObject
         val count = nav["count"]!!.jsonPrimitive.int
@@ -190,7 +190,7 @@ class Desu : HttpSource() {
         return GET(baseUrl + "/manga" + manga.url, headers)
     }
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
-        val obj = json.parseToJsonElement(response.body!!.string())
+        val obj = json.parseToJsonElement(response.body.string())
             .jsonObject["response"]!!
             .jsonObject
 
@@ -198,7 +198,7 @@ class Desu : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val obj = json.parseToJsonElement(response.body!!.string())
+        val obj = json.parseToJsonElement(response.body.string())
             .jsonObject["response"]!!
             .jsonObject
 
@@ -228,7 +228,7 @@ class Desu : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val obj = json.parseToJsonElement(response.body!!.string())
+        val obj = json.parseToJsonElement(response.body.string())
             .jsonObject["response"]!!
             .jsonObject
 

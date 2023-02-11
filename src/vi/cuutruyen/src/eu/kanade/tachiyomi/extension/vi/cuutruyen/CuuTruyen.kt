@@ -161,7 +161,7 @@ class CuuTruyen : HttpSource(), ConfigurableSource {
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used")
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromString(body?.string().orEmpty())
+        json.decodeFromString(body.string())
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

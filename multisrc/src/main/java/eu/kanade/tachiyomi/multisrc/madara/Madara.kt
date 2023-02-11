@@ -95,7 +95,7 @@ abstract class Madara(
 
                         if (uaResponse.isSuccessful) {
                             var listUserAgentString =
-                                json.decodeFromString<Map<String, List<String>>>(uaResponse.body!!.string())["desktop"]
+                                json.decodeFromString<Map<String, List<String>>>(uaResponse.body.string())["desktop"]
 
                             if (filterIncludeUserAgent.isNotEmpty()) {
                                 listUserAgentString = listUserAgentString!!.filter {

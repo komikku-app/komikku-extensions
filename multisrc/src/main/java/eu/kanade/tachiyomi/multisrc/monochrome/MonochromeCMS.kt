@@ -103,7 +103,7 @@ open class MonochromeCMS(
         }
 
     private inline fun <reified T> Response.decode() =
-        json.decodeFromString<T>(body!!.string())
+        json.decodeFromString<T>(body.string())
 
     override fun popularMangaRequest(page: Int) =
         throw UnsupportedOperationException("Not used!")

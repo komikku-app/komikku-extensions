@@ -236,7 +236,7 @@ class TruyenGiHot : ParsedHttpSource() {
             .add("g_id", chapterInfo["g_id"]!!)
             .build()
         val request = POST("$baseUrl/frontend_controllers/chapter/content.php", headers, formBody)
-        val response = client.newCall(request).execute().body!!.use {
+        val response = client.newCall(request).execute().body.use {
             it.string()
         }
 

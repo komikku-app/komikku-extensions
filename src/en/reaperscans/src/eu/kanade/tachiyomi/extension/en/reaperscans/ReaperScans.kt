@@ -283,7 +283,7 @@ class ReaperScans : ParsedHttpSource() {
 
     // Helpers
     private inline fun <reified T> Response.parseJson(): T = use {
-        it.body?.string().orEmpty().parseJson()
+        it.body.string().parseJson()
     }
 
     private inline fun <reified T> String.parseJson(): T = json.decodeFromString(this)

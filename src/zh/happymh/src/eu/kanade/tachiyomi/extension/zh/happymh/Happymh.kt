@@ -38,7 +38,7 @@ class Happymh : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val data = json.parseToJsonElement(response.body!!.string()).jsonObject["data"]!!.jsonObject
+        val data = json.parseToJsonElement(response.body.string()).jsonObject["data"]!!.jsonObject
         val items = data["items"]!!.jsonArray.map {
             SManga.create().apply {
                 val obj = it.jsonObject
@@ -109,7 +109,7 @@ class Happymh : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        return json.parseToJsonElement(response.body!!.string())
+        return json.parseToJsonElement(response.body.string())
             .jsonObject["data"]!!.jsonObject["scans"]!!.jsonArray
             // If n == 1, the image is from next chapter
             .filter { it.jsonObject["n"]!!.jsonPrimitive.int == 0 }

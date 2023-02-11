@@ -24,11 +24,11 @@ object PtImgInterceptor : Interceptor {
         val path = url.pathSegments
         if (!path.last().endsWith(".ptimg.json")) return response
 
-        val metadata = json.decodeFromString<PtImg>(response.body!!.string())
+        val metadata = json.decodeFromString<PtImg>(response.body.string())
         val imageUrl = url.newBuilder().setEncodedPathSegment(path.size - 1, metadata.getFilename()).build()
         val imgRequest = request.newBuilder().url(imageUrl).build()
         val imgResponse = chain.proceed(imgRequest)
-        val image = BitmapFactory.decodeStream(imgResponse.body!!.byteStream())
+        val image = BitmapFactory.decodeStream(imgResponse.body.byteStream())
         val (width, height) = metadata.getViewSize()
         val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val view = Canvas(result)

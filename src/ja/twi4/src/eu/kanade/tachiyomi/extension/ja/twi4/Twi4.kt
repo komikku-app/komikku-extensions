@@ -50,7 +50,7 @@ class Twi4 : HttpSource() {
     }
 
     private fun parsePopularMangaRequest(response: Response, hasNextPage: Boolean): MangasPage {
-        val doc = Jsoup.parse(response.body?.string())
+        val doc = Jsoup.parse(response.body.string())
         val ret = mutableListOf<SManga>()
         // One of the manga is a link to Twi4's zadankai, which is a platform for anyone to post oneshot 4-koma with judges to comment
         // It has a completely different page layout and it is pretty much its own "manga site".
@@ -87,7 +87,7 @@ class Twi4 : HttpSource() {
         GET(getUrlDomain() + manga.url, getChromeHeaders())
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val document = Jsoup.parse(response.body?.string())
+        val document = Jsoup.parse(response.body.string())
         return SManga.create().apply {
             // We need to get the title and thumbnail again.
             // This is only needed if you search by slug, as we have no information about the them.
@@ -135,7 +135,7 @@ class Twi4 : HttpSource() {
     // They have a <noscript> layout! This is surprising
     // Though their manga pages fails to load as it relies on JS
     override fun chapterListParse(response: Response): List<SChapter> {
-        val doc = Jsoup.parse(response.body?.string())
+        val doc = Jsoup.parse(response.body.string())
         val chapterRegex = Regex(".+『(.+)』 #(\\d+)")
         val allChapters = doc.select("#backnumbers > div > ul > li")
         val ret = mutableListOf<SChapter>()
@@ -173,7 +173,7 @@ class Twi4 : HttpSource() {
         GET(getUrlDomain() + chapter.url, getChromeHeaders())
 
     override fun pageListParse(response: Response): List<Page> {
-        val doc = Jsoup.parse(response.body?.string())
+        val doc = Jsoup.parse(response.body.string())
         // The site interprets 1 page == 1 chapter
         // There should only be 1 article in the document
         val page = doc.select("article.comic:first-child")
@@ -199,10 +199,10 @@ class Twi4 : HttpSource() {
             // We got a JS file that looks very much like a JSON object
             // A few string manipulation and we can parse the whole thing as JSON!
             val re = Regex("([A-z]+):")
-            var index = indexResponse.body?.string()?.substringAfter("=")?.dropLast(1)
-            index = index?.let { re.replace(it, "\"$1\":") }
+            val index = indexResponse.body.string().substringAfter("=").dropLast(1)
+                .let { re.replace(it, "\"$1\":") }
             indexResponse.close()
-            val indexElement = index?.let { Json.parseToJsonElement(it) }
+            val indexElement = index.let { Json.parseToJsonElement(it) }
             var suffix: String? = null
             if (indexElement != null) {
                 // Each entry in the Items array corresponds to 1 chapter/page

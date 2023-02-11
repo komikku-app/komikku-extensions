@@ -157,7 +157,7 @@ abstract class GigaViewer(
         var result = client.newCall(request).execute()
 
         while (result.code != 404) {
-            val jsonResult = json.parseToJsonElement(result.body!!.string()).jsonObject
+            val jsonResult = json.parseToJsonElement(result.body.string()).jsonObject
             readMoreEndpoint = jsonResult["nextUrl"]!!.jsonPrimitive.content
             val tempDocument = Jsoup.parse(
                 jsonResult["html"]!!.jsonPrimitive.content,
@@ -265,7 +265,7 @@ abstract class GigaViewer(
         request = request.newBuilder().url(newUrl).build()
 
         val response = chain.proceed(request)
-        val image = decodeImage(response.body!!.byteStream(), width, height)
+        val image = decodeImage(response.body.byteStream(), width, height)
         val body = image.toResponseBody(jpegMediaType)
 
         response.close()

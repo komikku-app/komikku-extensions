@@ -67,7 +67,7 @@ class Multporn : ParsedHttpSource() {
     override fun popularMangaRequest(page: Int) = buildPopularMangaRequest(page - 1)
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val html = json.decodeFromString<JsonArray>(response.body!!.string())
+        val html = json.decodeFromString<JsonArray>(response.body.string())
             .last { it.jsonObject["command"]!!.jsonPrimitive.content == "insert" }.jsonObject["data"]!!.jsonPrimitive.content
 
         return super.popularMangaParse(

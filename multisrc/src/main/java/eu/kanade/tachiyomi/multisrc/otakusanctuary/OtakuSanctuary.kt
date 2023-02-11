@@ -188,7 +188,7 @@ open class OtakuSanctuary(
                     headers,
                     FormBody.Builder().add("chapId", numericId).build(),
                 ),
-            ).execute().body!!.string(),
+            ).execute().body.string(),
         ).jsonObject
 
         if (data["view"] != null) {
@@ -226,7 +226,7 @@ open class OtakuSanctuary(
                         headers,
                         FormBody.Builder().add("chapId", numericId).build(),
                     ),
-                ).execute().body!!.string(),
+                ).execute().body.string(),
             ).jsonObject
             val content = alternate["Content"]?.jsonPrimitive?.content
                 ?: throw Exception("No pages found")

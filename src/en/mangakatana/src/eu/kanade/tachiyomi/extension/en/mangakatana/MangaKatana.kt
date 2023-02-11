@@ -44,7 +44,7 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder().addNetworkInterceptor { chain ->
         val originalResponse = chain.proceed(chain.request())
         if (originalResponse.headers("Content-Type").contains("application/octet-stream")) {
-            val orgBody = originalResponse.body!!.bytes()
+            val orgBody = originalResponse.body.bytes()
             val extension = chain.request().url.toString().substringAfterLast(".")
             val newBody = orgBody.toResponseBody("image/$extension".toMediaTypeOrNull())
             originalResponse.newBuilder()

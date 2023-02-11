@@ -150,7 +150,7 @@ open class Kemono(
     private fun cacheCreators() {
         val callback = object : Callback {
             override fun onResponse(call: Call, response: Response) =
-                response.body!!.source().run {
+                response.body.source().run {
                     readAll(blackholeSink())
                     close()
                 }
@@ -200,7 +200,7 @@ open class Kemono(
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used.")
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromStream(it.body!!.byteStream())
+        json.decodeFromStream(it.body.byteStream())
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

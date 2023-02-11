@@ -202,9 +202,9 @@ class DemoneCeleste : ParsedHttpSource() {
     override fun pageListParse(response: Response): List<Page> {
         val body = response.body
 
-        val risultati = body!!.string().replace("<pagine><pag>", "").replace("""</pag><linkforum>.*""".toRegex(), "").split("</pag><pag>")
+        val risultati = body.string().replace("<pagine><pag>", "").replace("""</pag><linkforum>.*""".toRegex(), "").split("</pag><pag>")
         // The line above may be changed with this : - Not used because I couldn't find a way to use Regex's Global flag in Kotlin
-        // val results = """<pag>(.*?)</pag>""".toRegex().find(body!!.string())!!.groups
+        // val results = """<pag>(.*?)</pag>""".toRegex().find(body.string())!!.groups
         val pages = mutableListOf<Page>()
 
         if (risultati.toString().contains("Accedi al sito")) {

@@ -64,8 +64,8 @@ class Mangainua : ParsedHttpSource() {
 
     // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        if (query.length > 2) {
-            return POST(
+        return if (query.length > 2) {
+            POST(
                 "$baseUrl/index.php?do=search",
                 body = FormBody.Builder()
                     .add("do", "search")
@@ -76,7 +76,7 @@ class Mangainua : ParsedHttpSource() {
                 headers = headers,
             )
         } else {
-            return throw UnsupportedOperationException("Запит має містити щонайменше 3 символи / The query must contain at least 3 characters")
+            throw UnsupportedOperationException("Запит має містити щонайменше 3 символи / The query must contain at least 3 characters")
         }
     }
 

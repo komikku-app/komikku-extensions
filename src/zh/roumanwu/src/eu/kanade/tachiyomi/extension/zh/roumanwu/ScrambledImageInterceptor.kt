@@ -18,7 +18,7 @@ object ScrambledImageInterceptor : Interceptor {
         val response = chain.proceed(request)
         val url = request.url.toString()
         if (!url.endsWith(SCRAMBLED_SUFFIX)) return response
-        val image = BitmapFactory.decodeStream(response.body!!.byteStream())
+        val image = BitmapFactory.decodeStream(response.body.byteStream())
         val width = image.width
         val height = image.height
         val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)

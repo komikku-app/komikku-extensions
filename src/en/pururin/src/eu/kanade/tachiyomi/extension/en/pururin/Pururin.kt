@@ -153,7 +153,7 @@ class Pururin : HttpSource() {
     )
 
     private inline val Response.jsonObject
-        get() = json.parseToJsonElement(body!!.string()).jsonObject
+        get() = json.parseToJsonElement(body.string()).jsonObject
 
     private inline val SManga.id get() = url.split('/')[2]
 

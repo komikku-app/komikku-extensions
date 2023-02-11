@@ -175,7 +175,7 @@ class SixMH : HttpSource(), ConfigurableSource {
     override fun pageListRequest(chapter: SChapter) = GET(baseUrl + chapter.url, headers)
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = Unpacker.unpack(response.body!!.string(), "[", "]")
+        val result = Unpacker.unpack(response.body.string(), "[", "]")
             .ifEmpty { return emptyList() }
             .replace("\\", "")
             .removeSurrounding("\"").split("\",\"")
@@ -185,7 +185,7 @@ class SixMH : HttpSource(), ConfigurableSource {
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used.")
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromStream(body!!.byteStream())
+        json.decodeFromStream(body.byteStream())
     }
 
     override fun getFilterList() = FilterList(listOf(PageFilter()))

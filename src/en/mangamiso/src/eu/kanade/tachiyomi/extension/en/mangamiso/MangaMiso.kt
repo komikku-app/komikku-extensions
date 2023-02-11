@@ -54,7 +54,7 @@ class MangaMiso : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val mangaList = json.decodeFromString<MisoNewMangaPage>(response.body!!.string())
+        val mangaList = json.decodeFromString<MisoNewMangaPage>(response.body.string())
         val page = response.request.url.queryParameter("page")!!.toInt()
         val totalViewedManga = page * MANGA_PER_PAGE
         return MangasPage(mangaList.newManga.map(::toSManga), mangaList.total > totalViewedManga)
@@ -109,7 +109,7 @@ class MangaMiso : HttpSource() {
             val manga = mangaDetailsParse(response)
             MangasPage(listOf(manga), false)
         } else {
-            val mangaList = json.decodeFromString<MisoBrowseManga>(response.body!!.string())
+            val mangaList = json.decodeFromString<MisoBrowseManga>(response.body.string())
             val page = response.request.url.queryParameter("page")!!.toInt()
             val totalViewedManga = page * MANGA_PER_PAGE
             MangasPage(mangaList.foundList.map(::toSManga), mangaList.total > totalViewedManga)
@@ -127,7 +127,7 @@ class MangaMiso : HttpSource() {
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val mangaList = json.decodeFromString<MisoLatestUpdatesPage>(response.body!!.string())
+        val mangaList = json.decodeFromString<MisoLatestUpdatesPage>(response.body.string())
         val page = response.request.url.queryParameter("page")!!.toInt()
         val totalViewedManga = page * MANGA_PER_PAGE
         return MangasPage(mangaList.newManga.map(::toSManga), mangaList.total > totalViewedManga)
@@ -151,7 +151,7 @@ class MangaMiso : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val mangaRoot = json.parseToJsonElement(response.body!!.string())
+        val mangaRoot = json.parseToJsonElement(response.body.string())
         val mangaObj = mangaRoot.jsonObject["manga"]!!
 
         return toSManga(json.decodeFromJsonElement(mangaObj))
@@ -186,7 +186,7 @@ class MangaMiso : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val chapterRoot = json.parseToJsonElement(response.body!!.string())
+        val chapterRoot = json.parseToJsonElement(response.body.string())
 
         val chapterBase = chapterRoot.jsonObject["chapters"]!!
 
@@ -202,7 +202,7 @@ class MangaMiso : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val chapterRoot = json.parseToJsonElement(response.body!!.string())
+        val chapterRoot = json.parseToJsonElement(response.body.string())
 
         val chapterBase = chapterRoot.jsonObject["chapter"]!!
 

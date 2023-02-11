@@ -63,7 +63,7 @@ class MuitoManga : ParsedHttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val directory = json.decodeFromString<MuitoMangaDirectoryDto>(response.body!!.string())
+        val directory = json.decodeFromString<MuitoMangaDirectoryDto>(response.body.string())
         val totalPages = ceil(directory.results.size.toDouble() / ITEMS_PER_PAGE)
         val currentPage = response.request.header("X-Page")!!.toInt()
 
@@ -190,8 +190,8 @@ class MuitoManga : ParsedHttpSource() {
         }
 
         val response = chain.proceed(chain.request())
-        val responseContentType = response.body!!.contentType()
-        val responseString = response.body!!.string()
+        val responseContentType = response.body.contentType()
+        val responseString = response.body.string()
 
         directoryCache[directoryType] = responseString
 

@@ -31,7 +31,7 @@ object ImageInterceptor : Interceptor {
 
     private fun Response.decode(key: ByteArray, iv: ByteArray) = AES.let {
         it.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), IvParameterSpec(iv))
-        newBuilder().body(it.doFinal(body!!.bytes()).toResponseBody(mediaType)).build()
+        newBuilder().body(it.doFinal(body.bytes()).toResponseBody(mediaType)).build()
     }
 
     private fun String.atob() = Base64.decode(this, Base64.URL_SAFE)

@@ -81,7 +81,7 @@ open class WebtoonsSrc(
         val motiontoonPath = motiontoonPathRegex.find(docString)!!.destructured.toList()[0]
         val motiontoonResponse = client.newCall(GET(docUrl, headers)).execute()
 
-        val motiontoonJson = json.parseToJsonElement(motiontoonResponse.body!!.string()).jsonObject
+        val motiontoonJson = json.parseToJsonElement(motiontoonResponse.body.string()).jsonObject
         val motiontoonImages = motiontoonJson["assets"]!!.jsonObject["image"]!!.jsonObject
 
         return motiontoonImages.entries

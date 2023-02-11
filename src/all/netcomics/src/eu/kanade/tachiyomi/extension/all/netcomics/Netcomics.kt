@@ -242,7 +242,7 @@ class Netcomics(
 
     private inline fun <reified T> Response.data() =
         json.decodeFromJsonElement<T>(
-            json.parseToJsonElement(body!!.string()).run {
+            json.parseToJsonElement(body.string()).run {
                 jsonObject["data"] ?: throw Error(
                     jsonObject["message"]!!.jsonPrimitive.content,
                 )

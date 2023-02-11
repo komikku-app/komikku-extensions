@@ -49,7 +49,7 @@ class Tsumino : HttpSource() {
         if (originalResponse.headers("Content-Type").contains("application/octet-stream") &&
             originalResponse.request.url.pathSegments.any { it == "parts" }
         ) {
-            val orgBody = originalResponse.body!!.bytes()
+            val orgBody = originalResponse.body.bytes()
             val newBody = orgBody.toResponseBody("image/jpeg".toMediaTypeOrNull())
             originalResponse.newBuilder()
                 .body(newBody)
@@ -78,7 +78,7 @@ class Tsumino : HttpSource() {
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val mangaList = mutableListOf<SManga>()
-        val jsonResponse = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val jsonResponse = json.parseToJsonElement(response.body.string()).jsonObject
 
         for (element in jsonResponse["data"]!!.jsonArray) {
             val manga = json.decodeFromJsonElement<Manga>(element.jsonObject["entry"]!!)

@@ -31,7 +31,7 @@ class CuuTruyenImageInterceptor : Interceptor {
         var drmData = response.request.url.fragment!!.substringAfter("$KEY=")
         drmData = drmData.replace("\n", "\\n")
 
-        val image = unscrambleImage(response.body!!.byteStream(), drmData)
+        val image = unscrambleImage(response.body.byteStream(), drmData)
         val body = image.toResponseBody("image/jpeg".toMediaTypeOrNull())
         return response.newBuilder()
             .body(body)

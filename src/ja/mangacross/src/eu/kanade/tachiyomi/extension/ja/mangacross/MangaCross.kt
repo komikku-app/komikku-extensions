@@ -111,5 +111,5 @@ class MangaCross : HttpSource() {
         fun getTag() = tags[state].second
     }
 
-    private inline fun <reified T> Response.parseAs(): T = json.decodeFromStream(this.body!!.byteStream())
+    private inline fun <reified T> Response.parseAs(): T = json.decodeFromStream(this.body.byteStream())
 }

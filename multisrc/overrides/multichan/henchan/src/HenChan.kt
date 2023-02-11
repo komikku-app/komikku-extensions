@@ -234,7 +234,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val html = response.body!!.string()
+        val html = response.body.string()
         val prefix = "fullimg\": ["
         val beginIndex = html.indexOf(prefix) + prefix.length
         val endIndex = html.indexOf("]", beginIndex)

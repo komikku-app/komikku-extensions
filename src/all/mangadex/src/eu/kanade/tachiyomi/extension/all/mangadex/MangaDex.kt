@@ -745,7 +745,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     }
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        helper.json.decodeFromString(body?.string().orEmpty())
+        helper.json.decodeFromString(body.string())
     }
 
     private val SharedPreferences.contentRating

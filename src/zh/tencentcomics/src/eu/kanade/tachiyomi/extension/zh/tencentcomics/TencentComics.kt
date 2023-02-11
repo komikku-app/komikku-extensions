@@ -141,7 +141,7 @@ class TencentComics : ParsedHttpSource() {
         var nonce = html.substringAfterLast("window[").substringAfter("] = ").substringBefore("</script>").trim()
 
         while (nonce.contains("document") || nonce.contains("window")) {
-            html = client.newCall(GET(desktopUrl + document.select("li.now-reading > a").attr("href"), headers)).execute().body!!.string()
+            html = client.newCall(GET(desktopUrl + document.select("li.now-reading > a").attr("href"), headers)).execute().body.string()
             nonce = html.substringAfterLast("window[").substringAfter("] = ").substringBefore("</script>").trim()
         }
 

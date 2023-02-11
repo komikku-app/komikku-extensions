@@ -248,9 +248,9 @@ class OnePieceEx : ParsedHttpSource() {
             .build()
 
         val bypasserResponse = chain.proceed(bypasserRequest)
-        val fixedBody = bypasserResponse.body?.string().orEmpty()
+        val fixedBody = bypasserResponse.body.string()
             .replace("onepieceex-net.translate.goog", baseUrl.removePrefix("https://"))
-            .toResponseBody(bypasserResponse.body!!.contentType())
+            .toResponseBody(bypasserResponse.body.contentType())
 
         return bypasserResponse.newBuilder()
             .body(fixedBody)

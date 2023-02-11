@@ -174,7 +174,7 @@ open class Comico(
         CryptoAES.decrypt(this, keyBytes, ivBytes)
 
     private val Response.data: JsonElement?
-        get() = json.parseToJsonElement(body!!.string()).jsonObject.also {
+        get() = json.parseToJsonElement(body.string()).jsonObject.also {
             val code = it["result"]["code"].jsonPrimitive.int
             if (code != 200) throw Error(status(code))
         }["data"]

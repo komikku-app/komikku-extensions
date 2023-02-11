@@ -111,19 +111,19 @@ class MMRCMSJsonGen {
                 // Bypass Cloudflare ("Please wait 5 seconds" page)
                 if (response.code == 503 && response.header("Server") in serverCheck) {
                     var cookie = "${response.header("Set-Cookie")!!.substringBefore(";")}; "
-                    Jsoup.parse(response.body!!.string()).let { document ->
+                    Jsoup.parse(response.body.string()).let { document ->
                         val path = document.select("[id=\"challenge-form\"]").attr("action")
                         val chk = document.select("[name=\"s\"]").attr("value")
                         getOkHttpClient().newCall(Request.Builder().url("$url/$path?s=$chk").build()).execute().let { solved ->
                             cookie += solved.header("Set-Cookie")!!.substringBefore(";")
                             request.addHeader("Cookie", cookie).build().let {
-                                return Jsoup.parse(getOkHttpClient().newCall(it).execute().body?.string())
+                                return Jsoup.parse(getOkHttpClient().newCall(it).execute().body.string())
                             }
                         }
                     }
                 }
                 if (response.code == 200) {
-                    return Jsoup.parse(response.body?.string())
+                    return Jsoup.parse(response.body.string())
                 }
             }
         } catch (e: Exception) {
@@ -216,7 +216,7 @@ class MMRCMSJsonGen {
     companion object {
         val sources = sourceList
 
-        val relativePath = System.getProperty("user.dir") + "/multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/mmrcms/SourceData.kt"
+        val relativePath = System.getProperty("user.dir")!! + "/multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/mmrcms/SourceData.kt"
 
         @JvmStatic
         fun main(args: Array<String>) {

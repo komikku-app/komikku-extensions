@@ -109,7 +109,7 @@ open class Ganma : HttpSource(), ConfigurableSource {
     override fun getFilterList() = FilterList(TypeFilter())
 
     protected inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromStream<Result<T>>(it.body!!.byteStream()).root
+        json.decodeFromStream<Result<T>>(it.body.byteStream()).root
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

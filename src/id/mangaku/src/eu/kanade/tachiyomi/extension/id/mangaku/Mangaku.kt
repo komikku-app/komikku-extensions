@@ -140,7 +140,7 @@ class Mangaku : ParsedHttpSource() {
         Log.d("mangaku", "wp-routine: $wpRoutineUrl")
 
         val wpRoutineJs = client.newCall(GET(wpRoutineUrl, headers)).execute().use {
-            it.body!!.string()
+            it.body.string()
         }
         val upt3 = wpRoutineJs
             .substringAfterLast("upt3(")

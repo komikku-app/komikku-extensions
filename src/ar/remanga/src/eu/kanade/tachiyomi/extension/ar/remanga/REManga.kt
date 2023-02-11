@@ -184,7 +184,7 @@ class REManga : ParsedHttpSource() {
         Pair("Manhua", "Manhua"),
     )
 
-    open fun getGenreFilters(): List<Genre> = listOf(
+    private fun getGenreFilters(): List<Genre> = listOf(
         Genre("Action", "action"),
         Genre("Adventure", "adventure"),
         Genre("Comedy", "comedy"),
@@ -216,7 +216,7 @@ class REManga : ParsedHttpSource() {
         Genre("Vampire", "vampire"),
     )
 
-    open fun getYearFilters(): List<Year> = listOf(
+    private fun getYearFilters(): List<Year> = listOf(
         Year("1970", "1970"),
         Year("1986", "1986"),
         Year("1989", "1989"),

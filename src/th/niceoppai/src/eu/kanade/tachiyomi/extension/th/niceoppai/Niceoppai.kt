@@ -268,10 +268,10 @@ class Niceoppai : ParsedHttpSource() {
         throw UnsupportedOperationException("Not used")
 
     // Filter
-    protected open val orderByFilterTitle: String = "Order By เรียกตาม"
+    private val orderByFilterTitle: String = "Order By เรียกตาม"
     private val orderByFilterOptions: Array<String> = arrayOf("Name (A-Z)", "Name (Z-A)", "Last Updated", "Oldest Updated", "Most Popular", "Most Popular (Weekly)", "Most Popular (Monthly)", "Least Popular", "Last Added", "Early Added", "Top Rating", "Lowest Rating")
     private val orderByFilterOptionsValues: Array<String> = arrayOf("name-az", "name-za", "last-updated", "oldest-updated", "most-popular", "most-popular-weekly", "most-popular-monthly", "least-popular", "last-added", "early-added", "top-rating", "lowest-rating")
-    protected class OrderByFilter(title: String, options: List<Pair<String, String>>, state: Int = 0) : UriPartFilter(title, options.toTypedArray(), state)
+    private class OrderByFilter(title: String, options: List<Pair<String, String>>, state: Int = 0) : UriPartFilter(title, options.toTypedArray(), state)
     override fun getFilterList(): FilterList {
         val filters = mutableListOf(
             OrderByFilter(
@@ -283,9 +283,7 @@ class Niceoppai : ParsedHttpSource() {
 
         return FilterList(filters)
     }
-    open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>, state: Int = 0) : Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), state) {
-        fun toUriPart() = vals[state].second
-    }
+    open class UriPartFilter(displayName: String, vals: Array<Pair<String, String>>, state: Int = 0) : Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), state)
 }
 
 class WordSet(private vararg val words: String) {

@@ -62,5 +62,5 @@ class TerraHistoricus : HttpSource() {
     override fun imageUrlParse(response: Response) = response.parseAs<THPage>().url
 
     private inline fun <reified T> Response.parseAs() =
-        json.decodeFromString<THResult<T>>(this.body!!.string()).data
+        json.decodeFromString<THResult<T>>(this.body.string()).data
 }

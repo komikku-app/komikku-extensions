@@ -29,7 +29,7 @@ class MangaKawaii : ParsedHttpSource() {
 
     override val name = "Mangakawaii"
     override val baseUrl = "https://www.mangakawaii.io"
-    val cdnUrl = "https://cdn.mangakawaii.pics"
+    private val cdnUrl = "https://cdn.mangakawaii.pics"
     override val lang = "fr"
     override val supportsLatest = true
 
@@ -39,9 +39,9 @@ class MangaKawaii : ParsedHttpSource() {
         .rateLimit(2)
         .build()
 
-    protected open val userAgentRandomizer1 = "${Random.nextInt(9).absoluteValue}"
-    protected open val userAgentRandomizer2 = "${Random.nextInt(10, 99).absoluteValue}"
-    protected open val userAgentRandomizer3 = "${Random.nextInt(100, 999).absoluteValue}"
+    private val userAgentRandomizer1 = "${Random.nextInt(9).absoluteValue}"
+    private val userAgentRandomizer2 = "${Random.nextInt(10, 99).absoluteValue}"
+    private val userAgentRandomizer3 = "${Random.nextInt(100, 999).absoluteValue}"
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add(

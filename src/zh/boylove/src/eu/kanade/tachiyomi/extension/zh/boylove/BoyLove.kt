@@ -128,7 +128,7 @@ class BoyLove : HttpSource(), ConfigurableSource {
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used.")
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromStream<ResultDto<T>>(body!!.byteStream()).result
+        json.decodeFromStream<ResultDto<T>>(body.byteStream()).result
     }
 
     private var genres: Array<String> = emptyArray()

@@ -192,10 +192,7 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
         GET(manga.url.replaceFirst("api/v1/", "", ignoreCase = true), headers)
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val responseBody = response.body
-            ?: throw IllegalStateException("Response code ${response.code}")
-
-        return responseBody.use { body ->
+        return response.body.use { body ->
             if (response.fromReadList()) {
                 val readList = json.decodeFromString<ReadListDto>(body.string())
                 readList.toSManga()
@@ -211,8 +208,6 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val responseBody = response.body
-            ?: throw IllegalStateException("Response code ${response.code}")
-
         val page = responseBody.use { json.decodeFromString<PageWrapperDto<BookDto>>(it.string()).content }
 
         val r = page.mapIndexed { index, book ->
@@ -233,8 +228,6 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
 
     override fun pageListParse(response: Response): List<Page> {
         val responseBody = response.body
-            ?: throw IllegalStateException("Response code ${response.code}")
-
         val pages = responseBody.use { json.decodeFromString<List<PageDto>>(it.string()) }
         return pages.map {
             val url = "${response.request.url}/${it.number}" +
@@ -252,8 +245,6 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
 
     private fun processSeriesPage(response: Response): MangasPage {
         val responseBody = response.body
-            ?: throw IllegalStateException("Response code ${response.code}")
-
         return responseBody.use { body ->
             if (response.fromReadList()) {
                 with(json.decodeFromString<PageWrapperDto<ReadListDto>>(body.string())) {

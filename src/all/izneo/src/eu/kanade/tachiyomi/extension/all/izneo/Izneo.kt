@@ -185,7 +185,7 @@ class Izneo(override val lang: String) : ConfigurableSource, HttpSource() {
     private fun String.btoa() = Base64.encode(toByteArray(), Base64.DEFAULT)
 
     private fun Response.parse() =
-        json.parseToJsonElement(body!!.string()).apply {
+        json.parseToJsonElement(body.string()).apply {
             if (jsonObject["status"]?.jsonPrimitive?.content == "error") {
                 when (jsonObject["code"]?.jsonPrimitive?.content) {
                     "4" -> throw Error("You are not authorized to view this")

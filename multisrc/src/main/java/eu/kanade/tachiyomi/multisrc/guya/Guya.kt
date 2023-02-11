@@ -59,7 +59,7 @@ abstract class Guya(
 
     // Gets the response object from the request
     override fun popularMangaParse(response: Response): MangasPage {
-        val res = response.body!!.string()
+        val res = response.body.string()
         return parseManga(JSONObject(res))
     }
 
@@ -68,7 +68,7 @@ abstract class Guya(
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val payload = JSONObject(response.body!!.string())
+        val payload = JSONObject(response.body.string())
         val mangas = sortedMapOf<Long, SManga>()
 
         for (series in payload.keys()) {
@@ -109,7 +109,7 @@ abstract class Guya(
     }
 
     private fun mangaDetailsParse(response: Response, manga: SManga): SManga {
-        val res = response.body!!.string()
+        val res = response.body.string()
         return parseMangaFromJson(JSONObject(res), "", manga.title)
     }
 
@@ -139,7 +139,7 @@ abstract class Guya(
 
     // Called after the request
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
-        return parseChapterList(response.body!!.string(), manga)
+        return parseChapterList(response.body.string(), manga)
     }
 
     // Overridden fetch so that we use our overloaded method instead
@@ -167,7 +167,7 @@ abstract class Guya(
     }
 
     private fun pageListParse(response: Response, chapter: SChapter): List<Page> {
-        val res = response.body!!.string()
+        val res = response.body.string()
 
         val json = JSONObject(res)
         val chapterNum = chapter.name.split(" - ")[0]
@@ -221,7 +221,7 @@ abstract class Guya(
     }
 
     protected open fun searchMangaParseWithSlug(response: Response, slug: String): MangasPage {
-        val results = JSONObject(response.body!!.string())
+        val results = JSONObject(response.body.string())
         val truncatedJSON = JSONObject()
 
         for (mangaTitle in results.keys()) {
@@ -236,7 +236,7 @@ abstract class Guya(
     }
 
     protected open fun searchMangaParse(response: Response, query: String): MangasPage {
-        val res = response.body!!.string()
+        val res = response.body.string()
         val json = JSONObject(res)
         val truncatedJSON = JSONObject()
 
@@ -310,7 +310,7 @@ abstract class Guya(
     }
 
     private fun proxyPageListParse(response: Response, chapter: SChapter): List<Page> {
-        val res = response.body!!.string()
+        val res = response.body.string()
         val pages = if (chapter.url.removePrefix(PROXY_PREFIX).startsWith(NESTED_PROXY_API_PREFIX)) {
             JSONArray(res)
         } else {
@@ -338,7 +338,7 @@ abstract class Guya(
     }
 
     protected open fun proxySearchMangaParse(response: Response, query: String): MangasPage {
-        val json = JSONObject(response.body!!.string())
+        val json = JSONObject(response.body.string())
         return MangasPage(listOf(parseMangaFromJson(json, query)), false)
     }
 
@@ -531,7 +531,7 @@ abstract class Guya(
             if (!response.isSuccessful) {
                 retryCount++
             } else {
-                val json = JSONObject(response.body!!.string())
+                val json = JSONObject(response.body.string())
                 for (scanId in json.keys()) {
                     scanlatorMap[scanId] = json.getString(scanId)
                 }

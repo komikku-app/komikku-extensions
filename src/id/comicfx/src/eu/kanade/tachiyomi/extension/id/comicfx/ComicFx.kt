@@ -84,7 +84,7 @@ class ComicFx : ParsedHttpSource() {
     private val json: Json by injectLazy()
 
     private fun parseSearchApiResponse(response: Response): MangasPage {
-        val results = json.parseToJsonElement(response.body!!.string()).jsonObject["suggestions"]!!.jsonArray
+        val results = json.parseToJsonElement(response.body.string()).jsonObject["suggestions"]!!.jsonArray
         val manga = results.map {
             SManga.create().apply {
                 title = it.jsonObject["value"]!!.jsonPrimitive.content

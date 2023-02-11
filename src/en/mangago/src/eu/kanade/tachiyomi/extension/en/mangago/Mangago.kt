@@ -51,7 +51,7 @@ class Mangago : ParsedHttpSource() {
             val cols = response.request.url.queryParameter("cols")?.toIntOrNull()
                 ?: return@addInterceptor response
 
-            val image = unscrambleImage(response.body!!.byteStream(), key, cols)
+            val image = unscrambleImage(response.body.byteStream(), key, cols)
             val body = image.toResponseBody("image/jpeg".toMediaTypeOrNull())
             return@addInterceptor response.newBuilder()
                 .body(body)
@@ -193,7 +193,7 @@ class Mangago : ParsedHttpSource() {
         }.attr("abs:src")
 
         val obfuscatedChapterJs =
-            client.newCall(GET(chapterJsUrl, headers)).execute().body!!.string()
+            client.newCall(GET(chapterJsUrl, headers)).execute().body.string()
         val deobfChapterJs = SoJsonV4Deobfuscator.decode(obfuscatedChapterJs)
 
         val key = findHexEncodedVariable(deobfChapterJs, "key").decodeHex()

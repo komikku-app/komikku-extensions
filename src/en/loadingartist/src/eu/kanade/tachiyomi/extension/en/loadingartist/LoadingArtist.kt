@@ -89,7 +89,7 @@ class LoadingArtist : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val comics = json.parseToJsonElement(response.body!!.string()).jsonObject.map {
+        val comics = json.parseToJsonElement(response.body.string()).jsonObject.map {
             json.decodeFromJsonElement<Comic>(it.value)
         }
         val validTypes = listOf("comic", "game", "art")

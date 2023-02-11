@@ -73,7 +73,7 @@ class NineHentai : HttpSource() {
     private fun parseSearchResponse(response: Response): MangasPage {
         return response.use {
             val page = json.decodeFromString<SearchRequestPayload>(it.request.bodyString).search.page
-            json.decodeFromString<SearchResponse>(it.body?.string().orEmpty()).let { searchResponse ->
+            json.decodeFromString<SearchResponse>(it.body.string()).let { searchResponse ->
                 MangasPage(
                     searchResponse.results.map {
                         SManga.create().apply {
@@ -266,7 +266,7 @@ class NineHentai : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val resultsObj = json.parseToJsonElement(response.body!!.string()).jsonObject["results"]!!
+        val resultsObj = json.parseToJsonElement(response.body.string()).jsonObject["results"]!!
         val manga = json.decodeFromJsonElement<Manga>(resultsObj)
         val imageUrl = manga.image_server + manga.id
         var totalPages = manga.total_page
@@ -303,7 +303,7 @@ class NineHentai : HttpSource() {
             .subscribeOn(Schedulers.io())
             .map { response ->
                 // Returns the first matched tag, or null if there are no results
-                val tagList = json.parseToJsonElement(response.body!!.string()).jsonObject["results"]!!.jsonArray.map {
+                val tagList = json.parseToJsonElement(response.body.string()).jsonObject["results"]!!.jsonArray.map {
                     json.decodeFromJsonElement<Tag>(it)
                 }
                 if (tagList.isEmpty()) {
@@ -315,7 +315,7 @@ class NineHentai : HttpSource() {
     }
 
     private fun fetchSingleManga(response: Response): MangasPage {
-        val resultsObj = json.parseToJsonElement(response.body!!.string()).jsonObject["results"]!!
+        val resultsObj = json.parseToJsonElement(response.body.string()).jsonObject["results"]!!
         val manga = json.decodeFromJsonElement<Manga>(resultsObj)
         val list = listOf(
             SManga.create().apply {

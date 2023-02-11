@@ -133,7 +133,7 @@ class NoyAcg : HttpSource(), ConfigurableSource {
     private val json: Json by injectLazy()
 
     private inline fun <reified T> Response.parseAs(): T = try {
-        json.decodeFromStream(body!!.byteStream())
+        json.decodeFromStream(body.byteStream())
     } catch (e: Throwable) {
         throw Exception("请在 WebView 中登录")
     } finally {

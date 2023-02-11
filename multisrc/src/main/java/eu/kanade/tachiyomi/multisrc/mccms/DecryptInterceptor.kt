@@ -17,7 +17,7 @@ object DecryptInterceptor : Interceptor {
             null -> key2
             else -> return response
         }
-        val data = decrypt(response.body!!.bytes(), key)
+        val data = decrypt(response.body.bytes(), key)
         val body = data.toResponseBody("image/jpeg".toMediaType())
         return response.newBuilder().body(body).build()
     }

@@ -285,7 +285,7 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
         val scriptUrl = rguardUrl ?: "$baseUrl/Scripts/rguard.min.js"
         val scriptRequest = GET(scriptUrl, headers, cache = cacheControl)
         val scriptResponse = client.newCall(scriptRequest).execute()
-        val scriptBody = scriptResponse.body?.string() ?: ""
+        val scriptBody = scriptResponse.body.string()
 
         val scriptParts = RGUARD_REGEX.find(scriptBody)?.groupValues?.drop(1)
             ?: throw Exception("Unable to parse rguard script")

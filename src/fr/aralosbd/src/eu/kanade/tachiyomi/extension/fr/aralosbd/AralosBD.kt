@@ -17,6 +17,142 @@ import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+class AralosBD : HttpSource() {
+
+    companion object {
+        val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.FRANCE)
+
+        val LINK_REGEX = "\\[([^]]+)\\]\\(([^)]+)\\)".toRegex()
+        val BOLD_REGEX = "\\*+\\s*([^\\*]*)\\s*\\*+".toRegex()
+        val ITALIC_REGEX = "_+\\s*([^_]*)\\s*_+".toRegex()
+        val ICON_REGEX = ":+[a-zA-Z]+:".toRegex()
+    }
+
+    private fun cleanString(string: String): String {
+        return Parser.unescapeEntities(string, false)
+            .substringBefore("---")
+            .replace(LINK_REGEX, "$2")
+            .replace(BOLD_REGEX, "$1")
+            .replace(ITALIC_REGEX, "$1")
+            .replace(ICON_REGEX, "")
+            .trim()
+    }
+
+    override val name = "AralosBD"
+    override val baseUrl = "https://aralosbd.fr"
+    override val lang = "fr"
+    override val supportsLatest = true
+
+    private val json: Json by injectLazy()
+
+    override fun popularMangaRequest(page: Int): Request {
+        // This is the search query used for the 'recommandations' in the front page
+        return GET("$baseUrl/manga/search?s=sort:allviews;limit:16;-id:3", headers)
+    }
+
+    override fun popularMangaParse(response: Response): MangasPage {
+        val searchResult = json.decodeFromString<AralosBDSearchResult>(response.body.string())
+
+        return MangasPage(searchResult.mangas.map(::searchMangaToSManga), false)
+    }
+
+    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException("Not used.")
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException("Not used.")
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        // For a basic search, we call the appropriate endpoint
+        return GET("$baseUrl/manga/search?s=text:$query", headers)
+    }
+
+    override fun searchMangaParse(response: Response): MangasPage {
+        val searchResult = json.decodeFromString<AralosBDSearchResult>(response.body.string())
+
+        return MangasPage(searchResult.mangas.map(::searchMangaToSManga), false)
+    }
+
+    override fun mangaDetailsRequest(manga: SManga): Request {
+        // This is a needed call, so the Tachiyomi user behave like a regular user
+        // return GET(manga.url.replace("display?", "api?get=manga&"), headers)
+        return GET(manga.url, headers)
+    }
+
+    override fun mangaDetailsParse(response: Response): SManga {
+        val responseBody = client.newCall(GET(response.request.url.toString().replace("display?", "api?get=manga&"), headers)).execute().body
+
+        val manga = json.decodeFromString<AralosBDManga>(responseBody.string())
+
+        return SManga.create().apply {
+            url = "$baseUrl/manga/display?id=${manga.id}"
+            title = manga.main_title
+            artist = "" // manga.authors.joinToString(", ")
+            author = manga.authors?.joinToString(", ", transform = ::authorToString)
+            description = cleanString("${manga.description}\n\n" + (manga.fulldescription ?: ""))
+            status = 0 // This is not on the website
+            genre = manga.tags?.joinToString(", ", transform = ::tagToString)
+            thumbnail_url = "$baseUrl/${manga.icon}"
+        }
+    }
+
+    override fun chapterListRequest(manga: SManga): Request {
+        return GET(manga.url.replace("display?id", "api?get=chapters&manga"), headers)
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val searchResult = json.decodeFromString<List<AralosBDChapter>>(response.body.string())
+
+        val validSearchResults = mutableListOf<AralosBDChapter>()
+        searchResult.filterTo(validSearchResults) { it.chapter_released == "1" }
+
+        return validSearchResults.map(::chapterToSChapter)
+    }
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        return GET(chapter.url, headers)
+    }
+
+    override fun pageListParse(response: Response): List<Page> {
+        val responseBody = client.newCall(GET(response.request.url.toString().replace("chapter?id", "api?get=pages&chapter"), headers)).execute().body
+
+        val pageResult = json.decodeFromString<AralosBDPages>(responseBody.string())
+
+        return pageResult.links.mapIndexed { index, link ->
+            Page(
+                index,
+                "$baseUrl/$link",
+                "$baseUrl/$link",
+            )
+        }
+    }
+
+    override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used.")
+
+    private fun authorToString(author: AralosBDAuthor) = author.name
+    private fun tagToString(tag: AralosBDTag) = tag.tag
+
+    private fun searchMangaToSManga(manga: AralosBDSearchManga): SManga {
+        return SManga.create().apply {
+            // No need to trim, it's already done by the server
+            title = manga.title
+
+            // Just need to append the base url to the relative link returned
+            thumbnail_url = "$baseUrl/${manga.icon}"
+
+            // The url of the manga is simply based on the manga ID for now
+            url = "$baseUrl/manga/display?id=${manga.id}"
+        }
+    }
+
+    private fun chapterToSChapter(chapter: AralosBDChapter): SChapter {
+        return SChapter.create().apply {
+            url = "$baseUrl/manga/chapter?id=${chapter.chapter_id}"
+            name = chapter.chapter_number + " - " + chapter.chapter_title
+            date_upload = try { DATE_FORMAT.parse(chapter.chapter_release_time)!!.time } catch (e: Exception) { System.currentTimeMillis() }
+            // chapter_number = // This is a string and it can be 2.5.1 for example
+            scanlator = chapter.chapter_translator
+        }
+    }
+}
+
 @Serializable
 data class AralosBDSearchManga(
     val icon: String = "",
@@ -91,140 +227,3 @@ data class AralosBDPages(
     val error: Int = 0,
     val links: List<String> = emptyList(),
 )
-
-class AralosBD : HttpSource() {
-
-    companion object {
-        val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.FRANCE)
-
-        val LINK_REGEX = "\\[([^]]+)\\]\\(([^)]+)\\)".toRegex()
-        val BOLD_REGEX = "\\*+\\s*([^\\*]*)\\s*\\*+".toRegex()
-        val ITALIC_REGEX = "_+\\s*([^_]*)\\s*_+".toRegex()
-        val ICON_REGEX = ":+[a-zA-Z]+:".toRegex()
-    }
-
-    fun cleanString(string: String): String {
-        return Parser.unescapeEntities(string, false)
-            .substringBefore("---")
-            .replace(LINK_REGEX, "$2")
-            .replace(BOLD_REGEX, "$1")
-            .replace(ITALIC_REGEX, "$1")
-            .replace(ICON_REGEX, "")
-            .trim()
-    }
-
-    override val name = "AralosBD"
-    override val baseUrl = "https://aralosbd.fr"
-    override val lang = "fr"
-    override val supportsLatest = true
-
-    private val json: Json by injectLazy()
-
-    override fun popularMangaRequest(page: Int): Request {
-        // This is the search query used for the 'recommandations' in the front page
-        return GET("$baseUrl/manga/search?s=sort:allviews;limit:16;-id:3", headers)
-    }
-
-    override fun popularMangaParse(response: Response): MangasPage {
-        val searchResult = json.decodeFromString<AralosBDSearchResult>(response.body!!.string())
-
-        return MangasPage(searchResult.mangas.map(::searchMangaToSManga), false)
-    }
-
-    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException("Not used.")
-    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException("Not used.")
-
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        // For a basic search, we call the appropriate endpoint
-        return GET("$baseUrl/manga/search?s=text:$query", headers)
-    }
-
-    override fun searchMangaParse(response: Response): MangasPage {
-        val searchResult = json.decodeFromString<AralosBDSearchResult>(response.body!!.string())
-
-        return MangasPage(searchResult.mangas.map(::searchMangaToSManga), false)
-    }
-
-    override fun mangaDetailsRequest(manga: SManga): Request {
-        // This is a needed call, so the Tachiyomi user behave like a regular user
-        // return GET(manga.url.replace("display?", "api?get=manga&"), headers)
-        return GET(manga.url, headers)
-    }
-
-    override fun mangaDetailsParse(response: Response): SManga {
-        val responseBody = client.newCall(GET(response.request.url.toString().replace("display?", "api?get=manga&"), headers)).execute().body
-
-        val manga = json.decodeFromString<AralosBDManga>(responseBody!!.string())
-
-        return SManga.create().apply {
-            url = "$baseUrl/manga/display?id=${manga.id}"
-            title = manga.main_title
-            artist = "" // manga.authors.joinToString(", ")
-            author = manga.authors?.joinToString(", ", transform = ::authorToString)
-            description = cleanString("${manga.description}\n\n" + (manga.fulldescription ?: ""))
-            status = 0 // This is not on the website
-            genre = manga.tags?.joinToString(", ", transform = ::tagToString)
-            thumbnail_url = "$baseUrl/${manga.icon}"
-        }
-    }
-
-    override fun chapterListRequest(manga: SManga): Request {
-        return GET(manga.url.replace("display?id", "api?get=chapters&manga"), headers)
-    }
-
-    override fun chapterListParse(response: Response): List<SChapter> {
-        val searchResult = json.decodeFromString<List<AralosBDChapter>>(response.body!!.string())
-
-        val validSearchResults = mutableListOf<AralosBDChapter>()
-        searchResult.filterTo(validSearchResults) { it.chapter_released == "1" }
-
-        return validSearchResults.map(::chapterToSChapter)
-    }
-
-    override fun pageListRequest(chapter: SChapter): Request {
-        return GET(chapter.url, headers)
-    }
-
-    override fun pageListParse(response: Response): List<Page> {
-        val responseBody = client.newCall(GET(response.request.url.toString().replace("chapter?id", "api?get=pages&chapter"), headers)).execute().body
-
-        val pageResult = json.decodeFromString<AralosBDPages>(responseBody!!.string())
-
-        return pageResult.links.mapIndexed { index, link ->
-            Page(
-                index,
-                "$baseUrl/$link",
-                "$baseUrl/$link",
-            )
-        }
-    }
-
-    override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used.")
-
-    private fun authorToString(author: AralosBDAuthor) = author.name
-    private fun translatorToString(translator: AralosBDTranslator) = translator.name
-    private fun tagToString(tag: AralosBDTag) = tag.tag
-
-    private fun searchMangaToSManga(manga: AralosBDSearchManga): SManga {
-        return SManga.create().apply {
-            // No need to trim, it's already done by the server
-            title = manga.title
-
-            // Just need to append the base url to the relative link returned
-            thumbnail_url = "$baseUrl/${manga.icon}"
-
-            // The url of the manga is simply based on the manga ID for now
-            url = "$baseUrl/manga/display?id=${manga.id}"
-        }
-    }
-
-    private fun chapterToSChapter(chapter: AralosBDChapter): SChapter {
-        return SChapter.create().apply {
-            url = "$baseUrl/manga/chapter?id=${chapter.chapter_id}"
-            name = chapter.chapter_number + " - " + chapter.chapter_title
-            date_upload = try { DATE_FORMAT.parse(chapter.chapter_release_time)!!.time } catch (e: Exception) { System.currentTimeMillis() }
-            // chapter_number = // This is a string and it can be 2.5.1 for example
-            scanlator = chapter.chapter_translator
-        }
-    }
-}

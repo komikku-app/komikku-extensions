@@ -312,7 +312,7 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
         fun parseChapters(page: Int) {
             val url = "$baseUrl/series/$mangaId/episodes?page=$page&sort=NEWEST&init_load=0&large=true&last_access=0&"
             val jsonResponse = client.newCall(GET(url, headers)).execute()
-            val json = json.parseToJsonElement(jsonResponse.body!!.string()).jsonObject["data"]!!.jsonObject
+            val json = json.parseToJsonElement(jsonResponse.body.string()).jsonObject["data"]!!.jsonObject
 
             Jsoup.parse(json["body"]!!.jsonPrimitive.content).select(chapterListSelector())
                 .let { list ->

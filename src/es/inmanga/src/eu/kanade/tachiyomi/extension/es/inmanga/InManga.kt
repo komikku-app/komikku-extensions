@@ -131,7 +131,7 @@ class InManga : ParsedHttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         // The server returns a JSON with data property that contains a string with the JSON,
         // so is necessary to decode twice.
-        val data = json.decodeFromString<InMangaResultDto>(response.body!!.string())
+        val data = json.decodeFromString<InMangaResultDto>(response.body.string())
         if (data.data.isNullOrEmpty()) {
             return emptyList()
         }

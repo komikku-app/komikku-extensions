@@ -72,7 +72,7 @@ class MangaDenizi : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element) = throw UnsupportedOperationException("Unused")
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val mangaListJson = Json.decodeFromString<SearchMangaJson>(response.body!!.string())
+        val mangaListJson = Json.decodeFromString<SearchMangaJson>(response.body.string())
         val mangaList = mangaListJson.suggestions.map {
             SManga.create().apply {
                 title = it.value

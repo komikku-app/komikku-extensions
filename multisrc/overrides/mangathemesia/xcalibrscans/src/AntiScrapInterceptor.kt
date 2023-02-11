@@ -30,7 +30,7 @@ class AntiScrapInterceptor : Interceptor {
             val newRequest = request.newBuilder().url(imageUrl).build()
             val response = chain.proceed(newRequest)
 
-            val bitmap = BitmapFactory.decodeStream(response.body!!.byteStream())
+            val bitmap = BitmapFactory.decodeStream(response.body.byteStream())
             response.close()
 
             width += bitmap.width

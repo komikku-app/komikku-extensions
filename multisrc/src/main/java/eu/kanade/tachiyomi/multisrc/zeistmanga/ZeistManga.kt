@@ -56,7 +56,7 @@ abstract class ZeistManga(
         val res = client.newCall(req).execute()
 
         // Parse JSON API response
-        val jsonString = res.body!!.string()
+        val jsonString = res.body.string()
         val result = json.decodeFromString<ZeistMangaDto>(jsonString)
 
         // Transform JSON response into List<SChapter>
@@ -126,7 +126,7 @@ abstract class ZeistManga(
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val jsonString = response.body?.string().orEmpty()
+        val jsonString = response.body.string()
         val result = json.decodeFromString<ZeistMangaDto>(jsonString)
         // Transform JSON response into List<SManga>
         val mangas = result.feed!!.entry?.map { it.toSManga(baseUrl) }

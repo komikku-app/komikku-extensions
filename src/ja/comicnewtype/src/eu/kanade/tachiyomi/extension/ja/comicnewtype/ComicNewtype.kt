@@ -97,7 +97,7 @@ class ComicNewtype : HttpSource() {
     override fun chapterListRequest(manga: SManga) = GET(baseUrl + manga.url + "more/1/", headers)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val jsonObject = Json.parseToJsonElement(response.body!!.string()).jsonObject
+        val jsonObject = Json.parseToJsonElement(response.body.string()).jsonObject
         val html = jsonObject["html"]!!.jsonPrimitive.content // asserting ["next"] is 0
         return Jsoup.parseBodyFragment(html).body().children().mapNotNull { element ->
             val url = element.child(0).attr("href")
@@ -117,7 +117,7 @@ class ComicNewtype : HttpSource() {
     override fun pageListRequest(chapter: SChapter) = GET(baseUrl + chapter.url + "json/", headers)
 
     override fun pageListParse(response: Response): List<Page> =
-        Json.parseToJsonElement(response.body!!.string()).jsonArray.mapIndexed { index, jsonElement ->
+        Json.parseToJsonElement(response.body.string()).jsonArray.mapIndexed { index, jsonElement ->
             val path = when (jsonElement) {
                 is JsonArray -> jsonElement[0]
                 else -> jsonElement

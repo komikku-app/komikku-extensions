@@ -65,7 +65,7 @@ abstract class HentaiHand(
     // Popular
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val jsonResponse = json.parseToJsonElement(response.body!!.string())
+        val jsonResponse = json.parseToJsonElement(response.body.string())
         val mangaList = jsonResponse.jsonObject["data"]!!.jsonArray.map {
             val obj = it.jsonObject
             SManga.create().apply {
@@ -118,7 +118,7 @@ abstract class HentaiHand(
             .subscribeOn(Schedulers.io())
             .map { response ->
                 // Returns the first matched id, or null if there are no results
-                val idList = json.parseToJsonElement(response.body!!.string()).jsonObject["data"]!!.jsonArray.map {
+                val idList = json.parseToJsonElement(response.body.string()).jsonObject["data"]!!.jsonArray.map {
                     it.jsonObject["id"]!!.jsonPrimitive.content
                 }
                 if (idList.isEmpty()) {
@@ -179,7 +179,7 @@ abstract class HentaiHand(
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val obj = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val obj = json.parseToJsonElement(response.body.string()).jsonObject
         return SManga.create().apply {
             url = slugToUrl(obj)
             title = obj["title"]!!.jsonPrimitive.content
@@ -224,7 +224,7 @@ abstract class HentaiHand(
     override fun chapterListParse(response: Response): List<SChapter> {
         val slug = response.request.url.toString().substringAfter("/api/comics/").removeSuffix("/chapters")
         return if (chapters) {
-            val array = json.parseToJsonElement(response.body!!.string()).jsonArray
+            val array = json.parseToJsonElement(response.body.string()).jsonArray
             array.map {
                 SChapter.create().apply {
                     url = "$slug/${it.jsonObject["slug"]!!.jsonPrimitive.content}"
@@ -240,7 +240,7 @@ abstract class HentaiHand(
                 }
             }
         } else {
-            val obj = json.parseToJsonElement(response.body!!.string()).jsonObject
+            val obj = json.parseToJsonElement(response.body.string()).jsonObject
             listOf(
                 SChapter.create().apply {
                     url = obj["slug"]!!.jsonPrimitive.content
@@ -267,7 +267,7 @@ abstract class HentaiHand(
     }
 
     override fun pageListParse(response: Response): List<Page> =
-        json.parseToJsonElement(response.body!!.string()).jsonObject["images"]!!.jsonArray.map {
+        json.parseToJsonElement(response.body.string()).jsonObject["images"]!!.jsonArray.map {
             val imgObj = it.jsonObject
             val index = imgObj["page"]!!.jsonPrimitive.int
             val imgUrl = imgObj["source_url"]!!.jsonPrimitive.content
@@ -304,13 +304,9 @@ abstract class HentaiHand(
         if (response.code == 401) {
             throw IOException("Failed to login, check if username and password are correct")
         }
-
-        if (response.body == null) {
-            throw IOException("Login response body is empty")
-        }
         try {
             // Returns access token as a string, unless unparseable
-            return json.parseToJsonElement(response.body!!.string()).jsonObject["auth"]!!.jsonObject["access-token"]!!.jsonPrimitive.content
+            return json.parseToJsonElement(response.body.string()).jsonObject["auth"]!!.jsonObject["access-token"]!!.jsonPrimitive.content
         } catch (e: IllegalArgumentException) {
             throw IOException("Cannot parse login response body")
         }

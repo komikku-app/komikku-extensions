@@ -192,7 +192,7 @@ class MangaPlusCreators(override val lang: String) : HttpSource() {
     }
 
     private fun Response.asMpcResponse(): MpcResponse = use {
-        json.decodeFromString(body!!.string())
+        json.decodeFromString(body.string())
     }
 
     companion object {

@@ -21,7 +21,7 @@ class MangKomik : MangaThemesia("MangKomik", "https://mangkomik.net", "id") {
         ).execute()
 
         // Inject external JS
-        scriptEl.text(scriptResponse.body!!.string())
+        scriptEl.text(scriptResponse.body.string())
         return super.pageListParse(document)
     }
 }

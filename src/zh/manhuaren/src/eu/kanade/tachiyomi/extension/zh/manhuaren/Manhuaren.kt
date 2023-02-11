@@ -119,7 +119,7 @@ class Manhuaren : HttpSource() {
     }
 
     private fun mangasPageParse(response: Response): MangasPage {
-        val res = response.body!!.string()
+        val res = response.body.string()
         val arr = JSONObject(res).getJSONObject("response").getJSONArray("mangas")
         return mangasFromJSONArray(arr)
     }
@@ -180,7 +180,7 @@ class Manhuaren : HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val res = response.body!!.string()
+        val res = response.body.string()
         val obj = JSONObject(res).getJSONObject("response")
         if (obj.has("result")) {
             return mangasFromJSONArray(obj.getJSONArray("result"))
@@ -189,7 +189,7 @@ class Manhuaren : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
-        val res = response.body!!.string()
+        val res = response.body.string()
         val obj = JSONObject(res).getJSONObject("response")
         title = obj.getString("mangaName")
         thumbnail_url = ""
@@ -253,7 +253,7 @@ class Manhuaren : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val res = response.body!!.string()
+        val res = response.body.string()
         val obj = JSONObject(res).getJSONObject("response")
         val ret = ArrayList<SChapter>()
         listOf("mangaEpisode", "mangaWords", "mangaRolls").forEach {
@@ -265,7 +265,7 @@ class Manhuaren : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val res = response.body!!.string()
+        val res = response.body.string()
         val obj = JSONObject(res).getJSONObject("response")
         val ret = ArrayList<Page>()
         val host = obj.getJSONArray("hostList").getString(0)

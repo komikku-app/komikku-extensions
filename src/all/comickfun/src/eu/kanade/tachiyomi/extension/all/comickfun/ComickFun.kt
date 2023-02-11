@@ -62,7 +62,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<List<Manga>>(response.body!!.string())
+        val result = json.decodeFromString<List<Manga>>(response.body.string())
         return MangasPage(
             result.map { data ->
                 SManga.create().apply {
@@ -91,7 +91,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.decodeFromString<List<Manga>>(response.body!!.string())
+        val result = json.decodeFromString<List<Manga>>(response.body.string())
         return MangasPage(
             result.map { data ->
                 SManga.create().apply {
@@ -190,7 +190,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<List<Manga>>(response.body!!.string())
+        val result = json.decodeFromString<List<Manga>>(response.body.string())
         return MangasPage(
             result.map { data ->
                 SManga.create().apply {
@@ -221,7 +221,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val mangaData = json.decodeFromString<MangaDetails>(response.body!!.string())
+        val mangaData = json.decodeFromString<MangaDetails>(response.body.string())
         return SManga.create().apply {
             url = "$baseUrl/comic/${mangaData.comic.slug}"
             title = mangaData.comic.title
@@ -245,7 +245,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val mangaData = json.decodeFromString<MangaDetails>(response.body!!.string())
+        val mangaData = json.decodeFromString<MangaDetails>(response.body.string())
         val mangaHid = findCurrentSlug(mangaData.comic.slug)
         val chapterData = client.newCall(
             GET(
@@ -262,7 +262,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                 headers,
             ),
         ).execute()
-        val result = json.decodeFromString<ChapterList>(chapterData.body!!.string())
+        val result = json.decodeFromString<ChapterList>(chapterData.body.string())
         return result.chapters.map { chapter ->
             SChapter.create().apply {
                 url = "/comic/${mangaData.comic.slug}/${chapter.hid}-chapter-${chapter.chap}-$comickFunLang"
@@ -297,7 +297,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = json.decodeFromString<PageList>(response.body!!.string())
+        val result = json.decodeFromString<PageList>(response.body.string())
         return result.chapter.images.mapIndexedNotNull { index, data ->
             if (data.url == null) null else Page(index = index, imageUrl = data.url)
         }
@@ -331,6 +331,6 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         ).execute()
 
         /** If the API does not contain the ID for the slug, return the slug back **/
-        return json.parseToJsonElement(response.body!!.string()).jsonObject[oldSlug]!!.jsonPrimitive.content
+        return json.parseToJsonElement(response.body.string()).jsonObject[oldSlug]!!.jsonPrimitive.content
     }
 }

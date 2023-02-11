@@ -100,7 +100,7 @@ open class FlameScans(
             val request = chain.request().newBuilder().url(imageUrl).build()
             val response = chain.proceed(request)
 
-            val bitmap = BitmapFactory.decodeStream(response.body!!.byteStream())
+            val bitmap = BitmapFactory.decodeStream(response.body.byteStream())
 
             width += bitmap.width
             height = bitmap.height

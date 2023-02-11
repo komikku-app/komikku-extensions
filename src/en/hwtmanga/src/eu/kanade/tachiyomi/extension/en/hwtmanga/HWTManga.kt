@@ -194,7 +194,7 @@ class HWTManga : HttpSource() {
     }
 
     private inline fun <reified T> Response.parse(key: String) =
-        body!!.string().let { body ->
+        body.string().let { body ->
             if ("success" !in body) error(body)
             json.decodeFromJsonElement<T>(
                 json.parseToJsonElement(body).jsonObject[key]!!,

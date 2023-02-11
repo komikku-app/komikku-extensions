@@ -112,7 +112,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
         if (!response.isSuccessful) {
             throw Exception("登录失败")
         }
-        return json.decodeFromString<PicaResponse>(response.body!!.string()).data.token!!
+        return json.decodeFromString<PicaResponse>(response.body.string()).data.token!!
     }
 
     override fun popularMangaRequest(page: Int): Request {
@@ -122,7 +122,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
 
     // for /comics/random, /comics/leaderboard
     private fun singlePageParse(response: Response): MangasPage {
-        val comics = json.decodeFromString<PicaResponse>(response.body!!.string())
+        val comics = json.decodeFromString<PicaResponse>(response.body.string())
             .data.comics!!.let { json.decodeFromJsonElement<List<PicaSearchComic>>(it) }
 
         val mangas = comics
@@ -204,7 +204,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
         }
 
         val comics = json.decodeFromString<PicaResponse>(
-            response.body!!.string(),
+            response.body.string(),
         ).data.comics!!.let { json.decodeFromJsonElement<PicaSearchComics>(it) }
 
         val mangas = comics.docs
@@ -227,7 +227,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val comic = json.decodeFromString<PicaResponse>(
-            response.body!!.string(),
+            response.body.string(),
         ).data.comic!!
 
         return SManga.create().apply {
@@ -252,7 +252,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
         val comicId = response.request.url.pathSegments[1]
 
         val eps = json.decodeFromString<PicaResponse>(
-            response.body!!.string(),
+            response.body.string(),
         ).data.eps!!
 
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
@@ -286,7 +286,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
 
     override fun pageListParse(response: Response): List<Page> {
         val pages = json.decodeFromString<PicaResponse>(
-            response.body!!.string(),
+            response.body.string(),
         ).data.pages!!
 
         val ret = pages.docs.mapIndexed { index, picaPage ->

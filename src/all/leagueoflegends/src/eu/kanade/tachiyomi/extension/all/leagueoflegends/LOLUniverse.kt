@@ -110,7 +110,7 @@ class LOLUniverse(
         throw UnsupportedOperationException("Not used")
 
     private inline fun <reified T> Response.decode() =
-        json.decodeFromString<T>(body!!.string())
+        json.decodeFromString<T>(body.string())
 
     private fun String.clean() =
         replace("</p> ", "</p>").replace("</p>", "\n").replace("<p>", "")

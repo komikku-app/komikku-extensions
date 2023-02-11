@@ -34,7 +34,7 @@ class XkcdZH : Xkcd("https://xkcd.tw", "zh", "yyyy-MM-dd HH:mm:ss") {
     override fun mangaDetailsRequest(manga: SManga) = GET(baseUrl, headers)
 
     override fun chapterListParse(response: Response) =
-        json.parseToJsonElement(response.body!!.string()).jsonObject.values.map {
+        json.parseToJsonElement(response.body.string()).jsonObject.values.map {
             val obj = it.jsonObject
             val number = obj["id"]!!.jsonPrimitive.content
             val title = obj["title"]!!.jsonPrimitive.content

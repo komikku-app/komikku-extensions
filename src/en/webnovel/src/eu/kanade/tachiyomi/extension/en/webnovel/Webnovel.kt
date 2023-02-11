@@ -338,7 +338,7 @@ class Webnovel : HttpSource() {
     }
 
     private inline fun <reified T> Response.checkAndParseAs(): T = use {
-        val parsed = json.decodeFromString<ResponseDto<T>>(it.body?.string().orEmpty())
+        val parsed = json.decodeFromString<ResponseDto<T>>(it.body.string())
         if (parsed.code != 0) error("Error ${parsed.code}: ${parsed.msg}")
         requireNotNull(parsed.data) { "Response data is null" }
     }

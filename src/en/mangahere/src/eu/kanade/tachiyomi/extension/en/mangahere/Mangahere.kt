@@ -278,7 +278,7 @@ class Mangahere : ParsedHttpSource() {
                         .build()
 
                     val response = client.newCall(request).execute()
-                    responseText = response.body!!.string()
+                    responseText = response.body.string()
 
                     if (responseText.isNotEmpty()) {
                         break

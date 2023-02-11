@@ -123,7 +123,7 @@ class Roumanwu : HttpSource(), ConfigurableSource {
         private val TAGS = arrayOf("全部", "正妹", "恋爱", "出版漫画", "肉慾", "浪漫", "大尺度", "巨乳", "有夫之婦", "女大生", "狗血劇", "同居", "好友", "調教", "动作", "後宮", "不倫")
     }
 
-    private inline fun <reified T> Response.parseAs(): T = json.decodeFromStream(this.body!!.byteStream())
+    private inline fun <reified T> Response.parseAs(): T = json.decodeFromStream(this.body.byteStream())
 
     private inline fun <reified T> Response.nextjsData() =
         json.decodeFromString<NextData<T>>(this.asJsoup().select("#__NEXT_DATA__").html()).props.pageProps

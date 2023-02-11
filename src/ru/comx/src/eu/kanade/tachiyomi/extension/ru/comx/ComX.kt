@@ -318,7 +318,7 @@ class ComX : ParsedHttpSource() {
 
     // Pages
     override fun pageListParse(response: Response): List<Page> {
-        val html = response.body!!.string()
+        val html = response.body.string()
 
         // Comics 18+
         if (html.contains("adult__header")) {

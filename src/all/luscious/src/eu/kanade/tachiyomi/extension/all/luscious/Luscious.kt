@@ -67,7 +67,7 @@ abstract class Luscious(
     private val rewriteOctetStream: Interceptor = Interceptor { chain ->
         val originalResponse: Response = chain.proceed(chain.request())
         if (originalResponse.headers("Content-Type").contains("application/octet-stream") && originalResponse.request.url.toString().contains(".webp")) {
-            val orgBody = originalResponse.body!!.bytes()
+            val orgBody = originalResponse.body.bytes()
             val newBody = orgBody.toResponseBody("image/webp".toMediaTypeOrNull())
             originalResponse.newBuilder()
                 .body(newBody)
@@ -215,7 +215,7 @@ abstract class Luscious(
     }
 
     private fun parseAlbumListResponse(response: Response): MangasPage {
-        val data = json.decodeFromString<JsonObject>(response.body!!.string())
+        val data = json.decodeFromString<JsonObject>(response.body.string())
         with(data["data"]!!.jsonObject["album"]!!.jsonObject["list"]) {
             return MangasPage(
                 this!!.jsonObject["items"]!!.jsonArray.map {
@@ -281,7 +281,7 @@ abstract class Luscious(
                     .let { it.first { f -> f.jsonObject["name"]!!.jsonPrimitive.content == "album_id" } }
                     .let { it.jsonObject["value"]!!.jsonPrimitive.content }
 
-                var data = json.decodeFromString<JsonObject>(response.body!!.string())
+                var data = json.decodeFromString<JsonObject>(response.body.string())
                     .let { it.jsonObject["data"]!!.jsonObject["picture"]!!.jsonObject["list"]!!.jsonObject }
 
                 while (nextPage) {
@@ -303,7 +303,7 @@ abstract class Luscious(
                     }
                     if (nextPage) {
                         val newPage = client.newCall(GET(buildAlbumPicturesPageUrl(id, page))).execute()
-                        data = json.decodeFromString<JsonObject>(newPage.body!!.string())
+                        data = json.decodeFromString<JsonObject>(newPage.body.string())
                             .let { it["data"]!!.jsonObject["picture"]!!.jsonObject["list"]!!.jsonObject }
                     }
                     page++
@@ -353,7 +353,7 @@ abstract class Luscious(
             .let { it.first { f -> f.jsonObject["name"]!!.jsonPrimitive.content == "album_id" } }
             .let { it.jsonObject["value"]!!.jsonPrimitive.content }
 
-        var data = json.decodeFromString<JsonObject>(response.body!!.string())
+        var data = json.decodeFromString<JsonObject>(response.body.string())
             .let { it["data"]!!.jsonObject["picture"]!!.jsonObject["list"]!!.jsonObject }
 
         while (nextPage) {
@@ -371,7 +371,7 @@ abstract class Luscious(
             }
             if (nextPage) {
                 val newPage = client.newCall(GET(buildAlbumPicturesPageUrl(id, page))).execute()
-                data = json.decodeFromString<JsonObject>(newPage.body!!.string())
+                data = json.decodeFromString<JsonObject>(newPage.body.string())
                     .let { it["data"]!!.jsonObject["picture"]!!.jsonObject["list"]!!.jsonObject }
             }
             page++
@@ -406,7 +406,7 @@ abstract class Luscious(
         return client.newCall(GET(page.url, headers))
             .asObservableSuccess()
             .map {
-                val data = json.decodeFromString<JsonObject>(it.body!!.string()).let { data ->
+                val data = json.decodeFromString<JsonObject>(it.body.string()).let { data ->
                     data["data"]!!.jsonObject["picture"]!!.jsonObject["list"]!!.jsonObject
                 }
                 when (getResolutionPref()) {
@@ -430,7 +430,7 @@ abstract class Luscious(
     }
 
     private fun detailsParse(response: Response): SManga {
-        val data = json.decodeFromString<JsonObject>(response.body!!.string())
+        val data = json.decodeFromString<JsonObject>(response.body.string())
         with(data["data"]!!.jsonObject["album"]!!.jsonObject["get"]!!.jsonObject) {
             val manga = SManga.create()
             manga.url = this["url"]!!.jsonPrimitive.content
@@ -498,10 +498,10 @@ abstract class Luscious(
 
     class TriStateFilterOption(name: String, val value: String) : Filter.TriState(name)
     abstract class TriStateGroupFilter(name: String, options: List<TriStateFilterOption>) : Filter.Group<TriStateFilterOption>(name, options) {
-        val included: List<String>
+        private val included: List<String>
             get() = state.filter { it.isIncluded() }.map { it.value }
 
-        val excluded: List<String>
+        private val excluded: List<String>
             get() = state.filter { it.isExcluded() }.map { it.value }
 
         fun anyNotIgnored(): Boolean = state.any { !it.isIgnored() }

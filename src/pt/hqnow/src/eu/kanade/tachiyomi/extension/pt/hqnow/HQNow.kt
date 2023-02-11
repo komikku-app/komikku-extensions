@@ -89,7 +89,7 @@ class HQNow : HttpSource() {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = json.parseToJsonElement(response.body.string()).jsonObject
 
         val comicList = result["data"]!!.jsonObject["getHqsByFilters"]!!
             .let { json.decodeFromJsonElement<List<HqNowComicBookDto>>(it) }
@@ -118,7 +118,7 @@ class HQNow : HttpSource() {
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = json.parseToJsonElement(response.body.string()).jsonObject
 
         val comicList = result["data"]!!.jsonObject["getRecentlyUpdatedHqs"]!!
             .let { json.decodeFromJsonElement<List<HqNowComicBookDto>>(it) }
@@ -153,7 +153,7 @@ class HQNow : HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = json.parseToJsonElement(response.body.string()).jsonObject
 
         val comicList = result["data"]!!.jsonObject["getHqsByName"]!!
             .let { json.decodeFromJsonElement<List<HqNowComicBookDto>>(it) }
@@ -199,7 +199,7 @@ class HQNow : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = json.parseToJsonElement(response.body.string()).jsonObject
         val comicBook = result["data"]!!.jsonObject["getHqsById"]!!.jsonArray[0].jsonObject
             .let { json.decodeFromJsonElement<HqNowComicBookDto>(it) }
 
@@ -213,7 +213,7 @@ class HQNow : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = json.parseToJsonElement(response.body.string()).jsonObject
         val comicBook = result["data"]!!.jsonObject["getHqsById"]!!.jsonArray[0].jsonObject
             .let { json.decodeFromJsonElement<HqNowComicBookDto>(it) }
 
@@ -260,7 +260,7 @@ class HQNow : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val result = json.parseToJsonElement(response.body.string()).jsonObject
 
         val chapterDto = result["data"]!!.jsonObject["getChapterById"]!!
             .let { json.decodeFromJsonElement<HqNowChapterDto>(it) }

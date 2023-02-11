@@ -252,7 +252,7 @@ class DoujinDesu : ParsedHttpSource() {
         return manga
     }
 
-    protected open fun imageFromElement(element: Element): String? {
+    private fun imageFromElement(element: Element): String? {
         return when {
             element.hasAttr("data-src") -> element.attr("abs:data-src")
             element.hasAttr("data-lazy-src") -> element.attr("abs:data-lazy-src")
@@ -268,10 +268,6 @@ class DoujinDesu : ParsedHttpSource() {
     private fun reconstructDate(dateStr: String): Long {
         return runCatching { DATE_FORMAT.parse(dateStr)?.time }
             .getOrNull() ?: 0L
-    }
-
-    private fun getImage(element: Element): Page {
-        return Page(getNumberFromString(element.attr("img-id")).toInt(), "", element.attr("src"))
     }
 
     // Popular

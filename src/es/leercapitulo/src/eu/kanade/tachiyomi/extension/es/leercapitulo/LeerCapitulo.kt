@@ -54,7 +54,7 @@ open class LeerCapitulo : ParsedHttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val mangas = json.decodeFromString<List<MangaDto>>(response.body!!.string()).map {
+        val mangas = json.decodeFromString<List<MangaDto>>(response.body.string()).map {
             SManga.create().apply {
                 setUrlWithoutDomain(it.link)
                 title = it.label

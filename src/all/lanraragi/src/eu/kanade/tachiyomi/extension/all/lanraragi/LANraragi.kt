@@ -76,7 +76,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val archive = json.decodeFromString<Archive>(response.body!!.string())
+        val archive = json.decodeFromString<Archive>(response.body.string())
 
         return archiveToSManga(archive)
     }
@@ -89,7 +89,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val archive = json.decodeFromString<Archive>(response.body!!.string())
+        val archive = json.decodeFromString<Archive>(response.body.string())
         val uri = getApiUriBuilder("/api/archives/${archive.arcid}/files")
         val prefClearNew = preferences.getBoolean(NEW_ONLY_KEY, NEW_ONLY_DEFAULT)
 
@@ -123,7 +123,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val archivePage = json.decodeFromString<ArchivePage>(response.body!!.string())
+        val archivePage = json.decodeFromString<ArchivePage>(response.body.string())
 
         return archivePage.pages.mapIndexed { index, url ->
             val uri = Uri.parse("${baseUrl}${url.trimStart('.')}")
@@ -197,7 +197,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val jsonResult = json.decodeFromString<ArchiveSearchResult>(response.body!!.string())
+        val jsonResult = json.decodeFromString<ArchiveSearchResult>(response.body.string())
         val currentStart = getStart(response)
         val archives = arrayListOf<SManga>()
 
@@ -340,7 +340,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
     // Helper
     private fun getRandomID(query: String): String {
         val searchRandom = client.newCall(GET("$baseUrl/api/search/random?count=1&$query", headers)).execute()
-        val data = json.parseToJsonElement(searchRandom.body!!.string()).jsonObject["data"]
+        val data = json.parseToJsonElement(searchRandom.body.string()).jsonObject["data"]
         val archive = data!!.jsonArray.firstOrNull()?.jsonObject
 
         // 0.8.2~0.8.7 = id, 0.8.8+ = arcid
@@ -361,7 +361,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
             .subscribe(
                 {
                     categories = try {
-                        json.decodeFromString(it.body!!.string())
+                        json.decodeFromString(it.body.string())
                     } catch (e: Exception) {
                         emptyList()
                     }

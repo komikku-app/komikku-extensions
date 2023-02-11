@@ -173,7 +173,7 @@ abstract class EHentai(
             // if no genres are selected by the user set all genres to on
             if (!check) {
                 for (i in it) {
-                    (i as GenreOption).state = true
+                    i.state = true
                 }
             }
         }
@@ -356,7 +356,7 @@ abstract class EHentai(
     }
 
     // Headers
-    override fun headersBuilder() = super.headersBuilder().add("Cookie", cookiesHeader)!!
+    override fun headersBuilder() = super.headersBuilder().add("Cookie", cookiesHeader)
 
     private fun buildSettings(settings: List<String?>) = settings.filterNotNull().joinToString(separator = "-")
 
@@ -381,7 +381,7 @@ abstract class EHentai(
                 .build()
 
             chain.proceed(newReq)
-        }.build()!!
+        }.build()
 
     // Filters
     override fun getFilterList() = FilterList(

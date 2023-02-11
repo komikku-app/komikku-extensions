@@ -31,7 +31,7 @@ class NicovideoSeiga : HttpSource() {
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val currentPage = response.request.url.queryParameter("page")!!.toInt()
-        val doc = Jsoup.parse(response.body!!.string())
+        val doc = Jsoup.parse(response.body.string())
         val mangaCount = doc.select("#main_title > h2 > span").text().trim().dropLast(1).toInt()
         val mangaPerPage = 20
         val mangaList = doc.select("#comic_list > ul > li")
@@ -81,7 +81,7 @@ class NicovideoSeiga : HttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage {
         val currentPage = response.request.url.queryParameter("page")!!.toInt()
-        val doc = Jsoup.parse(response.body!!.string())
+        val doc = Jsoup.parse(response.body.string())
         val mangaCount =
             doc.select("#mg_wrapper > div > div.header > div.header__result-summary").text().trim()
                 .split("：")[1].toInt()
@@ -118,7 +118,7 @@ class NicovideoSeiga : HttpSource() {
         GET("$baseUrl/manga/search/?q=$query&page=$page&sort=score")
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val doc = Jsoup.parse(response.body!!.string())
+        val doc = Jsoup.parse(response.body.string())
         // The description is a mix of synopsis and news announcements
         // This is just how mangakas use this site
         description =
@@ -144,7 +144,7 @@ class NicovideoSeiga : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val doc = Jsoup.parse(response.body!!.string())
+        val doc = Jsoup.parse(response.body.string())
         val chapters = ArrayList<SChapter>()
         val chapterList = doc.select("#episode_list > ul > li")
         val mangaId = response.request.url.toUrl().toString().substringAfterLast('/').substringBefore('?')
@@ -184,7 +184,7 @@ class NicovideoSeiga : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val doc = Jsoup.parse(response.body!!.string())
+        val doc = Jsoup.parse(response.body.string())
         val pages = ArrayList<Page>()
         // Nicovideo will refuse to serve any pages if the user has not logged in
         if (!doc.select("#login_manga").isEmpty()) {
@@ -235,7 +235,7 @@ class NicovideoSeiga : HttpSource() {
         // Decrypt the image
         val key = match.destructured.component1()
         val response = chain.proceed(chain.request())
-        val encryptedImage = response.body!!.bytes()
+        val encryptedImage = response.body.bytes()
         val decryptedImage = decryptImage(key, encryptedImage)
 
         // Construct a new response

@@ -153,7 +153,7 @@ class LittleGarden : ParsedHttpSource() {
             .headers(newHeaders)
             .build()
         val resp = client.newCall(request).execute()
-        val chapters = Json.parseToJsonElement(resp.body?.string().toString()).jsonObject["data"]?.jsonObject?.get("chapters")?.jsonArray
+        val chapters = Json.parseToJsonElement(resp.body.string()).jsonObject["data"]?.jsonObject?.get("chapters")?.jsonArray
         if (chapters != null) {
             return chapters.map {
                 SChapter.create().apply {

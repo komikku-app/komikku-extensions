@@ -237,7 +237,7 @@ class MangaDexHelper(lang: String) {
             return getMdAtHomeUrl(tokenRequestUrl, client, headers, CacheControl.FORCE_NETWORK)
         }
 
-        return response.use { json.decodeFromString<AtHomeDto>(it.body!!.string()).baseUrl }
+        return response.use { json.decodeFromString<AtHomeDto>(it.body.string()).baseUrl }
     }
 
     /**

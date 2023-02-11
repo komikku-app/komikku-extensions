@@ -47,7 +47,7 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
         val originalResponse: Response = chain.proceed(chain.request())
         if (originalResponse.request.url.toString().endsWith("?v=20220724")) {
             // Decrypt images in mangas
-            val orgBody = originalResponse.body!!.bytes()
+            val orgBody = originalResponse.body.bytes()
             val key = "my2ecret782ecret".toByteArray()
             val aesKey = SecretKeySpec(key, "AES")
             val cipher = Cipher.getInstance("AES/CBC/NOPADDING")
@@ -85,7 +85,7 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
         val document = resp.asJsoup()
         val imgHost = document.selectFirst(".manga-list-2-cover-img").attr(":src").drop(1).substringBefore("'")
 
-        val jsonObject = json.parseToJsonElement(response.body!!.string()).jsonObject
+        val jsonObject = json.parseToJsonElement(response.body.string()).jsonObject
         val mangas = jsonObject["books"]!!.jsonArray.map {
             SManga.create().apply {
                 val obj = it.jsonObject

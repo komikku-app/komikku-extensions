@@ -115,7 +115,7 @@ class AnimeSama : ParsedHttpSource() {
 
         val request = GET(javascriptUrl, newHeaders)
         val responsejs = client.newCall(request).execute()
-        val jsonDataString = responsejs.body?.string().orEmpty()
+        val jsonDataString = responsejs.body.string()
 
         return jsonDataString
             .split(" ", ",")
@@ -135,7 +135,7 @@ class AnimeSama : ParsedHttpSource() {
         val url = document.baseUri().split("/")
         val javascriptUrlFinal = url.subList(0, url.size - 1).joinToString("/")
         val javascriptResponse = checkJavascript(javascriptUrlFinal)
-        val jsonDataString = javascriptResponse.body?.string().orEmpty()
+        val jsonDataString = javascriptResponse.body.string()
 
         val episode = url[url.size - 1]
         val allEpisodes = jsonDataString.split("var")
