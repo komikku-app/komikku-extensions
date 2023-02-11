@@ -7,7 +7,7 @@ import java.util.TimeZone
 
 class YugenMangas : HeanCms(
     "YugenMangas",
-    "https://yugenmangas.net",
+    "https://yugenmangas.com",
     "es",
     "https://api.yugenmangas.com",
 ) {

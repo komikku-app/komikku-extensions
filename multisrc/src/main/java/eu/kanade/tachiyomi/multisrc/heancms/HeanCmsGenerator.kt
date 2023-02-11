@@ -13,7 +13,7 @@ class HeanCmsGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("Reaper Scans", "https://reaperscans.net", "pt-BR", overrideVersionCode = 35),
-        SingleLang("YugenMangas", "https://yugenmangas.net", "es", isNsfw = true),
+        SingleLang("YugenMangas", "https://yugenmangas.com", "es", isNsfw = true, overrideVersionCode = 1),
     )
 
     companion object {
