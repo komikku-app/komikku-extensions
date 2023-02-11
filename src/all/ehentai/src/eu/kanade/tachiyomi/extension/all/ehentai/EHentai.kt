@@ -166,11 +166,11 @@ abstract class EHentai(
             .joinToString(",")
             .let { if (it.isNotEmpty()) ",$it" else it }
         uri.appendQueryParameter("f_search", modifiedQuery)
-        //when attempting to search with no genres selected, will auto select all genres
+        // when attempting to search with no genres selected, will auto select all genres
         filters.filterIsInstance<GenreGroup>().firstOrNull()?.state?.let {
-            //variable to to check is any genres are selected
-            val check = it.any { option -> option.state }  // or it.any(GenreOption::state)
-            //if no genres are selected by the user set all genres to on
+            // variable to to check is any genres are selected
+            val check = it.any { option -> option.state } // or it.any(GenreOption::state)
+            // if no genres are selected by the user set all genres to on
             if (!check) {
                 for (i in it) {
                     (i as GenreOption).state = true

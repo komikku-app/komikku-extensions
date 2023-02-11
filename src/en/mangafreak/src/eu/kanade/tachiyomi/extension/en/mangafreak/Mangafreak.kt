@@ -93,6 +93,7 @@ class Mangafreak : ParsedHttpSource() {
                 }
                 is StatusFilter -> url.addPathSegments("Status/${filter.toUriPart()}")
                 is TypeFilter -> url.addPathSegments("Type/${filter.toUriPart()}")
+                else -> {}
             }
         }
 

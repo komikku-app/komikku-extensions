@@ -93,6 +93,7 @@ abstract class ZManga(
                         url = "$baseUrl$projectPageString/page/$page".toHttpUrlOrNull()!!.newBuilder()
                     }
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

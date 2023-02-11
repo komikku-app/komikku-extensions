@@ -170,6 +170,7 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
                         url.addQueryParameter("sort", sortCriteria)
                     }
                 }
+                else -> {}
             }
         }
 

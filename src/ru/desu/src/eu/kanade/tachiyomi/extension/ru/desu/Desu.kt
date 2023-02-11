@@ -146,6 +146,7 @@ class Desu : HttpSource() {
                 is OrderBy -> url += "&order=" + arrayOf("popular", "updated", "name")[filter.state]
                 is TypeList -> filter.state.forEach { type -> if (type.state) types.add(type) }
                 is GenreList -> filter.state.forEach { genre -> if (genre.state) genres.add(genre) }
+                else -> {}
             }
         }
 

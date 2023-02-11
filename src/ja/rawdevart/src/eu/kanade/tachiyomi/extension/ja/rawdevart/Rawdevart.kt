@@ -143,6 +143,7 @@ class Rawdevart : ParsedHttpSource() {
                         )
                     }
                 }
+                else -> {}
             }
         }
 

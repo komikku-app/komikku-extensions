@@ -63,6 +63,7 @@ class MangaPoisk : ParsedHttpSource() {
                             url.addQueryParameter("genres[]", genre.id)
                         }
                     }
+                    else -> {}
                 }
             }
             return GET(url.toString(), headers)

@@ -80,25 +80,22 @@ open class VCPVMP(override val name: String, override val baseUrl: String) : Par
         filters.forEach { filter ->
             when (filter) {
                 is Genre -> {
-                    when (filter.toUriPart().isNotEmpty()) {
-                        true -> {
-                            url = baseUrl.toHttpUrlOrNull()!!.newBuilder()
+                    if (filter.toUriPart().isNotEmpty()) {
+                        url = baseUrl.toHttpUrlOrNull()!!.newBuilder()
 
-                            url.addPathSegments(if (isOnVCP) "tags" else "genero")
-                            url.addPathSegments(filter.toUriPart())
+                        url.addPathSegments(if (isOnVCP) "tags" else "genero")
+                        url.addPathSegments(filter.toUriPart())
 
-                            url.addPathSegments("page")
-                            url.addPathSegments(page.toString())
-                        }
+                        url.addPathSegments("page")
+                        url.addPathSegments(page.toString())
                     }
                 }
                 is Category -> {
-                    when (filter.toUriPart().isNotEmpty()) {
-                        true -> {
-                            url.addQueryParameter("cat", filter.toUriPart())
-                        }
+                    if (filter.toUriPart().isNotEmpty()) {
+                        url.addQueryParameter("cat", filter.toUriPart())
                     }
                 }
+                else -> {}
             }
         }
 

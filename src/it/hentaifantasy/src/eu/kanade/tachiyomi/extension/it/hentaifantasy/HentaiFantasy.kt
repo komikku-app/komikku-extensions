@@ -80,6 +80,7 @@ class HentaiFantasy : ParsedHttpSource() {
                             it.id.toString()
                         }
                         .forEach { tags.add(it) }
+                else -> {}
             }
         }
 

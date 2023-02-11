@@ -239,6 +239,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                         return GET(UserProfileUrl.toString(), headers)
                     }
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

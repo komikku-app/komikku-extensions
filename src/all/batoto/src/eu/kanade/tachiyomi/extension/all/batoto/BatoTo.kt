@@ -697,7 +697,7 @@ open class BatoTo(
         TriStateFilterOption("manhwa", "Manhwa"),
         TriStateFilterOption("webtoon", "Webtoon"),
         TriStateFilterOption("western", "Western"),
-        
+
         TriStateFilterOption("shoujo", "Shoujo(G)"),
         TriStateFilterOption("shounen", "Shounen(B)"),
         TriStateFilterOption("josei", "Josei(W)"),
@@ -706,7 +706,7 @@ open class BatoTo(
         TriStateFilterOption("yaoi", "Yaoi(BL)"),
         TriStateFilterOption("futa", "Futa(WL)"),
         TriStateFilterOption("bara", "Bara(ML)"),
-        
+
         TriStateFilterOption("gore", "Gore"),
         TriStateFilterOption("bloody", "Bloody"),
         TriStateFilterOption("violence", "Violence"),
@@ -715,7 +715,7 @@ open class BatoTo(
         TriStateFilterOption("mature", "Mature"),
         TriStateFilterOption("smut", "Smut"),
         TriStateFilterOption("hentai", "Hentai"),
-        
+
         TriStateFilterOption("_4_koma", "4-Koma"),
         TriStateFilterOption("action", "Action"),
         TriStateFilterOption("adaptation", "Adaptation"),

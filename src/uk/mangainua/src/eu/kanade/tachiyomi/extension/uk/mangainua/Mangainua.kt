@@ -64,7 +64,7 @@ class Mangainua : ParsedHttpSource() {
 
     // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        if (query.length > 2 ) {
+        if (query.length > 2) {
             return POST(
                 "$baseUrl/index.php?do=search",
                 body = FormBody.Builder()

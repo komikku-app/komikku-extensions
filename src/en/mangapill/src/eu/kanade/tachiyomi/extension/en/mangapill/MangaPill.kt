@@ -103,7 +103,6 @@ class MangaPill : ParsedHttpSource() {
         filters.forEach { filter ->
             when (filter) {
                 is GenreList -> {
-
                     val genreInclude = mutableListOf<String>()
                     filter.state.forEach {
                         if (it.state == 1) {
@@ -118,6 +117,7 @@ class MangaPill : ParsedHttpSource() {
                 }
                 is Status -> url.addQueryParameter("status", filter.toUriPart())
                 is Type -> url.addQueryParameter("type", filter.toUriPart())
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

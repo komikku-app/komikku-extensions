@@ -166,6 +166,7 @@ class MangaRawClub : ParsedHttpSource() {
                         requestBody.add("options[]", it.name)
                     }
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

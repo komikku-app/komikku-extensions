@@ -101,7 +101,7 @@ open class MangaReader(
                         is GenresFilter -> {
                             addQueryParameter(filter.param, filter.selection)
                         }
-                        else -> Unit
+                        else -> {}
                     }
                 }
             }

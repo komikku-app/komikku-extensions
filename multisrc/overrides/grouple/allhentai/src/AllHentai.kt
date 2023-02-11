@@ -57,7 +57,7 @@ class AllHentai : GroupLe("AllHentai", "http://allhen.online", "ru") {
                         return GET(tagUrl.toString(), headers)
                     }
                 }
-                else -> return@forEach
+                else -> {}
             }
         }
         return if (url.toString().contains("&"))

@@ -42,6 +42,7 @@ class KomikPlay : ZManga("KomikPlay", "https://komikplay.com", "id", SimpleDateF
                         url = "$baseUrl$projectPageString/page/$page".toHttpUrlOrNull()!!.newBuilder()
                     }
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

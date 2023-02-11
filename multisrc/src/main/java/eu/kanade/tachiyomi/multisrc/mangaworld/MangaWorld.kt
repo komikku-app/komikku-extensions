@@ -97,6 +97,7 @@ abstract class MangaWorld(
                     }
                 is SortBy -> url.addQueryParameter("sort", filter.toUriPart())
                 is TextField -> url.addQueryParameter(filter.key, filter.state)
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

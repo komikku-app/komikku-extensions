@@ -160,7 +160,7 @@ class YuriNeko : HttpSource() {
                                 else -> continue
                             }
                         }
-                        else -> continue
+                        else -> {}
                     }
                 }
                 return popularMangaRequest(page)

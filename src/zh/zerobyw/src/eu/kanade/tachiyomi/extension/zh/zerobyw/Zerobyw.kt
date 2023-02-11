@@ -27,7 +27,6 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-
     // Url can be found at https://cdn.jsdelivr.net/gh/zerozzz123456/1/url.json
     // or just search for "zerobyw" in google
     private val defaultBaseUrl = "http://www.zerobywblac.com"

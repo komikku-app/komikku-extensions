@@ -92,6 +92,7 @@ class Readmangatoday : ParsedHttpSource() {
                         Filter.TriState.STATE_EXCLUDE -> builder.add("exclude[]", genre.id.toString())
                     }
                 }
+                else -> {}
             }
         }
         return POST("$baseUrl/advanced-search", headers, builder.build())

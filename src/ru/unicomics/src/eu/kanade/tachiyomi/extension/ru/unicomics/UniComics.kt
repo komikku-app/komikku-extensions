@@ -65,7 +65,7 @@ class UniComics : ParsedHttpSource() {
                         return GET(publisherUrl.toString(), headers)
                     }
                 }
-                else -> return@forEach
+                else -> {}
             }
         }
         if (query.isNotEmpty()) {

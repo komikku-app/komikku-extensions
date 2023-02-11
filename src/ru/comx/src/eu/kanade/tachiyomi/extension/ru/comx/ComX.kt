@@ -203,6 +203,7 @@ class ComX : ParsedHttpSource() {
                         sectionPub += publisher.id
                     }
                 }
+                else -> {}
             }
         }
         val pageParameter = if (page > 1) "page/$page/" else ""

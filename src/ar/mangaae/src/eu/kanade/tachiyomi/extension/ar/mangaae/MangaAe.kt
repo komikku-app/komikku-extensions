@@ -85,6 +85,7 @@ class MangaAe : ParsedHttpSource() {
                         url += "|order:${filter.toUriPart()}"
                     }
                 }
+                else -> {}
             }
         }
         url += "|arrange:minus"

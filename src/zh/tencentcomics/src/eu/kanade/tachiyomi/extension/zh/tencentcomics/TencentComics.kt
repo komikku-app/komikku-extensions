@@ -217,6 +217,7 @@ class TencentComics : ParsedHttpSource() {
                     is VipFilter -> {
                         vip = filter.toUriPart()
                     }
+                    else -> {}
                 }
             }
             GET("$desktopUrl/Comic/all/$genre${status}search/$popularity${vip}page/$page")

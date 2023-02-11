@@ -148,6 +148,7 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
                         )
                     }
                 }
+                else -> {}
             }
         }
 

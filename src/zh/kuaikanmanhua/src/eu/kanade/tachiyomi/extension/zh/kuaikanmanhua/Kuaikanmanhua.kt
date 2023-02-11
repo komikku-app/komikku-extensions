@@ -112,6 +112,7 @@ class Kuaikanmanhua : HttpSource() {
                     is StatusFilter -> {
                         status = filter.toUriPart()
                     }
+                    else -> {}
                 }
             }
             GET("$apiUrl/v1/search/by_tag?since=${(page - 1) * 10}&tag=$genre&sort=1&query_category=%7B%22update_status%22:$status%7D")

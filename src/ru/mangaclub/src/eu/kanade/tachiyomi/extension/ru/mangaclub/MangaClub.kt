@@ -80,6 +80,7 @@ class MangaClub : ParsedHttpSource() {
                         val orderID = arrayOf("date", "editdate", "title", "comm_num", "news_read", "rating")[filter.state!!.index]
                         url += "/sort=$orderID/order=$orderState"
                     }
+                    else -> {}
                 }
             }
             url += "/page/$page"

@@ -88,6 +88,7 @@ class Webcomics : ParsedHttpSource() {
                     val genre = getGenreList()[filter.state]
                     url?.addQueryParameter("category", genre)
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

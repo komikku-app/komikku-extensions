@@ -66,6 +66,7 @@ class PojokManga : Madara("Pojok Manga", "https://pojokmanga.net", "id", SimpleD
                         url = "$baseUrl/project/page/$page".toHttpUrlOrNull()!!.newBuilder()
                     }
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

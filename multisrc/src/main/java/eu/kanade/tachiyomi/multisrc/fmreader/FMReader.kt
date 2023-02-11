@@ -93,6 +93,7 @@ abstract class FMReader(
                     if (filter.state?.ascending == true)
                         url.addQueryParameter("sort_type", "ASC")
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

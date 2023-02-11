@@ -84,6 +84,7 @@ abstract class WPComics(
                 when (filter) {
                     is GenreFilter -> filter.toUriPart()?.let { url.addPathSegment(it) }
                     is StatusFilter -> filter.toUriPart()?.let { url.addQueryParameter("status", it) }
+                    else -> {}
                 }
             }
 

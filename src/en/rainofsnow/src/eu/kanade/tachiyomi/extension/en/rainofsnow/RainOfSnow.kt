@@ -65,6 +65,7 @@ open class RainOfSnow() : ParsedHttpSource() {
                         url.addQueryParameter("n_orderby", filter.toUriPart())
                     }
                 }
+                else -> {}
             }
         }
         return GET(url.build().toString(), headers)

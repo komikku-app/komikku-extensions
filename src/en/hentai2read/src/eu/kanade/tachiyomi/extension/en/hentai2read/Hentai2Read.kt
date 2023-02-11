@@ -112,6 +112,7 @@ class Hentai2Read : ParsedHttpSource() {
                             }
                         }
                         is SortOrder -> sortOrder = filter.toUriPart()
+                        else -> {}
                     }
                 }
             }

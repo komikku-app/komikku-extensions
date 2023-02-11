@@ -145,6 +145,7 @@ open class NineManga(
                     url.addQueryParameter("out_category_id", genreExclude)
                 }
                 is CompletedFilter -> url.addQueryParameter("completed_series", filter.toUriPart())
+                else -> {}
             }
         }
 

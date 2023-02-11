@@ -123,13 +123,15 @@ class EveriaClub() : ParsedHttpSource() {
     )
 
     open class UriPartFilter(
-        displayName: String, private val valuePair: Array<Pair<String, String>>
+        displayName: String,
+        private val valuePair: Array<Pair<String, String>>
     ) : Filter.Select<String>(displayName, valuePair.map { it.first }.toTypedArray()) {
         fun toUriPart() = valuePair[state].second
     }
 
     class CategoryFilter : UriPartFilter(
-        "Category", arrayOf(
+        "Category",
+        arrayOf(
             Pair("Any", ""),
             Pair("Gravure", "/gravure"),
             Pair("Aidol", "/aidol"),

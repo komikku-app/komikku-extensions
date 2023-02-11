@@ -49,7 +49,7 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
                         return GET(ordUrl.toString(), headers)
                     }
                 }
-                else -> return@forEach
+                else -> {}
             }
         }
         return if (url.toString().contains("&"))

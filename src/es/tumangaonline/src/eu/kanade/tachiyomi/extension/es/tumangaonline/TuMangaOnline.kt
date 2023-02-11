@@ -148,6 +148,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
                         }
                     }
                 }
+                else -> {}
             }
         }
         return GET(url.build().toString(), headers)

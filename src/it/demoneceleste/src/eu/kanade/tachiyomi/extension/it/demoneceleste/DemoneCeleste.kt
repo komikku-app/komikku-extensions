@@ -70,6 +70,7 @@ class DemoneCeleste : ParsedHttpSource() {
                         }
                     }
                 }
+                else -> {}
             }
         }
         return GET("$url#$status", headers)

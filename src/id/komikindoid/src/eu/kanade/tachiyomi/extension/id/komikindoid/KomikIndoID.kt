@@ -117,6 +117,7 @@ class KomikIndoID : ParsedHttpSource() {
                         }
                     }
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

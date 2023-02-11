@@ -166,6 +166,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
                         .filter { genre -> genre.state }
                         .forEach { genre -> url.addQueryParameter("genders[]", genre.id) }
                 }
+                else -> {}
             }
         }
 

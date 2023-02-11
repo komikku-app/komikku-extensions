@@ -325,6 +325,7 @@ class DoujinDesu : ParsedHttpSource() {
                     val status = filter.values[filter.state]
                     url.addQueryParameter("statusx", status.key)
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

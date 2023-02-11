@@ -150,7 +150,7 @@ class LxHentai : ParsedHttpSource() {
             .attr("style")
             .substringAfter("url('")
             .substringBefore("')")
-        
+
         val statusString = document.select("div.grow div.mt-2:contains(Tình trạng) a").first().text()
         status = when (statusString) {
             "Đã hoàn thành" -> SManga.COMPLETED

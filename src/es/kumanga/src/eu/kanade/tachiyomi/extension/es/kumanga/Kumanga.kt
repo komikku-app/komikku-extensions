@@ -210,6 +210,7 @@ class Kumanga : HttpSource() {
                         .filter { genre -> genre.state }
                         .forEach { genre -> url.addQueryParameter("category_filter[]", genre.id) }
                 }
+                else -> {}
             }
         }
 

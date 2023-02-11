@@ -81,6 +81,7 @@ class HeavenManga : ParsedHttpSource() {
                             return GET("$baseUrl/$name$pageParameter", headers)
                         }
                     }
+                    else -> {}
                 }
             }
         }

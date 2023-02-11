@@ -79,6 +79,7 @@ class AsgardTeam : ParsedHttpSource() {
             filters.forEach { filter ->
                 when (filter) {
                     is TypeFilter -> url.addQueryParameter("type", filter.toUriPart())
+                    else -> {}
                 }
             }
             GET(url.build().toString(), headers)

@@ -126,6 +126,7 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
                         "genero",
                         genresArray[filter.state].second
                     )
+                    else -> {}
                 }
             }
             uri.appendQueryParameter("p", page.toString())

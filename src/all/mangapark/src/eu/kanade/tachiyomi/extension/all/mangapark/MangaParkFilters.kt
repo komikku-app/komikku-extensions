@@ -73,6 +73,7 @@ class MangaParkFilters {
                     includedGenre += filter.state.filter { it.isIncluded() }.map { it.value }
                     excludedGenre += filter.state.filter { it.isExcluded() }.map { it.value }
                 }
+                else -> {}
             }
         }
 

@@ -49,6 +49,7 @@ class DoujinHentai : Madara(
                             url.addQueryParameter("page", page.toString())
                         }
                     }
+                    else -> {}
                 }
             }
         }

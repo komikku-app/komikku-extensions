@@ -122,6 +122,7 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
                             else -> url.addQueryParameter("chapters", filter.state.trim())
                         }
                     }
+                    else -> {}
                 }
             }
             return GET(url.toString(), headers)

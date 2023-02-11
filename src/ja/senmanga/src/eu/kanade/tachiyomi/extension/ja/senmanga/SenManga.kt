@@ -77,6 +77,7 @@ class SenManga : ParsedHttpSource() {
                     url.addQueryParameter("nogenre", genreExclude)
                 }
                 is SortFilter -> url.addQueryParameter("sort", filter.toUriPart())
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

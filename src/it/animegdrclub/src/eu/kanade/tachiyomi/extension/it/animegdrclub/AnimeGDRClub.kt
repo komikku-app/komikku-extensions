@@ -61,6 +61,7 @@ class AnimeGDRClub : ParsedHttpSource() {
                             }
                         }
                     }
+                    else -> {}
                 }
             }
 

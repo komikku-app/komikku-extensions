@@ -109,7 +109,7 @@ open class SimplyHentai(override val lang: String) : ConfigurableSource, HttpSou
                     is CharactersFilter -> filter.value?.forEachIndexed { idx, tag ->
                         appendQueryParameter("filter[characters][$idx]", tag.trim())
                     }
-                    else -> Unit
+                    else -> {}
                 }
             }
             GET(build().toString(), headers)

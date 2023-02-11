@@ -99,6 +99,7 @@ class Ikuhentai : ParsedHttpSource() {
                     url.addQueryParameter("m_orderby", orderBy)
                 }
                 is TextField -> url.addQueryParameter(filter.key, filter.state)
+                else -> {}
             }
         }
 

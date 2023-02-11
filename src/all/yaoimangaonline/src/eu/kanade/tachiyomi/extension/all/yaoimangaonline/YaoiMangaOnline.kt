@@ -55,7 +55,7 @@ class YaoiMangaOnline : ParsedHttpSource() {
                     is TagFilter -> if (it.state != 0) {
                         addEncodedPathSegments("tag/$it")
                     }
-                    else -> Unit
+                    else -> {}
                 }
             }
             addEncodedPathSegments("page/$page")

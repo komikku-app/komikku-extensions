@@ -67,6 +67,7 @@ class MangaLib : LibGroup("MangaLib", "https://mangalib.me", "ru") {
                         )
                     }
                 }
+                else -> {}
             }
         }
         return POST(url.toString(), catalogHeaders())

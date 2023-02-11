@@ -125,6 +125,7 @@ class Mangahere : ParsedHttpSource() {
                     url.addEncodedQueryParameter("released_method", "eq")
                     url.addEncodedQueryParameter("released", filter.state)
                 }
+                else -> {}
             }
         }
 

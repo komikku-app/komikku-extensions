@@ -96,6 +96,7 @@ abstract class MangaBox(
                             filter.state.forEach { if (it.isIncluded()) genreInclude += "_${it.id}" }
                             filter.state.forEach { if (it.isExcluded()) genreExclude += "_${it.id}" }
                         }
+                        else -> {}
                     }
                 }
                 url.addQueryParameter("g_i", genreInclude)
@@ -108,6 +109,7 @@ abstract class MangaBox(
                         is SortFilter -> url.addQueryParameter("type", filter.toUriPart())
                         is StatusFilter -> url.addQueryParameter("state", filter.toUriPart())
                         is GenreFilter -> url.addQueryParameter("category", filter.toUriPart())
+                        else -> {}
                     }
                 }
             }

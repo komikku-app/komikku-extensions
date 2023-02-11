@@ -172,6 +172,7 @@ class Manhuaren : HttpSource() {
                     url = url.setQueryParameter("subCategoryId", filter.getId())
                         .setQueryParameter("subCategoryType", filter.getType())
                 }
+                else -> {}
             }
         }
         url = url.addPathSegments("/v2/manga/getCategoryMangas")

@@ -72,6 +72,7 @@ abstract class Paprika(
                 when (filter) {
                     is GenreFilter -> url.addPathSegment(filter.toUriPart())
                     is OrderFilter -> url.addQueryParameter("orderby", filter.toUriPart())
+                    else -> {}
                 }
             }
             url.addQueryParameter("page", page.toString())

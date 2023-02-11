@@ -68,6 +68,7 @@ class SekteKomik : ZManga("Sekte Komik", "https://sektekomik.com", "id") {
                         url = "$baseUrl$projectPageString/${pagePathSegment(page)}".toHttpUrlOrNull()!!.newBuilder()
                     }
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

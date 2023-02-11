@@ -944,6 +944,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
             entryValues = KavitaConstants.filterPrefEntriesValue
             setDefaultValue(KavitaConstants.defaultFilterPrefEntries)
             setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
                 val checkValue = newValue as Set<String>
                 preferences.edit()
                     .putStringSet(KavitaConstants.toggledFiltersPref, checkValue)

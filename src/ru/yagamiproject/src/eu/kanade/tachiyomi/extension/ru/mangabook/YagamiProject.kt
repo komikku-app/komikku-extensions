@@ -71,6 +71,7 @@ class YagamiProject : ParsedHttpSource() {
                         return GET(formaUrl.toString(), headers)
                     }
                 }
+                else -> {}
             }
         }
         return popularMangaRequest(page)

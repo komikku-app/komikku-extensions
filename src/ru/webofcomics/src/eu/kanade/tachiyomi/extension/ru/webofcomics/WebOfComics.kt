@@ -126,6 +126,7 @@ class WebOfComics : ParsedHttpSource() {
                                         publisherCat = getPublishersComics()[filter.state].id
                                     }
                                 }
+                                else -> {}
                             }
                         }
                     }
@@ -148,10 +149,12 @@ class WebOfComics : ParsedHttpSource() {
                                         publisherCat = getPublishersManga()[filter.state].id
                                     }
                                 }
+                                else -> {}
                             }
                         }
                     }
                 }
+                else -> {}
             }
         }
 

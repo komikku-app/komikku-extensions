@@ -54,6 +54,7 @@ class Komikita : ZManga(
                             "$baseUrl$projectPageString/page/$page".toHttpUrlOrNull()!!.newBuilder()
                     }
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)

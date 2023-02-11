@@ -89,6 +89,7 @@ class MyHentaiGallery : ParsedHttpSource() {
                     is GenreFilter -> {
                         url.addPathSegment(filter.toUriPart())
                     }
+                    else -> {}
                 }
             }
             url.addPathSegment("$page")

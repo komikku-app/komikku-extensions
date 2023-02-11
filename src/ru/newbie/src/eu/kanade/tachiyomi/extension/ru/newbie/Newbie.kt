@@ -203,6 +203,7 @@ class Newbie : ConfigurableSource, HttpSource() {
                         requireChapters = false
                     }
                 }
+                else -> {}
             }
         }
 

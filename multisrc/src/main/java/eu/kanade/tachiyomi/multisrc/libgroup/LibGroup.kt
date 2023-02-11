@@ -559,6 +559,7 @@ abstract class LibGroup(
                         url.addQueryParameter(if (favorite.isIncluded()) "bookmarks[include][]" else "bookmarks[exclude][]", favorite.id)
                     }
                 }
+                else -> {}
             }
         }
         return POST(url.toString(), catalogHeaders())

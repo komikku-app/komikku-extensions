@@ -34,6 +34,7 @@ class YaoiChan : MultiChan("YaoiChan", "https://yaoi-chan.me", "ru") {
                         }
                     }
                     is Status -> status = arrayOf("", "all_done", "end", "ongoing", "new_ch")[filter.state]
+                    else -> {}
                 }
             }
 
@@ -47,6 +48,7 @@ class YaoiChan : MultiChan("YaoiChan", "https://yaoi-chan.me", "ru") {
                                 arrayOf("&n=dateasc", "&n=favdesc", "&n=abcasc", "&n=chdesc")[filter.state!!.index]
                             }
                         }
+                        else -> {}
                     }
                 }
                 if (statusParam) {
@@ -64,6 +66,7 @@ class YaoiChan : MultiChan("YaoiChan", "https://yaoi-chan.me", "ru") {
                                 arrayOf("manga/new&n=dateasc", "mostfavorites", "catalog", "sortch")[filter.state!!.index]
                             }
                         }
+                        else -> {}
                     }
                 }
                 if (statusParam) {

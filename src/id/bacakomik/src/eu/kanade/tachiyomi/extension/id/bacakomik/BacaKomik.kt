@@ -91,6 +91,7 @@ class BacaKomik : ParsedHttpSource() {
                         .filter { it.state != Filter.TriState.STATE_IGNORE }
                         .forEach { url.addQueryParameter("genre[]", it.id) }
                 }
+                else -> {}
             }
         }
         return GET(url.build().toString(), headers)

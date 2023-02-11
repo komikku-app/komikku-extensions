@@ -57,7 +57,7 @@ class HentaiVN : ParsedHttpSource() {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
 
-    //latestUpdates
+    // latestUpdates
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/chap-moi.html?page=$page", headers)
     }
@@ -74,7 +74,7 @@ class HentaiVN : ParsedHttpSource() {
         return manga
     }
 
-    //Popular
+    // Popular
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/danh-sach.html?page=$page", headers)
     }
@@ -83,7 +83,7 @@ class HentaiVN : ParsedHttpSource() {
     override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
     override fun popularMangaSelector() = latestUpdatesSelector()
 
-    //Chapter
+    // Chapter
     override fun chapterListSelector() = "table.listing > tbody > tr"
     override fun chapterFromElement(element: Element): SChapter {
         if (element.select("a").isEmpty()) throw Exception(element.select("h2").html())
@@ -111,7 +111,7 @@ class HentaiVN : ParsedHttpSource() {
 
     override fun imageUrlParse(document: Document) = ""
 
-    //Detail
+    // Detail
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select(".main > .page-left > .left-info > .page-info")
         val manga = SManga.create()
@@ -133,18 +133,18 @@ class HentaiVN : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
 
-    //Pages
+    // Pages
     override fun pageListParse(document: Document): List<Page> {
         return document.select("#image > img").mapIndexed { i, e ->
             Page(i, imageUrl = e.attr("abs:src"))
         }
     }
 
-    //Search
+    // Search
     override fun searchMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
         if (document.select("p").toString()
-                .contains("Bạn chỉ có thể sử dụng chức năng này khi đã đăng ký thành viên")
+            .contains("Bạn chỉ có thể sử dụng chức năng này khi đã đăng ký thành viên")
         )
             throw Exception("Đăng nhập qua WebView để kích hoạt tìm kiếm")
 
@@ -247,7 +247,7 @@ class HentaiVN : ParsedHttpSource() {
                     val group = getGroupList()[filter.state]
                     url.addQueryParameter("group", group.id)
                 }
-                else -> return@forEach
+                else -> {}
             }
         }
 

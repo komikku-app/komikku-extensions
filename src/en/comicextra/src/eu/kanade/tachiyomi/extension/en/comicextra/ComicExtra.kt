@@ -46,6 +46,7 @@ class ComicExtra : ParsedHttpSource() {
             filters.forEach { filter ->
                 when (filter) {
                     is GenreFilter -> url += "/${filter.toUriPart()}"
+                    else -> {}
                 }
             }
             GET(url + if (page > 1) "/$page" else "", headers)

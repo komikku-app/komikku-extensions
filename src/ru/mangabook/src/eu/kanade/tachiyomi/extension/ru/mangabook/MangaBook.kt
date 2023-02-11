@@ -80,6 +80,7 @@ class MangaBook : ParsedHttpSource() {
                             url.addQueryParameter("ftype[]", forma.id)
                         }
                     }
+                    else -> {}
                 }
             }
             return GET(url.toString(), headers)

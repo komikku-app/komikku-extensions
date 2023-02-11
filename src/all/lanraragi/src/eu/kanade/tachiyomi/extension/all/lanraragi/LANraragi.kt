@@ -92,7 +92,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
         val archive = json.decodeFromString<Archive>(response.body!!.string())
         val uri = getApiUriBuilder("/api/archives/${archive.arcid}/files")
         val prefClearNew = preferences.getBoolean(NEW_ONLY_KEY, NEW_ONLY_DEFAULT)
-        
+
         if (archive.isnew == "true" && prefClearNew) {
             val clearNew = Request.Builder()
                 .url("$baseUrl/api/archives/${archive.arcid}/isnew")
@@ -183,7 +183,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
                 is DescendingOrder -> if (filter.state) uri.appendQueryParameter("order", "desc")
                 is SortByNamespace -> if (filter.state.isNotEmpty()) uri.appendQueryParameter("sortby", filter.state.trim())
                 is CategorySelect -> if (filter.state > 0) uri.appendQueryParameter("category", filter.toUriPart())
-                else -> Unit
+                else -> {}
             }
         }
 

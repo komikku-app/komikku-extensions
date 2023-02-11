@@ -66,6 +66,7 @@ class MyHentaiComics : ParsedHttpSource() {
             for (filter in if (filters.isEmpty()) getFilterList() else filters) {
                 when (filter) {
                     is GenreFilter -> url += filter.toUriPart() + "?page=$page"
+                    else -> {}
                 }
             }
             GET(url, headers)

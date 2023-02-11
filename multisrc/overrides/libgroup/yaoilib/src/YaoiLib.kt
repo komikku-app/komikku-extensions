@@ -49,6 +49,7 @@ class YaoiLib : LibGroup("YaoiLib", "https://v1.yaoilib.net", "ru") {
                         )
                     }
                 }
+                else -> {}
             }
         }
         return POST(url.toString(), catalogHeaders())

@@ -41,6 +41,7 @@ class ShingekiNoShoujo : ParsedHttpSource() {
                             }.map { it.id }[0]}/page/$page"
                         )
                     }
+                    else -> {}
                 }
             }
             return GET(baseUrl, headers)

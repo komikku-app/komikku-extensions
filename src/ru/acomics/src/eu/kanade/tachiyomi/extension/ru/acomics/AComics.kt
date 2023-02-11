@@ -83,6 +83,7 @@ class AComics : ParsedHttpSource() {
                             }
                         }
                     }
+                    else -> {}
                 }
             }
             "$baseUrl/comics?categories=${categories.joinToString(",")}&${rating.joinToString { "ratings[]=$it" }}&type=0&updatable=$status&subscribe=0&issue_count=2&sort=subscr_count&skip=${10 * (page - 1)}"

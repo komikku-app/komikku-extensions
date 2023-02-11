@@ -78,6 +78,7 @@ class NineAnime : ParsedHttpSource() {
             for (filter in if (filters.isEmpty()) getFilterList() else filters) {
                 when (filter) {
                     is GenreFilter -> url += filter.toUriPart() + "_$page.html"
+                    else -> {}
                 }
             }
             GET(url, headers)

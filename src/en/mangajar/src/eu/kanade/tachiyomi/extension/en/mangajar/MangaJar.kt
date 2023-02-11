@@ -79,6 +79,7 @@ class MangaJar : ParsedHttpSource() {
                 is SortBy -> {
                     url.addQueryParameter("sortAscending", filter.toUriPart())
                 }
+                else -> {}
             }
         }
         return GET(url.toString(), headers)
