@@ -150,7 +150,7 @@ class Comicastle : ParsedHttpSource() {
         Filter.Separator(),
         PostFilter("Genre", getGenreList()),
         PostFilter("Year", getYearList()),
-        PostFilter("Publisher", getPublisherList())
+        PostFilter("Publisher", getPublisherList()),
     )
 
     private open class PostFilter(name: String, val vals: Array<String>) : Filter.Select<String>(name, vals) {

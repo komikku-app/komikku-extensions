@@ -8,7 +8,7 @@ class VerManhwas : Madara(
     "Ver Manhwas",
     "https://vermanhwa.com",
     "es",
-    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("es"))
+    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("es")),
 ) {
     override val useNewChapterEndpoint = true
 }

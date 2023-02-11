@@ -278,7 +278,7 @@ class Hiveworks : ParsedHttpSource() {
         Filter.Header("Extra Lists"),
         OriginalsFilter(),
         KidsFilter(),
-        CompletedFilter()
+        CompletedFilter(),
     )
 
     private class OriginalsFilter : Filter.CheckBox("Original Comics")
@@ -290,13 +290,14 @@ class Hiveworks : ParsedHttpSource() {
         val uriParam: String,
         val vals: Array<Pair<String, String>>,
         val firstIsUnspecified: Boolean = true,
-        defaultValue: Int = 0
+        defaultValue: Int = 0,
     ) :
         Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray(), defaultValue), UriFilter {
         override fun addToUri(uri: Uri.Builder) {
-            if (state != 0 || !firstIsUnspecified)
+            if (state != 0 || !firstIsUnspecified) {
                 uri.appendPath(uriParam)
                     .appendPath(vals[state].first)
+            }
         }
     }
 
@@ -315,8 +316,8 @@ class Hiveworks : ParsedHttpSource() {
             Pair("thursday", "Thursday"),
             Pair("friday", "Friday"),
             Pair("saturday", "Saturday"),
-            Pair("sunday", "Sunday")
-        )
+            Pair("sunday", "Sunday"),
+        ),
     )
 
     private class RatingFilter : UriSelectFilter(
@@ -327,8 +328,8 @@ class Hiveworks : ParsedHttpSource() {
             Pair("everyone", "Everyone"),
             Pair("teen", "Teen"),
             Pair("young-adult", "Young Adult"),
-            Pair("mature", "Mature")
-        )
+            Pair("mature", "Mature"),
+        ),
     )
 
     private class GenreFilter : UriSelectFilter(
@@ -354,8 +355,8 @@ class Hiveworks : ParsedHttpSource() {
             Pair("slice-of-life", "Slice of Life"),
             Pair("steampunk", "Steampunk"),
             Pair("superhero", "Superhero"),
-            Pair("urban-fantasy", "Urban Fantasy")
-        )
+            Pair("urban-fantasy", "Urban Fantasy"),
+        ),
     )
 
     private class TitleFilter : UriSelectFilter(
@@ -389,8 +390,8 @@ class Hiveworks : ParsedHttpSource() {
             Pair("x", "X"),
             Pair("y", "Y"),
             Pair("z", "Z"),
-            Pair("numbers-symbols", "Numbers / Symbols")
-        )
+            Pair("numbers-symbols", "Numbers / Symbols"),
+        ),
     )
 
     private class SortFilter : UriSelectFilter(
@@ -399,8 +400,8 @@ class Hiveworks : ParsedHttpSource() {
         arrayOf(
             Pair("none", "None"),
             Pair("a-z", "A-Z"),
-            Pair("z-a", "Z-A")
-        )
+            Pair("z-a", "Z-A"),
+        ),
     )
 
     // Other Code
@@ -415,7 +416,7 @@ class Hiveworks : ParsedHttpSource() {
                     name = "#$chapterNumber ${it.select("div.archive-title").text()} (${it.select(".archive-game").text()})"
                     url = it.select("a").attr("abs:href")
                     date_upload = parseDate(it.select(".archive-date").text().substringAfter(", "), awkwardzombieDateFormat)
-                }
+                },
             )
         }
         return chapters

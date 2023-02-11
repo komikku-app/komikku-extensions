@@ -1,6 +1,6 @@
 @file:Suppress("ClassName")
 
-package eu.kanade.tachiyomi.extension.all.dragonball_multiverse
+package eu.kanade.tachiyomi.extension.all.dragonballmultiverse
 
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
@@ -43,7 +43,7 @@ class DbMFactory : SourceFactory {
         DbMultiverseCO_FR(),
         DbMultiverseBR_FR(),
         DbMultiverseXX_VE(),
-        DbMultiverseXX_LMO()
+        DbMultiverseXX_LMO(),
     )
 }
 

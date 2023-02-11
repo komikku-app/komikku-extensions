@@ -151,7 +151,7 @@ open class RainOfSnow() : ParsedHttpSource() {
             Pair("Manhua", "115"),
             Pair("Manhwa", "105"),
             Pair("Vietnamese Comic", "306"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

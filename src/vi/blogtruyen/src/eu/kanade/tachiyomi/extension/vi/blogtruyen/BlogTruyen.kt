@@ -103,7 +103,7 @@ class BlogTruyen : ParsedHttpSource() {
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> {
         return when {
             query.startsWith(PREFIX_ID_SEARCH) -> {
@@ -118,7 +118,7 @@ class BlogTruyen : ParsedHttpSource() {
                 fetchMangaDetails(
                     SManga.create().apply {
                         url = "/$id"
-                    }
+                    },
                 )
                     .map { MangasPage(listOf(it.apply { url = "/$id" }), false) }
             }
@@ -227,7 +227,7 @@ class BlogTruyen : ParsedHttpSource() {
         author = document.select("a[href*=tac-gia]").joinToString { it.text() }
         genre = document.select("span.category a").joinToString { it.text() }
         status = parseStatus(
-            document.select("span.color-red:not(.bold)").text()
+            document.select("span.color-red:not(.bold)").text(),
         )
 
         description = StringBuilder().apply {
@@ -308,7 +308,7 @@ class BlogTruyen : ParsedHttpSource() {
         name = anchor.attr("title").replace(title, "", true).trim()
         date_upload = kotlin.runCatching {
             dateFormat.parse(
-                element.selectFirst("span.publishedDate").text()
+                element.selectFirst("span.publishedDate").text(),
             )?.time
         }.getOrNull() ?: 0L
     }
@@ -319,7 +319,7 @@ class BlogTruyen : ParsedHttpSource() {
         FormBody.Builder()
             .add("mangaId", mangaId)
             .add("chapterId", chapterId)
-            .build()
+            .build(),
     )
 
     private fun countView(document: Document) {
@@ -356,7 +356,7 @@ class BlogTruyen : ParsedHttpSource() {
 
     private class Status : Filter.Select<String>(
         "Status",
-        arrayOf("Sao cũng được", "Đang tiến hành", "Đã hoàn thành", "Tạm ngưng")
+        arrayOf("Sao cũng được", "Đang tiến hành", "Đã hoàn thành", "Tạm ngưng"),
     )
 
     private class Author : Filter.Text("Tác giả")
@@ -427,6 +427,6 @@ class BlogTruyen : ParsedHttpSource() {
         Genre("Video clip", 53),
         Genre("VnComic", 42),
         Genre("Webtoon", 52),
-        Genre("Yuri", 59)
+        Genre("Yuri", 59),
     )
 }

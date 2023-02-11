@@ -11,7 +11,7 @@ class KalangoScan : Madara(
     "Kalango Scan",
     "https://kalangoscan.online",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

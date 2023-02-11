@@ -11,7 +11,7 @@ class WarQueenScan : Madara(
     "War Queen Scan",
     "https://wqscan.com",
     "pt-BR",
-    SimpleDateFormat("yyyy-MM-dd", Locale("pt", "BR"))
+    SimpleDateFormat("yyyy-MM-dd", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

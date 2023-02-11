@@ -13,8 +13,9 @@ class TsuminoUtils {
             artists.forEach {
                 stringBuilder.append(it.attr("data-define"))
 
-                if (it != artists.last())
+                if (it != artists.last()) {
                     stringBuilder.append(", ")
+                }
             }
 
             return stringBuilder.toString()
@@ -27,8 +28,9 @@ class TsuminoUtils {
             groups.forEach {
                 stringBuilder.append(it.attr("data-define"))
 
-                if (it != groups.last())
+                if (it != groups.last()) {
                     stringBuilder.append(", ")
+                }
             }
 
             return if (stringBuilder.toString().isEmpty()) null else stringBuilder.toString()
@@ -49,8 +51,9 @@ class TsuminoUtils {
                 parodies.forEach {
                     stringBuilder.append(it.attr("data-define"))
 
-                    if (it != parodies.last())
+                    if (it != parodies.last()) {
                         stringBuilder.append(", ")
+                    }
                 }
             }
 
@@ -61,8 +64,9 @@ class TsuminoUtils {
                 characters.forEach {
                     stringBuilder.append(it.attr("data-define"))
 
-                    if (it != characters.last())
+                    if (it != characters.last()) {
                         stringBuilder.append(", ")
+                    }
                 }
             }
 

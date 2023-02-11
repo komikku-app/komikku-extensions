@@ -11,7 +11,7 @@ class RogMangas : Madara(
     "ROG Mangás",
     "https://rogmangas.com",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")),
 ) {
 
     // Changed their name from Mangás Overall to ROG Mangás.

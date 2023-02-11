@@ -8,7 +8,7 @@ fun getFilters() = FilterList(
     TagFilter(),
     RegionFilter(),
     StatusFilter(),
-    StartFilter()
+    StartFilter(),
 )
 
 open class UriPartFilter(name: String, private val query: String, private val vals: Array<Pair<String, String>>) :
@@ -83,8 +83,8 @@ private class TagFilter : UriPartFilter(
         Pair("性转", "xingzhuanhuan"),
         Pair("重生", "zhongsheng"),
         Pair("韩漫", "hanman"),
-        Pair("其它", "qita")
-    )
+        Pair("其它", "qita"),
+    ),
 )
 
 private class RegionFilter : UriPartFilter(
@@ -95,8 +95,8 @@ private class RegionFilter : UriPartFilter(
         Pair("国漫", "cn"),
         Pair("日本", "jp"),
         Pair("韩国", "kr"),
-        Pair("欧美", "en")
-    )
+        Pair("欧美", "en"),
+    ),
 )
 
 private class StatusFilter : UriPartFilter(
@@ -105,8 +105,8 @@ private class StatusFilter : UriPartFilter(
     arrayOf(
         Pair("全部", "all"),
         Pair("连载中", "serial"),
-        Pair("已完结", "pub")
-    )
+        Pair("已完结", "pub"),
+    ),
 )
 
 private class StartFilter : UriPartFilter(
@@ -121,6 +121,6 @@ private class StartFilter : UriPartFilter(
         Pair("QRST", "QRST"),
         Pair("UVW", "UVW"),
         Pair("XYZ", "XYZ"),
-        Pair("0-9", "0-9")
-    )
+        Pair("0-9", "0-9"),
+    ),
 )

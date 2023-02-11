@@ -19,7 +19,7 @@ class MangaParkFilters {
             TypeFilter("Type", typeList),
             DemographicFilter("Demographic", demographicList),
             ContentFilter("Content", contentList),
-            GenreFilter("Genre", genreList)
+            GenreFilter("Genre", genreList),
         )
     }
 
@@ -81,24 +81,24 @@ class MangaParkFilters {
             if (sort != "rating.za") {
                 addQueryParameter(
                     "sort",
-                    sort
+                    sort,
                 )
             }
             if (includedGenre.isNotEmpty() || excludedGenre.isNotEmpty()) {
                 addQueryParameter(
                     "genres",
-                    includedGenre.joinToString(",") + "|" + excludedGenre.joinToString(",")
+                    includedGenre.joinToString(",") + "|" + excludedGenre.joinToString(","),
                 )
             }
             if (publication != null) {
                 addQueryParameter(
                     "release",
-                    publication
+                    publication,
                 )
             }
             addQueryParameter(
                 "chapters",
-                minMaxToChapter(minChap, maxChap)
+                minMaxToChapter(minChap, maxChap),
             )
         }.toString()
     }
@@ -142,7 +142,7 @@ class MangaParkFilters {
         Filter.Sort(
             name,
             sorts.map { it.name }.toTypedArray(),
-            Selection(default.defaultSortIndex, default.ascending)
+            Selection(default.defaultSortIndex, default.ascending),
         )
 
     // Min - Max Chapter Filter
@@ -166,12 +166,12 @@ class MangaParkFilters {
     class PublicationFilter(
         name: String,
         statusList: List<PublicationItem>,
-        defaultStatusIndex: Int
+        defaultStatusIndex: Int,
     ) :
         Filter.Select<String>(
             name,
             statusList.map { it.name }.toTypedArray(),
-            defaultStatusIndex
+            defaultStatusIndex,
         )
 
     // Type

@@ -18,7 +18,7 @@ import uy.kohesive.injekt.injectLazy
 open class MonochromeCMS(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : HttpSource() {
     override val supportsLatest = false
 
@@ -45,10 +45,11 @@ open class MonochromeCMS(
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> {
-        if (!query.startsWith(UUID_QUERY))
+        if (!query.startsWith(UUID_QUERY)) {
             return super.fetchSearchManga(page, query, filters)
+        }
         val req = GET("$apiUrl/manga/${query.substringAfter(UUID_QUERY)}")
         return client.newCall(req).asObservableSuccess().map {
             MangasPage(listOf(mangaFromAPI(it.decode())), false)

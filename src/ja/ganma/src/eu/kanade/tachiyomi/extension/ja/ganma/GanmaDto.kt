@@ -172,10 +172,11 @@ class AppStory(val pages: List<AppPage>) {
     fun toPageList(): List<Page> {
         val result = ArrayList<Page>(pages.size)
         pages.forEach {
-            if (it.imageURL != null)
+            if (it.imageURL != null) {
                 result.add(Page(result.size, imageUrl = it.imageURL.url))
-            else if (it.afterwordImageURL != null)
+            } else if (it.afterwordImageURL != null) {
                 result.add(Page(result.size, imageUrl = it.afterwordImageURL.url))
+            }
         }
         return result
     }

@@ -7,6 +7,6 @@ class NaverComicFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         NaverWebtoon(),
         NaverBestChallenge(),
-        NaverChallenge()
+        NaverChallenge(),
     )
 }

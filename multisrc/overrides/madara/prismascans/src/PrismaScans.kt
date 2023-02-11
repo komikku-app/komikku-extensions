@@ -11,7 +11,7 @@ class PrismaScans : Madara(
     "Prisma Scans",
     "https://prismascans.net",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

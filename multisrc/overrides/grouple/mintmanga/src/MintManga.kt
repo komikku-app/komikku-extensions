@@ -52,14 +52,16 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
                 else -> {}
             }
         }
-        return if (url.toString().contains("&"))
+        return if (url.toString().contains("&")) {
             GET(url.toString().replace("=%3D", "="), headers)
-        else popularMangaRequest(page)
+        } else {
+            popularMangaRequest(page)
+        }
     }
 
     private class OrderBy : Filter.Select<String>(
         "Сортировка",
-        arrayOf("По популярности", "Популярно сейчас", "По году", "По имени", "Новинки", "По дате обновления", "По рейтингу")
+        arrayOf("По популярности", "Популярно сейчас", "По году", "По имени", "Новинки", "По дате обновления", "По рейтингу"),
     )
 
     private class Genre(name: String, val id: String) : Filter.TriState(name)
@@ -76,7 +78,7 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
         GenreList(getGenreList()),
         AgeList(getAgeList()),
         More(getMore()),
-        FilList(getFilList())
+        FilList(getFilList()),
     )
     private fun getFilList() = listOf(
         Genre("Высокий рейтинг", "s_high_rate"),
@@ -87,7 +89,7 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
         Genre("Заброшен перевод", "s_abandoned_popular"),
         Genre("Длинная", "s_many_chapters"),
         Genre("Ожидает загрузки", "s_wait_upload"),
-        Genre("Белые жанры", "s_not_pessimized")
+        Genre("Белые жанры", "s_not_pessimized"),
     )
     private fun getMore() = listOf(
         Genre("Анонс", "el_6641"),
@@ -95,13 +97,13 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
         Genre("Веб", "el_1355"),
         Genre("Выпуск приостановлен", "el_5232"),
         Genre("Не Яой", "el_1874"),
-        Genre("Сборник", "el_1348")
+        Genre("Сборник", "el_1348"),
     )
 
     private fun getAgeList() = listOf(
         Genre("R(16+)", "el_3968"),
         Genre("NC-17(18+)", "el_3969"),
-        Genre("R18+(18+)", "el_3990")
+        Genre("R18+(18+)", "el_3990"),
     )
 
     private fun getCategoryList() = listOf(
@@ -113,7 +115,7 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
         Genre("Манга", "el_6421"),
         Genre("Манхва", "el_1873"),
         Genre("Маньхуа", "el_1875"),
-        Genre("Ранобэ", "el_5688")
+        Genre("Ранобэ", "el_5688"),
     )
 
     private fun getGenreList() = listOf(
@@ -156,6 +158,6 @@ class MintManga : GroupLe("MintManga", "https://mintmanga.live", "ru") {
         Genre("эротика", "el_1340"),
         Genre("этти", "el_1354"),
         Genre("юри", "el_1315"),
-        Genre("яой", "el_1336")
+        Genre("яой", "el_1336"),
     )
 }

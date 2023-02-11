@@ -130,7 +130,7 @@ class MyHentaiGallery : ParsedHttpSource() {
             SChapter.create().apply {
                 name = "Chapter"
                 url = response.request.url.toString().substringAfter(baseUrl)
-            }
+            },
         )
     }
 
@@ -153,7 +153,7 @@ class MyHentaiGallery : ParsedHttpSource() {
     override fun getFilterList() = FilterList(
         Filter.Header("NOTE: Ignored if using text search!"),
         Filter.Separator(),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -234,8 +234,8 @@ class MyHentaiGallery : ParsedHttpSource() {
             Pair("Uncle", "63"),
             Pair("Urination", "64"),
             Pair("Vore", "65"),
-            Pair("Weight Gain", "66")
-        )
+            Pair("Weight Gain", "66"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

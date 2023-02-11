@@ -11,7 +11,7 @@ private const val EH_AUTHOR_NAMESPACE = "author"
 private val ONGOING_SUFFIX = arrayOf(
     "[ongoing]",
     "(ongoing)",
-    "{ongoing}"
+    "{ongoing}",
 )
 
 val EX_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
@@ -40,7 +40,9 @@ fun ExGalleryMetadata.copyTo(manga: SManga) {
         if (ONGOING_SUFFIX.any {
             t.endsWith(it, ignoreCase = true)
         }
-        ) manga.status = SManga.ONGOING
+        ) {
+            manga.status = SManga.ONGOING
+        }
     }
 
     // Build a nice looking description out of what we know

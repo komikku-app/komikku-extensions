@@ -9,7 +9,7 @@ class YugenMangas : HeanCms(
     "YugenMangas",
     "https://yugenmangas.net",
     "es",
-    "https://api.yugenmangas.com"
+    "https://api.yugenmangas.com",
 ) {
 
     // Site changed from Madara to HeanCms.
@@ -69,6 +69,6 @@ class YugenMangas : HeanCms(
         Genre("Transmigración", 34),
         Genre("Vida Escolar", 47),
         Genre("Yaoi", 43),
-        Genre("Yuri", 44)
+        Genre("Yuri", 44),
     )
 }

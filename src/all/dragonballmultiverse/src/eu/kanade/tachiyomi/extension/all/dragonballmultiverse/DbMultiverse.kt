@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.all.dragonball_multiverse
+package eu.kanade.tachiyomi.extension.all.dragonballmultiverse
 
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -15,8 +15,11 @@ import rx.Observable
 abstract class DbMultiverse(override val lang: String, private val internalLang: String) : ParsedHttpSource() {
 
     override val name =
-        if (internalLang.endsWith("_PA")) "Dragon Ball Multiverse Parody"
-        else "Dragon Ball Multiverse"
+        if (internalLang.endsWith("_PA")) {
+            "Dragon Ball Multiverse Parody"
+        } else {
+            "Dragon Ball Multiverse"
+        }
     override val baseUrl = "https://www.dragonball-multiverse.com"
     override val supportsLatest = false
 

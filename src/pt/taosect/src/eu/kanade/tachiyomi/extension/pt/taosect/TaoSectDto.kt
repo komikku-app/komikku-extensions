@@ -12,12 +12,12 @@ data class TaoSectProjectDto(
     val slug: String? = "",
     val title: TaoSectContentDto? = null,
     val thumbnail: String? = "",
-    @SerialName("capitulos") val volumes: List<TaoSectVolumeDto>? = emptyList()
+    @SerialName("capitulos") val volumes: List<TaoSectVolumeDto>? = emptyList(),
 )
 
 @Serializable
 data class TaoSectContentDto(
-    val rendered: String = ""
+    val rendered: String = "",
 )
 
 @Serializable
@@ -27,17 +27,17 @@ data class TaoSectProjectInfoDto(
     @SerialName("titulo_pais_origem") val originalTitle: String = "",
     @SerialName("roteiro") val script: String = "",
     @SerialName("serializacao") val serialization: String = "",
-    @SerialName("status_scan") val status: TaoSectTagDto? = null
+    @SerialName("status_scan") val status: TaoSectTagDto? = null,
 )
 
 @Serializable
 data class TaoSectTagDto(
-    @SerialName("nome") val name: String = ""
+    @SerialName("nome") val name: String = "",
 )
 
 @Serializable
 data class TaoSectVolumeDto(
-    @SerialName("capitulos") val chapters: List<TaoSectChapterDto> = emptyList()
+    @SerialName("capitulos") val chapters: List<TaoSectChapterDto> = emptyList(),
 )
 
 @Serializable
@@ -47,5 +47,5 @@ data class TaoSectChapterDto(
     @SerialName("nome_capitulo") val name: String = "",
     @SerialName("paginas") val pages: List<String> = emptyList(),
     @SerialName("post_id") val projectId: String? = "",
-    val slug: String = ""
+    val slug: String = "",
 )

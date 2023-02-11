@@ -86,7 +86,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         return GET(
             url = url.build().toString(),
             headers = headers,
-            cache = CacheControl.FORCE_NETWORK
+            cache = CacheControl.FORCE_NETWORK,
         )
     }
 
@@ -165,7 +165,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             .addQueryParameter("contentRating[]", preferences.contentRating)
             .addQueryParameter(
                 "excludedGroups[]",
-                MDConstants.defaultBlockedGroups + preferences.blockedGroups
+                MDConstants.defaultBlockedGroups + preferences.blockedGroups,
             )
             .addQueryParameter("excludedUploaders[]", preferences.blockedUploaders)
             .addQueryParameter("includeFuturePublishAt", "0")
@@ -184,7 +184,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                         super.fetchSearchManga(
                             page = page,
                             query = MDConstants.prefixIdSearch + mangaId,
-                            filters = filters
+                            filters = filters,
                         )
                     }
 
@@ -193,8 +193,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                     .newCall(
                         request = searchMangaUploaderRequest(
                             page = page,
-                            uploader = query.removePrefix(MDConstants.prefixUsrSearch)
-                        )
+                            uploader = query.removePrefix(MDConstants.prefixUsrSearch),
+                        ),
                     )
                     .asObservableSuccess()
                     .map { latestUpdatesParse(it) }
@@ -203,8 +203,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                 client
                     .newCall(
                         request = searchMangaListRequest(
-                            list = query.removePrefix(MDConstants.prefixListSearch)
-                        )
+                            list = query.removePrefix(MDConstants.prefixListSearch),
+                        ),
                     )
                     .asObservableSuccess()
                     .map { searchMangaListParse(it, page) }
@@ -276,7 +276,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         val finalUrl = helper.mdFilters.addFiltersToUrl(
             url = tempUrl,
             filters = filters.ifEmpty { getFilterList() },
-            dexLang = dexLang
+            dexLang = dexLang,
         )
 
         return GET(finalUrl, headers, CacheControl.FORCE_NETWORK)
@@ -358,7 +358,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             .addQueryParameter("contentRating[]", preferences.contentRating)
             .addQueryParameter(
                 "excludedGroups[]",
-                MDConstants.defaultBlockedGroups + preferences.blockedGroups
+                MDConstants.defaultBlockedGroups + preferences.blockedGroups,
             )
             .addQueryParameter("excludedUploaders[]", preferences.blockedUploaders)
 
@@ -401,7 +401,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             fetchSimpleChapterList(manga, dexLang),
             fetchFirstVolumeCover(manga),
             dexLang,
-            preferences.coverQuality
+            preferences.coverQuality,
         )
     }
 
@@ -655,13 +655,13 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                 helper.intl.contentRatingSafe,
                 helper.intl.contentRatingSuggestive,
                 helper.intl.contentRatingErotica,
-                helper.intl.contentRatingPornographic
+                helper.intl.contentRatingPornographic,
             )
             entryValues = arrayOf(
                 MDConstants.contentRatingPrefValSafe,
                 MDConstants.contentRatingPrefValSuggestive,
                 MDConstants.contentRatingPrefValErotica,
-                MDConstants.contentRatingPrefValPornographic
+                MDConstants.contentRatingPrefValPornographic,
             )
             setDefaultValue(MDConstants.contentRatingPrefDefaults)
 
@@ -681,12 +681,12 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             entries = arrayOf(
                 helper.intl.languageDisplayName(MangaDexIntl.JAPANESE),
                 helper.intl.languageDisplayName(MangaDexIntl.CHINESE),
-                helper.intl.languageDisplayName(MangaDexIntl.KOREAN)
+                helper.intl.languageDisplayName(MangaDexIntl.KOREAN),
             )
             entryValues = arrayOf(
                 MDConstants.originalLanguagePrefValJapanese,
                 MDConstants.originalLanguagePrefValChinese,
-                MDConstants.originalLanguagePrefValKorean
+                MDConstants.originalLanguagePrefValKorean,
             )
             setDefaultValue(MDConstants.originalLanguagePrefDefaults)
 
@@ -751,14 +751,14 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     private val SharedPreferences.contentRating
         get() = getStringSet(
             MDConstants.getContentRatingPrefKey(dexLang),
-            MDConstants.contentRatingPrefDefaults
+            MDConstants.contentRatingPrefDefaults,
         )
 
     private val SharedPreferences.originalLanguages: Set<String>
         get() {
             val prefValues = getStringSet(
                 MDConstants.getOriginalLanguagePrefKey(dexLang),
-                MDConstants.originalLanguagePrefDefaults
+                MDConstants.originalLanguagePrefDefaults,
             )
 
             val originalLanguages = prefValues.orEmpty().toMutableSet()
@@ -776,7 +776,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     private val SharedPreferences.tryUsingFirstVolumeCover
         get() = getBoolean(
             MDConstants.getTryUsingFirstVolumeCoverPrefKey(dexLang),
-            MDConstants.tryUsingFirstVolumeCoverDefault
+            MDConstants.tryUsingFirstVolumeCoverDefault,
         )
 
     private val SharedPreferences.blockedGroups

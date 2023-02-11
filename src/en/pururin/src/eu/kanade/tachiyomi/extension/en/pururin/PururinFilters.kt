@@ -3,19 +3,19 @@ package eu.kanade.tachiyomi.extension.en.pururin
 import eu.kanade.tachiyomi.source.model.Filter
 
 class SortFilter(
-    values: Array<Search.Sort> = Search.Sort.values()
+    values: Array<Search.Sort> = Search.Sort.values(),
 ) : Filter.Select<Search.Sort>("Sort by", values) {
     inline val sort get() = values[state]
 }
 
 sealed class TagFilter(
     name: String,
-    val id: Int
+    val id: Int,
 ) : Filter.TriState(name)
 
 sealed class TagGroup<T : TagFilter>(
     name: String,
-    values: List<T>
+    values: List<T>,
 ) : Filter.Group<T>(name, values)
 
 // TODO: Artist, Circle, Contents, Parody, Character, Convention
@@ -23,7 +23,7 @@ sealed class TagGroup<T : TagFilter>(
 class Category(name: String, id: Int) : TagFilter(name, id)
 
 class CategoryGroup(
-    values: List<Category> = categories
+    values: List<Category> = categories,
 ) : TagGroup<Category>("Categories", values) {
     companion object {
         private val categories get() = listOf(
@@ -38,7 +38,7 @@ class CategoryGroup(
 }
 
 class TagModeFilter(
-    values: Array<Search.TagMode> = Search.TagMode.values()
+    values: Array<Search.TagMode> = Search.TagMode.values(),
 ) : Filter.Select<Search.TagMode>("Tag mode", values) {
     inline val mode get() = values[state]
 }
@@ -54,7 +54,7 @@ class PagesFilter(
 }
 
 class PagesGroup(
-    values: List<PagesFilter> = minmax
+    values: List<PagesFilter> = minmax,
 ) : Filter.Group<PagesFilter>("Pages", values) {
     inline val range get() = IntRange(state[0].state, state[1].state).also {
         require(it.first <= it.last) { "'Minimum' cannot exceed 'Maximum'" }
@@ -63,7 +63,7 @@ class PagesGroup(
     companion object {
         private val minmax get() = listOf(
             PagesFilter("Minimum", 0),
-            PagesFilter("Maximum", 100)
+            PagesFilter("Maximum", 100),
         )
     }
 }

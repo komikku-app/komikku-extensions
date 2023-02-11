@@ -10,7 +10,7 @@ class EGYManga : Madara(
     "EGY Manga",
     "https://egymanga.net",
     "ar",
-    SimpleDateFormat("MMMM dd, yyyy", Locale("ar"))
+    SimpleDateFormat("MMMM dd, yyyy", Locale("ar")),
 ) {
 
     // The website does not flag the content.

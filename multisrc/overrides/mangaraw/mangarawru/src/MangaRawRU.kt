@@ -63,7 +63,6 @@ class MangaRawRU : MangaRawTheme("MangaRawRU", "https://mangaraw.ru") {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-
         val position = 32
         val parser = ImageListParser(document.html(), position)
 

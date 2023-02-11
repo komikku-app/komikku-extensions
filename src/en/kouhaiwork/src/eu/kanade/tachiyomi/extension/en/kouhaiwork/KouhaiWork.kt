@@ -126,7 +126,7 @@ class KouhaiWork : HttpSource() {
         GenresFilter(),
         ThemesFilter(),
         DemographicsFilter(),
-        StatusFilter()
+        StatusFilter(),
     )
 
     override fun mangaDetailsParse(response: Response) =
@@ -148,12 +148,12 @@ class KouhaiWork : HttpSource() {
             } ?: emptyList(),
             find<StatusFilter>()?.takeIf { it.state != 0 }?.let {
                 KouhaiTag(it.state - 1, it.values[it.state])
-            }
-        )
+            },
+        ),
     ).toString()
 
     private inline fun <reified T> Response.decode(key: String = "data") =
         json.decodeFromJsonElement<T>(
-            json.parseToJsonElement(body!!.string()).jsonObject[key]!!
+            json.parseToJsonElement(body!!.string()).jsonObject[key]!!,
         )
 }

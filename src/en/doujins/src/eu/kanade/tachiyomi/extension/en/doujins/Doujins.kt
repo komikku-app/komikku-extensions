@@ -50,12 +50,13 @@ class Doujins : HttpSource() {
 
                 val date = dateAndPageCountString.substringBefore(" • ")
                 for (dateFormat in MANGA_DETAILS_DATE_FORMAT) {
-                    if (date_upload == 0L)
+                    if (date_upload == 0L) {
                         date_upload = dateFormat.parseOrNull(date)?.time ?: 0L
-                    else
+                    } else {
                         break
+                    }
                 }
-            }
+            },
         )
     }
 
@@ -73,7 +74,7 @@ class Doujins : HttpSource() {
                     thumbnail_url = it.jsonObject["thumbnail2"]!!.jsonPrimitive.content
                 }
             },
-            true
+            true,
         )
     }
 
@@ -141,7 +142,6 @@ class Doujins : HttpSource() {
     }
 
     private fun parseGalleryPage(document: Document): MangasPage {
-
         val pagination = document.select(".pagination").first()
         return MangasPage(
             document.select("div:not(.premium-folder) > .thumbnail-doujin a.gallery-visited-from-favorites").map {
@@ -157,7 +157,7 @@ class Doujins : HttpSource() {
                 !pagination.select("li.page-item:last-child").hasClass("disabled")
             } else {
                 false
-            }
+            },
         )
     }
 
@@ -174,7 +174,7 @@ class Doujins : HttpSource() {
         Filter.Separator(),
 
         Filter.Header("Sort only works with text search and series filter"),
-        SortFilter()
+        SortFilter(),
     )
 
     private class SeriesFilter : UriPartFilter(
@@ -203,8 +203,8 @@ class Doujins : HttpSource() {
             Pair("Doujins - Mixed Series", "/doujins-mixed-series-20091"),
             Pair("Hentai Magazine Chapters", "/hentai-magazine-chapters-2766"),
             Pair("Hentai Magazine Chapters - Super-Shorts", "/hentai-magazine-chapters-super-shorts-19933"),
-            Pair("Hentai Manga", "/hentai-manga-19")
-        )
+            Pair("Hentai Manga", "/hentai-manga-19"),
+        ),
     )
 
     private class SortFilter : UriPartFilter(
@@ -214,8 +214,8 @@ class Doujins : HttpSource() {
             Pair("Oldest First", "created_at"),
             Pair("Alphabetical", "name"),
             Pair("Rating", "-cached_score"),
-            Pair("Popularity", "-cached_views")
-        )
+            Pair("Popularity", "-cached_views"),
+        ),
     )
 
     private class PopularityPeriodFilter : UriPartFilter(
@@ -224,7 +224,7 @@ class Doujins : HttpSource() {
             Pair("This Month", "/top"),
             Pair("This Year", "/top/year"),
             Pair("All Time", "/top/all"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

@@ -135,12 +135,12 @@ class PurpleCress : HttpSource() {
             }
         }
         return fetchPopularManga(page).map {
-            mangasPage ->
+                mangasPage ->
             MangasPage(
                 mangasPage.mangas.filter {
                     it.title.contains(query, true)
                 },
-                mangasPage.hasNextPage
+                mangasPage.hasNextPage,
             )
         }
     }

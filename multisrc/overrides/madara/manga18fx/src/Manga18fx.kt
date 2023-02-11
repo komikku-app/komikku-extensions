@@ -22,7 +22,7 @@ class Manga18fx : Madara(
     "Manga18fx",
     "https://manga18fx.com",
     "en",
-    SimpleDateFormat("dd MMM yy", Locale.ENGLISH)
+    SimpleDateFormat("dd MMM yy", Locale.ENGLISH),
 ) {
     override val id = 3157287889751723714
 
@@ -70,8 +70,9 @@ class Manga18fx : Madara(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.isEmpty()) {
             filters.forEach { filter ->
-                if (filter is GenreFilter)
+                if (filter is GenreFilter) {
                     return GET(filter.vals[filter.state].second, headers)
+                }
             }
             return latestUpdatesRequest(page)
         }
@@ -116,17 +117,16 @@ class Manga18fx : Madara(
     )
 
     override fun getFilterList(): FilterList {
-
         val filters = buildList(2) {
             add(Filter.Header("Filters are ignored for text search!"))
 
             if (genresList.isNotEmpty()) {
                 add(
-                    GenreFilter(hardCodedTypes + genresList)
+                    GenreFilter(hardCodedTypes + genresList),
                 )
             } else {
                 add(
-                    Filter.Header("Wait for mangas to load then tap Reset")
+                    Filter.Header("Wait for mangas to load then tap Reset"),
                 )
             }
         }

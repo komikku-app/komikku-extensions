@@ -34,7 +34,7 @@ abstract class MadTheme(
     override val name: String,
     override val baseUrl: String,
     override val lang: String,
-    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM dd, yyy", Locale.US)
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM dd, yyy", Locale.US),
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -312,7 +312,7 @@ abstract class MadTheme(
             Pair("All", "all"),
             Pair("Ongoing", "ongoing"),
             Pair("Completed", "completed"),
-        )
+        ),
     )
 
     class OrderFilter(state: Int = 0) : UriPartFilter(
@@ -324,13 +324,13 @@ abstract class MadTheme(
             Pair("Name A-Z", "name"),
             Pair("Rating", "rating"),
         ),
-        state
+        state,
     )
 
     open class UriPartFilter(
         displayName: String,
         private val vals: Array<Pair<String, String>>,
-        state: Int = 0
+        state: Int = 0,
     ) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), state) {
         fun toUriPart() = vals[state].second

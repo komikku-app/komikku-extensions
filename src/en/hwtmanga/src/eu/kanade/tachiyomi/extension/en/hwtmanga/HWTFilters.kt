@@ -87,7 +87,7 @@ private val tags: List<Tag>
     )
 
 class TagFilter(
-    values: List<Tag> = tags
+    values: List<Tag> = tags,
 ) : Filter.Group<Tag>("Tag Match", values) {
     override fun toString() =
         state.filter { it.state }.joinToString(";").ifEmpty { "all;" }
@@ -97,7 +97,7 @@ private val states: Array<String>
     get() = arrayOf("ALL", "Completed", "Ongoing")
 
 class StateFilter(
-    values: Array<String> = states
+    values: Array<String> = states,
 ) : Filter.Select<String>("State", values) {
     private val ids = arrayOf("all", "complete", "ongoing")
 
@@ -112,11 +112,11 @@ private val orders: Array<String>
         "Oldest",
         "Most Liked",
         "Most Viewed",
-        "Most Favourite"
+        "Most Favourite",
     )
 
 class OrderFilter(
-    values: Array<String> = orders
+    values: Array<String> = orders,
 ) : Filter.Select<String>("Order By", values) {
     private val ids = arrayOf(
         "az",
@@ -125,7 +125,7 @@ class OrderFilter(
         "oldest",
         "liked",
         "viewed",
-        "fav"
+        "fav",
     )
 
     override fun toString() = ids[state]

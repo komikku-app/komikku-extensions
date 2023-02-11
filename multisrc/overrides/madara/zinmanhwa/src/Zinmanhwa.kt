@@ -8,5 +8,5 @@ class Zinmanhwa : Madara(
     "Zinmanhwa",
     "https://zinmanhwa.com",
     "en",
-    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US)
+    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US),
 )

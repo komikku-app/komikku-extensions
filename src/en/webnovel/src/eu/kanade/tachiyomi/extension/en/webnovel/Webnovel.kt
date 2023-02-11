@@ -54,8 +54,8 @@ class Webnovel : HttpSource() {
         page = page,
         query = "",
         filters = FilterList(
-            SortByFilter(default = 1)
-        )
+            SortByFilter(default = 1),
+        ),
     )
 
     override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
@@ -65,8 +65,8 @@ class Webnovel : HttpSource() {
         page = page,
         query = "",
         filters = FilterList(
-            SortByFilter(default = 5)
-        )
+            SortByFilter(default = 5),
+        ),
     )
 
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
@@ -177,6 +177,7 @@ class Webnovel : HttpSource() {
     }
 
     private val ComicChapterDto.isPremium get() = isVip != 0 || price != 0
+
     // This can mean the chapter is free or user has paid to unlock it (check with [isPremium] for this case)
     private val ComicChapterDto.isAccessibleByUser get() = isAuth == 1
 
@@ -226,7 +227,7 @@ class Webnovel : HttpSource() {
 
     data class ChapterPage(
         val id: String,
-        val url: String
+        val url: String,
     )
 
     // LinkedHashMap with a capacity of 25. When exceeding the capacity the oldest entry is removed.
@@ -249,7 +250,7 @@ class Webnovel : HttpSource() {
         return select("#comicPageContainer img").map {
             ChapterPage(
                 id = it.attr("data-page"),
-                url = it.attr("data-original")
+                url = it.attr("data-original"),
             )
         }.also { chapterPageCache[chapterId] = it }
     }
@@ -261,7 +262,7 @@ class Webnovel : HttpSource() {
         Filter.Separator(),
         ContentStatusFilter(),
         SortByFilter(),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private val SManga.getId: String
@@ -305,8 +306,9 @@ class Webnovel : HttpSource() {
         val originalRequestUrl = originalRequest.url
 
         // If original request is not a page url or the url is still valid we just continue with og request
-        if (!originalRequestUrl.toString().contains(baseCdnUrl) || isPageUrlStillValid(originalRequestUrl))
+        if (!originalRequestUrl.toString().contains(baseCdnUrl) || isPageUrlStillValid(originalRequestUrl)) {
             return chain.proceed(originalRequest)
+        }
 
         val (_, comicId, chapterId, pageFileName) = originalRequest.url.pathSegments
 

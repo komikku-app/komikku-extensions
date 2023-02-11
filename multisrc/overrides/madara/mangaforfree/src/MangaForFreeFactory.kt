@@ -25,7 +25,7 @@ class MangaForFreeALL : MangaForFree("MangaForFree.net", "https://mangaforfree.n
 abstract class MangaForFree(
     override val name: String,
     override val baseUrl: String,
-    lang: String
+    lang: String,
 ) : Madara(name, baseUrl, lang) {
 
     override val client: OkHttpClient = super.client.newBuilder()

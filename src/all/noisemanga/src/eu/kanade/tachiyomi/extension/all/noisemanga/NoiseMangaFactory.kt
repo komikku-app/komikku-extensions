@@ -6,7 +6,7 @@ import eu.kanade.tachiyomi.source.SourceFactory
 class NoiseMangaFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         NoiseMangaEnglish(),
-        NoiseMangaPortuguese()
+        NoiseMangaPortuguese(),
     )
 }
 

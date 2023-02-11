@@ -21,7 +21,7 @@ class Mangakakalots : MangaBox("Mangakakalots (unoriginal)", "https://mangakakal
     override fun getStatusFilters(): Array<Pair<String?, String>> = arrayOf(
         Pair("all", "ALL"),
         Pair("Completed", "Completed"),
-        Pair("Ongoing", "Ongoing")
+        Pair("Ongoing", "Ongoing"),
     )
     override fun getGenreFilters(): Array<Pair<String?, String>> = arrayOf(
         Pair("all", "ALL"),
@@ -64,6 +64,6 @@ class Mangakakalots : MangaBox("Mangakakalots (unoriginal)", "https://mangakakal
         Pair("Tragedy", "Tragedy"),
         Pair("Webtoons", "Webtoons"),
         Pair("Yaoi", "Yaoi"),
-        Pair("Yuri", "Yuri")
+        Pair("Yuri", "Yuri"),
     )
 }

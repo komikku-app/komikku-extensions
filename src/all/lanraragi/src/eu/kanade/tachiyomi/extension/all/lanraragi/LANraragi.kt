@@ -114,7 +114,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
                 getDateAdded(archive.tags).toLongOrNull()?.let {
                     date_upload = it
                 }
-            }
+            },
         )
     }
 
@@ -216,7 +216,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
                     title = "Random"
                     description = "Refresh for a random archive."
                     thumbnail_url = getThumbnailUri("tachiyomi") // noThumb
-                }
+                },
             )
         }
 
@@ -259,7 +259,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
         NewArchivesOnly(),
         UntaggedArchivesOnly(),
         StartingPage(startingPageStats()),
-        SortByNamespace()
+        SortByNamespace(),
     )
 
     private var categories = emptyList<Category>()
@@ -366,7 +366,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
                         emptyList()
                     }
                 },
-                {}
+                {},
             )
     }
 
@@ -387,7 +387,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
                     .map {
                         val pinned = if (it.pinned == "1") pin else ""
                         Pair(it.id, "$pinned${it.name}")
-                    }
+                    },
             )
             .toTypedArray()
     }

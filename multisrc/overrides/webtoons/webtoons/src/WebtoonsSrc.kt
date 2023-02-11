@@ -25,7 +25,7 @@ open class WebtoonsSrc(
     override val lang: String,
     langCode: String = lang,
     override val localeForCookie: String = lang,
-    dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.ENGLISH)
+    dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.ENGLISH),
 ) : ConfigurableSource, Webtoons(name, baseUrl, lang, langCode, localeForCookie, dateFormat) {
 
     override val client: OkHttpClient = super.client.newBuilder()
@@ -60,12 +60,12 @@ open class WebtoonsSrc(
             val note = document.select("div.comment_area div.info_area p").text()
 
             if (note.isNotEmpty()) {
-
                 val creator = document.select("div.creator_note span.author a").text().trim()
 
                 pages = pages + Page(
-                    pages.size, "",
-                    TextInterceptorHelper.createUrl(creator, note)
+                    pages.size,
+                    "",
+                    TextInterceptorHelper.createUrl(creator, note),
                 )
             }
         }

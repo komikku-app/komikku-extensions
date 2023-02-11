@@ -55,7 +55,7 @@ class Mangaku : ParsedHttpSource() {
         POST(
             "$baseUrl/daftar-komik-bahasa-indonesia/",
             headers,
-            FormBody.Builder().add("ritem", "hot").build()
+            FormBody.Builder().add("ritem", "hot").build(),
         )
 
     override fun popularMangaParse(response: Response): MangasPage {
@@ -127,10 +127,11 @@ class Mangaku : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         name = element.text().let {
-            if (it.contains("–"))
+            if (it.contains("–")) {
                 it.split("–")[1].trim()
-            else
+            } else {
                 it
+            }
         }
     }
 
@@ -196,7 +197,7 @@ class Mangaku : ParsedHttpSource() {
         return re.findAll(htmImageList).mapIndexed { idx, it ->
             val url = Base64.decode(
                 CryptoAES.decrypt(it.groupValues[1], fifthArgValueDigest),
-                Base64.DEFAULT
+                Base64.DEFAULT,
             )
                 .toString(Charsets.UTF_8)
                 .replace("+", "%20")

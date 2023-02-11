@@ -66,8 +66,9 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
             uri.appendQueryParameter("q", query)
         }
         filters.forEach {
-            if (it is UriFilter)
+            if (it is UriFilter) {
                 it.addToUri(uri)
+            }
         }
         if (page != 1) {
             uri.appendQueryParameter("page", page.toString())
@@ -305,7 +306,7 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
         StatusFilter(),
         RatingFilter(),
         TypeFilter(),
-        YearFilter()
+        YearFilter(),
     )
 
     private class SearchTypeFilter(name: String, val uriParam: String) :
@@ -433,8 +434,8 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
                 GenreFilter("wuxia", "Wuxia"),
                 GenreFilter("yaoi", "Yaoi"),
                 GenreFilter("yuri", "Yuri"),
-                GenreFilter("zombies", "Zombies")
-            )
+                GenreFilter("zombies", "Zombies"),
+            ),
         ),
         UriFilter {
         override fun addToUri(uri: Uri.Builder) {
@@ -455,8 +456,8 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
         "genres-mode",
         arrayOf(
             Pair("and", "And mode"),
-            Pair("or", "Or mode")
-        )
+            Pair("or", "Or mode"),
+        ),
     )
 
     private class ChapterCountFilter : UriSelectFilter(
@@ -473,8 +474,8 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
             Pair("50", "50 +"),
             Pair("100", "100 +"),
             Pair("150", "150 +"),
-            Pair("200", "200 +")
-        )
+            Pair("200", "200 +"),
+        ),
     )
 
     private class StatusFilter : UriSelectFilter(
@@ -483,8 +484,8 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
         arrayOf(
             Pair("any", "Any"),
             Pair("completed", "Completed"),
-            Pair("ongoing", "Ongoing")
-        )
+            Pair("ongoing", "Ongoing"),
+        ),
     )
 
     private class RatingFilter : UriSelectFilter(
@@ -497,8 +498,8 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
             Pair("3", "3 stars"),
             Pair("2", "2 stars"),
             Pair("1", "1 star"),
-            Pair("0", "0 stars")
-        )
+            Pair("0", "0 stars"),
+        ),
     )
 
     private class TypeFilter : UriSelectFilter(
@@ -509,8 +510,8 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
             Pair("manga", "Japanese Manga"),
             Pair("manhwa", "Korean Manhwa"),
             Pair("manhua", "Chinese Manhua"),
-            Pair("unknown", "Unknown")
-        )
+            Pair("unknown", "Unknown"),
+        ),
     )
 
     private class YearFilter : UriSelectFilter(
@@ -521,8 +522,8 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
             // Get all years between today and 1946
             *(Calendar.getInstance().get(Calendar.YEAR) downTo 1946).map {
                 Pair(it.toString(), it.toString())
-            }.toTypedArray()
-        )
+            }.toTypedArray(),
+        ),
     )
 
     private class SortFilter : UriSelectFilter(
@@ -536,10 +537,10 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
             Pair("views_t", "Views last 90 days"),
             Pair("rating", "Rating"),
             Pair("update", "Latest"),
-            Pair("create", "New manga")
+            Pair("create", "New manga"),
         ),
         firstIsUnspecified = false,
-        defaultValue = 1
+        defaultValue = 1,
     )
 
     /**
@@ -553,12 +554,13 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
         val uriParam: String,
         val vals: Array<Pair<String, String>>,
         val firstIsUnspecified: Boolean = true,
-        defaultValue: Int = 0
+        defaultValue: Int = 0,
     ) :
         Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray(), defaultValue), UriFilter {
         override fun addToUri(uri: Uri.Builder) {
-            if (state != 0 || !firstIsUnspecified)
+            if (state != 0 || !firstIsUnspecified) {
                 uri.appendQueryParameter(uriParam, vals[state].first)
+            }
         }
     }
 
@@ -606,7 +608,7 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
             Pair("Prioritize source: Duck", "duck"),
             Pair("Prioritize source: Mini", "mini"),
             Pair("Prioritize source: Fox", "fox"),
-            Pair("Prioritize source: Panda", "panda")
+            Pair("Prioritize source: Panda", "panda"),
         )
     }
 }

@@ -6,13 +6,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class VizPageUrlDto(
     val ok: Int = 0,
-    val data: Map<Int, String>? = null
+    val data: Map<Int, String>? = null,
 )
 
 @Serializable
 data class VizMangaAuthDto(
     val ok: Int = 0,
-    @SerialName("archive_info") val archiveInfo: VizArchiveInfoDto? = null
+    @SerialName("archive_info") val archiveInfo: VizArchiveInfoDto? = null,
 )
 
 @Serializable
@@ -24,5 +24,5 @@ data class VizArchiveInfoDto(
 @Serializable
 data class VizErrorDto(
     val code: Int,
-    @SerialName("msg") val message: String? = null
+    @SerialName("msg") val message: String? = null,
 )

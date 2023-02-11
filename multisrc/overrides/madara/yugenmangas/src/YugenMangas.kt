@@ -14,7 +14,7 @@ class YugenMangas : Madara(
     "YugenMangas",
     "https://yugenmangas.com.br",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
@@ -40,7 +40,7 @@ class YugenMangas : Madara(
         val chapterUrl = element.selectFirst("a")!!.attr("abs:href")
         setUrlWithoutDomain(
             chapterUrl.substringBefore("?style=paged") +
-                if (!chapterUrl.endsWith(chapterUrlSuffix)) chapterUrlSuffix else ""
+                if (!chapterUrl.endsWith(chapterUrlSuffix)) chapterUrlSuffix else "",
         )
     }
 

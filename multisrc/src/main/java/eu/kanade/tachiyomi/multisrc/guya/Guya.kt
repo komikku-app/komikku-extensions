@@ -31,7 +31,7 @@ import uy.kohesive.injekt.api.get
 abstract class Guya(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : ConfigurableSource, HttpSource() {
 
     override val supportsLatest = true
@@ -42,7 +42,7 @@ abstract class Guya(
         "User-Agent",
         "(Android ${Build.VERSION.RELEASE}; " +
             "${Build.MANUFACTURER} ${Build.MODEL}) " +
-            "Tachiyomi/${AppInfo.getVersionName()} ${Build.ID}"
+            "Tachiyomi/${AppInfo.getVersionName()} ${Build.ID}",
     )
 
     private val scanlators: ScanlatorStore = ScanlatorStore()
@@ -183,7 +183,7 @@ abstract class Guya(
             "folder",
             json.getJSONObject("chapters")
                 .getJSONObject(chapterNum)
-                .getString("folder")
+                .getString("folder"),
         )
 
         return parsePageFromJson(pages, metadata)
@@ -328,7 +328,7 @@ abstract class Guya(
                 it + 1,
                 "",
                 pages.optJSONObject(it)?.getString("src")
-                    ?: pages[it].toString()
+                    ?: pages[it].toString(),
             )
         }
     }
@@ -364,8 +364,8 @@ abstract class Guya(
                             chapterObj,
                             chapterNum,
                             chapterObj.getJSONArray(sortKey),
-                            response.getString("slug")
-                        )
+                            response.getString("slug"),
+                        ),
                     )
                 }
                 response.has(sortKey) -> {
@@ -374,8 +374,8 @@ abstract class Guya(
                             chapterObj,
                             chapterNum,
                             response.getJSONArray(sortKey),
-                            response.getString("slug")
-                        )
+                            response.getString("slug"),
+                        ),
                     )
                 }
                 else -> {
@@ -469,8 +469,8 @@ abstract class Guya(
                     metadata.getString("slug"),
                     metadata.getString("folder"),
                     pages[it].toString(),
-                    metadata.getString("scanlator")
-                )
+                    metadata.getString("scanlator"),
+                ),
             )
         }
     }
@@ -515,8 +515,11 @@ abstract class Guya(
         fun getValueFromKey(key: String): String {
             update()
             // Fallback to key as value if endpoint fails
-            return if (!scanlatorMap[key].isNullOrEmpty())
-                scanlatorMap[key].toString() else key
+            return if (!scanlatorMap[key].isNullOrEmpty()) {
+                scanlatorMap[key].toString()
+            } else {
+                key
+            }
         }
 
         fun keys(): MutableSet<String> {

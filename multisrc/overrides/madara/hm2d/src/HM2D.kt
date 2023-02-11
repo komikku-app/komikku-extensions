@@ -11,7 +11,7 @@ class HM2D : Madara(
     "HM2D",
     "https://mangadistrict.com/hdoujin/",
     "en",
-    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US),
 ) {
 
     override fun mangaDetailsRequest(manga: SManga): Request {

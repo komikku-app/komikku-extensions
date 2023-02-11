@@ -11,7 +11,7 @@ data class Series(
     private val synopsis: String,
     private val gender: String,
     private val target: Target,
-    val authors: List<Author>
+    val authors: List<Author>,
 ) {
     val genres: String
         get() = "$gender, $target"
@@ -41,7 +41,7 @@ data class Album(
     val publicationDate: String,
     private val fullAvailable: Boolean,
     private val inUserLibrary: Boolean,
-    private val inUserSubscription: Boolean
+    private val inUserSubscription: Boolean,
 ) {
     val number: Float
         get() = volume.toFloat()
@@ -57,7 +57,7 @@ data class Album(
 data class AlbumPage(
     val albumPageNumber: Int,
     private val key: String,
-    private val iv: String
+    private val iv: String,
 ) {
     override fun toString() =
         "/$albumPageNumber?type=full&key=${key.urlSafe}&iv=${iv.urlSafe}"

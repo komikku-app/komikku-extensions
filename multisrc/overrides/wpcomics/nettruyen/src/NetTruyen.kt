@@ -15,7 +15,7 @@ class NetTruyen : WPComics("NetTruyen", "https://www.nettruyenking.com", "vi", S
     override fun getFilterList(): FilterList {
         return FilterList(
             StatusFilter(getStatusList()),
-            GenreFilter(getGenreList())
+            GenreFilter(getGenreList()),
         )
     }
 }

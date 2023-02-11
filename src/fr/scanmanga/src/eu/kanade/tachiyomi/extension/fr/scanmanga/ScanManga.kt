@@ -81,7 +81,8 @@ class ScanManga : ParsedHttpSource() {
             /*thumbnail_url = element.select(".logo_manga img").let {
                 if (it.hasAttr("data-original"))
                     it.attr("data-original") else it.attr("src")
-            }*/ // Better not use it, width is too large, which results in terrible image
+            }*/
+            // Better not use it, width is too large, which results in terrible image
         }
     }
 

@@ -10,7 +10,7 @@ data class BrewingSeries(
     val chapters: Map<String, String>,
     val author: String? = null,
     val artist: String? = null,
-    val genres: List<String>? = null
+    val genres: List<String>? = null,
 ) {
     val cover by lazy {
         if (id == null) null else "https://brewingscans.b-cdn.net/covers/${id}_cover.jpg"

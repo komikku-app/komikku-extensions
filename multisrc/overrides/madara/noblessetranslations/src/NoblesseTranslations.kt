@@ -8,7 +8,7 @@ class NoblesseTranslations : Madara(
     "Noblesse Translations",
     "https://www.noblessetranslations.com",
     "es",
-    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.ROOT)
+    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.ROOT),
 ) {
     override val useNewChapterEndpoint = true
 }

@@ -97,7 +97,6 @@ class ComicExtra : ParsedHttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-
         val document = response.asJsoup()
         val nav = document.getElementsByClass("general-nav").first()
         val chapters = ArrayList<SChapter>()
@@ -167,7 +166,7 @@ class ComicExtra : ParsedHttpSource() {
     override fun getFilterList() = FilterList(
         Filter.Header("Note: can't combine search types"),
         Filter.Separator(),
-        GenreFilter(getGenreList)
+        GenreFilter(getGenreList),
     )
 
     private class GenreFilter(genrePairs: Array<Pair<String, String>>) : UriPartFilter("Category", genrePairs)
@@ -234,6 +233,6 @@ class ComicExtra : ParsedHttpSource() {
         Pair("War", "war-comic"),
         Pair("Western", "western-comic"),
         Pair("Zombies", "zombies-comic"),
-        Pair("Zulema Scotto Lavina", "zulema-scotto-lavina-comic")
+        Pair("Zulema Scotto Lavina", "zulema-scotto-lavina-comic"),
     )
 }

@@ -124,7 +124,7 @@ class EveriaClub() : ParsedHttpSource() {
 
     open class UriPartFilter(
         displayName: String,
-        private val valuePair: Array<Pair<String, String>>
+        private val valuePair: Array<Pair<String, String>>,
     ) : Filter.Select<String>(displayName, valuePair.map { it.first }.toTypedArray()) {
         fun toUriPart() = valuePair[state].second
     }
@@ -140,7 +140,7 @@ class EveriaClub() : ParsedHttpSource() {
             Pair("Thailand", "/thailand"),
             Pair("Chinese", "/chinese"),
             Pair("Cosplay", "/cosplay"),
-        )
+        ),
     )
 
     class TagFilter : Filter.Text("Tag")

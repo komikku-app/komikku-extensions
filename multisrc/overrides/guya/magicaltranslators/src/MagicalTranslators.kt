@@ -36,18 +36,18 @@ abstract class MagicalTranslatorsCommon(lang: String) :
 
 class MagicalTranslatorsEN : MagicalTranslatorsCommon("en") {
     override fun filterMangasPage(mangasPage: MangasPage): MangasPage = mangasPage.copy(
-        mangas = mangasPage.mangas.filterNot { it.url.endsWith("-ES") || it.url.endsWith("-PL") }
+        mangas = mangasPage.mangas.filterNot { it.url.endsWith("-ES") || it.url.endsWith("-PL") },
     )
 }
 
 class MagicalTranslatorsES : MagicalTranslatorsCommon("es") {
     override fun filterMangasPage(mangasPage: MangasPage): MangasPage = mangasPage.copy(
-        mangas = mangasPage.mangas.filter { it.url.endsWith("-ES") }
+        mangas = mangasPage.mangas.filter { it.url.endsWith("-ES") },
     )
 }
 
 class MagicalTranslatorsPL : MagicalTranslatorsCommon("pl") {
     override fun filterMangasPage(mangasPage: MangasPage): MangasPage = mangasPage.copy(
-        mangas = mangasPage.mangas.filter { it.url.endsWith("-PL") }
+        mangas = mangasPage.mangas.filter { it.url.endsWith("-PL") },
     )
 }

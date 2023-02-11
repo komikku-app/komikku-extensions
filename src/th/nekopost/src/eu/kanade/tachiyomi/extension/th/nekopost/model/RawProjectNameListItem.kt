@@ -16,5 +16,5 @@ data class RawProjectNameListItem(
     @SerialName("np_status")
     val npStatus: String,
     @SerialName("np_type")
-    val npType: String
+    val npType: String,
 )

@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ResponseDto<T>(
     val data: T,
-    @SerialName("_metadata") val metadata: PaginationMetadataDto? = null
+    @SerialName("_metadata") val metadata: PaginationMetadataDto? = null,
 )
 
 @Serializable

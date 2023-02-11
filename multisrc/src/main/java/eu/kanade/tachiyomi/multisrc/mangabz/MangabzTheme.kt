@@ -19,7 +19,7 @@ import org.jsoup.select.Evaluator
 abstract class MangabzTheme(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String = "zh"
+    override val lang: String = "zh",
 ) : HttpSource() {
 
     override val supportsLatest = true

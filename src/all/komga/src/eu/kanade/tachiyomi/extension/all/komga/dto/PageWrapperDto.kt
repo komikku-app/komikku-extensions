@@ -12,5 +12,5 @@ data class PageWrapperDto<T>(
     val numberOfElements: Long,
     val size: Long,
     val totalElements: Long,
-    val totalPages: Long
+    val totalPages: Long,
 )

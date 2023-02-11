@@ -14,7 +14,7 @@ class YANPFansub : Madara(
     "YANP Fansub",
     "https://yanpfansub.com",
     "pt-BR",
-    SimpleDateFormat("MMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("MMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     // Scanlator changed the theme from WpMangaReader to Madara.

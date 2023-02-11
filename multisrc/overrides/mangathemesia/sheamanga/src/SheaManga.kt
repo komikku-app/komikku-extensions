@@ -12,7 +12,7 @@ class SheaManga : MangaThemesia(
     "Shea Manga",
     "https://sheakomik.com",
     "id",
-    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id"))
+    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id")),
 ) {
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()

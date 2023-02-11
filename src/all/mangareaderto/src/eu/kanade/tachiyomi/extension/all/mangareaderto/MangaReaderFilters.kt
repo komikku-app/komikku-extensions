@@ -8,14 +8,14 @@ object Note : Filter.Header("NOTE: Ignored if using text search!")
 sealed class Select(
     name: String,
     val param: String,
-    values: Array<String>
+    values: Array<String>,
 ) : Filter.Select<String>(name, values) {
     open val selection: String
         get() = if (state == 0) "" else state.toString()
 }
 
 class TypeFilter(
-    values: Array<String> = types
+    values: Array<String> = types,
 ) : Select("Type", "type", values) {
     companion object {
         private val types: Array<String>
@@ -27,13 +27,13 @@ class TypeFilter(
                 "Light Novel",
                 "Manhwa",
                 "Manhua",
-                "Comic"
+                "Comic",
             )
     }
 }
 
 class StatusFilter(
-    values: Array<String> = statuses
+    values: Array<String> = statuses,
 ) : Select("Status", "status", values) {
     companion object {
         private val statuses: Array<String>
@@ -43,13 +43,13 @@ class StatusFilter(
                 "Publishing",
                 "On Hiatus",
                 "Discontinued",
-                "Not yet published"
+                "Not yet published",
             )
     }
 }
 
 class RatingFilter(
-    values: Array<String> = ratings
+    values: Array<String> = ratings,
 ) : Select("Rating Type", "rating_type", values) {
     companion object {
         private val ratings: Array<String>
@@ -60,13 +60,13 @@ class RatingFilter(
                 "PG-13 - Teens 13 or older",
                 "R - 17+ (violence & profanity)",
                 "R+ - Mild Nudity",
-                "Rx - Hentai"
+                "Rx - Hentai",
             )
     }
 }
 
 class ScoreFilter(
-    values: Array<String> = scores
+    values: Array<String> = scores,
 ) : Select("Score", "score", values) {
     companion object {
         private val scores: Array<String>
@@ -81,7 +81,7 @@ class ScoreFilter(
                 "(7) Good",
                 "(8) Very Good",
                 "(9) Great",
-                "(10) Masterpiece"
+                "(10) Masterpiece",
             )
     }
 }
@@ -89,7 +89,7 @@ class ScoreFilter(
 sealed class DateSelect(
     name: String,
     param: String,
-    values: Array<String>
+    values: Array<String>,
 ) : Select(name, param, values) {
     override val selection: String
         get() = if (state == 0) "" else values[state]
@@ -97,7 +97,7 @@ sealed class DateSelect(
 
 class YearFilter(
     param: String,
-    values: Array<String> = years
+    values: Array<String> = years,
 ) : DateSelect("Year", param, values) {
     companion object {
         private val nextYear by lazy {
@@ -113,7 +113,7 @@ class YearFilter(
 
 class MonthFilter(
     param: String,
-    values: Array<String> = months
+    values: Array<String> = months,
 ) : DateSelect("Month", param, values) {
     companion object {
         private val months: Array<String>
@@ -125,7 +125,7 @@ class MonthFilter(
 
 class DayFilter(
     param: String,
-    values: Array<String> = days
+    values: Array<String> = days,
 ) : DateSelect("Day", param, values) {
     companion object {
         private val days: Array<String>
@@ -137,37 +137,37 @@ class DayFilter(
 
 sealed class DateFilter(
     type: String,
-    values: List<DateSelect>
+    values: List<DateSelect>,
 ) : Filter.Group<DateSelect>("$type Date", values)
 
 class StartDateFilter(
-    values: List<DateSelect> = parts
+    values: List<DateSelect> = parts,
 ) : DateFilter("Start", values) {
     companion object {
         private val parts: List<DateSelect>
             get() = listOf(
                 YearFilter("sy"),
                 MonthFilter("sm"),
-                DayFilter("sd")
+                DayFilter("sd"),
             )
     }
 }
 
 class EndDateFilter(
-    values: List<DateSelect> = parts
+    values: List<DateSelect> = parts,
 ) : DateFilter("End", values) {
     companion object {
         private val parts: List<DateSelect>
             get() = listOf(
                 YearFilter("ey"),
                 MonthFilter("em"),
-                DayFilter("ed")
+                DayFilter("ed"),
             )
     }
 }
 
 class SortFilter(
-    values: Array<String> = orders.keys.toTypedArray()
+    values: Array<String> = orders.keys.toTypedArray(),
 ) : Select("Sort", "sort", values) {
     override val selection: String
         get() = orders[values[state]]!!
@@ -179,7 +179,7 @@ class SortFilter(
             "Score" to "score",
             "Name A-Z" to "name-az",
             "Release Date" to "release-date",
-            "Most Viewed" to "most-viewed"
+            "Most Viewed" to "most-viewed",
         )
     }
 }
@@ -187,7 +187,7 @@ class SortFilter(
 class Genre(name: String, val id: String) : Filter.CheckBox(name)
 
 class GenresFilter(
-    values: List<Genre> = genres
+    values: List<Genre> = genres,
 ) : Filter.Group<Genre>("Genres", values) {
     val param = "genres"
 

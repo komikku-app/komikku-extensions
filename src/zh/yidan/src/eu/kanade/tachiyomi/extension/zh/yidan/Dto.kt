@@ -39,7 +39,7 @@ class ChapterDto(
     private val createTime: Long,
     private val mhid: String,
     private val title: String,
-    private val jiNo: Int
+    private val jiNo: Int,
 ) {
     fun toSChapter() = SChapter.create().apply {
         url = "$mhid/$jiNo"

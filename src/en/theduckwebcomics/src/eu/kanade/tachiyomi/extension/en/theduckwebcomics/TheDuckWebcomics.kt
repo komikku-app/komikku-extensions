@@ -102,6 +102,6 @@ class TheDuckWebcomics : ParsedHttpSource() {
         StyleFilter(),
         GenreFilter(),
         RatingFilter(),
-        UpdateFilter()
+        UpdateFilter(),
     )
 }

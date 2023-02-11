@@ -8,5 +8,5 @@ class Mangauptocats : Madara(
     "Mangauptocats",
     "https://manga-uptocats.com",
     "th",
-    SimpleDateFormat("d MMMM yyyy", Locale("th"))
+    SimpleDateFormat("d MMMM yyyy", Locale("th")),
 )

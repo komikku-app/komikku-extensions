@@ -55,7 +55,7 @@ class MangaLib : LibGroup("MangaLib", "https://mangalib.me", "ru") {
                     if (age.state != Filter.TriState.STATE_IGNORE) {
                         url.addQueryParameter(
                             if (age.isIncluded()) "caution[include][]" else "caution[exclude][]",
-                            age.id
+                            age.id,
                         )
                     }
                 }
@@ -63,7 +63,7 @@ class MangaLib : LibGroup("MangaLib", "https://mangalib.me", "ru") {
                     if (tag.state != Filter.TriState.STATE_IGNORE) {
                         url.addQueryParameter(
                             if (tag.isIncluded()) "tags[include][]" else "tags[exclude][]",
-                            tag.id
+                            tag.id,
                         )
                     }
                 }
@@ -183,14 +183,14 @@ class MangaLib : LibGroup("MangaLib", "https://mangalib.me", "ru") {
         SearchFilter("Шантаж", "279"),
         SearchFilter("Эльфы", "216"),
         SearchFilter("Якудза", "164"),
-        SearchFilter("Япония", "280")
+        SearchFilter("Япония", "280"),
 
     )
 
     private fun getAgeList() = listOf(
         SearchFilter("Отсутствует", "0"),
         SearchFilter("16+", "1"),
-        SearchFilter("18+", "2")
+        SearchFilter("18+", "2"),
     )
 
     companion object {

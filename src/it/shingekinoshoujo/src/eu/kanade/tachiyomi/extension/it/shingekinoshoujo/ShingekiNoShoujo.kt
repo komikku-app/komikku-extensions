@@ -38,7 +38,7 @@ class ShingekiNoShoujo : ParsedHttpSource() {
                         return GET(
                             "$baseUrl/tag/${getGenreList().filter {
                                 filter.values[filter.state] == it.name
-                            }.map { it.id }[0]}/page/$page"
+                            }.map { it.id }[0]}/page/$page",
                         )
                     }
                     else -> {}
@@ -62,7 +62,7 @@ class ShingekiNoShoujo : ParsedHttpSource() {
         }
         return MangasPage(
             mangas,
-            !document.select(searchMangaNextPageSelector()).isNullOrEmpty()
+            !document.select(searchMangaNextPageSelector()).isNullOrEmpty(),
         )
     }
     override fun popularMangaParse(response: Response): MangasPage = mangasParse(response, popularMangaSelector(), 1)
@@ -132,7 +132,7 @@ class ShingekiNoShoujo : ParsedHttpSource() {
                     chapter_number = it.text().replace(Regex("OneShot|Prologo"), "0").filter { it.isDigit() }.let {
                         if (it.isEmpty()) "$i" else it
                     }.toFloat()
-                }
+                },
             )
         }
 
@@ -174,12 +174,12 @@ class ShingekiNoShoujo : ParsedHttpSource() {
         genres.map {
             it.name
         }.toTypedArray(),
-        0
+        0,
     )
 
     override fun getFilterList() = FilterList(
         Filter.Header("La ricerca testuale non accetta i filtri e viceversa"),
-        GenreSelez(getGenreList())
+        GenreSelez(getGenreList()),
     )
 
     private fun getGenreList() = listOf(
@@ -208,7 +208,7 @@ class ShingekiNoShoujo : ParsedHttpSource() {
         Genre("Shibano Yuka", "shibano-yuka"),
         Genre("Fantasy", "fantasy"),
         Genre("Smut", "smut"),
-        Genre("Psicologico", "psicologico")
+        Genre("Psicologico", "psicologico"),
     )
     //endregion
 }

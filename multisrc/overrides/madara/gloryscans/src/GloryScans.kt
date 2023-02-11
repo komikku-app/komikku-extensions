@@ -8,7 +8,7 @@ class GloryScans : Madara(
     "Glory Scans",
     "https://gloryscans.com",
     "tr",
-    dateFormat = SimpleDateFormat("d MMM yyy", Locale("tr"))
+    dateFormat = SimpleDateFormat("d MMM yyy", Locale("tr")),
 ) {
     override val useNewChapterEndpoint = false
 }

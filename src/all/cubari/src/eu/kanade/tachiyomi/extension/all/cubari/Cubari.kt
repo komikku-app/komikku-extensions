@@ -43,7 +43,7 @@ open class Cubari(override val lang: String) : HttpSource() {
             "(Android ${Build.VERSION.RELEASE}; " +
                 "${Build.MANUFACTURER} ${Build.MODEL}) " +
                 "Tachiyomi/${AppInfo.getVersionName()} " +
-                Build.ID
+                Build.ID,
         )
     }
 
@@ -380,7 +380,7 @@ open class Cubari(override val lang: String) : HttpSource() {
 
         enum class SortType {
             PINNED,
-            UNPINNED
+            UNPINNED,
         }
     }
 }

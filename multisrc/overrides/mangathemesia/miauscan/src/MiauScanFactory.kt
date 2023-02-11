@@ -14,7 +14,7 @@ import java.util.Locale
 class MiauScanFactory : SourceFactory {
     override fun createSources() = listOf(
         MiauScan("es", Filter.TriState.STATE_EXCLUDE),
-        MiauScan("pt-BR", Filter.TriState.STATE_INCLUDE)
+        MiauScan("pt-BR", Filter.TriState.STATE_INCLUDE),
     )
 }
 
@@ -22,7 +22,7 @@ open class MiauScan(lang: String, private val portugueseMode: Int) : MangaThemes
     name = "Miau Scan",
     baseUrl = "https://miauscan.com",
     lang = lang,
-    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("es"))
+    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("es")),
 ) {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -32,8 +32,8 @@ open class MiauScan(lang: String, private val portugueseMode: Int) : MangaThemes
 
         val overloadedGenreFilter = GenreListFilter(
             genres = genreFilter.state + listOf(
-                Genre("", PORTUGUESE_GENRE, portugueseMode)
-            )
+                Genre("", PORTUGUESE_GENRE, portugueseMode),
+            ),
         )
 
         val overloadedFilters = filters.toMutableList().apply {

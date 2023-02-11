@@ -39,7 +39,7 @@ class HentaiLib : LibGroup("HentaiLib", "https://hentailib.me", "ru") {
                     if (tag.state != Filter.TriState.STATE_IGNORE) {
                         url.addQueryParameter(
                             if (tag.isIncluded()) "tags[include][]" else "tags[exclude][]",
-                            tag.id
+                            tag.id,
                         )
                     }
                 }
@@ -226,7 +226,7 @@ class HentaiLib : LibGroup("HentaiLib", "https://hentailib.me", "ru") {
         SearchFilter("Эксгибиционизм", "143"),
         SearchFilter("Эльф", "144"),
         SearchFilter("Юные", "145"),
-        SearchFilter("Яндэрэ", "146")
+        SearchFilter("Яндэрэ", "146"),
     )
 
     companion object {

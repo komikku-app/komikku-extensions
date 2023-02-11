@@ -121,18 +121,19 @@ abstract class MangaMainac(
         val document = response.asJsoup()
         val chapterList = document.select(chapterListSelector()).map { chapterFromElement(it) }
 
-        return if (hasCountdown(chapterList[0]))
+        return if (hasCountdown(chapterList[0])) {
             chapterList.subList(1, chapterList.size)
-        else
+        } else {
             chapterList
+        }
     }
 
     private fun hasCountdown(chapter: SChapter): Boolean {
         val document = client.newCall(
             GET(
                 baseUrl + chapter.url,
-                headersBuilder().build()
-            )
+                headersBuilder().build(),
+            ),
         ).execute().asJsoup()
 
         return document

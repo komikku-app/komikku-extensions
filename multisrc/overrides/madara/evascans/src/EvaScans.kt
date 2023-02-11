@@ -8,7 +8,7 @@ class EvaScans : Madara(
     "EvaScans",
     "https://evascans.com",
     "tr",
-    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("tr"))
+    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("tr")),
 ) {
     override val useNewChapterEndpoint = false
 }

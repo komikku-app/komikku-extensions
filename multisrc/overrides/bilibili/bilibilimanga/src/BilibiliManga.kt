@@ -11,7 +11,7 @@ import okhttp3.Response
 class BilibiliManga : Bilibili(
     "哔哩哔哩漫画",
     "https://manga.bilibili.com",
-    BilibiliIntl.SIMPLIFIED_CHINESE
+    BilibiliIntl.SIMPLIFIED_CHINESE,
 ) {
 
     override val id: Long = 3561131545129718586
@@ -40,7 +40,7 @@ class BilibiliManga : Bilibili(
         BilibiliTag(intl.sortPopular, 0),
         BilibiliTag(intl.sortUpdated, 1),
         BilibiliTag(intl.sortFollowers, 2),
-        BilibiliTag(intl.sortAdded, 3)
+        BilibiliTag(intl.sortAdded, 3),
     )
 
     override fun getAllPrices(): Array<String> =

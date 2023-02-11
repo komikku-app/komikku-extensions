@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RawProjectSummaryList(
     val code: Int,
-    val listChapter: List<RawProjectSummary>?
+    val listChapter: List<RawProjectSummary>?,
 )

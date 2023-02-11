@@ -102,7 +102,7 @@ object MDConstants {
         groupComikey,
         groupInkr,
         groupMangaHot,
-        groupMangaPlus
+        groupMangaPlus,
     )
     private const val blockedGroupsPref = "blockedGroups"
     fun getBlockedGroupsPrefKey(dexLang: String): String {

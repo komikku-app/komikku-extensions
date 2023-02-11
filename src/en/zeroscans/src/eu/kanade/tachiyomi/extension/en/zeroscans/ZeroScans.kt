@@ -64,7 +64,7 @@ class ZeroScans : HttpSource() {
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> {
         if (page == 1) runCatching { updateComicsData() }
 
@@ -118,16 +118,25 @@ class ZeroScans : HttpSource() {
 
         val rankingEntries = when (type) {
             "weekly" -> {
-                if (!ascending) rankings.weekly.reversed()
-                else rankings.weekly
+                if (!ascending) {
+                    rankings.weekly.reversed()
+                } else {
+                    rankings.weekly
+                }
             }
             "monthly" -> {
-                if (!ascending) rankings.monthly.reversed()
-                else rankings.monthly
+                if (!ascending) {
+                    rankings.monthly.reversed()
+                } else {
+                    rankings.monthly
+                }
             }
             else -> {
-                if (!ascending) rankings.allTime.reversed()
-                else rankings.allTime
+                if (!ascending) {
+                    rankings.allTime.reversed()
+                } else {
+                    rankings.allTime
+                }
             }
         }
 
@@ -186,14 +195,14 @@ class ZeroScans : HttpSource() {
             .data.let {
                 ZeroScansChapterPage(
                     it.data,
-                    it.currentPage < it.lastPage
+                    it.currentPage < it.lastPage,
                 )
             }
     }
 
     class ZeroScansChapterPage(
         val chapters: List<ZeroScansChapterDto>,
-        val hasNextPage: Boolean
+        val hasNextPage: Boolean,
     )
 
     private fun ZeroScansChapterDto.toSChapter(manga: SManga): SChapter {
@@ -248,7 +257,7 @@ class ZeroScans : HttpSource() {
             SortFilter(sortList),
             RankingsHeader(),
             RankingsHeader2(),
-            RankingsFilter(rankingList)
+            RankingsFilter(rankingList),
         )
 
         return FilterList(filters)
@@ -274,7 +283,7 @@ class ZeroScans : HttpSource() {
         Sort("Rating", "rating"),
         Sort("Chapter Count", "chapter_count"),
         Sort("Bookmark Count", "bookmark_count"),
-        Sort("View Count", "view_count")
+        Sort("View Count", "view_count"),
     )
 
     class RankingsHeader :
@@ -291,7 +300,7 @@ class ZeroScans : HttpSource() {
         Ranking("None"),
         Ranking("All Time", "all-time"),
         Ranking("Weekly", "weekly"),
-        Ranking("Monthly", "monthly")
+        Ranking("Monthly", "monthly"),
     )
 
     // Helpers

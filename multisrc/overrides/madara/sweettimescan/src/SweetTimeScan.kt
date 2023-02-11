@@ -14,7 +14,7 @@ class SweetTimeScan : Madara(
     "Sweet Time Scan",
     "https://sweetscan.net",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

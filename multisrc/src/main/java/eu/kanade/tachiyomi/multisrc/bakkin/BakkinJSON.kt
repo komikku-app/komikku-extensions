@@ -7,13 +7,13 @@ internal data class Series(
     val author: String?,
     val status: String?,
     val thumb: String?,
-    val volumes: List<Volume>
+    val volumes: List<Volume>,
 ) : Iterable<Chapter> {
     override fun iterator() = volumes.flatMap { vol ->
         vol.map {
             it.copy(
                 name = "$vol - $it",
-                dir = "$dir/${vol.dir}/${it.dir}"
+                dir = "$dir/${vol.dir}/${it.dir}",
             )
         }
     }.iterator()
@@ -28,7 +28,7 @@ internal data class Series(
 internal data class Volume(
     val dir: String,
     val name: String,
-    val chapters: List<Chapter>
+    val chapters: List<Chapter>,
 ) : Iterable<Chapter> by chapters {
     override fun toString() = name.ifEmpty { dir }
 }
@@ -37,7 +37,7 @@ internal data class Volume(
 internal data class Chapter(
     val dir: String,
     val name: String,
-    val pages: List<String>
+    val pages: List<String>,
 ) : Iterable<String> by pages {
     val number: Float
         get() = dir.substringAfterLast('c').toFloatOrNull() ?: -1f

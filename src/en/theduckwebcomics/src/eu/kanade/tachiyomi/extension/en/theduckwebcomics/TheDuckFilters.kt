@@ -13,7 +13,7 @@ interface QueryParam {
 
 sealed class LabelGroup(
     name: String,
-    values: List<Label>
+    values: List<Label>,
 ) : QueryParam, Filter.Group<Label>(name, values) {
     override fun encode(url: HttpUrl.Builder) =
         state.filter { it.state }.forEach {
@@ -22,7 +22,7 @@ sealed class LabelGroup(
 }
 
 class TypeFilter(
-    values: List<Label> = types
+    values: List<Label> = types,
 ) : LabelGroup("Type of comic", values) {
     override val param = "type"
 
@@ -36,7 +36,7 @@ class TypeFilter(
 }
 
 class ToneFilter(
-    values: List<Label> = tones
+    values: List<Label> = tones,
 ) : LabelGroup("Tone", values) {
     override val param = "tone"
 
@@ -52,7 +52,7 @@ class ToneFilter(
 }
 
 class StyleFilter(
-    values: List<Label> = styles
+    values: List<Label> = styles,
 ) : LabelGroup("Art style", values) {
     override val param = "style"
 
@@ -73,7 +73,7 @@ class StyleFilter(
 }
 
 class GenreFilter(
-    values: List<Label> = genres
+    values: List<Label> = genres,
 ) : LabelGroup("Genre", values) {
     override val param = "genre"
 
@@ -103,7 +103,7 @@ class GenreFilter(
 }
 
 class RatingFilter(
-    values: List<Label> = ratings
+    values: List<Label> = ratings,
 ) : LabelGroup("Rating", values) {
     override val param = "rating"
 
@@ -119,7 +119,7 @@ class RatingFilter(
 }
 
 class UpdateFilter(
-    values: Array<String> = labels.keys.toTypedArray()
+    values: Array<String> = labels.keys.toTypedArray(),
 ) : QueryParam, Filter.Select<String>("Last update", values) {
     override val param = "last_update"
 

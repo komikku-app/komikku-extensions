@@ -24,7 +24,7 @@ class KomikCast : MangaThemesia(
     "Komik Cast",
     baseUrl = "https://komikcast.site",
     "id",
-    mangaUrlDirectory = "/daftar-komik"
+    mangaUrlDirectory = "/daftar-komik",
 ) {
     // Formerly "Komik Cast (WP Manga Stream)"
     override val id = 972717448578983812
@@ -186,8 +186,8 @@ class KomikCast : MangaThemesia(
         arrayOf(
             Pair("All", ""),
             Pair("Ongoing", "ongoing"),
-            Pair("Completed", "completed")
-        )
+            Pair("Completed", "completed"),
+        ),
     )
 
     private class TypeFilter : SelectFilter(
@@ -196,8 +196,8 @@ class KomikCast : MangaThemesia(
             Pair("All", ""),
             Pair("Manga", "manga"),
             Pair("Manhwa", "manhwa"),
-            Pair("Manhua", "manhua")
-        )
+            Pair("Manhua", "manhua"),
+        ),
     )
 
     private class OrderByFilter(defaultOrder: String? = null) : SelectFilter(
@@ -207,9 +207,9 @@ class KomikCast : MangaThemesia(
             Pair("A-Z", "titleasc"),
             Pair("Z-A", "titledesc"),
             Pair("Update", "update"),
-            Pair("Popular", "popular")
+            Pair("Popular", "popular"),
         ),
-        defaultOrder
+        defaultOrder,
     )
 
     override fun getFilterList(): FilterList {
@@ -228,7 +228,7 @@ class KomikCast : MangaThemesia(
                     Filter.Header("NOTE: Can't be used with other filter!"),
                     Filter.Header("$name Project List page"),
                     ProjectFilter(),
-                )
+                ),
             )
         }
         return FilterList(filters)

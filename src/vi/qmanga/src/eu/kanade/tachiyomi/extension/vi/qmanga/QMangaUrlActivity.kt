@@ -19,7 +19,7 @@ class QMangaUrlActivity : Activity() {
                         action = "eu.kanade.tachiyomi.SEARCH"
                         putExtra("query", "${QManga.PREFIX_ID_SEARCH}$id")
                         putExtra("filter", packageName)
-                    }
+                    },
                 )
             } catch (e: ActivityNotFoundException) {
                 Log.e("QMangaUrlActivity", e.toString())

@@ -84,7 +84,7 @@ abstract class HentaiHand(
             .addQueryParameter("sort", "popularity")
             .addQueryParameter("order", "desc")
             .addQueryParameter("duration", "all")
-        hhLangId.forEachIndexed() { index, it ->
+        hhLangId.forEachIndexed { index, it ->
             url.addQueryParameter("languages[${-index - 1}]", it.toString())
         }
         // if (altLangId != null) url.addQueryParameter("languages", altLangId.toString())
@@ -101,7 +101,7 @@ abstract class HentaiHand(
             .addQueryParameter("sort", "uploaded_at")
             .addQueryParameter("order", "desc")
             .addQueryParameter("duration", "all")
-        hhLangId.forEachIndexed() { index, it ->
+        hhLangId.forEachIndexed { index, it ->
             url.addQueryParameter("languages[${-index - 1}]", it.toString())
         }
         return GET(url.toString())
@@ -121,18 +121,20 @@ abstract class HentaiHand(
                 val idList = json.parseToJsonElement(response.body!!.string()).jsonObject["data"]!!.jsonArray.map {
                     it.jsonObject["id"]!!.jsonPrimitive.content
                 }
-                if (idList.isEmpty()) return@map null
-                else idList.first().toInt()
+                if (idList.isEmpty()) {
+                    return@map null
+                } else {
+                    idList.first().toInt()
+                }
             }.toBlocking().first()
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-
         val url = "$baseUrl/api/comics".toHttpUrlOrNull()!!.newBuilder()
             .addQueryParameter("page", page.toString())
             .addQueryParameter("q", query)
 
-        hhLangId.forEachIndexed() { index, it ->
+        hhLangId.forEachIndexed { index, it ->
             url.addQueryParameter("languages[${-index - 1}]", it.toString())
         }
 
@@ -150,9 +152,10 @@ abstract class HentaiHand(
                 is LookupFilter -> {
                     filter.state.split(",").map { it.trim() }.filter { it.isNotBlank() }.map {
                         lookupFilterId(it, filter.uri) ?: throw Exception("No ${filter.singularName} \"$it\" was found")
-                    }.forEachIndexed() { index, it ->
-                        if (!(filter.uri == "languages" && hhLangId.contains(it)))
+                    }.forEachIndexed { index, it ->
+                        if (!(filter.uri == "languages" && hhLangId.contains(it))) {
                             url.addQueryParameter(filter.uri + "[$index]", it.toString())
+                        }
                     }
                 }
                 else -> {}
@@ -200,7 +203,7 @@ abstract class HentaiHand(
                 Pair("Category", try { obj["category"]!!.jsonObject["name"]!!.jsonPrimitive.content } catch (_: Exception) { null }),
                 Pair("Language", try { obj["language"]!!.jsonObject["name"]!!.jsonPrimitive.content } catch (_: Exception) { null }),
                 Pair("Parodies", jsonArrayToString("parodies", obj)),
-                Pair("Characters", jsonArrayToString("characters", obj))
+                Pair("Characters", jsonArrayToString("characters", obj)),
             ).filter { !it.second.isNullOrEmpty() }.joinToString("\n\n") { "${it.first}: ${it.second}" }
         }
     }
@@ -251,7 +254,7 @@ abstract class HentaiHand(
                         DATE_FORMAT.parse(obj.jsonObject["uploaded_at"]!!.jsonPrimitive.content)?.time ?: 0
                     }
                     chapter_number = 1f
-                }
+                },
             )
         }
     }
@@ -302,8 +305,9 @@ abstract class HentaiHand(
             throw IOException("Failed to login, check if username and password are correct")
         }
 
-        if (response.body == null)
+        if (response.body == null) {
             throw IOException("Login response body is empty")
+        }
         try {
             // Returns access token as a string, unless unparseable
             return json.parseToJsonElement(response.body!!.string()).jsonObject["auth"]!!.jsonObject["access-token"]!!.jsonPrimitive.content
@@ -388,7 +392,7 @@ abstract class HentaiHand(
         ParodiesFilter(),
         LanguagesFilter(),
         AttributesGroupFilter(getAttributePairs()),
-        StatusGroupFilter(getStatusPairs())
+        StatusGroupFilter(getStatusPairs()),
     )
 
     private fun getSortPairs() = listOf(
@@ -396,12 +400,12 @@ abstract class HentaiHand(
         Pair("Title", "title"),
         Pair("Pages", "pages"),
         Pair("Favorites", "favorites"),
-        Pair("Popularity", "popularity")
+        Pair("Popularity", "popularity"),
     )
 
     private fun getOrderPairs() = listOf(
         Pair("Descending", "desc"),
-        Pair("Ascending", "asc")
+        Pair("Ascending", "asc"),
     )
 
     private fun getDurationPairs() = listOf(
@@ -409,20 +413,20 @@ abstract class HentaiHand(
         Pair("This Week", "week"),
         Pair("This Month", "month"),
         Pair("This Year", "year"),
-        Pair("All Time", "all")
+        Pair("All Time", "all"),
     )
 
     private fun getAttributePairs() = listOf(
         Pair("Translated", "translated"),
         Pair("Speechless", "speechless"),
-        Pair("Rewritten", "rewritten")
+        Pair("Rewritten", "rewritten"),
     )
 
     private fun getStatusPairs() = listOf(
         Pair("Ongoing", "ongoing"),
         Pair("Complete", "complete"),
         Pair("On Hold", "onhold"),
-        Pair("Canceled", "canceled")
+        Pair("Canceled", "canceled"),
     )
 
     companion object {

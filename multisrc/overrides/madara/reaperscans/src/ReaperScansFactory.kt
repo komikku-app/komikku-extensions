@@ -12,14 +12,14 @@ class ReaperScansFactory : SourceFactory {
     override fun createSources() = listOf(
         ReaperScansTr(),
         ReaperScansId(),
-        ReaperScansFr()
+        ReaperScansFr(),
     )
 }
 
 abstract class ReaperScans(
     override val baseUrl: String,
     lang: String,
-    dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+    dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US),
 ) : Madara("Reaper Scans", baseUrl, lang, dateFormat) {
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
@@ -42,7 +42,7 @@ abstract class ReaperScans(
 class ReaperScansTr : ReaperScans(
     "https://reaperscanstr.com",
     "tr",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("tr"))
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("tr")),
 ) {
 
     // Tags are useless as they are just SEO keywords.
@@ -58,7 +58,7 @@ class ReaperScansId : ReaperScans("https://reaperscans.id", "id") {
 class ReaperScansFr : ReaperScans(
     "https://reaperscans.fr",
     "fr",
-    SimpleDateFormat("dd/MM/yyyy", Locale.US)
+    SimpleDateFormat("dd/MM/yyyy", Locale.US),
 ) {
 
     // Migrated from WpMangaReader to Madara.

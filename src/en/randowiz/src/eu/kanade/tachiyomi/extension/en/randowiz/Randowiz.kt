@@ -62,26 +62,26 @@ class Randowiz : ParsedHttpSource() {
                             "You like draw? I give you draw."
                         thumbnail_url =
                             "https://i0.wp.com/randowis.com/wp-content/uploads/2021/05/colour-studies-021-post.jpg"
-                    }
+                    },
                 ),
-                false
-            )
+                false,
+            ),
         )
     }
 
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> = fetchPopularManga(page).map {
         MangasPage(
             it.mangas.filter { manga ->
                 manga.title.contains(
                     query,
-                    ignoreCase = true
+                    ignoreCase = true,
                 )
             },
-            false
+            false,
         )
     }
 

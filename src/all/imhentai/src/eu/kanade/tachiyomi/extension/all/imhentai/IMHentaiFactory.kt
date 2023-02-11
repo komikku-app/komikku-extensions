@@ -12,6 +12,6 @@ class IMHentaiFactory : SourceFactory {
         IMHentai("fr", IMHentai.LANGUAGE_FRENCH),
         IMHentai("ko", IMHentai.LANGUAGE_KOREAN),
         IMHentai("de", IMHentai.LANGUAGE_GERMAN),
-        IMHentai("ru", IMHentai.LANGUAGE_RUSSIAN)
+        IMHentai("ru", IMHentai.LANGUAGE_RUSSIAN),
     )
 }

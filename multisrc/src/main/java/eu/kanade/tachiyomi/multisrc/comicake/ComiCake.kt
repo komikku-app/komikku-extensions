@@ -24,7 +24,7 @@ abstract class ComiCake(
     final override val baseUrl: String,
     override val lang: String,
     readerEndpoint: String = COMICAKE_DEFAULT_READER_ENDPOINT,
-    apiEndpoint: String = COMICAKE_DEFAULT_API_ENDPOINT
+    apiEndpoint: String = COMICAKE_DEFAULT_API_ENDPOINT,
 ) : HttpSource() {
 
     override val versionId = 1
@@ -60,8 +60,9 @@ abstract class ComiCake(
             if (nested) {
                 val nestedComic = obj.getJSONObject("comic")
                 val id = nestedComic.getInt("id")
-                if (ids.contains(id))
+                if (ids.contains(id)) {
                     continue
+                }
                 ids.add(id)
                 val manga = SManga.create()
                 manga.url = id.toString()
@@ -69,8 +70,9 @@ abstract class ComiCake(
                 mangas.add(manga)
             } else {
                 val id = obj.getInt("id")
-                if (ids.contains(id))
+                if (ids.contains(id)) {
                     continue
+                }
                 ids.add(id)
                 mangas.add(parseComicJson(obj))
             }

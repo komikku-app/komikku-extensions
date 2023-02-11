@@ -27,7 +27,7 @@ class AnimaRegia : MMRCMS("AnimaRegia", "https://animaregia.net", "pt-BR") {
             it.copy(
                 mangas = it.mangas.map { manga ->
                     manga.apply { title = title.removeSuffix(LANGUAGE_SUFFIX) }
-                }
+                },
             )
         }
     }
@@ -49,7 +49,7 @@ class AnimaRegia : MMRCMS("AnimaRegia", "https://animaregia.net", "pt-BR") {
             it.copy(
                 mangas = it.mangas.map { manga ->
                     manga.apply { title = title.removeSuffix(LANGUAGE_SUFFIX) }
-                }
+                },
             )
         }
     }
@@ -61,7 +61,7 @@ class AnimaRegia : MMRCMS("AnimaRegia", "https://animaregia.net", "pt-BR") {
         title = document.selectFirst("h1.widget-title").text()
         thumbnail_url = coverGuess(
             document.select("div.col-sm-5 img.img-thumbnail").firstOrNull()?.attr("abs:src"),
-            document.location()
+            document.location(),
         )
         description = document.select("div.row div.well p").text().trim()
 

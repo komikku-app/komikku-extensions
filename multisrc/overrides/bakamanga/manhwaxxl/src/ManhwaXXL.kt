@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.multisrc.bakamanga.BakaManga
 class ManhwaXXL : BakaManga(
     "Manhwa XXL",
     "https://manhwaxxl.com",
-    "en"
+    "en",
 ) {
     override fun getGenreList() = arrayOf(
         Pair("All", ""),

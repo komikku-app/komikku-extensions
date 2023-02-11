@@ -71,17 +71,20 @@ class Megatokyo : ParsedHttpSource() {
             .mapIndexed { i, element ->
                 Page(i, "", "https://megatokyo.com/" + element.attr("src"))
             }
+
     // certificate wasn't trusted for some reason so trusted all certificates
     private fun getUnsafeOkHttpClient(): OkHttpClient {
         // Create a trust manager that does not validate certificate chains
-        val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
-            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
-            }
-            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
-            }
+        val trustAllCerts = arrayOf<TrustManager>(
+            object : X509TrustManager {
+                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                }
+                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                }
 
-            override fun getAcceptedIssuers() = arrayOf<X509Certificate>()
-        })
+                override fun getAcceptedIssuers() = arrayOf<X509Certificate>()
+            },
+        )
 
         // Install the all-trusting trust manager
         val sslContext = SSLContext.getInstance("SSL")

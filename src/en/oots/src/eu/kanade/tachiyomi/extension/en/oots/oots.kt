@@ -46,7 +46,7 @@ class oots : ParsedHttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         val chapterList = super.chapterListParse(response).distinct()
         return chapterList.mapIndexed {
-            i, ch ->
+                i, ch ->
             ch.apply { chapter_number = chapterList.size.toFloat() - i }
         }
     }
@@ -54,7 +54,6 @@ class oots : ParsedHttpSource() {
     override fun chapterListSelector() = "p.ComicList a"
 
     override fun chapterFromElement(element: Element): SChapter {
-
         val seriesPrefs = Injekt.get<Application>().getSharedPreferences("source_${id}_time_found", 0)
         val seriesPrefsEditor = seriesPrefs.edit()
 

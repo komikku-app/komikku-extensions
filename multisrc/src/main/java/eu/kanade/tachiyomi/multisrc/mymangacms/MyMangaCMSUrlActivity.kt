@@ -18,7 +18,7 @@ class MyMangaCMSUrlActivity : Activity() {
                         action = "eu.kanade.tachiyomi.SEARCH"
                         putExtra("query", "${MyMangaCMS.PREFIX_URL_SEARCH}${intent?.data?.path}")
                         putExtra("filter", packageName)
-                    }
+                    },
                 )
             } catch (e: ActivityNotFoundException) {
                 Log.e("MyMangaCMSUrlActivity", e.toString())

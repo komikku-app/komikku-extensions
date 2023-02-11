@@ -13,7 +13,7 @@ class MangaDexFilters {
     internal fun getMDFilterList(
         preferences: SharedPreferences,
         dexLang: String,
-        intl: MangaDexIntl
+        intl: MangaDexIntl,
     ): FilterList = FilterList(
         HasAvailableChaptersFilter(intl),
         OriginalLanguageList(intl, getOriginalLanguage(preferences, dexLang, intl)),
@@ -56,7 +56,7 @@ class MangaDexFilters {
                     if (lang.isoCode == MDConstants.originalLanguagePrefValChinese) {
                         url.addQueryParameter(
                             "originalLanguage[]",
-                            MDConstants.originalLanguagePrefValChineseHk
+                            MDConstants.originalLanguagePrefValChineseHk,
                         )
                     }
 
@@ -69,11 +69,11 @@ class MangaDexFilters {
     private fun getOriginalLanguage(
         preferences: SharedPreferences,
         dexLang: String,
-        intl: MangaDexIntl
+        intl: MangaDexIntl,
     ): List<OriginalLanguage> {
         val originalLanguages = preferences.getStringSet(
             MDConstants.getOriginalLanguagePrefKey(dexLang),
-            setOf()
+            setOf(),
         )!!
 
         return listOf(
@@ -103,11 +103,11 @@ class MangaDexFilters {
     private fun getContentRating(
         preferences: SharedPreferences,
         dexLang: String,
-        intl: MangaDexIntl
+        intl: MangaDexIntl,
     ): List<ContentRating> {
         val contentRatings = preferences.getStringSet(
             MDConstants.getContentRatingPrefKey(dexLang),
-            MDConstants.contentRatingPrefDefaults
+            MDConstants.contentRatingPrefDefaults,
         )
 
         return listOf(
@@ -145,7 +145,7 @@ class MangaDexFilters {
         Demographic(intl.publicationDemographicShounen, PublicationDemographicDto.SHOUNEN.value),
         Demographic(intl.publicationDemographicShoujo, PublicationDemographicDto.SHOUJO.value),
         Demographic(intl.publicationDemographicSeinen, PublicationDemographicDto.SEINEN.value),
-        Demographic(intl.publicationDemographicJosei, PublicationDemographicDto.JOSEI.value)
+        Demographic(intl.publicationDemographicJosei, PublicationDemographicDto.JOSEI.value),
     )
 
     private class Status(name: String, val value: String) : Filter.CheckBox(name)
@@ -181,14 +181,14 @@ class MangaDexFilters {
         Sortable(intl.sortContentInfoUpdatedAt, "updatedAt"),
         Sortable(intl.sortRelevance, "relevance"),
         Sortable(intl.sortYear, "year"),
-        Sortable(intl.sortRating, "rating")
+        Sortable(intl.sortRating, "rating"),
     )
 
     class SortFilter(intl: MangaDexIntl, private val sortables: Array<Sortable>) :
         Filter.Sort(
             intl.sort,
             sortables.map(Sortable::title).toTypedArray(),
-            Selection(5, false)
+            Selection(5, false),
         ),
         UrlQueryFilter {
 
@@ -320,7 +320,7 @@ class MangaDexFilters {
             Tag("9438db5a-7e2a-4ac0-b39e-e0d95a34b8a8", intl.themeVideoGames),
             Tag("d14322ac-4d6f-4e9b-afd9-629d5f4d8a41", intl.themeVillainess),
             Tag("8c86611e-fab7-4986-9dec-d1a2f44acdd5", intl.themeVirtualReality),
-            Tag("631ef465-9aba-4afb-b0fc-ea10efe274a8", intl.themeZombies)
+            Tag("631ef465-9aba-4afb-b0fc-ea10efe274a8", intl.themeZombies),
         )
 
         return tags.sortIfTranslated(intl)
@@ -337,7 +337,7 @@ class MangaDexFilters {
 
     private fun getTagModes(intl: MangaDexIntl) = arrayOf(
         TagMode(intl.modeAnd, "AND"),
-        TagMode(intl.modeOr, "OR")
+        TagMode(intl.modeOr, "OR"),
     )
 
     private class TagInclusionMode(intl: MangaDexIntl, modes: Array<TagMode>) :

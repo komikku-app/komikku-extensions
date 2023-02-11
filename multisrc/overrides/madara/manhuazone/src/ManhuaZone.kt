@@ -8,5 +8,5 @@ class ManhuaZone : Madara(
     "ManhuaZone",
     "https://manhuazone.com",
     "en",
-    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US),
 )

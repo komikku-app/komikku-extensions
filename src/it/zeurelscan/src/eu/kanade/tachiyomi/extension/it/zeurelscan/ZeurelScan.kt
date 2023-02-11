@@ -72,7 +72,7 @@ class ZeurelScan : HttpSource() {
     // Search from results retrieved by popularMangaRequest
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = Observable.just(
-        MangasPage(mangaList.filter { it.title.contains(query, true) }, false)
+        MangasPage(mangaList.filter { it.title.contains(query, true) }, false),
     )
 
     override fun searchMangaParse(response: Response): MangasPage = throw UnsupportedOperationException("Not used")

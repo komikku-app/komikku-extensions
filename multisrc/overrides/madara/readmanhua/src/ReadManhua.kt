@@ -11,7 +11,7 @@ class ReadManhua : Madara(
     "ReadManhua",
     "https://readmanhua.net",
     "en",
-    dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.US)
+    dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.US),
 ) {
 
     override fun chapterFromElement(element: Element): SChapter {

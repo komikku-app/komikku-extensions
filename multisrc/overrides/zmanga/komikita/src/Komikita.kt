@@ -15,7 +15,7 @@ class Komikita : ZManga(
     "Komikita",
     "https://komikita.org",
     "id",
-    SimpleDateFormat("MMM d, yyyy", Locale("id"))
+    SimpleDateFormat("MMM d, yyyy", Locale("id")),
 ) {
     override val hasProjectPage = true
 
@@ -72,7 +72,7 @@ class Komikita : ZManga(
                     Filter.Header("NOTE: cant be used with other filter!"),
                     Filter.Header("$name Project List page"),
                     ProjectFilter(),
-                )
+                ),
             )
         }
         return FilterList(filters)
@@ -151,7 +151,7 @@ class Komikita : ZManga(
         Tag("vampire", "Vampire"),
         Tag("webtoons", "Webtoons"),
         Tag("yuri", "Yuri"),
-        Tag("zombies", "Zombies")
+        Tag("zombies", "Zombies"),
     )
 
     private class Tag(val id: String, name: String) : Filter.CheckBox(name)

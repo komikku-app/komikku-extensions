@@ -82,8 +82,9 @@ class Japanread : ParsedHttpSource() {
             val uri = Uri.parse("$baseUrl/manga-list").buildUpon()
             // Append uri filters
             filters.forEach {
-                if (it is UriFilter)
+                if (it is UriFilter) {
                     it.addToUri(uri)
+                }
             }
             uri
         }
@@ -266,7 +267,7 @@ class Japanread : ParsedHttpSource() {
         SortFilter(),
         TypeFilter(),
         StatusFilter(),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class SortFilter : UriSelectFilter(
@@ -291,8 +292,8 @@ class Japanread : ParsedHttpSource() {
             Pair("3", "Manhwa"),
             Pair("4", "Manhua"),
             Pair("5", "Novel"),
-            Pair("6", "Doujinshi")
-        )
+            Pair("6", "Doujinshi"),
+        ),
     )
 
     private class StatusFilter : UriSelectFilter(
@@ -301,8 +302,8 @@ class Japanread : ParsedHttpSource() {
         arrayOf(
             Pair("0", "Tous"),
             Pair("1", "En cours"),
-            Pair("2", "Terminé")
-        )
+            Pair("2", "Terminé"),
+        ),
     )
 
     private class GenreFilter : UriSelectFilter(
@@ -347,7 +348,7 @@ class Japanread : ParsedHttpSource() {
             Pair("34", "Vie scolaire"),
             Pair("24", "Yaoi"),
             Pair("41", "Yuri"),
-        )
+        ),
     )
 
     /**
@@ -361,13 +362,14 @@ class Japanread : ParsedHttpSource() {
         val uriParam: String,
         val vals: Array<Pair<String, String>>,
         val firstIsUnspecified: Boolean = true,
-        defaultValue: Int = 0
+        defaultValue: Int = 0,
     ) :
         Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray(), defaultValue),
         UriFilter {
         override fun addToUri(uri: Uri.Builder) {
-            if (state != 0 || !firstIsUnspecified)
+            if (state != 0 || !firstIsUnspecified) {
                 uri.appendQueryParameter(uriParam, vals[state].first)
+            }
         }
     }
 

@@ -8,7 +8,7 @@ class AiYuManga : Madara(
     "AiYuManga",
     "https://aiyumangascanlation.com",
     "es",
-    SimpleDateFormat("d 'de' MMM 'de' yyy", Locale("es"))
+    SimpleDateFormat("d 'de' MMM 'de' yyy", Locale("es")),
 ) {
     override val useNewChapterEndpoint = true
 }

@@ -21,7 +21,7 @@ import java.io.IOException
  */
 class MdAtHomeReportInterceptor(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) : Interceptor {
 
     private val json: Json by injectLazy()
@@ -43,7 +43,7 @@ class MdAtHomeReportInterceptor(
             success = response.isSuccessful,
             bytes = response.peekBody(Long.MAX_VALUE).bytes().size,
             cached = response.header("X-Cache", "") == "HIT",
-            duration = response.receivedResponseAtMillis - response.sentRequestAtMillis
+            duration = response.receivedResponseAtMillis - response.sentRequestAtMillis,
         )
 
         val payload = json.encodeToString(result)
@@ -51,21 +51,23 @@ class MdAtHomeReportInterceptor(
         val reportRequest = POST(
             url = MDConstants.atHomePostUrl,
             headers = headers,
-            body = payload.toRequestBody(JSON_MEDIA_TYPE)
+            body = payload.toRequestBody(JSON_MEDIA_TYPE),
         )
 
         // Execute the report endpoint network call asynchronously to avoid blocking
         // the reader from showing the image once it's fully loaded if the report call
         // gets stuck, as it tend to happens sometimes.
-        client.newCall(reportRequest).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e("MangaDex", "Error trying to POST report to MD@Home: ${e.message}")
-            }
+        client.newCall(reportRequest).enqueue(
+            object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.e("MangaDex", "Error trying to POST report to MD@Home: ${e.message}")
+                }
 
-            override fun onResponse(call: Call, response: Response) {
-                response.close()
-            }
-        })
+                override fun onResponse(call: Call, response: Response) {
+                    response.close()
+                }
+            },
+        )
 
         return response
     }

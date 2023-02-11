@@ -11,7 +11,7 @@ class SummerFansub : MangaThemesia(
     "Summer Fansub",
     "https://smmr.in",
     "pt-BR",
-    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

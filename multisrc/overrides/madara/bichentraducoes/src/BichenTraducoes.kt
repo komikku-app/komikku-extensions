@@ -11,7 +11,7 @@ class BichenTraducoes : Madara(
     "Bichen Traduções",
     "https://bichentraducoes.com",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

@@ -29,7 +29,7 @@ class YuriNekoUrlActivity : Activity() {
                             }
                         }
                         putExtra("filter", packageName)
-                    }
+                    },
                 )
             } catch (e: ActivityNotFoundException) {
                 Log.e("YuriNekoUrlActivity", e.toString())

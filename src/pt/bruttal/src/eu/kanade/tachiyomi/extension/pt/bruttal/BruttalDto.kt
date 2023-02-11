@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BruttalHomeDto(
-    val list: List<BruttalComicBookDto> = emptyList()
+    val list: List<BruttalComicBookDto> = emptyList(),
 )
 
 @Serializable
@@ -20,7 +20,7 @@ data class BruttalComicBookDto(
     @SerialName("soon_text") val soonText: String = "",
     val synopsis: String,
     val title: String,
-    val url: String
+    val url: String,
 ) {
 
     fun toSManga(): SManga = SManga.create().apply {
@@ -42,7 +42,7 @@ data class BruttalComicBookDto(
 @Serializable
 data class BruttalSeasonDto(
     val alias: String,
-    val chapters: List<BruttalChapterDto> = emptyList()
+    val chapters: List<BruttalChapterDto> = emptyList(),
 )
 
 @Serializable
@@ -51,7 +51,7 @@ data class BruttalChapterDto(
     val images: List<BruttalImageDto> = emptyList(),
     @SerialName("share_title") val shareTitle: String,
     val title: String,
-    val url: String
+    val url: String,
 ) {
 
     fun toSChapter(): SChapter = SChapter.create().apply {
@@ -65,5 +65,5 @@ data class BruttalChapterDto(
 
 @Serializable
 data class BruttalImageDto(
-    val image: String
+    val image: String,
 )

@@ -8,5 +8,5 @@ class FaeStorm : Madara(
     "FaeStorm",
     "https://faestormmanga.com",
     "tr",
-    SimpleDateFormat("d MMM yyy", Locale("tr"))
+    SimpleDateFormat("d MMM yyy", Locale("tr")),
 )

@@ -41,7 +41,7 @@ class NicovideoSeiga : HttpSource() {
             mangas.add(
                 SManga.create().apply {
                     setUrlWithoutDomain(
-                        baseUrl + mangaElement.select(".comic_icon > div > a").attr("href")
+                        baseUrl + mangaElement.select(".comic_icon > div > a").attr("href"),
                     )
                     title = mangaElement.select(".mg_body > .title > a").text()
                     // While the site does label who are the author and artists are, there is no formatting standard at all!
@@ -65,7 +65,7 @@ class NicovideoSeiga : HttpSource() {
                             SManga.UNKNOWN
                         }
                     }
-                }
+                },
             )
         }
         return MangasPage(mangas, mangaCount - mangaPerPage * currentPage > 0)
@@ -93,7 +93,7 @@ class NicovideoSeiga : HttpSource() {
                 SManga.create().apply {
                     setUrlWithoutDomain(
                         baseUrl + manga.select(".search_result__item__thumbnail > a")
-                            .attr("href")
+                            .attr("href"),
                     )
                     title =
                         manga.select(".search_result__item__info > .search_result__item__info--title > a")
@@ -108,7 +108,7 @@ class NicovideoSeiga : HttpSource() {
                     // A larger thumbnail/cover art is only available after going into the chapter listings
                     thumbnail_url = manga.select(".search_result__item__thumbnail > a > img")
                         .attr("data-original")
-                }
+                },
             )
         }
         return MangasPage(mangas, mangaCount - mangaPerPage * currentPage > 0)
@@ -162,7 +162,7 @@ class NicovideoSeiga : HttpSource() {
                     name = chapter.select("div > div.description > div.title > a").text()
                     setUrlWithoutDomain(
                         baseUrl + chapter.select("div > div.description > div.title > a")
-                            .attr("href")
+                            .attr("href"),
                     )
                     // The data-number attribute is the only way we can determine chapter orders,
                     // without that this extension would have been impossible to make
@@ -175,7 +175,7 @@ class NicovideoSeiga : HttpSource() {
                         editor.putLong(chapter_number.toString(), dateFound)
                     }
                     date_upload = sharedPref.getLong(chapter_number.toString(), dateFound)
-                }
+                },
             )
         }
         editor.apply()
@@ -187,8 +187,9 @@ class NicovideoSeiga : HttpSource() {
         val doc = Jsoup.parse(response.body!!.string())
         val pages = ArrayList<Page>()
         // Nicovideo will refuse to serve any pages if the user has not logged in
-        if (!doc.select("#login_manga").isEmpty())
+        if (!doc.select("#login_manga").isEmpty()) {
             throw SecurityException("Not logged in. Please login via WebView first")
+        }
         val pageList = doc.select("#page_contents > li")
         for (page in pageList) {
             val pageNumber = page.attr("data-page-index").toInt()
@@ -208,7 +209,7 @@ class NicovideoSeiga : HttpSource() {
             .set("accept-encoding", "gzip, deflate, br")
             .set(
                 "user-agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
             )
             .set("sec-fetch-dest", "image")
             .set("sec-fetch-mode", "no-cors")

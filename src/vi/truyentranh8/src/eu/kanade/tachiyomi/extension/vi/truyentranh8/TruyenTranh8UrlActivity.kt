@@ -21,7 +21,7 @@ class TruyenTranh8UrlActivity : Activity() {
                         action = "eu.kanade.tachiyomi.SEARCH"
                         putExtra("query", "${TruyenTranh8.PREFIX_ID_SEARCH}$id")
                         putExtra("filter", packageName)
-                    }
+                    },
                 )
             } catch (e: ActivityNotFoundException) {
                 Log.e("TruyenTranh8UrlActivity", e.toString())

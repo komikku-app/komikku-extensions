@@ -20,7 +20,7 @@ class MMRCMSGenerator : ThemeSourceGenerator {
             it.className,
             it.pkgName,
             it.sourceName,
-            it.overrideVersionCode
+            it.overrideVersionCode,
         )
     }
 

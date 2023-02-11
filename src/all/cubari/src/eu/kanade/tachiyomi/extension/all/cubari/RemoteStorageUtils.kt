@@ -86,7 +86,7 @@ class RemoteStorageUtils {
 
             handler.postDelayed(
                 { webView?.destroy() },
-                DELAY_MILLIS * (if (transparent) 2 else 1)
+                DELAY_MILLIS * (if (transparent) 2 else 1),
             )
 
             return if (transparent) {

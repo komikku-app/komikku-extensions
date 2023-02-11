@@ -63,7 +63,7 @@ class DarkLegacyComics : HttpSource() {
                 status = SManga.COMPLETED
                 author = AUTHOR_NAME
                 artist = AUTHOR_NAME
-            }
+            },
         ).let { Observable.just(MangasPage(it, false))!! }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList) =
@@ -120,7 +120,7 @@ class DarkLegacyComics : HttpSource() {
         private val specials = mapOf(
             1 to "Looking For Group",
             2 to "Rover",
-            3 to "Fan Comic"
+            3 to "Fan Comic",
         )
 
         private val dateFormat by lazy {

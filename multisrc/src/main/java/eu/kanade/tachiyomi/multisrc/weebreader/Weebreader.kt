@@ -89,8 +89,9 @@ abstract class Weebreader(
     override fun mangaDetailsParse(response: Response): SManga {
         val titleJson = json.parseToJsonElement(response.body!!.string()).jsonObject
 
-        if (titleJson["type"]!!.jsonPrimitive.content != "Comic")
+        if (titleJson["type"]!!.jsonPrimitive.content != "Comic") {
             throw UnsupportedOperationException("Tachiyomi only supports Comics.")
+        }
 
         return SManga.create().apply {
             title = titleJson["name"]!!.jsonPrimitive.content
@@ -109,8 +110,9 @@ abstract class Weebreader(
     override fun chapterListParse(response: Response): List<SChapter> {
         val titleJson = json.parseToJsonElement(response.body!!.string()).jsonObject
 
-        if (titleJson["type"]!!.jsonPrimitive.content != "Comic")
+        if (titleJson["type"]!!.jsonPrimitive.content != "Comic") {
             throw UnsupportedOperationException("Tachiyomi only supports Comics.")
+        }
 
         return titleJson["chapters"]!!.jsonArray.map {
             val chapter = it.jsonObject

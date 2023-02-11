@@ -34,13 +34,13 @@ open class FlameScans(
     override val baseUrl: String,
     override val lang: String,
     mangaUrlDirectory: String,
-    dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+    dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US),
 ) : MangaThemesia(
     "Flame Scans",
     baseUrl,
     lang,
     mangaUrlDirectory = mangaUrlDirectory,
-    dateFormat = dateFormat
+    dateFormat = dateFormat,
 ),
     ConfigurableSource {
 
@@ -154,7 +154,7 @@ open class FlameScans(
         return this.map { mangasPage ->
             MangasPage(
                 mangasPage.mangas.map { it.tempUrlToPermIfNeeded() },
-                mangasPage.hasNextPage
+                mangasPage.hasNextPage,
             )
         }
     }

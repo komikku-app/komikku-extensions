@@ -16,13 +16,13 @@ class OtakuSanctuaryGenerator : ThemeSourceGenerator {
             "Otaku Sanctuary",
             "https://otakusan.net",
             listOf("all", "vi", "en", "it", "fr", "es"),
-            isNsfw = true
+            isNsfw = true,
         ),
         MultiLang(
             "MyRockManga",
             "https://myrockmanga.com",
             listOf("all", "vi", "en", "it", "fr", "es"),
-            isNsfw = true
+            isNsfw = true,
         ),
     )
 

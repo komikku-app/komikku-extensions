@@ -8,7 +8,7 @@ class ManhwaDashRaw : Madara(
     "Manhwa-raw",
     "https://manhwa-raw.com",
     "all",
-    dateFormat = SimpleDateFormat("dd/MM/yyy", Locale.ROOT)
+    dateFormat = SimpleDateFormat("dd/MM/yyy", Locale.ROOT),
 ) {
     override val useNewChapterEndpoint = true
 }

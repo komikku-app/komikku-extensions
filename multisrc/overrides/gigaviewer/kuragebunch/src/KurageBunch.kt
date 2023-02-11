@@ -11,7 +11,7 @@ class KurageBunch : GigaViewer(
     "Kurage Bunch",
     "https://kuragebunch.com",
     "ja",
-    "https://cdn-img.kuragebunch.com"
+    "https://cdn-img.kuragebunch.com",
 ) {
 
     override val supportsLatest: Boolean = false
@@ -39,6 +39,6 @@ class KurageBunch : GigaViewer(
         Collection("読切", "oneshot"),
         Collection("月刊コミックバンチ", "comicbunch"),
         Collection("Bバンチ", "bbunch"),
-        Collection("ututu", "ututu")
+        Collection("ututu", "ututu"),
     )
 }

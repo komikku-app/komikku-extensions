@@ -28,7 +28,7 @@ internal class Artist : Filter.Text("Artist"), UriFilter {
  * @param labels The site's sort order labels.
  */
 internal class SortOrder(
-    private val labels: Array<String>
+    private val labels: Array<String>,
 ) : Filter.Sort("Sort", labels, null), UriFilter {
     override val param = "sort"
 
@@ -41,7 +41,10 @@ internal class SortOrder(
     companion object {
         /** The available sort order values. */
         private val sorts = arrayOf(
-            "title", "views", "latest_upload", "chapter_count"
+            "title",
+            "views",
+            "latest_upload",
+            "chapter_count",
         )
     }
 }
@@ -52,7 +55,7 @@ internal class SortOrder(
  * @param statuses The site's status names.
  */
 internal class Status(
-    statuses: Array<String>
+    statuses: Array<String>,
 ) : Filter.Select<String>("Status", statuses), UriFilter {
     override val param = "status"
 
@@ -72,7 +75,7 @@ internal class Category(name: String) : Filter.TriState(name)
  * @param categories The site's manga categories.
  */
 internal class CategoryList(
-    categories: List<String>
+    categories: List<String>,
 ) : Filter.Group<Category>("Categories", categories.map(::Category)), UriFilter {
     override val param = "categories"
 

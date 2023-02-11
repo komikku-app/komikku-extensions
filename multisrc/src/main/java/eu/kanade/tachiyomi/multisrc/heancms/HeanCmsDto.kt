@@ -10,13 +10,13 @@ import java.text.SimpleDateFormat
 @Serializable
 data class HeanCmsQuerySearchDto(
     val data: List<HeanCmsSeriesDto> = emptyList(),
-    val meta: HeanCmsQuerySearchMetaDto? = null
+    val meta: HeanCmsQuerySearchMetaDto? = null,
 )
 
 @Serializable
 data class HeanCmsQuerySearchMetaDto(
     @SerialName("current_page") val currentPage: Int,
-    @SerialName("last_page") val lastPage: Int
+    @SerialName("last_page") val lastPage: Int,
 ) {
 
     val hasNextPage: Boolean
@@ -28,13 +28,13 @@ data class HeanCmsSearchDto(
     val description: String? = null,
     @SerialName("series_slug") val slug: String,
     @SerialName("series_type") val type: String,
-    val title: String
+    val title: String,
 ) {
 
     fun toSManga(
         apiUrl: String,
         coverPath: String,
-        slugMap: Map<String, HeanCms.HeanCmsTitle>
+        slugMap: Map<String, HeanCms.HeanCmsTitle>,
     ): SManga = SManga.create().apply {
         val slugOnly = slug.replace(HeanCms.TIMESTAMP_REGEX, "")
         val thumbnailFileName = slugMap[slugOnly]?.thumbnailFileName.orEmpty()
@@ -60,7 +60,7 @@ data class HeanCmsSeriesDto(
     val thumbnail: String,
     val title: String,
     val tags: List<HeanCmsTagDto>? = emptyList(),
-    val chapters: List<HeanCmsChapterDto>? = emptyList()
+    val chapters: List<HeanCmsChapterDto>? = emptyList(),
 ) {
 
     fun toSManga(apiUrl: String, coverPath: String): SManga = SManga.create().apply {
@@ -103,12 +103,12 @@ data class HeanCmsChapterDto(
 
 @Serializable
 data class HeanCmsReaderDto(
-    val content: HeanCmsReaderContentDto? = null
+    val content: HeanCmsReaderContentDto? = null,
 )
 
 @Serializable
 data class HeanCmsReaderContentDto(
-    val images: List<String>? = emptyList()
+    val images: List<String>? = emptyList(),
 )
 
 @Serializable
@@ -118,7 +118,7 @@ data class HeanCmsQuerySearchPayloadDto(
     @SerialName("order_by") val orderBy: String,
     @SerialName("series_status") val status: String,
     @SerialName("series_type") val type: String,
-    @SerialName("tags_ids") val tagIds: List<Int> = emptyList()
+    @SerialName("tags_ids") val tagIds: List<Int> = emptyList(),
 )
 
 @Serializable

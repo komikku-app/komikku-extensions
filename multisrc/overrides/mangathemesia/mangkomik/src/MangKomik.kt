@@ -17,7 +17,7 @@ class MangKomik : MangaThemesia("MangKomik", "https://mangkomik.net", "id") {
         }
 
         val scriptResponse = client.newCall(
-            GET(scriptUrl, headers)
+            GET(scriptUrl, headers),
         ).execute()
 
         // Inject external JS

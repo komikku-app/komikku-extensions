@@ -71,7 +71,7 @@ class UniComics : ParsedHttpSource() {
         if (query.isNotEmpty()) {
             return GET(
                 "https://yandex.ru/search/site/?frame=1&lr=172&searchid=1959358&topdoc=xdm_e=$baseDefaultUrl&xdm_c=default5044&xdm_p=1&v=2.0&web=0&text=$query&p=$page",
-                headers
+                headers,
             )
         }
         return popularMangaRequest(page)
@@ -88,17 +88,20 @@ class UniComics : ParsedHttpSource() {
                     "/characters$|/creators$".toRegex().replace(
                         "/page$".toRegex().replace(
                             "/[0-9]+/?$".toRegex().replace(
-                                originUrl.replace(PATH_online, PATH_URL).replace(PATH_issue, PATH_URL), ""
+                                originUrl.replace(PATH_online, PATH_URL).replace(PATH_issue, PATH_URL),
+                                "",
                             ),
-                            ""
+                            "",
                         ),
-                        ""
+                        "",
                     )
                 val issueNumber = "-[0-9]+/?$".toRegex()
                 setUrlWithoutDomain(
-                    if (issueNumber.containsMatchIn(urlString) && (originUrl.contains(PATH_online) || originUrl.contains(PATH_issue)))
+                    if (issueNumber.containsMatchIn(urlString) && (originUrl.contains(PATH_online) || originUrl.contains(PATH_issue))) {
                         issueNumber.replace(urlString, "")
-                    else urlString
+                    } else {
+                        urlString
+                    },
                 )
 
                 title = it.text().substringBefore(" (").substringBefore(" №")
@@ -198,10 +201,11 @@ class UniComics : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val infoElement = document.select(".left_container div").first()
         title = infoElement.select("h1").first().text()
-        thumbnail_url = if (infoElement.select("img").isNotEmpty())
+        thumbnail_url = if (infoElement.select("img").isNotEmpty()) {
             infoElement.select("img").first().attr("src")
-        else
+        } else {
             document.select(".left_comics img").first().attr("src").replace(".jpg", "_big.jpg")
+        }
         description = infoElement.select("H2").first().text() + "\n" + infoElement.select("p").last()?.text().orEmpty()
         author = infoElement.select("tr:contains(Издательство)").text()
         genre = infoElement.select("tr:contains(Жанр) a").joinToString { it.text() }
@@ -220,7 +224,7 @@ class UniComics : ParsedHttpSource() {
         return Observable.just(
             pages.flatMap { page ->
                 chapterListParse(client.newCall(chapterPageListRequest(manga, page)).execute(), manga)
-            }.reversed()
+            }.reversed(),
         )
     }
 
@@ -240,10 +244,11 @@ class UniComics : ParsedHttpSource() {
         val chapter = SChapter.create()
         element.select(".list_title").first().text().let {
             val titleNoPrefix = it.removePrefix(manga.title).removePrefix(":").trim()
-            chapter.name = if (titleNoPrefix.isNotEmpty())
+            chapter.name = if (titleNoPrefix.isNotEmpty()) {
                 titleNoPrefix.replaceFirst(titleNoPrefix.first(), titleNoPrefix.first().uppercaseChar())
-            else
+            } else {
                 "Сингл"
+            }
             if (titleNoPrefix.contains("№")) {
                 chapter.chapter_number = titleNoPrefix.substringAfterLast("№").toFloatOrNull() ?: -1f
             }
@@ -274,11 +279,11 @@ class UniComics : ParsedHttpSource() {
 
     override fun getFilterList() = FilterList(
         Publishers(publishersName),
-        getEventsList()
+        getEventsList(),
     )
     private class getEventsList : Filter.Select<String>(
         "События (только)",
-        arrayOf("Нет", "в комиксах")
+        arrayOf("Нет", "в комиксах"),
     )
 
     private data class Publisher(val name: String, val url: String)
@@ -325,7 +330,7 @@ class UniComics : ParsedHttpSource() {
         Publisher("Warp Graphics", "warp-graphics"),
         Publisher("Scholastic Book Services", "scholastic-book-services"),
         Publisher("Ballantine Books", "ballantine-books"),
-        Publisher("Id Software", "id-software")
+        Publisher("Id Software", "id-software"),
     )
     private val publishersName = getPublishersList().map {
         it.name

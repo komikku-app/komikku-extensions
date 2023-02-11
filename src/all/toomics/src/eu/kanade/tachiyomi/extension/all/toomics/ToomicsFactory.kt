@@ -15,7 +15,7 @@ class ToomicsFactory : SourceFactory {
         ToomicsItalian(),
         ToomicsGerman(),
         ToomicsFrench(),
-        ToomicsPortuguese()
+        ToomicsPortuguese(),
     )
 }
 

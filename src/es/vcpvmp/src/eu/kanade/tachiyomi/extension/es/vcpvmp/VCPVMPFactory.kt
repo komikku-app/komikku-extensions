@@ -9,7 +9,7 @@ import org.jsoup.nodes.Element
 class VCPVMPFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         VCP(),
-        VMP()
+        VMP(),
     )
 }
 
@@ -61,8 +61,8 @@ class VMP : VCPVMP("VMP", "https://vermangasporno.com") {
             Pair("Sole Female", "sole-female"),
             Pair("Stockings", "stockings"),
             Pair("Tetona", "tetona"),
-            Pair("Tetonas", "tetonas")
-        )
+            Pair("Tetonas", "tetonas"),
+        ),
     )
 
     // Array.from(document.querySelectorAll('form select#cat option.level-0')).map(a => `Pair("${a.innerText}", "${a.value}")`).join(',\n')
@@ -387,8 +387,8 @@ class VMP : VCPVMP("VMP", "https://vermangasporno.com") {
             Pair("Zettai Junpaku Mahou Shoujo", "1918"),
             Pair("Zettai Karen Children", "1417"),
             Pair("Zoids Shinseiki Zero", "153"),
-            Pair("Zombieland Saga", "2059")
-        )
+            Pair("Zombieland Saga", "2059"),
+        ),
     )
 }
 

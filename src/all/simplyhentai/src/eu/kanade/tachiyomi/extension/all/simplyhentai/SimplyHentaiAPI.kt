@@ -16,7 +16,7 @@ data class SHObject(
     val preview: SHImage,
     val series: SHTag,
     val slug: String,
-    val title: String
+    val title: String,
 ) {
     val path by lazy { "/${series.slug}/$slug" }
 }
@@ -45,7 +45,7 @@ data class SHData(
     val slug: String,
     val tags: List<SHTag>,
     val title: String,
-    val translators: List<SHTag>
+    val translators: List<SHTag>,
 ) {
     val path by lazy { "/${series.slug}/$slug" }
 }
@@ -55,5 +55,5 @@ data class SHAlbumPages(val data: SHPagesData)
 
 @Serializable
 data class SHPagesData(
-    val pages: List<SHImage>
+    val pages: List<SHImage>,
 )

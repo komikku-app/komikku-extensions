@@ -9,7 +9,7 @@ class SundayWebEvery : GigaViewer(
     "Sunday Web Every",
     "https://www.sunday-webry.com",
     "ja",
-    "https://cdn-img.www.sunday-webry.com/public/page"
+    "https://cdn-img.www.sunday-webry.com/public/page",
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
@@ -33,6 +33,6 @@ class SundayWebEvery : GigaViewer(
     override fun getCollections(): List<Collection> = listOf(
         Collection("連載作品", ""),
         Collection("読切", "oneshot"),
-        Collection("夜サンデー", "yoru-sunday")
+        Collection("夜サンデー", "yoru-sunday"),
     )
 }

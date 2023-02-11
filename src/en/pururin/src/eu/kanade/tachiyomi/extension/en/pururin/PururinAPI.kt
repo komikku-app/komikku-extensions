@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class Results(
     private val current_page: Int,
     private val data: List<Data>,
-    private val last_page: Int
+    private val last_page: Int,
 ) : Iterable<Data> by data {
     val hasNext get() = current_page != last_page
 }
@@ -15,7 +15,7 @@ data class Results(
 data class Data(
     private val id: Int,
     val title: String,
-    private val slug: String
+    private val slug: String,
 ) {
     val path get() = "/gallery/$id/$slug"
 
@@ -29,7 +29,7 @@ data class Gallery(
     private val alt_title: String?,
     private val total_pages: Int,
     private val image_extension: String,
-    private val tags: TagList
+    private val tags: TagList,
 ) {
     val description get() = "$j_title\n${alt_title ?: ""}".trim()
 
@@ -57,7 +57,7 @@ data class TagList(
     val Category: List<Tag>,
     val Character: List<Tag>,
     val Scanlator: List<Tag>,
-    val Convention: List<Tag>
+    val Convention: List<Tag>,
 )
 
 @Serializable

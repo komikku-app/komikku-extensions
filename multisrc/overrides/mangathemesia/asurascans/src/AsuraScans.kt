@@ -20,12 +20,12 @@ import java.util.concurrent.TimeUnit
 open class AsuraScans(
     override val baseUrl: String,
     override val lang: String,
-    dateFormat: SimpleDateFormat
+    dateFormat: SimpleDateFormat,
 ) : MangaThemesia(
     "Asura Scans",
     baseUrl,
     lang,
-    dateFormat = dateFormat
+    dateFormat = dateFormat,
 ),
     ConfigurableSource {
 
@@ -56,7 +56,7 @@ open class AsuraScans(
         return this.map { mangasPage ->
             MangasPage(
                 mangasPage.mangas.map { it.tempUrlToPermIfNeeded() },
-                mangasPage.hasNextPage
+                mangasPage.hasNextPage,
             )
         }
     }

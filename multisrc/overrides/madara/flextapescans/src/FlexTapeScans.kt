@@ -10,7 +10,7 @@ class FlexTapeScans : Madara(
     "Flex Tape Scans",
     "https://flextapescans.com",
     "en",
-    dateFormat = SimpleDateFormat("MM/dd/yyy", Locale.ROOT)
+    dateFormat = SimpleDateFormat("MM/dd/yyy", Locale.ROOT),
 ) {
     override val useNewChapterEndpoint = false
 

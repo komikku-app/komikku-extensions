@@ -10,6 +10,6 @@ class LeCercleDuScan : FoolSlide("Le Cercle du Scan", "https://lel.lecercledusca
             "aujourd'hui" -> "today"
             "demain" -> "tomorrow"
             else -> lcDate
-        }
+        },
     )
 }

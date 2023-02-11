@@ -13,7 +13,7 @@ class AdultWebtoon : Madara("Adult Webtoon", "https://adultwebtoon.com", "en") {
         return GET(
             "$baseUrl/manga/$pageSuffix?m_orderby=trending",
             formHeaders,
-            CacheControl.FORCE_NETWORK
+            CacheControl.FORCE_NETWORK,
         )
     }
     override fun latestUpdatesRequest(page: Int): Request {
@@ -21,7 +21,7 @@ class AdultWebtoon : Madara("Adult Webtoon", "https://adultwebtoon.com", "en") {
         return GET(
             "$baseUrl/manga/$pageSuffix?m_orderby=latest",
             formHeaders,
-            CacheControl.FORCE_NETWORK
+            CacheControl.FORCE_NETWORK,
         )
     }
 }

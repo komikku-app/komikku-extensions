@@ -36,7 +36,7 @@ abstract class MangaThemesia(
     override val baseUrl: String,
     override val lang: String,
     val mangaUrlDirectory: String = "/manga",
-    val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+    val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US),
 ) : ParsedHttpSource() {
 
     protected open val json: Json by injectLazy()
@@ -71,7 +71,7 @@ abstract class MangaThemesia(
 
         return fetchMangaDetails(
             SManga.create()
-                .apply { this.url = "$mangaUrlDirectory/$mangaPath/" }
+                .apply { this.url = "$mangaUrlDirectory/$mangaPath/" },
         )
             .map {
                 // Isn't set in returned manga
@@ -172,8 +172,11 @@ abstract class MangaThemesia(
             seriesDetails.selectFirst(seriesTypeSelector)?.ownText().takeIf { it.isNullOrBlank().not() }?.let { genres.add(it) }
             genre = genres.map { genre ->
                 genre.lowercase(Locale.forLanguageTag(lang)).replaceFirstChar { char ->
-                    if (char.isLowerCase()) char.titlecase(Locale.forLanguageTag(lang))
-                    else char.toString()
+                    if (char.isLowerCase()) {
+                        char.titlecase(Locale.forLanguageTag(lang))
+                    } else {
+                        char.toString()
+                    }
                 }
             }
                 .joinToString { it.trim() }
@@ -313,11 +316,11 @@ abstract class MangaThemesia(
     open class SelectFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
-        defaultValue: String? = null
+        defaultValue: String? = null,
     ) : Filter.Select<String>(
         displayName,
         vals.map { it.first }.toTypedArray(),
-        vals.indexOfFirst { it.second == defaultValue }.takeIf { it != -1 } ?: 0
+        vals.indexOfFirst { it.second == defaultValue }.takeIf { it != -1 } ?: 0,
     ) {
         fun selectedValue() = vals[state].second
     }
@@ -329,8 +332,8 @@ abstract class MangaThemesia(
             Pair("Ongoing", "ongoing"),
             Pair("Completed", "completed"),
             Pair("Hiatus", "hiatus"),
-            Pair("Dropped", "dropped")
-        )
+            Pair("Dropped", "dropped"),
+        ),
     )
 
     protected class TypeFilter : SelectFilter(
@@ -340,8 +343,8 @@ abstract class MangaThemesia(
             Pair("Manga", "Manga"),
             Pair("Manhwa", "Manhwa"),
             Pair("Manhua", "Manhua"),
-            Pair("Comic", "Comic")
-        )
+            Pair("Comic", "Comic"),
+        ),
     )
 
     protected class OrderByFilter(defaultOrder: String? = null) : SelectFilter(
@@ -352,23 +355,23 @@ abstract class MangaThemesia(
             Pair("Z-A", "titlereverse"),
             Pair("Latest Update", "update"),
             Pair("Latest Added", "latest"),
-            Pair("Popular", "popular")
+            Pair("Popular", "popular"),
         ),
-        defaultOrder
+        defaultOrder,
     )
 
     protected class ProjectFilter : SelectFilter(
         "Filter Project",
         arrayOf(
             Pair("Show all manga", ""),
-            Pair("Show only project manga", "project-filter-on")
-        )
+            Pair("Show only project manga", "project-filter-on"),
+        ),
     )
 
     protected class Genre(
         name: String,
         val value: String,
-        state: Int = STATE_IGNORE
+        state: Int = STATE_IGNORE,
     ) : Filter.TriState(name, state)
 
     protected class GenreListFilter(genres: List<Genre>) : Filter.Group<Genre>("Genre", genres)
@@ -401,7 +404,7 @@ abstract class MangaThemesia(
                     Filter.Header("NOTE: Can't be used with other filter!"),
                     Filter.Header("$name Project List page"),
                     ProjectFilter(),
-                )
+                ),
             )
         }
         return FilterList(filters)
@@ -450,7 +453,7 @@ abstract class MangaThemesia(
         return document.selectFirst("ul.genrez")?.select("li")?.map { li ->
             Genre(
                 li.selectFirst("label").text(),
-                li.selectFirst("input[type=checkbox]").attr("value")
+                li.selectFirst("input[type=checkbox]").attr("value"),
             )
         }
     }

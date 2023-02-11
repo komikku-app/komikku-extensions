@@ -32,7 +32,7 @@ import java.util.Locale
 open class Comico(
     final override val baseUrl: String,
     final override val name: String,
-    private val langCode: String
+    private val langCode: String,
 ) : HttpSource() {
     final override val supportsLatest = true
 
@@ -62,16 +62,18 @@ open class Comico(
         }.build()
 
     override val client = network.client.newBuilder()
-        .cookieJar(object : CookieJar {
-            override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) =
-                cookies.filter { it.matches(url) }.forEach {
-                    cookieManager.setCookie(url.toString(), it.toString())
-                }
+        .cookieJar(
+            object : CookieJar {
+                override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) =
+                    cookies.filter { it.matches(url) }.forEach {
+                        cookieManager.setCookie(url.toString(), it.toString())
+                    }
 
-            override fun loadForRequest(url: HttpUrl) =
-                cookieManager.getCookie(url.toString())?.split("; ")
-                    ?.mapNotNull { Cookie.parse(url, it) } ?: emptyList()
-        }).build()
+                override fun loadForRequest(url: HttpUrl) =
+                    cookieManager.getCookie(url.toString())?.split("; ")
+                        ?.mapNotNull { Cookie.parse(url, it) } ?: emptyList()
+            },
+        ).build()
 
     override fun headersBuilder() = Headers.Builder()
         .set("Accept-Language", langCode)
@@ -85,8 +87,11 @@ open class Comico(
         paginate("all_comic/ranking/trending", page)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
-        if (query.isEmpty()) paginate("all_comic/read_for_free", page)
-        else POST("$apiUrl/search", apiHeaders, search(query, page))
+        if (query.isEmpty()) {
+            paginate("all_comic/read_for_free", page)
+        } else {
+            POST("$apiUrl/search", apiHeaders, search(query, page))
+        }
 
     override fun chapterListRequest(manga: SManga) =
         GET(apiUrl + manga.url + "/episode", apiHeaders)
@@ -151,8 +156,11 @@ open class Comico(
         rx.Observable.just(manga.apply { initialized = true })!!
 
     override fun fetchPageList(chapter: SChapter) =
-        if (!chapter.name.endsWith(LOCK)) super.fetchPageList(chapter)
-        else throw Error("You are not authorized to view this!")
+        if (!chapter.name.endsWith(LOCK)) {
+            super.fetchPageList(chapter)
+        } else {
+            throw Error("You are not authorized to view this!")
+        }
 
     private fun search(query: String, page: Int) =
         FormBody.Builder().add("query", query)
@@ -176,7 +184,7 @@ open class Comico(
 
     private inline fun <reified T, R> JsonElement?.map(
         key: String,
-        transform: (T) -> R
+        transform: (T) -> R,
     ) = json.decodeFromJsonElement<List<T>>(this[key]).map(transform)
 
     override fun mangaDetailsParse(response: Response) =

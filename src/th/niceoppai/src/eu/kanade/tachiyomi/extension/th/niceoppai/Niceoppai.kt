@@ -70,8 +70,11 @@ class Niceoppai : ParsedHttpSource() {
         val orderByState = if (filters.list.first().state != null) filters.first().state.toString().toInt() else 0
         val orderByString = orderByFilterOptionsValues[orderByState]
 
-        return if (isOrderByFilter) GET("$baseUrl/manga_list/all/any/$orderByString/$page", headers)
-        else GET("$baseUrl/manga_list/search/$query/$orderByString/$page", headers)
+        return if (isOrderByFilter) {
+            GET("$baseUrl/manga_list/all/any/$orderByString/$page", headers)
+        } else {
+            GET("$baseUrl/manga_list/search/$query/$orderByString/$page", headers)
+        }
     }
     override fun searchMangaSelector(): String = popularMangaSelector()
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
@@ -170,6 +173,7 @@ class Niceoppai : ParsedHttpSource() {
             else -> dateFormat.tryParse(date)
         }
     }
+
     // Parses dates in this form:
     // 21 horas ago
     private fun parseRelativeDate(date: String): Long {
@@ -273,8 +277,8 @@ class Niceoppai : ParsedHttpSource() {
             OrderByFilter(
                 orderByFilterTitle,
                 orderByFilterOptions.zip(orderByFilterOptionsValues),
-                0
-            )
+                0,
+            ),
         )
 
         return FilterList(filters)

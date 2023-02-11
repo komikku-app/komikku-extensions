@@ -266,7 +266,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     override fun getFilterList() = FilterList(
         CategoryGroup(),
         SortFilter(),
-        TimeFilter()
+        TimeFilter(),
     )
 
     private class CategoryGroup : UriPartFilter(
@@ -344,8 +344,8 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
             Pair("非H", "/search/photos?search_query=非H&"),
             Pair("血腥", "/search/photos?search_query=血腥&"),
             Pair("暴力", "/search/photos?search_query=暴力&"),
-            Pair("血腥暴力", "/search/photos?search_query=血腥暴力&")
-        )
+            Pair("血腥暴力", "/search/photos?search_query=血腥暴力&"),
+        ),
     )
 
     private class SortFilter : UriPartFilter(
@@ -354,8 +354,8 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
             Pair("最新", "o=mr&"),
             Pair("最多浏览", "o=mv&"),
             Pair("最多爱心", "o=tf&"),
-            Pair("最多图片", "o=mp&")
-        )
+            Pair("最多图片", "o=mp&"),
+        ),
     )
 
     private class TimeFilter : UriPartFilter(
@@ -364,8 +364,8 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
             Pair("全部", "t=a"),
             Pair("今天", "t=t"),
             Pair("这周", "t=w"),
-            Pair("本月", "t=m")
-        )
+            Pair("本月", "t=m"),
+        ),
     )
 
     /**
@@ -377,7 +377,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     private open class UriPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
-        defaultValue: Int = 0
+        defaultValue: Int = 0,
     ) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), defaultValue) {
         open fun toUriPart() = vals[state].second

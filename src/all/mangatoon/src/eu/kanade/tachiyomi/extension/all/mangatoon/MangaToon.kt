@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 
 open class MangaToon(
     final override val lang: String,
-    private val urlLang: String = lang
+    private val urlLang: String = lang,
 ) : ParsedHttpSource() {
 
     override val name = "MangaToon (Limited)"
@@ -169,11 +169,18 @@ open class MangaToon(
     companion object {
         private val ONGOING_STATUS = listOf(
             "连载", "on going", "sedang berlangsung", "tiếp tục cập nhật",
-            "en proceso", "atualizando", "เซเรียล", "en cours", "連載中"
+            "en proceso", "atualizando", "เซเรียล", "en cours", "連載中",
         )
 
         private val COMPLETED_STATUS = listOf(
-            "完结", "completed", "tamat", "đã full", "terminada", "concluído", "จบ", "fin"
+            "完结",
+            "completed",
+            "tamat",
+            "đã full",
+            "terminada",
+            "concluído",
+            "จบ",
+            "fin",
         )
 
         private val DATE_FORMAT by lazy {

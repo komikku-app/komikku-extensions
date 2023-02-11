@@ -27,7 +27,7 @@ abstract class HeanCms(
     override val name: String,
     override val baseUrl: String,
     override val lang: String,
-    protected val apiUrl: String = baseUrl.replace("://", "://api.")
+    protected val apiUrl: String = baseUrl.replace("://", "://api."),
 ) : HttpSource() {
 
     override val supportsLatest = true
@@ -56,7 +56,7 @@ abstract class HeanCms(
             order = "desc",
             orderBy = "total_views",
             status = "Ongoing",
-            type = "Comic"
+            type = "Comic",
         )
 
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
@@ -95,7 +95,7 @@ abstract class HeanCms(
             order = "desc",
             orderBy = "latest",
             status = "Ongoing",
-            type = "Comic"
+            type = "Comic",
         )
 
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
@@ -139,7 +139,7 @@ abstract class HeanCms(
             tagIds = filters.firstInstanceOrNull<GenreFilter>()?.state
                 ?.filter(Genre::state)
                 ?.map(Genre::id)
-                .orEmpty()
+                .orEmpty(),
         )
 
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
@@ -326,7 +326,7 @@ abstract class HeanCms(
             order = "desc",
             orderBy = "total_views",
             status = "",
-            type = "Comic"
+            type = "Comic",
         )
 
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
@@ -348,9 +348,9 @@ abstract class HeanCms(
                     HeanCmsTitle(
                         slug = it.slug,
                         thumbnailFileName = it.thumbnail,
-                        status = it.status?.toStatus() ?: SManga.UNKNOWN
+                        status = it.status?.toStatus() ?: SManga.UNKNOWN,
                     )
-                }
+                },
             )
     }
 
@@ -361,7 +361,7 @@ abstract class HeanCms(
             Filter.Header(intl.filterWarning),
             StatusFilter(intl.statusFilterTitle, getStatusList()),
             SortByFilter(intl.sortByFilterTitle, getSortProperties()),
-            GenreFilter(intl.genreFilterTitle, genres).takeIf { genres.isNotEmpty() }
+            GenreFilter(intl.genreFilterTitle, genres).takeIf { genres.isNotEmpty() },
         )
 
         return FilterList(filters)

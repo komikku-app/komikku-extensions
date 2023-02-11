@@ -19,7 +19,7 @@ class NineMangaFactory : SourceFactory {
         NineMangaRu(),
         NineMangaDe(),
         NineMangaIt(),
-        NineMangaFr()
+        NineMangaFr(),
     )
 }
 
@@ -178,7 +178,7 @@ class NineMangaEs : NineManga("NineMangaEs", "https://es.ninemanga.com", "es") {
         Genre("Webcomic", "92"),
         Genre("Webtoon", "200"),
         Genre("Wuxia", "244"),
-        Genre("Yonkoma", "232")
+        Genre("Yonkoma", "232"),
     )
 }
 
@@ -260,7 +260,7 @@ class NineMangaBr : NineManga("NineMangaBr", "https://br.ninemanga.com", "pt-BR"
         Genre("Vampiros", "112"),
         Genre("Webtoon", "128"),
         Genre("Xuanhuan", "104"),
-        Genre("Yaoi (Omegaverse)", "132")
+        Genre("Yaoi (Omegaverse)", "132"),
     )
 }
 
@@ -324,7 +324,7 @@ class NineMangaRu : NineManga("NineMangaRu", "https://ru.ninemanga.com", "ru") {
         Genre("эротика", "93"),
         Genre("этти", "60"),
         Genre("юри", "80"),
-        Genre("яой", "92")
+        Genre("яой", "92"),
     )
 }
 
@@ -381,7 +381,7 @@ class NineMangaDe : NineManga("NineMangaDe", "https://de.ninemanga.com", "de") {
         Genre("SuperkräFte", "102"),
         Genre("Thriller", "94"),
         Genre("Vampire", "71"),
-        Genre("Videospiel", "77")
+        Genre("Videospiel", "77"),
     )
 }
 
@@ -447,7 +447,7 @@ class NineMangaIt : NineManga("NineMangaIt", "https://it.ninemanga.com", "it") {
         Genre("Supernatural", "100"),
         Genre("Tragedia", "116"),
         Genre("Tragedy", "112"),
-        Genre("Vita Quotidiana", "77")
+        Genre("Vita Quotidiana", "77"),
     )
 }
 
@@ -750,7 +750,7 @@ class NineMangaFr : NineManga("NineMangaFr", "https://fr.ninemanga.com", "fr") {
         Genre("Yonkoma", "159"),
         Genre("Zombies", "277"),
         Genre("éChec", "164"),
-        Genre("éPéE", "224")
+        Genre("éPéE", "224"),
     )
 }
 

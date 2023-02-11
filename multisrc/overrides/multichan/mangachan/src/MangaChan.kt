@@ -19,7 +19,6 @@ class MangaChan : MultiChan("MangaChan", "https://manga-chan.me", "ru") {
         val url = if (query.isNotEmpty()) {
             "$baseUrl/?do=search&subaction=search&story=$query&search_start=$pageNum"
         } else {
-
             var genres = ""
             var order = ""
             var statusParam = true
@@ -90,13 +89,13 @@ class MangaChan : MultiChan("MangaChan", "https://manga-chan.me", "ru") {
     private class OrderBy : Filter.Sort(
         "Сортировка",
         arrayOf("Дата", "Популярность", "Имя", "Главы"),
-        Selection(1, false)
+        Selection(1, false),
     )
 
     override fun getFilterList() = FilterList(
         Status(),
         OrderBy(),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private fun getGenreList() = listOf(
@@ -154,6 +153,6 @@ class MangaChan : MultiChan("MangaChan", "https://manga-chan.me", "ru") {
         Genre("эротика"),
         Genre("юри"),
         Genre("яой"),
-        Genre("ёнкома")
+        Genre("ёнкома"),
     )
 }

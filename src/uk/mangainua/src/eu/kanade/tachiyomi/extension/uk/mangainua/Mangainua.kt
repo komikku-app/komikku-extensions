@@ -73,9 +73,11 @@ class Mangainua : ParsedHttpSource() {
                     .add("story", query)
                     .add("search_start", page.toString())
                     .build(),
-                headers = headers
+                headers = headers,
             )
-        } else return throw UnsupportedOperationException("Запит має містити щонайменше 3 символи / The query must contain at least 3 characters")
+        } else {
+            return throw UnsupportedOperationException("Запит має містити щонайменше 3 символи / The query must contain at least 3 characters")
+        }
     }
 
     override fun searchMangaSelector() = latestUpdatesSelector()

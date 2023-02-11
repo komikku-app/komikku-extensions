@@ -25,7 +25,7 @@ import uy.kohesive.injekt.api.get
 abstract class BakkinReaderX(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : ConfigurableSource, HttpSource() {
     override val supportsLatest = false
 

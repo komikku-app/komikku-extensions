@@ -75,23 +75,24 @@ class Rawdevart : ParsedHttpSource() {
                     val typeToExclude = mutableListOf<String>()
                     val typeToInclude = mutableListOf<String>()
                     filter.state.forEach { content ->
-                        if (content.isExcluded())
+                        if (content.isExcluded()) {
                             typeToExclude.add(content.id)
-                        else if (content.isIncluded())
+                        } else if (content.isIncluded()) {
                             typeToInclude.add(content.id)
+                        }
                     }
                     if (typeToExclude.isNotEmpty()) {
                         url.addQueryParameter(
                             "ctype_exc",
                             typeToExclude
-                                .joinToString(",")
+                                .joinToString(","),
                         )
                     }
                     if (typeToInclude.isNotEmpty()) {
                         url.addQueryParameter(
                             "ctype_inc",
                             typeToInclude
-                                .joinToString(",")
+                                .joinToString(","),
                         )
                     }
                 }
@@ -99,23 +100,24 @@ class Rawdevart : ParsedHttpSource() {
                     val statusToExclude = mutableListOf<String>()
                     val statusToInclude = mutableListOf<String>()
                     filter.state.forEach { content ->
-                        if (content.isExcluded())
+                        if (content.isExcluded()) {
                             statusToExclude.add(content.id)
-                        else if (content.isIncluded())
+                        } else if (content.isIncluded()) {
                             statusToInclude.add(content.id)
+                        }
                     }
                     if (statusToExclude.isNotEmpty()) {
                         url.addQueryParameter(
                             "status_exc",
                             statusToExclude
-                                .joinToString(",")
+                                .joinToString(","),
                         )
                     }
                     if (statusToInclude.isNotEmpty()) {
                         url.addQueryParameter(
                             "status_inc",
                             statusToInclude
-                                .joinToString(",")
+                                .joinToString(","),
                         )
                     }
                 }
@@ -123,23 +125,24 @@ class Rawdevart : ParsedHttpSource() {
                     val genreToExclude = mutableListOf<String>()
                     val genreToInclude = mutableListOf<String>()
                     filter.state.forEach { content ->
-                        if (content.isExcluded())
+                        if (content.isExcluded()) {
                             genreToExclude.add(content.id)
-                        else if (content.isIncluded())
+                        } else if (content.isIncluded()) {
                             genreToInclude.add(content.id)
+                        }
                     }
                     if (genreToExclude.isNotEmpty()) {
                         url.addQueryParameter(
                             "genre_exc",
                             genreToExclude
-                                .joinToString(",")
+                                .joinToString(","),
                         )
                     }
                     if (genreToInclude.isNotEmpty()) {
                         url.addQueryParameter(
                             "genre_inc",
                             genreToInclude
-                                .joinToString(",")
+                                .joinToString(","),
                         )
                     }
                 }
@@ -259,8 +262,8 @@ class Rawdevart : ParsedHttpSource() {
             Pair("Z-A", "2"),
             Pair("Star", "3"),
             Pair("Bookmark", "4"),
-            Pair("View", "5")
-        )
+            Pair("View", "5"),
+        ),
     )
 
     private class TypeFilter(type: List<Tag>) : Filter.Group<Tag>("Types", type)
@@ -277,7 +280,7 @@ class Rawdevart : ParsedHttpSource() {
         SortFilter(),
         TypeFilter(getTypeList()),
         StatusFilter(getStatusList()),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     private fun getTypeList() = listOf(
@@ -286,7 +289,7 @@ class Rawdevart : ParsedHttpSource() {
         Tag("2", "Manhwa - Korean"),
         Tag("3", "Manhua - Chinese"),
         Tag("4", "Comic"),
-        Tag("5", "Doujinshi")
+        Tag("5", "Doujinshi"),
     )
 
     private fun getStatusList() = listOf(
@@ -294,7 +297,7 @@ class Rawdevart : ParsedHttpSource() {
         Tag("1", "Haitus"),
         Tag("2", "Axed"),
         Tag("3", "Unknown"),
-        Tag("4", "Finished")
+        Tag("4", "Finished"),
     )
 
     private fun getGenreList() = listOf(
@@ -340,7 +343,7 @@ class Rawdevart : ParsedHttpSource() {
         Tag("23", "Tragedy"),
         Tag("24", "Wuxia"),
         Tag("25", "Yaoi"),
-        Tag("26", "Yuri")
+        Tag("26", "Yuri"),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

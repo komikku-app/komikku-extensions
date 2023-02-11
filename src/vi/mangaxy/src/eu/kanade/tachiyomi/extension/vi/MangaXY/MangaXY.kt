@@ -43,7 +43,7 @@ class MangaXY : ParsedHttpSource() {
             .addQueryParameter("view", "thumb")
             .addQueryParameter("page", page.toString())
             .toString(),
-        headers
+        headers,
     )
 
     override fun popularMangaSelector() = ".container > .row > div.col-12.col-lg-9 > #tblChap > .thumb"
@@ -75,7 +75,7 @@ class MangaXY : ParsedHttpSource() {
             .addQueryParameter("view", "thumb")
             .addQueryParameter("page", page.toString())
             .toString(),
-        headers
+        headers,
     )
 
     override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
@@ -85,7 +85,7 @@ class MangaXY : ParsedHttpSource() {
     open class UriPartFilter(
         displayName: String,
         private val vals: Array<Pair<String, String>>,
-        state: Int = 0
+        state: Int = 0,
     ) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), state) {
         fun toUriPart() = vals[state].second
@@ -100,7 +100,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("Theo ABC", "ten"),
             Pair("Số Chương", "sochap"),
         ),
-        2
+        2,
     )
 
     private class SearchTypeFilter : UriPartFilter(
@@ -108,7 +108,7 @@ class MangaXY : ParsedHttpSource() {
         arrayOf(
             Pair("AND/và", "and"),
             Pair("OR/hoặc", "or"),
-        )
+        ),
     )
 
     private class ForFilter : UriPartFilter(
@@ -118,7 +118,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("Con gái", "gai"),
             Pair("Con trai", "trai"),
             Pair("Con nít", "nit"),
-        )
+        ),
     )
 
     private class AgeFilter : UriPartFilter(
@@ -131,7 +131,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("= 16", "16"),
             Pair("= 17", "17"),
             Pair("= 18", "18"),
-        )
+        ),
     )
 
     private class StatusFilter : UriPartFilter(
@@ -141,7 +141,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("Đang dịch", "Ongoing"),
             Pair("Hoàn thành", "Complete"),
             Pair("Tạm ngưng", "Drop"),
-        )
+        ),
     )
 
     private class OriginFilter : UriPartFilter(
@@ -152,7 +152,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("Trung Quốc", "trung"),
             Pair("Hàn Quốc", "han"),
             Pair("Việt Nam", "vietnam"),
-        )
+        ),
     )
 
     private class ReadingModeFilter : UriPartFilter(
@@ -162,7 +162,7 @@ class MangaXY : ParsedHttpSource() {
             Pair("Chưa xác định", "chưa xác định"),
             Pair("Phải qua trái", "xem từ phải qua trái"),
             Pair("Trái qua phải", "xem từ trái qua phải"),
-        )
+        ),
     )
 
     private class YearFilter : Filter.Text("Năm phát hành")
@@ -216,20 +216,20 @@ class MangaXY : ParsedHttpSource() {
                             "baogom",
                             filter.state
                                 .filter { it.state == Filter.TriState.STATE_INCLUDE }
-                                .joinToString(",") { it.id }
+                                .joinToString(",") { it.id },
                         )
                         addQueryParameter(
                             "khonggom",
                             filter.state
                                 .filter { it.state == Filter.TriState.STATE_EXCLUDE }
-                                .joinToString(",") { it.id }
+                                .joinToString(",") { it.id },
                         )
                     }
                     else -> {}
                 }
             }
         }.build().toString(),
-        headers
+        headers,
     )
 
     override fun searchMangaSelector() = popularMangaSelector()
@@ -382,6 +382,6 @@ class MangaXY : ParsedHttpSource() {
         Genre("Supernatural", "102"),
         Genre("Tragedy", "104"),
         Genre("Yaoi", "114"),
-        Genre("Yuri", "111")
+        Genre("Yuri", "111"),
     )
 }

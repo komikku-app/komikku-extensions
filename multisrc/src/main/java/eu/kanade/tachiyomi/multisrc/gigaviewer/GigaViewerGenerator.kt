@@ -21,7 +21,7 @@ class GigaViewerGenerator : ThemeSourceGenerator {
         SingleLang("Magazine Pocket", "https://pocket.shonenmagazine.com", "ja"),
         SingleLang("Shonen Jump+", "https://shonenjumpplus.com", "ja", pkgName = "shonenjumpplus", className = "ShonenJumpPlus", overrideVersionCode = 2),
         SingleLang("Sunday Web Every", "https://www.sunday-webry.com", "ja"),
-        SingleLang("Tonari no Young Jump", "https://tonarinoyj.jp", "ja", className = "TonariNoYoungJump")
+        SingleLang("Tonari no Young Jump", "https://tonarinoyj.jp", "ja", className = "TonariNoYoungJump"),
     )
 
     companion object {

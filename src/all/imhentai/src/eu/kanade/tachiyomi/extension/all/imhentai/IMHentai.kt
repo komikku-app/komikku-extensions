@@ -47,7 +47,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
                 return response.newBuilder()
                     .body(responseString.toResponseBody(responseContentType))
                     .build()
-            }
+            },
         ).build()
 
     // Popular
@@ -143,7 +143,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
                 it.ownText(),
                 it.select(".split_tag")?.text()
                     ?.trim()
-                    ?.removePrefix("| ")
+                    ?.removePrefix("| "),
             )
                 .filter { s -> !s.isNullOrBlank() }
                 .joinToString(splitTagSeparator)
@@ -151,7 +151,6 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
     }
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-
         title = document.selectFirst("div.right_details > h1").text()
 
         thumbnail_url = document.selectFirst("div.left_cover img")?.let {
@@ -179,7 +178,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
             "Characters",
             "Groups",
             "Languages",
-            "Category"
+            "Category",
         ).map { it to infoMap[it]?.csvText() }
             .let { listOf(Pair("Alternate Title", altTitle)) + it + listOf(Pair("Pages", pages)) }
             .filter { !it.second.isNullOrEmpty() }
@@ -194,7 +193,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
                 setUrlWithoutDomain(response.request.url.toString().replace("gallery", "view") + "1")
                 name = "Chapter"
                 chapter_number = 1f
-            }
+            },
         )
     }
 
@@ -223,7 +222,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
 
         val images = json.parseToJsonElement(
             document.selectFirst("script:containsData(var g_th)").data()
-                .substringAfter("$.parseJSON('").substringBefore("');").trim()
+                .substringAfter("$.parseJSON('").substringBefore("');").trim(),
         ).jsonObject
         val pages = mutableListOf<Page>()
 
@@ -257,7 +256,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
     private fun getFilterList(sortOrderState: Int) = FilterList(
         SortOrderFilter(getSortOrderURIs(), sortOrderState),
         CategoryFilters(getCategoryURIs()),
-        LanguageFilters(getLanguageURIs().filter { it.name != imhLang }) // exclude main lang
+        LanguageFilters(getLanguageURIs().filter { it.name != imhLang }), // exclude main lang
     )
 
     private fun getCategoryURIs() = listOf(
@@ -266,7 +265,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
         SearchFlagFilter("Western", "western"),
         SearchFlagFilter("Image Set", "imageset"),
         SearchFlagFilter("Artist CG", "artistcg"),
-        SearchFlagFilter("Game CG", "gamecg")
+        SearchFlagFilter("Game CG", "gamecg"),
     )
 
     // update sort order indices in companion object if order is changed
@@ -274,7 +273,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
         Pair("Popular", "pp"),
         Pair("Latest", "lt"),
         Pair("Downloads", "dl"),
-        Pair("Top Rated", "tr")
+        Pair("Top Rated", "tr"),
     )
 
     private fun getLanguageURIs() = listOf(
@@ -284,7 +283,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
         LanguageFilter(LANGUAGE_FRENCH, "fr"),
         LanguageFilter(LANGUAGE_KOREAN, "kr"),
         LanguageFilter(LANGUAGE_GERMAN, "de"),
-        LanguageFilter(LANGUAGE_RUSSIAN, "ru")
+        LanguageFilter(LANGUAGE_RUSSIAN, "ru"),
     )
 
     private fun getLanguageURIByName(name: String): LanguageFilter {

@@ -14,12 +14,11 @@ open class UriPartFilter(
     private val uriParam: String,
     private val vals: Array<Pair<String, String>>,
     private val firstIsUnspecified: Boolean = true,
-    defaultValue: Int = 0
+    defaultValue: Int = 0,
 ) :
     Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray(), defaultValue),
     UriFilter {
     override fun addToUri(uri: Uri.Builder) {
-
         if (state != 0 || !firstIsUnspecified) {
             val filter = vals[state].first
             uri.appendPath(filter)

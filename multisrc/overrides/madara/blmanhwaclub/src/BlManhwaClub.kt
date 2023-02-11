@@ -11,7 +11,7 @@ class BlManhwaClub : Madara(
     "BL Manhwa Club",
     "https://blmanhwa.club",
     "pt-BR",
-    SimpleDateFormat("dd MMM yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd MMM yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

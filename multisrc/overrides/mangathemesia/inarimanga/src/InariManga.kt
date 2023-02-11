@@ -8,5 +8,5 @@ class InariManga : MangaThemesia(
     "InariManga",
     "https://inarimanga.com",
     "es",
-    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("es"))
+    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("es")),
 )

@@ -18,10 +18,10 @@ import rx.Observable
 abstract class MangaCatalog(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : ParsedHttpSource() {
     open val sourceList = listOf(
-        Pair("$name", "$baseUrl")
+        Pair("$name", "$baseUrl"),
     ).sortedBy { it.first }.distinctBy { it.second }
 
     // Info

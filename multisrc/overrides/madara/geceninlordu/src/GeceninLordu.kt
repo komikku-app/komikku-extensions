@@ -10,7 +10,7 @@ class GeceninLordu : Madara(
     "Gecenin Lordu",
     "https://geceninlordu.com/",
     "tr",
-    SimpleDateFormat("dd MMM yyyy", Locale("tr"))
+    SimpleDateFormat("dd MMM yyyy", Locale("tr")),
 ) {
 
     override val useLoadMoreSearch = false

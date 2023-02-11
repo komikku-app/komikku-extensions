@@ -8,5 +8,5 @@ class MangaPT : Madara(
     "MangaPT",
     "https://mangapt.com",
     "es",
-    SimpleDateFormat("dd/MM/yyyy", Locale("es"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("es")),
 )

@@ -73,13 +73,16 @@ class SortFilter(private val sortings: List<Tag>, private val default: Int) :
     Filter.Sort(
         "Ordem",
         sortings.map { it.name }.toTypedArray(),
-        Selection(default, false)
+        Selection(default, false),
     ),
     QueryParameterFilter {
 
     override fun toQueryParameter(url: HttpUrl.Builder, query: String) {
-        val orderBy = if (state == null) sortings[default].id else
+        val orderBy = if (state == null) {
+            sortings[default].id
+        } else {
             sortings[state!!.index].id
+        }
         val order = if (state?.ascending == true) "asc" else "desc"
 
         url.addQueryParameter("order", order)

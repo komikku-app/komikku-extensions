@@ -168,20 +168,20 @@ class REManga : ParsedHttpSource() {
         Pair("titlereverse", "Z-A"),
         Pair("update", "Latest Update"),
         Pair("latest", "Latest Added"),
-        Pair("popular", "Popular")
+        Pair("popular", "Popular"),
     )
 
     private fun getStatusFilters(): Array<Pair<String?, String>> = arrayOf(
         Pair("", "All"),
         Pair("Publishing", "مستمر"),
-        Pair("Finished", "تاريخ انتهي")
+        Pair("Finished", "تاريخ انتهي"),
     )
 
     private fun getTypeFilter(): Array<Pair<String?, String>> = arrayOf(
         Pair("", "All"),
         Pair("Manga", "Manga"),
         Pair("Manhwa", "Manhwa"),
-        Pair("Manhua", "Manhua")
+        Pair("Manhua", "Manhua"),
     )
 
     open fun getGenreFilters(): List<Genre> = listOf(
@@ -213,7 +213,7 @@ class REManga : ParsedHttpSource() {
         Genre("Sports", "sports"),
         Genre("Super Power", "super-power"),
         Genre("Supernatural", "supernatural"),
-        Genre("Vampire", "vampire")
+        Genre("Vampire", "vampire"),
     )
 
     open fun getYearFilters(): List<Year> = listOf(
@@ -242,7 +242,7 @@ class REManga : ParsedHttpSource() {
         Year("2017", "2017"),
         Year("2018", "2018"),
         Year("2019", "2019"),
-        Year("2020", "2020")
+        Year("2020", "2020"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String?, String>>) :

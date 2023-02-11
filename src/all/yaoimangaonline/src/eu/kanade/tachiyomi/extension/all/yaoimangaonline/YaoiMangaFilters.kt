@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.extension.all.yaoimangaonline
 import eu.kanade.tachiyomi.source.model.Filter
 
 class CategoryFilter(
-    values: Array<String> = categories.keys.toTypedArray()
+    values: Array<String> = categories.keys.toTypedArray(),
 ) : Filter.Select<String>("Category", values) {
     override fun toString() = categories[values[state]]!!
 
@@ -375,7 +375,7 @@ class CategoryFilter(
 }
 
 class TagFilter(
-    values: Array<String> = tags.keys.toTypedArray()
+    values: Array<String> = tags.keys.toTypedArray(),
 ) : Filter.Select<String>("Tag", values) {
     override fun toString() = tags[values[state]]!!
 

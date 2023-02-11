@@ -15,8 +15,9 @@ class Gufengmh : SinMH("古风漫画网", "https://www.123gf.com") {
         super.mangaDetailsParse(document).apply {
             if (status == SManga.COMPLETED) return@apply
             val firstChapter = document.selectFirst(".chapter-body li > a") ?: return@apply
-            if (firstChapter.attr("href").startsWith("javascript"))
+            if (firstChapter.attr("href").startsWith("javascript")) {
                 status = SManga.LICENSED
+            }
         }
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> =

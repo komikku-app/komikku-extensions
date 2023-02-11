@@ -155,7 +155,7 @@ class AsgardTeam : ParsedHttpSource() {
         Pair("", "<select>"),
         Pair("3", "صينية (مانها)"),
         Pair("2", "مانجا (يابانية)"),
-        Pair("1", "كورية (مانهوا)")
+        Pair("1", "كورية (مانهوا)"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String?, String>>) :

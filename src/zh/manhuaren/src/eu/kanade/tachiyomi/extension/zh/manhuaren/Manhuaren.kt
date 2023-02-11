@@ -112,7 +112,7 @@ class Manhuaren : HttpSource() {
                         else -> SManga.UNKNOWN
                     }
                     url = "/v1/manga/getDetail?mangaId=$id"
-                }
+                },
             )
         }
         return MangasPage(ret, arr.length() != 0)
@@ -246,7 +246,7 @@ class Manhuaren : HttpSource() {
                     date_upload = dateFormat.parse(obj.getString("releaseTime"))?.time ?: 0L
                     chapter_number = obj.getInt("sectionSort").toFloat()
                     url = "/v1/manga/getRead?mangaSectionId=${obj.getInt("sectionId")}"
-                }
+                },
             )
         }
         return ret
@@ -295,8 +295,8 @@ class Manhuaren : HttpSource() {
                 Pair("热门", "0"),
                 Pair("更新", "1"),
                 Pair("新作", "2"),
-                Pair("完结", "3")
-            )
+                Pair("完结", "3"),
+            ),
         ),
         CategoryFilter(
             "分类",
@@ -337,9 +337,9 @@ class Manhuaren : HttpSource() {
                 Category("港台", "2", "35"),
                 Category("日韩", "2", "36"),
                 Category("大陆", "2", "37"),
-                Category("欧美", "2", "52")
-            )
-        )
+                Category("欧美", "2", "52"),
+            ),
+        ),
     )
 
     private data class Category(val name: String, val type: String, val id: String)
@@ -347,11 +347,11 @@ class Manhuaren : HttpSource() {
     private class SortFilter(
         name: String,
         val vals: Array<Pair<String, String>>,
-        state: Int = 0
+        state: Int = 0,
     ) : Filter.Select<String>(
         name,
         vals.map { it.first }.toTypedArray(),
-        state
+        state,
     ) {
         fun getId() = vals[state].second
     }
@@ -359,11 +359,11 @@ class Manhuaren : HttpSource() {
     private class CategoryFilter(
         name: String,
         val vals: Array<Category>,
-        state: Int = 0
+        state: Int = 0,
     ) : Filter.Select<String>(
         name,
         vals.map { it.name }.toTypedArray(),
-        state
+        state,
     ) {
         fun getId() = vals[state].id
         fun getType() = vals[state].type

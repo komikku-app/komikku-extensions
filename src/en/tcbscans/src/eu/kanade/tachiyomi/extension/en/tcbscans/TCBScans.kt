@@ -30,6 +30,7 @@ class TCBScans : ParsedHttpSource() {
         private const val MIGRATE_MESSAGE = "Migrate from TCB Scans to TCB Scans"
         private val TITLE_REGEX = "[0-9]+$".toRegex()
     }
+
     // popular
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/projects")
@@ -135,8 +136,9 @@ class TCBScans : ParsedHttpSource() {
         var name = element.select(".text-lg.font-bold:not(.flex)").text()
         val description = element.select(".text-gray-500").text()
         val matchResult = TITLE_REGEX.find(name)
-        if (matchResult != null)
+        if (matchResult != null) {
             name = "Chapter ${matchResult.value}"
+        }
         chapter.name = "$name: $description"
 
         return chapter

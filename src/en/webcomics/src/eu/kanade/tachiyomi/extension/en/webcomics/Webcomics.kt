@@ -154,7 +154,7 @@ class Webcomics : ParsedHttpSource() {
     override fun pageListParse(document: Document) = document
         .select("section.book-reader .img-list > li > img")
         .mapIndexed {
-            i, element ->
+                i, element ->
             Page(i, "", element.attr("data-original"))
         }
 
@@ -163,7 +163,7 @@ class Webcomics : ParsedHttpSource() {
     private class GenreFilter(genres: Array<String>) : Filter.Select<String>("Genre", genres)
 
     override fun getFilterList() = FilterList(
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     // [...$('.row.wiki-book-nav .col-md-8 ul a')].map(el => `"${el.textContent.trim()}"`).join(',\n')
@@ -182,6 +182,6 @@ class Webcomics : ParsedHttpSource() {
         "Thriller",
         "Historical",
         "Sci-fi",
-        "Slice of Life"
+        "Slice of Life",
     )
 }

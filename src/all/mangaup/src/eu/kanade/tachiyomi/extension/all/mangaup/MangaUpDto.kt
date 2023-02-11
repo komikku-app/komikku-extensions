@@ -8,12 +8,12 @@ import java.util.Date
 
 @Serializable
 data class MangaUpSearch(
-    val titles: List<MangaUpTitle> = emptyList()
+    val titles: List<MangaUpTitle> = emptyList(),
 )
 
 @Serializable
 data class MangaUpViewer(
-    val pages: List<MangaUpPage> = emptyList()
+    val pages: List<MangaUpPage> = emptyList(),
 )
 
 @Serializable
@@ -27,7 +27,7 @@ data class MangaUpTitle(
     val mainThumbnailUrl: String? = null,
     val bookmarkCount: Int? = null,
     val genres: List<MangaUpGenre> = emptyList(),
-    val chapters: List<MangaUpChapter> = emptyList()
+    val chapters: List<MangaUpChapter> = emptyList(),
 ) {
 
     private val fullDescription: String
@@ -56,7 +56,7 @@ data class MangaUpTitle(
 @Serializable
 data class MangaUpGenre(
     val id: Int,
-    val name: String
+    val name: String,
 )
 
 @Serializable
@@ -67,7 +67,7 @@ data class MangaUpChapter(
     val price: Int? = null,
     val published: Int,
     val badge: MangaUpBadge = MangaUpBadge.FREE,
-    val available: Boolean = false
+    val available: Boolean = false,
 ) {
 
     val isReadable: Boolean
@@ -88,10 +88,10 @@ data class MangaUpChapter(
 enum class MangaUpBadge {
     FREE,
     ADVANCE,
-    UPDATE
+    UPDATE,
 }
 
 @Serializable
 data class MangaUpPage(
-    val imageUrl: String
+    val imageUrl: String,
 )

@@ -146,7 +146,7 @@ abstract class NoiseManga(override val lang: String) : ParsedHttpSource() {
                 artist = "Max Andrade"
                 author = "Max Andrade"
                 thumbnail_url = "/wp-content/uploads/2019/11/TC_001_NOISE_0000-1.jpg"
-            }
+            },
         )
     }
 }

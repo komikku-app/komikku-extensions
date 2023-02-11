@@ -35,8 +35,9 @@ class Tappytoon(override val lang: String) : HttpSource() {
         val res = chain.proceed(chain.request())
         val mime = res.headers["Content-Type"]
         if (res.isSuccessful) {
-            if (mime != "application/octet-stream")
+            if (mime != "application/octet-stream") {
                 return@addInterceptor res
+            }
             // Fix image content type
             val type = IMG_CONTENT_TYPE.toMediaType()
             val body = res.body!!.bytes().toResponseBody(type)
@@ -180,7 +181,7 @@ class Tappytoon(override val lang: String) : HttpSource() {
 
     override fun getFilterList() = FilterList(
         Filter.Header("NOTE: can't be used with text search!"),
-        Genre(genres.keys.toTypedArray())
+        Genre(genres.keys.toTypedArray()),
     )
 
     private inline fun <reified T> Response.parse() =
@@ -217,7 +218,7 @@ class Tappytoon(override val lang: String) : HttpSource() {
             "Slice of Life" to "slice",
             "BL" to "bl",
             "Comedy" to "comedy",
-            "GL" to "gl"
+            "GL" to "gl",
         )
 
         private val dateFormat by lazy {

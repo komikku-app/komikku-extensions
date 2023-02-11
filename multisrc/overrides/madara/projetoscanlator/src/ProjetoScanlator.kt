@@ -11,7 +11,7 @@ class ProjetoScanlator : Madara(
     "Projeto Scanlator",
     "https://projetoscanlator.com",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

@@ -11,7 +11,7 @@ class Remangas : Madara(
     "Remangas",
     "https://remangas.net",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMM 'de' yyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd 'de' MMM 'de' yyy", Locale("pt", "BR")),
 ) {
     override val versionId = 2
 

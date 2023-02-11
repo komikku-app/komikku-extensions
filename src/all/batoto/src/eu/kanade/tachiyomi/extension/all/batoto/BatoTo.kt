@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit
 
 open class BatoTo(
     final override val lang: String,
-    private val siteLang: String
+    private val siteLang: String,
 ) : ConfigurableSource, ParsedHttpSource() {
 
     private val preferences: SharedPreferences by lazy {
@@ -200,7 +200,8 @@ open class BatoTo(
                         is GenreGroupFilter -> {
                             with(filter) {
                                 url.addQueryParameter(
-                                    "genres", included.joinToString(",") + "|" + excluded.joinToString(",")
+                                    "genres",
+                                    included.joinToString(",") + "|" + excluded.joinToString(","),
                                 )
                             }
                         }
@@ -344,8 +345,8 @@ open class BatoTo(
                 when {
                     manga.url.startsWith("http") -> manga.url
                     else -> "$baseUrl${manga.url}"
-                }
-            )
+                },
+            ),
         ).execute().asJsoup()
         if (getAltChapterListPref() || checkChapterLists(url)) {
             val id = manga.url.substringBeforeLast("/").substringAfterLast("/").trim()
@@ -819,7 +820,7 @@ open class BatoTo(
         TriStateFilterOption("lolicon", "lolicon"),
         TriStateFilterOption("award_winning", "Award Winning"),
         TriStateFilterOption("youkai", "Youkai"),
-        TriStateFilterOption("uncategorized", "Uncategorized")
+        TriStateFilterOption("uncategorized", "Uncategorized"),
     )
 
     private fun getLangFilter() = listOf(
@@ -949,7 +950,7 @@ open class BatoTo(
             "dto.to",
             "hto.to",
             "mto.to",
-            "wto.to"
+            "wto.to",
         )
         private val MIRROR_PREF_ENTRY_VALUES = arrayOf(
             "https://bato.to",
@@ -965,7 +966,7 @@ open class BatoTo(
             "https://dto.to",
             "https://hto.to",
             "https://mto.to",
-            "https://wto.to"
+            "https://wto.to",
         )
         private val MIRROR_PREF_DEFAULT_VALUE = MIRROR_PREF_ENTRY_VALUES[0]
 

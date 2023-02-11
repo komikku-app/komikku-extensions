@@ -21,7 +21,7 @@ import java.util.Locale
 abstract class Gattsu(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -135,8 +135,11 @@ abstract class Gattsu(
     }
 
     protected fun Element.imgAttr(): String =
-        if (hasAttr("data-src")) attr("abs:data-src")
-        else attr("abs:src")
+        if (hasAttr("data-src")) {
+            attr("abs:data-src")
+        } else {
+            attr("abs:src")
+        }
 
     protected fun String.toDate(): Long {
         return try {

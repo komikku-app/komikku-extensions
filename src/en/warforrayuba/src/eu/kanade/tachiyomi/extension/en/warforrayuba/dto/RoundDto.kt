@@ -9,5 +9,5 @@ data class RoundDto(
     val artist: String,
     val author: String,
     val cover: String,
-    val chapters: Map<Int, ChapterDto>
+    val chapters: Map<Int, ChapterDto>,
 )

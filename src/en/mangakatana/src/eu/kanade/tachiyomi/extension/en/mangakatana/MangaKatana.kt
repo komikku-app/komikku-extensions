@@ -239,15 +239,15 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
         StatusFilter(),
         Filter.Separator(),
         Filter.Header("Input -1 to search for only oneshots"),
-        ChaptersFilter()
+        ChaptersFilter(),
     )
 
     private class TypeFilter : UriPartFilter(
         "Text search by",
         arrayOf(
             Pair("Title", "book_name"),
-            Pair("Author", "author")
-        )
+            Pair("Author", "author"),
+        ),
     )
 
     private class Genre(val id: String, name: String) : Filter.TriState(name)
@@ -311,8 +311,8 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
         "Genre inclusion mode",
         arrayOf(
             Pair("And", "and"),
-            Pair("Or", "or")
-        )
+            Pair("Or", "or"),
+        ),
     )
 
     private class ChaptersFilter : Filter.Text("Minimum Chapters")
@@ -323,8 +323,8 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
             Pair("Latest update", "latest"),
             Pair("New manga", "new"),
             Pair("A-Z", "az"),
-            Pair("Number of chapters", "numc")
-        )
+            Pair("Number of chapters", "numc"),
+        ),
     )
 
     private class StatusFilter : UriPartFilter(
@@ -333,8 +333,8 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
             Pair("All", ""),
             Pair("Cancelled", "0"),
             Pair("Ongoing", "1"),
-            Pair("Completed", "2")
-        )
+            Pair("Completed", "2"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

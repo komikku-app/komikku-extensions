@@ -48,7 +48,7 @@ class PepperCarrot : HttpSource(), ConfigurableSource {
 
     private fun getArtworkList(): List<SManga> = arrayOf(
         "artworks", "wallpapers", "sketchbook", "misc",
-        "book-publishing", "comissions", "eshop", "framasoft", "press", "references", "wiki"
+        "book-publishing", "comissions", "eshop", "framasoft", "press", "references", "wiki",
     ).map(::getArtworkEntry)
 
     override fun getFilterList() = getFilters(preferences)

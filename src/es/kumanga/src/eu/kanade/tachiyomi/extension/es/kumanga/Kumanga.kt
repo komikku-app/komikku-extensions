@@ -164,7 +164,9 @@ class Kumanga : HttpSource() {
                 document.select(chapterSelector()).map { add(chapterFromElement(it)) }
                 page++
             }
-        } else throw Exception("No fue posible obtener los capítulos")
+        } else {
+            throw Exception("No fue posible obtener los capítulos")
+        }
     }
 
     override fun pageListParse(response: Response): List<Page> {
@@ -224,7 +226,7 @@ class Kumanga : HttpSource() {
         Filter.Separator(),
         StatusList(getStatusList()),
         Filter.Separator(),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private class Type(name: String, val id: String) : Filter.CheckBox(name)
@@ -241,13 +243,13 @@ class Kumanga : HttpSource() {
         Type("Manhwa", "2"),
         Type("Manhua", "3"),
         Type("One shot", "4"),
-        Type("Doujinshi", "5")
+        Type("Doujinshi", "5"),
     )
 
     private fun getStatusList() = listOf(
         Status("Activo", "1"),
         Status("Finalizado", "2"),
-        Status("Inconcluso", "3")
+        Status("Inconcluso", "3"),
     )
 
     private fun getGenreList() = listOf(
@@ -298,6 +300,6 @@ class Kumanga : HttpSource() {
         Genre("Vampiros", "42"),
         Genre("Vida escolar", "43"),
         Genre("Yaoi", "44"),
-        Genre("Yuri", "45")
+        Genre("Yuri", "45"),
     )
 }

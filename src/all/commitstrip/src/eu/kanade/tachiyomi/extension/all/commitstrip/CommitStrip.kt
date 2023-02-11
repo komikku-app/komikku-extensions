@@ -19,7 +19,7 @@ import java.util.Locale
 
 abstract class CommitStrip(
     override val lang: String,
-    private val siteLang: String
+    private val siteLang: String,
 ) : ParsedHttpSource() {
 
     override val name = "Commit Strip"
@@ -72,7 +72,7 @@ abstract class CommitStrip(
     override fun fetchMangaDetails(manga: SManga) = Observable.just(
         manga.apply {
             initialized = true
-        }
+        },
     )!!
 
     // Open in WebView

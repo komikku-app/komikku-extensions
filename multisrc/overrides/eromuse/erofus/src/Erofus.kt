@@ -153,13 +153,13 @@ class Erofus : EroMuse("Erofus", "https://www.erofus.com") {
         Triple("Magnifire Comics", "/comics/magnifire-comics", AUTHOR),
         Triple("Reptileye Comics", "/comics/reptileye-comics", AUTHOR),
         Triple("ProjectPinkXXX.com Comics", "/comics/projectpinkxxx_com-comics", AUTHOR),
-        Triple("CallMePlisskin Comics", "/comics/callmeplisskin-comics", AUTHOR)
+        Triple("CallMePlisskin Comics", "/comics/callmeplisskin-comics", AUTHOR),
     )
 
     override fun getSortList() = arrayOf(
         Pair("Viewed", "viewed"),
         Pair("Liked", "liked"),
         Pair("Date", "recent"),
-        Pair("A-Z", "az")
+        Pair("A-Z", "az"),
     )
 }

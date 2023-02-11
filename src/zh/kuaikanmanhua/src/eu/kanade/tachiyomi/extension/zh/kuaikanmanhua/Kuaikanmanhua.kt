@@ -99,7 +99,6 @@ class Kuaikanmanhua : HttpSource() {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         return if (query.isNotEmpty()) {
-
             GET("$apiUrl/v1/search/topic?q=$query&size=18", headers)
         } else {
             lateinit var genre: String
@@ -179,7 +178,7 @@ class Kuaikanmanhua : HttpSource() {
                             ""
                         }
                     date_upload = obj["created_at"]!!.jsonPrimitive.long * 1000
-                }
+                },
             )
         }
         return chapters
@@ -198,7 +197,7 @@ class Kuaikanmanhua : HttpSource() {
     }
 
     val fixJson: (MatchResult) -> CharSequence = {
-        match: MatchResult ->
+            match: MatchResult ->
         val str = match.value
         val out = str[0] + "\"" + str.subSequence(1, str.length - 1) + "\"" + str[str.length - 1]
         out
@@ -234,7 +233,7 @@ class Kuaikanmanhua : HttpSource() {
     override fun getFilterList() = FilterList(
         Filter.Header("注意：不影響按標題搜索"),
         StatusFilter(),
-        GenreFilter()
+        GenreFilter(),
     )
 
     override fun imageUrlParse(response: Response): String {
@@ -264,8 +263,8 @@ class Kuaikanmanhua : HttpSource() {
             Pair("萌系", "62"),
             Pair("玄幻", "63"),
             Pair("日常", "19"),
-            Pair("投稿", "76")
-        )
+            Pair("投稿", "76"),
+        ),
     )
 
     private class StatusFilter : UriPartFilter(
@@ -273,8 +272,8 @@ class Kuaikanmanhua : HttpSource() {
         arrayOf(
             Pair("全部", "1"),
             Pair("连载中", "2"),
-            Pair("已完结", "3")
-        )
+            Pair("已完结", "3"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

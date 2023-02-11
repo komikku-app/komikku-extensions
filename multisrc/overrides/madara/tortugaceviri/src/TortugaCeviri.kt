@@ -10,7 +10,7 @@ class TortugaCeviri : Madara(
     "Tortuga Ceviri",
     "https://tortuga-ceviri.com",
     "tr",
-    SimpleDateFormat("MMM d, yyy", Locale("tr"))
+    SimpleDateFormat("MMM d, yyy", Locale("tr")),
 ) {
     override val versionId = 2
 

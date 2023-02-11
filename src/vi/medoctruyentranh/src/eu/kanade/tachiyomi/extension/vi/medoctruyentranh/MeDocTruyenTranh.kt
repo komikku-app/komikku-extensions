@@ -58,7 +58,7 @@ class MeDocTruyenTranh : ParsedHttpSource() {
             .map {
                 Pair(
                     it.jsonObject["title"]!!.jsonPrimitive.content,
-                    it.jsonObject["coverimg"]!!.jsonPrimitive.content
+                    it.jsonObject["coverimg"]!!.jsonPrimitive.content,
                 )
             }
             .toMap()
@@ -102,7 +102,6 @@ class MeDocTruyenTranh : ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-
         val nextData = document.select("script#__NEXT_DATA__").first()
             .let { json.parseToJsonElement(it.data()).jsonObject }
 
@@ -156,7 +155,7 @@ class MeDocTruyenTranh : ParsedHttpSource() {
         // 2019-05-09T07:09:58
         val dateFormat = SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss",
-            Locale.US
+            Locale.US,
         )
         return dateFormat.parse(date)?.time ?: 0L
     }

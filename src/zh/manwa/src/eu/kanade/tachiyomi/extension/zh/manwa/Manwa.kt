@@ -57,7 +57,9 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
             originalResponse.newBuilder()
                 .body(newBody)
                 .build()
-        } else originalResponse
+        } else {
+            originalResponse
+        }
     }
     override val client: OkHttpClient = network.client.newBuilder()
         .addNetworkInterceptor(rewriteOctetStream)

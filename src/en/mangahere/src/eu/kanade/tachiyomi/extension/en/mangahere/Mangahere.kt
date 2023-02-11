@@ -50,11 +50,11 @@ class Mangahere : ParsedHttpSource() {
                                 .path("/")
                                 .name("isAdult")
                                 .value("1")
-                                .build()
+                                .build(),
                         )
                     }
                 }
-            }
+            },
         )
         .build()
 
@@ -218,7 +218,7 @@ class Mangahere : ParsedHttpSource() {
         /*
             function to drop last imageUrl if it's broken/unneccesary, working imageUrls are incremental (e.g. t001, t002, etc); if the difference between
             the last two isn't 1 or doesn't have an Int at the end of the last imageUrl's filename, drop last Page
-        */
+         */
         fun List<Page>.dropLastIfBroken(): List<Page> {
             val list = this.takeLast(2).map { page ->
                 try {
@@ -251,7 +251,7 @@ class Mangahere : ParsedHttpSource() {
             val chapterIdStartLoc = html.indexOf("chapterid")
             val chapterId = html.substring(
                 chapterIdStartLoc + 11,
-                html.indexOf(";", chapterIdStartLoc)
+                html.indexOf(";", chapterIdStartLoc),
             ).trim()
 
             val chapterPagesElement = document.select(".pager-list-left > span").first()
@@ -280,10 +280,11 @@ class Mangahere : ParsedHttpSource() {
                     val response = client.newCall(request).execute()
                     responseText = response.body!!.string()
 
-                    if (responseText.isNotEmpty())
+                    if (responseText.isNotEmpty()) {
                         break
-                    else
+                    } else {
                         secretKey = ""
+                    }
                 }
 
                 val deobfuscatedScript = quickJs.evaluate(responseText.removePrefix("eval")).toString()
@@ -315,7 +316,7 @@ class Mangahere : ParsedHttpSource() {
 
         val secretKeyResultScript = secretKeyDeobfuscatedScript.substring(
             secretKeyStartLoc,
-            secretKeyEndLoc
+            secretKeyEndLoc,
         )
 
         return quickJs.evaluate(secretKeyResultScript).toString()
@@ -341,7 +342,7 @@ class Mangahere : ParsedHttpSource() {
         GenreList(genres()),
         RatingList(ratings),
         YearFilter("Year released"),
-        CompletionList(completions)
+        CompletionList(completions),
     )
 
     private val types = hashMapOf(
@@ -352,7 +353,7 @@ class Mangahere : ParsedHttpSource() {
         "American Manga" to 5,
         "Hong Kong Manga" to 6,
         "Other Manga" to 7,
-        "Any" to 0
+        "Any" to 0,
     )
 
     private val completions = arrayOf("Either", "No", "Yes")
@@ -395,6 +396,6 @@ class Mangahere : ParsedHttpSource() {
         Genre("Mecha", 34),
         Genre("Shotacon", 35),
         Genre("Lolicon", 36),
-        Genre("Webtoons", 37)
+        Genre("Webtoons", 37),
     )
 }

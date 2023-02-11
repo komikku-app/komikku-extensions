@@ -49,7 +49,7 @@ open class OtakuSanctuary(
         FormBody.Builder().apply {
             add("Lang", helper.otakusanLang())
             add("PageSize", "24")
-        }.build()
+        }.build(),
     )
 
     private fun parseMangaCollection(elements: Elements): List<SManga> {
@@ -102,7 +102,7 @@ open class OtakuSanctuary(
                 addPathSegments("Home/Search")
                 addQueryParameter("search", query)
             }.build().toString(),
-            headers
+            headers,
         )
 
     override fun searchMangaParse(response: Response): MangasPage {
@@ -186,9 +186,9 @@ open class OtakuSanctuary(
                 POST(
                     "$baseUrl/Manga/UpdateView",
                     headers,
-                    FormBody.Builder().add("chapId", numericId).build()
-                )
-            ).execute().body!!.string()
+                    FormBody.Builder().add("chapId", numericId).build(),
+                ),
+            ).execute().body!!.string(),
         ).jsonObject
 
         if (data["view"] != null) {
@@ -224,9 +224,9 @@ open class OtakuSanctuary(
                     POST(
                         "$baseUrl/Manga/CheckingAlternate",
                         headers,
-                        FormBody.Builder().add("chapId", numericId).build()
-                    )
-                ).execute().body!!.string()
+                        FormBody.Builder().add("chapId", numericId).build(),
+                    ),
+                ).execute().body!!.string(),
             ).jsonObject
             val content = alternate["Content"]?.jsonPrimitive?.content
                 ?: throw Exception("No pages found")

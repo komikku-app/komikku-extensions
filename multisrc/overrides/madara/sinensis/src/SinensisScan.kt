@@ -22,7 +22,7 @@ class SinensisScan : Madara(
     "Sinensis Scan",
     "https://sinensisscans.com",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")),
 ) {
 
     // Name changed from Sinensis to Sinensis Scan

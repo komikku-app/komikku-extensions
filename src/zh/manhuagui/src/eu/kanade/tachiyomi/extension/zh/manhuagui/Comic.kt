@@ -17,5 +17,5 @@ data class Comic(
     val path: String? = "",
     val prevId: Int? = 0,
     val sl: Sl? = Sl(),
-    val status: Int? = 0
+    val status: Int? = 0,
 )

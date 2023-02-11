@@ -24,7 +24,7 @@ class BlogTruyenUrlActivity : Activity() {
                             }
                         }
                         putExtra("filter", packageName)
-                    }
+                    },
                 )
             } catch (e: ActivityNotFoundException) {
                 Log.e("BlogTruyenUrlActivity", e.toString())

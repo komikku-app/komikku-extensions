@@ -8,7 +8,7 @@ class ArabToons : Madara(
     "عرب تونز",
     "https://arabtoons.net",
     "ar",
-    dateFormat = SimpleDateFormat("MMM d", Locale("ar"))
+    dateFormat = SimpleDateFormat("MMM d", Locale("ar")),
 ) {
     override val useNewChapterEndpoint = true
 }

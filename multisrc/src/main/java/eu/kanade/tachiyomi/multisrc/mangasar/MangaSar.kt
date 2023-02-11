@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
 abstract class MangaSar(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : HttpSource() {
 
     override val supportsLatest = true

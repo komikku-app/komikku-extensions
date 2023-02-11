@@ -23,8 +23,9 @@ class GmangaPreferences(id: Long) {
                 summary = "%s"
             }
 
-            if (!preferences.contains(it.key))
+            if (!preferences.contains(it.key)) {
                 preferences.edit().putString(it.key, it.default().key).apply()
+            }
 
             screen.addPreference(preference)
         }
@@ -42,7 +43,7 @@ class GmangaPreferences(id: Long) {
             val key: String,
             val title: String,
             private val options: List<StringPreferenceOption>,
-            private val defaultOptionIndex: Int = 0
+            private val defaultOptionIndex: Int = 0,
         ) {
             fun entries(): Array<String> = options.map { it.title }.toTypedArray()
             fun entryValues(): Array<String> = options.map { it.key }.toTypedArray()
@@ -60,21 +61,21 @@ class GmangaPreferences(id: Long) {
             "كيفية عرض الفصل بقائمة الفصول",
             listOf(
                 StringPreferenceOption(PREF_CHAPTER_LISTING_SHOW_POPULAR, "اختيار النسخة الأكثر مشاهدة"),
-                StringPreferenceOption(PREF_CHAPTER_LISTING_SHOW_ALL, "عرض جميع النسخ")
-            )
+                StringPreferenceOption(PREF_CHAPTER_LISTING_SHOW_ALL, "عرض جميع النسخ"),
+            ),
         )
         val PREF_LASTETS_LISTING = StringPreference(
             "gmanga_last_listing",
             "كيفية عرض بقائمة الأعمال الجديدة ",
             listOf(
                 StringPreferenceOption(PREF_LASTETS_LISTING_SHOW_LASTETS_CHAPTER, "اختيار آخر الإضافات"),
-                StringPreferenceOption(PREF_LASTETS_LISTING_SHOW_LASTETS_MANGA, "اختيار لمانجات الجديدة")
-            )
+                StringPreferenceOption(PREF_LASTETS_LISTING_SHOW_LASTETS_MANGA, "اختيار لمانجات الجديدة"),
+            ),
         )
 
         private val STRING_PREFERENCES = listOf(
             PREF_CHAPTER_LISTING,
-            PREF_LASTETS_LISTING
+            PREF_LASTETS_LISTING,
         )
     }
 }

@@ -33,7 +33,7 @@ import java.util.UUID
 class MangaPlus(
     override val lang: String,
     private val internalLang: String,
-    private val langCode: Language
+    private val langCode: Language,
 ) : HttpSource(), ConfigurableSource {
 
     override val name = "MANGA Plus by SHUEISHA"

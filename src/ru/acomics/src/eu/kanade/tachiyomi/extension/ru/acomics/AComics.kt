@@ -170,14 +170,14 @@ class AComics : ParsedHttpSource() {
             Rating("6+", 3),
             Rating("12+", 4),
             Rating("16+", 5),
-            Rating("18+", 6)
-        )
+            Rating("18+", 6),
+        ),
     )
 
     override fun getFilterList() = FilterList(
         Status(),
         RatingList(),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private fun getGenreList() = listOf(
@@ -193,6 +193,6 @@ class AComics : ParsedHttpSource() {
         Genre("Фантастика", 10),
         Genre("Бытовое", 11),
         Genre("Стимпанк", 12),
-        Genre("Супергерои", 13)
+        Genre("Супергерои", 13),
     )
 }

@@ -16,7 +16,7 @@ class GroupLeGenerator : ThemeSourceGenerator {
         SingleLang("MintManga", "https://mintmanga.live", "ru", overrideVersionCode = 46),
         SingleLang("AllHentai", "http://allhen.online", "ru", isNsfw = true, overrideVersionCode = 22),
         SingleLang("SelfManga", "https://selfmanga.live", "ru", overrideVersionCode = 22),
-        SingleLang("RuMIX", "https://rumix.me", "ru", overrideVersionCode = 1)
+        SingleLang("RuMIX", "https://rumix.me", "ru", overrideVersionCode = 1),
     )
 
     companion object {

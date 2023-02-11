@@ -11,7 +11,7 @@ class MangaClash : Madara(
     "MangaClash",
     "https://mangaclash.com",
     "en",
-    dateFormat = SimpleDateFormat("MM/dd/yy", Locale.US)
+    dateFormat = SimpleDateFormat("MM/dd/yy", Locale.US),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

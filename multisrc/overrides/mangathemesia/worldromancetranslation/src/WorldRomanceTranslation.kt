@@ -11,7 +11,7 @@ class WorldRomanceTranslation : MangaThemesia(
     "World Romance Translation",
     "https://wrt.my.id",
     "id",
-    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("id"))
+    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("id")),
 ) {
     override val projectPageString = "/project-wrt"
 

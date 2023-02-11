@@ -8,5 +8,5 @@ data class RawPageItem(
     val fileName: String? = null,
     val height: Int,
     val pageNo: Int,
-    val width: Int
+    val width: Int,
 )

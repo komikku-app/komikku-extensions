@@ -12,6 +12,6 @@ class ReadBokuNoHeroAcademiaMyHeroAcademiaManga : MangaCatalog("Read Boku no Her
         Pair("Rising", "$baseUrl/manga/deku-bakugo-rising/"),
         Pair("Colored", "$baseUrl/manga/boku-no-hero-academia-colored/"),
         Pair("Oumagadoki Zoo", "$baseUrl/manga/oumagadoki-zoo/"),
-        Pair("Sensei no Bulge", "$baseUrl/manga/sensei-no-bulge/")
+        Pair("Sensei no Bulge", "$baseUrl/manga/sensei-no-bulge/"),
     ).sortedBy { it.first }.distinctBy { it.second }
 }

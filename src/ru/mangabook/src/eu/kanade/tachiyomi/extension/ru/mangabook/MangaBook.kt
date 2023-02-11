@@ -46,6 +46,7 @@ class MangaBook : ParsedHttpSource() {
             thumbnail_url = element.select(".short-poster.img-box > img").attr("src")
         }
     }
+
     // Latest
     override fun latestUpdatesRequest(page: Int) = GET(baseUrl, headers)
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
@@ -122,12 +123,13 @@ class MangaBook : ParsedHttpSource() {
         manga.artist = infoElement.select(".vis:contains(Художник) > a").text()
         manga.status = if (document.select(".fheader h2").text() == "Чтение заблокировано") {
             SManga.LICENSED
-        } else
+        } else {
             when (infoElement.select(".vis:contains(Статус) span.label").text()) {
                 "Сейчас издаётся" -> SManga.ONGOING
                 "Изданное" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
             }
+        }
 
         val rawCategory = infoElement.select(".vis:contains(Жанр (вид)) span.label").text()
         val category = when {
@@ -172,6 +174,7 @@ class MangaBook : ParsedHttpSource() {
     private fun parseDate(date: String): Long {
         return SimpleDateFormat("dd.MM.yyyy", Locale.US).parse(date)?.time ?: 0
     }
+
     // Pages
     override fun pageListParse(document: Document): List<Page> {
         return document.select(".reader-images img.img-responsive:not(.scan-page)").mapIndexed { i, img ->
@@ -191,24 +194,24 @@ class MangaBook : ParsedHttpSource() {
         OrderBy(),
         CategoryList(categoriesName),
         StatusList(getStatusList()),
-        FormatList(getFormatList())
+        FormatList(getFormatList()),
     )
 
     private class OrderBy : Filter.Select<String>(
         "Сортировка",
-        arrayOf("По популярности", "По рейтингу", "По алфавиту", "По дате выхода")
+        arrayOf("По популярности", "По рейтингу", "По алфавиту", "По дате выхода"),
     )
     private fun getFormatList() = listOf(
         CheckFilter("Манга", "1"),
         CheckFilter("Манхва", "2"),
         CheckFilter("Веб Манхва", "4"),
-        CheckFilter("Маньхуа", "3")
+        CheckFilter("Маньхуа", "3"),
     )
 
     private fun getStatusList() = listOf(
         CheckFilter("Сейчас издаётся", "1"),
         CheckFilter("Анонсировано", "3"),
-        CheckFilter("Изданное", "2")
+        CheckFilter("Изданное", "2"),
     )
 
     private class CategoryList(categories: Array<String>) : Filter.Select<String>("Категории", categories)
@@ -289,6 +292,6 @@ class MangaBook : ParsedHttpSource() {
         CatUnit("Этти", "etty"),
         CatUnit("Юмор", "humor"),
         CatUnit("Юри", "yuri"),
-        CatUnit("Яой", "yaoi")
+        CatUnit("Яой", "yaoi"),
     )
 }

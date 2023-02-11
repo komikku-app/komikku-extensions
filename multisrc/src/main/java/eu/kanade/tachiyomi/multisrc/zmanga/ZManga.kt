@@ -198,7 +198,7 @@ abstract class ZManga(
                     Filter.Header("NOTE: cant be used with other filter!"),
                     Filter.Header("$name Project List page"),
                     ProjectFilter(),
-                )
+                ),
             )
         }
         return FilterList(filters)
@@ -208,8 +208,8 @@ abstract class ZManga(
         "Filter Project",
         arrayOf(
             Pair("Show all manga", ""),
-            Pair("Show only project manga", "project-filter-on")
-        )
+            Pair("Show only project manga", "project-filter-on"),
+        ),
     )
 
     private class AuthorFilter : Filter.Text("Author")
@@ -226,8 +226,8 @@ abstract class ZManga(
             Pair("Manhua", "Manhua"),
             Pair("Manhwa", "Manhwa"),
             Pair("One-Shot", "One-Shot"),
-            Pair("Doujin", "Doujin")
-        )
+            Pair("Doujin", "Doujin"),
+        ),
     )
     private class OrderByFilter : UriPartFilter(
         "Order By",
@@ -238,8 +238,8 @@ abstract class ZManga(
             Pair("Latest Update", "update"),
             Pair("Latest Added", "latest"),
             Pair("Popular", "popular"),
-            Pair("Rating", "rating")
-        )
+            Pair("Rating", "rating"),
+        ),
     )
 
     private fun getGenreList() = listOf(
@@ -297,7 +297,7 @@ abstract class ZManga(
         Tag("tragedy", "Tragedy"),
         Tag("vampire", "Vampire"),
         Tag("webtoons", "Webtoons"),
-        Tag("yuri", "Yuri")
+        Tag("yuri", "Yuri"),
     )
 
     open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

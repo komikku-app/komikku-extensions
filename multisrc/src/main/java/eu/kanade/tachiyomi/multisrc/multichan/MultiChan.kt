@@ -19,7 +19,7 @@ import java.util.Locale
 abstract class MultiChan(
     override val name: String,
     override val baseUrl: String,
-    final override val lang: String
+    final override val lang: String,
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true

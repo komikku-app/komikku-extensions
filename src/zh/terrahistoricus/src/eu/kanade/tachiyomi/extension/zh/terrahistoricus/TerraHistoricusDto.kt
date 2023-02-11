@@ -66,10 +66,13 @@ data class THComic(
         private val EPISODE_TYPES = arrayOf("", "正篇", "番外", "贺图", "公告")
         private val isNewDateLogic = run {
             val commitCount = AppInfo.getVersionName().substringAfter('-', "")
-            if (commitCount.isNotEmpty()) // Preview
+            if (commitCount.isNotEmpty()) {
+                // Preview
                 commitCount.toInt() >= 4442
-            else // Stable
+            } else {
+                // Stable
                 AppInfo.getVersionCode() >= 81
+            }
         }
     }
 }

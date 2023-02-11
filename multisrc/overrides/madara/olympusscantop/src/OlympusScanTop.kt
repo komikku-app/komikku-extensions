@@ -8,7 +8,7 @@ class OlympusScanTop : Madara(
     "OlympusScan.top",
     "https://olympusscan.top",
     "es",
-    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("es"))
+    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("es")),
 ) {
     override val useNewChapterEndpoint = true
 }

@@ -185,7 +185,7 @@ class MMRCMSJsonGen {
                 override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> {
                     return arrayOf()
                 }
-            }
+            },
         )
 
         // Install the all-trusting trust manager

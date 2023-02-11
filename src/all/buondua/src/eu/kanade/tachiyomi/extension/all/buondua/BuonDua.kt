@@ -89,7 +89,7 @@ class BuonDua() : ParsedHttpSource() {
         val numpages = document.selectFirst(".pagination-list").select(".pagination-link")
         val pages = mutableListOf<Page>()
 
-        numpages.forEachIndexed() { index, page ->
+        numpages.forEachIndexed { index, page ->
             val doc = when (index) {
                 0 -> document
                 else -> client.newCall(GET(page.attr("abs:href"))).execute().asJsoup()

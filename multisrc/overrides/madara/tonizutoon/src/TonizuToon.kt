@@ -8,5 +8,5 @@ class TonizuToon : Madara(
     "TonizuToon",
     "https://tonizutoon.com",
     "tr",
-    SimpleDateFormat("MMMMM d, yyyy", Locale("tr"))
+    SimpleDateFormat("MMMMM d, yyyy", Locale("tr")),
 )

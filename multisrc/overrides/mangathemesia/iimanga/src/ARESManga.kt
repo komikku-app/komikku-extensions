@@ -9,7 +9,7 @@ class ARESManga : MangaThemesia(
     "https://aresmanga.net",
     "ar",
     mangaUrlDirectory = "/series",
-    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("ar"))
+    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("ar")),
 ) {
     // The scanlator changed their name.
     override val id: Long = 230017529540228175

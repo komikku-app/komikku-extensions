@@ -8,7 +8,7 @@ class Shayami : Madara(
     "Shayami",
     "https://shayami.com",
     "es",
-    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("es"))
+    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("es")),
 ) {
     override val useNewChapterEndpoint = true
 }

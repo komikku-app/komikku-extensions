@@ -32,7 +32,7 @@ class Hentairead : Madara("HentaiRead", "https://hentairead.com", "en", dateForm
                 index,
                 document.location(),
                 Uri.parse(pageUri).buildUpon().clearQuery().appendQueryParameter("ssl", "1")
-                    .appendQueryParameter("w", "1100").build().toString()
+                    .appendQueryParameter("w", "1100").build().toString(),
             )
         }
     }
@@ -42,7 +42,7 @@ class Hentairead : Madara("HentaiRead", "https://hentairead.com", "en", dateForm
             SChapter.create().apply {
                 name = "Chapter"
                 setUrlWithoutDomain(response.request.url.encodedPath)
-            }
+            },
         )
     }
 }

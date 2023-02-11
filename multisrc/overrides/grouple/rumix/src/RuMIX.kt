@@ -25,16 +25,18 @@ class RuMIX : GroupLe("RuMIX", "https://rumix.me", "ru") {
                 else -> return@forEach
             }
         }
-        return if (url.toString().contains("&"))
+        return if (url.toString().contains("&")) {
             GET(url.toString().replace("=%3D", "="), headers)
-        else popularMangaRequest(page)
+        } else {
+            popularMangaRequest(page)
+        }
     }
     private class OrderBy : Filter.Select<String>(
         "Сортировка",
-        arrayOf("По популярности", "Популярно сейчас", "По году", "По имени", "Новинки", "По дате обновления", "По рейтингу")
+        arrayOf("По популярности", "Популярно сейчас", "По году", "По имени", "Новинки", "По дате обновления", "По рейтингу"),
     )
 
     override fun getFilterList() = FilterList(
-        OrderBy()
+        OrderBy(),
     )
 }

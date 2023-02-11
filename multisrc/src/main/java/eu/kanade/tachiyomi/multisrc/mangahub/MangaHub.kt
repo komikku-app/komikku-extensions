@@ -31,7 +31,7 @@ abstract class MangaHub(
     override val name: String,
     override val baseUrl: String,
     override val lang: String,
-    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MM-dd-yyyy", Locale.US)
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MM-dd-yyyy", Locale.US),
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -190,8 +190,11 @@ abstract class MangaHub(
         document.select("h1 small").firstOrNull()?.ownText()?.let { alternativeName ->
             if (alternativeName.isNotBlank()) {
                 manga.description = manga.description.orEmpty().let {
-                    if (it.isBlank()) "Alternative Name: $alternativeName"
-                    else "$it\n\nAlternative Name: $alternativeName"
+                    if (it.isBlank()) {
+                        "Alternative Name: $alternativeName"
+                    } else {
+                        "$it\n\nAlternative Name: $alternativeName"
+                    }
                 }
             }
         }
@@ -346,7 +349,7 @@ abstract class MangaHub(
 
     override fun getFilterList() = FilterList(
         OrderBy(orderBy),
-        GenreList(genres)
+        GenreList(genres),
     )
 
     private val orderBy = arrayOf(
@@ -354,7 +357,7 @@ abstract class MangaHub(
         Order("Updates", "LATEST"),
         Order("A-Z", "ALPHABET"),
         Order("New", "NEW"),
-        Order("Completed", "COMPLETED")
+        Order("Completed", "COMPLETED"),
     )
 
     private val genres = arrayOf(
@@ -421,7 +424,7 @@ abstract class MangaHub(
         Genre("Webtoon", "webtoon"),
         Genre("Webtoons", "webtoons"),
         Genre("Wuxia", "wuxia"),
-        Genre("Yuri", "yuri")
+        Genre("Yuri", "yuri"),
     )
 
     companion object {

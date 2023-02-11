@@ -11,6 +11,6 @@ class ReadKaguyaSamaMangaOnline : MangaCatalog("Read Kaguya-sama Manga Online", 
         Pair("Instant Bullet", "$baseUrl/manga/ib-instant-bullet/"),
         Pair("Oshi no Ko", "$baseUrl/manga/oshi-no-ko/"),
         Pair("Sayonara Piano Sonata", "$baseUrl/manga/sayonara-piano-sonata/"),
-        Pair("Original Hinatazaka", "$baseUrl/manga/original-hinatazaka/")
+        Pair("Original Hinatazaka", "$baseUrl/manga/original-hinatazaka/"),
     ).sortedBy { it.first }.distinctBy { it.second }
 }

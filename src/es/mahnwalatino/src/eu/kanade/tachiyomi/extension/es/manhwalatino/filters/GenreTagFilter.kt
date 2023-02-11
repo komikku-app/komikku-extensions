@@ -43,6 +43,6 @@ class GenreTagFilter : UriPartFilter(
         Pair("manga-genre/tragedia", "Tragedia"),
         Pair("manga-genre/venganza", "Venganza"),
         Pair("manga-genre/vida-escolar", "Vida Escolar"),
-        Pair("manga-genre/webtoon", "Webtoon")
-    )
+        Pair("manga-genre/webtoon", "Webtoon"),
+    ),
 )

@@ -8,6 +8,6 @@ class KavitaFactory : SourceFactory {
         listOf(
             Kavita("1"),
             Kavita("2"),
-            Kavita("3")
+            Kavita("3"),
         )
 }

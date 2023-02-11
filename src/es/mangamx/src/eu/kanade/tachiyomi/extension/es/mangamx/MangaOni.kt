@@ -49,7 +49,7 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
 
     override fun popularMangaRequest(page: Int) = GET(
         url = "$baseUrl/directorio?genero=false&estado=false&filtro=visitas&tipo=false&adulto=${if (hideNSFWContent()) "0" else "false"}&orden=desc&p=$page",
-        headers = headers
+        headers = headers,
     )
 
     override fun popularMangaNextPageSelector() = ".page-item a[rel=next]"
@@ -109,22 +109,22 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
                 when (filter) {
                     is StatusFilter -> uri.appendQueryParameter(
                         filter.name.lowercase(Locale.ROOT),
-                        statusArray[filter.state].second
+                        statusArray[filter.state].second,
                     )
                     is SortBy -> {
                         uri.appendQueryParameter("filtro", sortables[filter.state!!.index].second)
                         uri.appendQueryParameter(
                             "orden",
-                            if (filter.state!!.ascending) { "asc" } else { "desc" }
+                            if (filter.state!!.ascending) { "asc" } else { "desc" },
                         )
                     }
                     is TypeFilter -> uri.appendQueryParameter(
                         filter.name.lowercase(Locale.ROOT),
-                        typedArray[filter.state].second
+                        typedArray[filter.state].second,
                     )
                     is GenreFilter -> uri.appendQueryParameter(
                         "genero",
-                        genresArray[filter.state].second
+                        genresArray[filter.state].second,
                     )
                     else -> {}
                 }
@@ -181,7 +181,9 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
         manga.author = document.select("div#info-i").text().let {
             if (it.contains("Autor", true)) {
                 it.substringAfter("Autor:").substringBefore("Fecha:").trim()
-            } else "N/A"
+            } else {
+                "N/A"
+            }
         }
         manga.artist = manga.author
         manga.genre = document.select("div#categ a").joinToString(", ") { it.text() }
@@ -226,7 +228,7 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
         SortBy("Ordenar por", sortables),
         StatusFilter("Estado", statusArray),
         TypeFilter("Tipo", typedArray),
-        GenreFilter("Géneros", genresArray)
+        GenreFilter("Géneros", genresArray),
     )
 
     private class StatusFilter(name: String, values: Array<Pair<String, String>>) :
@@ -239,14 +241,15 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
         Filter.Select<String>(name, values.map { it.first }.toTypedArray())
 
     class SortBy(name: String, values: Array<Pair<String, String>>) : Filter.Sort(
-        name, values.map { it.first }.toTypedArray(),
-        Selection(0, false)
+        name,
+        values.map { it.first }.toTypedArray(),
+        Selection(0, false),
     )
 
     private val statusArray = arrayOf(
         Pair("Estado", "false"),
         Pair("En desarrollo", "1"),
-        Pair("Completo", "0")
+        Pair("Completo", "0"),
     )
 
     private val typedArray = arrayOf(
@@ -255,7 +258,7 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
         Pair("Manhwas", "1"),
         Pair("One Shot", "2"),
         Pair("Manhuas", "3"),
-        Pair("Novelas", "4")
+        Pair("Novelas", "4"),
     )
 
     private val sortables = arrayOf(
@@ -308,7 +311,7 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
         Pair("Shōnen ai", "40"),
         Pair("Militar", "41"),
         Pair("Eroge", "42"),
-        Pair("Isekai", "43")
+        Pair("Isekai", "43"),
     )
 
     private val preferences: SharedPreferences by lazy {
@@ -316,7 +319,6 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-
         val contentPref = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = CONTENT_PREF
             title = CONTENT_PREF_TITLE

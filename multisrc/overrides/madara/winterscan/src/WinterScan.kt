@@ -11,7 +11,7 @@ class WinterScan : Madara(
     "Winter Scan",
     "https://winterscan.com",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMMM 'de' yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd 'de' MMMM 'de' yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

@@ -73,7 +73,7 @@ class BrewingScans : HttpSource() {
         }!!
 
     private inline fun Response.toMangasPage(
-        crossinline func: Collection<BrewingSeries>.() -> List<BrewingSeries>
+        crossinline func: Collection<BrewingSeries>.() -> List<BrewingSeries>,
     ) =
         json.decodeFromString<Map<String, BrewingSeries>>(body!!.string())
             .values.func().map {

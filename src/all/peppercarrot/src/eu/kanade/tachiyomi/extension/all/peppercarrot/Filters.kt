@@ -8,11 +8,13 @@ fun getFilters(preferences: SharedPreferences): FilterList {
     val langData = preferences.langData
     val list: List<Filter<*>> = if (langData.isEmpty()) {
         listOf(Filter.Header("Tap 'Reset' to load languages"))
-    } else buildList(langData.size + 1) {
-        add(Filter.Header("Languages"))
-        val lang = preferences.lang.toHashSet()
-        langData.mapTo(this) {
-            LangFilter(it.key, "${it.name} (${it.progress})", it.key in lang)
+    } else {
+        buildList(langData.size + 1) {
+            add(Filter.Header("Languages"))
+            val lang = preferences.lang.toHashSet()
+            langData.mapTo(this) {
+                LangFilter(it.key, "${it.name} (${it.progress})", it.key in lang)
+            }
         }
     }
     return FilterList(list)

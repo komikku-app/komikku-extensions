@@ -78,8 +78,8 @@ object NewTokiWebtoon : NewToki("NewToki", "webtoon", newTokiPreferences) {
             "금",
             "토",
             "일",
-            "열흘"
-        )
+            "열흘",
+        ),
     )
 
     // [...document.querySelectorAll("form.form td")[2].querySelectorAll("a")].map((el, i) => `"${el.innerText.trim()}"`).join(',\n')
@@ -102,9 +102,10 @@ object NewTokiWebtoon : NewToki("NewToki", "webtoon", newTokiPreferences) {
             "ㅍ",
             "ㅎ",
             "a-z",
-            "0-9"
-        )
+            "0-9",
+        ),
     )
+
     // [...document.querySelectorAll("form.form td")[3].querySelectorAll("a")].map((el, i) => `"${el.innerText.trim()}"`).join(',\n')
     private class SearchGenreTypeList : Filter.Select<String>(
         "Genre",
@@ -120,8 +121,8 @@ object NewTokiWebtoon : NewToki("NewToki", "webtoon", newTokiPreferences) {
             "스포츠",
             "일상",
             "학원",
-            "성인"
-        )
+            "성인",
+        ),
     )
 
     private class SearchSortTypeList : Filter.Sort(
@@ -130,7 +131,7 @@ object NewTokiWebtoon : NewToki("NewToki", "webtoon", newTokiPreferences) {
             "기본(업데이트순)",
             "인기순",
             "추천순",
-        )
+        ),
     )
 
     override fun getFilterList() = FilterList(
@@ -140,6 +141,6 @@ object NewTokiWebtoon : NewToki("NewToki", "webtoon", newTokiPreferences) {
         Filter.Header(ignoredForTextSearch()),
         SearchYoilTypeList(),
         SearchJaumTypeList(),
-        SearchGenreTypeList()
+        SearchGenreTypeList(),
     )
 }

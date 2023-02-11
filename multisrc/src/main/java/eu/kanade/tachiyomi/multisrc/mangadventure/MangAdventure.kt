@@ -20,7 +20,7 @@ import eu.kanade.tachiyomi.source.model.Page as SPage
 abstract class MangAdventure(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String = "en"
+    override val lang: String = "en",
 ) : HttpSource() {
     /** The site's manga categories. */
     protected open val categories = DEFAULT_CATEGORIES
@@ -30,7 +30,10 @@ abstract class MangAdventure(
 
     /** The site's sort order labels that correspond to [SortOrder.values]. */
     protected open val orders = arrayOf(
-        "Title", "Views", "Latest upload", "Chapter count"
+        "Title",
+        "Views",
+        "Latest upload",
+        "Chapter count",
     )
 
     /** A user agent representing Tachiyomi. */
@@ -130,7 +133,7 @@ abstract class MangAdventure(
             Artist(),
             SortOrder(orders),
             Status(statuses),
-            CategoryList(categories)
+            CategoryList(categories),
         )
 
     /** Decodes the JSON response as an object. */
@@ -146,8 +149,9 @@ abstract class MangAdventure(
             description = buildString {
                 series.description?.let(::append)
                 series.aliases.let {
-                    if (!it.isNullOrEmpty())
+                    if (!it.isNullOrEmpty()) {
                         it.joinTo(this, "\n", "\n\nAlternative titles:\n")
+                    }
                 }
             }
             author = series.authors?.joinToString()
@@ -155,10 +159,12 @@ abstract class MangAdventure(
             genre = series.categories?.joinToString()
             status = if (series.licensed == true) {
                 SManga.LICENSED
-            } else when (series.completed) {
-                true -> SManga.COMPLETED
-                false -> SManga.ONGOING
-                null -> SManga.UNKNOWN
+            } else {
+                when (series.completed) {
+                    true -> SManga.COMPLETED
+                    false -> SManga.ONGOING
+                    null -> SManga.UNKNOWN
+                }
             }
         }
 
@@ -197,7 +203,7 @@ abstract class MangAdventure(
             "Supernatural",
             "Tragedy",
             "Yaoi",
-            "Yuri"
+            "Yuri",
         )
 
         /** Query to search by manga slug. */

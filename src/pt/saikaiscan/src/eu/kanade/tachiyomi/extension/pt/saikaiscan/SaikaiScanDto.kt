@@ -11,7 +11,7 @@ import java.util.Locale
 @Serializable
 data class SaikaiScanResultDto<T>(
     val data: T? = null,
-    val meta: SaikaiScanMetaDto? = null
+    val meta: SaikaiScanMetaDto? = null,
 )
 
 typealias SaikaiScanPaginatedStoriesDto = SaikaiScanResultDto<List<SaikaiScanStoryDto>>
@@ -20,7 +20,7 @@ typealias SaikaiScanReleaseResultDto = SaikaiScanResultDto<SaikaiScanReleaseDto>
 @Serializable
 data class SaikaiScanMetaDto(
     @SerialName("current_page") val currentPage: Int,
-    @SerialName("last_page") val lastPage: Int
+    @SerialName("last_page") val lastPage: Int,
 )
 
 @Serializable
@@ -33,7 +33,7 @@ data class SaikaiScanStoryDto(
     val slug: String,
     val status: SaikaiScanStatusDto? = null,
     val synopsis: String,
-    val title: String
+    val title: String,
 ) {
 
     fun toSManga(): SManga = SManga.create().apply {
@@ -56,17 +56,17 @@ data class SaikaiScanStoryDto(
 
 @Serializable
 data class SaikaiScanPersonDto(
-    val name: String
+    val name: String,
 )
 
 @Serializable
 data class SaikaiScanGenreDto(
-    val name: String
+    val name: String,
 )
 
 @Serializable
 data class SaikaiScanStatusDto(
-    val name: String
+    val name: String,
 )
 
 @Serializable
@@ -77,7 +77,7 @@ data class SaikaiScanReleaseDto(
     @SerialName("published_at") val publishedAt: String,
     @SerialName("release_images") val releaseImages: List<SaikaiScanReleaseImageDto> = emptyList(),
     val slug: String,
-    val title: String? = ""
+    val title: String? = "",
 ) {
 
     fun toSChapter(storySlug: String): SChapter = SChapter.create().apply {

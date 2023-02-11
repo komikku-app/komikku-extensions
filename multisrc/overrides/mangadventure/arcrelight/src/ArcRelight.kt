@@ -20,6 +20,6 @@ class ArcRelight : MangAdventure("Arc-Relight", "https://arc-relight.com") {
         "Shounen",
         "Steins;Gate",
         "Supernatural",
-        "Tragedy"
+        "Tragedy",
     )
 }

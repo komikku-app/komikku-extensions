@@ -22,7 +22,7 @@ abstract class WPComics(
     override val baseUrl: String,
     override val lang: String,
     private val dateFormat: SimpleDateFormat = SimpleDateFormat("HH:mm - dd/MM/yyyy Z", Locale.US),
-    private val gmtOffset: String? = "+0500"
+    private val gmtOffset: String? = "+0500",
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -231,7 +231,7 @@ abstract class WPComics(
         Pair(null, "Tất cả"),
         Pair("1", "Đang tiến hành"),
         Pair("2", "Đã hoàn thành"),
-        Pair("3", "Tạm ngừng")
+        Pair("3", "Tạm ngừng"),
     )
     protected open fun getGenreList(): Array<Pair<String?, String>> = arrayOf(
         null to "Tất cả",
@@ -285,7 +285,7 @@ abstract class WPComics(
         "truyen-scan" to "Truyện scan",
         "truyen-mau" to "Truyện Màu",
         "webtoon" to "Webtoon",
-        "xuyen-khong" to "Xuyên Không"
+        "xuyen-khong" to "Xuyên Không",
     )
 
     protected open class UriPartFilter(displayName: String, val vals: Array<Pair<String?, String>>) :

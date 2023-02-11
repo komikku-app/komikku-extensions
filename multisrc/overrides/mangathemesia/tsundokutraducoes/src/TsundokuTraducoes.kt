@@ -11,7 +11,7 @@ class TsundokuTraducoes : MangaThemesia(
     "Tsundoku Traduções",
     "https://tsundoku.com.br",
     "pt-BR",
-    dateFormat = SimpleDateFormat("MMMMM d, yyyy", Locale("pt", "BR"))
+    dateFormat = SimpleDateFormat("MMMMM d, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()

@@ -271,8 +271,11 @@ class MangaVibe : HttpSource() {
             return chain.proceed(chain.request())
         }
 
-        val directoryType = if (chain.request().url.queryParameter("Ordem") == null)
-            POPULAR_KEY else LATEST_KEY
+        val directoryType = if (chain.request().url.queryParameter("Ordem") == null) {
+            POPULAR_KEY
+        } else {
+            LATEST_KEY
+        }
         val page = chain.request().header("X-Page")?.toInt()
 
         if (directoryCache.containsKey(directoryType) && page != null && page > 1) {

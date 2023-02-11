@@ -270,7 +270,7 @@ class OnePieceEx : ParsedHttpSource() {
             "OPEX - DENSETSU NO SEKAI" to "https://onepieceex.net/mangareader/especiais/501/00.jpg",
             "OPEX - ESPECIAIS" to "https://onepieceex.net/mangareader/especiais/27/00.jpg",
             "ONE PIECE - ESPECIAIS DE ONE PIECE" to "https://onepieceex.net/mangareader/especiais/5/002.png",
-            "ONE PIECE - HISTÓRIAS DE CAPA" to "https://onepieceex.net/mangareader/mangas/428/00_c.jpg"
+            "ONE PIECE - HISTÓRIAS DE CAPA" to "https://onepieceex.net/mangareader/mangas/428/00_c.jpg",
         )
     }
 }

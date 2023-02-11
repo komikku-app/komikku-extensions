@@ -20,7 +20,7 @@ class SortByFilter(default: Int = 1) : EnhancedSelect(
         FilterOption("Rating", "4"),
         FilterOption("Time updated", "5"),
     ),
-    default - 1
+    default - 1,
 )
 
 class ContentStatusFilter : EnhancedSelect(
@@ -29,7 +29,7 @@ class ContentStatusFilter : EnhancedSelect(
         FilterOption("All", "0"),
         FilterOption("Ongoing", "1"),
         FilterOption("Completed", "2"),
-    )
+    ),
 )
 
 class GenreFilter : EnhancedSelect(
@@ -59,5 +59,5 @@ class GenreFilter : EnhancedSelect(
         FilterOption("Transmigration", "60012"),
         FilterOption("Urban", "60005"),
         FilterOption("Wuxia", "60010"),
-    )
+    ),
 )

@@ -11,7 +11,7 @@ data class HqNowComicBookDto(
     val name: String,
     val publisherName: String? = "",
     val status: String? = "",
-    val synopsis: String? = ""
+    val synopsis: String? = "",
 )
 
 @Serializable
@@ -19,10 +19,10 @@ data class HqNowChapterDto(
     val id: Int = 0,
     val name: String,
     val number: String,
-    val pictures: List<HqNowPageDto> = emptyList()
+    val pictures: List<HqNowPageDto> = emptyList(),
 )
 
 @Serializable
 data class HqNowPageDto(
-    val pictureUrl: String
+    val pictureUrl: String,
 )

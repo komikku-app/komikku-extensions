@@ -46,7 +46,7 @@ class BilibiliComicsFactory : SourceFactory {
 abstract class BilibiliComics(lang: String) : Bilibili(
     "BILIBILI COMICS",
     "https://www.bilibilicomics.com",
-    lang
+    lang,
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
@@ -245,7 +245,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
 
             val refreshTokenRequest = refreshTokenRequest(
                 accessTokenCookie!!.accessToken,
-                accessTokenCookie!!.refreshToken
+                accessTokenCookie!!.refreshToken,
             )
             val refreshTokenResponse = chain.proceed(refreshTokenRequest)
 
@@ -294,7 +294,7 @@ abstract class BilibiliComics(lang: String) : Bilibili(
         return BilibiliAccessTokenCookie(
             accessToken.accessToken,
             accessToken.refreshToken,
-            accessTokenCookie!!.area
+            accessTokenCookie!!.area,
         )
     }
 
@@ -334,7 +334,7 @@ class BilibiliComicsEn : BilibiliComics(BilibiliIntl.ENGLISH) {
         BilibiliTag("Romance", 13),
         BilibiliTag("Slice of Life", 21),
         BilibiliTag("Suspense", 41),
-        BilibiliTag("Teen", 20)
+        BilibiliTag("Teen", 20),
     )
 }
 
@@ -354,7 +354,7 @@ class BilibiliComicsCn : BilibiliComics(BilibiliIntl.SIMPLIFIED_CHINESE) {
         BilibiliTag("百合", 16),
         BilibiliTag("玄幻", 30),
         BilibiliTag("悬疑", 41),
-        BilibiliTag("科幻", 8)
+        BilibiliTag("科幻", 8),
     )
 }
 
@@ -371,7 +371,7 @@ class BilibiliComicsId : BilibiliComics(BilibiliIntl.INDONESIAN) {
         BilibiliTag("Komedi", 14),
         BilibiliTag("Menegangkan", 41),
         BilibiliTag("Remaja", 20),
-        BilibiliTag("Romantis", 13)
+        BilibiliTag("Romantis", 13),
     )
 }
 
@@ -396,7 +396,7 @@ class BilibiliComicsEs : BilibiliComics(BilibiliIntl.SPANISH) {
         BilibiliTag("Romance", 13),
         BilibiliTag("Suspenso", 41),
         BilibiliTag("Urbano", 9),
-        BilibiliTag("Wuxia", 103)
+        BilibiliTag("Wuxia", 103),
     )
 }
 
@@ -411,6 +411,6 @@ class BilibiliComicsFr : BilibiliComics(BilibiliIntl.FRENCH) {
         BilibiliTag("GL", 16),
         BilibiliTag("Fantasy Orientale", 30),
         BilibiliTag("Suspense", 41),
-        BilibiliTag("Moderne", 111)
+        BilibiliTag("Moderne", 111),
     )
 }

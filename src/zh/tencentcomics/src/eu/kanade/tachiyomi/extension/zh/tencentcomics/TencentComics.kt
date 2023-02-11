@@ -29,6 +29,7 @@ import kotlin.collections.ArrayList
 class TencentComics : ParsedHttpSource() {
 
     override val name = "腾讯动漫"
+
     // its easier to parse the mobile version of the website
     override val baseUrl = "https://m.ac.qq.com"
 
@@ -248,7 +249,7 @@ class TencentComics : ParsedHttpSource() {
         PopularityFilter(),
         VipFilter(),
         StatusFilter(),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -260,8 +261,8 @@ class TencentComics : ParsedHttpSource() {
         "热门人气/更新时间",
         arrayOf(
             Pair("热门人气", "hot/"),
-            Pair("更新时间", "time/")
-        )
+            Pair("更新时间", "time/"),
+        ),
     )
 
     private class VipFilter : UriPartFilter(
@@ -269,8 +270,8 @@ class TencentComics : ParsedHttpSource() {
         arrayOf(
             Pair("全部", ""),
             Pair("付费", "vip/2/"),
-            Pair("免费", "vip/1/")
-        )
+            Pair("免费", "vip/1/"),
+        ),
     )
 
     private class StatusFilter : UriPartFilter(
@@ -278,8 +279,8 @@ class TencentComics : ParsedHttpSource() {
         arrayOf(
             Pair("全部", ""),
             Pair("连载中", "finish/1/"),
-            Pair("已完结", "finish/2/")
-        )
+            Pair("已完结", "finish/2/"),
+        ),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -301,8 +302,8 @@ class TencentComics : ParsedHttpSource() {
             Pair("竞技", "114"),
             Pair("武侠", "115"),
             Pair("历史", "116"),
-            Pair("战争", "117")
-        )
+            Pair("战争", "117"),
+        ),
     )
 
     companion object {

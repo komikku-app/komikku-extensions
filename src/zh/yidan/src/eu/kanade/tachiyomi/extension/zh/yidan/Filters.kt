@@ -9,12 +9,14 @@ fun getFilterListInternal() = FilterList(ListingFilter(), GenreFilter())
 fun parseFilters(filters: FilterList, builder: HttpUrl.Builder) {
     for (filter in filters) when (filter) {
         is ListingFilter -> {
-            if (filter.state > 0)
+            if (filter.state > 0) {
                 builder.addEncodedQueryParameter("mhcate", LISTING_VALUES[filter.state].toString())
+            }
         }
         is GenreFilter -> {
-            if (filter.state > 0)
+            if (filter.state > 0) {
                 builder.addEncodedQueryParameter("cateid", String.format("%02d", filter.state))
+            }
         }
         else -> {}
     }

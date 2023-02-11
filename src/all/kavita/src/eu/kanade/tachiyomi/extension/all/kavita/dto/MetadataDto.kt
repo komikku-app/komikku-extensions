@@ -9,38 +9,45 @@ data class MetadataGenres(
     val id: Int,
     val title: String,
 )
+
 @Serializable
 data class MetadataPeople(
     val id: Int,
     val name: String,
-    val role: Int
+    val role: Int,
 )
+
 @Serializable
 data class MetadataPubStatus(
     val value: Int,
-    val title: String
+    val title: String,
 )
+
 @Serializable
 data class MetadataTag(
     val id: Int,
     val title: String,
 )
+
 @Serializable
 data class MetadataAgeRatings(
     val value: Int,
-    val title: String
+    val title: String,
 )
+
 @Serializable
 data class MetadataLanguages(
     val isoCode: String,
-    val title: String
+    val title: String,
 )
+
 @Serializable
 data class MetadataLibrary(
     val id: Int,
     val name: String,
-    val type: Int
+    val type: Int,
 )
+
 @Serializable
 data class MetadataCollections(
     val id: Int,
@@ -51,7 +58,7 @@ data class MetadataPayload(
     val forceUseMetadataPayload: Boolean = true,
     var sorting: Int = 1,
     var sorting_asc: Boolean = true,
-    var readStatus: ArrayList<String> = arrayListOf< String>(),
+    var readStatus: ArrayList<String> = arrayListOf<String>(),
     val readStatusList: List<String> = listOf("notRead", "inProgress", "read"),
     var genres: ArrayList<Int> = arrayListOf<Int>(),
     var tags: ArrayList<Int> = arrayListOf<Int>(),

@@ -29,7 +29,7 @@ open class MCCMS(
     override val name: String,
     override val baseUrl: String,
     override val lang: String = "zh",
-    hasCategoryPage: Boolean = false
+    hasCategoryPage: Boolean = false,
 ) : HttpSource() {
     override val supportsLatest = true
 

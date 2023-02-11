@@ -10,8 +10,8 @@ class Mihentai : MangaThemesia("Mihentai", "https://mihentai.com", "all") {
             Pair("All", ""),
             Pair("Publishing", "publishing"),
             Pair("Finished", "finished"),
-            Pair("Dropped", "drop")
-        )
+            Pair("Dropped", "drop"),
+        ),
     )
 
     private class TypeFilter : SelectFilter(
@@ -23,8 +23,8 @@ class Mihentai : MangaThemesia("Mihentai", "https://mihentai.com", "all") {
             Pair("Manhua", "Manhua"),
             Pair("Webtoon", "webtoon"),
             Pair("One-Shot", "One-Shot"),
-            Pair("Doujin", "doujin")
-        )
+            Pair("Doujin", "doujin"),
+        ),
     )
 
     override fun getFilterList(): FilterList = FilterList(
@@ -32,7 +32,7 @@ class Mihentai : MangaThemesia("Mihentai", "https://mihentai.com", "all") {
             StatusFilter(),
             TypeFilter(),
             OrderByFilter(),
-            GenreListFilter(getGenreList())
-        )
+            GenreListFilter(getGenreList()),
+        ),
     )
 }

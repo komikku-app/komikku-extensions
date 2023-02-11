@@ -90,8 +90,10 @@ class Picacomic : HttpSource(), ConfigurableSource {
             put("time", time.toString())
             put("nonce", nonce)
             put("signature", signature)
-            if (!url.endsWith("/auth/sign-in")) // avoid recursive call
+            if (!url.endsWith("/auth/sign-in")) {
+                // avoid recursive call
                 put("authorization", token)
+            }
         }.toHeaders()
     }
 
@@ -104,11 +106,12 @@ class Picacomic : HttpSource(), ConfigurableSource {
             .toRequestBody("application/json; charset=UTF-8".toMediaType())
 
         val response = client.newCall(
-            POST(url, picaHeaders(url, "POST"), body)
+            POST(url, picaHeaders(url, "POST"), body),
         ).execute()
 
-        if (!response.isSuccessful)
+        if (!response.isSuccessful) {
             throw Exception("登录失败")
+        }
         return json.decodeFromString<PicaResponse>(response.body!!.string()).data.token!!
     }
 
@@ -164,14 +167,16 @@ class Picacomic : HttpSource(), ConfigurableSource {
         }
 
         // return comics from leaderboard
-        if (!rankPath.isNullOrEmpty())
+        if (!rankPath.isNullOrEmpty()) {
             return GET("$baseUrl$rankPath", picaHeaders("$baseUrl$rankPath"))
+        }
 
         // return comics from some category or just sort
         if (query.isEmpty()) {
             var url = "$baseUrl/comics?page=$page&s=$sort"
-            if (!category.isNullOrEmpty())
+            if (!category.isNullOrEmpty()) {
                 url += "&c=${URLEncoder.encode(category, "utf-8")}"
+            }
 
             return GET(url, picaHeaders(url))
         }
@@ -199,7 +204,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
         }
 
         val comics = json.decodeFromString<PicaResponse>(
-            response.body!!.string()
+            response.body!!.string(),
         ).data.comics!!.let { json.decodeFromJsonElement<PicaSearchComics>(it) }
 
         val mangas = comics.docs
@@ -222,7 +227,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val comic = json.decodeFromString<PicaResponse>(
-            response.body!!.string()
+            response.body!!.string(),
         ).data.comic!!
 
         return SManga.create().apply {
@@ -247,7 +252,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
         val comicId = response.request.url.pathSegments[1]
 
         val eps = json.decodeFromString<PicaResponse>(
-            response.body!!.string()
+            response.body!!.string(),
         ).data.eps!!
 
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
@@ -263,7 +268,8 @@ class Picacomic : HttpSource(), ConfigurableSource {
         if (eps.page < eps.pages) {
             val nextUrl = response.request.url.newBuilder()
                 .setQueryParameter(
-                    "page", (eps.page + 1).toString()
+                    "page",
+                    (eps.page + 1).toString(),
                 ).build().toString()
 
             val nextResponse = client.newCall(GET(nextUrl, picaHeaders(nextUrl))).execute()
@@ -275,12 +281,12 @@ class Picacomic : HttpSource(), ConfigurableSource {
 
     override fun pageListRequest(chapter: SChapter) = GET(
         chapter.url + "/pages?page=1",
-        picaHeaders(chapter.url + "/pages?page=1")
+        picaHeaders(chapter.url + "/pages?page=1"),
     )
 
     override fun pageListParse(response: Response): List<Page> {
         val pages = json.decodeFromString<PicaResponse>(
-            response.body!!.string()
+            response.body!!.string(),
         ).data.pages!!
 
         val ret = pages.docs.mapIndexed { index, picaPage ->
@@ -316,7 +322,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
             "旧到新" to "da",
             "最多爱心" to "ld",
             "最多绅士指名" to "vd",
-        )
+        ),
     )
 
     private class CategoryFilter : UriPartFilter(
@@ -330,7 +336,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
             "東方", "禁書目錄", "Cosplay",
             "英語 ENG", "生肉", "性轉換", "足の恋", "非人類",
             "耽美花園", "偽娘哲學", "扶他樂園", "重口地帶", "歐美", "WEBTOON",
-        ).map { it to it }.toTypedArray()
+        ).map { it to it }.toTypedArray(),
     )
 
     private class RankFilter : UriPartFilter(
@@ -340,13 +346,13 @@ class Picacomic : HttpSource(), ConfigurableSource {
             Pair("过去24小时最热门", "/comics/leaderboard?tt=H24&ct=VC"),
             Pair("过去7天最热门", "/comics/leaderboard?tt=D7&ct=VC"),
             Pair("过去30天最热门", "/comics/leaderboard?tt=D30&ct=VC"),
-        )
+        ),
     )
 
     private open class UriPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
-        defaultValue: Int = 0
+        defaultValue: Int = 0,
     ) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), defaultValue) {
         open fun toUriPart() = vals[state].second

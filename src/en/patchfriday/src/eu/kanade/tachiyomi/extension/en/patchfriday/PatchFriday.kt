@@ -103,7 +103,7 @@ class PatchFriday : HttpSource() {
                 chapter_number = url.replace("/", "").trim().toFloat()
                 name = "#${chapter_number.toInt()} - The One"
                 date_upload = System.currentTimeMillis()
-            }
+            },
         )
         return chapters
     }

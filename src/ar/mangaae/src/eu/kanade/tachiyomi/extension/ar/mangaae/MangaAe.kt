@@ -153,11 +153,11 @@ class MangaAe : ParsedHttpSource() {
             Pair("اسم المانجا", "english_name"),
             Pair("تاريخ النشر", "release_date"),
             Pair("عدد الفصول", "chapter_count"),
-            Pair("الحالة", "status")
-        )
+            Pair("الحالة", "status"),
+        ),
     )
 
     override fun getFilterList() = FilterList(
-        OrderByFilter()
+        OrderByFilter(),
     )
 }

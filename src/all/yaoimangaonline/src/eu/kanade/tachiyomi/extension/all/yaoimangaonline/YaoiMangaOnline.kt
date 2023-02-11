@@ -86,7 +86,7 @@ class YaoiMangaOnline : ParsedHttpSource() {
         SChapter.create().apply {
             name = element.selectFirst(".acp_title").text()
             setUrlWithoutDomain(
-                element.selectFirst("a")?.attr("href") ?: element.baseUri()
+                element.selectFirst("a")?.attr("href") ?: element.baseUri(),
             )
         }
 

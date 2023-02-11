@@ -68,9 +68,8 @@ class Buttsmithy : HttpSource() {
         comicTitle: String,
         currentPageUrl: String,
         pageNr: Float = 0f,
-        allChapters: MutableList<SChapter> = mutableListOf()
+        allChapters: MutableList<SChapter> = mutableListOf(),
     ): MutableList<SChapter> {
-
         val currentDoc = client.newCall(GET(currentPageUrl, headers)).execute().asJsoup()
         val currentPageComicPage = currentDoc.select("#comic img").first()
         val chapterTitle = currentPageComicPage.attr("alt")
@@ -101,8 +100,11 @@ class Buttsmithy : HttpSource() {
 
         val potentialNextPageUrl = currentDoc.select(".comic-nav-next").attr("href")
 
-        return if (potentialNextPageUrl.isEmpty()) allChapters
-        else fetchOtherPagesAsChapters(comicTitle, potentialNextPageUrl, pageNr + 1, allChapters)
+        return if (potentialNextPageUrl.isEmpty()) {
+            allChapters
+        } else {
+            fetchOtherPagesAsChapters(comicTitle, potentialNextPageUrl, pageNr + 1, allChapters)
+        }
     }
 
     /**
@@ -116,7 +118,7 @@ class Buttsmithy : HttpSource() {
     private tailrec fun fetchAlfiePagesAsChapters(
         currentPageUrl: String,
         lastPageNr: Float = 0f,
-        allChapters: MutableList<SChapter> = mutableListOf()
+        allChapters: MutableList<SChapter> = mutableListOf(),
     ): MutableList<SChapter> {
         val pageNrRegex = "p*[0-9]+".toRegex()
 
@@ -130,7 +132,9 @@ class Buttsmithy : HttpSource() {
                 val pageNr =
                     if (pageNrRegex.matches(title)) {
                         title.substringAfter("p").trim().toFloat()
-                    } else index + lastPageNr
+                    } else {
+                        index + lastPageNr
+                    }
 
                 val dateString = postElement.select(".post-info .post-date").text()
                 val timeString = postElement.select(".post-info .post-time").text()
@@ -213,8 +217,11 @@ class Buttsmithy : HttpSource() {
     }
 
     private fun decideAlfieStatusFromTitle(chapTitle: String, mostRecentChapTitle: String): Int {
-        return if (chapTitle == mostRecentChapTitle) SManga.UNKNOWN
-        else SManga.COMPLETED
+        return if (chapTitle == mostRecentChapTitle) {
+            SManga.UNKNOWN
+        } else {
+            SManga.COMPLETED
+        }
     }
 
     private fun extractChapterTitleFromPageDoc(doc: Document): String {
@@ -275,7 +282,6 @@ class Buttsmithy : HttpSource() {
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         return Observable.just(
             if (manga.title.contains(alfieTitle)) {
-
                 val pageDoc = client.newCall(GET(baseUrlAlfie, headers)).execute().asJsoup()
                 val mostRecentChapTitle = extractChapterTitleFromPageDoc(pageDoc)
                 val chapTitle = manga.title.substringAfter("Alfie - ").trim()
@@ -289,7 +295,9 @@ class Buttsmithy : HttpSource() {
                     genre = "fantasy, NSFW"
                     thumbnail_url = generateImageUrlWithText(alfieTitle)
                 }
-            } else manga
+            } else {
+                manga
+            },
         )
     }
 

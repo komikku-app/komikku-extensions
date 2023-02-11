@@ -20,7 +20,7 @@ class MangaMainacGenerator : ThemeSourceGenerator {
         SingleLang("Read Black Clover Manga", "https://w6.blackclovermanga2.com/", "en", overrideVersionCode = 1),
         SingleLang("Read Shingeki no Kyojin Manga", "https://readshingekinokyojin.com/", "en"),
         SingleLang("Read Nanatsu no Taizai Manga", "https://w2.readnanatsutaizai.net/", "en", overrideVersionCode = 1),
-        SingleLang("Read Rent a Girlfriend Manga", "https://kanojo-okarishimasu.com/", "en")
+        SingleLang("Read Rent a Girlfriend Manga", "https://kanojo-okarishimasu.com/", "en"),
     )
 
     companion object {

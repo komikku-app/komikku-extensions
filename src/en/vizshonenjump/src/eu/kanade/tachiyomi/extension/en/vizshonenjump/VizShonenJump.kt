@@ -64,7 +64,7 @@ class VizShonenJump : ParsedHttpSource() {
         return GET(
             url = "$baseUrl/read/shonenjump/section/free-chapters",
             headers = newHeaders,
-            cache = CacheControl.FORCE_NETWORK
+            cache = CacheControl.FORCE_NETWORK,
         )
     }
 

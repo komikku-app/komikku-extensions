@@ -12,7 +12,7 @@ class ModeScanlator : MangaThemesia(
     "https://modescanlator.com",
     "pt-BR",
     mangaUrlDirectory = "/projetos",
-    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     // Site changed from Madara to WpMangaReader.

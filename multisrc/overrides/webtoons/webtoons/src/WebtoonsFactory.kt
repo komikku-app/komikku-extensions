@@ -25,7 +25,7 @@ class WebtoonsID : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "id")
     // Android seems to be unable to parse Indonesian dates; we'll use a short hard-coded table
     // instead.
     private val dateMap: Array<String> = arrayOf(
-        "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
+        "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
     )
 
     override fun chapterParseDate(date: String): Long {
@@ -39,7 +39,7 @@ class WebtoonsTH : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "th",
 class WebtoonsES : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "es") {
     // Android seems to be unable to parse es dates like Indonesian; we'll use a short hard-coded table instead.
     private val dateMap: Array<String> = arrayOf(
-        "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"
+        "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic",
     )
 
     override fun chapterParseDate(date: String): Long {

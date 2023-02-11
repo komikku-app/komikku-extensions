@@ -21,7 +21,7 @@ private val decimalFormat = DecimalFormat("#.##")
 data class KouhaiSeries(
     val id: Int,
     val title: String,
-    val cover: String
+    val cover: String,
 ) {
     inline val url get() = id.toString()
 
@@ -40,7 +40,7 @@ data class KouhaiSeriesDetails(
     val genres: List<KouhaiTag>? = null,
     val themes: List<KouhaiTag>? = null,
     val demographics: List<KouhaiTag>? = null,
-    val chapters: List<KouhaiChapter>
+    val chapters: List<KouhaiChapter>,
 ) {
     val tags by lazy {
         genres.orEmpty() + themes.orEmpty() + demographics.orEmpty()
@@ -49,7 +49,9 @@ data class KouhaiSeriesDetails(
     override fun toString() = buildString {
         append(synopsis)
         alternative_titles?.joinTo(
-            this, "\n", "\n\nAlternative Names:\n"
+            this,
+            "\n",
+            "\n\nAlternative Names:\n",
         )
     }
 }
@@ -61,7 +63,7 @@ data class KouhaiChapter(
     val number: Float,
     val name: String? = null,
     val groups: List<KouhaiTag>,
-    val updated_at: String
+    val updated_at: String,
 ) {
     inline val url get() = id.toString()
 
@@ -82,7 +84,7 @@ data class KouhaiChapter(
 @Serializable
 data class KouhaiTag(
     private val id: Int,
-    private val name: String
+    private val name: String,
 ) {
     override fun toString() = name
 }
@@ -92,12 +94,12 @@ data class KouhaiTagList(
     val genres: List<KouhaiTag>,
     val themes: List<KouhaiTag>,
     val demographics: List<KouhaiTag>,
-    val status: KouhaiTag?
+    val status: KouhaiTag?,
 )
 
 @Serializable
 data class KouhaiPages(
-    private val pages: List<KouhaiMedia>
+    private val pages: List<KouhaiMedia>,
 ) : Iterable<KouhaiMedia> by pages
 
 @Serializable

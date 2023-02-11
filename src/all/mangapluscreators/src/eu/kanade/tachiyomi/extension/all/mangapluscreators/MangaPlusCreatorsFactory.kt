@@ -6,6 +6,6 @@ import eu.kanade.tachiyomi.source.SourceFactory
 class MangaPlusCreatorsFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         MangaPlusCreators("en"),
-        MangaPlusCreators("es")
+        MangaPlusCreators("es"),
     )
 }

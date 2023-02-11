@@ -65,10 +65,11 @@ class TwoKinds : HttpSource() {
 
     // the manga is one and only, but still write the data again to avoid bugs in backup restore
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        if (manga.url == "1")
+        if (manga.url == "1") {
             return Observable.just(mangaSinglePages())
-        else
+        } else {
             return Observable.just(manga20Pages())
+        }
     }
 
     override fun mangaDetailsParse(response: Response): SManga = throw Exception("Not used")
@@ -121,7 +122,7 @@ class TwoKinds : HttpSource() {
                 SChapter.create().apply {
                     url = "20-${pages[i].url}"
                     name = "Pages ${pages[i].name}-${pages[min(pages.size, i + 20) - 1].name}"
-                }
+                },
             )
         }
         return chapters.reversed()
@@ -131,8 +132,8 @@ class TwoKinds : HttpSource() {
         if (chapter.url.startsWith("1")) {
             return Observable.just(
                 listOf(
-                    Page(0, baseUrl + "/comic/${chapter.url.substringAfter("-")}/")
-                )
+                    Page(0, baseUrl + "/comic/${chapter.url.substringAfter("-")}/"),
+                ),
             )
         } else {
             val firstPage = chapter.url.substringAfter("-")
@@ -156,7 +157,7 @@ class TwoKinds : HttpSource() {
                     .subList(firstPageIdx, lastPageIdx)
                     .mapIndexed { idx, page ->
                         Page(idx, baseUrl + "/comic/${page.url}/")
-                    }
+                    },
             )
         }
     }

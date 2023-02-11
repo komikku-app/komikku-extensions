@@ -246,7 +246,7 @@ class MangaDexHelper(lang: String) {
     fun mdAtHomeRequest(
         tokenRequestUrl: String,
         headers: Headers,
-        cacheControl: CacheControl
+        cacheControl: CacheControl,
     ): Request {
         if (cacheControl == CacheControl.FORCE_NETWORK) {
             tokenTracker[tokenRequestUrl] = Date().time
@@ -262,7 +262,7 @@ class MangaDexHelper(lang: String) {
         mangaDataDto: MangaDataDto,
         coverFileName: String?,
         coverSuffix: String?,
-        lang: String
+        lang: String,
     ): SManga {
         return SManga.create().apply {
             url = "/manga/${mangaDataDto.id}"
@@ -291,7 +291,7 @@ class MangaDexHelper(lang: String) {
         chapters: Map<String, AggregateVolume>,
         firstVolumeCover: String?,
         lang: String,
-        coverSuffix: String?
+        coverSuffix: String?,
     ): SManga {
         val attr = mangaDataDto.attributes!!
 
@@ -306,7 +306,7 @@ class MangaDexHelper(lang: String) {
             attr.originalLanguage
                 ?.let { Locale.forLanguageTag(it) }
                 ?.getDisplayName(dexLocale)
-                ?.replaceFirstChar { it.uppercase(dexLocale) }
+                ?.replaceFirstChar { it.uppercase(dexLocale) },
         )
 
         val authors = mangaDataDto.relationships
@@ -427,30 +427,32 @@ class MangaDexHelper(lang: String) {
      * extension preferences screen to Compose.
      */
     fun setupEditTextUuidValidator(editText: EditText) {
-        editText.addTextChangedListener(object : TextWatcher {
+        editText.addTextChangedListener(
+            object : TextWatcher {
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                // Do nothing.
-            }
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                    // Do nothing.
+                }
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                // Do nothing.
-            }
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    // Do nothing.
+                }
 
-            override fun afterTextChanged(editable: Editable?) {
-                requireNotNull(editable)
+                override fun afterTextChanged(editable: Editable?) {
+                    requireNotNull(editable)
 
-                val text = editable.toString()
+                    val text = editable.toString()
 
-                val isValid = text.isBlank() || text
-                    .split(",")
-                    .map(String::trim)
-                    .all(::isUuid)
+                    val isValid = text.isBlank() || text
+                        .split(",")
+                        .map(String::trim)
+                        .all(::isUuid)
 
-                editText.error = if (!isValid) intl.invalidUuids else null
-                editText.rootView.findViewById<Button>(android.R.id.button1)
-                    ?.isEnabled = editText.error == null
-            }
-        })
+                    editText.error = if (!isValid) intl.invalidUuids else null
+                    editText.rootView.findViewById<Button>(android.R.id.button1)
+                        ?.isEnabled = editText.error == null
+                }
+            },
+        )
     }
 }

@@ -19,8 +19,9 @@ class VizImageInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
 
-        if (chain.request().url.queryParameter(SIGNATURE) == null)
+        if (chain.request().url.queryParameter(SIGNATURE) == null) {
             return response
+        }
 
         val image = response.body!!.byteStream().decodeImage()
         val body = image.toResponseBody(MEDIA_TYPE)
@@ -62,7 +63,7 @@ class VizImageInterceptor : Interceptor {
             dstX = 0,
             dstY = 0,
             width = newWidth,
-            height = blockHeight
+            height = blockHeight,
         )
         // Left border.
         canvas.drawImage(
@@ -72,7 +73,7 @@ class VizImageInterceptor : Interceptor {
             dstX = 0,
             dstY = blockHeight,
             width = blockWidth,
-            height = newHeight - 2 * blockHeight
+            height = newHeight - 2 * blockHeight,
         )
         // Bottom border.
         canvas.drawImage(
@@ -82,7 +83,7 @@ class VizImageInterceptor : Interceptor {
             dstX = 0,
             dstY = (CELL_HEIGHT_COUNT - 1) * blockHeight,
             width = newWidth,
-            height = height - (CELL_HEIGHT_COUNT - 1) * (blockHeight + 10)
+            height = height - (CELL_HEIGHT_COUNT - 1) * (blockHeight + 10),
         )
         // Right border.
         canvas.drawImage(
@@ -92,7 +93,7 @@ class VizImageInterceptor : Interceptor {
             dstX = (CELL_WIDTH_COUNT - 1) * blockWidth,
             dstY = blockHeight,
             width = blockWidth + (newWidth - CELL_WIDTH_COUNT * blockWidth),
-            height = newHeight - 2 * blockHeight
+            height = newHeight - 2 * blockHeight,
         )
 
         // Draw the inner cells.
@@ -104,7 +105,7 @@ class VizImageInterceptor : Interceptor {
                 dstX = (y % INNER_CELL_COUNT + 1) * blockWidth,
                 dstY = (y / INNER_CELL_COUNT + 1) * blockHeight,
                 width = blockWidth,
-                height = blockHeight
+                height = blockHeight,
             )
         }
 
@@ -120,7 +121,7 @@ class VizImageInterceptor : Interceptor {
         dstX: Int,
         dstY: Int,
         width: Int,
-        height: Int
+        height: Int,
     ) {
         val srcRect = Rect(srcX, srcY, srcX + width, srcY + height)
         val dstRect = Rect(dstX, dstY, dstX + width, dstY + height)

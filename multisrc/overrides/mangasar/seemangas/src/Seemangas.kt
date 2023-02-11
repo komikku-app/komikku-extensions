@@ -20,7 +20,7 @@ import org.jsoup.nodes.Element
 class Seemangas : MangaSar(
     "Seemangas",
     "https://seemangas.com",
-    "pt-BR"
+    "pt-BR",
 ) {
 
     override fun popularMangaSelector() = "ul.sidebar-popular li.popular-treending"

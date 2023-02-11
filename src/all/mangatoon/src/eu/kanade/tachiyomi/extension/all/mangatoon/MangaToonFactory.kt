@@ -14,7 +14,7 @@ class MangaToonFactory : SourceFactory {
         MangaToonPt(),
         MangaToonTh(),
         MangaToonFr(),
-        MangaToonJa()
+        MangaToonJa(),
     )
 }
 

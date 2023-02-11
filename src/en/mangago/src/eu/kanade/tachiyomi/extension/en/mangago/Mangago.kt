@@ -264,8 +264,8 @@ class Mangago : ParsedHttpSource() {
         "Status",
         listOf(
             StatusFilter("Completed", "f", true),
-            StatusFilter("Ongoing", "o", true)
-        )
+            StatusFilter("Ongoing", "o", true),
+        ),
     ) {
         override fun addToUrl(builder: HttpUrl.Builder) {
             state.forEach {
@@ -279,7 +279,7 @@ class Mangago : ParsedHttpSource() {
         private val query: String,
         private val vals: Array<Pair<String, String>>,
         private val firstIsUnspecified: Boolean = true,
-        state: Int = 0
+        state: Int = 0,
     ) : UriFilter, Filter.Select<String>(name, vals.map { it.first }.toTypedArray(), state) {
         override fun addToUrl(builder: HttpUrl.Builder) {
             if (state != 0 || !firstIsUnspecified) {
@@ -296,7 +296,7 @@ class Mangago : ParsedHttpSource() {
             Pair("Views", "view"),
             Pair("Comment Count", "comment_count"),
             Pair("Creation Date", "create_date"),
-            Pair("Update Date", "update_date")
+            Pair("Update Date", "update_date"),
         ),
         state = 1,
     )
@@ -342,8 +342,8 @@ class Mangago : ParsedHttpSource() {
             GenreFilter("Tragedy"),
             GenreFilter("Bara"),
             GenreFilter("Shotacon"),
-            GenreFilter("Webtoons")
-        )
+            GenreFilter("Webtoons"),
+        ),
     )
 
     private fun findHexEncodedVariable(input: String, variable: String): String {
@@ -457,7 +457,7 @@ class Mangago : ParsedHttpSource() {
                     return str;
                 }
                 """.trimIndent(),
-                "?"
+                "?",
             )
         }
     }

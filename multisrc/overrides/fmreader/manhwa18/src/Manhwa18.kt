@@ -77,7 +77,7 @@ class Manhwa18 : FMReader("Manhwa18", "https://manhwa18.com", "en") {
                 name = element.attr("title")
                 date_upload =
                     SimpleDateFormat("dd/MM/yyyy", Locale.US).parse(
-                        element.select(".chapter-time").text().substringAfter(" - ")
+                        element.select(".chapter-time").text().substringAfter(" - "),
                     )?.time ?: 0L
                 chapter_number = element.attr("time").substringAfterLast(' ').toFloatOrNull() ?: -1f
             }

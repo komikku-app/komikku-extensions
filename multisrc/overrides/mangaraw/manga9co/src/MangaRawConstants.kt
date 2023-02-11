@@ -15,12 +15,12 @@ internal fun getSelectors(mirrorIndex: Int) = when (mirrorIndex) {
     0, 1, 2 -> Selectors(
         listMangaSelector = ".card",
         detailsSelector = "div:has(> main)",
-        recommendClass = "container"
+        recommendClass = "container",
     )
     else -> Selectors(
         listMangaSelector = ".post-list:not(.last-hidden) > .item",
         detailsSelector = "#post-data",
-        recommendClass = "post-list"
+        recommendClass = "post-list",
     )
 }
 

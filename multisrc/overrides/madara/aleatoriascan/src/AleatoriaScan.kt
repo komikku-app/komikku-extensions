@@ -11,7 +11,7 @@ class AleatoriaScan : Madara(
     "Aleatória Scan",
     "https://aleatoriascan.xyz",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

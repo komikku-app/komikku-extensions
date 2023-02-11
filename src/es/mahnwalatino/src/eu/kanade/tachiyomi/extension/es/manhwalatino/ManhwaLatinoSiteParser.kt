@@ -24,7 +24,7 @@ import java.util.Locale
 class ManhwaLatinoSiteParser(
     private val baseUrl: String,
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     /**
@@ -76,7 +76,7 @@ class ManhwaLatinoSiteParser(
         val manga = SManga.create()
         manga.url =
             getUrlWithoutDomain(
-                element.select(MLConstants.latestUpdatesSelectorUrl).first().attr("abs:href")
+                element.select(MLConstants.latestUpdatesSelectorUrl).first().attr("abs:href"),
             )
         manga.title = element.select(MLConstants.latestUpdatesSelectorTitle).text().trim()
         manga.thumbnail_url = getImage(element.select(MLConstants.latestUpdatesSelectorThumbnailUrl)).replace("//", "/")
@@ -116,7 +116,7 @@ class ManhwaLatinoSiteParser(
         return document.select(MLConstants.searchSiteMangasHTMLSelector).map {
             val manga = SManga.create()
             manga.url = getUrlWithoutDomain(
-                it.select(MLConstants.searchPageUrlHTMLSelector).attr("abs:href")
+                it.select(MLConstants.searchPageUrlHTMLSelector).attr("abs:href"),
             )
             manga.title = it.select(MLConstants.searchPageTitleHTMLSelector).text().trim()
             manga.thumbnail_url = getImage(it.select(MLConstants.searchPageThumbnailUrlMangaHTMLSelector))
@@ -138,7 +138,7 @@ class ManhwaLatinoSiteParser(
     fun getMangaFromList(element: Element): SManga {
         val manga = SManga.create()
         manga.url = getUrlWithoutDomain(
-            element.select(MLConstants.popularGenreUrlHTMLSelector).attr("abs:href")
+            element.select(MLConstants.popularGenreUrlHTMLSelector).attr("abs:href"),
         )
         manga.title = element.select(MLConstants.popularGenreTitleHTMLSelector).text().trim()
         manga.thumbnail_url = getImage(element.select(MLConstants.popularGenreThumbnailUrlMangaHTMLSelector))
@@ -184,12 +184,15 @@ class ManhwaLatinoSiteParser(
         val types = mutableListOf<MangaType>()
 
         for (badge in titleBadges.select("span")) {
-            if (badge.hasClass(MangaType.ADULT.getBadge()))
+            if (badge.hasClass(MangaType.ADULT.getBadge())) {
                 types.add(MangaType.ADULT)
-            if (badge.hasClass(MangaType.GAY.getBadge()))
+            }
+            if (badge.hasClass(MangaType.GAY.getBadge())) {
                 types.add(MangaType.GAY)
-            if (badge.hasClass(MangaType.FIN.getBadge()))
+            }
+            if (badge.hasClass(MangaType.FIN.getBadge())) {
                 types.add(MangaType.FIN)
+            }
         }
         return types
     }
@@ -327,8 +330,9 @@ class ManhwaLatinoSiteParser(
             searchType = SearchType.SEARCH_FILTER
             // Append uri filters
             filters.forEach {
-                if (it is UriFilter)
+                if (it is UriFilter) {
                     it.addToUri(uri)
+                }
             }
             uri.appendPath("page").appendPath(page.toString())
         }
@@ -373,8 +377,9 @@ class ManhwaLatinoSiteParser(
      */
     private fun getImage(elements: Elements): String {
         var imageUrl: String = elements.attr(MLConstants.imageAttribute)
-        if (imageUrl.isEmpty())
+        if (imageUrl.isEmpty()) {
             imageUrl = elements.attr("abs:src")
+        }
         return imageUrl
     }
 
@@ -385,8 +390,9 @@ class ManhwaLatinoSiteParser(
      */
     private fun getImage(element: Element): String {
         var imageUrl = element.attr(MLConstants.imageAttribute)
-        if (imageUrl.isEmpty())
+        if (imageUrl.isEmpty()) {
             imageUrl = element.attr("abs:src")
+        }
         return imageUrl
     }
 }

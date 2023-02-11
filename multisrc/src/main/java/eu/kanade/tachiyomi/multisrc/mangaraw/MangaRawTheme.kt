@@ -12,7 +12,7 @@ import org.jsoup.select.Evaluator
 abstract class MangaRawTheme(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String = "ja"
+    override val lang: String = "ja",
 ) : ParsedHttpSource() {
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")

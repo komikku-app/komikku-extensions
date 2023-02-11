@@ -8,5 +8,5 @@ data class RawProjectCategory(
     @SerialName("cateName")
     val categoryName: String,
     @SerialName("cateLink")
-    val categoryLink: String
+    val categoryLink: String,
 )

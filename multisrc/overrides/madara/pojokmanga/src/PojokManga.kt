@@ -78,8 +78,8 @@ class PojokManga : Madara("Pojok Manga", "https://pojokmanga.net", "id", SimpleD
         "Filter Project",
         arrayOf(
             Pair("Show all manga", ""),
-            Pair("Show only project manga", "project-filter-on")
-        )
+            Pair("Show only project manga", "project-filter-on"),
+        ),
     )
 
     override fun getFilterList(): FilterList {
@@ -89,7 +89,7 @@ class PojokManga : Madara("Pojok Manga", "https://pojokmanga.net", "id", SimpleD
             Filter.Separator(),
             Filter.Header("NOTE: cant be used with other filter!"),
             Filter.Header("$name Project List page"),
-            ProjectFilter()
+            ProjectFilter(),
         )
 
         return FilterList(filters)

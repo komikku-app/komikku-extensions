@@ -52,7 +52,7 @@ class TruyenTranh8 : ParsedHttpSource() {
             addQueryParameter("view", "thumb")
             addQueryParameter("page", page.toString())
         }.build().toString(),
-        headers
+        headers,
     )
 
     override fun popularMangaNextPageSelector(): String = "div#tblChap p.page a:contains(Cuối)"
@@ -73,7 +73,7 @@ class TruyenTranh8 : ParsedHttpSource() {
             addQueryParameter("view", "thumb")
             addQueryParameter("page", page.toString())
         }.build().toString(),
-        headers
+        headers,
     )
 
     override fun latestUpdatesNextPageSelector(): String = popularMangaNextPageSelector()
@@ -143,20 +143,20 @@ class TruyenTranh8 : ParsedHttpSource() {
                             "baogom",
                             filter.state
                                 .filter { it.state == Filter.TriState.STATE_INCLUDE }
-                                .joinToString(",") { it.id }
+                                .joinToString(",") { it.id },
                         )
                         addQueryParameter(
                             "khonggom",
                             filter.state
                                 .filter { it.state == Filter.TriState.STATE_EXCLUDE }
-                                .joinToString(",") { it.id }
+                                .joinToString(",") { it.id },
                         )
                     }
                     else -> {}
                 }
             }
         }.build().toString(),
-        headers
+        headers,
     )
 
     override fun searchMangaNextPageSelector(): String = popularMangaNextPageSelector()
@@ -235,7 +235,7 @@ class TruyenTranh8 : ParsedHttpSource() {
         arrayOf(
             Pair("AND/và", "and"),
             Pair("OR/hoặc", "or"),
-        )
+        ),
     )
     private class ForFilter : UriPartFilter(
         "Dành cho",
@@ -244,7 +244,7 @@ class TruyenTranh8 : ParsedHttpSource() {
             Pair("Con gái", "gai"),
             Pair("Con trai", "trai"),
             Pair("Con nít", "nit"),
-        )
+        ),
     )
     private class AgeFilter : UriPartFilter(
         "Bất kỳ",
@@ -256,7 +256,7 @@ class TruyenTranh8 : ParsedHttpSource() {
             Pair("= 16", "16"),
             Pair("= 17", "17"),
             Pair("= 18", "18"),
-        )
+        ),
     )
     private class StatusFilter : UriPartFilter(
         "Tình trạng",
@@ -265,7 +265,7 @@ class TruyenTranh8 : ParsedHttpSource() {
             Pair("Đang dịch", "Ongoing"),
             Pair("Hoàn thành", "Complete"),
             Pair("Tạm ngưng", "Drop"),
-        )
+        ),
     )
     private class OriginFilter : UriPartFilter(
         "Quốc gia",
@@ -275,7 +275,7 @@ class TruyenTranh8 : ParsedHttpSource() {
             Pair("Trung Quốc", "trung"),
             Pair("Hàn Quốc", "han"),
             Pair("Việt Nam", "vietnam"),
-        )
+        ),
     )
     private class ReadingModeFilter : UriPartFilter(
         "Kiểu đọc",
@@ -284,7 +284,7 @@ class TruyenTranh8 : ParsedHttpSource() {
             Pair("Chưa xác định", "chưa xác định"),
             Pair("Phải qua trái", "xem từ phải qua trái"),
             Pair("Trái qua phải", "xem từ trái qua phải"),
-        )
+        ),
     )
     private class SortByFilter : UriPartFilter(
         "Sắp xếp theo",
@@ -295,7 +295,7 @@ class TruyenTranh8 : ParsedHttpSource() {
             Pair("Theo ABC", "ten"),
             Pair("Số Chương", "sochap"),
         ),
-        2
+        2,
     )
     open class Genre(name: String, val id: String) : Filter.TriState(name)
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Thể loại", genres)

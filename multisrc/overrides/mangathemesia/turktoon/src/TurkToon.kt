@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class TurkToon : MangaThemesia(
-    "TurkToon", "https://turktoon.com", "tr",
-    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale("tr"))
+    "TurkToon",
+    "https://turktoon.com",
+    "tr",
+    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale("tr")),
 )

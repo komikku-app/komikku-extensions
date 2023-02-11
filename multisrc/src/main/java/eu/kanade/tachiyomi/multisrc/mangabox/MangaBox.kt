@@ -27,7 +27,7 @@ abstract class MangaBox(
     override val name: String,
     override val baseUrl: String,
     override val lang: String,
-    private val dateformat: SimpleDateFormat = SimpleDateFormat("MMM-dd-yy", Locale.ENGLISH)
+    private val dateformat: SimpleDateFormat = SimpleDateFormat("MMM-dd-yy", Locale.ENGLISH),
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -137,8 +137,9 @@ abstract class MangaBox(
     }
 
     private fun checkForRedirectMessage(document: Document) {
-        if (document.select("body").text().startsWith("REDIRECT :"))
+        if (document.select("body").text().startsWith("REDIRECT :")) {
             throw Exception("Source URL has changed")
+        }
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
@@ -292,7 +293,7 @@ abstract class MangaBox(
             KeywordFilter(getKeywordFilters()),
             SortFilter(getSortFilters()),
             StatusFilter(getStatusFilters()),
-            AdvGenreFilter(getAdvancedGenreFilters())
+            AdvGenreFilter(getAdvancedGenreFilters()),
         )
     } else {
         FilterList(
@@ -300,7 +301,7 @@ abstract class MangaBox(
             Filter.Separator(),
             SortFilter(getSortFilters()),
             StatusFilter(getStatusFilters()),
-            GenreFilter(getGenreFilters())
+            GenreFilter(getGenreFilters()),
         )
     }
 
@@ -318,20 +319,20 @@ abstract class MangaBox(
         Pair(null, "Everything"),
         Pair("title", "Title"),
         Pair("alternative", "Alt title"),
-        Pair("author", "Author")
+        Pair("author", "Author"),
     )
 
     private fun getSortFilters(): Array<Pair<String?, String>> = arrayOf(
         Pair("latest", "Latest"),
         Pair("newest", "Newest"),
-        Pair("topview", "Top read")
+        Pair("topview", "Top read"),
     )
 
     open fun getStatusFilters(): Array<Pair<String?, String>> = arrayOf(
         Pair("all", "ALL"),
         Pair("completed", "Completed"),
         Pair("ongoing", "Ongoing"),
-        Pair("drop", "Dropped")
+        Pair("drop", "Dropped"),
     )
 
     open fun getGenreFilters(): Array<Pair<String?, String>> = arrayOf(
@@ -375,7 +376,7 @@ abstract class MangaBox(
         Pair("39", "Tragedy"),
         Pair("40", "Webtoons"),
         Pair("41", "Yaoi"),
-        Pair("42", "Yuri")
+        Pair("42", "Yuri"),
     )
 
     // To be overridden if using tri-state genres

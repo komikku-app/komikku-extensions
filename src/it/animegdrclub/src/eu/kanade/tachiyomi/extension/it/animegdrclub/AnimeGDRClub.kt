@@ -164,7 +164,7 @@ class AnimeGDRClub : ParsedHttpSource() {
                     setUrlWithoutDomain(it.attr("href").replace("reader", "readerr"))
                     name = it.text()
                     chapter_number = it.text().filter { it.isDigit() }.toFloat()
-                }
+                },
             )
         }
 
@@ -206,13 +206,13 @@ class AnimeGDRClub : ParsedHttpSource() {
         Filter.Header("La ricerca non accetta i filtri e viceversa"),
         SelezType(listOf("Stato", "Genere")),
         StatusList(getStatusList()),
-        GenreSelez(getGenreList())
+        GenreSelez(getGenreList()),
     )
 
     private fun getStatusList() = listOf(
         Status("In corso", "progettiincorso"),
         Status("Finito", "progetticonclusi-progettioneshot"),
-        Status("Interrotto", "progettiinterrotti")
+        Status("Interrotto", "progettiinterrotti"),
     )
     private fun getGenreList() = listOf("Avventura", "Azione", "Comico", "Commedia", "Drammatico", "Ecchi", "Fantascienza", "Fantasy", "Guerra", "Harem", "Horror", "Isekai", "Mecha", "Mistero", "Musica", "Psicologico", "Scolastico", "Sentimentale", "Slice of Life", "Sovrannaturale", "Sperimentale", "Storico", "Thriller")
     //endregion

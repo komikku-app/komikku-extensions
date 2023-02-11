@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class LibraryDto(
     val id: String,
-    val name: String
+    val name: String,
 )
 
 @Serializable
@@ -18,7 +18,7 @@ data class SeriesDto(
     val fileLastModified: String,
     val booksCount: Int,
     val metadata: SeriesMetadataDto,
-    val booksMetadata: BookMetadataAggregationDto
+    val booksMetadata: BookMetadataAggregationDto,
 )
 
 @Serializable
@@ -42,7 +42,7 @@ data class SeriesMetadataDto(
     val genresLock: Boolean,
     val tags: Set<String>,
     val tagsLock: Boolean,
-    val totalBookCount: Int? = null
+    val totalBookCount: Int? = null,
 )
 
 @Serializable
@@ -54,7 +54,7 @@ data class BookMetadataAggregationDto(
     val summaryNumber: String,
 
     val created: String,
-    val lastModified: String
+    val lastModified: String,
 )
 
 @Serializable
@@ -70,21 +70,21 @@ data class BookDto(
     val sizeBytes: Long,
     val size: String,
     val media: MediaDto,
-    val metadata: BookMetadataDto
+    val metadata: BookMetadataDto,
 )
 
 @Serializable
 data class MediaDto(
     val status: String,
     val mediaType: String,
-    val pagesCount: Int
+    val pagesCount: Int,
 )
 
 @Serializable
 data class PageDto(
     val number: Int,
     val fileName: String,
-    val mediaType: String
+    val mediaType: String,
 )
 
 @Serializable
@@ -100,13 +100,13 @@ data class BookMetadataDto(
     val releaseDate: String?,
     val releaseDateLock: Boolean,
     val authors: List<AuthorDto>,
-    val authorsLock: Boolean
+    val authorsLock: Boolean,
 )
 
 @Serializable
 data class AuthorDto(
     val name: String,
-    val role: String
+    val role: String,
 )
 
 @Serializable
@@ -117,7 +117,7 @@ data class CollectionDto(
     val seriesIds: List<String>,
     val createdDate: String,
     val lastModifiedDate: String,
-    val filtered: Boolean
+    val filtered: Boolean,
 )
 
 @Serializable
@@ -128,5 +128,5 @@ data class ReadListDto(
     val bookIds: List<String>,
     val createdDate: String,
     val lastModifiedDate: String,
-    val filtered: Boolean
+    val filtered: Boolean,
 )

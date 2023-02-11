@@ -37,7 +37,7 @@ class Twi4 : HttpSource() {
 
     private fun getChromeHeaders(): Headers = headersBuilder().add(
         "User-Agent",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36",
     ).build()
 
     // Popular manga == All manga in the site
@@ -63,10 +63,10 @@ class Twi4 : HttpSource() {
                         getUrlDomain() + manga.select("header > div.figgroup > figure > a > img")
                             .attr("src")
                     setUrlWithoutDomain(
-                        getUrlDomain() + manga.select("header > div.hgroup > h3 > a").attr("href")
+                        getUrlDomain() + manga.select("header > div.hgroup > h3 > a").attr("href"),
                     )
                     title = manga.select("header > div.hgroup > h3 > a > strong").text()
-                }
+                },
             )
         }
         return MangasPage(ret, hasNextPage)
@@ -108,8 +108,9 @@ class Twi4 : HttpSource() {
             val staffs = document.select("#introduction > div > section > header > div > h3")
             for (staff in staffs) {
                 val role = staff.select("small")
-                if (role.isEmpty())
+                if (role.isEmpty()) {
                     continue
+                }
                 when (role.text().replace("：", "").trim()) {
                     "作者" -> {
                         author = staff.select("span").text()
@@ -160,7 +161,7 @@ class Twi4 : HttpSource() {
                         editor.putLong(chapNumber, dateFound)
                     }
                     this.date_upload = sharedPref.getLong(chapNumber, dateFound)
-                }
+                },
             )
         }
         editor.apply()
@@ -189,11 +190,12 @@ class Twi4 : HttpSource() {
             val indexResponse = client.newCall(
                 GET(
                     requestUrl.substringBeforeLast("/") + "/index.js",
-                    getChromeHeaders()
-                )
+                    getChromeHeaders(),
+                ),
             ).execute()
-            if (!indexResponse.isSuccessful)
+            if (!indexResponse.isSuccessful) {
                 throw Exception("Failed to find pages!")
+            }
             // We got a JS file that looks very much like a JSON object
             // A few string manipulation and we can parse the whole thing as JSON!
             val re = Regex("([A-z]+):")
@@ -209,14 +211,15 @@ class Twi4 : HttpSource() {
             // Twi4's image links are a bit of a mess
             // Because in very rare cases, the image filename *doesn't* come with a suffix
             // So only attach the suffix if there is one
-            if (suffix != null)
+            if (suffix != null) {
                 imageUrl = getUrlDomain() + page.select("div > div > p > img").attr("src").dropLast(4) + suffix + ".jpg"
+            }
         }
         ret.add(
             Page(
                 index = page.select("header > div > h3 > span.number").text().toInt(),
-                imageUrl = imageUrl
-            )
+                imageUrl = imageUrl,
+            ),
         )
         return ret
     }
@@ -226,7 +229,7 @@ class Twi4 : HttpSource() {
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> {
         if (query.startsWith(SEARCH_PREFIX_SLUG)) {
             val slug = query.drop(SEARCH_PREFIX_SLUG.length)
@@ -236,8 +239,9 @@ class Twi4 : HttpSource() {
 
             // There will still be some urls that would accidentally activate the intent (like the news page),
             // but there's no way to avoid it.
-            if (slug.endsWith("html") || slug.startsWith("zadankai"))
+            if (slug.endsWith("html") || slug.startsWith("zadankai")) {
                 return Observable.just(MangasPage(listOf(), false))
+            }
             return client.newCall(GET(baseUrl + slug))
                 .asObservableSuccess()
                 .map { response -> searchMangaSlug(response, slug) }
@@ -246,7 +250,7 @@ class Twi4 : HttpSource() {
             mp.copy(
                 mp.mangas.filter {
                     it.title.contains(query, true)
-                }
+                },
             )
         }
     }

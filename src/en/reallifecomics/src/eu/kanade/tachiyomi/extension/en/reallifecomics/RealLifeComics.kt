@@ -56,7 +56,7 @@ class RealLifeComics : ParsedHttpSource() {
     override fun fetchMangaDetails(manga: SManga) = Observable.just(
         manga.apply {
             initialized = true
-        }
+        },
     )!!
 
     // Chapters

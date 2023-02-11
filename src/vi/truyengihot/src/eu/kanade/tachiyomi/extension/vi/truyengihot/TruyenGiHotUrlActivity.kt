@@ -19,7 +19,7 @@ class TruyenGiHotUrlActivity : Activity() {
                         action = "eu.kanade.tachiyomi.SEARCH"
                         putExtra("query", "${TruyenGiHot.PREFIX_ID_SEARCH}$id")
                         putExtra("filter", packageName)
-                    }
+                    },
                 )
             } catch (e: ActivityNotFoundException) {
                 Log.e("TruyenGiHotUrlActivity", e.toString())

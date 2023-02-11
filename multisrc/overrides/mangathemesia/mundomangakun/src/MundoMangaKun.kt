@@ -11,7 +11,7 @@ class MundoMangaKun : MangaThemesia(
     "Mundo Mangá-Kun",
     "https://mundomangakun.com.br",
     "pt-BR",
-    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     // Changed their theme from a custom one to MangaThemesia.

@@ -22,6 +22,7 @@ class MangaTR : FMReader("Manga-TR", "https://manga-tr.com", "tr") {
         add("User-Agent", "Mozilla/5.0 (Windows NT 6.3; WOW64)")
     }
     override fun popularMangaNextPageSelector() = "div.btn-group:not(div.btn-block) button.btn-info"
+
     // TODO: genre search possible but a bit of a pain
     override fun getFilterList() = FilterList()
 

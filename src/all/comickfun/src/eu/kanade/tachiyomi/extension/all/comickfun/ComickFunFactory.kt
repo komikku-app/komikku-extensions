@@ -52,7 +52,7 @@ class ComickFunFactory : SourceFactory {
         "lt" to 1792260331167396074,
         "el" to 6190162673651111756,
         "sr" to 571668187470919545,
-        "da" to 7137437402245830147
+        "da" to 7137437402245830147,
     ).toMap()
     override fun createSources(): List<Source> = idMap.keys.map {
         object : ComickFun(legacyLanguageMappings.getValue(it), it) {

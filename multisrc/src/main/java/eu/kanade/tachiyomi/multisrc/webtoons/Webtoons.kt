@@ -39,7 +39,7 @@ open class Webtoons(
     override val lang: String,
     open val langCode: String = lang,
     open val localeForCookie: String = lang,
-    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.ENGLISH)
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.ENGLISH),
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -59,10 +59,10 @@ open class Webtoons(
                             .value(localeForCookie)
                             .name("needGDPR")
                             .value("false")
-                            .build()
+                            .build(),
                     )
                 }
-            }
+            },
         )
         .addInterceptor(::sslRetryInterceptor)
         .build()
@@ -149,8 +149,9 @@ open class Webtoons(
     override fun latestUpdatesNextPageSelector(): String? = null
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        if (!query.startsWith(URL_SEARCH_PREFIX))
+        if (!query.startsWith(URL_SEARCH_PREFIX)) {
             return super.fetchSearchManga(page, query, filters)
+        }
 
         val emptyResult = Observable.just(MangasPage(emptyList(), false))
 
@@ -164,9 +165,9 @@ open class Webtoons(
             val title_no = url.queryParameter("title_no")
             val couldBeWebtoonOrEpisode = title_no != null && (url.pathSegments.size >= 3 && url.pathSegments.last().isNotEmpty())
             val isThisLang = "$url".startsWith("$baseUrl/$langCode")
-            if (! (couldBeWebtoonOrEpisode && isThisLang))
+            if (!(couldBeWebtoonOrEpisode && isThisLang)) {
                 emptyResult
-            else {
+            } else {
                 val potentialUrl = "${webtoonPath(url)}?title_no=$title_no"
                 fetchMangaDetails(SManga.create().apply { this.url = potentialUrl }).map {
                     it.url = potentialUrl
@@ -227,7 +228,7 @@ open class Webtoons(
         return FilterList(
             Header("Query can not be blank"),
             Separator(),
-            SearchType(getOfficialList())
+            SearchType(getOfficialList()),
         )
     }
 
@@ -238,7 +239,7 @@ open class Webtoons(
     private fun getOfficialList() = arrayOf(
         Pair("Any", ""),
         Pair("Official only", "WEBTOON"),
-        Pair("Challenge only", "CHALLENGE")
+        Pair("Challenge only", "CHALLENGE"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

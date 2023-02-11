@@ -24,8 +24,8 @@ object ImageInterceptor : Interceptor {
                 url.newBuilder()
                     .removeAllQueryParameters("key")
                     .removeAllQueryParameters("iv")
-                    .build()
-            ).build()
+                    .build(),
+            ).build(),
         ).decode(key.atob(), url.queryParameter("iv")!!.atob())
     }
 

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ArgosResponseDto<T>(
-    val data: Map<String, T>? = null
+    val data: Map<String, T>? = null,
 )
 
 @Serializable
@@ -14,7 +14,7 @@ data class ArgosProjectListDto(
     val currentPage: Int = 0,
     val limit: Int = 0,
     val projects: List<ArgosProjectDto> = emptyList(),
-    val totalPages: Int = 0
+    val totalPages: Int = 0,
 )
 
 @Serializable
@@ -28,7 +28,7 @@ data class ArgosProjectDto(
     val id: Int = 0,
     val name: String? = "",
     @SerialName("getTags") val tags: List<ArgosTagDto>? = emptyList(),
-    val type: String? = ""
+    val type: String? = "",
 )
 
 @Serializable
@@ -38,10 +38,10 @@ data class ArgosChapterDto(
     val images: List<String>? = emptyList(),
     val number: Int? = 0,
     val project: ArgosProjectDto? = null,
-    val title: String? = ""
+    val title: String? = "",
 )
 
 @Serializable
 data class ArgosTagDto(
-    val name: String
+    val name: String,
 )

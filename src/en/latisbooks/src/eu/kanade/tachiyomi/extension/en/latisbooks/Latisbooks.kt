@@ -134,7 +134,7 @@ class Latisbooks : HttpSource() {
                 // Some pages have empty html blocks (e.g. Page 1), so ignore them
                 .filter { it.childrenSize() > 0 }
                 .mapIndexed { i, it -> Page(i + numImages, "", wordWrap(it.text()).image()) }
-                .toList()
+                .toList(),
         )
 
         return pages.toList()

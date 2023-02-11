@@ -42,8 +42,11 @@ class MangaJar : ParsedHttpSource() {
         setUrlWithoutDomain(element.select("a").attr("href"))
         title = element.select("img").attr("title")
         thumbnail_url = element.select("img").let {
-            if (it.hasAttr("data-src"))
-                it.attr("data-src") else it.attr("src")
+            if (it.hasAttr("data-src")) {
+                it.attr("data-src")
+            } else {
+                it.attr("src")
+            }
         }
     }
 
@@ -180,15 +183,15 @@ class MangaJar : ParsedHttpSource() {
     override fun getFilterList() = FilterList(
         OrderBy(),
         SortBy(),
-        GenreList()
+        GenreList(),
     )
 
     private class SortBy : UriPartFilter(
         "Sort By",
         arrayOf(
             Pair("Descending", "0"),
-            Pair("Ascending", "1")
-        )
+            Pair("Ascending", "1"),
+        ),
     )
 
     private class OrderBy : UriPartFilter(
@@ -198,8 +201,8 @@ class MangaJar : ParsedHttpSource() {
             Pair("Year", "year"),
             Pair("Alphabet", "name"),
             Pair("Date added", "published_at"),
-            Pair("Date updated", "last_chapter_at")
-        )
+            Pair("Date updated", "last_chapter_at"),
+        ),
     )
 
     private class GenreList : Filter.Select<String>(
@@ -252,8 +255,8 @@ class MangaJar : ParsedHttpSource() {
             "Music",
             "One Shot",
             "Parody",
-            "Josei"
-        )
+            "Josei",
+        ),
     )
 
     private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T

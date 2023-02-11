@@ -79,7 +79,9 @@ abstract class NewToki(
                     // Includes Manga Details Page, Chapters, Comments, and etcs...
                     actualMangaParseById(urlPath, response)
                 }
-        } else super.fetchSearchManga(page, query, filters)
+        } else {
+            super.fetchSearchManga(page, query, filters)
+        }
     }
 
     private fun actualMangaParseById(urlPath: String, response: Response): MangasPage {

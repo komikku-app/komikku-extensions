@@ -95,11 +95,12 @@ class MeituaTop : HttpSource() {
 
     override fun getFilterList() = FilterList(
         Filter.Header("Category (ignored for text search)"),
-        RegionFilter()
+        RegionFilter(),
     )
 
     private class RegionFilter : Filter.Select<String>(
-        "Region", arrayOf("All", "国产美女", "韩国美女", "台湾美女", "日本美女", "欧美美女", "泰国美女")
+        "Region",
+        arrayOf("All", "国产美女", "韩国美女", "台湾美女", "日本美女", "欧美美女", "泰国美女"),
     )
 
     private fun String.pageNumber() = numberRegex.findAll(this).last().value.toInt()

@@ -75,7 +75,7 @@ data class MangaListDto(
         val dto = this@MangaListDto
         return MangasPage(
             dto.result.map { it.toSManga() },
-            currentPage + 1f <= ceil(dto.resultCount.toFloat() / 20f)
+            currentPage + 1f <= ceil(dto.resultCount.toFloat() / 20f),
         )
     }
 }

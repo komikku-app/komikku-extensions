@@ -18,7 +18,7 @@ import java.util.Locale
 
 class LOLUniverse(
     private val siteLang: String,
-    override val lang: String = siteLang.substring(0, 2)
+    override val lang: String = siteLang.substring(0, 2),
 ) : HttpSource() {
     override val baseUrl = "$UNIVERSE_URL/$siteLang/comic/"
 
@@ -129,7 +129,7 @@ class LOLUniverse(
         mangas.filter {
             it.title.contains(query, true) ||
                 it.genre?.contains(query, true) ?: false
-        }
+        },
     )
 
     companion object {

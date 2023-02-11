@@ -11,7 +11,7 @@ class OrigamiOrpheans : MangaThemesia(
     "Origami Orpheans",
     "https://origami-orpheans.com.br",
     "pt-BR",
-    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     // Scanlator migrated from Madara to WpMangaReader.

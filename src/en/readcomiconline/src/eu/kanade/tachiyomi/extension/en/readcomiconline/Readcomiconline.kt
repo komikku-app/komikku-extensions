@@ -197,7 +197,7 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
 
     override fun getFilterList() = FilterList(
         Status(),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     // $("select[name=\"genres\"]").map((i,el) => `Genre("${$(el).next().text().trim()}", ${i})`).get().join(',\n')
@@ -250,7 +250,7 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
         Genre("Video Games"),
         Genre("War"),
         Genre("Western"),
-        Genre("Zombies")
+        Genre("Zombies"),
     )
     // Preferences Code
 

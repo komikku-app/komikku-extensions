@@ -37,7 +37,7 @@ import java.util.Locale
 abstract class Bilibili(
     override val name: String,
     final override val baseUrl: String,
-    final override val lang: String
+    final override val lang: String,
 ) : HttpSource(), ConfigurableSource {
 
     override val supportsLatest = true
@@ -77,8 +77,8 @@ abstract class Bilibili(
         page = page,
         query = "",
         filters = FilterList(
-            SortFilter("", getAllSortOptions(), defaultPopularSort)
-        )
+            SortFilter("", getAllSortOptions(), defaultPopularSort),
+        ),
     )
 
     override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
@@ -87,8 +87,8 @@ abstract class Bilibili(
         page = page,
         query = "",
         filters = FilterList(
-            SortFilter("", getAllSortOptions(), defaultLatestSort)
-        )
+            SortFilter("", getAllSortOptions(), defaultLatestSort),
+        ),
     )
 
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
@@ -119,10 +119,13 @@ abstract class Bilibili(
         }
         val requestBody = jsonPayload.toString().toRequestBody(JSON_MEDIA_TYPE)
 
-        val refererUrl = if (query.isBlank()) "$baseUrl/genre" else
+        val refererUrl = if (query.isBlank()) {
+            "$baseUrl/genre"
+        } else {
             "$baseUrl/search".toHttpUrl().newBuilder()
                 .addQueryParameter("keyword", query)
                 .toString()
+        }
 
         val newHeaders = headersBuilder()
             .set("Referer", refererUrl)
@@ -354,7 +357,7 @@ abstract class Bilibili(
             SortFilter(intl.sortLabel, getAllSortOptions(), defaultPopularSort),
             PriceFilter(intl.priceLabel, getAllPrices()).takeIf { allPrices.isNotEmpty() },
             GenreFilter(intl.genreLabel, getAllGenres()),
-            AreaFilter(intl.areaLabel, allAreas).takeIf { allAreas.isNotEmpty() }
+            AreaFilter(intl.areaLabel, allAreas).takeIf { allAreas.isNotEmpty() },
         )
 
         return FilterList(filters)

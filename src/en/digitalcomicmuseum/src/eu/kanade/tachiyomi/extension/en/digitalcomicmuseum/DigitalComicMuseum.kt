@@ -112,7 +112,7 @@ class DigitalComicMuseum() : ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
-        document.select(".latest-slide > .slick-slide > a").forEachIndexed() { index, element ->
+        document.select(".latest-slide > .slick-slide > a").forEachIndexed { index, element ->
             pages.add(Page(index, element.attr("abs:href")))
         }
         return pages

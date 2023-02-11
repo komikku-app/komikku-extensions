@@ -7,7 +7,7 @@ import org.jsoup.nodes.Element
 class CatTranslator : Madara(
     "CAT-translator",
     "https://cats-translator.com/manga",
-    "th"
+    "th",
 ) {
     private fun parseMangaFromElement(element: Element, isSearch: Boolean): SManga {
         val manga = SManga.create()

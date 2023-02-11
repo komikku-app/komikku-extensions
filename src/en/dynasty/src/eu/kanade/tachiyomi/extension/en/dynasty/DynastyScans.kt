@@ -101,7 +101,7 @@ abstract class DynastyScans : ParsedHttpSource() {
     private fun buildListfromResponse(): List<Node> {
         return client.newCall(
             Request.Builder().headers(headers)
-                .url(popularMangaInitialUrl()).build()
+                .url(popularMangaInitialUrl()).build(),
         ).execute().asJsoup()
             .select("div#main").first { it.hasText() }.childNodes()
     }

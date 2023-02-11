@@ -339,7 +339,7 @@ class TaoSect : HttpSource() {
         GenreFilter(getGenreList()),
         SortFilter(SORT_LIST, DEFAULT_ORDERBY),
         FeaturedFilter(),
-        NsfwFilter()
+        NsfwFilter(),
     )
 
     private inline fun <reified T> Response.parseAs(): T = use {
@@ -361,14 +361,14 @@ class TaoSect : HttpSource() {
     private fun getCountryList(): List<Tag> = listOf(
         Tag("59", "China"),
         Tag("60", "Coréia do Sul"),
-        Tag("13", "Japão")
+        Tag("13", "Japão"),
     )
 
     private fun getStatusList(): List<Tag> = listOf(
         Tag("3", "Ativo"),
         Tag("5", "Cancelado"),
         Tag("4", "Finalizado"),
-        Tag("6", "One-shot")
+        Tag("6", "One-shot"),
     )
 
     private fun getGenreList(): List<Tag> = listOf(
@@ -400,7 +400,7 @@ class TaoSect : HttpSource() {
         Tag("19", "Slice of life"),
         Tag("17", "Sobrenatural"),
         Tag("57", "Tragédia"),
-        Tag("62", "Webtoon")
+        Tag("62", "Webtoon"),
     )
 
     private data class GoogleDriveResponse(val isValid: Boolean, val code: Int) {
@@ -441,7 +441,7 @@ class TaoSect : HttpSource() {
             Tag("date", "Data de criação"),
             Tag("modified", "Data de modificação"),
             Tag("title", "Título"),
-            Tag("views", "Visualizações")
+            Tag("views", "Visualizações"),
         )
     }
 }

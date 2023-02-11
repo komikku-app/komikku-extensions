@@ -8,5 +8,5 @@ class OzulScans : MangaThemesia(
     "Ozul Scans",
     "https://ozulscans.com",
     "ar",
-    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("ar"))
+    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("ar")),
 )

@@ -57,7 +57,9 @@ class Xinmeitulu : ParsedHttpSource() {
             val slug = query.removePrefix("SLUG:")
             client.newCall(GET("$baseUrl/photo/$slug", headers)).asObservableSuccess()
                 .map { response -> MangasPage(listOf(mangaDetailsParse(response.asJsoup())), false) }
-        } else super.fetchSearchManga(page, query, filters)
+        } else {
+            super.fetchSearchManga(page, query, filters)
+        }
     }
 
     // Details

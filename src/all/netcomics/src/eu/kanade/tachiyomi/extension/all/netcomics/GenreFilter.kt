@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.extension.all.netcomics
 import eu.kanade.tachiyomi.source.model.Filter
 
 internal class GenreFilter(
-    values: Array<String> = genres
+    values: Array<String> = genres,
 ) : Filter.Select<String>("Genre", values) {
     override fun toString() = if (state == 0) "" else values[state]
 

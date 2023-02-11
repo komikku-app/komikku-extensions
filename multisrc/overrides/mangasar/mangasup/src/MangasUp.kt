@@ -11,7 +11,7 @@ import org.jsoup.nodes.Element
 class MangasUp : MangaSar(
     "MangásUp",
     "https://mangasup.net",
-    "pt-BR"
+    "pt-BR",
 ) {
 
     override fun chapterListPaginatedRequest(mangaUrl: String, page: Int): Request {

@@ -5,14 +5,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class InMangaResultDto(
-    val data: String?
+    val data: String?,
 )
 
 @Serializable
 data class InMangaResultObjectDto<T>(
     val message: String = "",
     val success: Boolean,
-    val result: List<T>
+    val result: List<T>,
 )
 
 @Serializable

@@ -8,7 +8,7 @@ class DapRob : Madara(
     "DapRob",
     "https://daprob.com",
     "es",
-    dateFormat = SimpleDateFormat("dd/MM/yyy", Locale.ROOT)
+    dateFormat = SimpleDateFormat("dd/MM/yyy", Locale.ROOT),
 ) {
     override val useNewChapterEndpoint = true
 }

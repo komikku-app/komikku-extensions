@@ -93,7 +93,7 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
         fun internalParse(internalDocument: Document): List<SManga> {
             val authorDocument = if (stackItem.pageType == VARIOUS_AUTHORS) {
                 internalDocument.select(albumSelector)?.let {
-                    elements ->
+                        elements ->
                     elements.reversed().map { pageStack.addLast(StackItem(it.attr("abs:href"), AUTHOR)) }
                 }
                 client.newCall(stackRequest()).execute().asJsoup()
@@ -108,7 +108,7 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
         val mangas = when (stackItem.pageType) {
             VARIOUS_AUTHORS -> {
                 document.select(albumSelector)?.let {
-                    elements ->
+                        elements ->
                     elements.reversed().map { pageStack.addLast(StackItem(it.attr("abs:href"), AUTHOR)) }
                 }
                 internalParse(document)
@@ -268,7 +268,7 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
                         SChapter.create().apply {
                             name = it.text()
                             setUrlWithoutDomain(it.attr("href"))
-                        }
+                        },
                     )
                 }
 
@@ -279,7 +279,7 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
                         SChapter.create().apply {
                             name = "Chapter"
                             setUrlWithoutDomain(response.request.url.toString())
-                        }
+                        },
                     )
                 }
             }
@@ -300,14 +300,13 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
         fun parsePages(
             document: Document,
             nestedChapterDocuments: ArrayDeque<Document> = ArrayDeque(),
-            pages: ArrayList<Page> = ArrayList()
+            pages: ArrayList<Page> = ArrayList(),
         ): List<Page> {
-
             // Nested chapters aka folders
             document.select(linkedChapterSelector)
                 .mapNotNull {
                     nestedChapterDocuments.add(
-                        client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup()
+                        client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup(),
                     )
                 }
 
@@ -315,11 +314,11 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
             pages.addAll(
                 document.select(pageThumbnailSelector).mapIndexed { i, img ->
                     Page(lastPage + i, "", img.imgAttr().replace(pageThumbnailPathSegment, pageFullSizePathSegment))
-                }
+                },
             )
 
             document.nextPageOrNull()?.let {
-                url ->
+                    url ->
                 pages.addAll(parsePages(client.newCall(GET(url, headers)).execute().asJsoup(), nestedChapterDocuments, pages))
             }
 
@@ -342,7 +341,7 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
             Filter.Header("Text search only combines with sort!"),
             Filter.Separator(),
             AlbumFilter(getAlbumList()),
-            SortFilter(getSortList())
+            SortFilter(getSortList()),
         )
     }
 
@@ -423,7 +422,7 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
         Triple("Markydaysaid Comics", "album/Markydaysaid-Comics", AUTHOR),
         Triple("Central Comics", "album/Central-Comics", AUTHOR),
         Triple("Frozen Parody Comics", "album/Frozen-Parody-Comics", AUTHOR),
-        Triple("Blacknwhitecomics.com Comix", "album/Blacknwhitecomics_com-Comix", AUTHOR)
+        Triple("Blacknwhitecomics.com Comix", "album/Blacknwhitecomics_com-Comix", AUTHOR),
     )
 
     protected class SortFilter(private val vals: Array<Pair<String, String>>) : Filter.Select<String>("Sort Order", vals.map { it.first }.toTypedArray()) {
@@ -433,6 +432,6 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
         Pair("Views", ""),
         Pair("Likes", "like"),
         Pair("Date", "date"),
-        Pair("A-Z", "az")
+        Pair("A-Z", "az"),
     )
 }

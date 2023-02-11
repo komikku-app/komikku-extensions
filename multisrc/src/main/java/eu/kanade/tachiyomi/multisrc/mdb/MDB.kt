@@ -170,11 +170,15 @@ abstract class MDB(
     }
 
     override fun getFilterList() =
-        if (::categories.isInitialized) FilterList(
-            Filter.Header("如果使用文本搜索，将会忽略分类筛选"),
-            *categories.map { it.toFilter() }.toTypedArray()
-        ) else FilterList(
-            Filter.Header("点击“重置”即可刷新分类，如果失败，"),
-            Filter.Header("请尝试重新从图源列表点击进入图源"),
-        )
+        if (::categories.isInitialized) {
+            FilterList(
+                Filter.Header("如果使用文本搜索，将会忽略分类筛选"),
+                *categories.map { it.toFilter() }.toTypedArray(),
+            )
+        } else {
+            FilterList(
+                Filter.Header("点击“重置”即可刷新分类，如果失败，"),
+                Filter.Header("请尝试重新从图源列表点击进入图源"),
+            )
+        }
 }

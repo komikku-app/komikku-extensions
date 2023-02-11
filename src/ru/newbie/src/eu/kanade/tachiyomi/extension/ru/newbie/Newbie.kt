@@ -133,7 +133,9 @@ class Newbie : ConfigurableSource, HttpSource() {
             url = document.id
             thumbnail_url = if (document.image_large.isNotEmpty()) {
                 "$IMAGE_URL/${document.image_large}"
-            } else "$IMAGE_URL/${document.image_small}"
+            } else {
+                "$IMAGE_URL/${document.image_small}"
+            }
         }
     }
 
@@ -210,7 +212,7 @@ class Newbie : ConfigurableSource, HttpSource() {
         return POST(
             "https://neo.newmanga.org/catalogue",
             body = """{"query":"$query","sort":{"kind":"$orderBy","dir":"$ascEnd"},"filter":{"hidden_projects":[],"genres":{"excluded":$mutableExGenre,"included":$mutableGenre},"tags":{"excluded":$mutableExTag,"included":$mutableTag},"type":{"allowed":$mutableType},"translation_status":{"allowed":$mutableStatus},"released_year":{"min":null,"max":null},"require_chapters":$requireChapters,"original_status":{"allowed":$mutableTitleStatus},"adult":{"allowed":$mutableAge}},"pagination":{"page":$page,"size":$count}}""".toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()),
-            headers = headers
+            headers = headers,
         )
     }
 
@@ -296,8 +298,9 @@ class Newbie : ConfigurableSource, HttpSource() {
     @SuppressLint("DefaultLocale")
     private fun chapterName(book: BookDto): String {
         var chapterName = "${book.tom}. Глава ${DecimalFormat("#,###.##").format(book.number).replace(",", ".")}"
-        if (!book.is_available)
+        if (!book.is_available) {
             chapterName += " \uD83D\uDCB2 "
+        }
         if (book.name?.isNotBlank() == true) {
             chapterName += " ${book.name.capitalize()}"
         }
@@ -353,7 +356,7 @@ class Newbie : ConfigurableSource, HttpSource() {
     private fun chapterListRequest(branch: Long): Request {
         return GET(
             "$API_URL/branches/$branch/chapters?reverse=true&size=1000000",
-            headers
+            headers,
         )
     }
 
@@ -413,18 +416,18 @@ class Newbie : ConfigurableSource, HttpSource() {
         StatusList(getStatusList()),
         StatusTitleList(getStatusTitleList()),
         AgeList(getAgeList()),
-        RequireChapters()
+        RequireChapters(),
     )
 
     private class OrderBy : Filter.Sort(
         "Сортировка",
         arrayOf("По рейтингу", "По просмотрам", "По лайкам", "По кол-ву глав", "По дате создания", "По дате обновления"),
-        Selection(0, false)
+        Selection(0, false),
     )
 
     private class RequireChapters : Filter.Select<String>(
         "Только проекты с главами",
-        arrayOf("Да", "Все")
+        arrayOf("Да", "Все"),
     )
 
     private fun getTypeList() = listOf(
@@ -434,7 +437,7 @@ class Newbie : ConfigurableSource, HttpSource() {
         CheckFilter("Сингл", "SINGLE"),
         CheckFilter("OEL-манга", "OEL"),
         CheckFilter("Комикс", "COMICS"),
-        CheckFilter("Руманга", "RUSSIAN")
+        CheckFilter("Руманга", "RUSSIAN"),
     )
 
     private fun getStatusList() = listOf(
@@ -622,7 +625,7 @@ class Newbie : ConfigurableSource, HttpSource() {
     private fun getAgeList() = listOf(
         CheckFilter("13+", "ADULT_13"),
         CheckFilter("16+", "ADULT_16"),
-        CheckFilter("18+", "ADULT_18")
+        CheckFilter("18+", "ADULT_18"),
     )
 
     private var isEng: String? = preferences.getString(LANGUAGE_PREF, "eng")

@@ -8,7 +8,7 @@ typealias MangaVibeChapterListDto = MangaVibeResultDto<List<MangaVibeChapterDto>
 
 @Serializable
 data class MangaVibeResultDto<T>(
-    val data: T? = null
+    val data: T? = null,
 )
 
 @Serializable
@@ -18,13 +18,13 @@ data class MangaVibeComicDto(
     val id: Int,
     val status: String? = "",
     val title: Map<String, String?> = emptyMap(),
-    val views: Int = -1
+    val views: Int = -1,
 )
 
 @Serializable
 data class MangaVibeLatestChapterDto(
     val mediaID: String? = "",
-    val title: String? = ""
+    val title: String? = "",
 )
 
 @Serializable
@@ -33,5 +33,5 @@ data class MangaVibeChapterDto(
     val mediaID: Int = -1,
     val number: Float = -1f,
     val pages: Int = -1,
-    val title: String? = ""
+    val title: String? = "",
 )

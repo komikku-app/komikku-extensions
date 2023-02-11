@@ -107,8 +107,8 @@ class MyHentaiComics : ParsedHttpSource() {
                 SChapter.create().apply {
                     name = "Chapter"
                     url = manga.url
-                }
-            )
+                },
+            ),
         )
     }
 
@@ -142,7 +142,7 @@ class MyHentaiComics : ParsedHttpSource() {
     override fun getFilterList() = FilterList(
         Filter.Header("Cannot combine search types!"),
         Filter.Separator("-----------------"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -183,8 +183,8 @@ class MyHentaiComics : ParsedHttpSource() {
             Pair("Rape", "/index.php/tag/2433"),
             Pair("Strap-On", "/index.php/tag/2441"),
             Pair("Superheroes", "/index.php/tag/2443"),
-            Pair("Tentacles", "/index.php/tag/2444")
-        )
+            Pair("Tentacles", "/index.php/tag/2444"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

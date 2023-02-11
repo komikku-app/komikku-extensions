@@ -8,5 +8,5 @@ class Mangacim : MangaThemesia(
     "Mangacim",
     "https://www.mangacim.com",
     "tr",
-    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("tr"))
+    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("tr")),
 )

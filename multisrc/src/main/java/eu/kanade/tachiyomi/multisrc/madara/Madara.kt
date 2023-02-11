@@ -48,7 +48,7 @@ abstract class Madara(
     override val name: String,
     override val baseUrl: String,
     final override val lang: String,
-    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US),
 ) : ParsedHttpSource(), ConfigurableSource {
 
     private val preferences: SharedPreferences by lazy {
@@ -227,7 +227,7 @@ abstract class Madara(
             "$baseUrl/wp-admin/admin-ajax.php",
             formHeaders,
             formBuilder(page, true).build(),
-            CacheControl.FORCE_NETWORK
+            CacheControl.FORCE_NETWORK,
         )
     }
 
@@ -296,9 +296,11 @@ abstract class Madara(
                 if (!response.isSuccessful) {
                     response.close()
                     // Error message for exceeding last page
-                    if (response.code == 404)
+                    if (response.code == 404) {
                         error("Already on the Last Page!")
-                    else throw Exception("HTTP error ${response.code}")
+                    } else {
+                        throw Exception("HTTP error ${response.code}")
+                    }
                 }
             }
             .map { response ->
@@ -466,7 +468,7 @@ abstract class Madara(
                             add("vars[meta_query][$metaQueryIdx][key]", "manga_adult_content")
                             add(
                                 "vars[meta_query][$metaQueryIdx][compare]",
-                                if (filter.state == 1) "not exists" else "exists"
+                                if (filter.state == 1) "not exists" else "exists",
                             )
 
                             metaQueryIdx++
@@ -502,7 +504,7 @@ abstract class Madara(
             "$baseUrl/wp-admin/admin-ajax.php",
             searchHeaders,
             formBodyBuilder.build(),
-            CacheControl.FORCE_NETWORK
+            CacheControl.FORCE_NETWORK,
         )
     }
 
@@ -532,7 +534,10 @@ abstract class Madara(
     }
 
     protected val statusFilterOptionsValues: Array<String> = arrayOf(
-        "end", "on-going", "canceled", "on-hold"
+        "end",
+        "on-going",
+        "canceled",
+        "on-hold",
     )
 
     protected open val orderByFilterTitle: String = when (lang) {
@@ -542,17 +547,33 @@ abstract class Madara(
 
     protected open val orderByFilterOptions: Array<String> = when (lang) {
         "pt-BR" -> arrayOf(
-            "Relevância", "Recentes", "A-Z", "Avaliação",
-            "Tendência", "Visualizações", "Novos"
+            "Relevância",
+            "Recentes",
+            "A-Z",
+            "Avaliação",
+            "Tendência",
+            "Visualizações",
+            "Novos",
         )
         else -> arrayOf(
-            "Relevance", "Latest", "A-Z", "Rating",
-            "Trending", "Most Views", "New"
+            "Relevance",
+            "Latest",
+            "A-Z",
+            "Rating",
+            "Trending",
+            "Most Views",
+            "New",
         )
     }
 
     protected val orderByFilterOptionsValues: Array<String> = arrayOf(
-        "", "latest", "alphabet", "rating", "trending", "views", "new-manga"
+        "",
+        "latest",
+        "alphabet",
+        "rating",
+        "trending",
+        "views",
+        "new-manga",
     )
 
     protected open val genreConditionFilterTitle: String = when (lang) {
@@ -606,12 +627,12 @@ abstract class Madara(
 
     protected class GenreConditionFilter(title: String, options: Array<String>) : UriPartFilter(
         title,
-        options.zip(arrayOf("", "1")).toTypedArray()
+        options.zip(arrayOf("", "1")).toTypedArray(),
     )
 
     protected class AdultContentFilter(title: String, options: Array<String>) : UriPartFilter(
         title,
-        options.zip(arrayOf("", "0", "1")).toTypedArray()
+        options.zip(arrayOf("", "0", "1")).toTypedArray(),
     )
 
     protected class GenreList(title: String, genres: List<Genre>) : Filter.Group<Genre>(title, genres)
@@ -628,9 +649,9 @@ abstract class Madara(
             OrderByFilter(
                 orderByFilterTitle,
                 orderByFilterOptions.zip(orderByFilterOptionsValues),
-                if (useLoadMoreSearch) 5 else 0
+                if (useLoadMoreSearch) 5 else 0,
             ),
-            AdultContentFilter(adultContentFilterTitle, adultContentFilterOptions)
+            AdultContentFilter(adultContentFilterTitle, adultContentFilterOptions),
         )
 
         if (useLoadMoreSearch) {
@@ -642,12 +663,12 @@ abstract class Madara(
                 Filter.Separator(),
                 Filter.Header(genreFilterHeader),
                 GenreConditionFilter(genreConditionFilterTitle, genreConditionFilterOptions),
-                GenreList(genreFilterTitle, genresList)
+                GenreList(genreFilterTitle, genresList),
             )
         } else if (fetchGenres) {
             filters += listOf(
                 Filter.Separator(),
-                Filter.Header(genresMissingWarning)
+                Filter.Header(genresMissingWarning),
             )
         }
 
@@ -696,22 +717,28 @@ abstract class Madara(
     // Manga Details Parse
 
     protected val completedStatusList: Array<String> = arrayOf(
-        "Completed", "Completo", "Concluído", "Concluido", "Terminé", "Hoàn Thành", "مكتملة",
-        "مكتمل"
+        "Completed",
+        "Completo",
+        "Concluído",
+        "Concluido",
+        "Terminé",
+        "Hoàn Thành",
+        "مكتملة",
+        "مكتمل",
     )
 
     protected val ongoingStatusList: Array<String> = arrayOf(
         "OnGoing", "Продолжается", "Updating", "Em Lançamento", "Em lançamento", "Em andamento",
         "Em Andamento", "En cours", "Ativo", "Lançando", "Đang Tiến Hành", "Devam Ediyor",
-        "Devam ediyor", "In Corso", "In Arrivo", "مستمرة", "مستمر", "En Curso"
+        "Devam ediyor", "In Corso", "In Arrivo", "مستمرة", "مستمر", "En Curso",
     )
 
     protected val hiatusStatusList: Array<String> = arrayOf(
-        "On Hold"
+        "On Hold",
     )
 
     protected val canceledStatusList: Array<String> = arrayOf(
-        "Canceled"
+        "Canceled",
     )
 
     override fun mangaDetailsParse(document: Document): SManga {
@@ -880,8 +907,11 @@ abstract class Madara(
             val mangaUrl = document.location().removeSuffix("/")
             val mangaId = chaptersWrapper.attr("data-id")
 
-            var xhrRequest = if (useNewChapterEndpoint || oldChapterEndpointDisabled)
-                xhrChaptersRequest(mangaUrl) else oldXhrChaptersRequest(mangaId)
+            var xhrRequest = if (useNewChapterEndpoint || oldChapterEndpointDisabled) {
+                xhrChaptersRequest(mangaUrl)
+            } else {
+                oldXhrChaptersRequest(mangaId)
+            }
             var xhrResponse = client.newCall(xhrRequest).execute()
 
             // Newer Madara versions throws HTTP 400 when using the old endpoint.
@@ -1025,7 +1055,7 @@ abstract class Madara(
                 document.location(),
                 element.select("img").first()?.let {
                     it.absUrl(if (it.hasAttr("data-src")) "data-src" else "src")
-                }
+                },
             )
         }
     }
@@ -1127,7 +1157,7 @@ abstract class Madara(
             .map { li ->
                 Genre(
                     li.selectFirst("label").text(),
-                    li.selectFirst("input[type=checkbox]").`val`()
+                    li.selectFirst("input[type=checkbox]").`val`(),
                 )
             }
     }

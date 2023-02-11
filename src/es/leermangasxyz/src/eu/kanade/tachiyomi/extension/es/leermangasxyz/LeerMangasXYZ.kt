@@ -67,11 +67,12 @@ open class LeerMangasXYZ : ParsedHttpSource() {
         val pages = document.select(pageListSelector()).map {
             Page(
                 imageUrl = it.attr("href"),
-                index = it.attr("data-ngdesc").substringAfter("Page ").toInt()
+                index = it.attr("data-ngdesc").substringAfter("Page ").toInt(),
             )
         }
-        if (pages.isNullOrEmpty())
+        if (pages.isNullOrEmpty()) {
             throw RuntimeException("Cannot fetch images from source")
+        }
         return pages
     }
 

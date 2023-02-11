@@ -8,6 +8,6 @@ class LANraragiFactory : SourceFactory {
         listOf(
             LANraragi("1"),
             LANraragi("2"),
-            LANraragi("3")
+            LANraragi("3"),
         )
 }

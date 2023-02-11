@@ -16,7 +16,7 @@ import org.jsoup.select.Elements
 open class GenkanOriginal(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : Genkan(name, baseUrl, lang) {
 
     private var searchQuery = ""

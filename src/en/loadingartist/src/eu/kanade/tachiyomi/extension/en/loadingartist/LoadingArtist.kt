@@ -37,7 +37,7 @@ class LoadingArtist : HttpSource() {
         val url: String,
         val title: String,
         val date: String = "",
-        val section: String
+        val section: String,
     )
 
     // Popular Section (list of comic archives by year)
@@ -53,10 +53,10 @@ class LoadingArtist : HttpSource() {
                         artist = "Loading Artist"
                         author = artist
                         status = SManga.ONGOING
-                    }
+                    },
                 ),
-                false
-            )
+                false,
+            ),
         )
     }
 

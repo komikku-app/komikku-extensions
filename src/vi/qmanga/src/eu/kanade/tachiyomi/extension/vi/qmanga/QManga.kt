@@ -66,7 +66,7 @@ class QManga : ParsedHttpSource() {
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> {
         return when {
             query.startsWith(PREFIX_ID_SEARCH) -> {
@@ -75,7 +75,7 @@ class QManga : ParsedHttpSource() {
                 fetchMangaDetails(
                     SManga.create().apply {
                         this.url = url
-                    }
+                    },
                 )
                     .map {
                         it.url = url
@@ -163,7 +163,7 @@ class QManga : ParsedHttpSource() {
         ScanlatorFilter(),
         AuthorFilter(),
         StatusFilter(),
-        SortFilter()
+        SortFilter(),
     )
 
     open class UriPartFilter(
@@ -181,7 +181,7 @@ class QManga : ParsedHttpSource() {
         arrayOf(
             Pair("Tất cả", ""),
             Pair("Đã hoàn thành", "1"),
-            Pair("Chưa hoàn thành", "2")
+            Pair("Chưa hoàn thành", "2"),
         ),
     )
 
@@ -191,7 +191,7 @@ class QManga : ParsedHttpSource() {
         arrayOf(
             Pair("Mới nhất", "moi-nhat"),
             Pair("Đang hot", "dang-hot"),
-            Pair("Cũ nhất", "cu-nhat")
+            Pair("Cũ nhất", "cu-nhat"),
         ),
         1,
     )
@@ -281,7 +281,7 @@ class QManga : ParsedHttpSource() {
             Pair("ABO", "abo"),
             Pair("Showbiz", "showbiz"),
             Pair("BL Manhwa", "bl-manhwa"),
-            Pair("Văn phòng", "van-phong")
+            Pair("Văn phòng", "van-phong"),
         ),
     )
 
@@ -340,7 +340,7 @@ class QManga : ParsedHttpSource() {
             Pair("Tooyama Ema", "tooyama-ema"),
             Pair("Shinkai Makoto", "shinkai-makoto"),
             Pair("Mikawa Ghost", "mikawa-ghost"),
-            Pair("Mitsunaga Yasunori", "mitsunaga-yasunori")
+            Pair("Mitsunaga Yasunori", "mitsunaga-yasunori"),
         ),
     )
 
@@ -696,7 +696,7 @@ class QManga : ParsedHttpSource() {
             Pair("Meow cuồng đam mẽo", "meow-cuong-dam-meo"),
             Pair(
                 "công ty trách nhiệm hữu hạn một thành viên",
-                "cong-ty-trach-nhiem-huu-han-mot-thanh-vien"
+                "cong-ty-trach-nhiem-huu-han-mot-thanh-vien",
             ),
             Pair("Leviathan Team", "leviathan-team"),
             Pair("Hải âu xanh", "hai-au-xanh"),
@@ -714,7 +714,7 @@ class QManga : ParsedHttpSource() {
             Pair("Mỹ Nữ Translation Comics", "my-nu-translation-comics"),
             Pair(
                 "Takei Translator : Con sâu Takei mê ngủ",
-                "takei-translator-con-sau-takei-me-ngu"
+                "takei-translator-con-sau-takei-me-ngu",
             ),
             Pair("Hồ ly team", "ho-ly-team"),
             Pair("Sở Thú Biên Hòa", "so-thu-bien-hoa"),
@@ -856,7 +856,7 @@ class QManga : ParsedHttpSource() {
             Pair("MẶT NẠ ẨN", "mat-na-an"),
             Pair(
                 "UN EXUTOIRE - Truyện tranh BL siu cấp ngọt ngào",
-                "un-exutoire-truyen-tranh-bl-siu-cap-ngot-ngao"
+                "un-exutoire-truyen-tranh-bl-siu-cap-ngot-ngao",
             ),
             Pair("chunnyyi", "chunnyyi"),
             Pair("Ieyama Akari : Con heo lười biếng", "ieyama-akari-con-heo-luoi-bieng"),
@@ -1009,7 +1009,7 @@ class QManga : ParsedHttpSource() {
             Pair("Silver Snake", "silver_snake"),
             Pair(
                 "zanh siu đẹp trai 12 cá tính và thích đu bê đê",
-                "zanh-siu-dep-trai-12-ca-tinh-va-thich-du-be-de"
+                "zanh-siu-dep-trai-12-ca-tinh-va-thich-du-be-de",
             ),
             Pair("Động Tà Răm", "dong-ta-ram"),
             Pair("Chiếc Kẹo Đường Đáng Eo", "chiec-keo-duong-dang-eo"),
@@ -1054,7 +1054,7 @@ class QManga : ParsedHttpSource() {
             Pair("BER", "ber"),
             Pair("Duck team", "duck-team"),
             Pair("Nivemeo", "nivemeo"),
-            Pair("Chi Chi Chành Chành", "chi-chi-chanh-chanh")
+            Pair("Chi Chi Chành Chành", "chi-chi-chanh-chanh"),
         ),
     )
 

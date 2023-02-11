@@ -45,7 +45,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
     override val supportsLatest = true
 
     private val bannerInterceptor = BaoziBanner(
-        level = preferences.getString(BaoziBanner.PREF, DEFAULT_LEVEL)!!.toInt()
+        level = preferences.getString(BaoziBanner.PREF, DEFAULT_LEVEL)!!.toInt(),
     )
 
     override val client = network.cloudflareClient.newBuilder()
@@ -72,8 +72,9 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             if (chapterOrderPref != CHAPTER_ORDER_DISABLED) {
                 val isAggressive = chapterOrderPref == CHAPTER_ORDER_AGGRESSIVE
                 forEach {
-                    if (isAggressive || it.name.any(Char::isDigit))
+                    if (isAggressive || it.name.any(Char::isDigit)) {
                         it.url = it.url + '#' + it.name // += will use one more StringBuilder
+                    }
                 }
             }
             if (!isNewDateLogic) return@apply
@@ -265,9 +266,12 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
 
         private const val MIRROR_PREF = "MIRROR"
         private val MIRRORS = arrayOf(
-            "cn.baozimh.com", "cn.webmota.com",
-            "tw.baozimh.com", "tw.webmota.com",
-            "www.baozimh.com", "www.webmota.com",
+            "cn.baozimh.com",
+            "cn.webmota.com",
+            "tw.baozimh.com",
+            "tw.webmota.com",
+            "www.baozimh.com",
+            "www.webmota.com",
         )
 
         private const val DEFAULT_LEVEL = BaoziBanner.NORMAL.toString()

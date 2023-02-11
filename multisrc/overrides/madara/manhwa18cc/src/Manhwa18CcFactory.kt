@@ -82,7 +82,7 @@ abstract class Manhwa18Cc(
                 document.location(),
                 element?.let {
                     it.absUrl(if (it.hasAttr("data-src")) "data-src" else "src")
-                }
+                },
             )
         }
     }

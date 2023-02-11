@@ -116,9 +116,11 @@ class YagamiProject : ParsedHttpSource() {
         val chapter = element.select(".title a")
         val chapterScan_Date = element.select(".meta_r")
 
-        name = if (chapter.attr("title").isNullOrBlank())
+        name = if (chapter.attr("title").isNullOrBlank()) {
             chapter.text()
-        else chapter.attr("title")
+        } else {
+            chapter.attr("title")
+        }
 
         chapter_number = name.substringBefore(":").substringAfterLast(" ").substringAfterLast("№").substringAfterLast("#").toFloatOrNull() ?: chapter.attr("href").substringBeforeLast("/").substringAfterLast("/").toFloatOrNull() ?: -1f
 
@@ -126,7 +128,9 @@ class YagamiProject : ParsedHttpSource() {
         date_upload = parseDate(chapterScan_Date.text().substringAfter(", "))
         scanlator = if (chapterScan_Date.select("a").isNotEmpty()) {
             chapterScan_Date.select("a").map { it.text() }.joinToString(" / ")
-        } else null
+        } else {
+            null
+        }
     }
     private fun parseDate(date: String): Long {
         return when (date) {
@@ -135,6 +139,7 @@ class YagamiProject : ParsedHttpSource() {
             else -> SimpleDateFormat("dd.MM.yyyy", Locale.US).parse(date)?.time ?: 0
         }
     }
+
     // Pages
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
         val defaultsel = document.select(".dropdown li a")
@@ -163,7 +168,7 @@ class YagamiProject : ParsedHttpSource() {
     override fun getFilterList() = FilterList(
         Filter.Header("ПРИМЕЧАНИЕ: Фильтры исключают другдруга!"),
         CategoryList(categoriesName),
-        FormatList(formasName)
+        FormatList(formasName),
     )
 
     private class FormatList(formas: Array<String>) : Filter.Select<String>("Тип", formas)
@@ -178,7 +183,7 @@ class YagamiProject : ParsedHttpSource() {
         FormUnit("Манхва", "manhva"),
         FormUnit("Веб Манхва", "webtoon"),
         FormUnit("Маньхуа", "manhua"),
-        FormUnit("Артбуки", "artbooks")
+        FormUnit("Артбуки", "artbooks"),
 
     )
 
@@ -219,6 +224,6 @@ class YagamiProject : ParsedHttpSource() {
         CatUnit("школьная жизнь"),
         CatUnit("экшн"),
         CatUnit("эротика"),
-        CatUnit("этти")
+        CatUnit("этти"),
     )
 }

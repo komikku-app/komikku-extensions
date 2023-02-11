@@ -20,7 +20,7 @@ import uy.kohesive.injekt.injectLazy
 abstract class ReaderFront(
     final override val name: String,
     final override val baseUrl: String,
-    final override val lang: String
+    final override val lang: String,
 ) : HttpSource() {
     override val supportsLatest = true
 

@@ -72,18 +72,18 @@ class Hennojin(override val lang: String, suffix: String) : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document) =
         SManga.create().apply {
             description = document.selectFirst(
-                ".manga-subtitle + p + p"
+                ".manga-subtitle + p + p",
             )?.html()?.replace("<br> ", "\n")
             genre = document.select(
                 ".tags-list a[href*=/parody/]," +
                     ".tags-list a[href*=/tags/]," +
-                    ".tags-list a[href*=/character/]"
+                    ".tags-list a[href*=/character/]",
             )?.joinToString { it.text() }
             artist = document.select(
-                ".tags-list a[href*=/artist/]"
+                ".tags-list a[href*=/artist/]",
             )?.joinToString { it.text() }
             author = document.select(
-                ".tags-list a[href*=/group/]"
+                ".tags-list a[href*=/group/]",
             )?.joinToString { it.text() } ?: artist
             status = SManga.COMPLETED
         }
@@ -108,7 +108,7 @@ class Hennojin(override val lang: String, suffix: String) : ParsedHttpSource() {
             .mapIndexed { idx, img -> Page(idx, "", img.absUrl("src")) }
 
     private inline fun HttpUrl.request(
-        block: HttpUrl.Builder.() -> HttpUrl.Builder
+        block: HttpUrl.Builder.() -> HttpUrl.Builder,
     ) = GET(newBuilder().block().toString(), headers)
 
     private inline val Response.date: Long

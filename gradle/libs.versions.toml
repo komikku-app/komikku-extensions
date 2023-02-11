@@ -7,7 +7,7 @@ serialization_version = "1.4.0"
 gradle-agp = { module = "com.android.tools.build:gradle", version = "7.4.1" }
 gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin_version" }
 gradle-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "kotlin_version" }
-gradle-kotlinter = { module = "org.jmailen.gradle:kotlinter-gradle", version = "3.6.0" }
+gradle-kotlinter = { module = "org.jmailen.gradle:kotlinter-gradle", version = "3.13.0" }
 
 tachiyomi-lib = { module = "com.github.tachiyomiorg:extensions-lib", version = "1.4.0" }
 

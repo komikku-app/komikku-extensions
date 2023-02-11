@@ -198,7 +198,7 @@ class HentaiFantasy : ParsedHttpSource() {
     private class TagList(title: String, tags: List<Tag>) : Filter.Group<Tag>(title, tags)
 
     override fun getFilterList() = FilterList(
-        TagList("Generi", getTagList())
+        TagList("Generi", getTagList()),
     )
 
     // Tags: 47
@@ -250,6 +250,6 @@ class HentaiFantasy : ParsedHttpSource() {
         Tag("Vanilla", 19),
         Tag("Yandere", 58),
         Tag("Yaoi", 22),
-        Tag("Yuri", 14)
+        Tag("Yuri", 14),
     )
 }

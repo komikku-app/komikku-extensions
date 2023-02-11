@@ -21,7 +21,7 @@ class Comic(
     val isCompleted: Boolean,
     val ageRating: Name,
     val genres: List<Name>,
-    val authors: List<Name>
+    val authors: List<Name>,
 ) : Accessible {
     override fun toString() = "$slug|$id"
 }
@@ -41,7 +41,7 @@ class Chapter(
     private val isFree: Boolean,
     private val isUserUnlocked: Boolean,
     private val isUserRented: Boolean,
-    val createdAt: String
+    val createdAt: String,
 ) : Accessible {
     override fun toString() = buildString {
         append(title)

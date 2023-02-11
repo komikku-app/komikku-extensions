@@ -165,21 +165,21 @@ class Komiku : ParsedHttpSource() {
 
     private val ProjectFilter = arrayOf(
         Status("Show all manga", ""),
-        Status("Show only project manga", "project-filter-on")
+        Status("Show only project manga", "project-filter-on"),
     )
 
     private val categoryNames = arrayOf(
         Category("All", ""),
         Category("Manga", "manga"),
         Category("Manhua", "manhua"),
-        Category("Manhwa", "manhwa")
+        Category("Manhwa", "manhwa"),
     )
 
     private val orderBy = arrayOf(
         Order("Ranking", "meta_value_num"),
         Order("New Title", "date"),
         Order("Updates", "modified"),
-        Order("Random", "rand")
+        Order("Random", "rand"),
     )
 
     private val genreList = arrayOf(
@@ -234,13 +234,13 @@ class Komiku : ParsedHttpSource() {
         Genre("Urban", "urban"),
         Genre("Vampire", "vampire"),
         Genre("Webtoons", "webtoons"),
-        Genre("Yuri", "yuri")
+        Genre("Yuri", "yuri"),
     )
 
     private val statusList = arrayOf(
         Status("All", ""),
         Status("Ongoing", "ongoing"),
-        Status("End", "end")
+        Status("End", "end"),
     )
 
     // manga details

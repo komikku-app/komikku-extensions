@@ -212,7 +212,9 @@ abstract class SinMH(
     protected open fun parsePageImages(chapterImages: String): List<String> =
         if (chapterImages.length > 4) {
             chapterImages.run { substring(2, length - 2) }.replace("""\/""", "/").split("\",\"")
-        } else emptyList() // []
+        } else {
+            emptyList() // []
+        }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used.")
 

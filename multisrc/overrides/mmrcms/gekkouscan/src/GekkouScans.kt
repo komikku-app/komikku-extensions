@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 class GekkouScans : MMRCMS(
     "Gekkou Scans",
     "https://gekkou.com.br",
-    "pt-BR"
+    "pt-BR",
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

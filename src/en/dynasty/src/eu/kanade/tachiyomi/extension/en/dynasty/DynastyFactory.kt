@@ -13,5 +13,5 @@ fun getAllDynasty() =
         DynastyChapters(),
         DynastyDoujins(),
         DynastyIssues(),
-        DynastySeries()
+        DynastySeries(),
     )

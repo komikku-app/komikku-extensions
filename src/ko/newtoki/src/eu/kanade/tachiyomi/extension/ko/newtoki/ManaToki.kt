@@ -90,8 +90,8 @@ object ManaToki : NewToki("ManaToki", "comic", manaTokiPreferences) {
             "월간",
             "단편",
             "단행본",
-            "완결"
-        )
+            "완결",
+        ),
     )
 
     // [...document.querySelectorAll("form.form td")[4].querySelectorAll("span.btn")].map((el, i) => `"${el.innerText.trim()}"`).join(',\n')
@@ -114,8 +114,8 @@ object ManaToki : NewToki("ManaToki", "comic", manaTokiPreferences) {
             "ㅍ",
             "ㅎ",
             "0-9",
-            "a-z"
-        )
+            "a-z",
+        ),
     )
 
     // [...document.querySelectorAll("form.form td")[6].querySelectorAll("span.btn")].map((el, i) => `"${el.innerText.trim()}"`).join(',\n')
@@ -149,8 +149,8 @@ object ManaToki : NewToki("ManaToki", "comic", manaTokiPreferences) {
             "추리",
             "판타지",
             "학원",
-            "호러"
-        ).map { SearchCheckBox(it) }
+            "호러",
+        ).map { SearchCheckBox(it) },
     )
 
     private class SearchSortTypeList : Filter.Sort(
@@ -159,8 +159,8 @@ object ManaToki : NewToki("ManaToki", "comic", manaTokiPreferences) {
             "기본(날짜순)",
             "인기순",
             "추천순",
-            "업데이트순"
-        )
+            "업데이트순",
+        ),
     )
 
     override fun getFilterList() = FilterList(
@@ -169,6 +169,6 @@ object ManaToki : NewToki("ManaToki", "comic", manaTokiPreferences) {
         Filter.Header(ignoredForTextSearch()),
         SearchPublishTypeList(),
         SearchJaumTypeList(),
-        SearchGenreTypeList()
+        SearchGenreTypeList(),
     )
 }

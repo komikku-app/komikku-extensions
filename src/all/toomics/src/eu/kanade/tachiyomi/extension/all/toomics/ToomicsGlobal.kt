@@ -23,7 +23,7 @@ abstract class ToomicsGlobal(
     private val siteLang: String,
     private val dateFormat: SimpleDateFormat,
     override val lang: String = siteLang,
-    displayName: String = ""
+    displayName: String = "",
 ) : ParsedHttpSource() {
 
     override val name = "Toomics (Only free chapters)" + (if (displayName.isNotEmpty()) " ($displayName)" else "")
@@ -135,8 +135,9 @@ abstract class ToomicsGlobal(
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        if (document.select("div.section_age_verif").isNotEmpty())
+        if (document.select("div.section_age_verif").isNotEmpty()) {
             throw Exception("Verify age via WebView")
+        }
 
         val url = document.select("head meta[property='og:url']").attr("content")
 

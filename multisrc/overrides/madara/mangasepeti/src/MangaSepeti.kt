@@ -8,5 +8,5 @@ class MangaSepeti : Madara(
     "Manga Sepeti",
     "https://www.mangasepeti.xyz",
     "tr",
-    SimpleDateFormat("MMMMM d, yyyy", Locale("tr"))
+    SimpleDateFormat("MMMMM d, yyyy", Locale("tr")),
 )

@@ -11,7 +11,7 @@ class ThreeQueensScanlator : Madara(
     "Three Queens Scanlator",
     "https://tqscan.com.br",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMMM 'de' yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd 'de' MMMM 'de' yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

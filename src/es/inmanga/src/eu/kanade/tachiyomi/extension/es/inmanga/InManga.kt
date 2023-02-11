@@ -56,7 +56,7 @@ class InManga : ParsedHttpSource() {
     override fun popularMangaRequest(page: Int) = POST(
         url = "$baseUrl/manga/getMangasConsultResult",
         headers = postHeaders,
-        body = requestBodyBuilder(page, true)
+        body = requestBodyBuilder(page, true),
     )
 
     override fun popularMangaSelector() = searchMangaSelector()
@@ -68,7 +68,7 @@ class InManga : ParsedHttpSource() {
     override fun latestUpdatesRequest(page: Int) = POST(
         url = "$baseUrl/manga/getMangasConsultResult",
         headers = postHeaders,
-        body = requestBodyBuilder(page, false)
+        body = requestBodyBuilder(page, false),
     )
 
     override fun latestUpdatesSelector() = searchMangaSelector()
@@ -81,7 +81,7 @@ class InManga : ParsedHttpSource() {
         val skip = (page - 1) * 10
         val body =
             "filter%5Bgeneres%5D%5B%5D=-1&filter%5BqueryString%5D=$query&filter%5Bskip%5D=$skip&filter%5Btake%5D=10&filter%5Bsortby%5D=1&filter%5BbroadcastStatus%5D=0&filter%5BonlyFavorites%5D=false&d=".toRequestBody(
-                null
+                null,
             )
 
         return POST("$baseUrl/manga/getMangasConsultResult", postHeaders, body)
@@ -125,19 +125,21 @@ class InManga : ParsedHttpSource() {
 
     override fun chapterListRequest(manga: SManga) = GET(
         url = "$baseUrl/chapter/getall?mangaIdentification=${manga.url.substringAfterLast("/")}",
-        headers = headers
+        headers = headers,
     )
 
     override fun chapterListParse(response: Response): List<SChapter> {
         // The server returns a JSON with data property that contains a string with the JSON,
         // so is necessary to decode twice.
         val data = json.decodeFromString<InMangaResultDto>(response.body!!.string())
-        if (data.data.isNullOrEmpty())
+        if (data.data.isNullOrEmpty()) {
             return emptyList()
+        }
 
         val result = json.decodeFromString<InMangaResultObjectDto<InMangaChapterDto>>(data.data)
-        if (!result.success)
+        if (!result.success) {
             return emptyList()
+        }
 
         return result.result
             .map { chap -> chapterFromObject(chap) }

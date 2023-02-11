@@ -11,7 +11,7 @@ class CafeComYaoi : Madara(
     "Café com Yaoi",
     "http://cafecomyaoi.com.br",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

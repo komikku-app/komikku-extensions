@@ -65,7 +65,7 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         super.pageListRequest(chapter).newBuilder()
             .header(
                 "Accept",
-                "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+                "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
             )
             .header("Sec-Fetch-Site", "same-origin")
             .header("Sec-Fetch-Mode", "navigate")

@@ -12,5 +12,5 @@ data class ChapterDto(
 
 @Serializable
 data class ChapterGroupDto(
-    val primary: String
+    val primary: String,
 )

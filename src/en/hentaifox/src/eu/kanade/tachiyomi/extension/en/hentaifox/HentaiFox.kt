@@ -119,7 +119,7 @@ class HentaiFox : ParsedHttpSource() {
                 url = "${response.request.url.toString().replace("/gallery/", "/g/")}#"
                 // number of pages
                 url += response.asJsoup().select("[id=load_pages]").attr("value")
-            }
+            },
         )
     }
 
@@ -147,7 +147,7 @@ class HentaiFox : ParsedHttpSource() {
     override fun getFilterList() = FilterList(
         Filter.Header("NOTE: Ignored if using text search!"),
         Filter.Separator(),
-        GenreFilter()
+        GenreFilter(),
     )
 
     // Top 50 tags
@@ -204,8 +204,8 @@ class HentaiFox : ParsedHttpSource() {
             Pair("Uncensored", "uncensored"),
             Pair("Big ass", "big-ass"),
             Pair("Story arc", "story-arc"),
-            Pair("Teacher", "teacher")
-        )
+            Pair("Teacher", "teacher"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

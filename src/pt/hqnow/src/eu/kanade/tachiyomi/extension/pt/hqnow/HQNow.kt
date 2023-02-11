@@ -84,7 +84,7 @@ class HQNow : HttpSource() {
                 put("orderByViews", true)
                 put("loadCovers", true)
                 put("limit", 300)
-            }
+            },
         )
     }
 
@@ -148,7 +148,7 @@ class HQNow : HttpSource() {
             operationName = "getHqsByName",
             variables = buildJsonObject {
                 put("name", query)
-            }
+            },
         )
     }
 
@@ -194,7 +194,7 @@ class HQNow : HttpSource() {
             operationName = "getHqsById",
             variables = buildJsonObject {
                 put("id", comicBookId.toInt())
-            }
+            },
         )
     }
 
@@ -255,7 +255,7 @@ class HQNow : HttpSource() {
             operationName = "getChapterById",
             variables = buildJsonObject {
                 put("chapterId", chapterId.toInt())
-            }
+            },
         )
     }
 

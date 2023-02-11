@@ -6,7 +6,7 @@ import eu.kanade.tachiyomi.source.SourceFactory
 class KomikLabFactory : SourceFactory {
     override fun createSources() = listOf(
         KomikLabEn(),
-        KomikLabId()
+        KomikLabId(),
     )
 }
 

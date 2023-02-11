@@ -8,7 +8,7 @@ class TreeManga : Madara(
     "TreeManga",
     "https://treemanga.com",
     "en",
-    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US)
+    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US),
 ) {
     override val useNewChapterEndpoint: Boolean = true
 }

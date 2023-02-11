@@ -86,7 +86,7 @@ class MikuDoujin : ParsedHttpSource() {
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> {
         val searchMethod = query.startsWith("http")
         return client.newCall(
@@ -95,8 +95,8 @@ class MikuDoujin : ParsedHttpSource() {
                     query
                 } else {
                     "$baseUrl/genre/${genre(query)}/?page=$page"
-                }
-            )
+                },
+            ),
         )
             .asObservableSuccess()
             .map {
@@ -109,7 +109,7 @@ class MikuDoujin : ParsedHttpSource() {
                             thumbnail_url =
                                 document.select("div.sr-card-body div.col-md-4 img").attr("abs:src")
                             initialized = false
-                        }
+                        },
                     )
                 } else {
                     document.select(popularMangaSelector()).map { element ->
@@ -169,7 +169,6 @@ class MikuDoujin : ParsedHttpSource() {
     }
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-
         return client.newCall(GET("$baseUrl/${manga.url}"))
             .asObservableSuccess()
             .map {

@@ -68,10 +68,13 @@ class Vgperson : ParsedHttpSource() {
             .childNodes().drop(5).takeWhile {
                 it.nodeName() != "table"
             }.joinToString("") {
-                if (it is TextNode) it.text()
-                else when ((it as Element).tagName()) {
-                    "br" -> "\n"
-                    else -> it.text()
+                if (it is TextNode) {
+                    it.text()
+                } else {
+                    when ((it as Element).tagName()) {
+                        "br" -> "\n"
+                        else -> it.text()
+                    }
                 }
             }
     }

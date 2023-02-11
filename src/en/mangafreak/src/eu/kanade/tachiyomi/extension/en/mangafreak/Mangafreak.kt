@@ -181,7 +181,7 @@ class Mangafreak : ParsedHttpSource() {
         Filter.Header("Filters do not work if search bar is empty"),
         GenreFilter(getGenreList()),
         TypeFilter(),
-        StatusFilter()
+        StatusFilter(),
     )
     private fun getGenreList() = listOf(
         Genre("Act"),
@@ -222,7 +222,7 @@ class Mangafreak : ParsedHttpSource() {
         Genre("Tragedy"),
         Genre("Vampire"),
         Genre("Yaoi"),
-        Genre("Yuri")
+        Genre("Yuri"),
     )
 
     private class TypeFilter : UriPartFilter(
@@ -230,8 +230,8 @@ class Mangafreak : ParsedHttpSource() {
         arrayOf(
             Pair("Both", "0"),
             Pair("Manga", "2"),
-            Pair("Manhwa", "1")
-        )
+            Pair("Manhwa", "1"),
+        ),
     )
 
     private class StatusFilter : UriPartFilter(
@@ -239,8 +239,8 @@ class Mangafreak : ParsedHttpSource() {
         arrayOf(
             Pair("Both", "0"),
             Pair("Completed", "1"),
-            Pair("Ongoing", "2")
-        )
+            Pair("Ongoing", "2"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

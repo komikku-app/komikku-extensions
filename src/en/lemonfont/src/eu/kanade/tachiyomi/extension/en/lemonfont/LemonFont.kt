@@ -70,7 +70,7 @@ class LemonFont : ParsedHttpSource() {
                     setUrlWithoutDomain("$baseUrl/assets/comics/$series/$part/${i.toString().padStart(3, '0')}.png")
                     chapter_number = i.toFloat()
                     name = "Chapter $i"
-                }
+                },
             )
         }
         return chapterList.reversed()

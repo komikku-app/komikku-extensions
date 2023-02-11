@@ -68,7 +68,7 @@ class Tachidesk : ConfigurableSource, UnmeteredSource, HttpSource() {
             json.decodeFromString<List<MangaDataClass>>(response.body!!.string()).map {
                 it.toSManga()
             },
-            false
+            false,
         )
     // ------------- Manga Details -------------
 
@@ -121,7 +121,7 @@ class Tachidesk : ConfigurableSource, UnmeteredSource, HttpSource() {
     override fun getFilterList(): FilterList =
         FilterList(
             CategorySelect(refreshCategoryList(baseUrl).let { categoryList }),
-            Filter.Header("Press reset to attempt to fetch categories")
+            Filter.Header("Press reset to attempt to fetch categories"),
         )
 
     private var categoryList: List<CategoryDataClass> = emptyList()
@@ -140,7 +140,7 @@ class Tachidesk : ConfigurableSource, UnmeteredSource, HttpSource() {
                         emptyList()
                     }
                 },
-                {}
+                {},
             )
     }
 
@@ -157,7 +157,7 @@ class Tachidesk : ConfigurableSource, UnmeteredSource, HttpSource() {
         val preferencesMap = mapOf(
             ADDRESS_TITLE to ADDRESS_DEFAULT,
             LOGIN_TITLE to LOGIN_DEFAULT,
-            PASSWORD_TITLE to PASSWORD_DEFAULT
+            PASSWORD_TITLE to PASSWORD_DEFAULT,
         )
 
         preferencesMap.forEach { (key, defaultValue) ->

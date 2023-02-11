@@ -21,7 +21,7 @@ class EHFactory : SourceFactory {
         EHentaiTh(),
         EHentaiVi(),
         EHentaiNone(),
-        EHentaiOther()
+        EHentaiOther(),
     )
 }
 

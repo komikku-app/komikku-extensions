@@ -11,7 +11,7 @@ class FayScans : Madara(
     "Fay Scans",
     "https://fayscans.com.br",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

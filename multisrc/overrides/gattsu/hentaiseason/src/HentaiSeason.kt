@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 class HentaiSeason : Gattsu(
     "Hentai Season",
     "https://hentaiseason.com",
-    "pt-BR"
+    "pt-BR",
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

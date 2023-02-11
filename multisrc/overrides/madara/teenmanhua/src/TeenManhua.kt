@@ -8,5 +8,5 @@ class TeenManhua : Madara(
     "TeenManhua",
     "https://teenmanhua.com",
     "en",
-    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US)
+    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US),
 )

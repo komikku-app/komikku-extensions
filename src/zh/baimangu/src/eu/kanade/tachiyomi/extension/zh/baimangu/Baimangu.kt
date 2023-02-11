@@ -95,14 +95,14 @@ class Baimangu : ConfigurableSource, ParsedHttpSource() {
             "更多漫画",
             "漫画大全",
         ),
-        3 // means 漫画大全 (4)
+        3, // means 漫画大全 (4)
     )
 
     private class SortFilter : Filter.Select<String>("排序", arrayOf("按时间", "按人气", "按评分"), 0)
 
     override fun getFilterList() = FilterList(
         ChannelFilter(),
-        SortFilter()
+        SortFilter(),
     )
 
     // Search

@@ -92,8 +92,9 @@ class WuqiManga : SinMH("57漫画", "http://www.wuqimh.net") {
             val tagMap = filterMap[name]!!
             for (tag in tags) {
                 val tagName = tag.text()
-                if (!tagMap.containsKey(tagName))
+                if (!tagMap.containsKey(tagName)) {
                     tagMap[tagName] = tag.attr("href").removePrefix("/list/").substringBeforeLast("-order-")
+                }
             }
         }
         categories = filterMap.map {

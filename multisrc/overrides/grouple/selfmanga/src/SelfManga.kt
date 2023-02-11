@@ -37,14 +37,16 @@ class SelfManga : GroupLe("SelfManga", "https://selfmanga.live", "ru") {
                 else -> return@forEach
             }
         }
-        return if (url.toString().contains("&"))
+        return if (url.toString().contains("&")) {
             GET(url.toString().replace("=%3D", "="), headers)
-        else popularMangaRequest(page)
+        } else {
+            popularMangaRequest(page)
+        }
     }
 
     private class OrderBy : Filter.Select<String>(
         "Сортировка",
-        arrayOf("По популярности", "Популярно сейчас", "По году", "По имени", "Новинки", "По дате обновления", "По рейтингу")
+        arrayOf("По популярности", "Популярно сейчас", "По году", "По имени", "Новинки", "По дате обновления", "По рейтингу"),
     )
 
     private class Genre(name: String, val id: String) : Filter.TriState(name)
@@ -54,7 +56,7 @@ class SelfManga : GroupLe("SelfManga", "https://selfmanga.live", "ru") {
     override fun getFilterList() = FilterList(
         OrderBy(),
         Category(getCategoryList()),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private fun getCategoryList() = listOf(
@@ -62,7 +64,7 @@ class SelfManga : GroupLe("SelfManga", "https://selfmanga.live", "ru") {
         Genre("Веб", "el_2160"),
         Genre("Журнал", "el_4983"),
         Genre("Ранобэ", "el_5215"),
-        Genre("Сборник", "el_2157")
+        Genre("Сборник", "el_2157"),
     )
 
     private fun getGenreList() = listOf(
@@ -99,6 +101,6 @@ class SelfManga : GroupLe("SelfManga", "https://selfmanga.live", "ru") {
         Genre("фантастика", "el_2140"),
         Genre("фэнтези", "el_2131"),
         Genre("школа", "el_2127"),
-        Genre("этти", "el_4982")
+        Genre("этти", "el_4982"),
     )
 }

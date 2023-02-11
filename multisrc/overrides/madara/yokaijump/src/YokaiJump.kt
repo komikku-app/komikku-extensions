@@ -8,5 +8,5 @@ class YokaiJump : Madara(
     "Yokai Jump",
     "https://yokaijump.fr",
     "fr",
-    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US)
+    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US),
 )

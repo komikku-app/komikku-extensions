@@ -11,7 +11,7 @@ class DiskusScan : MangaThemesia(
     "Diskus Scan",
     "https://diskusscan.com",
     "pt-BR",
-    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     // Changed their theme from Madara to MangaThemesia.

@@ -69,8 +69,9 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
                 .appendQueryParameter("c", "index")
                 .appendQueryParameter("a", "ku")
             filters.forEach {
-                if (it is UriSelectFilterPath && it.toUri().second.isNotEmpty())
+                if (it is UriSelectFilterPath && it.toUri().second.isNotEmpty()) {
                     uri.appendQueryParameter(it.toUri().first, it.toUri().second)
+                }
             }
             uri.appendQueryParameter("page", page.toString())
         }
@@ -139,7 +140,7 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
         Filter.Header("过滤器将被忽略"),
         CategoryFilter(),
         StatusFilter(),
-        AttributeFilter()
+        AttributeFilter(),
     )
 
     private class CategoryFilter : UriSelectFilterPath(
@@ -160,8 +161,8 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
             Pair("29", "体育"),
             Pair("34", "机战"),
             Pair("35", "职业"),
-            Pair("36", "汉化组跟上，不再更新")
-        )
+            Pair("36", "汉化组跟上，不再更新"),
+        ),
     )
 
     private class StatusFilter : UriSelectFilterPath(
@@ -170,8 +171,8 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
         arrayOf(
             Pair("", "全部"),
             Pair("0", "连载中"),
-            Pair("1", "已完结")
-        )
+            Pair("1", "已完结"),
+        ),
     )
 
     private class AttributeFilter : UriSelectFilterPath(
@@ -181,8 +182,8 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
             Pair("", "全部"),
             Pair("一半中文一半生肉", "一半中文一半生肉"),
             Pair("全生肉", "全生肉"),
-            Pair("全中文", "全中文")
-        )
+            Pair("全中文", "全中文"),
+        ),
     )
 
     /**
@@ -193,7 +194,7 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
     private open class UriSelectFilterPath(
         val key: String,
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray()) {
         fun toUri() = Pair(key, vals[state].first)
     }

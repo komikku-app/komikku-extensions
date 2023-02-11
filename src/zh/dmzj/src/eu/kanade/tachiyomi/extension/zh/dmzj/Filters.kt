@@ -23,7 +23,7 @@ class RankingGroup : Filter.Group<Filter<*>>(
         TimeFilter(),
         SortFilter(),
         GenreFilter(),
-    )
+    ),
 ) {
     val isEnabled get() = (state[0] as EnabledFilter).state
 
@@ -39,7 +39,7 @@ class RankingGroup : Filter.Group<Filter<*>>(
             Pair("周排行", "1"),
             Pair("月排行", "2"),
             Pair("总排行", "3"),
-        )
+        ),
     )
 
     private class SortFilter : QueryFilter(
@@ -49,7 +49,7 @@ class RankingGroup : Filter.Group<Filter<*>>(
             Pair("人气", "0"),
             Pair("吐槽", "1"),
             Pair("订阅", "2"),
-        )
+        ),
     )
 
     private class GenreFilter : QueryFilter("题材(慎用/易出错)", "tag_id", genres)
@@ -81,7 +81,7 @@ private class GenreSelectFilter : TagFilter, SelectFilter("题材", genres)
 
 private class GenreGroup : TagFilter, Filter.Group<GenreFilter>(
     "题材（作品需包含勾选的所有项目）",
-    genres.drop(1).map { GenreFilter(it.first, it.second) }
+    genres.drop(1).map { GenreFilter(it.first, it.second) },
 ) {
     override val uriPart get() = state.filter { it.state }.joinToString("-") { it.value }
 }
@@ -94,7 +94,7 @@ private class StatusFilter : TagFilter, SelectFilter(
         Pair("全部", ""),
         Pair("连载中", "2309"),
         Pair("已完结", "2310"),
-    )
+    ),
 )
 
 private class ReaderFilter : TagFilter, SelectFilter(
@@ -105,7 +105,7 @@ private class ReaderFilter : TagFilter, SelectFilter(
         Pair("少女漫画", "3263"),
         Pair("青年漫画", "3264"),
         Pair("女青漫画", "13626"),
-    )
+    ),
 )
 
 private class RegionFilter : TagFilter, SelectFilter(
@@ -118,7 +118,7 @@ private class RegionFilter : TagFilter, SelectFilter(
         Pair("港台", "2307"),
         Pair("内地", "2308"),
         Pair("其他", "8453"),
-    )
+    ),
 )
 
 private class SortFilter : SelectFilter(
@@ -126,7 +126,7 @@ private class SortFilter : SelectFilter(
     arrayOf(
         Pair("人气", "0"),
         Pair("更新", "1"),
-    )
+    ),
 )
 
 // endregion

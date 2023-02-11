@@ -13,5 +13,5 @@ data class CoverArtDto(override val attributes: CoverArtAttributesDto? = null) :
 @Serializable
 data class CoverArtAttributesDto(
     val fileName: String? = null,
-    val locale: String? = null
+    val locale: String? = null,
 ) : AttributesDto()

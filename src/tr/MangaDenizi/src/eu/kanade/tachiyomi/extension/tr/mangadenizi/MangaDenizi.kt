@@ -126,8 +126,9 @@ class MangaDenizi : ParsedHttpSource() {
 
     @Serializable
     data class SearchMangaJson(
-        val suggestions: List<MangaJson>
+        val suggestions: List<MangaJson>,
     )
+
     @Serializable
     data class MangaJson(
         val value: String,

@@ -9,7 +9,7 @@ class TonariNoYoungJump : GigaViewer(
     "Tonari no Young Jump",
     "https://tonarinoyj.jp",
     "ja",
-    "https://cdn-img.tonarinoyj.jp/public/page"
+    "https://cdn-img.tonarinoyj.jp/public/page",
 ) {
 
     override val supportsLatest: Boolean = false
@@ -35,6 +35,6 @@ class TonariNoYoungJump : GigaViewer(
     override fun getCollections(): List<Collection> = listOf(
         Collection("連載中", ""),
         Collection("読切", "oneshot"),
-        Collection("出張作品", "trial")
+        Collection("出張作品", "trial"),
     )
 }

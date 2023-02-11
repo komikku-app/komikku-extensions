@@ -27,7 +27,7 @@ data class Title(
     private val v_cover_img: String,
     private val author_story_arr: List<Author>,
     private val author_picture_arr: List<Author>,
-    private val author_origin_arr: List<Author>
+    private val author_origin_arr: List<Author>,
 ) {
     val slug: String
         get() = "$title_slug|$title_id"
@@ -67,7 +67,7 @@ data class Chapter(
     private val created_at: String,
     private val title_id: Int,
     private val is_free: String,
-    private val is_order: String? = null
+    private val is_order: String? = null,
 ) {
     val path: String
         get() = "$title_id/$chapter_id"

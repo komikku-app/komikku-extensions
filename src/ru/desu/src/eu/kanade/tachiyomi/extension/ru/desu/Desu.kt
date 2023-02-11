@@ -266,7 +266,7 @@ class Desu : HttpSource() {
 
     private class OrderBy : Filter.Select<String>(
         "Сортировка",
-        arrayOf("Популярность", "Дата", "Имя")
+        arrayOf("Популярность", "Дата", "Имя"),
     )
 
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Жанр", genres)
@@ -280,7 +280,7 @@ class Desu : HttpSource() {
     override fun getFilterList() = FilterList(
         OrderBy(),
         TypeList(getTypeList()),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private fun getTypeList() = listOf(
@@ -288,7 +288,7 @@ class Desu : HttpSource() {
         Type("Манхва", "manhwa"),
         Type("Маньхуа", "manhua"),
         Type("Ваншот", "one_shot"),
-        Type("Комикс", "comics")
+        Type("Комикс", "comics"),
     )
 
     private fun getGenreList() = listOf(
@@ -336,7 +336,7 @@ class Desu : HttpSource() {
         Genre("Экшен", "Action"),
         Genre("Этти", "Ecchi"),
         Genre("Юри", "Yuri"),
-        Genre("Яой", "Yaoi")
+        Genre("Яой", "Yaoi"),
     )
 
     companion object {

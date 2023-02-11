@@ -57,7 +57,7 @@ class ThePropertyOfHate : HttpSource() {
                 url = firstChapterUrl
                 chapter_number = 1f
                 name = "The Hook"
-            }
+            },
         )
 
         document.select("select > option:not(:first-child)")

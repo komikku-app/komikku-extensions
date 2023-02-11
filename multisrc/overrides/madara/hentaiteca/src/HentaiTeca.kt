@@ -12,7 +12,7 @@ class HentaiTeca : Madara(
     "Hentai Teca",
     "https://hentaiteca.net",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

@@ -14,7 +14,7 @@ import org.jsoup.nodes.Element
 abstract class PaprikaAlt(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : Paprika(name, baseUrl, lang) {
     override fun popularMangaSelector() = "div.anipost"
 

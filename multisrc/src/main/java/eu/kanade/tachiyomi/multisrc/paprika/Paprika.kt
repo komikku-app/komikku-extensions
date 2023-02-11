@@ -22,7 +22,7 @@ import java.util.Locale
 abstract class Paprika(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -187,7 +187,7 @@ abstract class Paprika(
         Filter.Header("NOTE: Ignored if using text search!"),
         Filter.Separator(),
         OrderFilter(getOrderList()),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     class OrderFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Category", vals)
@@ -195,7 +195,7 @@ abstract class Paprika(
     private fun getOrderList() = arrayOf(
         Pair("Views", "2"),
         Pair("Latest", "3"),
-        Pair("A-Z", "1")
+        Pair("A-Z", "1"),
     )
 
     class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Category", vals)
@@ -298,7 +298,7 @@ abstract class Paprika(
         Pair("Wuxia", "wuxia"),
         Pair("Yaoi", "yaoi"),
         Pair("Yuri", "yuri"),
-        Pair("Zombies", "zombies")
+        Pair("Zombies", "zombies"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

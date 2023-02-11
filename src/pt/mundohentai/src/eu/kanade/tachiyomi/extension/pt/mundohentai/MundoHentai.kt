@@ -128,7 +128,7 @@ class MundoHentai : ParsedHttpSource() {
 
     override fun getFilterList(): FilterList = FilterList(
         Filter.Header("Os filtros são ignorados na busca!"),
-        TagFilter(getTags())
+        TagFilter(getTags()),
     )
 
     data class Tag(val name: String, val slug: String) {
@@ -165,7 +165,7 @@ class MundoHentai : ParsedHttpSource() {
         Tag("Professora", "professora"),
         Tag("Sex Toys", "sex-toys"),
         Tag("Tentáculos", "tentaculos"),
-        Tag("Yaoi", "yaoi")
+        Tag("Yaoi", "yaoi"),
     )
 
     override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException("Not used")

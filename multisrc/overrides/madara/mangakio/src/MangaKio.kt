@@ -8,7 +8,7 @@ class MangaKio : Madara(
     "Manga Kio",
     "https://mangakio.com",
     "en",
-    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US),
 ) {
     override val useNewChapterEndpoint = true
 }

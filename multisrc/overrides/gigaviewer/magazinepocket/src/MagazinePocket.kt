@@ -9,7 +9,7 @@ class MagazinePocket : GigaViewer(
     "Magazine Pocket",
     "https://pocket.shonenmagazine.com",
     "ja",
-    "https://cdn-img.pocket.shonenmagazine.com/public/page"
+    "https://cdn-img.pocket.shonenmagazine.com/public/page",
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
@@ -31,6 +31,6 @@ class MagazinePocket : GigaViewer(
     override fun getCollections(): List<Collection> = listOf(
         Collection("マガポケ連載一覧", ""),
         Collection("週刊少年マガジン連載一覧", "smaga"),
-        Collection("別冊少年マガジン連載一覧", "bmaga")
+        Collection("別冊少年マガジン連載一覧", "bmaga"),
     )
 }

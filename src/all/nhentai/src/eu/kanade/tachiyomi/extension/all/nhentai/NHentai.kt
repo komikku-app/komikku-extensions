@@ -34,7 +34,7 @@ import uy.kohesive.injekt.api.get
 
 open class NHentai(
     override val lang: String,
-    private val nhLang: String
+    private val nhLang: String,
 ) : ConfigurableSource, ParsedHttpSource() {
 
     final override val baseUrl = "https://nhentai.net"
@@ -82,8 +82,9 @@ open class NHentai(
             }
         }
 
-        if (!preferences.contains(TITLE_PREF))
+        if (!preferences.contains(TITLE_PREF)) {
             preferences.edit().putString(TITLE_PREF, "full").apply()
+        }
 
         screen.addPreference(serverPref)
     }
@@ -237,7 +238,7 @@ open class NHentai(
                 scanlator = getGroups(document)
                 date_upload = getTime(document)
                 setUrlWithoutDomain(response.request.url.encodedPath)
-            }
+            },
         )
     }
 
@@ -273,7 +274,7 @@ open class NHentai(
         SortFilter(),
         OffsetPageFilter(),
         Filter.Header("Sort is ignored if favorites only"),
-        FavoriteFilter()
+        FavoriteFilter(),
     )
 
     class TagFilter : AdvSearchEntryFilter("Tags")
@@ -298,8 +299,8 @@ open class NHentai(
             Pair("Popular: All Time", "popular"),
             Pair("Popular: Week", "popular-week"),
             Pair("Popular: Today", "popular-today"),
-            Pair("Recent", "date")
-        )
+            Pair("Recent", "date"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

@@ -65,9 +65,13 @@ abstract class SandraAndWoo(
         val (_, title, number, backupNumber) = titleMatch.groupValues
 
         val chapterNumber =
-            if (number.isNotEmpty()) number.toFloat()
-            else if (backupNumber.isNotEmpty()) backupNumber.toFloat()
-            else roundHalfwayUp(lastChapterNumber)
+            if (number.isNotEmpty()) {
+                number.toFloat()
+            } else if (backupNumber.isNotEmpty()) {
+                backupNumber.toFloat()
+            } else {
+                roundHalfwayUp(lastChapterNumber)
+            }
         val chapter = SChapter.create().apply {
             url = path
             name = title

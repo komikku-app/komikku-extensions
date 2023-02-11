@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit
 
 open class MangaPark(
     final override val lang: String,
-    private val siteLang: String
+    private val siteLang: String,
 ) : ParsedHttpSource() {
 
     override val name: String = "MangaPark v3"
@@ -186,11 +186,13 @@ open class MangaPark(
 
     private fun String?.parseStatus() = if (this == null) {
         SManga.UNKNOWN
-    } else when {
-        this.lowercase(Locale.US).contains("ongoing") -> SManga.ONGOING
-        this.lowercase(Locale.US).contains("hiatus") -> SManga.ONGOING
-        this.lowercase(Locale.US).contains("completed") -> SManga.COMPLETED
-        else -> SManga.UNKNOWN
+    } else {
+        when {
+            this.lowercase(Locale.US).contains("ongoing") -> SManga.ONGOING
+            this.lowercase(Locale.US).contains("hiatus") -> SManga.ONGOING
+            this.lowercase(Locale.US).contains("completed") -> SManga.COMPLETED
+            else -> SManga.UNKNOWN
+        }
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {

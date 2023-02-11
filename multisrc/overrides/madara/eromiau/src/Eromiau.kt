@@ -8,7 +8,7 @@ class Eromiau : Madara(
     "Eromiau",
     "https://www.eromiau.com",
     "es",
-    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("es"))
+    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("es")),
 ) {
     override val useNewChapterEndpoint = true
 }

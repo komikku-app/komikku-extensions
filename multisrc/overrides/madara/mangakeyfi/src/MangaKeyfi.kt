@@ -8,5 +8,5 @@ class MangaKeyfi : Madara(
     "Manga Keyfi",
     "https://mangakeyfi.net",
     "tr",
-    SimpleDateFormat("d MMM yyy", Locale("tr"))
+    SimpleDateFormat("d MMM yyy", Locale("tr")),
 )

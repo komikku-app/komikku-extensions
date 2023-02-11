@@ -132,7 +132,7 @@ class Nekopost : ParsedHttpSource() {
                             name = chapter.chapterName
                             date_upload = SimpleDateFormat(
                                 "yyyy-MM-dd HH:mm:ss",
-                                Locale("th")
+                                Locale("th"),
                             ).parse(chapter.createDate)?.time
                                 ?: 0L
                             chapter_number = chapter.chapterNo.toFloat()
@@ -162,7 +162,7 @@ class Nekopost : ParsedHttpSource() {
                     }
                     Page(
                         index = page.pageNo,
-                        imageUrl = imgUrl
+                        imageUrl = imgUrl,
                     )
                 }
             }
@@ -217,7 +217,7 @@ class Nekopost : ParsedHttpSource() {
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> {
         return client.newCall(GET("$fileHost/dataJson/dataProjectName.json"))
             .asObservableSuccess()
@@ -229,7 +229,7 @@ class Nekopost : ParsedHttpSource() {
                 val mangaList: List<SManga> = projectList.filter { project ->
                     Regex(
                         query,
-                        setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE)
+                        setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE),
                     ).find(project.npName) != null
                 }.map { project ->
                     SManga.create().apply {

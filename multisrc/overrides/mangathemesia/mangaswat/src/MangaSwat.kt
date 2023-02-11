@@ -15,7 +15,7 @@ class MangaSwat : MangaThemesia(
     "MangaSwat",
     "https://swatmanga.net",
     "ar",
-    dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US),
 ) {
     override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(1)

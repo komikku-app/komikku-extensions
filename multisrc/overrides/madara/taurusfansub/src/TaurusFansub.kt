@@ -8,7 +8,7 @@ class TaurusFansub : Madara(
     "Taurus Fansub",
     "https://taurusfansub.com",
     "es",
-    dateFormat = SimpleDateFormat("dd/MM/yyy", Locale.ROOT)
+    dateFormat = SimpleDateFormat("dd/MM/yyy", Locale.ROOT),
 ) {
     override val useNewChapterEndpoint = true
 }

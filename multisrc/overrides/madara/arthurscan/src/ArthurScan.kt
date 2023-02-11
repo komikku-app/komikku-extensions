@@ -11,7 +11,7 @@ class ArthurScan : Madara(
     "Arthur Scan",
     "https://arthurscan.xyz",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

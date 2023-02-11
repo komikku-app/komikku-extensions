@@ -11,7 +11,7 @@ class Comiplex : GigaViewer(
     "Comiplex",
     "https://viewer.heros-web.com",
     "ja",
-    "https://cdn-img.viewer.heros-web.com/public/page"
+    "https://cdn-img.viewer.heros-web.com/public/page",
 ) {
 
     override val supportsLatest: Boolean = false
@@ -37,6 +37,6 @@ class Comiplex : GigaViewer(
         Collection("ヒーローズ", "heros"),
         Collection("ふらっとヒーローズ", "flat"),
         Collection("わいるどヒーローズ", "wild"),
-        Collection("読切作品", "oneshot")
+        Collection("読切作品", "oneshot"),
     )
 }

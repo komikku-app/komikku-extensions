@@ -49,7 +49,7 @@ class CloneManga : ParsedHttpSource() {
             description = element.select("h4").first()?.text() ?: ""
             thumbnail_url = baseUrl + attr.substring(
                 attr.indexOf("site/themes"),
-                attr.indexOf(")")
+                attr.indexOf(")"),
             )
         }
     }
@@ -67,9 +67,9 @@ class CloneManga : ParsedHttpSource() {
         val document = response.asJsoup()
         val series = document.location()
         val numChapters = Regex(
-            pattern = "&page=(.*)&lang="
+            pattern = "&page=(.*)&lang=",
         ).findAll(
-            input = document.getElementsByTag("script")[3].toString()
+            input = document.getElementsByTag("script")[3].toString(),
         )
             .elementAt(3).destructured.component1()
             .toInt()

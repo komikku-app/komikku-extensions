@@ -72,7 +72,7 @@ fun updateLangData(client: OkHttpClient, headers: Headers, preferences: SharedPr
                 name = dto.local_name,
                 code = dto.iso_code.ifEmpty { key },
                 translators = dto.translators.joinToString(),
-                translatedCount = translatedCount[key] ?: 0
+                translatedCount = translatedCount[key] ?: 0,
             )
         }
         .filter { it.translatedCount > 0 }

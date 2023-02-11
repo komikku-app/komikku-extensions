@@ -12,5 +12,5 @@ data class RawProjectSummary(
     val providerName: String,
     val noNewChapter: String,
     val projectName: String,
-    val projectId: String
+    val projectId: String,
 )

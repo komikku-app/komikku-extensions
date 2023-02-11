@@ -332,13 +332,15 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
             }
             FilterList(
                 Filter.Header("Page alphabétique"),
-                PageList(pagelist.toTypedArray())
+                PageList(pagelist.toTypedArray()),
             )
-        } else FilterList(
-            Filter.Header("Page alphabétique"),
-            TextField("Page #"),
-            Filter.Header("Appuyez sur reset pour la liste")
-        )
+        } else {
+            FilterList(
+                Filter.Header("Page alphabétique"),
+                TextField("Page #"),
+                Filter.Header("Appuyez sur reset pour la liste"),
+            )
+        }
     }
 
     private var pageNumberDoc: Document? = null

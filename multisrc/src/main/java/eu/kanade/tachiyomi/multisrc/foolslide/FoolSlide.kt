@@ -33,7 +33,7 @@ abstract class FoolSlide(
     override val name: String,
     override val baseUrl: String,
     override val lang: String,
-    open val urlModifier: String = ""
+    open val urlModifier: String = "",
 ) : ConfigurableSource, ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -53,7 +53,7 @@ abstract class FoolSlide(
         return mp.copy(
             mp.mangas.distinctBy { it.url }.filter {
                 latestUpdatesUrls.add(it.url)
-            }
+            },
         )
     }
 
@@ -153,8 +153,9 @@ abstract class FoolSlide(
 
     protected open fun parseChapterDate(date: String): Long? {
         val lcDate = date.lowercase(Locale.ROOT)
-        if (lcDate.endsWith(" ago"))
+        if (lcDate.endsWith(" ago")) {
             parseRelativeDate(lcDate)?.let { return it }
+        }
 
         // Handle 'yesterday' and 'today', using midnight
         var relativeDate: Calendar? = null
@@ -192,10 +193,11 @@ abstract class FoolSlide(
         var result = DATE_FORMAT_1.parseOrNull(date)
 
         for (dateFormat in DATE_FORMATS_WITH_ORDINAL_SUFFIXES) {
-            if (result == null)
+            if (result == null) {
                 result = dateFormat.parseOrNull(date)
-            else
+            } else {
                 break
+            }
         }
 
         for (dateFormat in DATE_FORMATS_WITH_ORDINAL_SUFFIXES_NO_YEAR) {
@@ -209,7 +211,9 @@ abstract class FoolSlide(
                         set(Calendar.YEAR, Calendar.getInstance().get(Calendar.YEAR))
                     }.time
                 }
-            } else break
+            } else {
+                break
+            }
         }
 
         return result?.time ?: 0L

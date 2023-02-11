@@ -11,7 +11,7 @@ class YaoiComics : Madara(
     "Yaoi Comics",
     "https://ycscan.com",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

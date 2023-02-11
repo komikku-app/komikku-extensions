@@ -24,7 +24,7 @@ abstract class PizzaReader(
     override val baseUrl: String,
     override val lang: String,
     private val apiPath: String = "/api",
-    private val dateParser: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.ITALY)
+    private val dateParser: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.ITALY),
 ) : HttpSource() {
 
     override val supportsLatest = true

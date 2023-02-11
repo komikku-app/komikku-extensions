@@ -8,7 +8,7 @@ class PhoenixFansub : MangaThemesia(
     "Phoenix Fansub",
     "https://phoenixfansub.com",
     "es",
-    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale("es"))
+    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale("es")),
 ) {
 
     override val altNamePrefix: String = "Nombre alternativo: "

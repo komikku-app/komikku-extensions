@@ -9,7 +9,7 @@ class ComicDays : GigaViewer(
     "Comic Days",
     "https://comic-days.com",
     "ja",
-    "https://cdn-img.comic-days.com/public/page"
+    "https://cdn-img.comic-days.com/public/page",
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
@@ -30,6 +30,6 @@ class ComicDays : GigaViewer(
     override fun latestUpdatesSelector(): String = "section#$dayOfWeek.daily " + popularMangaSelector()
 
     override fun getCollections(): List<Collection> = listOf(
-        Collection("連載作品一覧", "")
+        Collection("連載作品一覧", ""),
     )
 }

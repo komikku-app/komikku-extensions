@@ -245,7 +245,7 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
                 }
             Page(
                 index = it.number - 1,
-                imageUrl = url
+                imageUrl = url,
             )
         }
     }
@@ -300,9 +300,9 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
     private fun Response.fromReadList() = request.url.toString().contains("/api/v1/readlists")
 
     private fun parseDate(date: String?): Long =
-        if (date == null)
+        if (date == null) {
             0
-        else {
+        } else {
             try {
                 KomgaHelper.formatterDate.parse(date)?.time ?: 0
             } catch (ex: Exception) {
@@ -311,9 +311,9 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
         }
 
     private fun parseDateTime(date: String?): Long =
-        if (date == null)
+        if (date == null) {
             0
-        else {
+        } else {
             try {
                 KomgaHelper.formatterDateTime.parse(date)?.time ?: 0
             } catch (ex: Exception) {
@@ -348,7 +348,7 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
 
     private data class CollectionFilterEntry(
         val name: String,
-        val id: String? = null
+        val id: String? = null,
     ) {
         override fun toString() = name
     }
@@ -365,7 +365,7 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
                 StatusGroup(listOf("Ongoing", "Ended", "Abandoned", "Hiatus").map { StatusFilter(it) }),
                 GenreGroup(genres.map { GenreFilter(it) }),
                 TagGroup(tags.map { TagFilter(it) }),
-                PublisherGroup(publishers.map { PublisherFilter(it) })
+                PublisherGroup(publishers.map { PublisherFilter(it) }),
             ).also { list ->
                 list.addAll(authors.map { (role, authors) -> AuthorGroup(role, authors.map { AuthorFilter(it) }) })
                 list.add(SeriesSort())
@@ -430,7 +430,7 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
             title = "Source display name",
             default = suffix,
             summary = displayName.ifBlank { "Here you can change the source displayed suffix" },
-            key = PREF_DISPLAYNAME
+            key = PREF_DISPLAYNAME,
         )
         screen.addEditTextPreference(
             title = "Address",
@@ -439,20 +439,20 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI,
             validate = { it.toHttpUrlOrNull() != null },
             validationMessage = "The URL is invalid or malformed",
-            key = PREF_ADDRESS
+            key = PREF_ADDRESS,
         )
         screen.addEditTextPreference(
             title = "Username",
             default = USERNAME_DEFAULT,
             summary = username.ifBlank { "The user account email" },
-            key = PREF_USERNAME
+            key = PREF_USERNAME,
         )
         screen.addEditTextPreference(
             title = "Password",
             default = PASSWORD_DEFAULT,
             summary = if (password.isBlank()) "The user account password" else "*".repeat(password.length),
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD,
-            key = PREF_PASSWORD
+            key = PREF_PASSWORD,
         )
     }
 
@@ -478,23 +478,25 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
                 }
 
                 if (validate != null) {
-                    editText.addTextChangedListener(object : TextWatcher {
-                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    editText.addTextChangedListener(
+                        object : TextWatcher {
+                            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
-                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
-                        override fun afterTextChanged(editable: Editable?) {
-                            requireNotNull(editable)
+                            override fun afterTextChanged(editable: Editable?) {
+                                requireNotNull(editable)
 
-                            val text = editable.toString()
+                                val text = editable.toString()
 
-                            val isValid = text.isBlank() || validate(text)
+                                val isValid = text.isBlank() || validate(text)
 
-                            editText.error = if (!isValid) validationMessage else null
-                            editText.rootView.findViewById<Button>(android.R.id.button1)
-                                ?.isEnabled = editText.error == null
-                        }
-                    })
+                                editText.error = if (!isValid) validationMessage else null
+                                editText.rootView.findViewById<Button>(android.R.id.button1)
+                                    ?.isEnabled = editText.error == null
+                            }
+                        },
+                    )
                 }
             }
 
@@ -649,7 +651,7 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
                     {},
                     { tr ->
                         Log.e(LOG_TAG, "error while doing initial calls", tr)
-                    }
+                    },
                 )
         }
     }

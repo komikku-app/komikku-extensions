@@ -116,8 +116,11 @@ class KillSixBillionDemons : HttpSource() {
         val newestPage = client.newCall(GET(baseUrl, headers)).execute().asJsoup()
         val postTitle = newestPage.selectFirst(".post-title")?.text() ?: ""
         // title is "<book name> <page(s)>"
-        return if (postTitle.lowercase().contains(bookTitleWithoutBook.lowercase())) SManga.UNKNOWN
-        else SManga.COMPLETED
+        return if (postTitle.lowercase().contains(bookTitleWithoutBook.lowercase())) {
+            SManga.UNKNOWN
+        } else {
+            SManga.COMPLETED
+        }
     }
 
     // latest Updates not used
@@ -135,8 +138,8 @@ class KillSixBillionDemons : HttpSource() {
         return Observable.just(
             fetchChapterListTR(
                 baseUrl + manga.url + pagesOrder,
-                mutableListOf()
-            )
+                mutableListOf(),
+            ),
         )
     }
 
@@ -152,9 +155,8 @@ class KillSixBillionDemons : HttpSource() {
      */
     private tailrec fun fetchChapterListTR(
         currentUrl: String,
-        foundChapters: MutableList<SChapter>
+        foundChapters: MutableList<SChapter>,
     ): MutableList<SChapter> {
-
         val numberOfPreviousChapters = foundChapters.size
         val currentPage = client.newCall(GET(currentUrl, headers)).execute().asJsoup()
         val chaptersOnCurrentPage = currentPage.select(".post-content")
@@ -192,7 +194,9 @@ class KillSixBillionDemons : HttpSource() {
         val dateString = dateRegex.find(imageUrl)
         return if (dateString?.value != null) {
             return urlDateFormat.parse(dateString.value)?.time ?: 0L
-        } else 0L
+        } else {
+            0L
+        }
     }
 
     override fun chapterListRequest(manga: SManga): Request = throw Exception("Not used")
@@ -217,7 +221,7 @@ class KillSixBillionDemons : HttpSource() {
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> = throw Exception("Search functionality is not available.")
 
     override fun searchMangaParse(response: Response): MangasPage = throw Exception("Not used")

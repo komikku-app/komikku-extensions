@@ -200,7 +200,7 @@ class HBrowse : ParsedHttpSource(), ConfigurableSource {
     override fun getFilterList(): FilterList {
         return FilterList(
             listOf(Filter.Header("Can't combine with text search!"), Filter.Separator()) +
-                advFilterMap.map { AdvancedFilter(getAdvTriStateList(it.key, it.value.split(", "))) }
+                advFilterMap.map { AdvancedFilter(getAdvTriStateList(it.key, it.value.split(", "))) },
         )
     }
 
@@ -225,7 +225,7 @@ class HBrowse : ParsedHttpSource(), ConfigurableSource {
         Pair("Female Body", "adult, animal_ears, bald, big_butt, chubby, dark_skin, elderly, elf_ears, exaggerated_breasts, fat, furry, hairy, hair_bun, half_animal, halo, hime_cut, horns, large_breasts, long_hair, middle_age, monster_girl, muscular, none, pigtails, ponytail, short, short_hair, skinny, small_breasts, tail, tall, tanned, tan_line, teenager, twintails, wings, young"),
         Pair("Grouping", "foursome_(1_female), foursome_(1_male), foursome_(mixed), foursome_(only_female), one_on_one, one_on_one_(2_females), one_on_one_(2_males), orgy_(1_female), orgy_(1_male), orgy_(mainly_female), orgy_(mainly_male), orgy_(mixed), orgy_(only_female), orgy_(only_male), solo_(female), solo_(male), threesome_(1_female), threesome_(1_male), threesome_(only_female), threesome_(only_male)"),
         Pair("Scene", "adultery, ahegao, anal_(female), anal_(male), aphrodisiac, armpit_sex, asphyxiation, blackmail, blowjob, bondage, breast_feeding, breast_sucking, bukkake, cheating_(female), cheating_(male), chikan, clothed_sex, consensual, cunnilingus, defloration, discipline, dominance, double_penetration, drunk, enema, exhibitionism, facesitting, fingering_(female), fingering_(male), fisting, footjob, grinding, groping, handjob, humiliation, hypnosis, intercrural, interracial_sex, interspecies_sex, lactation, lotion, masochism, masturbation, mind_break, nonhuman, orgy, paizuri, phone_sex, props, rape, reverse_rape, rimjob, sadism, scat, sex_toys, spanking, squirt, submission, sumata, swingers, tentacles, voyeurism, watersports, x-ray_blowjob, x-ray_sex"),
-        Pair("Position", "69, acrobat, arch, bodyguard, butterfly, cowgirl, dancer, deck_chair, deep_stick, doggy, drill, ex_sex, jockey, lap_dance, leg_glider, lotus, mastery, missionary, none, other, pile_driver, prison_guard, reverse_piggyback, rodeo, spoons, standing, teaspoons, unusual, victory")
+        Pair("Position", "69, acrobat, arch, bodyguard, butterfly, cowgirl, dancer, deck_chair, deep_stick, doggy, drill, ex_sex, jockey, lap_dance, leg_glider, lotus, mastery, missionary, none, other, pile_driver, prison_guard, reverse_piggyback, rodeo, spoons, standing, teaspoons, unusual, victory"),
     )
 
     private fun getAdvTriStateList(groupName: String, vals: List<String>) = vals.map { AdvTriStateFilter(groupName, it) }

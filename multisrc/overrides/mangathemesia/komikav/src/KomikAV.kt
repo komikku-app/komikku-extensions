@@ -14,7 +14,7 @@ class KomikAV : MangaThemesia(
     "Komik AV (WP Manga Stream)",
     "https://komikav.com",
     "id",
-    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id"))
+    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id")),
 ) {
     // Formerly "Komik AV (WP Manga Stream)"
     override val id = 7875815514004535629

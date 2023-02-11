@@ -90,8 +90,11 @@ class HeavenManga : ParsedHttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        return if (response.request.url.toString().contains("query=")) super.searchMangaParse(response)
-        else popularMangaParse(response)
+        return if (response.request.url.toString().contains("query=")) {
+            super.searchMangaParse(response)
+        } else {
+            popularMangaParse(response)
+        }
     }
 
     // get contents of a url
@@ -244,8 +247,8 @@ class HeavenManga : ParsedHttpSource() {
             Pair("Webtoon", "webtoon"),
             Pair("Webtoons", "webtoons"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
     )
 
     /**
@@ -282,8 +285,8 @@ class HeavenManga : ParsedHttpSource() {
             Pair("X", "x"),
             Pair("Y", "y"),
             Pair("Z", "z"),
-            Pair("0-9", "0-9")
-        )
+            Pair("0-9", "0-9"),
+        ),
     )
 
     /**
@@ -296,8 +299,8 @@ class HeavenManga : ParsedHttpSource() {
             Pair("Todo", ""),
             Pair("Lista Comis", "comic"),
             Pair("Lista Novelas", "novela"),
-            Pair("Lista Adulto", "adulto")
-        )
+            Pair("Lista Adulto", "adulto"),
+        ),
     )
 
     override fun getFilterList() = FilterList(
@@ -307,7 +310,7 @@ class HeavenManga : ParsedHttpSource() {
         Filter.Separator(),
         GenreFilter(),
         AlphabeticoFilter(),
-        ListaCompletasFilter()
+        ListaCompletasFilter(),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

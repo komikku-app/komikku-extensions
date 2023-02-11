@@ -156,14 +156,16 @@ class TheLibraryOfOhara(override val lang: String, private val siteLang: String)
 
         while (true) {
             val pageChapters = document.select(chapterListSelector()).map { chapterFromElement(it) }
-            if (pageChapters.isEmpty())
+            if (pageChapters.isEmpty()) {
                 break
+            }
 
             allChapters += pageChapters
 
             val hasNextPage = document.select(chapterNextPageSelector()).isNotEmpty()
-            if (!hasNextPage)
+            if (!hasNextPage) {
                 break
+            }
 
             val nextUrl = document.select(chapterNextPageSelector()).attr("href")
             document = client.newCall(GET(nextUrl, headers)).execute().asJsoup()

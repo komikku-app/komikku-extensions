@@ -98,7 +98,7 @@ class Nudemoon : ParsedHttpSource() {
                         order = arrayOf(
                             "all_manga?date",
                             "all_manga?views",
-                            "all_manga?like"
+                            "all_manga?like",
                         )[filter.state!!.index]
                     }
                 }
@@ -177,13 +177,13 @@ class Nudemoon : ParsedHttpSource() {
                         }
                     }
                     chapter_number = 0F
-                }
+                },
             )
         } else {
             var pageListDocument: Document
             val pageListLink = allPageElement.attr("href")
             client.newCall(
-                GET(baseUrl + pageListLink, headers)
+                GET(baseUrl + pageListLink, headers),
             ).execute().run {
                 if (!isSuccessful) {
                     close()
@@ -233,12 +233,12 @@ class Nudemoon : ParsedHttpSource() {
     private class OrderBy : Filter.Sort(
         "Сортировка",
         arrayOf("Дата", "Просмотры", "Лайки"),
-        Selection(1, false)
+        Selection(1, false),
     )
 
     override fun getFilterList() = FilterList(
         OrderBy(),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private fun getGenreList() = listOf(
@@ -323,6 +323,6 @@ class Nudemoon : ParsedHttpSource() {
         Genre("netorare"),
         Genre("nipple penetration"),
         Genre("titsfuck"),
-        Genre("x-ray")
+        Genre("x-ray"),
     )
 }

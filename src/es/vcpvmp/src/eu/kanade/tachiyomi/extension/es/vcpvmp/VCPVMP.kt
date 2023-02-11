@@ -55,8 +55,8 @@ open class VCPVMP(override val name: String, override val baseUrl: String) : Par
                 SChapter.create().apply {
                     name = manga.title
                     url = manga.url
-                }
-            )
+                },
+            ),
         )
     }
 
@@ -111,7 +111,7 @@ open class VCPVMP(override val name: String, override val baseUrl: String) : Par
     override fun getFilterList() = FilterList(
         Genre(),
         Filter.Separator(),
-        Category()
+        Category(),
     )
 
     // Array.from(document.querySelectorAll('div.tagcloud a.tag-cloud-link')).map(a => `Pair("${a.innerText}", "${a.href.replace('https://vercomicsporno.com/etiqueta/', '')}")`).join(',\n')
@@ -139,8 +139,8 @@ open class VCPVMP(override val name: String, override val baseUrl: String) : Par
             Pair("Tetonas", "tetonas"),
             Pair("Trios", "trios"),
             Pair("Videojuegos", "videojuegos"),
-            Pair("Yuri", "yuri-2")
-        )
+            Pair("Yuri", "yuri-2"),
+        ),
     )
 
     // Array.from(document.querySelectorAll('form select#cat option.level-0')).map(a => `Pair("${a.innerText}", "${a.value}")`).join(',\n')
@@ -478,7 +478,7 @@ open class VCPVMP(override val name: String, override val baseUrl: String) : Par
             Pair("Yusioka", "3082"),
             Pair("Zillionaire", "2807"),
             Pair("Zzomp", "252"),
-            Pair("ZZZ Comics", "2839")
-        )
+            Pair("ZZZ Comics", "2839"),
+        ),
     )
 }

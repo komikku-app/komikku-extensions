@@ -144,8 +144,11 @@ class ComicFx : ParsedHttpSource() {
         document.selectFirst(".infokomik .type")?.ownText().takeIf { it.isNullOrBlank().not() }?.let { genres.add(it) }
         genre = genres.map { genre ->
             genre.lowercase(Locale.forLanguageTag(lang)).replaceFirstChar { char ->
-                if (char.isLowerCase()) char.titlecase(Locale.forLanguageTag(lang))
-                else char.toString()
+                if (char.isLowerCase()) {
+                    char.titlecase(Locale.forLanguageTag(lang))
+                } else {
+                    char.toString()
+                }
             }
         }
             .joinToString { it.trim() }
@@ -276,8 +279,8 @@ class ComicFx : ParsedHttpSource() {
             Pair("28", "Sports"),
             Pair("29", "Supernatural"),
             Pair("30", "Tragedy"),
-            Pair("34", "Smut")
-        )
+            Pair("34", "Smut"),
+        ),
     )
 
     private class StatusFilter : UriPartFilter(
@@ -285,8 +288,8 @@ class ComicFx : ParsedHttpSource() {
         arrayOf(
             Pair("", "All"),
             Pair("1", "Ongoing"),
-            Pair("2", "Complete")
-        )
+            Pair("2", "Complete"),
+        ),
     )
 
     private class TypeFilter : UriPartFilter(
@@ -297,15 +300,15 @@ class ComicFx : ParsedHttpSource() {
             Pair("2", "Manhwa (Korean)"),
             Pair("3", "Manga"),
             Pair("4", "Oneshot"),
-        )
+        ),
     )
 
     private class ProjectFilter : UriPartFilter(
         "Filter Project",
         arrayOf(
             Pair("", "Show all manga"),
-            Pair("project-filter-on", "Show only project manga")
-        )
+            Pair("project-filter-on", "Show only project manga"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

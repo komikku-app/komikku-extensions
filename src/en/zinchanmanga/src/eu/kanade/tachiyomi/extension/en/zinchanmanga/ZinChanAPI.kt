@@ -9,7 +9,7 @@ import kotlinx.serialization.SerialName as N
 @Serializable
 data class Data<T>(
     private val data: List<T>,
-    private val err_message: String
+    private val err_message: String,
 ) : List<T> by data {
     init { require(err_message == "Success") { err_message } }
 }
@@ -17,7 +17,7 @@ data class Data<T>(
 @Serializable
 data class SeriesList(
     private val data: Pagination,
-    private val err_message: String
+    private val err_message: String,
 ) : List<Series> by data {
     init { require(err_message == "Success") { err_message } }
 
@@ -27,7 +27,7 @@ data class SeriesList(
 @Serializable
 data class Pagination(
     @N("total_page") val pages: Int,
-    private val data: List<Series>
+    private val data: List<Series>,
 ) : List<Series> by data
 
 @Serializable
@@ -39,7 +39,7 @@ data class Series(
     private val name_genre: String,
     private val name_author: String,
     @N("thumbnail_story") val cover: String,
-    private val content_story: String? = null
+    private val content_story: String? = null,
 ) {
     val url by lazy {
         "$slug_story?id=$id_story"
@@ -66,7 +66,7 @@ data class Chapter(
     private val id_chapter: Int,
     private val name_chapter: String,
     private val latest_update_chapter: String,
-    private val name_extend: String
+    private val name_extend: String,
 ) {
     val params by lazy {
         "?id_chapter=$id_chapter&type_story=manga"
@@ -99,5 +99,5 @@ data class Chapter(
 
 @Serializable
 data class PageList(
-    private val data_chapter: List<String>
+    private val data_chapter: List<String>,
 ) : List<String> by data_chapter

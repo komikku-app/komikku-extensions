@@ -17,7 +17,7 @@ data class Series<T : Any>(
     val data: T,
     val id: Int,
     val image: Cover,
-    val episodes: List<Episode>? = null
+    val episodes: List<Episode>? = null,
 ) {
     override fun toString() = data.toString()
 }
@@ -32,7 +32,7 @@ data class Details(
     val tags: List<Tag>,
     val isCompleted: Boolean? = null,
     private val description: Description,
-    private val creators: List<Creator>
+    private val creators: List<Creator>,
 ) {
     val artists by lazy {
         creators.filter { it.role == "Illustration" }
@@ -51,7 +51,7 @@ data class Episode(
     val ord: Int,
     val data: Data?,
     private val createdAt: String,
-    val cutImages: List<Image>? = null
+    val cutImages: List<Image>? = null,
 ) {
     val timestamp: Long
         get() = createdAt.timestamp
@@ -79,13 +79,13 @@ data class Episode(
 @Serializable
 data class Data(
     val title: String? = null,
-    val freeAt: String? = null
+    val freeAt: String? = null,
 )
 
 @Serializable
 data class Creator(
     private val name: String,
-    val role: String
+    val role: String,
 ) {
     override fun toString() = name
 }
@@ -93,7 +93,7 @@ data class Creator(
 @Serializable
 data class Description(
     private val long: String,
-    private val short: String
+    private val short: String,
 ) {
     override fun toString() = "$short\n\n$long"
 }
@@ -121,7 +121,7 @@ data class Name(private val en: String) {
 @Serializable
 data class Status(
     private val description: String,
-    private val message: String
+    private val message: String,
 ) {
     override fun toString() = "$description: $message"
 }

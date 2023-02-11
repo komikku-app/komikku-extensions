@@ -11,7 +11,7 @@ class SensainaYuri : Madara(
     "Sensaina Yuri",
     "https://sensainayuri.dropescan.com",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

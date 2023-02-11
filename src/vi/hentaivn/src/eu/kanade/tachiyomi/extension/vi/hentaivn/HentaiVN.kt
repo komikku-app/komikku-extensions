@@ -145,8 +145,9 @@ class HentaiVN : ParsedHttpSource() {
         val document = response.asJsoup()
         if (document.select("p").toString()
             .contains("Bạn chỉ có thể sử dụng chức năng này khi đã đăng ký thành viên")
-        )
+        ) {
             throw Exception("Đăng nhập qua WebView để kích hoạt tìm kiếm")
+        }
 
         val mangas = document.select(searchMangaSelector()).map { element ->
             searchMangaFromElement(element)
@@ -181,7 +182,7 @@ class HentaiVN : ParsedHttpSource() {
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> {
         val authorFilter =
             (if (filters.isEmpty()) getFilterList() else filters).find { it is Author } as Author
@@ -194,8 +195,8 @@ class HentaiVN : ParsedHttpSource() {
                         .addQueryParameter("key", authorFilter.state)
                         .addQueryParameter("page", page.toString())
                         .build().toString(),
-                    headers
-                )
+                    headers,
+                ),
             )
                 .asObservableSuccess()
                 .map { response -> latestUpdatesParse(response) }
@@ -207,8 +208,8 @@ class HentaiVN : ParsedHttpSource() {
                         .addQueryParameter("key", searchAllFilter.state)
                         .addQueryParameter("page", page.toString())
                         .build().toString(),
-                    headers
-                )
+                    headers,
+                ),
             )
                 .asObservableSuccess()
                 .map { response -> latestUpdatesParse(response) }
@@ -454,7 +455,7 @@ class HentaiVN : ParsedHttpSource() {
         Genre("Yandere", "112"),
         Genre("Yaoi", "96"),
         Genre("Yuri", "97"),
-        Genre("Zombie", "128")
+        Genre("Zombie", "128"),
     )
 
     // jQuery.makeArray($('#container > div > div > div.box-box.textbox > form > ul:nth-child(8) > li').map((i, e) => `TransGroup("${e.textContent}", "${e.children[0].value}")`)).join(',\n')
@@ -510,6 +511,6 @@ class HentaiVN : ParsedHttpSource() {
         TransGroup("The Ignite Team", "50"),
         TransGroup("Cuồng Loli", "51"),
         TransGroup("Depressed Lolicons Squad - DLS", "52"),
-        TransGroup("Heaven Of The Fuck", "53")
+        TransGroup("Heaven Of The Fuck", "53"),
     )
 }

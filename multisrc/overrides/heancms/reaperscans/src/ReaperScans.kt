@@ -11,7 +11,7 @@ import java.util.TimeZone
 class ReaperScans : HeanCms(
     "Reaper Scans",
     "https://reaperscans.net",
-    "pt-BR"
+    "pt-BR",
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
@@ -51,6 +51,6 @@ class ReaperScans : HeanCms(
         Genre("Segunda vida", 4),
         Genre("Seinen", 1),
         Genre("Shounen", 13),
-        Genre("Terror", 6)
+        Genre("Terror", 6),
     )
 }

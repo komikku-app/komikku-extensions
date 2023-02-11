@@ -39,7 +39,7 @@ class Aurora : HttpSource() {
 
     private tailrec fun fetchChapterListTR(
         currentUrl: String,
-        foundChapters: MutableList<SChapter>
+        foundChapters: MutableList<SChapter>,
     ): MutableList<SChapter> {
         val currentPage = client.newCall(GET(currentUrl, headers)).execute().asJsoup()
 
@@ -121,10 +121,10 @@ class Aurora : HttpSource() {
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
         val singlePageChapterDoc = client.newCall(
-            GET(baseUrl + chapter.url, headers)
+            GET(baseUrl + chapter.url, headers),
         ).execute().asJsoup()
         val imageUrl = singlePageChapterDoc.selectFirst(
-            ".webcomic-media .webcomic-link .attachment-full"
+            ".webcomic-media .webcomic-link .attachment-full",
         ).attr("src")
         val singlePageChapter = Page(0, "", imageUrl)
 
@@ -165,8 +165,11 @@ class Aurora : HttpSource() {
                     genre = auroraGenre
                     // this will mark every chapter except the last one as completed
                     status =
-                        if (chapterIndex >= chapterBlockElements.size - 1) SManga.UNKNOWN
-                        else SManga.COMPLETED
+                        if (chapterIndex >= chapterBlockElements.size - 1) {
+                            SManga.UNKNOWN
+                        } else {
+                            SManga.COMPLETED
+                        }
                     thumbnail_url = chapterThumbnail
                 }
             }

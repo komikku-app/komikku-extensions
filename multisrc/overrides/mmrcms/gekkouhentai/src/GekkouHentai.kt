@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 class GekkouHentai : MMRCMS(
     "Gekkou Hentai",
     "https://hentai.gekkouscans.com.br",
-    "pt-BR"
+    "pt-BR",
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

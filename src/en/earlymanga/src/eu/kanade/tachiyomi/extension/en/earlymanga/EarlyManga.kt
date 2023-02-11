@@ -44,7 +44,7 @@ class EarlyManga : ParsedHttpSource() {
         .add(
             "User-Agent",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/8$userAgentRandomizer1.0.4$userAgentRandomizer3.1$userAgentRandomizer2 Safari/537.36"
+                "Chrome/8$userAgentRandomizer1.0.4$userAgentRandomizer3.1$userAgentRandomizer2 Safari/537.36",
         )
         .add("Referer", baseUrl)
 
@@ -190,7 +190,7 @@ class EarlyManga : ParsedHttpSource() {
     // pages
     override fun pageListParse(document: Document): List<Page> {
         return document.select(
-            "img[src*=manga],img[src*=chapter],div>div>img[src]"
+            "img[src*=manga],img[src*=chapter],div>div>img[src]",
         ).mapIndexed { i, element ->
             Page(i, "", element.attr("abs:src"))
         }

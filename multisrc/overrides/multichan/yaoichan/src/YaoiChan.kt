@@ -14,7 +14,6 @@ class YaoiChan : MultiChan("YaoiChan", "https://yaoi-chan.me", "ru") {
         val url = if (query.isNotEmpty()) {
             "$baseUrl/?do=search&subaction=search&story=$query&search_start=$page"
         } else {
-
             var genres = ""
             var order = ""
             var statusParam = true
@@ -85,13 +84,13 @@ class YaoiChan : MultiChan("YaoiChan", "https://yaoi-chan.me", "ru") {
     private class OrderBy : Filter.Sort(
         "Сортировка",
         arrayOf("Дата", "Популярность", "Имя", "Главы"),
-        Selection(1, false)
+        Selection(1, false),
     )
 
     override fun getFilterList() = FilterList(
         Status(),
         OrderBy(),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private fun getGenreList() = listOf(
@@ -155,6 +154,6 @@ class YaoiChan : MultiChan("YaoiChan", "https://yaoi-chan.me", "ru") {
         Genre("юмор"),
         Genre("юри"),
         Genre("яой"),
-        Genre("ёнкома")
+        Genre("ёнкома"),
     )
 }

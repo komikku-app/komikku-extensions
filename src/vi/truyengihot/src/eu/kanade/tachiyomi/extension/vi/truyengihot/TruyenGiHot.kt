@@ -56,9 +56,9 @@ class TruyenGiHot : ParsedHttpSource() {
             FilterList(
                 SortFilter(
                     getSortItems(),
-                    Filter.Sort.Selection(2, false)
-                )
-            )
+                    Filter.Sort.Selection(2, false),
+                ),
+            ),
         )
 
     override fun popularMangaSelector(): String = searchMangaSelector()
@@ -75,9 +75,9 @@ class TruyenGiHot : ParsedHttpSource() {
             FilterList(
                 SortFilter(
                     getSortItems(),
-                    Filter.Sort.Selection(0, false)
-                )
-            )
+                    Filter.Sort.Selection(0, false),
+                ),
+            ),
         )
 
     override fun latestUpdatesSelector(): String = searchMangaSelector()
@@ -90,7 +90,7 @@ class TruyenGiHot : ParsedHttpSource() {
     override fun fetchSearchManga(
         page: Int,
         query: String,
-        filters: FilterList
+        filters: FilterList,
     ): Observable<MangasPage> {
         return when {
             query.startsWith(PREFIX_ID_SEARCH) -> {
@@ -105,7 +105,7 @@ class TruyenGiHot : ParsedHttpSource() {
                 fetchMangaDetails(
                     SManga.create().apply {
                         url = id
-                    }
+                    },
                 )
                     .map { MangasPage(listOf(it.apply { url = id }), false) }
             }
@@ -286,7 +286,7 @@ class TruyenGiHot : ParsedHttpSource() {
         arrayOf(
             Pair("Tên truyện", "name"),
             Pair("Tác giả", "authors"),
-        )
+        ),
     )
 
     private class CategoryFilter : UriPartFilter(
@@ -295,8 +295,8 @@ class TruyenGiHot : ParsedHttpSource() {
         arrayOf(
             Pair("Tất cả", ""),
             Pair("Truyện 18+", "truyen-tranh"),
-            Pair("Ngôn tình", "ngon-tinh")
-        )
+            Pair("Ngôn tình", "ngon-tinh"),
+        ),
     )
 
     private class PublicationTypeFilter : UriPartFilter(
@@ -309,7 +309,7 @@ class TruyenGiHot : ParsedHttpSource() {
             Pair("Manhwa", "manhwa"),
             Pair("Tự sáng tác", "tu-sang-tac"),
             Pair("Khác", "khac"),
-        )
+        ),
     )
 
     private class CountryFilter : UriPartFilter(
@@ -322,8 +322,8 @@ class TruyenGiHot : ParsedHttpSource() {
             Pair("Khác", "khac"),
             Pair("Nhật Bản", "nhat-ban"),
             Pair("Trung Quốc", "trung-quoc"),
-            Pair("Việt Nam", "viet-nam")
-        )
+            Pair("Việt Nam", "viet-nam"),
+        ),
     )
 
     private class StatusFilter : UriPartFilter(
@@ -333,8 +333,8 @@ class TruyenGiHot : ParsedHttpSource() {
             Pair("Tất cả", "0"),
             Pair("Full", "1"),
             Pair("Ongoing", "2"),
-            Pair("Drop", "3")
-        )
+            Pair("Drop", "3"),
+        ),
     )
 
     private class SortFilter(
@@ -346,7 +346,7 @@ class TruyenGiHot : ParsedHttpSource() {
             builder.addQueryParameter("order_add", vals[state?.index ?: 2].second)
             builder.addQueryParameter(
                 "order_by_add",
-                if (state?.ascending == true) "ASC" else "DESC"
+                if (state?.ascending == true) "ASC" else "DESC",
             )
         }
     }
@@ -356,7 +356,7 @@ class TruyenGiHot : ParsedHttpSource() {
         Pair("Lượt xem", "views"),
         Pair("Hot", "total_vote"),
         Pair("Vote", "count_vote"),
-        Pair("Tên A-Z", "name")
+        Pair("Tên A-Z", "name"),
     )
 
     private class Genre(name: String, val id: String) : Filter.TriState(name)
@@ -556,8 +556,8 @@ class TruyenGiHot : ParsedHttpSource() {
             Genre("Xuyên Không", "xuyen-khong"),
             Genre("Xuyên không/Trọng sinh", "xuyen-khong-trong-sinh"),
             Genre("Yandere", "yandere"),
-            Genre("Yuri", "yuri")
-        )
+            Genre("Yuri", "yuri"),
+        ),
     )
 
     // console.log([...document.querySelectorAll(".wrapper-search-group .search-content span")].map(e => `Pair("${e.innerText.trim()}", "${e.dataset.val}")`).join(",\n"))
@@ -626,7 +626,7 @@ class TruyenGiHot : ParsedHttpSource() {
             Pair("Yu", "406"),
             Pair("Đào Lý Tửu", "345"),
             Pair("Đảo San Hô", "397"),
-            Pair("Điền Thất", "373")
-        )
+            Pair("Điền Thất", "373"),
+        ),
     )
 }

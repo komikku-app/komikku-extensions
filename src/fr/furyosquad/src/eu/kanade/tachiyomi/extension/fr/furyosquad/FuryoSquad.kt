@@ -150,8 +150,9 @@ class FuryoSquad : ParsedHttpSource() {
 
     private fun parseChapterDate(date: String): Long {
         val lcDate = date.lowercase(Locale.ROOT)
-        if (lcDate.startsWith("il y a"))
+        if (lcDate.startsWith("il y a")) {
             parseRelativeDate(lcDate).let { return it }
+        }
 
         // Handle 'day before yesterday', yesterday' and 'today', using midnight
         var relativeDate: Calendar? = null
@@ -186,7 +187,6 @@ class FuryoSquad : ParsedHttpSource() {
     }
 
     private fun parseRelativeDate(date: String): Long {
-
         val value = date.split(" ")[3].toIntOrNull()
 
         return if (value != null) {

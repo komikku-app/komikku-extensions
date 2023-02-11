@@ -18,7 +18,7 @@ data class Results(
     private val offset: Int,
     private val limit: Int,
     private val results: List<Manga>,
-    private val total: Int
+    private val total: Int,
 ) : Iterable<Manga> by results {
     val hasNext: Boolean
         get() = total > results.size + offset * limit
@@ -32,7 +32,7 @@ data class Manga(
     val artist: String,
     val status: String,
     val id: String,
-    private val version: Int
+    private val version: Int,
 ) {
     val cover: String
         get() = "/media/$id/cover.jpg?version=$version"
@@ -47,7 +47,7 @@ data class Chapter(
     private val id: String,
     private val version: Int,
     private val length: Int,
-    private val uploadTime: String
+    private val uploadTime: String,
 ) {
     val title: String
         get() = buildString {

@@ -10,7 +10,7 @@ class MangaFenix : Madara(
     "Manga Fenix",
     "https://manga-fenix.com",
     "es",
-    SimpleDateFormat("dd MMMM, yyyy", Locale("es"))
+    SimpleDateFormat("dd MMMM, yyyy", Locale("es")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

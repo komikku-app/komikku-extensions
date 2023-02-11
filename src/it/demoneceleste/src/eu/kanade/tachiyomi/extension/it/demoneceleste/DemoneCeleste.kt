@@ -189,13 +189,14 @@ class DemoneCeleste : ParsedHttpSource() {
     override fun pageListRequest(chapter: SChapter): Request {
         val (id, n) = chapter.url.replace("manga/", "").replace("""/#([0-9]+)""".toRegex(), "").split("/")
         return POST(
-            "$baseUrl/ajax.php", headers,
+            "$baseUrl/ajax.php",
+            headers,
             FormBody.Builder().apply {
                 add("ajax", "pagine")
                 add("id", id)
                 add("n", n)
                 add("leggo", "1")
-            }.build()
+            }.build(),
         )
     }
     override fun pageListParse(response: Response): List<Page> {
@@ -239,13 +240,13 @@ class DemoneCeleste : ParsedHttpSource() {
 
     override fun getFilterList() = FilterList(
         StatusList(getStatusList()),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private fun getStatusList() = listOf(
         Status("In corso", "in corso"),
         Status("Finito", "concluso-Oneshot"),
-        Status("Sospeso", "sospeso")
+        Status("Sospeso", "sospeso"),
     )
     private fun getGenreList() = listOf(
         Genre("Avventura", "Avventura"),
@@ -279,7 +280,7 @@ class DemoneCeleste : ParsedHttpSource() {
         Genre("Soprannaturale", "Soprannaturale"),
         Genre("Spokon", "Spokon"),
         Genre("Sport", "Sport"),
-        Genre("Storico", "Storico")
+        Genre("Storico", "Storico"),
     )
     //endregion
 }

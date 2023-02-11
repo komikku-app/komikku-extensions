@@ -96,7 +96,9 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
             currentUrl.substringBefore("paginated") + "cascade"
         } else if (getPageMethodPref() == "paginated" && currentUrl.contains("cascade")) {
             currentUrl.substringBefore("cascade") + "paginated"
-        } else currentUrl
+        } else {
+            currentUrl
+        }
 
         return GET("$baseUrl$newUrl", headers)
     }
@@ -144,7 +146,7 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
                         url.addQueryParameter("order", SORTABLES[filter.state!!.index].second)
                         url.addQueryParameter(
                             "order-dir",
-                            if (filter.state!!.ascending) { "asc" } else { "desc" }
+                            if (filter.state!!.ascending) { "asc" } else { "desc" },
                         )
                     }
                 }
@@ -193,7 +195,7 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
         FilterBy(),
         SortBy(),
         Filter.Separator(),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -209,8 +211,8 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
             Pair("Light Hentai", "light-hentai"),
             Pair("Doujinshi", "doujinshi"),
             Pair("One-shot", "one-shot"),
-            Pair("Other", "otro")
-        )
+            Pair("Other", "otro"),
+        ),
     )
 
     private class FilterBy : UriPartFilter(
@@ -219,14 +221,14 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
             Pair("Nombre", "name"),
             Pair("Artista", "artist"),
             Pair("Revista", "magazine"),
-            Pair("Tag", "tag")
-        )
+            Pair("Tag", "tag"),
+        ),
     )
 
     class SortBy : Filter.Sort(
         "Ordenar por",
         SORTABLES.map { it.first }.toTypedArray(),
-        Selection(2, false)
+        Selection(2, false),
     )
 
     /**
@@ -282,7 +284,7 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
         Genre("Sport", "43"),
         Genre("Domination", "44"),
         Genre("Tsundere", "45"),
-        Genre("Yandere", "46")
+        Genre("Yandere", "46"),
     )
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
@@ -324,7 +326,7 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
         private val SORTABLES = listOf(
             Pair("Alfabético", "alphabetic"),
             Pair("Creación", "publication_date"),
-            Pair("Popularidad", "popularity")
+            Pair("Popularidad", "popularity"),
         )
     }
 }

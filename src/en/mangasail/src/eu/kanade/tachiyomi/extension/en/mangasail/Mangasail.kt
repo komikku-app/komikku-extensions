@@ -59,7 +59,7 @@ class Mangasail : ParsedHttpSource() {
     override fun latestUpdatesRequest(page: Int) =
         GET(
             "$baseUrl/sites/all/modules/authcache/modules/authcache_p13n/frontcontroller/authcache.php?r=frag/block/showmanga-lastest_list&o[q]=node",
-            headers
+            headers,
         )
 
     override fun latestUpdatesSelector() = "ul#latest-list > li"
@@ -179,7 +179,7 @@ class Mangasail : ParsedHttpSource() {
 
     override fun getFilterList(): FilterList = FilterList(
         Filter.Header("Text search ignores filters"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     // From https://www.mangasail.co/tagclouds/chunk/1
@@ -233,8 +233,8 @@ class Mangasail : ParsedHttpSource() {
             Pair("Tragedy", "tragedy"),
             Pair("Webtoon", "webtoon"),
             Pair("Webtoons", "webtoons"),
-            Pair("Yaoi", "yaoi")
-        )
+            Pair("Yaoi", "yaoi"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

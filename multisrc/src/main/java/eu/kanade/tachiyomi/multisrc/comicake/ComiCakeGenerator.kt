@@ -12,7 +12,7 @@ class ComiCakeGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 1
 
     override val sources = listOf(
-        SingleLang("WhimSubs", "https://whimsubs.xyz", "en")
+        SingleLang("WhimSubs", "https://whimsubs.xyz", "en"),
     )
 
     companion object {

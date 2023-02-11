@@ -24,7 +24,7 @@ import java.util.Locale
 abstract class MangaWorld(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -105,8 +105,9 @@ abstract class MangaWorld(
 
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select("div.comic-info")
-        if (infoElement.isEmpty())
+        if (infoElement.isEmpty()) {
             throw Exception("Page not found")
+        }
 
         val manga = SManga.create()
         manga.author = infoElement.select("a[href*=/archive?author=]").first()?.text()
@@ -115,8 +116,9 @@ abstract class MangaWorld(
 
         var description = document.select("div#noidungm").text()
         val otherTitle = document.select("div.meta-data > div").first()?.text()
-        if (!otherTitle.isNullOrBlank() && otherTitle.contains("Titoli alternativi"))
+        if (!otherTitle.isNullOrBlank() && otherTitle.contains("Titoli alternativi")) {
             description += "\n\n$otherTitle"
+        }
         manga.description = description.trim()
 
         manga.genre = infoElement.select("div.meta-data a.badge").joinToString(", ") {
@@ -130,8 +132,9 @@ abstract class MangaWorld(
     }
 
     protected fun parseStatus(element: String?): Int {
-        if (element.isNullOrEmpty())
+        if (element.isNullOrEmpty()) {
             return SManga.UNKNOWN
+        }
         return when (element.lowercase()) {
             "in corso" -> SManga.ONGOING
             "finito" -> SManga.COMPLETED
@@ -157,14 +160,16 @@ abstract class MangaWorld(
         chapter.date_upload = date
 
         val number = parseChapterNumber(name)
-        if (number != null)
+        if (number != null) {
             chapter.chapter_number = number
+        }
         return chapter
     }
 
     protected fun fixChapterUrl(url: String?): String {
-        if (url.isNullOrEmpty())
+        if (url.isNullOrEmpty()) {
             return ""
+        }
         val params = url.split("?").let { if (it.size > 1) it[1] else "" }
         return when {
             params.contains("style=list") -> url
@@ -176,8 +181,9 @@ abstract class MangaWorld(
     }
 
     protected fun parseChapterDate(string: String?): Long {
-        if (string == null)
+        if (string == null) {
             return 0L
+        }
         return runCatching { DATE_FORMATTER.parse(string)?.time }.getOrNull()
             ?: runCatching { DATE_FORMATTER_2.parse(string)?.time }.getOrNull() ?: 0L
     }
@@ -210,7 +216,7 @@ abstract class MangaWorld(
         SortBy(),
         StatusList(getStatusList()),
         GenreList(getGenreList()),
-        MTypeList(getTypesList())
+        MTypeList(getTypesList()),
     )
 
     private class SortBy : UriPartFilter(
@@ -222,8 +228,8 @@ abstract class MangaWorld(
             Pair("Più recenti", "newest"),
             Pair("Meno recenti", "oldest"),
             Pair("A-Z", "a-z"),
-            Pair("Z-A", "z-a")
-        )
+            Pair("Z-A", "z-a"),
+        ),
     )
 
     private class TextField(name: String, val key: String) : Filter.Text(name)
@@ -273,7 +279,7 @@ abstract class MangaWorld(
         Genre("Storico", "storico"),
         Genre("Tragico", "tragico"),
         Genre("Yaoi", "yaoi"),
-        Genre("Yuri", "yuri")
+        Genre("Yuri", "yuri"),
     )
     protected fun getTypesList() = listOf(
         MType("Manga", "manga"),
@@ -281,14 +287,14 @@ abstract class MangaWorld(
         MType("Manhwa", "manhwa"),
         MType("Oneshot", "oneshot"),
         MType("Thai", "thai"),
-        MType("Vietnamita", "vietnamese")
+        MType("Vietnamita", "vietnamese"),
     )
     protected fun getStatusList() = listOf(
         Status("In corso", "ongoing"),
         Status("Finito", "completed"),
         Status("Droppato", "dropped"),
         Status("In pausa", "paused"),
-        Status("Cancellato", "canceled")
+        Status("Cancellato", "canceled"),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

@@ -8,9 +8,11 @@ import org.jsoup.select.Evaluator
 fun getFilterListInternal(categories: List<CategoryData>): FilterList {
     val list: List<Filter<*>> = if (categories.isEmpty()) {
         listOf(Filter.Header("点击“重置”刷新分类"))
-    } else buildList(categories.size + 1) {
-        add(Filter.Header("分类（搜索文本时无效）"))
-        categories.mapTo(this, CategoryData::toFilter)
+    } else {
+        buildList(categories.size + 1) {
+            add(Filter.Header("分类（搜索文本时无效）"))
+            categories.mapTo(this, CategoryData::toFilter)
+        }
     }
     return FilterList(list)
 }
@@ -55,7 +57,7 @@ fun parseCategories(document: Document): List<CategoryData> {
 class CategoryData(
     private val name: String,
     private val values: Array<String>,
-    private val ids: IntArray
+    private val ids: IntArray,
 ) {
     fun toFilter() = CategoryFilter(name, values, ids)
 }

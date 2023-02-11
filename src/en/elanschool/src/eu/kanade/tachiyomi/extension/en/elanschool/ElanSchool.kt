@@ -51,14 +51,16 @@ class ElanSchool : HttpSource() {
             val chapters = document.select(chapterListSelector()).map {
                 chapterFromElement(it)
             }
-            if (chapters.isEmpty())
+            if (chapters.isEmpty()) {
                 break
+            }
 
             allChaps += chapters
 
             val hasNext = document.select(chapterNextPageSelector()).isNotEmpty()
-            if (!hasNext)
+            if (!hasNext) {
                 break
+            }
 
             val nextUrl = document.select(chapterNextPageSelector()).attr("href")
             document = client.newCall(GET(nextUrl, headers)).execute().asJsoup()

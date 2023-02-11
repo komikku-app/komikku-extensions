@@ -14,6 +14,6 @@ class ComicoFactory : SourceFactory {
         PocketComics("en-US"),
         PocketComics("zh-TW"),
         ComicoJP(),
-        ComicoKR()
+        ComicoKR(),
     )
 }

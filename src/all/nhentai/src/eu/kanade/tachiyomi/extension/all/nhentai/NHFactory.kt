@@ -8,6 +8,6 @@ class NHFactory : SourceFactory {
         NHentai("en", "english"),
         NHentai("ja", "japanese"),
         NHentai("zh", "chinese"),
-        NHentai("all", "")
+        NHentai("all", ""),
     )
 }

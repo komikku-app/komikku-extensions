@@ -8,7 +8,7 @@ data class Manga(
     val id: Int,
     val title: String,
     val image_server: String,
-    val total_page: Int
+    val total_page: Int,
 )
 
 /*
@@ -45,34 +45,34 @@ data class SearchRequest(
     val page: Int,
     val sort: Int,
     val pages: Range,
-    val tag: Items
+    val tag: Items,
 )
 
 @Serializable
 data class SearchRequestPayload(
-    val search: SearchRequest
+    val search: SearchRequest,
 )
 
 @Serializable
 data class SearchResponse(
     @SerialName("total_count") val totalCount: Int,
-    val results: List<Manga>
+    val results: List<Manga>,
 )
 
 @Serializable
 data class Range(
-    val range: List<Int>
+    val range: List<Int>,
 )
 
 @Serializable
 data class Items(
-    val items: TagArrays
+    val items: TagArrays,
 )
 
 @Serializable
 data class TagArrays(
     val included: List<Tag>,
-    val excluded: List<Tag>
+    val excluded: List<Tag>,
 )
 
 @Serializable
@@ -80,5 +80,5 @@ data class Tag(
     val id: Int,
     val name: String,
     val description: String? = null,
-    val type: Int = 1
+    val type: Int = 1,
 )

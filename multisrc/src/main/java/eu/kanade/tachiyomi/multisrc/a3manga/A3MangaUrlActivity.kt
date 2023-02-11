@@ -22,7 +22,7 @@ class A3MangaUrlActivity : Activity() {
                         action = "eu.kanade.tachiyomi.SEARCH"
                         putExtra("query", "id:$id")
                         putExtra("filter", packageName)
-                    }
+                    },
                 )
             } catch (e: ActivityNotFoundException) {
                 Log.e("A3MangaThemeUrlActivity", e.toString())

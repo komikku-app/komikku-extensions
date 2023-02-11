@@ -11,7 +11,7 @@ class ImagineScan : MangaThemesia(
     "Imagine Scan",
     "https://imaginescan.com.br",
     "pt-BR",
-    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

@@ -17,7 +17,7 @@ import java.util.Calendar
 abstract class BakaManga(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : ParsedHttpSource() {
     override val supportsLatest = true
 
@@ -155,7 +155,7 @@ abstract class BakaManga(
     override fun getFilterList() = FilterList(
         Filter.Header("NOTE: Ignored if using text search!"),
         Filter.Separator(),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Category", vals)

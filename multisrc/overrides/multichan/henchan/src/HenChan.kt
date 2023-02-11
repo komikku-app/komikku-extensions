@@ -41,7 +41,6 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
     override val baseUrl = domain
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-
         val url = if (query.isNotEmpty()) {
             "$baseUrl/?do=search&subaction=search&story=$query&search_start=$page"
         } else {
@@ -93,14 +92,14 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         return this.replace(regex, "showfull_retina/manga")
             .replace(
                 "_".plus(URL(baseUrl).host),
-                "_hentaichan.ru"
+                "_hentaichan.ru",
             ) // domain-related replacing for very old mangas
             .plus(
                 if (isExHenManga) {
                     "#"
                 } else {
                     ""
-                }
+                },
             ) // # for later so we know what type manga is it
     }
 
@@ -122,17 +121,19 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
                 if (!response.isSuccessful) {
                     response.close()
                     // Error message for exceeding last page
-                    if (response.code == 404)
+                    if (response.code == 404) {
                         Observable.just(
                             listOf(
                                 SChapter.create().apply {
                                     url = manga.url
                                     name = "Chapter"
                                     chapter_number = 1f
-                                }
-                            )
+                                },
+                            ),
                         )
-                    else throw Exception("HTTP error ${response.code}")
+                    } else {
+                        throw Exception("HTTP error ${response.code}")
+                    }
                 }
             }
             .map { response ->
@@ -188,20 +189,20 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         result.addAll(
             document.select(chapterListSelector()).map {
                 chapterFromElement(it)
-            }
+            },
         )
 
         var url = document.select("div#pagination_related a:contains(Вперед)").attr("href")
         while (url.isNotBlank()) {
             val get = GET(
                 "${response.request.url}/$url",
-                headers = headers
+                headers = headers,
             )
             val nextPage = client.newCall(get).execute().asJsoup()
             result.addAll(
                 nextPage.select(chapterListSelector()).map {
                     chapterFromElement(it)
-                }
+                },
             )
 
             url = nextPage.select("div#pagination_related a:contains(Вперед)").attr("href")
@@ -247,7 +248,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
 
     private class Genre(
         val id: String,
-        @SuppressLint("DefaultLocale") name: String = id.replace('_', ' ').capitalize()
+        @SuppressLint("DefaultLocale") name: String = id.replace('_', ' ').capitalize(),
     ) : Filter.TriState(name)
 
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Тэги", genres)
@@ -258,15 +259,15 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         arrayOf(
             "manga/new&n=dateasc" to "manga/new",
             "manga/new&n=favasc" to "mostfavorites&sort=manga",
-            "manga/new&n=abcdesc" to "manga/new&n=abcasc"
-        )
+            "manga/new&n=abcdesc" to "manga/new&n=abcasc",
+        ),
     )
 
     private open class UriPartFilter(
         displayName: String,
         sortNames: Array<String>,
         val withGenres: Array<Pair<String, String>>,
-        val withoutGenres: Array<Pair<String, String>>
+        val withoutGenres: Array<Pair<String, String>>,
     ) :
         Filter.Sort(displayName, sortNames, Selection(1, false)) {
         fun toUriPartWithGenres() =
@@ -278,7 +279,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
 
     override fun getFilterList() = FilterList(
         OrderBy(),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private fun getGenreList() = listOf(
@@ -457,7 +458,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         Genre("юмор"),
         Genre("юри"),
         Genre("яндере"),
-        Genre("яой")
+        Genre("яой"),
     )
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {

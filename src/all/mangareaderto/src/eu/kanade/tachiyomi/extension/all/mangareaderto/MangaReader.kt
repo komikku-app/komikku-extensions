@@ -25,7 +25,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 open class MangaReader(
-    override val lang: String
+    override val lang: String,
 ) : ConfigurableSource, ParsedHttpSource() {
     override val name = "MangaReader"
 
@@ -247,7 +247,7 @@ open class MangaReader(
             StartDateFilter(),
             EndDateFilter(),
             SortFilter(),
-            GenresFilter()
+            GenresFilter(),
         )
 
     private fun Response.parseHtmlProperty(): Document {

@@ -71,7 +71,7 @@ open class A3Manga(
                 fetchMangaDetails(
                     SManga.create().apply {
                         url = "/truyen-tranh/$id/"
-                    }
+                    },
                 )
                     .map {
                         it.url = "/truyen-tranh/$id/"

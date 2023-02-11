@@ -9,7 +9,7 @@ class ZeroScansHelper {
     // Search Related
     fun checkStatusFilter(
         filter: ZeroScans.StatusFilter,
-        comic: ZeroScansComicDto
+        comic: ZeroScansComicDto,
     ): Boolean {
         val includedStatusIds = filter.state.filter { it.isIncluded() }.map { it.id }
         val excludedStatusIds = filter.state.filter { it.isExcluded() }.map { it.id }
@@ -23,7 +23,7 @@ class ZeroScansHelper {
 
     fun checkGenreFilter(
         filter: ZeroScans.GenreFilter,
-        comic: ZeroScansComicDto
+        comic: ZeroScansComicDto,
     ): Boolean {
         val includedGenreIds = filter.state.filter { it.isIncluded() }.map { it.id }
         val excludedGenreIds = filter.state.filter { it.isExcluded() }.map { it.id }
@@ -38,7 +38,7 @@ class ZeroScansHelper {
     fun applySortFilter(
         type: String,
         ascending: Boolean,
-        comics: List<ZeroScansComicDto>
+        comics: List<ZeroScansComicDto>,
     ): List<ZeroScansComicDto> {
         var sortedList = when (type) {
             "alphabetic" -> comics.sortedBy { it.name.lowercase(Locale.ROOT) }

@@ -49,7 +49,7 @@ class MangaDexFactory : SourceFactory {
         MangaDexThai(),
         MangaDexTurkish(),
         MangaDexUkrainian(),
-        MangaDexVietnamese()
+        MangaDexVietnamese(),
     )
 }
 

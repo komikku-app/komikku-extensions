@@ -15,7 +15,7 @@ class CorocoroOnline : GigaViewer(
     "Corocoro Online",
     "https://corocoro.jp",
     "ja",
-    "https://cdn-img.www.corocoro.jp/public/page"
+    "https://cdn-img.www.corocoro.jp/public/page",
 ) {
 
     override val supportsLatest: Boolean = false

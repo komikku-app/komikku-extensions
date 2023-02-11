@@ -89,7 +89,7 @@ class ZinChanManga : HttpSource() {
 
     override fun getFilterList() = FilterList(
         ZinChanGenre.Companion.Note,
-        ZinChanGenre(ZinChanGenre.genres)
+        ZinChanGenre(ZinChanGenre.genres),
     )
 
     private inline val SManga.id: String

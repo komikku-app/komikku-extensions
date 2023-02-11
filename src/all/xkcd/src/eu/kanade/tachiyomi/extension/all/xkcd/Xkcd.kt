@@ -16,7 +16,7 @@ import java.util.Locale
 open class Xkcd(
     final override val baseUrl: String,
     final override val lang: String,
-    dateFormat: String = "yyyy-MM-dd"
+    dateFormat: String = "yyyy-MM-dd",
 ) : HttpSource() {
     final override val name = "xkcd"
 

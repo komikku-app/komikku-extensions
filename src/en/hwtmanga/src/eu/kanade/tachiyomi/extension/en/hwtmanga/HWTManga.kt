@@ -47,9 +47,9 @@ class HWTManga : HttpSource() {
                         .path("/")
                         .name("manga_security_id")
                         .value(postID)
-                        .build()
+                        .build(),
                 )
-        }
+        },
     ).build()
 
     private var postID = ""
@@ -76,7 +76,7 @@ class HWTManga : HttpSource() {
             pid = page,
             tags = filters.get<TagFilter>("all;"),
             state = filters.get<StateFilter>("all"),
-            order = filters.get<OrderFilter>("az")
+            order = filters.get<OrderFilter>("az"),
         )
 
     override fun searchMangaParse(response: Response) =
@@ -174,7 +174,7 @@ class HWTManga : HttpSource() {
     private fun FormBody.Builder.post(
         subpage: String,
         page: String = "mangaData",
-        block: FormBody.Builder.() -> FormBody.Builder
+        block: FormBody.Builder.() -> FormBody.Builder,
     ) = add("page", page).add("subpage", subpage).run {
         POST(baseUrl + "callback.php", headers, block().build())
     }
@@ -184,7 +184,7 @@ class HWTManga : HttpSource() {
         tags: String = "all;",
         state: String = "all",
         order: String = "az",
-        pid: Int = 1
+        pid: Int = 1,
     ) = post("MANGASEARCH") {
         add("searchbox", query)
         add("byg", tags)
@@ -197,7 +197,7 @@ class HWTManga : HttpSource() {
         body!!.string().let { body ->
             if ("success" !in body) error(body)
             json.decodeFromJsonElement<T>(
-                json.parseToJsonElement(body).jsonObject[key]!!
+                json.parseToJsonElement(body).jsonObject[key]!!,
             )
         }
 

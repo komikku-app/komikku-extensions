@@ -41,5 +41,5 @@ private val languageList = listOf(
 //    Source("", "Swedish"),
 //    Source("", "Thai"),
     Source("tr", "Turkish"),
-    Source("vi", "Vietnamese")
+    Source("vi", "Vietnamese"),
 )

@@ -25,7 +25,7 @@ class GmangaFilters() {
             TranslationStatusFilter(),
             ChapterCountFilter(),
             DateRangeFilter(),
-            CategoryFilter()
+            CategoryFilter(),
         )
 
         fun buildSearchPayload(page: Int, query: String = "", filters: FilterList): JsonObject {
@@ -94,7 +94,7 @@ class GmangaFilters() {
                         },
                         "min",
                         ERROR_INVALID_MIN_CHAPTER_COUNT,
-                        ""
+                        "",
                     )
 
                     putFromValidatingTextFilter(
@@ -103,7 +103,7 @@ class GmangaFilters() {
                         },
                         "max",
                         ERROR_INVALID_MAX_CHAPTER_COUNT,
-                        ""
+                        "",
                     )
                 }
                 putJsonObject("dates") {
@@ -112,7 +112,7 @@ class GmangaFilters() {
                             it.id == FILTER_ID_START_DATE
                         },
                         "start",
-                        ERROR_INVALID_START_DATE
+                        ERROR_INVALID_START_DATE,
                     )
 
                     putFromValidatingTextFilter(
@@ -120,7 +120,7 @@ class GmangaFilters() {
                             it.id == FILTER_ID_END_DATE
                         },
                         "end",
-                        ERROR_INVALID_END_DATE
+                        ERROR_INVALID_END_DATE,
                     )
                 }
             }
@@ -150,22 +150,22 @@ class GmangaFilters() {
                 TagFilter("6", "هواة", TriState.STATE_INCLUDE),
                 TagFilter("7", "إندونيسية", TriState.STATE_INCLUDE),
                 TagFilter("8", "روسية", TriState.STATE_INCLUDE),
-            )
+            ),
         )
 
         private class OneShotFilter() : Filter.Group<TagFilter>(
             "ونشوت؟",
             listOf(
-                TagFilter(FILTER_ID_ONE_SHOT, "نعم", TriState.STATE_EXCLUDE)
-            )
+                TagFilter(FILTER_ID_ONE_SHOT, "نعم", TriState.STATE_EXCLUDE),
+            ),
         )
 
         private class StoryStatusFilter() : Filter.Group<TagFilter>(
             "حالة القصة",
             listOf(
                 TagFilter("2", "مستمرة"),
-                TagFilter("3", "منتهية")
-            )
+                TagFilter("3", "منتهية"),
+            ),
         )
 
         private class TranslationStatusFilter() : Filter.Group<TagFilter>(
@@ -175,23 +175,23 @@ class GmangaFilters() {
                 TagFilter("1", "مستمرة"),
                 TagFilter("2", "متوقفة"),
                 TagFilter("3", "غير مترجمة", TriState.STATE_EXCLUDE),
-            )
+            ),
         )
 
         private class ChapterCountFilter() : Filter.Group<IntFilter>(
             "عدد الفصول",
             listOf(
                 IntFilter(FILTER_ID_MIN_CHAPTER_COUNT, "على الأقل"),
-                IntFilter(FILTER_ID_MAX_CHAPTER_COUNT, "على الأكثر")
-            )
+                IntFilter(FILTER_ID_MAX_CHAPTER_COUNT, "على الأكثر"),
+            ),
         )
 
         private class DateRangeFilter() : Filter.Group<DateFilter>(
             "تاريخ النشر",
             listOf(
                 DateFilter(FILTER_ID_START_DATE, "تاريخ النشر"),
-                DateFilter(FILTER_ID_END_DATE, "تاريخ الإنتهاء")
-            )
+                DateFilter(FILTER_ID_END_DATE, "تاريخ الإنتهاء"),
+            ),
         )
 
         private class CategoryFilter() : Filter.Group<TagFilter>(
@@ -233,8 +233,8 @@ class GmangaFilters() {
                 TagFilter("34", "حريم"),
                 TagFilter("35", "راشد"),
                 TagFilter("38", "ويب-تون"),
-                TagFilter("39", "زمنكاني")
-            )
+                TagFilter("39", "زمنكاني"),
+            ),
         )
 
         private const val DATE_FILTER_PATTERN = "yyyy/MM/dd"
@@ -257,13 +257,15 @@ class GmangaFilters() {
             filter: ValidatingTextFilter,
             property: String,
             invalidErrorMessage: String,
-            default: String? = null
+            default: String? = null,
         ) {
             filter.let {
                 when {
                     it.state == "" -> if (default == null) {
                         put(property, JsonNull)
-                    } else put(property, default)
+                    } else {
+                        put(property, default)
+                    }
                     it.isValid() -> put(property, it.state)
                     else -> throw Exception(invalidErrorMessage)
                 }

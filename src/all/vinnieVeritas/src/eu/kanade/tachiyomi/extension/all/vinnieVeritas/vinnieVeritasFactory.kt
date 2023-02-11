@@ -8,6 +8,6 @@ class vinnieVeritasFactory : SourceFactory {
     override fun createSources(): List<Source> =
         listOf(
             vinnieVeritas("en"),
-            vinnieVeritas("es")
+            vinnieVeritas("es"),
         )
 }

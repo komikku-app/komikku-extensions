@@ -9,7 +9,7 @@ class MagComi : GigaViewer(
     "MAGCOMI",
     "https://magcomi.com",
     "ja",
-    "https://cdn-img.magcomi.com/public/page"
+    "https://cdn-img.magcomi.com/public/page",
 ) {
 
     override val supportsLatest: Boolean = false
@@ -29,6 +29,6 @@ class MagComi : GigaViewer(
     }
 
     override fun getCollections(): List<Collection> = listOf(
-        Collection("連載・読切", "")
+        Collection("連載・読切", ""),
     )
 }

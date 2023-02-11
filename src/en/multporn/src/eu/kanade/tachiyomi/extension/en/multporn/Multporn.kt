@@ -73,7 +73,7 @@ class Multporn : ParsedHttpSource() {
         return super.popularMangaParse(
             response.newBuilder()
                 .body(html.toResponseBody("text/html; charset=UTF-8".toMediaTypeOrNull()))
-                .build()
+                .build(),
         )
     }
 
@@ -157,7 +157,7 @@ class Multporn : ParsedHttpSource() {
             .map { pages ->
                 MangasPage(
                     pages.map { it.mangas }.flatten().distinctBy { it.url },
-                    pages.any { it.hasNextPage }
+                    pages.any { it.hasNextPage },
                 )
             }
     }
@@ -165,7 +165,6 @@ class Multporn : ParsedHttpSource() {
     override fun searchMangaSelector() = popularMangaSelector()
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-
         val sortByFilterType = filters.findInstance<SortBySelectFilter>()?.requestType ?: POPULAR_REQUEST_TYPE
         val textSearchFilters = filters.filterIsInstance<TextSearchFilter>().filter { it.state.isNotBlank() }
 
@@ -176,10 +175,13 @@ class Multporn : ParsedHttpSource() {
                 squashMangasPageObservables(
                     requests.map {
                         client.newCall(it).asObservable().map { res ->
-                            if (res.code == 200) textSearchFilterParse(res)
-                            else null
+                            if (res.code == 200) {
+                                textSearchFilterParse(res)
+                            } else {
+                                null
+                            }
                         }
-                    }
+                    },
                 )
             }
             query.isNotEmpty() || sortByFilterType == SEARCH_REQUEST_TYPE -> {
@@ -198,7 +200,6 @@ class Multporn : ParsedHttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-
         val sortByFilterType = filters.findInstance<SortBySelectFilter>()?.requestType ?: POPULAR_REQUEST_TYPE
 
         return when {
@@ -219,19 +220,18 @@ class Multporn : ParsedHttpSource() {
         "field-name-field-authors-gr",
         "field-name-field-img-group",
         "field-name-field-hentai-img-group",
-        "field-name-field-rule-63-section"
+        "field-name-field-rule-63-section",
     ).map { document.select(".$it a").map { a -> a.text().trim() } }.flatten()
 
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-
             title = document.select("h1#page-title").text()
 
             val infoMap = listOf(
                 "Section",
                 "Characters",
                 "Tags",
-                "Author"
+                "Author",
             ).map {
                 it to document.select(".field:has(.field-label:contains($it:)) .links a").map { t -> t.text().trim() }
             }.toMap()
@@ -253,7 +253,7 @@ class Multporn : ParsedHttpSource() {
                 .map { "${it.key}:\n${it.value.joinToString()}" }
                 .let {
                     it + listOf(
-                        "Pages:\n$pageCount"
+                        "Pages:\n$pageCount",
                     )
                 }
                 .joinToString("\n\n")
@@ -274,8 +274,8 @@ class Multporn : ParsedHttpSource() {
                 url = manga.url
                 name = "Chapter"
                 chapter_number = 1f
-            }
-        )
+            },
+        ),
     )
 
     // Pages
@@ -297,7 +297,7 @@ class Multporn : ParsedHttpSource() {
     class RequestTypeURIFilter(
         val requestType: String,
         override var name: String,
-        override val uri: String
+        override val uri: String,
     ) : URIFilter(name, uri)
 
     open class URISelectFilter(name: String, open val filters: List<URIFilter>, state: Int = 0) :
@@ -330,7 +330,7 @@ class Multporn : ParsedHttpSource() {
             filters.map { filter ->
                 filter.let { it.name = "[${it.requestType}] ${it.name}"; it }
             },
-            state
+            state,
         ) {
         val requestType: String
             get() = filters[state].requestType
@@ -363,7 +363,7 @@ class Multporn : ParsedHttpSource() {
         TextSearchFilter("Picture Sections", "pictures"),
         TextSearchFilter("Hentai Sections", "hentai"),
         TextSearchFilter("Rule 63 Sections", "rule_63"),
-        TextSearchFilter("Gay Tags", "category_gay")
+        TextSearchFilter("Gay Tags", "category_gay"),
     )
 
     private fun getPopularTypeFilters() = listOf(
@@ -372,7 +372,7 @@ class Multporn : ParsedHttpSource() {
         URIFilter("Cartoon Pictures", "3"),
         URIFilter("Hentai Pictures", "4"),
         URIFilter("Rule 63", "10"),
-        URIFilter("Author Albums", "11")
+        URIFilter("Author Albums", "11"),
     )
 
     private fun getLatestTypeFilters() = listOf(
@@ -380,7 +380,7 @@ class Multporn : ParsedHttpSource() {
         URIFilter("Hentai Manga", "2"),
         URIFilter("Cartoon Pictures", "3"),
         URIFilter("Hentai Pictures", "4"),
-        URIFilter("Author Albums", "10")
+        URIFilter("Author Albums", "10"),
     )
 
     private fun getSearchTypeFilters() = listOf(
@@ -390,7 +390,7 @@ class Multporn : ParsedHttpSource() {
         URIFilter("Cartoon Pictures", "4"),
         URIFilter("Hentai Pictures", "5"),
         URIFilter("Rule 63", "11"),
-        URIFilter("Humor", "13")
+        URIFilter("Humor", "13"),
     )
 
     private fun getSortByFilters() = listOf(
@@ -400,12 +400,12 @@ class Multporn : ParsedHttpSource() {
         RequestTypeURIFilter(LATEST_REQUEST_TYPE, "Date Posted", "created"),
         RequestTypeURIFilter(LATEST_REQUEST_TYPE, "Date Updated", "changed"),
         RequestTypeURIFilter(SEARCH_REQUEST_TYPE, "Relevance", "search_api_relevance"),
-        RequestTypeURIFilter(SEARCH_REQUEST_TYPE, "Author", "author")
+        RequestTypeURIFilter(SEARCH_REQUEST_TYPE, "Author", "author"),
     )
 
     private fun getSortOrderFilters() = listOf(
         URIFilter("Descending", "DESC"),
-        URIFilter("Ascending", "ASC")
+        URIFilter("Ascending", "ASC"),
     )
 
     private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T

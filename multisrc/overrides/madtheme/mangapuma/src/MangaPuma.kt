@@ -6,7 +6,7 @@ class MangaPuma :
     MadTheme(
         "MangaPuma",
         "https://mangapuma.com",
-        "en"
+        "en",
     ) {
     override val id = 7893483872024027913
 }

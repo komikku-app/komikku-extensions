@@ -12,7 +12,7 @@ class SilenceScan : MangaThemesia(
     "Silence Scan",
     "https://silencescan.com.br",
     "pt-BR",
-    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val versionId: Int = 2

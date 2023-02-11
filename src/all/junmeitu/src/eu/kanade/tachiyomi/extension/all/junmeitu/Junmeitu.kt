@@ -141,7 +141,7 @@ class Junmeitu : ParsedHttpSource() {
         ModelFilter(),
         GroupFilter(),
         CategoryFilter(getCategoryFilter(), 0),
-        SortFilter(getSortFilter(), 0)
+        SortFilter(getSortFilter(), 0),
     )
 
     class SelectFilterOption(val name: String, val value: String = name)

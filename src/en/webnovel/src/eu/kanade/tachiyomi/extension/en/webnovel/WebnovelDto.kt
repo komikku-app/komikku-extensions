@@ -30,7 +30,7 @@ data class ComicInfoDto(
 
 @Serializable
 data class ComicDetailInfoResponseDto(
-    @SerialName("comicInfo") val info: ComicDetailInfoDto
+    @SerialName("comicInfo") val info: ComicDetailInfoDto,
 )
 
 @Serializable
@@ -40,13 +40,13 @@ data class ComicDetailInfoDto(
     val actionStatus: Int,
     val authorName: String,
     val categoryName: String,
-    val description: String
+    val description: String,
 )
 
 @Serializable
 data class ComicChapterListDto(
     val comicInfo: ComicInfoDto,
-    val comicChapters: List<ComicChapterDto>
+    val comicChapters: List<ComicChapterDto>,
 )
 
 @Serializable

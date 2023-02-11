@@ -147,7 +147,7 @@ private val getGenresList: List<TriState> = listOf(
     TriState("Wuxia", "wuxia"),
     TriState("Yaoi", "yaoi"),
     TriState("Yuri", "yuri"),
-    TriState("Zombies", "zombies")
+    TriState("Zombies", "zombies"),
 )
 
 private val getDemographicList: List<CheckBox> = listOf(
@@ -175,5 +175,5 @@ private val getSortsList: Array<Pair<String, String>> = arrayOf(
     Pair("Most follows", "user_follow_count"),
     Pair("Most views", "view"),
     Pair("High rating", "rating"),
-    Pair("Last updated", "uploaded")
+    Pair("Last updated", "uploaded"),
 )

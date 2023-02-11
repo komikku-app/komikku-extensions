@@ -43,7 +43,7 @@ import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 
 abstract class Luscious(
-    final override val lang: String
+    final override val lang: String,
 ) : ConfigurableSource, HttpSource() {
 
     override val supportsLatest: Boolean = true
@@ -72,7 +72,9 @@ abstract class Luscious(
             originalResponse.newBuilder()
                 .body(newBody)
                 .build()
-        } else originalResponse
+        } else {
+            originalResponse
+        }
     }
 
     private val lusLang: String = toLusLang(lang)
@@ -114,20 +116,25 @@ abstract class Luscious(
                 put("display", sortByFilter.selected)
                 put("page", page)
                 putJsonArray("filters") {
-                    if (contentTypeFilter.selected != FILTER_VALUE_IGNORE)
+                    if (contentTypeFilter.selected != FILTER_VALUE_IGNORE) {
                         add(contentTypeFilter.toJsonObject("content_id"))
+                    }
 
-                    if (albumTypeFilter.selected != FILTER_VALUE_IGNORE)
+                    if (albumTypeFilter.selected != FILTER_VALUE_IGNORE) {
                         add(albumTypeFilter.toJsonObject("album_type"))
+                    }
 
-                    if (selectionFilter.selected != FILTER_VALUE_IGNORE)
+                    if (selectionFilter.selected != FILTER_VALUE_IGNORE) {
                         add(selectionFilter.toJsonObject("selection"))
+                    }
 
-                    if (albumSizeFilter.selected != FILTER_VALUE_IGNORE)
+                    if (albumSizeFilter.selected != FILTER_VALUE_IGNORE) {
                         add(albumSizeFilter.toJsonObject("picture_count_rank"))
+                    }
 
-                    if (restrictGenresFilter.selected != FILTER_VALUE_IGNORE)
+                    if (restrictGenresFilter.selected != FILTER_VALUE_IGNORE) {
                         add(restrictGenresFilter.toJsonObject("restrict_genres"))
+                    }
 
                     with(interestsFilter) {
                         if (this.selected.isEmpty()) {
@@ -143,10 +150,10 @@ abstract class Luscious(
                                 languageIds.toMutableMap().apply {
                                     put(
                                         "value",
-                                        JsonPrimitive("+$lusLang${languageIds["value"]!!.jsonPrimitive.content}")
+                                        JsonPrimitive("+$lusLang${languageIds["value"]!!.jsonPrimitive.content}"),
                                     )
-                                }
-                            )
+                                },
+                            ),
                         )
                     }
 
@@ -158,7 +165,7 @@ abstract class Luscious(
                             buildJsonObject {
                                 put("name", "tagged")
                                 put("value", tags)
-                            }
+                            },
                         )
                     }
 
@@ -167,7 +174,7 @@ abstract class Luscious(
                             buildJsonObject {
                                 put("name", "created_by_id")
                                 put("value", creatorFilter.state)
-                            }
+                            },
                         )
                     }
 
@@ -176,7 +183,7 @@ abstract class Luscious(
                             buildJsonObject {
                                 put("name", "favorite_by_user_id")
                                 put("value", favoriteFilter.state)
-                            }
+                            },
                         )
                     }
 
@@ -189,7 +196,7 @@ abstract class Luscious(
                             buildJsonObject {
                                 put("name", "search_query")
                                 put("value", query)
-                            }
+                            },
                         )
                     }
                 }
@@ -218,7 +225,7 @@ abstract class Luscious(
                         thumbnail_url = it.jsonObject["cover"]!!.jsonObject["url"]!!.jsonPrimitive.content
                     }
                 },
-                this.jsonObject["info"]!!.jsonObject["has_next_page"]!!.jsonPrimitive.boolean
+                this.jsonObject["info"]!!.jsonObject["has_next_page"]!!.jsonPrimitive.boolean,
             )
         }
     }
@@ -319,7 +326,7 @@ abstract class Luscious(
                         buildJsonObject {
                             put("name", "album_id")
                             put("value", id)
-                        }
+                        },
                     )
                 }
                 put("display", getSortPref())
@@ -469,10 +476,13 @@ abstract class Luscious(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = buildAlbumListRequest(
         page,
         filters.let {
-            if (it.isEmpty()) getSortFilters(SEARCH_DEFAULT_SORT_STATE)
-            else it
+            if (it.isEmpty()) {
+                getSortFilters(SEARCH_DEFAULT_SORT_STATE)
+            } else {
+                it
+            }
         },
-        query
+        query,
     )
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
@@ -618,13 +628,13 @@ abstract class Luscious(
     private fun getAlbumTypeFilters() = listOf(
         SelectFilterOption("All", FILTER_VALUE_IGNORE),
         SelectFilterOption("Manga", "manga"),
-        SelectFilterOption("Pictures", "pictures")
+        SelectFilterOption("Pictures", "pictures"),
     )
 
     private fun getRestrictGenresFilters() = listOf(
         SelectFilterOption("None", FILTER_VALUE_IGNORE),
         SelectFilterOption("Loose", "loose"),
-        SelectFilterOption("Strict", "strict")
+        SelectFilterOption("Strict", "strict"),
     )
 
     private fun getSelectionFilters() = listOf(
@@ -642,7 +652,7 @@ abstract class Luscious(
         SelectFilterOption("All", FILTER_VALUE_IGNORE),
         SelectFilterOption("Hentai", "0"),
         SelectFilterOption("Non-Erotic", "5"),
-        SelectFilterOption("Real People", "6")
+        SelectFilterOption("Real People", "6"),
     )
 
     private fun getAlbumSizeFilters() = listOf(
@@ -664,7 +674,7 @@ abstract class Luscious(
         CheckboxFilterOption("Trans", "5"),
         CheckboxFilterOption("Solo Girl", "6"),
         CheckboxFilterOption("Trans x Trans", "8"),
-        CheckboxFilterOption("Trans x Guy", "9")
+        CheckboxFilterOption("Trans x Guy", "9"),
     )
 
     private fun getLanguageFilters() = listOf(
@@ -678,7 +688,7 @@ abstract class Luscious(
         CheckboxFilterOption("Korean", toLusLang("ko"), false),
         CheckboxFilterOption("Others", toLusLang("other"), false),
         CheckboxFilterOption("Portuguese", toLusLang("pt-BR"), false),
-        CheckboxFilterOption("Thai", toLusLang("th"), false)
+        CheckboxFilterOption("Thai", toLusLang("th"), false),
     ).filterNot { it.value == lusLang }
 
     private fun getGenreFilters() = listOf(
@@ -737,7 +747,7 @@ abstract class Luscious(
         TriStateFilterOption("Video Games", "15"),
         TriStateFilterOption("Vintage", "58"),
         TriStateFilterOption("Western", "11"),
-        TriStateFilterOption("Workplace Sex", "50")
+        TriStateFilterOption("Workplace Sex", "50"),
     )
 
     private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T

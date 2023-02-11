@@ -8,7 +8,7 @@ class MangaSehri : Madara(
     "Manga Şehri",
     "https://mangasehri.com",
     "tr",
-    SimpleDateFormat("dd/MM/yyy", Locale("tr"))
+    SimpleDateFormat("dd/MM/yyy", Locale("tr")),
 ) {
     override val useNewChapterEndpoint = true
 }

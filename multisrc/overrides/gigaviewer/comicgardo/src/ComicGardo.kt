@@ -9,7 +9,7 @@ class ComicGardo : GigaViewer(
     "Comic Gardo",
     "https://comic-gardo.com",
     "ja",
-    "https://cdn-img.comic-gardo.com/public/page"
+    "https://cdn-img.comic-gardo.com/public/page",
 ) {
 
     override val supportsLatest: Boolean = false
@@ -29,6 +29,6 @@ class ComicGardo : GigaViewer(
     }
 
     override fun getCollections(): List<Collection> = listOf(
-        Collection("連載一覧", "")
+        Collection("連載一覧", ""),
     )
 }

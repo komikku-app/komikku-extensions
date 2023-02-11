@@ -44,10 +44,10 @@ class GrrlPower(
                     thumbnail_url = "https://fakeimg.pl/550x780/cc3333/1b2a82/?font=museo&text=Grrl%0APower"
                     title = "Grrl Power"
                     url = "/archive"
-                }
+                },
             ),
-            false
-        )
+            false,
+        ),
     )!!
 
     /**
@@ -88,11 +88,13 @@ class GrrlPower(
     override fun pageListParse(response: Response): List<Page> {
         return listOf(
             Page(
-                0, response.request.url.toString(),
-                response.asJsoup().selectFirst("div#comic img").absUrl("src")
-            )
+                0,
+                response.request.url.toString(),
+                response.asJsoup().selectFirst("div#comic img").absUrl("src"),
+            ),
         )
     }
+
     // This can be called when the user refreshes the comic even if initialized is true
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> = Observable.just(manga)
 

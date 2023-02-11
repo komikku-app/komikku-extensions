@@ -62,7 +62,7 @@ class LxHentai : ParsedHttpSource() {
                 fetchMangaDetails(
                     SManga.create().apply {
                         url = "/truyen/$id"
-                    }
+                    },
                 )
                     .map { MangasPage(listOf(it), false) }
             }
@@ -199,7 +199,7 @@ class LxHentai : ParsedHttpSource() {
             Pair("A-Z", "name"),
             Pair("Z-A", "-name"),
         ),
-        state
+        state,
     )
 
     private class Status : UriPartFilter(

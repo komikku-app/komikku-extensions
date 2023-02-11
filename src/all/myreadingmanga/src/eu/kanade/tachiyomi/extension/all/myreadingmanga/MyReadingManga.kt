@@ -162,8 +162,8 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
                 thumbnail_url = getThumbnail(
                     getImage(
                         client.newCall(GET("$baseUrl/search/?search=${document.location()}", headers))
-                            .execute().asJsoup().select("div.wdm_results div.p_content img").first()
-                    )
+                            .execute().asJsoup().select("div.wdm_results div.p_content img").first(),
+                    ),
                 )
             }
         }
@@ -265,7 +265,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
         Pair("tags", baseUrl),
         Pair("categories", "$baseUrl/cats/"),
         Pair("pairings", "$baseUrl/pairing/"),
-        Pair("groups", "$baseUrl/group/")
+        Pair("groups", "$baseUrl/group/"),
     )
 
     // Generates the filter lists for app
@@ -277,7 +277,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
             TagFilter(returnFilter(getCache(cachedPagesUrls["tags"]!!), ".tagcloud a[href*=/tag/]")),
             CatFilter(returnFilter(getCache(cachedPagesUrls["categories"]!!), ".links a")),
             PairingFilter(returnFilter(getCache(cachedPagesUrls["pairings"]!!), ".links a")),
-            ScanGroupFilter(returnFilter(getCache(cachedPagesUrls["groups"]!!), ".links a"))
+            ScanGroupFilter(returnFilter(getCache(cachedPagesUrls["groups"]!!), ".links a")),
         )
     }
 
@@ -305,12 +305,13 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
         val uriValuePrefix: String,
         val vals: Array<String>,
         val firstIsUnspecified: Boolean = true,
-        defaultValue: Int = 0
+        defaultValue: Int = 0,
     ) :
         Filter.Select<String>(displayName, vals.map { it }.toTypedArray(), defaultValue), UriFilter {
         override fun addToUri(uri: Uri.Builder, uriParam: String) {
-            if (state != 0 || !firstIsUnspecified)
+            if (state != 0 || !firstIsUnspecified) {
                 uri.appendQueryParameter(uriParam, "$uriValuePrefix:${vals[state]}")
+            }
         }
     }
 

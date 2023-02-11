@@ -52,7 +52,7 @@ data class Chapter(
     val publishedAt: String,
     private val salesConfig: SalesConfig,
     private val hasTrial: Boolean,
-    private val activity: Activity
+    private val activity: Activity,
 ) {
     val isAvailable: Boolean
         get() = salesConfig.free || hasTrial || activity.owned
@@ -71,5 +71,5 @@ data class Activity(val rented: Boolean, val unlocked: Boolean) {
 data class ChapterImage(
     val sort: Int,
     val url: String,
-    val parameter: String
+    val parameter: String,
 )

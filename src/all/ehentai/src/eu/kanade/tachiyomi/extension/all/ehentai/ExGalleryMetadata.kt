@@ -34,10 +34,11 @@ class ExGalleryMetadata {
     companion object {
         private fun splitGalleryUrl(url: String) = url.let {
             // Only parse URL if is full URL
-            val pathSegments = if (it.startsWith("http"))
+            val pathSegments = if (it.startsWith("http")) {
                 Uri.parse(it).pathSegments
-            else
+            } else {
                 it.split('/')
+            }
             pathSegments.filterNot(String::isNullOrBlank)
         }
 

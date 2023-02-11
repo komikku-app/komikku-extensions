@@ -7,12 +7,12 @@ import kotlinx.serialization.Serializable
 data class BilibiliResultDto<T>(
     val code: Int = 0,
     val data: T? = null,
-    @SerialName("msg") val message: String = ""
+    @SerialName("msg") val message: String = "",
 )
 
 @Serializable
 data class BilibiliSearchDto(
-    val list: List<BilibiliComicDto> = emptyList()
+    val list: List<BilibiliComicDto> = emptyList(),
 )
 
 @Serializable
@@ -28,7 +28,7 @@ data class BilibiliComicDto(
     val styles: List<String> = emptyList(),
     val title: String,
     @SerialName("update_weekday") val updateWeekdays: List<Int> = emptyList(),
-    @SerialName("vertical_cover") val verticalCover: String = ""
+    @SerialName("vertical_cover") val verticalCover: String = "",
 ) {
     val hasPaidChapters: Boolean
         get() = paidChaptersCount > 0
@@ -49,19 +49,19 @@ data class BilibiliEpisodeDto(
     @SerialName("pay_mode") val payMode: Int,
     @SerialName("pub_time") val publicationTime: String,
     @SerialName("short_title") val shortTitle: String,
-    val title: String
+    val title: String,
 )
 
 @Serializable
 data class BilibiliReader(
-    val images: List<BilibiliImageDto> = emptyList()
+    val images: List<BilibiliImageDto> = emptyList(),
 )
 
 @Serializable
 data class BilibiliImageDto(
     val path: String,
     @SerialName("x") val width: Int,
-    @SerialName("y") val height: Int
+    @SerialName("y") val height: Int,
 ) {
 
     fun url(quality: String, format: String): String {
@@ -74,40 +74,40 @@ data class BilibiliImageDto(
 @Serializable
 data class BilibiliPageDto(
     val token: String,
-    val url: String
+    val url: String,
 )
 
 @Serializable
 data class BilibiliAccessTokenCookie(
     val accessToken: String,
     val refreshToken: String,
-    val area: String
+    val area: String,
 )
 
 @Serializable
 data class BilibiliAccessToken(
     @SerialName("access_token") val accessToken: String,
-    @SerialName("refresh_token") val refreshToken: String
+    @SerialName("refresh_token") val refreshToken: String,
 )
 
 @Serializable
 data class BilibiliUserEpisodes(
-    @SerialName("unlocked_eps") val unlockedEpisodes: List<BilibiliUnlockedEpisode>? = emptyList()
+    @SerialName("unlocked_eps") val unlockedEpisodes: List<BilibiliUnlockedEpisode>? = emptyList(),
 )
 
 @Serializable
 data class BilibiliUnlockedEpisode(
-    @SerialName("ep_id") val id: Int = 0
+    @SerialName("ep_id") val id: Int = 0,
 )
 
 @Serializable
 data class BilibiliGetCredential(
     @SerialName("comic_id") val comicId: Int,
     @SerialName("ep_id") val episodeId: Int,
-    val type: Int
+    val type: Int,
 )
 
 @Serializable
 data class BilibiliCredential(
-    val credential: String
+    val credential: String,
 )

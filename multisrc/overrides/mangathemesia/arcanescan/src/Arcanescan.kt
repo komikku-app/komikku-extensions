@@ -8,5 +8,5 @@ class Arcanescan : MangaThemesia(
     "Arcane scan",
     "https://arcanescan.fr",
     "fr",
-    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale.FRANCE)
+    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale.FRANCE),
 )

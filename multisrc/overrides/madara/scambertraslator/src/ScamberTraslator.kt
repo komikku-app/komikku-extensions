@@ -8,7 +8,7 @@ class ScamberTraslator : Madara(
     "ScamberTraslator",
     "https://scambertraslator.com",
     "es",
-    dateFormat = SimpleDateFormat("yyy-MM-dd", Locale.ROOT)
+    dateFormat = SimpleDateFormat("yyy-MM-dd", Locale.ROOT),
 ) {
     override val useNewChapterEndpoint = false
 }

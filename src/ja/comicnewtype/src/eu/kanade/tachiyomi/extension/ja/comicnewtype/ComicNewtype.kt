@@ -34,8 +34,9 @@ class ComicNewtype : HttpSource() {
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup().also { it.parseGenres() }
-        if (document.selectFirst(Evaluator.Class("section__txt--serch")) != null)
+        if (document.selectFirst(Evaluator.Class("section__txt--serch")) != null) {
             return MangasPage(emptyList(), false)
+        }
 
         val list = document.selectFirst(Evaluator.Class("content__col-list--common"))
         val mangas = list.children().map {

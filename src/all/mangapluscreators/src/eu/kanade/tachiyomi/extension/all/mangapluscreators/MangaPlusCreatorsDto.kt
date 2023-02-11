@@ -9,25 +9,25 @@ import kotlinx.serialization.Serializable
 data class MpcResponse(
     @SerialName("mpcEpisodesDto") val episodes: MpcEpisodesDto? = null,
     @SerialName("mpcTitlesDto") val titles: MpcTitlesDto? = null,
-    val pageList: List<MpcPage>? = emptyList()
+    val pageList: List<MpcPage>? = emptyList(),
 )
 
 @Serializable
 data class MpcEpisodesDto(
     val pagination: MpcPagination? = null,
-    val episodeList: List<MpcEpisode>? = emptyList()
+    val episodeList: List<MpcEpisode>? = emptyList(),
 )
 
 @Serializable
 data class MpcTitlesDto(
     val pagination: MpcPagination? = null,
-    val titleList: List<MpcTitle>? = emptyList()
+    val titleList: List<MpcTitle>? = emptyList(),
 )
 
 @Serializable
 data class MpcPagination(
     val page: Int,
-    val maxPage: Int
+    val maxPage: Int,
 ) {
 
     val hasNextPage: Boolean
@@ -54,7 +54,7 @@ data class MpcEpisode(
     @SerialName("episodeTitle") val title: String,
     val numbering: Int,
     val oneshot: Boolean = false,
-    val publishDate: Long
+    val publishDate: Long,
 ) {
 
     fun toSChapter(): SChapter = SChapter.create().apply {

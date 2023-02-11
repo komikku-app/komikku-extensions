@@ -56,12 +56,12 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         .rateLimitHost(
             baseUrl.toHttpUrlOrNull()!!,
             preferences.getString(WEB_RATELIMIT_PREF, WEB_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
-            60
+            60,
         )
         .rateLimitHost(
             imageCDNUrl.toHttpUrlOrNull()!!,
             preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
-            60
+            60,
         )
         .build()
 
@@ -123,7 +123,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
                         url.addQueryParameter("order_item", SORTABLES[filter.state!!.index].second)
                         url.addQueryParameter(
                             "order_dir",
-                            if (filter.state!!.ascending) { "asc" } else { "desc" }
+                            if (filter.state!!.ascending) { "asc" } else { "desc" },
                         )
                     }
                 }
@@ -224,7 +224,9 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             currentUrl.substringBefore("paginated") + "cascade"
         } else if (getPageMethodPref() == "paginated" && currentUrl.contains("cascade")) {
             currentUrl.substringBefore("cascade") + "paginated"
-        } else currentUrl
+        } else {
+            currentUrl
+        }
 
         val doc = client.newCall(GET(newUrl, headers)).execute().asJsoup()
 
@@ -235,10 +237,13 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
                         size,
                         "",
                         it.let {
-                            if (it.hasAttr("data-src"))
-                                it.attr("abs:data-src") else it.attr("abs:src")
-                        }
-                    )
+                            if (it.hasAttr("data-src")) {
+                                it.attr("abs:data-src")
+                            } else {
+                                it.attr("abs:src")
+                            }
+                        },
+                    ),
                 )
             }
         } else {
@@ -249,6 +254,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             }
         }
     }
+
     // Note: At this moment (24/08/2021) it's necessary to make the image request with headers to prevent 403.
     override fun imageRequest(page: Page) = GET(page.imageUrl!!, headers)
 
@@ -288,8 +294,8 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             Pair("Novela", "novel"),
             Pair("One shot", "one_shot"),
             Pair("Doujinshi", "doujinshi"),
-            Pair("Oel", "oel")
-        )
+            Pair("Oel", "oel"),
+        ),
     )
 
     private class Status : UriPartFilter(
@@ -299,8 +305,8 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             Pair("Publicándose", "publishing"),
             Pair("Finalizado", "ended"),
             Pair("Cancelado", "cancelled"),
-            Pair("Pausado", "on_hold")
-        )
+            Pair("Pausado", "on_hold"),
+        ),
     )
 
     private class TranslationStatus : UriPartFilter(
@@ -309,8 +315,8 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             Pair("Ver todo", ""),
             Pair("Activo", "publishing"),
             Pair("Finalizado", "ended"),
-            Pair("Abandonado", "cancelled")
-        )
+            Pair("Abandonado", "cancelled"),
+        ),
     )
 
     private class Demography : UriPartFilter(
@@ -321,8 +327,8 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             Pair("Shoujo", "shoujo"),
             Pair("Shounen", "shounen"),
             Pair("Josei", "josei"),
-            Pair("Kodomo", "kodomo")
-        )
+            Pair("Kodomo", "kodomo"),
+        ),
     )
 
     private class FilterBy : UriPartFilter(
@@ -330,14 +336,14 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         arrayOf(
             Pair("Título", "title"),
             Pair("Autor", "author"),
-            Pair("Compañia", "company")
-        )
+            Pair("Compañia", "company"),
+        ),
     )
 
     class SortBy : Filter.Sort(
         "Ordenar por",
         SORTABLES.map { it.first }.toTypedArray(),
-        Selection(0, false)
+        Selection(0, false),
     )
 
     private class ContentType(name: String, val id: String) : Filter.TriState(name)
@@ -365,7 +371,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         Filter.Separator(),
         ContentTypeList(getContentTypeList()),
         Filter.Separator(),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     // Array.from(document.querySelectorAll('#books-genders .col-auto .custom-control'))
@@ -420,14 +426,14 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         Genre("Realidad", "45"),
         Genre("Telenovela", "46"),
         Genre("Guerra", "47"),
-        Genre("Oeste", "48")
+        Genre("Oeste", "48"),
     )
 
     private fun getContentTypeList() = listOf(
         ContentType("Webcomic", "webcomic"),
         ContentType("Yonkoma", "yonkoma"),
         ContentType("Amateur", "amateur"),
-        ContentType("Erótico", "erotic")
+        ContentType("Erótico", "erotic"),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -436,7 +442,6 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-
         val SFWModePref = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = SFW_MODE_PREF
             title = SFW_MODE_PREF_TITLE
@@ -550,15 +555,19 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         private const val PAGE_METHOD_PREF_DEFAULT_VALUE = "cascade"
 
         private const val WEB_RATELIMIT_PREF = "webRatelimitPreference"
+
         // Ratelimit permits per second for main website
         private const val WEB_RATELIMIT_PREF_TITLE = "Ratelimit por minuto para el sitio web"
+
         // This value affects network request amount to TMO url. Lower this value may reduce the chance to get HTTP 429 error, but loading speed will be slower too. Tachiyomi restart required. \nCurrent value: %s
         private const val WEB_RATELIMIT_PREF_SUMMARY = "Este valor afecta la cantidad de solicitudes de red a la URL de TMO. Reducir este valor puede disminuir la posibilidad de obtener un error HTTP 429, pero la velocidad de descarga será más lenta. Se requiere reiniciar Tachiyomi. \nValor actual: %s"
         private const val WEB_RATELIMIT_PREF_DEFAULT_VALUE = "10"
 
         private const val IMAGE_CDN_RATELIMIT_PREF = "imgCDNRatelimitPreference"
+
         // Ratelimit permits per second for image CDN
         private const val IMAGE_CDN_RATELIMIT_PREF_TITLE = "Ratelimit por minuto para descarga de imágenes"
+
         // This value affects network request amount for loading image. Lower this value may reduce the chance to get error when loading image, but loading speed will be slower too. Tachiyomi restart required. \nCurrent value: %s
         private const val IMAGE_CDN_RATELIMIT_PREF_SUMMARY = "Este valor afecta la cantidad de solicitudes de red para descargar imágenes. Reducir este valor puede disminuir errores al cargar imagenes, pero la velocidad de descarga será más lenta. Se requiere reiniciar Tachiyomi. \nValor actual: %s"
         private const val IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE = "10"
@@ -574,7 +583,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             Pair("Puntuación", "score"),
             Pair("Creación", "creation"),
             Pair("Fecha estreno", "release_date"),
-            Pair("Núm. Capítulos", "num_chapters")
+            Pair("Núm. Capítulos", "num_chapters"),
         )
     }
 }

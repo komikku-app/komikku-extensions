@@ -147,7 +147,7 @@ class JMana : ConfigurableSource, ParsedHttpSource() {
                 Page(
                     i,
                     "",
-                    getImageUrl(img)
+                    getImageUrl(img),
                 )
             }
         return pages ?: emptyList()

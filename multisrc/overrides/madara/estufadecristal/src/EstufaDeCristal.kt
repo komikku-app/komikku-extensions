@@ -13,7 +13,7 @@ class EstufaDeCristal : Madara(
     "Estufa de Cristal",
     "https://scanestufadecristal.site",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

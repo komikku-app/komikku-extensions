@@ -16,7 +16,7 @@ class YaoiToshokan : Madara(
     "Yaoi Toshokan",
     "https://www.yaoitoshokan.net",
     "pt-BR",
-    SimpleDateFormat("dd MMM yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd MMM yyyy", Locale("pt", "BR")),
 ) {
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()

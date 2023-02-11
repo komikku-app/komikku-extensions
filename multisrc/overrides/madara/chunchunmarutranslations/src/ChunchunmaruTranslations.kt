@@ -13,7 +13,7 @@ class ChunchunmaruTranslations : Madara(
     "Chunchunmaru Translations",
     "https://chunchunmarutl.com",
     "es",
-    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("es"))
+    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("es")),
 ) {
 
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/manga/page/$page/?m_orderby=views", headers)

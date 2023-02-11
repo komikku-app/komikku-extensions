@@ -64,20 +64,20 @@ class DoujinDesu : ParsedHttpSource() {
         Order("A-Z", "title"),
         Order("Latest Update", "update"),
         Order("Latest Added", "latest"),
-        Order("Popular", "popular")
+        Order("Popular", "popular"),
     )
 
     private val statusList = arrayOf(
         Status("All", ""),
         Status("Publishing", "Publishing"),
-        Status("Finished", "Finished")
+        Status("Finished", "Finished"),
     )
 
     private val categoryNames = arrayOf(
         Category("All", ""),
         Category("Doujinshi", "Doujinshi"),
         Category("Manga", "Manga"),
-        Category("Manhwa", "Manhwa")
+        Category("Manhwa", "Manhwa"),
     )
 
     private fun genreList() = listOf(
@@ -231,7 +231,7 @@ class DoujinDesu : ParsedHttpSource() {
         Genre("X-Ray"),
         Genre("Yandere"),
         Genre("Yaoi"),
-        Genre("Yuri")
+        Genre("Yuri"),
     )
 
     private class CategoryNames(categories: Array<Category>) : Filter.Select<Category>("Category", categories, 0)
@@ -339,7 +339,7 @@ class DoujinDesu : ParsedHttpSource() {
         StatusList(statusList),
         CategoryNames(categoryNames),
         OrderBy(orderBy),
-        GenreList(genreList())
+        GenreList(genreList()),
     )
 
     // Detail Parse

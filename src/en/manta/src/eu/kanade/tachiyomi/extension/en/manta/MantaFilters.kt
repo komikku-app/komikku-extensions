@@ -12,11 +12,11 @@ private val categories = arrayOf(
     "Drama",
     "Fantasy",
     "Thriller",
-    "Slice of life"
+    "Slice of life",
 )
 
 class Category(
-    values: Array<String> = categories
+    values: Array<String> = categories,
 ) : Filter.Select<String>("Category", values)
 
 inline val List<Filter<*>>.category: String

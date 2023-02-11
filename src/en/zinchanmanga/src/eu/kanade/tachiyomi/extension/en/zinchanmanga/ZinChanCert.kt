@@ -23,7 +23,7 @@ object ZinChanCert {
 
     private val managers by lazy {
         TrustManagerFactory.getInstance(
-            TrustManagerFactory.getDefaultAlgorithm()
+            TrustManagerFactory.getDefaultAlgorithm(),
         ).apply { init(keystore) }.trustManagers
     }
 

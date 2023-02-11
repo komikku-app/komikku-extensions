@@ -10,7 +10,7 @@ class YetiskinRuyaManga : Madara(
     "Yetişkin Rüya Manga",
     "https://yetiskin.ruyamanga.com",
     "tr",
-    SimpleDateFormat("dd/MM/yyy", Locale("tr"))
+    SimpleDateFormat("dd/MM/yyy", Locale("tr")),
 ) {
     override val useNewChapterEndpoint = true
 

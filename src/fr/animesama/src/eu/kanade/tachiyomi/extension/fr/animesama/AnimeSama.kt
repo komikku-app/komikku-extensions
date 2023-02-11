@@ -87,7 +87,7 @@ class AnimeSama : ParsedHttpSource() {
             thumbnail_url =
                 cdn_url + title.replace(
                 " [SCANS]",
-                ""
+                "",
             ).replace(" ", "-").trim() + "carre.jpg"
         }
     }

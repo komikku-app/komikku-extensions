@@ -10,6 +10,6 @@ class ReadTokyoGhoulReTokyoGhoulMangaOnline : MangaCatalog("Read Tokyo Ghoul Re 
         Pair("TGre Colored", "$baseUrl/manga/tokyo-ghoulre-colored/"),
         Pair("Gorilla", "$baseUrl/manga/this-gorilla-will-die-in-1-day/"),
         Pair("ArtBook", "$baseUrl/manga/tokyo-ghoul-zakki/"),
-        Pair("TG Light Novel", "$baseUrl/manga/tokyo-ghoul-re-light-novels/")
+        Pair("TG Light Novel", "$baseUrl/manga/tokyo-ghoul-re-light-novels/"),
     ).sortedBy { it.first }.distinctBy { it.second }
 }

@@ -15,14 +15,14 @@ class Manhwafull : Madara("Manhwafull", "https://manhwafull.com", "en") {
         return GET(
             "$baseUrl/manga-mwf/page/$page/?m_orderby=views",
             formHeaders,
-            CacheControl.FORCE_NETWORK
+            CacheControl.FORCE_NETWORK,
         )
     }
     override fun latestUpdatesRequest(page: Int): Request {
         return GET(
             "$baseUrl/manga-mwf/page/$page/?m_orderby=latest",
             formHeaders,
-            CacheControl.FORCE_NETWORK
+            CacheControl.FORCE_NETWORK,
         )
     }
 }

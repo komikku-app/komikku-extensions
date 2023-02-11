@@ -8,5 +8,5 @@ class LordManga : Madara(
     "Lord Manga",
     "https://lordmanga.com",
     "en",
-    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US),
 )

@@ -64,7 +64,7 @@ open class SimplyHentai(override val lang: String) : ConfigurableSource, HttpSou
                         thumbnail_url = it.preview.sizes.thumb
                     }
                 },
-                pagination.next != null
+                pagination.next != null,
             )
         }
 
@@ -125,7 +125,7 @@ open class SimplyHentai(override val lang: String) : ConfigurableSource, HttpSou
                         thumbnail_url = it.`object`.preview.sizes.thumb
                     }
                 },
-                pagination.next != null
+                pagination.next != null,
             )
         }
 

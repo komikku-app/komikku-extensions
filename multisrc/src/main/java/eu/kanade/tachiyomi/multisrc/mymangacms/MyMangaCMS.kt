@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 abstract class MyMangaCMS(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -42,7 +42,7 @@ abstract class MyMangaCMS(
         add("Referer", "$baseUrl/")
         add(
             "User-Agent",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:101.0) Gecko/20100101 Firefox/101.0"
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:101.0) Gecko/20100101 Firefox/101.0",
         )
     }
 
@@ -77,7 +77,7 @@ abstract class MyMangaCMS(
             addPathSegment("tim-kiem")
             addQueryParameter("sort", "top")
             addQueryParameter("page", page.toString())
-        }.build().toString()
+        }.build().toString(),
     )
 
     override fun popularMangaSelector(): String = "div.thumb-item-flow.col-6.col-md-2"
@@ -99,7 +99,7 @@ abstract class MyMangaCMS(
             addPathSegment("tim-kiem")
             addQueryParameter("sort", "update")
             addQueryParameter("page", page.toString())
-        }.build().toString()
+        }.build().toString(),
     )
 
     override fun latestUpdatesSelector(): String = popularMangaSelector()
@@ -118,7 +118,7 @@ abstract class MyMangaCMS(
                 fetchMangaDetails(
                     SManga.create().apply {
                         url = query.removePrefix(PREFIX_URL_SEARCH).trim().replace(baseUrl, "")
-                    }
+                    },
                 )
                     .map { MangasPage(listOf(it), false) }
             }
@@ -161,7 +161,7 @@ abstract class MyMangaCMS(
                 if (query.isNotEmpty()) {
                     addQueryParameter("q", query)
                 }
-            }.build().toString()
+            }.build().toString(),
         )
 
     override fun searchMangaSelector(): String = popularMangaSelector()
@@ -180,7 +180,7 @@ abstract class MyMangaCMS(
         setUrlWithoutDomain(
             document.select(".series-name-group a")
                 .first()
-                .attr("abs:href")
+                .attr("abs:href"),
         )
         title = document.select(".series-name").first().text().trim()
 
@@ -245,7 +245,7 @@ abstract class MyMangaCMS(
             setUrlWithoutDomain(element.attr("abs:href"))
             name = element.select("div.chapter-name").first().text()
             date_upload = dateUpdatedParser(
-                element.select("div.chapter-time").first().text()
+                element.select("div.chapter-time").first().text(),
             )
 
             val match = floatingNumberRegex.find(name)
@@ -300,8 +300,8 @@ abstract class MyMangaCMS(
             "Tất cả",
             "Đang tiến hành",
             "Tạm ngưng",
-            "Hoàn thành"
-        )
+            "Hoàn thành",
+        ),
     )
     private class Sort : UriPartFilter(
         "Sắp xếp",
@@ -313,7 +313,7 @@ abstract class MyMangaCMS(
             Pair("Xem nhiều", "top"),
             Pair("Được thích nhiều", "like"),
         ),
-        4
+        4,
     )
     open class Genre(name: String, val id: Int) : Filter.TriState(name)
     private class Author : Filter.Text("Tác giả")

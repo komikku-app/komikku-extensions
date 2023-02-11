@@ -121,7 +121,9 @@ class MangaPoisk : ParsedHttpSource() {
         manga.description = infoElement.select(".post-info > div .manga-description.entry").text()
         manga.status = if (document.select(".order-2 h3").text() == "Главы удалены по требованию правообладателя.") {
             SManga.LICENSED
-        } else parseStatus(infoElement.select(".post-info > span:eq(7)").text())
+        } else {
+            parseStatus(infoElement.select(".post-info > span:eq(7)").text())
+        }
         manga.thumbnail_url = infoElement.select("img.img-fluid").first().attr("src")
         return manga
     }
@@ -144,7 +146,7 @@ class MangaPoisk : ParsedHttpSource() {
         return Observable.just(
             pages.flatMap { page ->
                 chapterListParse(client.newCall(chapterPageListRequest(manga, page)).execute(), manga)
-            }
+            },
         )
     }
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
@@ -198,13 +200,13 @@ class MangaPoisk : ParsedHttpSource() {
     override fun getFilterList() = FilterList(
         OrderBy(),
         StatusList(getStatusList()),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     private class OrderBy : Filter.Sort(
         "Сортировка",
         arrayOf("Год", "Популярности", "Алфавиту", "Дате добавления", "Дате обновления"),
-        Selection(1, false)
+        Selection(1, false),
     )
 
     private fun getStatusList() = listOf(
@@ -255,7 +257,7 @@ class MangaPoisk : ParsedHttpSource() {
         CheckFilter("юри", "3197"),
         CheckFilter("арт", "7332"),
         CheckFilter("омегаверс", "7514"),
-        CheckFilter("бара", "8119")
+        CheckFilter("бара", "8119"),
     )
 
     override fun imageUrlParse(document: Document) = throw Exception("Not Used")

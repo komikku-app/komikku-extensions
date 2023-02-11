@@ -9,6 +9,6 @@ class KomgaFactory : SourceFactory {
         listOf(
             Komga(),
             Komga("2"),
-            Komga("3")
+            Komga("3"),
         )
 }

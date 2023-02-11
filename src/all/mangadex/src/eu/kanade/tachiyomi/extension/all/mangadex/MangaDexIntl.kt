@@ -168,7 +168,7 @@ class MangaDexIntl(lang: String) {
         ContentRatingDto.SAFE to contentRatingSafe,
         ContentRatingDto.SUGGESTIVE to contentRatingSuggestive,
         ContentRatingDto.EROTICA to contentRatingErotica,
-        ContentRatingDto.PORNOGRAPHIC to contentRatingPornographic
+        ContentRatingDto.PORNOGRAPHIC to contentRatingPornographic,
     )
 
     fun contentRatingGenre(contentRating: ContentRatingDto): String = when (availableLang) {
@@ -1021,9 +1021,11 @@ class MangaDexIntl(lang: String) {
 
         val AVAILABLE_LANGS = arrayOf(
             ENGLISH,
-            BRAZILIAN_PORTUGUESE, PORTUGUESE,
-            SPANISH_LATAM, SPANISH,
-            RUSSIAN
+            BRAZILIAN_PORTUGUESE,
+            PORTUGUESE,
+            SPANISH_LATAM,
+            SPANISH,
+            RUSSIAN,
         )
 
         const val MANGADEX_NAME = "MangaDex"

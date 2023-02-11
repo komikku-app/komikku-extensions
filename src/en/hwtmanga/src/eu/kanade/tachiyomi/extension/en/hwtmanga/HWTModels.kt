@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class HWTQuery(
     val cimage: String,
     val postID: String,
-    val title: String
+    val title: String,
 )
 
 @Serializable
@@ -18,7 +18,7 @@ data class HWTMangaInfo(
     val statue: Int,
     val postID: Int,
     val tags: List<HWTTag>,
-    val title: String
+    val title: String,
 )
 
 @Serializable
@@ -26,7 +26,7 @@ data class HWTTag(var value: String?)
 
 @Serializable
 data class HWTChapterList(
-    private val chapterList: List<HWTChapter>
+    private val chapterList: List<HWTChapter>,
 ) : List<HWTChapter> by chapterList
 
 @Serializable
@@ -35,7 +35,7 @@ data class HWTChapter(
     val pid: String,
     val name: String,
     val cdate: String,
-    val is_locked: String
+    val is_locked: String,
 )
 
 @Serializable

@@ -73,7 +73,7 @@ class CuuTruyen : HttpSource(), ConfigurableSource {
         val coverKey = preferences.coverQuality
         return MangasPage(
             responseDto.data.map { it.toSManga(coverKey) },
-            hasMoreResults
+            hasMoreResults,
         )
     }
 
@@ -99,7 +99,7 @@ class CuuTruyen : HttpSource(), ConfigurableSource {
                 fetchMangaDetails(
                     SManga.create().apply {
                         this.url = url
-                    }
+                    },
                 )
                     .map {
                         it.url = url

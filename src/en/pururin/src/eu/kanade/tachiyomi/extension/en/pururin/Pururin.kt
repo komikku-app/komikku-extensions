@@ -69,14 +69,14 @@ class Pururin : HttpSource() {
                 whitelist,
                 blacklist,
                 find<TagModeFilter>().mode,
-                find<PagesGroup>().range
+                find<PagesGroup>().range,
             )
             POST(searchUrl, headers, body)
         }
 
     override fun searchMangaParse(response: Response): MangasPage {
         val results = json.decodeFromString<Results>(
-            response.jsonObject["results"]!!.jsonPrimitive.content
+            response.jsonObject["results"]!!.jsonPrimitive.content,
         )
         val mp = results.map {
             SManga.create().apply {
@@ -90,7 +90,7 @@ class Pururin : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val gallery = json.decodeFromJsonElement<Gallery>(
-            response.jsonObject["gallery"]!!
+            response.jsonObject["gallery"]!!,
         )
         return SManga.create().apply {
             description = gallery.description
@@ -109,7 +109,7 @@ class Pururin : HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val gallery = json.decodeFromJsonElement<Gallery>(
-            response.jsonObject["gallery"]!!
+            response.jsonObject["gallery"]!!,
         )
         val chapter = SChapter.create().apply {
             name = "Chapter"
@@ -124,7 +124,7 @@ class Pururin : HttpSource() {
 
     override fun pageListParse(response: Response): List<Page> {
         val pages = json.decodeFromJsonElement<Gallery>(
-            response.jsonObject["gallery"]!!
+            response.jsonObject["gallery"]!!,
         ).pages
         return pages.mapIndexed { idx, img ->
             Page(idx + 1, CDN_URL + img)

@@ -49,7 +49,7 @@ class WarForRayuba : HttpSource() {
             "(Android ${Build.VERSION.RELEASE}; " +
                 "${Build.MANUFACTURER} ${Build.MODEL}) " +
                 "Tachiyomi/${AppInfo.getVersionName()} " +
-                Build.ID
+                Build.ID,
         )
     }.build()
 
@@ -67,7 +67,7 @@ class WarForRayuba : HttpSource() {
             SManga.create().apply {
                 val githubRawUrl = "https://raw.githubusercontent.com/xrabohrok/WarMap/" + element.attr("abs:href").replace(".*(?=main)".toRegex(), "")
                 val githubData: RoundDto = json.decodeFromString(
-                    client.newCall(GET(githubRawUrl, headers)).execute().body!!.string()
+                    client.newCall(GET(githubRawUrl, headers)).execute().body!!.string(),
                 )
 
                 title = githubData.title
@@ -121,7 +121,7 @@ class WarForRayuba : HttpSource() {
                     chapter_number = number.toFloat()
                     name = number.toString() + " " + chapter.title
                     date_upload = chapter.last_updated
-                }
+                },
             )
         }
 

@@ -18,7 +18,7 @@ class TruyenChon : WPComics("TruyenChon", "http://truyenchon.com", "vi", SimpleD
     override fun getFilterList(): FilterList {
         return FilterList(
             StatusFilter(getStatusList()),
-            GenreFilter(getGenreList())
+            GenreFilter(getGenreList()),
         )
     }
     override fun popularMangaFromElement(element: Element): SManga {

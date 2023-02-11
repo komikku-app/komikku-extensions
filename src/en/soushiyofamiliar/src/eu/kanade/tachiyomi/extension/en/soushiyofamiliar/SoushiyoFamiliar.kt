@@ -76,7 +76,7 @@ class SoushiyoFamiliar : ParsedHttpSource() {
         }
 
         val chapter = SChapter.create()
-        chapter.url = element.select(".column-3 > a").attr("href").substringAfter(baseUrl) /* This is empty if there is no link (e.g. for unreleased chapters) --> This is then handled in chapterListParse */
+        chapter.url = element.select(".column-3 > a").attr("href").substringAfter(baseUrl) // This is empty if there is no link (e.g. for unreleased chapters) --> This is then handled in chapterListParse
         chapter.name = "Act $textAct - Chapter $textChapNum: $textChapName"
         chapter.date_upload = parseDate(textDate)
 

@@ -28,6 +28,7 @@ class WeLoveManga : FMReader("WeLoveManga", "https://weloma.art", "ja") {
             Page(i, document.location(), img.decoded())
         }
     }
+
     // Referer needs to be chapter URL
     override fun imageRequest(page: Page): Request = GET(page.imageUrl!!, headersBuilder().set("Referer", page.url).build())
 }

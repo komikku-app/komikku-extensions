@@ -209,7 +209,7 @@ class Readmangatoday : ParsedHttpSource() {
         TextField("Artist", "artist-name"),
         Type(),
         Status(),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
 
     // [...document.querySelectorAll("ul.manga-cat span")].map(el => `Genre("${el.nextSibling.textContent.trim()}", ${el.getAttribute('data-id')})`).join(',\n')
@@ -249,6 +249,6 @@ class Readmangatoday : ParsedHttpSource() {
         Genre("Supernatural", 34),
         Genre("Tragedy", 35),
         Genre("Yaoi", 36),
-        Genre("Yuri", 37)
+        Genre("Yuri", 37),
     )
 }

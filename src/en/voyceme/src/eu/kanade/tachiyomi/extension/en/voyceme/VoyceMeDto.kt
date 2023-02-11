@@ -13,22 +13,22 @@ data class VoyceMeComic(
     val slug: String = "",
     val status: String? = "",
     val thumbnail: String = "",
-    val title: String = ""
+    val title: String = "",
 )
 
 @Serializable
 data class VoyceMeAuthor(
-    val username: String? = ""
+    val username: String? = "",
 )
 
 @Serializable
 data class VoyceMeGenreAggregation(
-    val genre: VoyceMeGenre? = null
+    val genre: VoyceMeGenre? = null,
 )
 
 @Serializable
 data class VoyceMeGenre(
-    val title: String? = ""
+    val title: String? = "",
 )
 
 @Serializable
@@ -36,10 +36,10 @@ data class VoyceMeChapter(
     @SerialName("created_at") val createdAt: String = "",
     val id: Int = -1,
     val images: List<VoyceMePage> = emptyList(),
-    val title: String = ""
+    val title: String = "",
 )
 
 @Serializable
 data class VoyceMePage(
-    val image: String = ""
+    val image: String = "",
 )

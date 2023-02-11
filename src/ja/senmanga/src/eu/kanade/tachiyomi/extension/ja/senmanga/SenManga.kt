@@ -32,10 +32,12 @@ class SenManga : ParsedHttpSource() {
                     "Referer",
                     it.request().url.newBuilder()
                         .removePathSegment(0)
-                        .toString()
+                        .toString(),
                 )
                 .build()
-        } else it.request()
+        } else {
+            it.request()
+        }
         it.proceed(request)
     }.build()
 
@@ -139,7 +141,7 @@ class SenManga : ParsedHttpSource() {
 
     override fun getFilterList() = FilterList(
         GenreFilter(getGenreList()),
-        SortFilter()
+        SortFilter(),
     )
 
     private class Genre(name: String, val id: String = name) : Filter.TriState(name)
@@ -156,8 +158,8 @@ class SenManga : ParsedHttpSource() {
             Pair("total_views", "Total Views"),
             Pair("title", "Title"),
             Pair("rank", "Rank"),
-            Pair("last_update", "Last Update")
-        )
+            Pair("last_update", "Last Update"),
+        ),
     )
 
     private fun getGenreList(): List<Genre> = listOf(
@@ -195,6 +197,6 @@ class SenManga : ParsedHttpSource() {
         Genre("Tragedy", "Tragedy"),
         Genre("Webtoons", "Webtoons"),
         Genre("Yaoi", "Yaoi"),
-        Genre("Yuri", "Yuri")
+        Genre("Yuri", "Yuri"),
     )
 }

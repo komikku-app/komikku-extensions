@@ -60,14 +60,16 @@ class AllHentai : GroupLe("AllHentai", "http://allhen.online", "ru") {
                 else -> {}
             }
         }
-        return if (url.toString().contains("&"))
+        return if (url.toString().contains("&")) {
             GET(url.toString().replace("=%3D", "="), headers)
-        else popularMangaRequest(page)
+        } else {
+            popularMangaRequest(page)
+        }
     }
 
     private class OrderBy : Filter.Select<String>(
         "Сортировка (только)",
-        arrayOf("Без сортировки", "По году", "По популярности", "Популярно сейчас", "По рейтингу", "Новинки", "По дате обновления")
+        arrayOf("Без сортировки", "По году", "По популярности", "Популярно сейчас", "По рейтингу", "Новинки", "По дате обновления"),
     )
 
     private class Genre(name: String, val id: String) : Filter.TriState(name)
@@ -84,7 +86,7 @@ class AllHentai : GroupLe("AllHentai", "http://allhen.online", "ru") {
         Tags(tagsName),
         GenreList(getGenreList()),
         Category(getCategoryList()),
-        FilList(getFilList())
+        FilList(getFilList()),
     )
 
     private fun getGenreList() = listOf(
@@ -121,7 +123,7 @@ class AllHentai : GroupLe("AllHentai", "http://allhen.online", "ru") {
         Genre("чикан", "el_1059"),
         Genre("этти", "el_798"),
         Genre("юри", "el_84"),
-        Genre("яой", "el_83")
+        Genre("яой", "el_83"),
     )
 
     private fun getCategoryList() = listOf(
@@ -129,7 +131,7 @@ class AllHentai : GroupLe("AllHentai", "http://allhen.online", "ru") {
         Genre("Анимация", "el_5777"),
         Genre("Без текста", "el_3157"),
         Genre("Порно комикс", "el_1003"),
-        Genre("Порно манхва", "el_1104")
+        Genre("Порно манхва", "el_1104"),
     )
 
     private fun getFilList() = listOf(
@@ -140,7 +142,7 @@ class AllHentai : GroupLe("AllHentai", "http://allhen.online", "ru") {
         Genre("Переведено", "s_translated"),
         Genre("Длинная", "s_many_chapters"),
         Genre("Ожидает загрузки", "s_wait_upload"),
-        Genre("Продается", "s_sale")
+        Genre("Продается", "s_sale"),
     )
 
     private fun getTagsList() = listOf(
@@ -260,7 +262,7 @@ class AllHentai : GroupLe("AllHentai", "http://allhen.online", "ru") {
         Tag("шантаж", "blackmail"),
         Tag("эксгибиционизм", "exhibitionism"),
         Tag("эльфы", "elves"),
-        Tag("яндере", "yandere")
+        Tag("яндере", "yandere"),
     )
 
     private val tagsName = getTagsList().map {

@@ -41,7 +41,7 @@ internal fun getPreferenceList(context: Context) = arrayOf(
         title = "屏蔽词列表"
         setDefaultValue(
             "// 例如 \"YAOI cos 扶他 毛絨絨 獵奇 韩漫 韓漫\", " +
-                "关键词之间用空格分离, 大小写不敏感, \"//\"后的字符会被忽略"
+                "关键词之间用空格分离, 大小写不敏感, \"//\"后的字符会被忽略",
         )
         dialogTitle = "关键词列表"
     },
@@ -58,17 +58,23 @@ internal const val MAINSITE_RATELIMIT_PERIOD_DEFAULT = 3.toString()
 internal const val USE_MIRROR_URL_PREF = "useMirrorWebsitePreference"
 
 internal val SITE_ENTRIES_ARRAY_DESCRIPTION = arrayOf(
-    "主站", "海外分流",
-    "中国大陆线路1", "中国大陆线路2/已被墙",
-    "东南亚线路1", "东南亚线路2",
+    "主站",
+    "海外分流",
+    "中国大陆线路1",
+    "中国大陆线路2/已被墙",
+    "东南亚线路1",
+    "东南亚线路2",
     "中国大陆线路3",
 )
 
 // List is based on https://jmcomic1.bet/
 // Please also update AndroidManifest
 internal val SITE_ENTRIES_ARRAY = arrayOf(
-    "18comic.vip", "18comic.org",
-    "jmcomic.onl", "jmcomic2.onl",
-    "jmcomic.me", "jmcomic1.me",
+    "18comic.vip",
+    "18comic.org",
+    "jmcomic.onl",
+    "jmcomic2.onl",
+    "jmcomic.me",
+    "jmcomic1.me",
     "jmcomic1.onl",
 )

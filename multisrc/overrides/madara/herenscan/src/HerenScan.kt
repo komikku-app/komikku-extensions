@@ -8,7 +8,7 @@ class HerenScan : Madara(
     "HerenScan",
     "https://herenscan.com",
     "es",
-    dateFormat = SimpleDateFormat("d 'de' MMM 'de' yyy", Locale("es"))
+    dateFormat = SimpleDateFormat("d 'de' MMM 'de' yyy", Locale("es")),
 ) {
     override val useNewChapterEndpoint = true
 

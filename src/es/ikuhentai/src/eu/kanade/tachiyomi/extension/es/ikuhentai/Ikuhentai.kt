@@ -27,6 +27,7 @@ class Ikuhentai : ParsedHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request {
         return GET("$baseUrl/page/$page?s&post_type=wp-manga&m_orderby=latest", headers)
     }
+
     //    LIST SELECTOR
     override fun popularMangaSelector() = "div.c-tabs-item__content"
     override fun latestUpdatesSelector() = popularMangaSelector()
@@ -130,7 +131,6 @@ class Ikuhentai : ParsedHttpSource() {
     }
 
     private fun parseStatus(element: String): Int = when {
-
         element.lowercase().contains("ongoing") -> SManga.ONGOING
         element.lowercase().contains("completado") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
@@ -183,6 +183,7 @@ class Ikuhentai : ParsedHttpSource() {
         }.build()
         return GET(page.imageUrl!!, imgHeader)
     }
+
     //    private class Status : Filter.TriState("Completed")
     private class TextField(name: String, val key: String) : Filter.Text(name)
     private class SortBy : UriPartFilter(
@@ -194,8 +195,8 @@ class Ikuhentai : ParsedHttpSource() {
             Pair("Calificación", "rating"),
             Pair("Tendencia", "trending"),
             Pair("Más visto", "views"),
-            Pair("Nuevo", "new-manga")
-        )
+            Pair("Nuevo", "new-manga"),
+        ),
     )
 
     private class Genre(name: String, val id: String = name) : Filter.TriState(name)
@@ -209,13 +210,13 @@ class Ikuhentai : ParsedHttpSource() {
         TextField("Año de publicación", "release"),
         SortBy(),
         StatusList(getStatusList()),
-        GenreList(getGenreList())
+        GenreList(getGenreList()),
     )
     private fun getStatusList() = listOf(
         Status("Completado", "end"),
         Status("En emisión", "on-going"),
         Status("Cancelado", "canceled"),
-        Status("Pausado", "on-hold")
+        Status("Pausado", "on-hold"),
     )
     private fun getGenreList() = listOf(
         Genre("Ahegao", "ahegao"),
@@ -260,7 +261,7 @@ class Ikuhentai : ParsedHttpSource() {
         Genre("Tentáculos", "tentaculos"),
         Genre("Virgen", "virgen"),
         Genre("Yaoi", "yaoi"),
-        Genre("Yuri", "yuri")
+        Genre("Yuri", "yuri"),
     )
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {

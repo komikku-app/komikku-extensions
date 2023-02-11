@@ -8,5 +8,5 @@ class hManhwa : Madara(
     "hManhwa",
     "https://hmanhwa.com",
     "en",
-    dateFormat = SimpleDateFormat("dd MMM", Locale.US)
+    dateFormat = SimpleDateFormat("dd MMM", Locale.US),
 )

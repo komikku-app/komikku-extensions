@@ -157,7 +157,7 @@ class Toonkor : ConfigurableSource, ParsedHttpSource() {
             Filter.Header("Note: can't combine with text search!"),
             Filter.Separator(),
             TypeFilter(getTypeList()),
-            SortFilter(getSortList())
+            SortFilter(getSortList()),
         )
     }
 
@@ -167,13 +167,13 @@ class Toonkor : ConfigurableSource, ParsedHttpSource() {
     private fun getTypeList() = arrayOf(
         Pair("Webtoons", webtoonsRequestPath),
         Pair("Manga", "/%EB%8B%A8%ED%96%89%EB%B3%B8"),
-        Pair("Hentai", "/%EB%A7%9D%EA%B0%80")
+        Pair("Hentai", "/%EB%A7%9D%EA%B0%80"),
     )
 
     private fun getSortList() = arrayOf(
         Pair("Popular", ""),
         Pair("Latest", latestRequestModifier),
-        Pair("Completed", "/%EC%99%84%EA%B2%B0")
+        Pair("Completed", "/%EC%99%84%EA%B2%B0"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

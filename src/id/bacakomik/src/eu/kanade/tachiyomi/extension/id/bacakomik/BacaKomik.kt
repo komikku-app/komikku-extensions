@@ -225,8 +225,8 @@ class BacaKomik : ParsedHttpSource() {
             Pair("Manga", "Manga"),
             Pair("Manhwa", "Manhwa"),
             Pair("Manhua", "Manhua"),
-            Pair("Comic", "Comic")
-        )
+            Pair("Comic", "Comic"),
+        ),
     )
 
     private class SortByFilter : UriPartFilter(
@@ -237,8 +237,8 @@ class BacaKomik : ParsedHttpSource() {
             Pair("Z-A", "titlereverse"),
             Pair("Latest Update", "update"),
             Pair("Latest Added", "latest"),
-            Pair("Popular", "popular")
-        )
+            Pair("Popular", "popular"),
+        ),
     )
 
     private class StatusFilter : UriPartFilter(
@@ -246,8 +246,8 @@ class BacaKomik : ParsedHttpSource() {
         arrayOf(
             Pair("All", ""),
             Pair("Ongoing", "ongoing"),
-            Pair("Completed", "completed")
-        )
+            Pair("Completed", "completed"),
+        ),
     )
 
     private class Genre(name: String, val id: String = name) : Filter.TriState(name)
@@ -261,7 +261,7 @@ class BacaKomik : ParsedHttpSource() {
         StatusFilter(),
         TypeFilter(),
         SortByFilter(),
-        GenreListFilter(getGenreList())
+        GenreListFilter(getGenreList()),
     )
 
     private fun getGenreList() = listOf(
@@ -323,7 +323,7 @@ class BacaKomik : ParsedHttpSource() {
         Genre("Vampire", "vampire"),
         Genre("Webtoon", "webtoon"),
         Genre("Webtoons", "webtoons"),
-        Genre("Yuri", "yuri")
+        Genre("Yuri", "yuri"),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

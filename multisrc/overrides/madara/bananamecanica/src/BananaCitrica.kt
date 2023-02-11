@@ -11,7 +11,7 @@ class BananaCitrica : Madara(
     "Banana Cítrica",
     "https://dinastiacilly.com",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR")),
 ) {
 
     // Website changed their name.

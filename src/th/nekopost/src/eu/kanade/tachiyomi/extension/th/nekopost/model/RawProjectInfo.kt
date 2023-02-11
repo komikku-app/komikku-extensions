@@ -12,5 +12,5 @@ data class RawProjectInfo(
     @SerialName("listChapter")
     val projectChapterList: List<RawProjectChapter>?,
     @SerialName("projectInfo")
-    val projectInfo: RawProjectInfoData
+    val projectInfo: RawProjectInfoData,
 )

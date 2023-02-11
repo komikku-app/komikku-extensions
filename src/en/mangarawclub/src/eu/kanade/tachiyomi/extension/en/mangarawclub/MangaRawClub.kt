@@ -63,20 +63,23 @@ class MangaRawClub : ParsedHttpSource() {
     override fun latestUpdatesNextPageSelector() = searchMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga {
-        if (document.select(".novel-header").first() == null)
+        if (document.select(".novel-header").first() == null) {
             throw Exception("Page not found")
+        }
 
         val manga = SManga.create()
         val author = document.select(".author a").first()?.attr("title")?.trim() ?: ""
-        if (author.lowercase(Locale.ROOT) != "updating")
+        if (author.lowercase(Locale.ROOT) != "updating") {
             manga.author = author
+        }
 
         var description = document.select(".description").first()?.text() ?: ""
         description = description.substringAfter("Summary is").trim()
 
         val otherTitle = document.select(".alternative-title").first()?.text()?.trim() ?: ""
-        if (otherTitle.isNotEmpty() && otherTitle.lowercase(Locale.ROOT) != "updating")
+        if (otherTitle.isNotEmpty() && otherTitle.lowercase(Locale.ROOT) != "updating") {
             description += "\n\n$altName $otherTitle"
+        }
         manga.description = description.trim()
 
         manga.genre = document.select(".categories a[href*=genre]").joinToString(", ") {
@@ -115,8 +118,9 @@ class MangaRawClub : ParsedHttpSource() {
         val name = element.select(".chapter-title").text().removeSuffix("-eng-li")
         chapter.name = "Chapter $name"
         val number = parseChapterNumber(name)
-        if (number != null)
+        if (number != null) {
             chapter.chapter_number = number
+        }
         val date = parseChapterDate(element.select(".chapter-update").attr("datetime"))
         chapter.date_upload = date
         return chapter
@@ -130,8 +134,9 @@ class MangaRawClub : ParsedHttpSource() {
     }
 
     private fun parseChapterNumber(string: String): Float? {
-        if (string.isEmpty())
+        if (string.isEmpty()) {
             return null
+        }
         return string.split("-")[0].toFloatOrNull()
             ?: string.split(".")[0].toFloatOrNull()
     }
@@ -147,8 +152,10 @@ class MangaRawClub : ParsedHttpSource() {
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        if (query.isNotEmpty()) // Query search
+        if (query.isNotEmpty()) {
+            // Query search
             return GET("$baseUrl/search/?search=$query", headers)
+        }
 
         // Filter search
         val url = "$baseUrl/browse-comics/".toHttpUrlOrNull()!!.newBuilder()
@@ -188,8 +195,8 @@ class MangaRawClub : ParsedHttpSource() {
         arrayOf(
             Pair("All", ""),
             Pair("Include", "include"),
-            Pair("Exclude", "exclude")
-        )
+            Pair("Exclude", "exclude"),
+        ),
     )
 
     private class Order : UriPartFilter(
@@ -198,8 +205,8 @@ class MangaRawClub : ParsedHttpSource() {
             Pair("Random", "Random"),
             Pair("Updated", "Updated"),
             Pair("New", "New"),
-            Pair("Views", "views")
-        )
+            Pair("Views", "views"),
+        ),
     )
 
     private class Status : UriPartFilter(
@@ -207,8 +214,8 @@ class MangaRawClub : ParsedHttpSource() {
         arrayOf(
             Pair("All", ""),
             Pair("Completed", "Completed"),
-            Pair("Ongoing", "Ongoing")
-        )
+            Pair("Ongoing", "Ongoing"),
+        ),
     )
 
     private class GenrePairList : UriPartFilter(
@@ -251,8 +258,8 @@ class MangaRawClub : ParsedHttpSource() {
             Pair("Sports", "Sports"),
             Pair("Supernatural", "Supernatural"),
             Pair("Tragedy", "Tragedy"),
-            Pair("Webtoons", "Webtoons")
-        )
+            Pair("Webtoons", "Webtoons"),
+        ),
     )
 
     private fun getGenreList(): List<Genre> {

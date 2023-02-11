@@ -61,7 +61,6 @@ class MangaMiso : HttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-
         val builder = getBaseURLBuilder()
             .addQueryParameter("perPage", MANGA_PER_PAGE.toString())
             .addQueryParameter("page", page.toString())
@@ -144,7 +143,7 @@ class MangaMiso : HttpSource() {
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         val jsonURL = manga.url.replace("/manga/", "/mangas/")
         return client.newCall(
-            GET(jsonURL, headers)
+            GET(jsonURL, headers),
         ).asObservableSuccess()
             .map { response ->
                 mangaDetailsParse(response)
@@ -203,7 +202,6 @@ class MangaMiso : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-
         val chapterRoot = json.parseToJsonElement(response.body!!.string())
 
         val chapterBase = chapterRoot.jsonObject["chapter"]!!
@@ -215,7 +213,7 @@ class MangaMiso : HttpSource() {
             Page(
                 index,
                 imgURL,
-                imgURL
+                imgURL,
             )
         }
     }
@@ -235,8 +233,8 @@ class MangaMiso : HttpSource() {
             Pair("Ongoing", "ongoing"),
             Pair("Completed", "completed"),
             Pair("Cancelled", "cancelled"),
-            Pair("On Hiatus", "hiatus")
-        )
+            Pair("On Hiatus", "hiatus"),
+        ),
     )
 
     private class DemographicFilter : UriPartFilter(
@@ -246,8 +244,8 @@ class MangaMiso : HttpSource() {
             Pair("Shounen", "shounen"),
             Pair("Shoujo", "shoujo"),
             Pair("Seinen", "seinen"),
-            Pair("Josei", "josei")
-        )
+            Pair("Josei", "josei"),
+        ),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -281,8 +279,8 @@ class MangaMiso : HttpSource() {
             Pair("Tragedy", "tragedy"),
             Pair("Wuxia", "wuxia"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
     )
 
     private class ThemeFilter : UriPartFilter(
@@ -323,8 +321,8 @@ class MangaMiso : HttpSource() {
             Pair("Video Games", "video_games"),
             Pair("Villainess", "villainess"),
             Pair("Virtual Reality", "virtual_reality"),
-            Pair("Zombies", "zombies")
-        )
+            Pair("Zombies", "zombies"),
+        ),
     )
 
     private class ContentTypeFilter : UriPartFilter(
@@ -342,7 +340,7 @@ class MangaMiso : HttpSource() {
             Pair("One Shot", "one_shot"),
             Pair("Partly-Colored", "partly-colored"),
             Pair("Web Comic", "web_comic"),
-        )
+        ),
     )
 
     private class ContentWarningFilter : UriPartFilter(
@@ -353,8 +351,8 @@ class MangaMiso : HttpSource() {
             Pair("Ecchi", "ecchi"),
             Pair("Gore", "gore"),
             Pair("Sexual Violence", "sexual_violence"),
-            Pair("Smut", "smut")
-        )
+            Pair("Smut", "smut"),
+        ),
     )
     private class GloryFilter : UriPartFilter(
         "Glory",
@@ -362,8 +360,8 @@ class MangaMiso : HttpSource() {
             Pair("<Select>", ""),
             Pair("Adaptation", "adaptation"),
             Pair("Adapted to Anime", "adapted_to_anime"),
-            Pair("Award Winning", "award_winning")
-        )
+            Pair("Award Winning", "award_winning"),
+        ),
     )
 
     //endregion
@@ -377,7 +375,7 @@ class MangaMiso : HttpSource() {
             ThemeFilter(),
             ContentTypeFilter(),
             ContentWarningFilter(),
-            GloryFilter()
+            GloryFilter(),
         )
     }
 

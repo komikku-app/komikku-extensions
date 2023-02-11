@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.multisrc.bakamanga.BakaManga
 class MWManhwa : BakaManga(
     "MWManhwa",
     "https://mwmanhwa.net",
-    "all"
+    "all",
 ) {
     override fun getGenreList() = arrayOf(
         Pair("All", ""),

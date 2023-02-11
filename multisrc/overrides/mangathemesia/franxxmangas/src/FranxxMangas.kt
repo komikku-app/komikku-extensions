@@ -11,7 +11,7 @@ class FranxxMangas : MangaThemesia(
     "Franxx Mangás",
     "https://franxxmangas.net",
     "pt-BR",
-    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()

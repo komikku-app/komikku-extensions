@@ -5,20 +5,20 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TagsDto(
     val id: Int,
-    val name: String
+    val name: String,
 )
 
 @Serializable
 data class BranchesDto(
     val id: Long,
-    val count_chapters: Int
+    val count_chapters: Int,
 )
 
 @Serializable
 data class ImgDto(
     val high: String? = null,
     val mid: String? = null,
-    val low: String? = null
+    val low: String? = null,
 )
 
 @Serializable
@@ -28,17 +28,18 @@ data class LibraryDto(
     val rus_name: String,
     val dir: String,
     val img: ImgDto,
-    val bookmark_type: String? = null
+    val bookmark_type: String? = null,
 )
+
 @Serializable
 data class MyLibraryDto(
-    val title: LibraryDto
+    val title: LibraryDto,
 )
 
 @Serializable
 data class StatusDto(
     val id: Int,
-    val name: String
+    val name: String,
 )
 
 @Serializable
@@ -58,24 +59,24 @@ data class MangaDetDto(
     val status: StatusDto,
     val avg_rating: String,
     val count_rating: Int,
-    val age_limit: Int
+    val age_limit: Int,
 )
 
 @Serializable
 data class PropsDto(
     val total_pages: Int,
-    val page: Int
+    val page: Int,
 )
 
 @Serializable
 data class PageWrapperDto<T>(
     val content: List<T>,
-    val props: PropsDto
+    val props: PropsDto,
 )
 
 @Serializable
 data class SeriesWrapperDto<T>(
-    val content: T
+    val content: T,
 )
 
 @Serializable
@@ -92,7 +93,7 @@ data class BookDto(
     val upload_date: String,
     val is_paid: Boolean,
     val is_bought: Boolean?,
-    val publishers: List<PublisherDto>
+    val publishers: List<PublisherDto>,
 )
 
 @Serializable
@@ -100,21 +101,21 @@ data class PagesDto(
     val id: Int,
     val height: Int,
     val link: String,
-    val page: Int
+    val page: Int,
 )
 
 @Serializable
 data class PageDto(
-    val pages: List<PagesDto>
+    val pages: List<PagesDto>,
 )
 
 @Serializable
 data class ChunksPageDto(
-    val pages: List<List<PagesDto>>
+    val pages: List<List<PagesDto>>,
 )
 
 @Serializable
 data class UserDto(
     val id: Long,
-    val access_token: String? = null
+    val access_token: String? = null,
 )

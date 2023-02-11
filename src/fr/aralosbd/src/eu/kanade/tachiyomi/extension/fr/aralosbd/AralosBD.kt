@@ -31,7 +31,7 @@ data class AralosBDSearchManga(
 @Serializable
 data class AralosBDSearchResult(
     val error: Int = 0,
-    val mangas: List<AralosBDSearchManga> = emptyList()
+    val mangas: List<AralosBDSearchManga> = emptyList(),
 )
 
 @Serializable
@@ -89,7 +89,7 @@ data class AralosBDChapter(
 @Serializable
 data class AralosBDPages(
     val error: Int = 0,
-    val links: List<String> = emptyList()
+    val links: List<String> = emptyList(),
 )
 
 class AralosBD : HttpSource() {
@@ -194,7 +194,7 @@ class AralosBD : HttpSource() {
             Page(
                 index,
                 "$baseUrl/$link",
-                "$baseUrl/$link"
+                "$baseUrl/$link",
             )
         }
     }

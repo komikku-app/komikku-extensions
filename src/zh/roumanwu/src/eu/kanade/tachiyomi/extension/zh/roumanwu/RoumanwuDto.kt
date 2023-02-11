@@ -59,10 +59,13 @@ data class Book(
         private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH)
         private val isNewDateLogic = run {
             val commitCount = AppInfo.getVersionName().substringAfter('-', "")
-            if (commitCount.isNotEmpty()) // Preview
+            if (commitCount.isNotEmpty()) {
+                // Preview
                 commitCount.toInt() >= 4442
-            else // Stable
+            } else {
+                // Stable
                 AppInfo.getVersionCode() >= 81
+            }
         }
     }
 }

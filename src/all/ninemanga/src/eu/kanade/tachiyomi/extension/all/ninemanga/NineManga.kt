@@ -20,7 +20,7 @@ import java.util.Locale
 open class NineManga(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : ParsedHttpSource() {
 
     override val supportsLatest: Boolean = true
@@ -176,8 +176,8 @@ open class NineManga(
         arrayOf(
             Pair("Contain", "contain"),
             Pair("Begin", "begin"),
-            Pair("End", "end")
-        )
+            Pair("End", "end"),
+        ),
     )
 
     private class QueryCBEFilter : ContainBeginEndFilter("Query")
@@ -189,8 +189,8 @@ open class NineManga(
         arrayOf(
             Pair("Either", "either"),
             Pair("Yes", "yes"),
-            Pair("No", "no")
-        )
+            Pair("No", "no"),
+        ),
     )
 
     override fun getFilterList() = FilterList(
@@ -200,7 +200,7 @@ open class NineManga(
         ArtistCBEFilter(),
         ArtistFilter(),
         GenreList(getGenreList()),
-        CompletedFilter()
+        CompletedFilter(),
     )
 
     // $(document.querySelectorAll('.optionbox .typelist:nth-child(3) ul li.cate_list')).map((i, el)=>`Genre("${$(el).first().text().trim()}", "${$(el).attr("cate_id")}")`).get().sort().join(",\n")
@@ -270,6 +270,6 @@ open class NineManga(
         Genre("Webtoon", "58"),
         Genre("Webtoons", "50"),
         Genre("Wuxia", "128"),
-        Genre("[No Chapters]", "61")
+        Genre("[No Chapters]", "61"),
     )
 }

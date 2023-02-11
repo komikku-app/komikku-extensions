@@ -159,7 +159,7 @@ class TruyenQQ : ParsedHttpSource() {
     open class UriPartFilter(
         name: String,
         private val query: String,
-        private val vals: Array<Pair<String, String>>
+        private val vals: Array<Pair<String, String>>,
     ) : UriFilter, Filter.Select<String>(name, vals.map { it.first }.toTypedArray()) {
         override fun addToUri(builder: HttpUrl.Builder) {
             builder.addQueryParameter(query, vals[state].second)
@@ -176,7 +176,7 @@ class TruyenQQ : ParsedHttpSource() {
             "Hàn Quốc" to "3",
             "Nhật Bản" to "4",
             "Mỹ" to "5",
-        )
+        ),
     )
 
     class StatusFilter : UriPartFilter(
@@ -186,7 +186,7 @@ class TruyenQQ : ParsedHttpSource() {
             "Tất cả" to "-1",
             "Đang tiến hành" to "0",
             "Hoàn thành" to "2",
-        )
+        ),
     )
 
     class ChapterCountFilter : UriPartFilter(
@@ -199,13 +199,13 @@ class TruyenQQ : ParsedHttpSource() {
             ">= 300" to "300",
             ">= 400" to "400",
             ">= 500" to "500",
-        )
+        ),
     )
 
     class SortByFilter : UriFilter, Filter.Sort(
         "Sắp xếp",
         arrayOf("Ngày đăng", "Ngày cập nhật", "Lượt xem"),
-        Selection(2, false)
+        Selection(2, false),
     ) {
         override fun addToUri(builder: HttpUrl.Builder) {
             val index = state?.index ?: 2
@@ -280,6 +280,6 @@ class TruyenQQ : ParsedHttpSource() {
         Genre("Trọng Sinh", "82"),
         Genre("Truyện Màu", "92"),
         Genre("Webtoon", "55"),
-        Genre("Xuyên Không", "88")
+        Genre("Xuyên Không", "88"),
     )
 }

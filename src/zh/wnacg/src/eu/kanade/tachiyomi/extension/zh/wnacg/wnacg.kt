@@ -120,7 +120,7 @@ class wnacg : ParsedHttpSource() {
 
     override fun getFilterList() = FilterList(
         Filter.Header("注意：分类不支持搜索"),
-        CategoryFilter()
+        CategoryFilter(),
     )
 
     private class CategoryFilter : UriPartFilter(
@@ -137,7 +137,7 @@ class wnacg : ParsedHttpSource() {
             Pair("杂志&短篇-日语", "albums-index-page-%d-cate-14.html"),
             Pair("韩漫-汉化", "albums-index-page-%d-cate-20.html"),
             Pair("韩漫-生肉", "albums-index-page-%d-cate-21.html"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

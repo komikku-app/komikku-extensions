@@ -61,7 +61,7 @@ class Mango : ConfigurableSource, UnmeteredSource, HttpSource() {
                     thumbnail_url = baseUrl + it.jsonObject["cover_url"]!!.jsonPrimitive.content
                 }
             },
-            false
+            false,
         )
     }
 
@@ -85,7 +85,6 @@ class Mango : ConfigurableSource, UnmeteredSource, HttpSource() {
 
     // Here the best we can do is just match manga based on their titles
     private fun searchMangaParse(response: Response, query: String): MangasPage {
-
         val queryLower = query.lowercase()
         val mangas = popularMangaParse(response).mangas
         val exactMatch = mangas.firstOrNull { it.title.lowercase() == queryLower }
@@ -186,8 +185,8 @@ class Mango : ConfigurableSource, UnmeteredSource, HttpSource() {
             pages.add(
                 Page(
                     index = i,
-                    imageUrl = "$baseUrl/api$baseUrlChapter$i"
-                )
+                    imageUrl = "$baseUrl/api$baseUrlChapter$i",
+                ),
             )
         }
         return Observable.just(pages)
@@ -226,7 +225,6 @@ class Mango : ConfigurableSource, UnmeteredSource, HttpSource() {
             .build()
 
     private fun authIntercept(chain: Interceptor.Chain): Response {
-
         // Check that we have our username and password to login with
         val request = chain.request()
         if (username.isEmpty() || password.isEmpty()) {

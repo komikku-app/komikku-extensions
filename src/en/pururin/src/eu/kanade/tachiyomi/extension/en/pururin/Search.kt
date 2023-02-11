@@ -17,7 +17,8 @@ object Search {
         POPULAR("Most Popular", "most-popular"),
         RATING("Highest Rated", "highest-rated"),
         VIEWS("Most Viewed", "most-viewed"),
-        TITLE("Title", "title");
+        TITLE("Title", "title"),
+        ;
 
         override fun toString() = label
     }
@@ -35,7 +36,7 @@ object Search {
         whitelist: List<Int> = emptyList(),
         blacklist: List<Int> = emptyList(),
         mode: TagMode = TagMode.AND,
-        range: IntRange = 0..100
+        range: IntRange = 0..100,
     ) = buildJsonObject {
         putJsonObject("search") {
             put("sort", sort.id)

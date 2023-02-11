@@ -36,7 +36,7 @@ import java.net.URLEncoder
 
 abstract class EHentai(
     override val lang: String,
-    private val ehLang: String
+    private val ehLang: String,
 ) : ConfigurableSource, HttpSource() {
 
     private val preferences: SharedPreferences by lazy {
@@ -102,8 +102,8 @@ abstract class EHentai(
                 url = manga.url
                 name = "Chapter"
                 chapter_number = 1f
-            }
-        )
+            },
+        ),
     )
 
     override fun fetchPageList(chapter: SChapter) = fetchChapterPage(chapter, "$baseUrl/${chapter.url}").map {
@@ -118,7 +118,7 @@ abstract class EHentai(
     private fun fetchChapterPage(
         chapter: SChapter,
         np: String,
-        pastUrls: List<String> = emptyList()
+        pastUrls: List<String> = emptyList(),
     ): Observable<List<String>> {
         val urls = ArrayList(pastUrls)
         return chapterPageCall(np).flatMap {
@@ -210,7 +210,7 @@ abstract class EHentai(
                     }
                 }
                 headers.build()
-            } ?: headers
+            } ?: headers,
 
         ).let {
             if (!cache) {
@@ -294,7 +294,7 @@ abstract class EHentai(
                 val currentTags = it.select("div").map { element ->
                     Tag(
                         element.text().trim(),
-                        element.hasClass("gtl")
+                        element.hasClass("gtl"),
                     )
                 }
                 tags[namespace] = currentTags
@@ -391,13 +391,14 @@ abstract class EHentai(
         TagFilter("Misc Tags", triStateBoxesFrom(miscTags), "other"),
         TagFilter("Female Tags", triStateBoxesFrom(femaleTags), "female"),
         TagFilter("Male Tags", triStateBoxesFrom(maleTags), "male"),
-        AdvancedGroup()
+        AdvancedGroup(),
     )
 
     class Watched : CheckBox("Watched List"), UriFilter {
         override fun addToUri(builder: Uri.Builder) {
-            if (state)
+            if (state) {
                 builder.appendPath("watched")
+            }
         }
     }
 
@@ -419,14 +420,15 @@ abstract class EHentai(
             GenreOption("Image Set", "imageset"),
             GenreOption("Cosplay", "cosplay"),
             GenreOption("Asian Porn", "asianporn"),
-            GenreOption("Misc", "misc")
-        )
+            GenreOption("Misc", "misc"),
+        ),
     )
 
     class AdvancedOption(name: String, private val param: String, defValue: Boolean = false) : CheckBox(name, defValue), UriFilter {
         override fun addToUri(builder: Uri.Builder) {
-            if (state)
+            if (state) {
                 builder.appendQueryParameter(param, "on")
+            }
         }
     }
 
@@ -453,8 +455,8 @@ abstract class EHentai(
                 "2 stars",
                 "3 stars",
                 "4 stars",
-                "5 stars"
-            )
+                "5 stars",
+            ),
         ),
         UriFilter {
         override fun addToUri(builder: Uri.Builder) {
@@ -479,8 +481,8 @@ abstract class EHentai(
             AdvancedOption("Show Expunged Galleries", "f_sh"),
             RatingOption(),
             MinPagesOption(),
-            MaxPagesOption()
-        )
+            MaxPagesOption(),
+        ),
     )
 
     private class EnforceLanguageFilter(default: Boolean) : CheckBox("Enforce language", default)
@@ -514,7 +516,7 @@ abstract class EHentai(
         Pair("thai", listOf("120", "1144", "2168")),
         Pair("vietnamese", listOf("130", "1154", "2178")),
         Pair("n/a", listOf("254", "1278", "2302")),
-        Pair("other", listOf("255", "1279", "2303"))
+        Pair("other", listOf("255", "1279", "2303")),
     )
 
     companion object {

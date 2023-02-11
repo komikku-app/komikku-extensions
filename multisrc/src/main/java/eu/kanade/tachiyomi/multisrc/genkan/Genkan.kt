@@ -102,7 +102,7 @@ open class Genkan(
         description = document.select("div.col-lg-9").text().substringAfter("Description ").substringBefore(" Volume")
         thumbnail_url = styleToUrl(document.select("div.media a").first())
         genre = listOfNotNull(
-            document.selectFirst(countryOfOriginSelector)?.let { countryOfOriginToSeriesType(it.text()) }
+            document.selectFirst(countryOfOriginSelector)?.let { countryOfOriginToSeriesType(it.text()) },
         ).joinToString()
     }
 
@@ -110,7 +110,6 @@ open class Genkan(
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
-
             val urlElement = element.select("a.item-author")
             val chapNum = urlElement.attr("href").split("/").last()
 

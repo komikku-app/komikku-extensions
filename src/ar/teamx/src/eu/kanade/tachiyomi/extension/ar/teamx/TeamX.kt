@@ -47,8 +47,11 @@ class TeamX : ParsedHttpSource() {
             title = element.select("a").attr("title")
             setUrlWithoutDomain(element.select("a").first().attr("href"))
             thumbnail_url = element.select("img").let {
-                if (it.hasAttr("data-src"))
-                    it.attr("abs:data-src") else it.attr("abs:src")
+                if (it.hasAttr("data-src")) {
+                    it.attr("abs:data-src")
+                } else {
+                    it.attr("abs:src")
+                }
             }
         }
     }
@@ -139,8 +142,9 @@ class TeamX : ParsedHttpSource() {
 
         while (true) {
             val pageChapters = document.select(chapterListSelector())
-            if (pageChapters.isEmpty())
+            if (pageChapters.isEmpty()) {
                 break
+            }
 
             allElements += pageChapters
 
@@ -163,7 +167,6 @@ class TeamX : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
-
             val chpNum = element.select("div.epl-num").text()
             val chpTitle = element.select("div.epl-title").text()
 

@@ -8,7 +8,8 @@ enum class MangaFormat(val format: Int) {
     Archive(1),
     Unknown(2),
     Epub(3),
-    Pdf(4);
+    Pdf(4),
+    ;
     companion object {
         private val map = PersonRole.values().associateBy(PersonRole::role)
         fun fromInt(type: Int) = map[type]
@@ -25,12 +26,14 @@ enum class PersonRole(val role: Int) {
     Editor(9),
     Publisher(10),
     Character(11),
-    Translator(12);
+    Translator(12),
+    ;
     companion object {
         private val map = PersonRole.values().associateBy(PersonRole::role)
         fun fromInt(type: Int) = map[type]
     }
 }
+
 @Serializable
 data class SeriesDto(
     val id: Int,
@@ -47,7 +50,7 @@ data class SeriesDto(
     val format: Int,
     val created: String? = "",
     val libraryId: Int,
-    val libraryName: String? = ""
+    val libraryName: String? = "",
 )
 
 @Serializable
@@ -58,16 +61,18 @@ data class SeriesMetadataDto(
     val coverArtists: List<Person> = emptyList(),
     val genres: List<Genres> = emptyList(),
     val seriesId: Int,
-    val ageRating: Int
+    val ageRating: Int,
 
 )
+
 @Serializable
 data class Genres(
-    val title: String
+    val title: String,
 )
+
 @Serializable
 data class Person(
-    val name: String
+    val name: String,
 )
 
 @Serializable
@@ -80,7 +85,7 @@ data class VolumeDto(
     val lastModified: String,
     val created: String,
     val seriesId: Int,
-    val chapters: List<ChapterDto> = emptyList()
+    val chapters: List<ChapterDto> = emptyList(),
 )
 
 @Serializable
@@ -94,5 +99,5 @@ data class ChapterDto(
     val pagesRead: Int,
     val coverImageLocked: Boolean,
     val volumeId: Int,
-    val created: String
+    val created: String,
 )

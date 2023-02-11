@@ -20,7 +20,7 @@ class LxHentaiUrlActivity : Activity() {
                         action = "eu.kanade.tachiyomi.SEARCH"
                         putExtra("query", "id:$id")
                         putExtra("filter", packageName)
-                    }
+                    },
                 )
             } catch (e: ActivityNotFoundException) {
                 Log.e("LxHentaiUrlActivity", e.toString())

@@ -52,7 +52,7 @@ class NineHentai : HttpSource() {
         sort: Int = 0,
         range: List<Int> = listOf(0, 2000),
         includedTags: List<Tag> = listOf(),
-        excludedTags: List<Tag> = listOf()
+        excludedTags: List<Tag> = listOf(),
     ): Request {
         val searchRequest = SearchRequest(
             text = searchText,
@@ -62,9 +62,9 @@ class NineHentai : HttpSource() {
             tag = Items(
                 items = TagArrays(
                     included = includedTags,
-                    excluded = excludedTags
-                )
-            )
+                    excluded = excludedTags,
+                ),
+            ),
         )
         val jsonString = json.encodeToString(SearchRequestPayload(search = searchRequest))
         return POST("$baseUrl$SEARCH_URL", headers, jsonString.toRequestBody(MEDIA_TYPE))
@@ -83,7 +83,7 @@ class NineHentai : HttpSource() {
                             thumbnail_url = "${it.image_server}${it.id}/1.jpg?${it.total_page}"
                         }
                     },
-                    searchResponse.totalCount - 1 > page
+                    searchResponse.totalCount - 1 > page,
                 )
             }
         }
@@ -174,7 +174,7 @@ class NineHentai : HttpSource() {
             sort = sort,
             range = range,
             includedTags = includedTags,
-            excludedTags = excludedTags
+            excludedTags = excludedTags,
         )
     }
 
@@ -222,7 +222,7 @@ class NineHentai : HttpSource() {
                 name = "Chapter"
                 date_upload = parseChapterDate(time)
                 url = response.request.url.encodedPath
-            }
+            },
         )
     }
 
@@ -274,8 +274,8 @@ class NineHentai : HttpSource() {
         client.newCall(
             GET(
                 "$imageUrl/preview/${totalPages}t.jpg",
-                headersBuilder().build()
-            )
+                headersBuilder().build(),
+            ),
         ).execute().code.let { code ->
             if (code == 404) totalPages--
         }
@@ -306,8 +306,11 @@ class NineHentai : HttpSource() {
                 val tagList = json.parseToJsonElement(response.body!!.string()).jsonObject["results"]!!.jsonArray.map {
                     json.decodeFromJsonElement<Tag>(it)
                 }
-                if (tagList.isEmpty()) return@map null
-                else tagList.first()
+                if (tagList.isEmpty()) {
+                    return@map null
+                } else {
+                    tagList.first()
+                }
             }.toBlocking().first()
     }
 
@@ -319,7 +322,7 @@ class NineHentai : HttpSource() {
                 setUrlWithoutDomain("/g/${manga.id}")
                 title = manga.title
                 thumbnail_url = "${manga.image_server + manga.id}/cover.jpg"
-            }
+            },
         )
         return MangasPage(list, false)
     }
@@ -328,7 +331,7 @@ class NineHentai : HttpSource() {
 
     private class SortFilter : Filter.Select<String>(
         "Sort by",
-        arrayOf("Newest", "Popular Right now", "Most Fapped", "Most Viewed", "By Title")
+        arrayOf("Newest", "Popular Right now", "Most Fapped", "Most Viewed", "By Title"),
     )
 
     private class MinPagesFilter : Filter.Text("Minimum Pages")

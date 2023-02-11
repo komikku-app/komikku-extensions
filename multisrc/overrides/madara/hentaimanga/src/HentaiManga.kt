@@ -8,7 +8,7 @@ class HentaiManga : Madara(
     "Hentai Manga",
     "https://hentaimanga.me",
     "en",
-    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US),
 ) {
 
     // The website does not flag the content.

@@ -9,7 +9,7 @@ class Manga3asq : Madara(
     "https://3asq.org",
     "ar",
     // \u060c (،) U+060C : ARABIC COMMA
-    dateFormat = SimpleDateFormat("d MMM\u060c yyy", Locale("ar"))
+    dateFormat = SimpleDateFormat("d MMM\u060c yyy", Locale("ar")),
 ) {
     override val useNewChapterEndpoint: Boolean = true
 

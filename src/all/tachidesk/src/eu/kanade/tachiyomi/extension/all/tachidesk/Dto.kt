@@ -89,5 +89,5 @@ data class CategoryDataClass(
     val id: Int,
     val order: Int,
     val name: String,
-    val default: Boolean
+    val default: Boolean,
 )

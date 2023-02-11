@@ -51,12 +51,12 @@ data class MCComic(
 
     private fun getDescription() = listOfNotNull(
         episodes?.firstOrNull()?.getNextDatePrefix(),
-        outline?.stripHtml()
+        outline?.stripHtml(),
     ).joinToString("\n")
 
     private fun getGenre() = listOfNotNull(
         comic_category?.display_name,
-        comic_tags.joinToString(", ") { it.name }
+        comic_tags.joinToString(", ") { it.name },
     ).joinToString(", ")
 
     private fun getStatus() = when {

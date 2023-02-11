@@ -11,7 +11,7 @@ class FoxWhite : Madara(
     "Fox White",
     "https://foxwhite.com.br",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

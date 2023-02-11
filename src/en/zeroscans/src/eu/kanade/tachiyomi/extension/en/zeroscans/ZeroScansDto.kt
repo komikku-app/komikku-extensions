@@ -6,19 +6,19 @@ import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class NewChaptersResponseDto(
-    val all: List<NewChaptersMangaDto>
+    val all: List<NewChaptersMangaDto>,
 )
 
 @Serializable
 data class NewChaptersMangaDto(
-    val slug: String
+    val slug: String,
 )
 
 @Serializable
 data class ZeroScansResponseDto<T>(
     val success: Boolean? = null,
     val data: T,
-    val message: String? = null
+    val message: String? = null,
 )
 
 @Serializable
@@ -26,7 +26,7 @@ data class ZeroScansComicsDataDto(
     val comics: List<ZeroScansComicDto>,
     val genres: List<ZeroScansGenreDto>,
     val statuses: List<ZeroScansStatusDto>,
-    val rankings: ZeroScansRankingsDto
+    val rankings: ZeroScansRankingsDto,
 )
 
 @Serializable
@@ -41,7 +41,7 @@ data class ZeroScansComicDto(
     @SerialName("chapter_count") val chapterCount: Int,
     @SerialName("bookmark_count") val bookmarkCount: Int,
     @SerialName("view_count") val viewCount: Int,
-    val rating: JsonElement
+    val rating: JsonElement,
 ) {
     fun getRating(): Float {
         return this.rating.toString().toFloatOrNull() ?: 0F
@@ -51,32 +51,32 @@ data class ZeroScansComicDto(
 @Serializable
 data class ZeroScansGenreDto(
     val name: String,
-    val id: Int
+    val id: Int,
 )
 
 @Serializable
 data class ZeroScansStatusDto(
     val name: String,
-    val id: Int
+    val id: Int,
 )
 
 @Serializable
 data class ZeroScansRankingsDto(
     @SerialName("all_time") val allTime: List<ZeroScansRankingsEntryDto>,
     @SerialName("weekly_comics") val weekly: List<ZeroScansRankingsEntryDto>,
-    @SerialName("monthly_comics") val monthly: List<ZeroScansRankingsEntryDto>
+    @SerialName("monthly_comics") val monthly: List<ZeroScansRankingsEntryDto>,
 )
 
 @Serializable
 data class ZeroScansRankingsEntryDto(
-    val slug: String
+    val slug: String,
 )
 
 @Serializable
 data class ZeroScansCoverDto(
     val horizontal: String? = null,
     val vertical: String? = null,
-    val full: String? = null
+    val full: String? = null,
 ) {
     fun getHighResCover(): String {
         return when {
@@ -92,7 +92,7 @@ data class ZeroScansCoverDto(
 data class ZeroScansChaptersResponseDto(
     val data: List<ZeroScansChapterDto> = emptyList(),
     @SerialName("current_page") val currentPage: Int,
-    @SerialName("last_page") val lastPage: Int
+    @SerialName("last_page") val lastPage: Int,
 )
 
 @Serializable
@@ -100,16 +100,16 @@ data class ZeroScansChapterDto(
     val id: Int,
     val name: Int,
     val group: String?,
-    @SerialName("created_at") val createdAt: String
+    @SerialName("created_at") val createdAt: String,
 )
 
 @Serializable
 data class ZeroScansPageResponseDto(
-    val chapter: ZeroScansChapterPagesDto
+    val chapter: ZeroScansChapterPagesDto,
 )
 
 @Serializable
 data class ZeroScansChapterPagesDto(
     @SerialName("high_quality") val highQuality: List<String> = emptyList(),
-    @SerialName("good_quality") val goodQuality: List<String> = emptyList()
+    @SerialName("good_quality") val goodQuality: List<String> = emptyList(),
 )

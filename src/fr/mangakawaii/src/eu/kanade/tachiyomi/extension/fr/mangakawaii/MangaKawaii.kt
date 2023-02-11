@@ -47,11 +47,11 @@ class MangaKawaii : ParsedHttpSource() {
         .add(
             "User-Agent",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/8$userAgentRandomizer1.0.4$userAgentRandomizer3.1$userAgentRandomizer2 Safari/537.36"
+                "Chrome/8$userAgentRandomizer1.0.4$userAgentRandomizer3.1$userAgentRandomizer2 Safari/537.36",
         )
         .add(
             "Accept-Language",
-            lang
+            lang,
         )
 
     // Popular
@@ -172,8 +172,8 @@ class MangaKawaii : ParsedHttpSource() {
                 Page(
                     i,
                     cdnUrl + "/uploads/manga/" + mangaSlug + "/chapters_fr/" + chapterSlug + "/" + it.groupValues[1],
-                    cdnUrl + "/uploads/manga/" + mangaSlug + "/chapters_fr/" + chapterSlug + "/" + it.groupValues[1]
-                )
+                    cdnUrl + "/uploads/manga/" + mangaSlug + "/chapters_fr/" + chapterSlug + "/" + it.groupValues[1],
+                ),
             )
         }
         return pages

@@ -40,8 +40,11 @@ class DongmanManhua : Webtoons("Dongman Manhua", "https://www.dongmanmanhua.cn",
         while (continueParsing) {
             document.select(chapterListSelector()).map { chapters.add(chapterFromElement(it)) }
             document.select("div.paginate a[onclick] + a").let { element ->
-                if (element.isNotEmpty()) document = client.newCall(GET(element.attr("abs:href"), headers)).execute().asJsoup()
-                else continueParsing = false
+                if (element.isNotEmpty()) {
+                    document = client.newCall(GET(element.attr("abs:href"), headers)).execute().asJsoup()
+                } else {
+                    continueParsing = false
+                }
             }
         }
         return chapters

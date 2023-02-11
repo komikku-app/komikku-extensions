@@ -25,7 +25,7 @@ object KavitaConstants {
         "Publisher",
         "Character",
         "Translators",
-        "ReleaseYearRange"
+        "ReleaseYearRange",
     )
     val filterPrefEntriesValue = arrayOf(
         "Sort Options",
@@ -49,7 +49,7 @@ object KavitaConstants {
         "Publisher",
         "Character",
         "Translators",
-        "ReleaseYearRange"
+        "ReleaseYearRange",
     )
     val defaultFilterPrefEntries = setOf(
         "Sort Options",
@@ -73,7 +73,7 @@ object KavitaConstants {
         "Publisher",
         "Character",
         "Translators",
-        "ReleaseYearRange"
+        "ReleaseYearRange",
     )
 
     const val customSourceNamePref = "customSourceName"

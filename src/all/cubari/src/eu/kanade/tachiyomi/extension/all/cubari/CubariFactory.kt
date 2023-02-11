@@ -7,6 +7,6 @@ class CubariFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         Cubari("en"),
         Cubari("all"),
-        Cubari("other")
+        Cubari("other"),
     )
 }

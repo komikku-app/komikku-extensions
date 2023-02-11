@@ -112,7 +112,7 @@ class ManhwasNet : HttpSource() {
             manhwa.title = anime.selectFirst(".title").text().trim()
             manhwa.thumbnail_url = anime.selectFirst("img").attr("src")
             manhwa.url = getUrlWithoutDomain(
-                transformUrl(anime.select("a").attr("href"))
+                transformUrl(anime.select("a").attr("href")),
             )
             manhwa
         }

@@ -201,8 +201,9 @@ class ReaperScans : ParsedHttpSource() {
         document.select(chapterListSelector()).forEach { chapters.add(chapterFromElement(it)) }
         var hasNextPage = document.selectFirst(chapterListNextPageSelector()) != null
 
-        if (!hasNextPage)
+        if (!hasNextPage) {
             return chapters
+        }
 
         val csrfToken = document.selectFirst("meta[name=csrf-token]")?.attr("content")
             ?: error("Couldn't find csrf-token")

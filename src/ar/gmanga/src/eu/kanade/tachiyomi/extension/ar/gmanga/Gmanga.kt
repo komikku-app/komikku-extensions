@@ -61,7 +61,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
 
     private val parsedDatePattern: SimpleDateFormat = SimpleDateFormat(
         "yyyy-MM-dd HH:mm:ss ZZZ zzz",
-        Locale.ENGLISH
+        Locale.ENGLISH,
     )
     private val formattedDatePattern: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
     override fun headersBuilder() = Headers.Builder().apply {
@@ -127,7 +127,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
             }
         } else {
             val data = json.decodeFromString<JsonObject>(
-                response.asJsoup().select(".js-react-on-rails-component").html()
+                response.asJsoup().select(".js-react-on-rails-component").html(),
             )
             data["mangaDataAction"]!!.jsonObject["newMangas"]!!.jsonArray
         }
@@ -143,7 +143,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
                         "https://media.gmanga.me/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
                 }
             },
-            (mangas.size >= 30) && !isLatest
+            (mangas.size >= 30) && !isLatest,
         )
     }
 
@@ -162,7 +162,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
         val startedDayPrefix = "تاريخ النشر"
         val endedDayPrefix = "تاريخ الانتهاء"
         val data = json.decodeFromString<JsonObject>(
-            response.asJsoup().select(".js-react-on-rails-component").html()
+            response.asJsoup().select(".js-react-on-rails-component").html(),
         )
         val mangaData = data["mangaDataAction"]!!.jsonObject["mangaData"]!!.jsonObject
         return SManga.create().apply {
@@ -176,7 +176,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
             genre = listOfNotNull(
                 mangaData["type"]!!.jsonObject["title"]!!.jsonPrimitive.content,
                 mangaData["type"]!!.jsonObject["name"]!!.jsonPrimitive.content,
-                mangaData["categories"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content }
+                mangaData["categories"]!!.jsonArray.joinToString(", ") { it.jsonObject["name"]!!.jsonPrimitive.content },
             ).joinToString(", ")
 
             parseTranslationStatus(mangaData["translation_status"].toString()).let {
@@ -200,13 +200,13 @@ class Gmanga : ConfigurableSource, HttpSource() {
                 mangaData["synonyms"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() },
                 mangaData["arabic_title"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() },
                 mangaData["japanese"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() },
-                mangaData["english"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() }
+                mangaData["english"]!!.jsonPrimitive.content.takeIf { it.isBlank().not() },
             ).joinToString("\n").trim()
 
             val additionalInformation = listOfNotNull(
                 startedDate,
                 endedDay,
-                alternativeName
+                alternativeName,
             )
             additionalInformation.forEach { info ->
                 when (info) {
@@ -241,7 +241,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
     override fun pageListParse(response: Response): List<Page> {
         val url = response.request.url.toString()
         val data = json.decodeFromString<JsonObject>(
-            response.asJsoup().select(".js-react-on-rails-component").html()
+            response.asJsoup().select(".js-react-on-rails-component").html(),
         )
         val releaseData =
             data["readerDataAction"]!!.jsonObject["readerData"]!!.jsonObject["release"]!!.jsonObject
@@ -252,7 +252,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
                 Page(
                     index,
                     "$url#page_$index",
-                    "https://media.gmanga.me/uploads/releases/${releaseData["storage_key"]!!.jsonPrimitive.content}/hq${if (hasWebP) "_webp" else ""}/$pageUri"
+                    "https://media.gmanga.me/uploads/releases/${releaseData["storage_key"]!!.jsonPrimitive.content}/hq${if (hasWebP) "_webp" else ""}/$pageUri",
                 )
             }
     }
@@ -276,7 +276,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
                         "https://media.gmanga.me/uploads/manga/cover/${it.jsonObject["id"]!!.jsonPrimitive.content}/$thumbnail"
                 }
             },
-            mangas.size == 50
+            mangas.size == 50,
         )
     }
 
@@ -291,7 +291,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
         return GmangaFilters.buildSearchPayload(
             page,
             query,
-            if (filters.isEmpty()) getFilterList() else filters
+            if (filters.isEmpty()) getFilterList() else filters,
         ).let {
             val body = it.toString().toRequestBody(MEDIA_TYPE)
             POST("$baseUrl/api/mangas/search", headers, body)

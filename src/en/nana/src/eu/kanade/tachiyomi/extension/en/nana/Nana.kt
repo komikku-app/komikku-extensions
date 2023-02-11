@@ -123,8 +123,8 @@ class Nana : ParsedHttpSource() {
                     name = "Chapter"
                     date_upload = 0L
                     chapter_number = 1F
-                }
-            )
+                },
+            ),
         )
     }
 

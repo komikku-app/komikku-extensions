@@ -11,7 +11,7 @@ class PirulitoRosa : Madara(
     "Pirulito Rosa",
     "https://pirulitorosa.site",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

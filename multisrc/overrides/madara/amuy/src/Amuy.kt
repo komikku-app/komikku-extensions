@@ -18,7 +18,7 @@ class Amuy : Madara(
     "Amuy",
     "https://amuyscans.com",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
@@ -38,7 +38,7 @@ class Amuy : Madara(
             chapterProtector
                 .substringAfter("chapter_data='")
                 .substringBefore("';")
-                .replace("\\/", "/")
+                .replace("\\/", "/"),
         ).jsonObject
 
         val unsaltedCiphertext = Base64.decode(chapterData["ct"]!!.jsonPrimitive.content, Base64.DEFAULT)

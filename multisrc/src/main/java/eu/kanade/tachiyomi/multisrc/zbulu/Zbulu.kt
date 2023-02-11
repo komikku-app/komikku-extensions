@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 abstract class Zbulu(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String
+    override val lang: String,
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -204,7 +204,7 @@ abstract class Zbulu(
         Filter.Header("Author name must be exact."),
         Filter.Separator(),
         AuthorFilter(),
-        GenreFilter()
+        GenreFilter(),
     )
 
     // [...document.querySelectorAll('.sub-menu li a')].map(a => `Pair("${a.textContent}", "${a.getAttribute('href')}")`).join(',\n')
@@ -259,8 +259,8 @@ abstract class Zbulu(
             Pair("Supernatural", "supernatural"),
             Pair("Tragedy", "tragedy"),
             Pair("Trap", "trap"),
-            Pair("Webtoons", "webtoons")
-        )
+            Pair("Webtoons", "webtoons"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

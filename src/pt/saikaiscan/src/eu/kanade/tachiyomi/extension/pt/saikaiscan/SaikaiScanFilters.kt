@@ -65,7 +65,7 @@ class SortByFilter(val sortProperties: List<SortProperty>) :
     Filter.Sort(
         name = "Ordenar por",
         values = sortProperties.map { it.name }.toTypedArray(),
-        state = Selection(2, ascending = false)
+        state = Selection(2, ascending = false),
     ),
     UrlQueryFilter {
 

@@ -101,13 +101,15 @@ class Iqiyi : ParsedHttpSource() {
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
-        if (!document.select("div.main > p.pay-title").isEmpty())
+        if (!document.select("div.main > p.pay-title").isEmpty()) {
             throw Exception("本章为付费章节")
+        }
         return document.select("ul.main-container > li.main-item > img").mapIndexed { index, element ->
-            if (element.hasAttr("data-original"))
+            if (element.hasAttr("data-original")) {
                 Page(index, "", element.attr("data-original"))
-            else
+            } else {
                 Page(index, "", element.attr("src"))
+            }
         }
     }
 

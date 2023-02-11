@@ -108,5 +108,5 @@ private val languages = listOf(
     LanguageOption("vi"),
     LanguageOption("yo"),
     LanguageOption("zu"),
-    LanguageOption("other", "_t")
+    LanguageOption("other", "_t"),
 )

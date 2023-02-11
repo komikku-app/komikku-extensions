@@ -236,7 +236,7 @@ class KomikIndoID : ParsedHttpSource() {
         StatusFilter(getStatus()),
         ContentRatingFilter(getContentRating()),
         ThemeFilter(getTheme()),
-        GenreFilter(getGenre())
+        GenreFilter(getGenre()),
     )
 
     private class AuthorFilter : Filter.Text("Author")
@@ -250,8 +250,8 @@ class KomikIndoID : ParsedHttpSource() {
             Pair("Z-A", "titlereverse"),
             Pair("Latest Update", "update"),
             Pair("Latest Added", "latest"),
-            Pair("Popular", "popular")
-        )
+            Pair("Popular", "popular"),
+        ),
     )
 
     private class OriginalLanguage(name: String, val id: String = name) : Filter.CheckBox(name)
@@ -260,7 +260,7 @@ class KomikIndoID : ParsedHttpSource() {
     private fun getOriginalLanguage() = listOf(
         OriginalLanguage("Japanese (Manga)", "Manga"),
         OriginalLanguage("Chinese (Manhua)", "Manhua"),
-        OriginalLanguage("Korean (Manhwa)", "Manhwa")
+        OriginalLanguage("Korean (Manhwa)", "Manhwa"),
     )
 
     private class Format(name: String, val id: String = name) : Filter.CheckBox(name)
@@ -268,7 +268,7 @@ class KomikIndoID : ParsedHttpSource() {
         Filter.Group<Format>("Format", formatList)
     private fun getFormat() = listOf(
         Format("Black & White", "0"),
-        Format("Full Color", "1")
+        Format("Full Color", "1"),
     )
 
     private class Demographic(name: String, val id: String = name) : Filter.CheckBox(name)
@@ -278,7 +278,7 @@ class KomikIndoID : ParsedHttpSource() {
         Demographic("Josei", "josei"),
         Demographic("Seinen", "seinen"),
         Demographic("Shoujo", "shoujo"),
-        Demographic("Shounen", "shounen")
+        Demographic("Shounen", "shounen"),
     )
 
     private class Status(name: String, val id: String = name) : Filter.CheckBox(name)
@@ -286,7 +286,7 @@ class KomikIndoID : ParsedHttpSource() {
         Filter.Group<Status>("Status", statusList)
     private fun getStatus() = listOf(
         Status("Ongoing", "Ongoing"),
-        Status("Completed", "Completed")
+        Status("Completed", "Completed"),
     )
 
     private class ContentRating(name: String, val id: String = name) : Filter.CheckBox(name)
@@ -296,7 +296,7 @@ class KomikIndoID : ParsedHttpSource() {
         ContentRating("Ecchi", "ecchi"),
         ContentRating("Gore", "gore"),
         ContentRating("Sexual Violence", "sexual-violence"),
-        ContentRating("Smut", "smut")
+        ContentRating("Smut", "smut"),
     )
 
     private class Theme(name: String, val id: String = name) : Filter.CheckBox(name)
@@ -341,7 +341,7 @@ class KomikIndoID : ParsedHttpSource() {
         Theme("Video Games", "video-games"),
         Theme("Villainess", "villainess"),
         Theme("Virtual Reality", "virtual-reality"),
-        Theme("Zombies", "zombies")
+        Theme("Zombies", "zombies"),
     )
 
     private class Genre(name: String, val id: String = name) : Filter.CheckBox(name)
@@ -374,7 +374,7 @@ class KomikIndoID : ParsedHttpSource() {
         Genre("Thriller", "thriller"),
         Genre("Tragedy", "tragedy"),
         Genre("Wuxia", "wuxia"),
-        Genre("Yuri", "yuri")
+        Genre("Yuri", "yuri"),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

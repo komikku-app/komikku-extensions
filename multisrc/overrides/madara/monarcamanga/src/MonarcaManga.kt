@@ -8,7 +8,7 @@ class MonarcaManga : Madara(
     "MonarcaManga",
     "https://monarcamanga.com",
     "es",
-    SimpleDateFormat("MMM d, yyy", Locale("es"))
+    SimpleDateFormat("MMM d, yyy", Locale("es")),
 ) {
     override val useNewChapterEndpoint = true
 }

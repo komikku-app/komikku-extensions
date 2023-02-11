@@ -42,6 +42,7 @@ abstract class MMRCMS(
     } else {
         sourceInfo
     }
+
     /**
      * Parse a List of JSON sources into a list of `MyMangaReaderCMSSource`s
      *
@@ -167,7 +168,7 @@ abstract class MMRCMS(
                             // thumbnail_url = "$baseUrl/uploads/manga/$segment/cover/cover_250x350.jpg"
                         }
                     },
-                false
+                false,
             )
         } else {
             internalMangaParse(response)
@@ -248,7 +249,7 @@ abstract class MMRCMS(
                     }
                 }
             },
-            document.select(".pagination a[rel=next]").isNotEmpty()
+            document.select(".pagination a[rel=next]").isNotEmpty(),
         )
     }
 
@@ -268,17 +269,21 @@ abstract class MMRCMS(
         for (i in parsedBaseUrl.pathSegments) {
             if (i.trim().equals(newPathSegments.first(), true)) {
                 newPathSegments.removeAt(0)
-            } else break
+            } else {
+                break
+            }
         }
 
         val builtUrl = parsedNewUrl.buildUpon().path("/")
         newPathSegments.forEach { builtUrl.appendPath(it) }
 
         var out = builtUrl.build().encodedPath!!
-        if (parsedNewUrl.encodedQuery != null)
+        if (parsedNewUrl.encodedQuery != null) {
             out += "?" + parsedNewUrl.encodedQuery
-        if (parsedNewUrl.encodedFragment != null)
+        }
+        if (parsedNewUrl.encodedFragment != null) {
             out += "#" + parsedNewUrl.encodedFragment
+        }
 
         return out
     }
@@ -426,8 +431,8 @@ abstract class MMRCMS(
             "cat",
             arrayOf(
                 "" to "Any",
-                *categoryMappings.toTypedArray()
-            )
+                *categoryMappings.toTypedArray(),
+            ),
         ),
         UriSelectFilter(
             "Begins with",
@@ -436,10 +441,10 @@ abstract class MMRCMS(
                 "" to "Any",
                 *"#ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray().map {
                     Pair(it.toString(), it.toString())
-                }.toTypedArray()
-            )
+                }.toTypedArray(),
+            ),
         ),
-        SortFilter()
+        SortFilter(),
     )
 
     /**
@@ -454,9 +459,9 @@ abstract class MMRCMS(
                         "tag",
                         arrayOf(
                             "" to "Any",
-                            *tagMappings.toTypedArray()
-                        )
-                    )
+                            *tagMappings.toTypedArray(),
+                        ),
+                    ),
                 )
             }
             else -> FilterList(getInitialFilterList())
@@ -474,12 +479,13 @@ abstract class MMRCMS(
         private val uriParam: String,
         private val vals: Array<Pair<String, String>>,
         private val firstIsUnspecified: Boolean = true,
-        defaultValue: Int = 0
+        defaultValue: Int = 0,
     ) :
         Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray(), defaultValue), UriFilter {
         override fun addToUri(uri: Uri.Builder) {
-            if (state != 0 || !firstIsUnspecified)
+            if (state != 0 || !firstIsUnspecified) {
                 uri.appendQueryParameter(uriParam, vals[state].first)
+            }
         }
     }
 
@@ -493,7 +499,7 @@ abstract class MMRCMS(
         Filter.Sort(
             "Sort",
             sortables.map { it.second }.toTypedArray(),
-            Selection(0, true)
+            Selection(0, true),
         ),
         UriFilter {
         override fun addToUri(uri: Uri.Builder) {
@@ -505,7 +511,7 @@ abstract class MMRCMS(
             private val sortables = arrayOf(
                 "name" to "Name",
                 "views" to "Popularity",
-                "last_release" to "Last update"
+                "last_release" to "Last update",
             )
         }
     }

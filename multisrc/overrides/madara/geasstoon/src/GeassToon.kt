@@ -8,7 +8,7 @@ class GeassToon : Madara(
     "GeassToon",
     "https://geasstoon.com",
     "tr",
-    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("tr"))
+    dateFormat = SimpleDateFormat("MMM d, yyy", Locale("tr")),
 ) {
     override val useNewChapterEndpoint = true
 }

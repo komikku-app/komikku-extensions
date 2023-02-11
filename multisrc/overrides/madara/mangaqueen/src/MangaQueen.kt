@@ -8,5 +8,5 @@ class MangaQueen : Madara(
     "Manga Queen",
     "https://mangaqueen.net",
     "en",
-    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+    dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US),
 )

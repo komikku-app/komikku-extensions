@@ -238,7 +238,7 @@ class SaikaiScan : HttpSource() {
         Genre("Xianxia", 7),
         Genre("Xuanhuan", 48),
         Genre("Yaoi", 41),
-        Genre("Yuri", 83)
+        Genre("Yuri", 83),
     )
 
     // fetch('https://api.saikai.com.br/api/countries?hasStories=1')
@@ -252,7 +252,7 @@ class SaikaiScan : HttpSource() {
         Country("Espanha", 199),
         Country("Estados Unidos da América", 1),
         Country("Japão", 109),
-        Country("Portugal", 173)
+        Country("Portugal", 173),
     )
 
     // fetch('https://api.saikai.com.br/api/countries?hasStories=1')
@@ -265,21 +265,21 @@ class SaikaiScan : HttpSource() {
         Status("Dropado", 6),
         Status("Em Andamento", 2),
         Status("Hiato", 4),
-        Status("Pausado", 3)
+        Status("Pausado", 3),
     )
 
     private fun getSortProperties(): List<SortProperty> = listOf(
         SortProperty("Título", "title"),
         SortProperty("Quantidade de capítulos", "releases_count"),
         SortProperty("Visualizações", "pageviews"),
-        SortProperty("Data de criação", "created_at")
+        SortProperty("Data de criação", "created_at"),
     )
 
     override fun getFilterList(): FilterList = FilterList(
         CountryFilter(getCountryList()),
         StatusFilter(getStatusList()),
         SortByFilter(getSortProperties()),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     private inline fun <reified T> Response.parseAs(): T = use {

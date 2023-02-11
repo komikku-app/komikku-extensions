@@ -25,7 +25,7 @@ data class SortProperty(val name: String, val value: String) {
 class SortByFilter(title: String, private val sortProperties: List<SortProperty>) : Filter.Sort(
     title,
     sortProperties.map { it.name }.toTypedArray(),
-    Selection(1, ascending = false)
+    Selection(1, ascending = false),
 ) {
     val selected: String
         get() = sortProperties[state!!.index].value

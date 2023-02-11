@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Sl(
     val e: Int? = 0,
-    val m: String? = ""
+    val m: String? = "",
 )

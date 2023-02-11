@@ -11,7 +11,7 @@ class GloriousScan : Madara(
     "Glorious Scan",
     "https://gloriousscan.com",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR"))
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()

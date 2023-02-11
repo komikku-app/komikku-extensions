@@ -6,7 +6,7 @@ class ImageListParser(
     html: String,
     private val position: Int,
     private val keys: String = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
-    private val pattern: String = """'BYFxAcGcC4.*?'"""
+    private val pattern: String = """'BYFxAcGcC4.*?'""",
 ) {
 
     private val code: String

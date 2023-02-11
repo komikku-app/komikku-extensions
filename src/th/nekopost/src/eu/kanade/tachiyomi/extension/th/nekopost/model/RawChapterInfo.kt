@@ -7,5 +7,5 @@ data class RawChapterInfo(
     val chapterId: Int,
     val chapterNo: String,
     val pageItem: List<RawPageItem>,
-    val projectId: String
+    val projectId: String,
 )

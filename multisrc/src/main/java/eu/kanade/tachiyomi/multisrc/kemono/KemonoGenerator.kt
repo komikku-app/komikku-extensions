@@ -13,7 +13,7 @@ class KemonoGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("Kemono", "https://kemono.party", "all", isNsfw = true),
-        SingleLang("Coomer", "https://coomer.party", "all", isNsfw = true)
+        SingleLang("Coomer", "https://coomer.party", "all", isNsfw = true),
     )
 
     companion object {

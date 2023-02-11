@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.multisrc.bakamanga.BakaManga
 class ManhuaMangaNet : BakaManga(
     "ManhuaManga.net",
     "https://manhuamanga.net",
-    "en"
+    "en",
 ) {
     override fun getGenreList() = arrayOf(
         Pair("All", ""),

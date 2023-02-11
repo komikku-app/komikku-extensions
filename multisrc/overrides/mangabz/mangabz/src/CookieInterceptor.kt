@@ -8,7 +8,7 @@ import okhttp3.Response
 class CookieInterceptor(
     private val domain: String,
     private val key: String,
-    private val value: String
+    private val value: String,
 ) : Interceptor {
 
     init {

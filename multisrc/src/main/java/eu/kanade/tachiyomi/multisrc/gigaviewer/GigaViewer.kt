@@ -43,7 +43,7 @@ abstract class GigaViewer(
     override val name: String,
     override val baseUrl: String,
     override val lang: String,
-    private val cdnUrl: String = ""
+    private val cdnUrl: String = "",
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -104,8 +104,9 @@ abstract class GigaViewer(
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        if (response.request.url.toString().contains("search"))
+        if (response.request.url.toString().contains("search")) {
             return super.searchMangaParse(response)
+        }
 
         return popularMangaParse(response)
     }
@@ -160,7 +161,7 @@ abstract class GigaViewer(
             readMoreEndpoint = jsonResult["nextUrl"]!!.jsonPrimitive.content
             val tempDocument = Jsoup.parse(
                 jsonResult["html"]!!.jsonPrimitive.content,
-                response.request.url.toString()
+                response.request.url.toString(),
             )
 
             tempDocument
@@ -237,7 +238,7 @@ abstract class GigaViewer(
 
     private class CollectionFilter(val collections: List<Collection>) : Filter.Select<Collection>(
         "コレクション",
-        collections.toTypedArray()
+        collections.toTypedArray(),
     ) {
         val selected: Collection
             get() = collections[state]
