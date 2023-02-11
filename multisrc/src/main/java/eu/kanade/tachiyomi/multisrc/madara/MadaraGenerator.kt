@@ -20,7 +20,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         MultiLang("Reaper Scans", "https://reaperscans.com", listOf("fr", "id", "tr"), className = "ReaperScansFactory", pkgName = "reaperscans", overrideVersionCode = 11),
         SingleLang("1st Kiss Manga.love", "https://1stkissmanga.love", "en", className = "FirstKissMangaLove", overrideVersionCode = 2),
         SingleLang("1st Kiss Manhua", "https://1stkissmanhua.com", "en", className = "FirstKissManhua", overrideVersionCode = 4),
-        SingleLang("1st Kiss", "https://1stkissmanga.io", "en", className = "FirstKissManga", pkgName = "firstkissmanga", overrideVersionCode = 8),
+        SingleLang("1st Kiss", "https://1stkissmanga.me", "en", className = "FirstKissManga", pkgName = "firstkissmanga", overrideVersionCode = 9),
         SingleLang("1stKissManga.Club", "https://1stkissmanga.club", "en", className = "FirstKissMangaClub", overrideVersionCode = 2),
         SingleLang("247Manga", "https://247manga.com", "en", className = "Manga247", overrideVersionCode = 1),
         SingleLang("365Manga", "https://365manga.com", "en", className = "ThreeSixtyFiveManga", overrideVersionCode = 1),

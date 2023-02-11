@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 
 class FirstKissManga : Madara(
     "1st Kiss",
-    "https://1stkissmanga.io",
+    "https://1stkissmanga.me",
     "en",
 ) {
     override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", baseUrl)
