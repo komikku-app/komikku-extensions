@@ -1,10 +1,8 @@
 package eu.kanade.tachiyomi.multisrc.mangadventure
 
-import android.net.Uri
 import android.os.Build.VERSION
 import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -12,6 +10,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
 import eu.kanade.tachiyomi.source.model.Page as SPage
@@ -61,18 +60,21 @@ abstract class MangAdventure(
         GET("$apiUrl/series?page=$page&sort=-views", headers)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
-        Uri.parse(apiUrl).buildUpon().appendEncodedPath("series").run {
+        apiUrl.toHttpUrl().newBuilder().addEncodedPathSegment("series").run {
             if (query.startsWith(SLUG_QUERY)) {
-                appendQueryParameter("slug", query.substring(SLUG_QUERY.length))
+                addQueryParameter("slug", query.substring(SLUG_QUERY.length))
             } else {
-                appendQueryParameter("page", page.toString())
-                appendQueryParameter("title", query)
+                addQueryParameter("page", page.toString())
+                addQueryParameter("title", query)
                 filters.filterIsInstance<UriFilter>().forEach {
-                    appendQueryParameter(it.param, it.toString())
+                    addQueryParameter(it.param, it.toString())
                 }
             }
-            GET(toString(), headers)
+            GET(build(), headers)
         }
+
+    override fun mangaDetailsRequest(manga: SManga) =
+        GET("$apiUrl/series/${manga.url}", headers)
 
     override fun chapterListRequest(manga: SManga) =
         GET("$apiUrl/series/${manga.url}/chapters?date_format=timestamp", headers)
@@ -113,19 +115,12 @@ abstract class MangAdventure(
             SPage(page.number, page.url, page.image)
         }
 
-    // Return the real URL for "Open in browser"
-    override fun mangaDetailsRequest(manga: SManga) =
-        GET("$baseUrl/reader/${manga.url}", headers)
-
-    // Workaround to allow "Open in browser" to use the real URL
-    override fun fetchMangaDetails(manga: SManga) =
-        client.newCall(GET("$apiUrl/series/${manga.url}", headers))
-            .asObservableSuccess().map {
-                mangaDetailsParse(it).apply { initialized = true }
-            }!!
-
     override fun imageUrlParse(response: Response) =
         throw UnsupportedOperationException("Not used!")
+
+    override fun getMangaUrl(manga: SManga) = "$baseUrl/reader/${manga.url}"
+
+    override fun getChapterUrl(chapter: SChapter) = "$apiUrl/chapters/${chapter.url}/read"
 
     override fun getFilterList() =
         FilterList(
