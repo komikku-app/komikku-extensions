@@ -4,15 +4,14 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.extension.BuildConfig
 import eu.kanade.tachiyomi.multisrc.madara.Madara
-import eu.kanade.tachiyomi.source.ConfigurableSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class EmpireWebtoon : ConfigurableSource, Madara("Empire Webtoon", "https://webtoonempire.com", "ar", SimpleDateFormat("yyyy MMMMM dd", Locale("ar"))) {
+class EmpireWebtoon : Madara("Empire Webtoon", "https://webtoonempire.com", "ar", SimpleDateFormat("yyyy MMMMM dd", Locale("ar"))) {
 
     private val defaultBaseUrl = "https://webtoonempire.com"
 
@@ -25,30 +24,26 @@ class EmpireWebtoon : ConfigurableSource, Madara("Empire Webtoon", "https://webt
     companion object {
         private const val RESTART_TACHIYOMI = "Restart Tachiyomi to apply new setting."
         private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-        private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
+        private const val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_CODE}"
         private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val baseUrlPref = androidx.preference.EditTextPreference(screen.context).apply {
-            key = BASE_URL_PREF_TITLE
+            key = BASE_URL_PREF
             title = BASE_URL_PREF_TITLE
             summary = BASE_URL_PREF_SUMMARY
             this.setDefaultValue(defaultBaseUrl)
             dialogTitle = BASE_URL_PREF_TITLE
 
-            setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val res = preferences.edit().putString(BASE_URL_PREF, newValue as String).commit()
-                    Toast.makeText(screen.context, RESTART_TACHIYOMI, Toast.LENGTH_LONG).show()
-                    res
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
+            setOnPreferenceChangeListener { _, _ ->
+                Toast.makeText(screen.context, RESTART_TACHIYOMI, Toast.LENGTH_LONG).show()
+                true
             }
         }
         screen.addPreference(baseUrlPref)
+
+        super.setupPreferenceScreen(screen)
     }
 
     private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)!!
