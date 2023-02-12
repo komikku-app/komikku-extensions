@@ -108,10 +108,10 @@ abstract class NaverComicBase(protected val mType: String) : ParsedHttpSource() 
         val titleElement = element.select(".detail > h2")
 
         val manga = SManga.create()
-        manga.title = titleElement.first().ownText().trim()
+        manga.title = titleElement.first()!!.ownText().trim()
         manga.author = titleElement.select("span").text().trim()
         manga.description = document.select("div.detail p").text().trim()
-        manga.thumbnail_url = element.select(".thumb > a > img").last().attr("src")
+        manga.thumbnail_url = element.select(".thumb > a > img").last()!!.attr("src")
         return manga
     }
 
@@ -142,8 +142,8 @@ abstract class NaverComicChallengeBase(mType: String) : NaverComicBase(mType) {
     override fun popularMangaSelector() = ".weekchallengeBox tbody td:not([class])"
     override fun popularMangaNextPageSelector(): String? = ".paginate .page_wrap a.next"
     override fun popularMangaFromElement(element: Element): SManga {
-        val thumb = element.select("a img").first().attr("src")
-        val title = element.select(".challengeTitle a").first()
+        val thumb = element.select("a img").first()!!.attr("src")
+        val title = element.select(".challengeTitle a").first()!!
 
         val manga = SManga.create()
         manga.url = title.attr("href").substringBefore("&week")

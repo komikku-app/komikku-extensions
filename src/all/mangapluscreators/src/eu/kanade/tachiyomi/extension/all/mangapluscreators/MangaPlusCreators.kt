@@ -106,21 +106,21 @@ class MangaPlusCreators(override val lang: String) : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val result = response.asJsoup()
-        val bookBox = result.selectFirst(".book-box")
+        val bookBox = result.selectFirst(".book-box")!!
 
         return SManga.create().apply {
-            title = bookBox.selectFirst("div.title").text()
-            author = bookBox.selectFirst("div.mod-btn-profile div.name").text()
+            title = bookBox.selectFirst("div.title")!!.text()
+            author = bookBox.selectFirst("div.mod-btn-profile div.name")!!.text()
             description = bookBox.select("div.summary p")
                 .joinToString("\n\n") { it.text() }
-            status = when (bookBox.selectFirst("div.book-submit-type").text()) {
+            status = when (bookBox.selectFirst("div.book-submit-type")!!.text()) {
                 "Series" -> SManga.ONGOING
                 "One-shot" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
             }
             genre = bookBox.select("div.genre-area div.tag-genre")
                 .joinToString { it.text() }
-            thumbnail_url = bookBox.selectFirst("div.cover img").attr("data-src")
+            thumbnail_url = bookBox.selectFirst("div.cover img")!!.attr("data-src")
         }
     }
 

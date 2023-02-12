@@ -46,7 +46,7 @@ class HentaiFox : ParsedHttpSource() {
                 title = it.text()
                 setUrlWithoutDomain(it.attr("href"))
             }
-            thumbnail_url = element.select("img").first().attr("abs:src")
+            thumbnail_url = element.select("img").first()!!.attr("abs:src")
         }
     }
 

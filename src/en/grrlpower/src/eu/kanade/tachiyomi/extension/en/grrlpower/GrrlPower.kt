@@ -75,7 +75,7 @@ class GrrlPower(
         var num = 0
         return response.asJsoup().getElementsByClass("archive-date").map {
             val date = dateFormat.parse("${it.text()} $year")
-            val link = it.nextElementSibling().child(0)
+            val link = it.nextElementSibling()!!.child(0)
             SChapter.create().apply {
                 name = link.text()
                 setUrlWithoutDomain(link.attr("href"))
@@ -90,7 +90,7 @@ class GrrlPower(
             Page(
                 0,
                 response.request.url.toString(),
-                response.asJsoup().selectFirst("div#comic img").absUrl("src"),
+                response.asJsoup().selectFirst("div#comic img")!!.absUrl("src"),
             ),
         )
     }

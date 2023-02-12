@@ -36,13 +36,13 @@ class Nikkangecchan : ParsedHttpSource() {
     override fun popularMangaSelector(): String = ".contentInner > figure"
 
     override fun popularMangaFromElement(element: Element): SManga {
-        val imgBox = element.select(".imgBox").first()
-        val detailBox = element.select(".detailBox").last()
+        val imgBox = element.select(".imgBox").first()!!
+        val detailBox = element.select(".detailBox").last()!!
 
         return SManga.create().apply {
-            title = detailBox.select("h3").first().text()
-            thumbnail_url = baseUrl + imgBox.select("a > img").first().attr("src")
-            setUrlWithoutDomain(baseUrl + imgBox.select("a").first().attr("href"))
+            title = detailBox.select("h3").first()!!.text()
+            thumbnail_url = baseUrl + imgBox.select("a > img").first()!!.attr("src")
+            setUrlWithoutDomain(baseUrl + imgBox.select("a").first()!!.attr("href"))
         }
     }
 
@@ -70,10 +70,10 @@ class Nikkangecchan : ParsedHttpSource() {
         val detailBox = document.select("#comicDetail .detailBox")
 
         return SManga.create().apply {
-            title = detailBox.select("h3").first().text()
-            author = detailBox.select(".author").first().text()
-            artist = detailBox.select(".author").first().text()
-            description = document.select(".description").first().text()
+            title = detailBox.select("h3").first()!!.text()
+            author = detailBox.select(".author").first()!!.text()
+            artist = detailBox.select(".author").first()!!.text()
+            description = document.select(".description").first()!!.text()
             status = SManga.ONGOING
         }
     }
@@ -84,13 +84,13 @@ class Nikkangecchan : ParsedHttpSource() {
         super.chapterListParse(response).reversed()
 
     override fun chapterFromElement(element: Element): SChapter {
-        val episodePage = element.select(".episode-page").first()
-        val title = element.select("h4.episodeTitle").first().text()
+        val episodePage = element.select(".episode-page").first()!!
+        val title = element.select("h4.episodeTitle").first()!!.text()
         val dataTitle = episodePage.attr("data-title").substringBefore("|").trim()
 
         return SChapter.create().apply {
             name = "$title - $dataTitle"
-            chapter_number = element.select("h4.episodeTitle").first().text().toFloatOrNull() ?: -1f
+            chapter_number = element.select("h4.episodeTitle").first()!!.text().toFloatOrNull() ?: -1f
             scanlator = "Akita Publishing"
             setUrlWithoutDomain(baseUrl + episodePage.attr("data-src").substringBeforeLast("/"))
         }

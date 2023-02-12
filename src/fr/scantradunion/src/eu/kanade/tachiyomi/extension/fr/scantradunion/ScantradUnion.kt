@@ -27,7 +27,7 @@ class ScantradUnion : ParsedHttpSource() {
         val chapterNumberStr = element.select(".chapter-number").text()
         // We don't have a css selector to select the date directly, but we know that it will always
         // be the third child of a .name-chapter.
-        val dateUploadStr = element.select(".name-chapter").first().children().elementAt(2).text()
+        val dateUploadStr = element.select(".name-chapter").first()!!.children().elementAt(2).text()
         val chapterName = element.select(".chapter-name").text()
         // The only way to get the chapter url is to check all .btnlel and take the one starting with https://...
         val url = element.select(".btnlel").map { it.attr("href") }.first { it.startsWith("https://scantrad-union.com/read/") }

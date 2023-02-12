@@ -130,7 +130,7 @@ class Latisbooks : HttpSource() {
         // Add text above/below the image as xkcd-esque text pages after the image itself
         pages.addAll(
             blocks.select("div.html-block")
-                .map { it.select("div.sqs-block-content").first() }
+                .map { it.select("div.sqs-block-content").first()!! }
                 // Some pages have empty html blocks (e.g. Page 1), so ignore them
                 .filter { it.childrenSize() > 0 }
                 .mapIndexed { i, it -> Page(i + numImages, "", wordWrap(it.text()).image()) }

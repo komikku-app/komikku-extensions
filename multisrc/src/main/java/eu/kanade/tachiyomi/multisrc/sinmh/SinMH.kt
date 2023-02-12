@@ -44,10 +44,10 @@ abstract class SinMH(
     protected open val comicItemSelector = "#contList > li, li.list-comic"
     protected open val comicItemTitleSelector = "p > a, h3 > a"
     protected open fun mangaFromElement(element: Element) = SManga.create().apply {
-        val titleElement = element.selectFirst(comicItemTitleSelector)
+        val titleElement = element.selectFirst(comicItemTitleSelector)!!
         title = titleElement.text()
         setUrlWithoutDomain(titleElement.attr("href"))
-        val image = element.selectFirst(Evaluator.Tag("img"))
+        val image = element.selectFirst(Evaluator.Tag("img"))!!
         thumbnail_url = image.attr("src").ifEmpty { image.attr("data-src") }
     }
 
@@ -102,24 +102,24 @@ abstract class SinMH(
     // Details
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        title = document.selectFirst(".book-title > h1").text()
-        val detailsList = document.selectFirst(Evaluator.Class("detail-list"))
+        title = document.selectFirst(".book-title > h1")!!.text()
+        val detailsList = document.selectFirst(Evaluator.Class("detail-list"))!!
         author = detailsList.select("strong:contains(作者) ~ *").text()
-        description = document.selectFirst(Evaluator.Id("intro-all")).text().trim()
+        description = document.selectFirst(Evaluator.Id("intro-all"))!!.text().trim()
             .removePrefix("漫画简介：").trim()
             .removePrefix("漫画简介：").trim() // some sources have double prefix
         genre = mangaDetailsParseDefaultGenre(document, detailsList)
-        status = when (detailsList.selectFirst("strong:contains(状态) + *").text()) {
+        status = when (detailsList.selectFirst("strong:contains(状态) + *")!!.text()) {
             "连载中" -> SManga.ONGOING
             "已完结" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
-        thumbnail_url = document.selectFirst("div.book-cover img").attr("src")
+        thumbnail_url = document.selectFirst("div.book-cover img")!!.attr("src")
     }
 
     protected open fun mangaDetailsParseDefaultGenre(document: Document, detailsList: Element): String {
-        val category = detailsList.selectFirst("strong:contains(类型) + a")
-        val breadcrumbs = document.selectFirst("div.breadcrumb-bar").select("a[href^=/list/]")
+        val category = detailsList.selectFirst("strong:contains(类型) + a")!!
+        val breadcrumbs = document.selectFirst("div.breadcrumb-bar")!!.select("a[href^=/list/]")
         return buildString {
             append(category.text())
             breadcrumbs.map(Element::text).filter(String::isNotEmpty).joinTo(this, prefix = ", ")
@@ -127,23 +127,23 @@ abstract class SinMH(
     }
 
     protected fun mangaDetailsParseDMZJStyle(document: Document, hasBreadcrumb: Boolean) = SManga.create().apply {
-        val detailsDiv = document.selectFirst("div.comic_deCon")
-        title = detailsDiv.selectFirst(Evaluator.Tag("h1")).text()
+        val detailsDiv = document.selectFirst("div.comic_deCon")!!
+        title = detailsDiv.selectFirst(Evaluator.Tag("h1"))!!.text()
         val details = detailsDiv.select("> ul > li")
         val linkSelector = Evaluator.Tag("a")
-        author = details[0].selectFirst(linkSelector).text()
-        status = when (details[1].selectFirst(linkSelector).text()) {
+        author = details[0].selectFirst(linkSelector)!!.text()
+        status = when (details[1].selectFirst(linkSelector)!!.text()) {
             "连载中" -> SManga.ONGOING
             "已完结" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
         genre = mutableListOf<Element>().apply {
-            add(details[2].selectFirst(linkSelector)) // 类别
+            add(details[2].selectFirst(linkSelector)!!) // 类别
             addAll(details[3].select(linkSelector)) // 类型
-            if (hasBreadcrumb) addAll(document.selectFirst("div.mianbao").select("a[href^=/list/]"))
+            if (hasBreadcrumb) addAll(document.selectFirst("div.mianbao")!!.select("a[href^=/list/]"))
         }.mapTo(mutableSetOf()) { it.text() }.joinToString(", ")
-        description = detailsDiv.selectFirst("> p.comic_deCon_d").text()
-        thumbnail_url = document.selectFirst("div.comic_i_img > img").attr("src")
+        description = detailsDiv.selectFirst("> p.comic_deCon_d")!!.text()
+        thumbnail_url = document.selectFirst("div.comic_i_img > img")!!.attr("src")
     }
 
     // Chapters
@@ -167,7 +167,7 @@ abstract class SinMH(
             section.select(itemSelector).map { chapterFromElement(it) }.sortedDescending()
         }
         if (isNewDateLogic && list.isNotEmpty()) {
-            val date = document.selectFirst(dateSelector).textNodes().last().text()
+            val date = document.selectFirst(dateSelector)!!.textNodes().last().text()
             list[0].date_upload = DATE_FORMAT.parse(date)?.time ?: 0L
         }
         return list
@@ -194,7 +194,7 @@ abstract class SinMH(
 
     // baseUrl/js/common.js/getChapterImage()
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.selectFirst("body > script").html().let(::ProgressiveParser)
+        val script = document.selectFirst("body > script")!!.html().let(::ProgressiveParser)
         val images = script.substringBetween("chapterImages = ", ";")
         if (images.length <= 2) return emptyList() // [] or ""
         val path = script.substringBetween("chapterPath = \"", "\";")
@@ -237,8 +237,8 @@ abstract class SinMH(
         if (categories.isNotEmpty()) return
         val labelSelector = Evaluator.Tag("label")
         val linkSelector = Evaluator.Tag("a")
-        categories = document.selectFirst(Evaluator.Class("filter-nav")).children().map { element ->
-            val name = element.selectFirst(labelSelector).text()
+        categories = document.selectFirst(Evaluator.Class("filter-nav"))!!.children().map { element ->
+            val name = element.selectFirst(labelSelector)!!.text()
             val tags = element.select(linkSelector)
             val values = tags.map { it.text() }.toTypedArray()
             val uriParts = tags.map { it.attr("href").removePrefix("/list/").removeSuffix("/") }.toTypedArray()

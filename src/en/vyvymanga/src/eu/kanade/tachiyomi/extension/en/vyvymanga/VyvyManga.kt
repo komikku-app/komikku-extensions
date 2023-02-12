@@ -36,7 +36,7 @@ class VyvyManga : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga =
         searchMangaFromElement(element)
 
-    override fun popularMangaNextPageSelector(): String? =
+    override fun popularMangaNextPageSelector(): String =
         searchMangaNextPageSelector()
 
     // Search
@@ -48,8 +48,7 @@ class VyvyManga : ParsedHttpSource() {
         return GET(url.toString(), headers)
     }
 
-    override fun searchMangaSelector(): String =
-        ".comic-item"
+    override fun searchMangaSelector(): String = ".comic-item"
 
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         setUrlWithoutDomain(element.selectFirst("a")!!.absUrl("href"))
@@ -57,8 +56,7 @@ class VyvyManga : ParsedHttpSource() {
         thumbnail_url = element.selectFirst(".comic-image")!!.absUrl("data-background-image")
     }
 
-    override fun searchMangaNextPageSelector(): String? =
-        "[rel=next]"
+    override fun searchMangaNextPageSelector(): String = "[rel=next]"
 
     // Latest
     override fun latestUpdatesRequest(page: Int): Request =
@@ -85,7 +83,7 @@ class VyvyManga : ParsedHttpSource() {
             "Completed" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
-        thumbnail_url = document.selectFirst(".img-manga").absUrl("src")
+        thumbnail_url = document.selectFirst(".img-manga")!!.absUrl("src")
     }
 
     // Chapters
@@ -94,7 +92,7 @@ class VyvyManga : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         url = element.absUrl("href")
-        name = element.selectFirst("span").text()
+        name = element.selectFirst("span")!!.text()
         date_upload = parseChapterDate(element.selectFirst("> p")?.text())
     }
 

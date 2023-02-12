@@ -33,7 +33,7 @@ data class Title(
         get() = "$title_slug|$title_id"
 
     val description: String?
-        get() = Jsoup.parse(story)?.text()
+        get() = Jsoup.parse(story).text()
 
     val thumbnail: String
         get() = CDN_URL + v_cover_img

@@ -159,14 +159,14 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         title = document.select("h2.element-subtitle").text()
         document.select("h5.card-title").let {
-            author = it?.first()?.attr("title")?.substringAfter(", ")
-            artist = it?.last()?.attr("title")?.substringAfter(", ")
+            author = it.first()?.attr("title")?.substringAfter(", ")
+            artist = it.last()?.attr("title")?.substringAfter(", ")
         }
         genre = document.select("a.py-2").joinToString(", ") {
             it.text()
         }
-        description = document.select("p.element-description")?.text()
-        status = parseStatus(document.select("span.book-status")?.text().orEmpty())
+        description = document.select("p.element-description").text()
+        status = parseStatus(document.select("span.book-status").text().orEmpty())
         thumbnail_url = document.select(".book-thumbnail").attr("src")
     }
     private fun parseStatus(status: String) = when {
@@ -200,7 +200,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     private fun oneShotChapterFromElement(element: Element) = SChapter.create().apply {
         url = element.select("div.row > .text-right > a").attr("href")
         name = "One Shot"
-        scanlator = element.select("div.col-md-6.text-truncate")?.text()
+        scanlator = element.select("div.col-md-6.text-truncate").text()
         date_upload = element.select("span.badge.badge-primary.p-2").first()?.text()?.let { parseChapterDate(it) }
             ?: 0
     }
@@ -208,7 +208,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     private fun regularChapterFromElement(element: Element, chName: String) = SChapter.create().apply {
         url = element.select("div.row > .text-right > a").attr("href")
         name = chName
-        scanlator = element.select("div.col-md-6.text-truncate")?.text()
+        scanlator = element.select("div.col-md-6.text-truncate").text()
         date_upload = element.select("span.badge.badge-primary.p-2").first()?.text()?.let { parseChapterDate(it) }
             ?: 0
     }
@@ -247,7 +247,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
                 )
             }
         } else {
-            val pageList = doc.select("#viewer-pages-select").first().select("option").map { it.attr("value").toInt() }
+            val pageList = doc.select("#viewer-pages-select").first()!!.select("option").map { it.attr("value").toInt() }
             val url = doc.baseUri()
             pageList.forEach {
                 add(Page(it, "$url/$it"))
@@ -442,7 +442,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-        val SFWModePref = androidx.preference.CheckBoxPreference(screen.context).apply {
+        val sfwModePref = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = SFW_MODE_PREF
             title = SFW_MODE_PREF_TITLE
             summary = SFW_MODE_PREF_SUMMARY
@@ -524,7 +524,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             }
         }
 
-        screen.addPreference(SFWModePref)
+        screen.addPreference(sfwModePref)
         screen.addPreference(scanlatorPref)
         screen.addPreference(pageMethodPref)
         screen.addPreference(apiRateLimitPreference)

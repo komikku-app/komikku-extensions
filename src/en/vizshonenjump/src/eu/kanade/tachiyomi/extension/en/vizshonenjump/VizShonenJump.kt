@@ -84,7 +84,7 @@ class VizShonenJump : ParsedHttpSource() {
         "section.section_chapters div.o_sort_container div.o_sortable > a.o_chapters-link"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.selectFirst("div.pad-x-rg").text()
+        title = element.selectFirst("div.pad-x-rg")!!.text()
         thumbnail_url = element.selectFirst("div.pos-r img.disp-bl")
             ?.attr("data-original")
         url = element.attr("href")
@@ -139,7 +139,7 @@ class VizShonenJump : ParsedHttpSource() {
     override fun searchMangaNextPageSelector(): String? = null
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val seriesIntro = document.select("section#series-intro").first()
+        val seriesIntro = document.select("section#series-intro").first()!!
 
         // Get the thumbnail url from the manga list (if available),
         // or fetch it for the first time (in backup restore, for example).
@@ -215,7 +215,7 @@ class VizShonenJump : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val pageCount = document.select("script:containsData(var pages)").first().data()
+        val pageCount = document.select("script:containsData(var pages)").first()!!.data()
             .substringAfter("= ")
             .substringBefore(";")
             .toInt()

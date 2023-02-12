@@ -74,7 +74,7 @@ abstract class GroupLe(
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("img.lazy").first()?.attr("data-original")?.replace("_p.", ".")
-        element.select("h3 > a").first().let {
+        element.select("h3 > a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.attr("title")
         }
@@ -103,11 +103,9 @@ abstract class GroupLe(
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select(".expandable").first()
+        val infoElement = document.select(".expandable").first()!!
         val rawCategory = infoElement.select("span.elem_category").text()
-        val category = if (rawCategory.isNotEmpty()) {
-            rawCategory
-        } else {
+        val category = rawCategory.ifEmpty {
             "манга"
         }
 
@@ -187,8 +185,8 @@ abstract class GroupLe(
     override fun chapterListSelector() = "div.chapters-link > table > tbody > tr:has(td > a):has(td.date:not(.text-info))"
 
     private fun chapterFromElement(element: Element, manga: SManga): SChapter {
-        val urlElement = element.select("a.chapter-link").first()
-        val chapterInf = element.select("td.item-title").first()
+        val urlElement = element.select("a.chapter-link").first()!!
+        val chapterInf = element.select("td.item-title").first()!!
         val urlText = urlElement.text()
 
         val chapter = SChapter.create()

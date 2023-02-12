@@ -40,7 +40,7 @@ class Schlockmercenary : ParsedHttpSource() {
     override fun popularMangaSelector(): String = "div.archive-book"
 
     override fun popularMangaFromElement(element: Element): SManga {
-        val book = element.select("h4 > a").first()
+        val book = element.select("h4 > a").first()!!
         val thumb = (
             baseUrl + (
                 element.select("img").first()?.attr("src")
@@ -151,8 +151,7 @@ class Schlockmercenary : ParsedHttpSource() {
     private fun getImageUrlsForDay(day: String): List<String> {
         val requestUrl = "$baseUrl/$day"
         val document = client.newCall(GET(requestUrl)).execute().asJsoup()
-        val urls = document.select("div#strip-$day > img").map { it.attr("abs:src") }
-        return urls
+        return document.select("div#strip-$day > img").map { it.attr("abs:src") }
     }
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> = Observable.just(manga)
@@ -161,7 +160,7 @@ class Schlockmercenary : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga = throw UnsupportedOperationException("Not used")
 
-    override fun searchMangaNextPageSelector(): String? = throw UnsupportedOperationException("Not used")
+    override fun searchMangaNextPageSelector(): String = throw UnsupportedOperationException("Not used")
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
 
@@ -175,7 +174,7 @@ class Schlockmercenary : ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> = throw UnsupportedOperationException("Not used")
 
-    override fun latestUpdatesNextPageSelector(): String? = throw UnsupportedOperationException("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException("Not used")
 
     override fun latestUpdatesFromElement(element: Element): SManga = throw UnsupportedOperationException("Not used")
 

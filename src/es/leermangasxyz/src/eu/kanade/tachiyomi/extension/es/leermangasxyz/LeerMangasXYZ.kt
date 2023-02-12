@@ -40,7 +40,7 @@ open class LeerMangasXYZ : ParsedHttpSource() {
         }
         with(row[1]) {
             name = text()
-            url = selectFirst("a").attr("href")
+            url = selectFirst("a")!!.attr("href")
         }
     }
 
@@ -49,17 +49,12 @@ open class LeerMangasXYZ : ParsedHttpSource() {
     }
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         setUrlWithoutDomain(document.baseUri())
-        val rawStatus = document.selectFirst("td:contains(Status)").text()
-        println(" Status: $rawStatus")
+        val rawStatus = document.selectFirst("td:contains(Status)")!!.text()
         status = getStatus(rawStatus.substringAfter("Status: "))
-
-        author = document.select("li[itemprop=author]")?.joinToString(separator = ", ") { it.text() }
-
-        thumbnail_url = document.selectFirst("img.img-thumbnail").attr("abs:src")
-
-        description = document.selectFirst("p[itemprop=description]").text()
-
-        genre = document.select("span[itemprop=genre]")?.joinToString(", ") { it.text() }
+        author = document.select("li[itemprop=author]").joinToString(separator = ", ") { it.text() }
+        thumbnail_url = document.selectFirst("img.img-thumbnail")!!.attr("abs:src")
+        description = document.selectFirst("p[itemprop=description]")!!.text()
+        genre = document.select("span[itemprop=genre]").joinToString(", ") { it.text() }
     }
 
     override fun pageListParse(document: Document): List<Page> {
@@ -69,16 +64,16 @@ open class LeerMangasXYZ : ParsedHttpSource() {
                 index = it.attr("data-ngdesc").substringAfter("Page ").toInt(),
             )
         }
-        if (pages.isNullOrEmpty()) {
+        if (pages.isEmpty()) {
             throw RuntimeException("Cannot fetch images from source")
         }
         return pages
     }
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        thumbnail_url = element.selectFirst("img.card-img-top").attr("abs:src")
-        element.selectFirst("div.card-body").let {
-            val dc = it.selectFirst("h5.card-title a")
+        thumbnail_url = element.selectFirst("img.card-img-top")!!.attr("abs:src")
+        element.selectFirst("div.card-body")!!.let {
+            val dc = it.selectFirst("h5.card-title a")!!
             url = dc.attr("href")
             title = dc.text()
         }
@@ -86,13 +81,13 @@ open class LeerMangasXYZ : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         with(element) {
-            thumbnail_url = selectFirst("img").attr("abs:src")
-            title = selectFirst("span[itemprop=name]").text()
-            url = selectFirst("div.col-4 a").attr("href")
+            thumbnail_url = selectFirst("img")!!.attr("abs:src")
+            title = selectFirst("span[itemprop=name]")!!.text()
+            url = selectFirst("div.col-4 a")!!.attr("href")
         }
     }
 
-    fun encodeString(str: String): String = URLEncoder.encode(str, "utf-8")
+    private fun encodeString(str: String): String = URLEncoder.encode(str, "utf-8")
 
     private fun getStatus(str: String): Int = when (str) {
         "Emitiéndose", "Ongoing", "En emisión" -> SManga.ONGOING

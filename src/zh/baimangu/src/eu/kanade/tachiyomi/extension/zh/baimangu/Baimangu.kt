@@ -55,10 +55,10 @@ class Baimangu : ConfigurableSource, ParsedHttpSource() {
     private var commonSelector = "li.fed-list-item"
     private var commonNextPageSelector = "a.fed-btns-info.fed-rims-info:nth-last-child(4)"
     private fun commonMangaFromElement(element: Element): SManga {
-        val picElement = element.select("a.fed-list-pics").first()
+        val picElement = element.select("a.fed-list-pics").first()!!
         val picUrl = picElement.attr("data-original")
         val manga = SManga.create().apply {
-            title = element.select("a.fed-list-title").first().text()
+            title = element.select("a.fed-list-title").first()!!.text()
 
             if (!invalidCoverImageDomains.any { picUrl.contains(it) }) {
                 thumbnail_url = picUrl
@@ -141,20 +141,20 @@ class Baimangu : ConfigurableSource, ParsedHttpSource() {
             return commonMangaFromElement(element)
         }
 
-        val picElement = element.select("a.fed-list-pics").first()
+        val picElement = element.select("a.fed-list-pics").first()!!
         return SManga.create().apply {
-            title = element.select("dd.fed-deta-content a:first-child").first().text()
+            title = element.select("dd.fed-deta-content a:first-child").first()!!.text()
             thumbnail_url = picElement.attr("data-original")
             setUrlWithoutDomain(picElement.attr("href"))
         }
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val picElement = document.select("a.fed-list-pics").first()
+        val picElement = document.select("a.fed-list-pics").first()!!
         val picUrl = picElement.attr("data-original")
         val detailElements = document.select("dd.fed-deta-content ul.fed-part-rows")
         return SManga.create().apply {
-            title = document.select("h1.fed-part-eone").first().text().trim()
+            title = document.select("h1.fed-part-eone").first()!!.text().trim()
 
             if (!invalidCoverImageDomains.any { picUrl.contains(it) }) {
                 thumbnail_url = picUrl
@@ -164,7 +164,7 @@ class Baimangu : ConfigurableSource, ParsedHttpSource() {
 
             author = detailElements.select("li:nth-child(1) a").firstOrNull()?.text()?.trim()
 
-            genre = detailElements.select("li.fed-show-md-block:nth-last-child(2) a:not(:empty)")?.joinToString { it.text().trim() }
+            genre = detailElements.select("li.fed-show-md-block:nth-last-child(2) a:not(:empty)").joinToString { it.text().trim() }
 
             // It has both "简介：" and "简介" in the description
             description = detailElements.select("li.fed-show-md-block:nth-last-child(1)")

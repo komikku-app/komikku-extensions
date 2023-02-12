@@ -60,9 +60,9 @@ class TruyenTranh8 : ParsedHttpSource() {
     override fun popularMangaSelector(): String = "div#tblChap figure.col"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        setUrlWithoutDomain(element.select("figcaption h3 a").first().attr("href"))
-        title = element.select("figcaption h3 a").first().text().replace("[TT8] ", "")
-        thumbnail_url = element.select("img").first().attr("abs:src")
+        setUrlWithoutDomain(element.select("figcaption h3 a").first()!!.attr("href"))
+        title = element.select("figcaption h3 a").first()!!.text().replace("[TT8] ", "")
+        thumbnail_url = element.select("img").first()!!.attr("abs:src")
     }
 
     override fun latestUpdatesRequest(page: Int) = GET(
@@ -166,26 +166,26 @@ class TruyenTranh8 : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        title = document.select("h1.fs-5").first().text().replace("Truyện Tranh ", "")
+        title = document.select("h1.fs-5").first()!!.text().replace("Truyện Tranh ", "")
 
-        author = document.select("span[itemprop=author]")
+        author = document.select("span[itemprop=author]").toList()
             .filter { it.text().isNotEmpty() }
             .joinToString(", ") { it.text() }
 
-        thumbnail_url = document.select("img.thumbnail").first().attr("abs:src")
+        thumbnail_url = document.select("img.thumbnail").first()!!.attr("abs:src")
 
-        genre = document.select("a[itemprop=genre]")
+        genre = document.select("a[itemprop=genre]").toList()
             .filter { it.text().isNotEmpty() }
             .joinToString(", ") { it.text() }
 
-        status = when (document.select("ul.mangainfo b:contains(Tình Trạng) + a").first().text().trim()) {
+        status = when (document.select("ul.mangainfo b:contains(Tình Trạng) + a").first()!!.text().trim()) {
             "Đang tiến hành" -> SManga.ONGOING
             "Đã hoàn thành" -> SManga.COMPLETED
             "Tạm ngưng" -> SManga.ON_HIATUS
             else -> SManga.UNKNOWN
         }
 
-        val descnode = document.select("div.card-body.border-start.border-info.border-3").first()
+        val descnode = document.select("div.card-body.border-start.border-info.border-3").first()!!
         descnode.select(Evaluator.Tag("br")).prepend("\\n")
 
         description = if (descnode.select("p").any()) {
@@ -200,10 +200,10 @@ class TruyenTranh8 : ParsedHttpSource() {
     override fun chapterListSelector() = "ul#ChapList li"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.select("a").first().attr("abs:href"))
-        name = element.text().replace(element.select("time").first().text(), "")
+        setUrlWithoutDomain(element.select("a").first()!!.attr("abs:href"))
+        name = element.text().replace(element.select("time").first()!!.text(), "")
         date_upload = runCatching {
-            dateFormatter.parse(element.select("time").first().attr("datetime"))?.time
+            dateFormatter.parse(element.select("time").first()!!.attr("datetime"))?.time
         }.getOrNull() ?: 0L
 
         val match = floatingNumberRegex.find(name)
@@ -216,7 +216,7 @@ class TruyenTranh8 : ParsedHttpSource() {
 
     override fun pageListParse(document: Document) = document.select("div.page-chapter")
         .mapIndexed { i, elem ->
-            Page(i, "", elem.select("img").first().attr("abs:src"))
+            Page(i, "", elem.select("img").first()!!.attr("abs:src"))
         }
 
     override fun imageUrlParse(document: Document): String = throw Exception("Not used")

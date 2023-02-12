@@ -174,7 +174,7 @@ class OnePieceEx : ParsedHttpSource() {
     override fun chapterListSelector() = "div.capitulos li.volume-capitulo"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        val mangaUrl = element.ownerDocument().location().toHttpUrlOrNull()!!
+        val mangaUrl = element.ownerDocument()!!.location().toHttpUrlOrNull()!!
 
         when (mangaUrl.queryParameter("type")!!) {
             "main" -> {

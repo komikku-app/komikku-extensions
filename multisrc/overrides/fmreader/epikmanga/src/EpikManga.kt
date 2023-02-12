@@ -29,7 +29,7 @@ class EpikManga : FMReader("Epik Manga", "https://www.epikmanga.com", "tr") {
     }
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = GET("$baseUrl/seri-listesi?type=text", headers)
     private fun searchMangaParse(response: Response, query: String): MangasPage {
-        val mangas = response.asJsoup().select("div.char.col-lg-4 a")
+        val mangas = response.asJsoup().select("div.char.col-lg-4 a").toList()
             .filter { it.text().contains(query, ignoreCase = true) }
             .map {
                 SManga.create().apply {
@@ -40,7 +40,7 @@ class EpikManga : FMReader("Epik Manga", "https://www.epikmanga.com", "tr") {
         return MangasPage(mangas, false)
     }
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.col-md-9 div.row").first()
+        val infoElement = document.select("div.col-md-9 div.row").first()!!
 
         return SManga.create().apply {
             status = parseStatus(infoElement.select("h4:contains(Durum:)").firstOrNull()?.ownText())

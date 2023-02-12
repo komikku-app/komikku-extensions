@@ -46,10 +46,10 @@ class Hennojin(override val lang: String, suffix: String) : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element) =
         SManga.create().apply {
             element.selectFirst(".title_link > a").let {
-                title = it.text()
+                title = it!!.text()
                 setUrlWithoutDomain(it.attr("href"))
             }
-            thumbnail_url = element.selectFirst("img").attr("src")
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
         }
 
     override fun searchMangaSelector() = popularMangaSelector()

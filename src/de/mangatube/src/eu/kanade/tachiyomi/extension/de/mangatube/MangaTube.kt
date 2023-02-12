@@ -129,7 +129,7 @@ class MangaTube : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            document.select("div.series-detailed div.row").first().let { info ->
+            document.select("div.series-detailed div.row").first()!!.let { info ->
                 author = info.select("li:contains(Autor:) a").joinToString { it.text() }
                 artist = info.select("li:contains(Artist:) a").joinToString { it.text() }
                 status = info.select("li:contains(Offiziel)").firstOrNull()?.ownText().toStatus()
@@ -170,7 +170,7 @@ class MangaTube : ParsedHttpSource() {
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.select("script:containsData(current_chapter:)").first().data()
+        val script = document.select("script:containsData(current_chapter:)").first()!!.data()
         val imagePath = Regex("""img_path: '(.*)'""").find(script)?.groupValues?.get(1)
             ?: throw Exception("Couldn't find image path")
         val jsonArray = Regex("""pages: (\[.*]),""").find(script)?.groupValues?.get(1)

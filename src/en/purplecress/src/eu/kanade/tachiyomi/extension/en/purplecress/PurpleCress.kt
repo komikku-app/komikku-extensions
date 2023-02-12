@@ -30,16 +30,16 @@ class PurpleCress : HttpSource() {
     override fun popularMangaRequest(page: Int) = GET(baseUrl)
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val seriesContainer = response.asJsoup().selectFirst("div.container-grid--small")
+        val seriesContainer = response.asJsoup().selectFirst("div.container-grid--small")!!
         val mangaList: List<SManga> = seriesContainer.select("a").map {
             SManga.create().apply {
-                title = it.selectFirst("div.card__info").selectFirst("h3").html()
+                title = it.selectFirst("div.card__info")!!.selectFirst("h3")!!.html()
                 url = it.attr("href")
-                author = it.selectFirst("p.card__author").html().substringAfter("by ")
+                author = it.selectFirst("p.card__author")!!.html().substringAfter("by ")
                 artist = author
                 description = it.attr("description")
-                thumbnail_url = it.selectFirst("img.image").attr("src")
-                status = when (it.selectFirst("h3.card__status").html()) {
+                thumbnail_url = it.selectFirst("img.image")!!.attr("src")
+                status = when (it.selectFirst("h3.card__status")!!.html()) {
                     "Ongoing" -> SManga.ONGOING
                     "Dropped" -> SManga.COMPLETED // Not sure what the best status is for "Dropped"
                     "Completed" -> SManga.COMPLETED // There aren't any completed series on the site, so I'm just guessing as to the string
@@ -54,12 +54,12 @@ class PurpleCress : HttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl)
 
     override fun latestUpdatesParse(response: Response): MangasPage {
-        val seriesContainer = response.asJsoup().selectFirst("div.container-grid--large")
+        val seriesContainer = response.asJsoup().selectFirst("div.container-grid--large")!!
         val mangaList: List<SManga> = seriesContainer.select("a").map {
             SManga.create().apply {
-                title = it.selectFirst("h3.chapter__series-name").html()
+                title = it.selectFirst("h3.chapter__series-name")!!.html()
                 url = it.attr("href").replaceFirst("chapter", "series").substringBeforeLast("/")
-                thumbnail_url = it.selectFirst("img.image").attr("src")
+                thumbnail_url = it.selectFirst("img.image")!!.attr("src")
                 initialized = false
             }
         }
@@ -82,15 +82,15 @@ class PurpleCress : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val responseJ = response.asJsoup()
-        val infoBox = responseJ.selectFirst("div.series__info")
+        val infoBox = responseJ.selectFirst("div.series__info")!!
         return SManga.create().apply {
-            title = infoBox.selectFirst("h1.series__name").html()
+            title = infoBox.selectFirst("h1.series__name")!!.html()
             // url is set by overridden fetchMangaDetails
-            author = infoBox.selectFirst("p.series__author").html().substringAfter("by ")
+            author = infoBox.selectFirst("p.series__author")!!.html().substringAfter("by ")
             artist = author
-            description = infoBox.selectFirst("p.description-pagagraph").html()
-            thumbnail_url = responseJ.selectFirst("img.thumbnail").attr("src")
-            status = when (infoBox.selectFirst("span.series__status").html()) {
+            description = infoBox.selectFirst("p.description-pagagraph")!!.html()
+            thumbnail_url = responseJ.selectFirst("img.thumbnail")!!.attr("src")
+            status = when (infoBox.selectFirst("span.series__status")!!.html()) {
                 "Ongoing" -> SManga.ONGOING
                 "Dropped" -> SManga.COMPLETED // See comments in popularMangaParse
                 "Completed" -> SManga.COMPLETED
@@ -104,8 +104,8 @@ class PurpleCress : HttpSource() {
             .map {
                 SChapter.create().apply {
                     url = it.attr("href")
-                    name = it.selectFirst("span.chapter__name").html()
-                    date_upload = it.selectFirst("h5.chapter__date").html()
+                    name = it.selectFirst("span.chapter__name")!!.html()
+                    date_upload = it.selectFirst("h5.chapter__date")!!.html()
                         .let { SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(it)?.time ?: 0L }
                 }
             }

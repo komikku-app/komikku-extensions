@@ -105,7 +105,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = super.popularMangaFromElement(element)
-        manga.thumbnail_url = element.select("img").first().attr("src").getHQThumbnail()
+        manga.thumbnail_url = element.select("img").first()!!.attr("src").getHQThumbnail()
         return manga
     }
 

@@ -226,7 +226,7 @@ abstract class MangaThemesia(
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         val urlElements = element.select("a")
         setUrlWithoutDomain(urlElements.attr("href"))
-        name = element.select(".lch a, .chapternum").text().ifBlank { urlElements.first().text() }
+        name = element.select(".lch a, .chapternum").text().ifBlank { urlElements.first()!!.text() }
         date_upload = element.selectFirst(".chapterdate")?.text().parseChapterDate()
     }
 
@@ -452,8 +452,8 @@ abstract class MangaThemesia(
     private fun parseGenres(document: Document): List<Genre>? {
         return document.selectFirst("ul.genrez")?.select("li")?.map { li ->
             Genre(
-                li.selectFirst("label").text(),
-                li.selectFirst("input[type=checkbox]").attr("value"),
+                li.selectFirst("label")!!.text(),
+                li.selectFirst("input[type=checkbox]")!!.attr("value"),
             )
         }
     }
@@ -464,7 +464,7 @@ abstract class MangaThemesia(
         else -> attr("abs:src")
     }
 
-    protected open fun Elements.imgAttr(): String = this.first().imgAttr()
+    protected open fun Elements.imgAttr(): String = this.first()!!.imgAttr()
 
     // Unused
     override fun popularMangaSelector(): String = throw UnsupportedOperationException("Not used")

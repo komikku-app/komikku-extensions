@@ -38,17 +38,17 @@ class ComicNewtype : HttpSource() {
             return MangasPage(emptyList(), false)
         }
 
-        val list = document.selectFirst(Evaluator.Class("content__col-list--common"))
+        val list = document.selectFirst(Evaluator.Class("content__col-list--common"))!!
         val mangas = list.children().map {
-            val eyeCatcher = it.selectFirst(Evaluator.Class("catch__txt")).ownText()
-            val root = it.selectFirst(Evaluator.Tag("a"))
+            val eyeCatcher = it.selectFirst(Evaluator.Class("catch__txt"))!!.ownText()
+            val root = it.selectFirst(Evaluator.Tag("a"))!!
             SManga.create().apply {
                 url = root.attr("href")
-                title = root.selectFirst(Evaluator.Class("detail__txt--ttl")).text()
-                author = root.selectFirst(Evaluator.Class("detail__txt--info")).ownText()
-                thumbnail_url = baseUrl + root.selectFirst(Evaluator.Tag("img"))
+                title = root.selectFirst(Evaluator.Class("detail__txt--ttl"))!!.text()
+                author = root.selectFirst(Evaluator.Class("detail__txt--info"))!!.ownText()
+                thumbnail_url = baseUrl + root.selectFirst(Evaluator.Tag("img"))!!
                     .attr("src").removeSuffix("/w250/")
-                val genreText = root.selectFirst(Evaluator.Class("detail__txt--label")).ownText()
+                val genreText = root.selectFirst(Evaluator.Class("detail__txt--label"))!!.ownText()
                 if (genreText.isNotEmpty()) {
                     genre = genreText.substring(1).replace("#", ", ")
                 }
@@ -74,23 +74,23 @@ class ComicNewtype : HttpSource() {
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
 
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
-        val root = response.asJsoup().selectFirst(Evaluator.Class("pc__list--contents"))
-        title = root.selectFirst(Evaluator.Tag("h1")).ownText()
-        author = root.selectFirst(Evaluator.Class("contents__info")).ownText()
+        val root = response.asJsoup().selectFirst(Evaluator.Class("pc__list--contents"))!!
+        title = root.selectFirst(Evaluator.Tag("h1"))!!.ownText()
+        author = root.selectFirst(Evaluator.Class("contents__info"))!!.ownText()
         // This one is horizontal. Prefer the square one from manga list.
         // thumbnail_url = baseUrl + root.selectFirst(Evaluator.Class("contents__thumb-comic"))
         //     .child(0).attr("src").removeSuffix("/w500/")
         genre = root.selectFirst(Evaluator.Class("container__link-list--genre-btn"))
             ?.run { children().joinToString { it.text() } }
 
-        val updates = root.selectFirst(Evaluator.Class("contents__date--info-comic"))
+        val updates = root.selectFirst(Evaluator.Class("contents__date--info-comic"))!!
             .textNodes().filterNot { it.isBlank }.joinToString("  ||  ") { it.text() }
         val isCompleted = (updates == "連載終了")
         status = if (isCompleted) SManga.COMPLETED else SManga.ONGOING
         description = buildString {
             if (!isCompleted) append(updates).append("\n\n")
-            append(root.selectFirst(Evaluator.Class("contents__txt-catch")).ownText()).append("\n\n")
-            append(root.selectFirst(Evaluator.Class("contents__txt--desc")).ownText())
+            append(root.selectFirst(Evaluator.Class("contents__txt-catch"))!!.ownText()).append("\n\n")
+            append(root.selectFirst(Evaluator.Class("contents__txt--desc"))!!.ownText())
         }
     }
 
@@ -104,7 +104,7 @@ class ComicNewtype : HttpSource() {
             if (url[0] != '/') return@mapNotNull null
 
             val dateEl = element.selectFirst(Evaluator.Class("detail__txt--date"))
-            val title = element.selectFirst(Evaluator.Tag("h2")).ownText().halfwidthDigits()
+            val title = element.selectFirst(Evaluator.Tag("h2"))!!.ownText().halfwidthDigits()
             val noteEl = element.selectFirst(Evaluator.Class("detail__txt--caution"))
             SChapter.create().apply {
                 this.url = url

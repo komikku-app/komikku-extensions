@@ -124,7 +124,7 @@ class Madokami : ConfigurableSource, ParsedHttpSource() {
      * @param element an element obtained from [chapterListSelector].
      */
     override fun chapterFromElement(element: Element): SChapter {
-        val el = element.parent().parent()
+        val el = element.parent()!!.parent()!!
         val chapter = SChapter.create()
         chapter.url = el.select("td:nth-child(6) a").attr("href")
         chapter.name = el.select("td:nth-child(1) a").text()

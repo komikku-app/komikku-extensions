@@ -105,11 +105,11 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
         if (getPageMethodPref() == "cascade") {
-            document.select("div#content-images img.content-image")?.forEach {
+            document.select("div#content-images img.content-image").forEach {
                 add(Page(size, "", it.attr("data-original")))
             }
         } else {
-            val pageList = document.select("select#select-page").first().select("option").map { it.attr("value").toInt() }
+            val pageList = document.select("select#select-page").first()!!.select("option").map { it.attr("value").toInt() }
             val url = document.baseUri()
 
             pageList.forEach {
@@ -118,7 +118,7 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
         }
     }
 
-    override fun imageUrlParse(document: Document) = document.select("div#content-images img.content-image").attr("data-original")
+    override fun imageUrlParse(document: Document): String = document.select("div#content-images img.content-image").attr("data-original")
 
     override fun imageRequest(page: Page) = GET("$baseUrl${page.imageUrl!!}", headers)
 
@@ -317,7 +317,6 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
         private const val PAGE_METHOD_PREF_TITLE = "Método de descarga de imágenes"
         private const val PAGE_METHOD_PREF_SUMMARY = "Puede corregir errores al cargar las imágenes.\nConfiguración actual: %s"
         private const val PAGE_METHOD_PREF_CASCADE = "cascade"
-        private const val PAGE_METHOD_PREF_PAGINATED = "paginated"
         private const val PAGE_METHOD_PREF_DEFAULT_VALUE = PAGE_METHOD_PREF_CASCADE
 
         const val PREFIX_CONTENTS = "contents"

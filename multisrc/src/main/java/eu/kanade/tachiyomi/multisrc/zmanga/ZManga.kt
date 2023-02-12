@@ -38,7 +38,7 @@ abstract class ZManga(
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
             setUrlWithoutDomain(element.select("div.flexbox2-content a").attr("href"))
-            title = element.select("div.flexbox2-title > span").first().text()
+            title = element.select("div.flexbox2-title > span").first()!!.text()
             thumbnail_url = element.select("img").attr("abs:src")
         }
     }
@@ -162,7 +162,7 @@ abstract class ZManga(
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
             setUrlWithoutDomain(element.attr("href"))
-            name = element.select("span").first().ownText()
+            name = element.select("span").first()!!.ownText()
             date_upload = parseDate(element.select("span.date").text())
         }
     }

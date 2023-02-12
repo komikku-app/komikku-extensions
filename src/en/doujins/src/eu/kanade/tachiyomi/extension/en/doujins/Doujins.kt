@@ -101,10 +101,10 @@ class Doujins : HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
         return SManga.create().apply {
-            title = document.select(".folder-title a").last().text()
+            title = document.select(".folder-title a").last()!!.text()
             artist = document.select(".gallery-artist a").joinToString { it.text() }
             author = artist
-            genre = document.select(".tag-area").first().select("a").joinToString { it.text() }
+            genre = document.select(".tag-area").first()!!.select("a").joinToString { it.text() }
         }
     }
 
@@ -148,7 +148,8 @@ class Doujins : HttpSource() {
                 SManga.create().apply {
                     setUrlWithoutDomain(it.attr("href"))
                     title = it.select("div.title .text").text()
-                    artist = it.parent().nextElementSibling().select(".single-line strong")?.last()?.text()?.substringAfter("Artist: ")
+                    artist = it.parent()!!.nextElementSibling()!!.select(".single-line strong").last()
+                        ?.text()?.substringAfter("Artist: ")
                     author = artist
                     thumbnail_url = it.select("img").attr("srcset")
                 }

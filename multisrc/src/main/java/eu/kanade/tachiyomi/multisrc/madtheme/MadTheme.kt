@@ -176,7 +176,7 @@ abstract class MadTheme(
         }
 
         // Try to show message/error from site
-        response.body?.let { body ->
+        response.body.let { body ->
             json.decodeFromString<JsonObject>(body.string())["message"]
                 ?.jsonPrimitive
                 ?.content
@@ -200,7 +200,7 @@ abstract class MadTheme(
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         // Not using setUrlWithoutDomain() to support external chapters
-        url = element.selectFirst("a")
+        url = element.selectFirst("a")!!
             .absUrl("href")
             .removePrefix(baseUrl)
 
@@ -211,7 +211,7 @@ abstract class MadTheme(
 
     // Pages
     override fun pageListParse(document: Document): List<Page> {
-        val html = document.html()!!
+        val html = document.html()
 
         if (!html.contains("var mainServer = \"")) {
             // No fancy CDN, all images are available directly in <img> tags

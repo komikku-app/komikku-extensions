@@ -75,8 +75,8 @@ class ShingekiNoShoujo : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create().apply {
-            thumbnail_url = element.selectFirst("img").attr("src")
-            element.select("a").last().let {
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
+            element.select("a").last()!!.let {
                 setUrlWithoutDomain(it.attr("href"))
                 title = it.text()
             }
@@ -84,20 +84,20 @@ class ShingekiNoShoujo : ParsedHttpSource() {
         return manga
     }
     override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
-        thumbnail_url = element.select("img").first().attr("src")
+        thumbnail_url = element.select("img").first()!!.attr("src")
         setUrlWithoutDomain(element.attr("href"))
-        title = element.select("span").first().text()
+        title = element.select("span").first()!!.text()
     }
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
-        thumbnail_url = element.select(".entry-thumbnail > img")?.attr("src") ?: ""
-        element.select("a").first().let {
+        thumbnail_url = element.select(".entry-thumbnail > img").attr("src") ?: ""
+        element.select("a").first()!!.let {
             setUrlWithoutDomain(it.attr("href"))
             title = it.text()
         }
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val statusElementText = document.select("blockquote").last().text().lowercase()
+        val statusElementText = document.select("blockquote").last()!!.text().lowercase()
         return SManga.create().apply {
             thumbnail_url = document.select(".entry-thumbnail > img").attr("src")
             status = when {
@@ -105,9 +105,9 @@ class ShingekiNoShoujo : ParsedHttpSource() {
                 statusElementText.contains("fine") -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
             }
-            author = document.select("span:has(strong:contains(Autore))")?.text()!!.substringAfter("Autore:").trim()
-            genre = document.select("span:has(strong:contains(Genere))")?.text()!!.substringAfter("Genere:").replace(".", "").trim()
-            description = document.select("p:has(strong:contains(Trama))")?.text()!!.substringAfter("Trama:").trim()
+            author = document.select("span:has(strong:contains(Autore))").text().substringAfter("Autore:").trim()
+            genre = document.select("span:has(strong:contains(Genere))").text().substringAfter("Genere:").replace(".", "").trim()
+            description = document.select("p:has(strong:contains(Trama))").text().substringAfter("Trama:").trim()
         }
     }
     //endregion
@@ -130,7 +130,7 @@ class ShingekiNoShoujo : ParsedHttpSource() {
                     setUrlWithoutDomain(it.attr("href"))
                     name = it.text()
                     chapter_number = it.text().replace(Regex("OneShot|Prologo"), "0").filter { it.isDigit() }.let {
-                        if (it.isEmpty()) "$i" else it
+                        it.ifEmpty { "$i" }
                     }.toFloat()
                 },
             )

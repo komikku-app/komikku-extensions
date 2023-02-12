@@ -56,7 +56,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
 
     override fun latestUpdatesNextPageSelector() = "li.pagination-next"
     override fun latestUpdatesSelector() = "article"
-    override fun latestUpdatesFromElement(element: Element) = buildManga(element.select("a[rel]").first(), element.select("a.entry-image-link img").first())
+    override fun latestUpdatesFromElement(element: Element) = buildManga(element.select("a[rel]").first()!!, element.select("a.entry-image-link img").first())
     override fun latestUpdatesParse(response: Response): MangasPage {
         cacheAssistant()
         return super.latestUpdatesParse(response)
@@ -94,7 +94,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
         val totalResults = Regex("""(\d+)""").find(document.select("div.res_info").text())?.groupValues?.get(1)?.toIntOrNull() ?: 0
         return MangasPage(mangas, mangaParsedSoFar < totalResults)
     }
-    override fun searchMangaFromElement(element: Element) = buildManga(element.select("a").first(), element.select("img")?.first())
+    override fun searchMangaFromElement(element: Element) = buildManga(element.select("a").first()!!, element.select("img").first())
 
     // Build Manga From Element
     private fun buildManga(titleElement: Element, thumbnailElement: Element?): SManga {
@@ -150,9 +150,9 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
             // too troublesome to achieve 100% accuracy assigning scanlator group during chapterListParse
             val scanlatedBy = document.select(".entry-terms:has(a[href*=group])").firstOrNull()
                 ?.select("a[href*=group]")?.joinToString(prefix = "Scanlated by: ") { it.text() }
-            val extendedDescription = document.select(".entry-content p:not(p:containsOwn(|)):not(.chapter-class + p)")?.joinToString("\n") { it.text() }
+            val extendedDescription = document.select(".entry-content p:not(p:containsOwn(|)):not(.chapter-class + p)").joinToString("\n") { it.text() }
             description = listOfNotNull(basicDescription, scanlatedBy, extendedDescription).joinToString("\n")
-            status = when (document.select("a[href*=status]")?.first()?.text()) {
+            status = when (document.select("a[href*=status]").first()?.text()) {
                 "Ongoing" -> SManga.ONGOING
                 "Completed" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
@@ -162,7 +162,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
                 thumbnail_url = getThumbnail(
                     getImage(
                         client.newCall(GET("$baseUrl/search/?search=${document.location()}", headers))
-                            .execute().asJsoup().select("div.wdm_results div.p_content img").first(),
+                            .execute().asJsoup().select("div.wdm_results div.p_content img").first()!!,
                     ),
                 )
             }
@@ -181,16 +181,16 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
 
         val date = parseDate(document.select(".entry-time").text())
         val mangaUrl = document.baseUri()
-        val chfirstname = document.select(".chapter-class a[href*=$mangaUrl]")?.first()?.text()?.ifEmpty { "Ch. 1" }?.replaceFirstChar { it.titlecase() }
+        val chfirstname = document.select(".chapter-class a[href*=$mangaUrl]").first()?.text()?.ifEmpty { "Ch. 1" }?.replaceFirstChar { it.titlecase() }
             ?: "Ch. 1"
         // create first chapter since its on main manga page
         chapters.add(createChapter("1", document.baseUri(), date, chfirstname))
         // see if there are multiple chapters or not
-        document.select(chapterListSelector())?.let { it ->
+        document.select(chapterListSelector()).let { it ->
             it.forEach {
                 if (!it.text().contains("Next »", true)) {
                     val pageNumber = it.text()
-                    val chname = document.select(".chapter-class a[href$=/$pageNumber/]")?.text()?.ifEmpty { "Ch. $pageNumber" }?.replaceFirstChar { it.titlecase() }
+                    val chname = document.select(".chapter-class a[href$=/$pageNumber/]").text().ifEmpty { "Ch. $pageNumber" }?.replaceFirstChar { it.titlecase() }
                         ?: "Ch. $pageNumber"
                     chapters.add(createChapter(it.text(), document.baseUri(), date, chname))
                 }

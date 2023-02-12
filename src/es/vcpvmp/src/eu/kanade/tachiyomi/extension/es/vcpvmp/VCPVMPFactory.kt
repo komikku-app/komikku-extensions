@@ -22,9 +22,9 @@ class VCP : VCPVMP("VCP", "https://vercomicsporno.com") {
     override fun popularMangaNextPageSelector() = "span.current + a"
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        element.select("a.popimg").first().let {
+        element.select("a.popimg").first()!!.let {
             setUrlWithoutDomain(it.attr("href"))
-            it.select("figure img").first().let { img ->
+            it.select("figure img").first()!!.let { img ->
                 title = img.attr("alt")
                 thumbnail_url = img.attr("abs:src")
             }

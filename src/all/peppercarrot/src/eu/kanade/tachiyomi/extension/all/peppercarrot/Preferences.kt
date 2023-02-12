@@ -99,8 +99,8 @@ private fun fetchTitles(client: OkHttpClient, headers: Headers): Map<String, Str
     val url = "https://framagit.org/search?project_id=76196&search=core/mod-header.php:4"
     val document = client.newCall(GET(url, headers)).execute().asJsoup()
     val result = hashMapOf<String, String>()
-    for (file in document.selectFirst(Evaluator.Class("search-results")).children()) {
-        val filename = file.selectFirst(Evaluator.Tag("strong")).ownText()
+    for (file in document.selectFirst(Evaluator.Class("search-results"))!!.children()) {
+        val filename = file.selectFirst(Evaluator.Tag("strong"))!!.ownText()
         if (!filename.endsWith(".po") || !filename.startsWith("po/")) continue
         val lang = filename.substring(3, filename.length - 3)
 

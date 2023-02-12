@@ -100,8 +100,8 @@ class Niceoppai : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.det").first()
-        val titleElement = document.select("h1.ttl").first()
+        val infoElement = document.select("div.det").first()!!
+        val titleElement = document.select("h1.ttl").first()!!
 
         return SManga.create().apply {
             title = titleElement.text()
@@ -109,8 +109,8 @@ class Niceoppai : ParsedHttpSource() {
             artist = author
             status = getStatus(infoElement.select("p")[9].ownText().replace(": ", ""))
             genre = infoElement.select("p")[5].select("a").joinToString { it.text() }
-            description = infoElement.select("p").first().ownText().replace(": ", "")
-            thumbnail_url = document.select("div.mng_ifo div.cvr_ara img").first().attr("abs:src")
+            description = infoElement.select("p").first()!!.ownText().replace(": ", "")
+            thumbnail_url = document.select("div.mng_ifo div.cvr_ara img").first()!!.attr("abs:src")
             initialized = true
         }
     }
@@ -222,7 +222,7 @@ class Niceoppai : ParsedHttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val listPage = document.select("ul.pgg li a")
+        val listPage = document.select("ul.pgg li a").toList()
             .filter { it.text() != "Next" && it.text() != "Last" }
             .map { it.select("a").attr("href") }
             .distinct()

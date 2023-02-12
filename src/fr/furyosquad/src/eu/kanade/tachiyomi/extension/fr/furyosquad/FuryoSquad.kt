@@ -122,9 +122,9 @@ class FuryoSquad : ParsedHttpSource() {
         document.select("div.comic-info").let {
             it.select("p.fs-comic-label").forEach { el ->
                 when (el.text().lowercase(Locale.ROOT)) {
-                    "scénario" -> manga.author = el.nextElementSibling().text()
-                    "dessins" -> manga.artist = el.nextElementSibling().text()
-                    "genre" -> manga.genre = el.nextElementSibling().text()
+                    "scénario" -> manga.author = el.nextElementSibling()!!.text()
+                    "dessins" -> manga.artist = el.nextElementSibling()!!.text()
+                    "genre" -> manga.genre = el.nextElementSibling()!!.text()
                 }
             }
             manga.description = it.select("div.fs-comic-description").text()

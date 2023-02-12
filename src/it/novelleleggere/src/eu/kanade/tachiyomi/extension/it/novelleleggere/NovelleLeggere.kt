@@ -25,7 +25,7 @@ class NovelleLeggere : ParsedHttpSource() {
     override fun popularMangaNextPageSelector(): String? = null
     override fun popularMangaSelector(): String = "table:contains(Manga) tr:gt(0)"
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val a = element.select("a").first()
+        val a = element.select("a").first()!!
         title = a.text()
         setUrlWithoutDomain(a.attr("abs:href"))
     }
@@ -33,7 +33,7 @@ class NovelleLeggere : ParsedHttpSource() {
     // Latest
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Latest Not Supported")
 
-    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Latest Not Supported")
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Latest Not Supported")
     override fun latestUpdatesSelector(): String = throw Exception("Latest Not Supported")
     override fun latestUpdatesFromElement(element: Element): SManga =
         throw Exception("Latest Not Supported")
@@ -42,14 +42,14 @@ class NovelleLeggere : ParsedHttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request =
         throw Exception("Search Not Supported")
 
-    override fun searchMangaNextPageSelector(): String? = throw Exception("Search Not Supported")
+    override fun searchMangaNextPageSelector(): String = throw Exception("Search Not Supported")
     override fun searchMangaSelector(): String = throw Exception("Search Not Supported")
     override fun searchMangaFromElement(element: Element): SManga =
         throw Exception("Search Not Supported")
 
     // Details
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        thumbnail_url = document.select("div.post-content img").first().attr("abs:src")
+        thumbnail_url = document.select("div.post-content img").first()!!.attr("abs:src")
         title = document.select("div.post-content h3").text().trim()
         description =
             document.select("div.post-content div:contains(Trama) div.su-spoiler-content").text()

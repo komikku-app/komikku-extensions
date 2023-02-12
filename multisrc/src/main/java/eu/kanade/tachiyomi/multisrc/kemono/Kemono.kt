@@ -55,10 +55,10 @@ open class Kemono(
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        val cardList = document.selectFirst(Evaluator.Class("card-list"))
+        val cardList = document.selectFirst(Evaluator.Class("card-list"))!!
         val creators = cardList.select(Evaluator.Tag("article")).map {
             val children = it.children()
-            val avatar = children[0].selectFirst(Evaluator.Tag("img")).attr("src")
+            val avatar = children[0].selectFirst(Evaluator.Tag("img"))!!.attr("src")
             val link = children[1].child(0)
             val service = children[2].ownText()
             SManga.create().apply {
@@ -100,13 +100,13 @@ open class Kemono(
         val baseUrl = baseUrl
         return if (page == 1) {
             val document = client.newCall(GET(baseUrl + path, headers)).execute().asJsoup()
-            val cardList = document.selectFirst(Evaluator.Class("card-list__items"))
+            val cardList = document.selectFirst(Evaluator.Class("card-list__items"))!!
             val creators = cardList.children().map {
                 SManga.create().apply {
                     url = it.attr("href")
-                    title = it.selectFirst(Evaluator.Class("user-card__name")).ownText()
-                    author = it.selectFirst(Evaluator.Class("user-card__service")).ownText()
-                    thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img")).attr("src")
+                    title = it.selectFirst(Evaluator.Class("user-card__name"))!!.ownText()
+                    author = it.selectFirst(Evaluator.Class("user-card__service"))!!.ownText()
+                    thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img"))!!.attr("src")
                     description = PROMPT
                     initialized = true
                 }
@@ -227,7 +227,7 @@ open class Kemono(
         private const val POST_PAGES_MAX = 50
 
         private fun Element.hasNextPage(): Boolean {
-            val pagination = selectFirst(Evaluator.Class("paginator"))
+            val pagination = selectFirst(Evaluator.Class("paginator"))!!
             return pagination.selectFirst("a[title=Next page]") != null
         }
 

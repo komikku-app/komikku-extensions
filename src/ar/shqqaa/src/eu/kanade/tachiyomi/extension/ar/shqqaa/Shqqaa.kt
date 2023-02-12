@@ -34,8 +34,8 @@ class Shqqaa : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("img").first().attr("data-src")
-        element.select("a").first().let {
+        manga.thumbnail_url = element.select("img").first()!!.attr("data-src")
+        element.select("a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.attr("title").split(", ")[0]
         }
@@ -53,11 +53,11 @@ class Shqqaa : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
-        element.select("a").first().let {
+        element.select("a").first()!!.let {
             manga.setUrlWithoutDomain("${it.attr("href").substringBeforeLast('/')}/")
-            manga.title = element.select("small").first().text().split(", ")[0]
+            manga.title = element.select("small").first()!!.text().split(", ")[0]
         }
-        manga.thumbnail_url = element.select("img").first().attr("data-src")
+        manga.thumbnail_url = element.select("img").first()!!.attr("data-src")
         return manga
     }
 
@@ -82,10 +82,10 @@ class Shqqaa : ParsedHttpSource() {
         val manga = SManga.create()
         manga.title = mangaInfo.select("small.text-muted")[1].ownText().split(", ")[0]
         manga.author = null
-        val status = mangaInfo.select("span.badge").first().ownText()
+        val status = mangaInfo.select("span.badge").first()!!.ownText()
         manga.status = parseStatus(status)
         manga.genre = null
-        manga.description = infoElement.first().select(".text-muted").first().ownText()
+        manga.description = infoElement.first()!!.select(".text-muted").first()!!.ownText()
         manga.thumbnail_url = mangaInfo.select("img").attr("data-src")
         return manga
     }

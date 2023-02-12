@@ -152,7 +152,7 @@ class HeavenManga : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("script:containsData(pUrl)").first().data()
+        return document.select("script:containsData(pUrl)").first()!!.data()
             .substringAfter("pUrl=[").substringBefore("\"},];").split("\"},")
             .mapIndexed { i, string -> Page(i, "", string.substringAfterLast("\"")) }
     }

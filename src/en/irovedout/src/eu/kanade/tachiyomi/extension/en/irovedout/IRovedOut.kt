@@ -48,11 +48,11 @@ class IRovedOut : HttpSource() {
             val bookPage = client.newCall(GET(bookUrl, headers)).execute().asJsoup()
             val chapters = bookPage.select(".comic-archive-chapter-wrap")
             chapters.map {
-                val chapterWrap = it.selectFirst(".comic-archive-chapter-wrap")
+                val chapterWrap = it.selectFirst(".comic-archive-chapter-wrap")!!
                 SChapter.create().apply {
-                    name = "Book $bookNumber: ${chapterWrap.selectFirst(".comic-archive-chapter").text()}"
-                    url = chapterWrap.selectFirst(".comic-archive-title > a").attr("href")
-                    date_upload = dateFormat.parse(chapterWrap.select(".comic-archive-date").last().text())?.time ?: 0L
+                    name = "Book $bookNumber: ${chapterWrap.selectFirst(".comic-archive-chapter")!!.text()}"
+                    url = chapterWrap.selectFirst(".comic-archive-title > a")!!.attr("href")
+                    date_upload = dateFormat.parse(chapterWrap.select(".comic-archive-date").last()!!.text())?.time ?: 0L
                     chapter_number = chapterCounter++
                 }
             }
@@ -62,7 +62,7 @@ class IRovedOut : HttpSource() {
 
     override fun fetchImageUrl(page: Page): Observable<String> {
         val comicPage = client.newCall(GET(page.url, headers)).execute().asJsoup()
-        val imageUrl = comicPage.selectFirst("#comic img").attr("src")
+        val imageUrl = comicPage.selectFirst("#comic img")!!.attr("src")
         return Observable.just(imageUrl)
     }
 
@@ -83,7 +83,7 @@ class IRovedOut : HttpSource() {
         val bookNumber = match.groups["bookNumber"]!!.value.toInt()
         val title = match.groups["chapterTitle"]!!.value
         val bookPage = client.newCall(GET(archiveUrl + if (bookNumber != 1) "-book-$bookNumber" else "", headers)).execute().asJsoup()
-        val chapterWrap = bookPage.select(".comic-archive-chapter-wrap").find { it.selectFirst(".comic-archive-chapter").text() == title }
+        val chapterWrap = bookPage.select(".comic-archive-chapter-wrap").find { it.selectFirst(".comic-archive-chapter")!!.text() == title }
         val pageUrls = chapterWrap?.select(".comic-archive-list-wrap .comic-archive-title > a")?.map { it.attr("href") } ?: return Observable.just(listOf())
         val pages = pageUrls.mapIndexed { pageIndex, pageUrl ->
             Page(pageIndex, pageUrl)

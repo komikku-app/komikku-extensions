@@ -58,12 +58,12 @@ class AnimaRegia : MMRCMS("AnimaRegia", "https://animaregia.net", "pt-BR") {
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
         val document = response.asJsoup()
 
-        title = document.selectFirst("h1.widget-title").text()
+        title = document.selectFirst("h1.widget-title")!!.text()
         thumbnail_url = coverGuess(
             document.select("div.col-sm-5 img.img-thumbnail").firstOrNull()?.attr("abs:src"),
             document.location(),
         )
-        description = document.select("div.row div.well p").text().trim()
+        description = document.select("div.row div.well p")!!.text().trim()
 
         for (element in document.select("div.col-sm-5 ul.list-group li.list-group-item")) {
             when (element.text().trim().lowercase(BRAZILIAN_LOCALE).substringBefore(":")) {
@@ -94,7 +94,7 @@ class AnimaRegia : MMRCMS("AnimaRegia", "https://animaregia.net", "pt-BR") {
                         .joinToString(" & ") { it.text().trim() }
                     date_upload = el.select("div.col-md-4").firstOrNull()
                         ?.text()?.removeSuffix("Download")?.toDate() ?: 0L
-                    setUrlWithoutDomain(el.select("h5.chapter-title-rtl a").first().attr("href"))
+                    setUrlWithoutDomain(el.select("h5.chapter-title-rtl a").first()!!.attr("href"))
                 }
             }
     }

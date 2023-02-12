@@ -62,7 +62,7 @@ class MangaPill : ParsedHttpSource() {
         manga.genre = genres.joinToString(", ")
         manga.status = parseStatus(document.select("div.container > div:first-child > div:last-child > div:nth-child(3) > div:nth-child(2) > div").text())
         manga.description = document.select("div.container > div:first-child > div:last-child > div:nth-child(2) > p").text()
-        manga.thumbnail_url = document.select("div.container > div:first-child > div:first-child > img").first().attr("data-src")
+        manga.thumbnail_url = document.select("div.container > div:first-child > div:first-child > img").first()!!.attr("data-src")
 
         return manga
     }

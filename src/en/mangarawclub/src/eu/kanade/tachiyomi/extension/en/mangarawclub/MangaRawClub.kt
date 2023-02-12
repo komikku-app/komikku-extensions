@@ -52,7 +52,7 @@ class MangaRawClub : ParsedHttpSource() {
         val manga = SManga.create()
         manga.title = element.select(".novel-title").first()?.text() ?: ""
         manga.thumbnail_url = element.select(".novel-cover img").attr("abs:data-src")
-        manga.setUrlWithoutDomain(element.select("a").first().attr("href"))
+        manga.setUrlWithoutDomain(element.select("a").first()!!.attr("href"))
         return manga
     }
     override fun popularMangaFromElement(element: Element): SManga = searchMangaFromElement(element)
@@ -262,13 +262,7 @@ class MangaRawClub : ParsedHttpSource() {
         ),
     )
 
-    private fun getGenreList(): List<Genre> {
-        return GenrePairList().vals.map {
-            Genre(it.first)
-        }
-    }
-
-    private class Genre(name: String, id: String = name) : Filter.TriState(name)
+    private class Genre(name: String) : Filter.TriState(name)
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genres+", genres)
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

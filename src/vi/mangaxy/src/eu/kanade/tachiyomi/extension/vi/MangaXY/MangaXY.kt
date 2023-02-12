@@ -52,12 +52,12 @@ class MangaXY : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        element.select("a.name").first().let {
+        element.select("a.name").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text().trim()
         }
         manga.thumbnail_url = element.select(".item img")
-            .first()
+            .first()!!
             .attr("style")
             .substringAfter("url('")
             .substringBefore("')")
@@ -241,19 +241,19 @@ class MangaXY : ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val infoElement = document.selectFirst(".tab-content")
-        val infoTop = document.selectFirst(".detail-top-wrap")
+        val infoElement = document.selectFirst(".tab-content")!!
+        val infoTop = document.selectFirst(".detail-top-wrap")!!
         val statusString0 = infoElement.select("div.manga-info > ul > li:nth-child(3) > a").firstOrNull()?.text()
         val statusString1 = infoElement.select("div.manga-info > ul > li:nth-child(4) > a").firstOrNull()?.text()
         val statusString2 = infoElement.select("div.manga-info > ul > li:nth-child(5) > a").firstOrNull()?.text()
         title = infoTop.select("h1.comics-title").text()
         author = infoTop.select(".created-by").joinToString { it.text() }
-        genre = infoTop.select(".top-comics-type a")
+        genre = infoTop.select(".top-comics-type a").toList()
             .filter { it.text().isNotEmpty() }
             .joinToString(", ") { it.text() }
         description = infoElement.select(".manga-info p").textWithLinebreaks()
         thumbnail_url = infoTop.select(".detail-top-right img")
-            .first()
+            .first()!!
             .attr("style")
             .substringAfter("url('")
             .substringBefore("')")
@@ -296,8 +296,8 @@ class MangaXY : ParsedHttpSource() {
 
     override fun chapterListSelector() = "#ChapList > .episode-item"
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.select(".episode-item").first().attr("abs:href"))
-        name = element.select(".episode-title").first().text()
+        setUrlWithoutDomain(element.select(".episode-item").first()!!.attr("abs:href"))
+        name = element.select(".episode-title").first()!!.text()
         date_upload = runCatching {
             dateFormat.parse(element.select("div.episode-date > time").attr("datetime"))?.time
         }.getOrNull() ?: 0L

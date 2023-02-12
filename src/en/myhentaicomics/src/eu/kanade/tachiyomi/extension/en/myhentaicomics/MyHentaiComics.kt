@@ -95,7 +95,7 @@ class MyHentaiComics : ParsedHttpSource() {
             artist = tags.first.joinToString { it.text().substringAfter(" ") }
             author = artist
             genre = tags.second.joinToString { it.text() }
-            thumbnail_url = document.select("img.g-thumbnail").first().attr("abs:src").replace("/thumbs/", "/resizes/")
+            thumbnail_url = document.select("img.g-thumbnail").first()!!.attr("abs:src").replace("/thumbs/", "/resizes/")
         }
     }
 

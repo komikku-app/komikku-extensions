@@ -130,13 +130,13 @@ class ComicExtra : ParsedHttpSource() {
     override fun chapterListSelector() = "table.table > tbody#list > tr:has(td)"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlEl = element.select("td:nth-of-type(1) > a").first()
+        val urlEl = element.select("td:nth-of-type(1) > a").first()!!
         val dateEl = element.select("td:nth-of-type(2)")
 
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlEl.attr("href").replace(" ", "%20"))
         chapter.name = urlEl.text()
-        chapter.date_upload = dateEl.text()?.let { dateParse(it) } ?: 0
+        chapter.date_upload = dateParse(dateEl.text())
         return chapter
     }
 

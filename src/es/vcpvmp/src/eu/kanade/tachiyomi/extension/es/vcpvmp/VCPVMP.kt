@@ -32,7 +32,7 @@ open class VCPVMP(override val name: String, override val baseUrl: String) : Par
     override fun popularMangaSelector() = "div#ccontent div.gallery"
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        element.select("a.cover").first().let {
+        element.select("a.cover").first()!!.let {
             setUrlWithoutDomain(it.attr("href"))
             title = it.select("div.caption").text()
             thumbnail_url = it.select("img").attr("abs:src").substringBefore("?")

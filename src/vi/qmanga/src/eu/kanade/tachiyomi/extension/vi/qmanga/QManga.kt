@@ -135,7 +135,7 @@ class QManga : ParsedHttpSource() {
 
         val dateUploadString = element.select("span").first()?.text()
         if (!dateUploadString.isNullOrEmpty()) {
-            date_upload = kotlin.runCatching {
+            date_upload = runCatching {
                 dateFormat.parse(dateUploadString)?.time
             }.getOrNull() ?: 0L
         }

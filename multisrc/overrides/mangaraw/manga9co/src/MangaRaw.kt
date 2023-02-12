@@ -58,10 +58,10 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
         GET("$baseUrl/?s=$query&page=$page", headers)
 
     override fun Document.getSanitizedDetails(): Element =
-        selectFirst(selectors.detailsSelector).apply {
+        selectFirst(selectors.detailsSelector)!!.apply {
             val recommendClass = selectors.recommendClass
             children().find { it.hasClass(recommendClass) }?.remove()
-            selectFirst(Evaluator.Class("list-scoll")).remove()
+            selectFirst(Evaluator.Class("list-scoll"))!!.remove()
         }
 
     override fun chapterListSelector() = ".list-scoll a"

@@ -65,11 +65,11 @@ class Xinmeitulu : ParsedHttpSource() {
     // Details
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        setUrlWithoutDomain(document.selectFirst("link[rel=canonical]").attr("abs:href"))
+        setUrlWithoutDomain(document.selectFirst("link[rel=canonical]")!!.attr("abs:href"))
         title = document.select(".container > h1").text()
         description = document.select(".container > *:not(div)").text()
         status = SManga.COMPLETED
-        thumbnail_url = document.selectFirst("figure img").attr("abs:data-original")
+        thumbnail_url = document.selectFirst("figure img")!!.attr("abs:data-original")
     }
 
     // Chapters
@@ -77,7 +77,7 @@ class Xinmeitulu : ParsedHttpSource() {
     override fun chapterListSelector() = "html"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.selectFirst("link[rel=canonical]").attr("abs:href"))
+        setUrlWithoutDomain(element.selectFirst("link[rel=canonical]")!!.attr("abs:href"))
         name = element.select(".container > h1").text()
     }
 

@@ -43,7 +43,7 @@ class LemonFont : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         val seriesUrl: String = document.location()
         val homePage: Document = client.newCall(GET("$baseUrl/comics/", headers)).execute().asJsoup()
-        val element: Element = homePage.select("div.comic-collection > a[abs:href=$seriesUrl]").first()
+        val element: Element = homePage.select("div.comic-collection > a[abs:href=$seriesUrl]").first()!!
 
         thumbnail_url = element.select("img").attr("abs:src")
         status = getStatus(element)
@@ -52,7 +52,7 @@ class LemonFont : ParsedHttpSource() {
 
     private fun getStatus(element: Element) = when {
         element.attr("href").contains("http") -> SManga.LICENSED
-        element.select("p").first().id() == "tag-ongoing" -> SManga.ONGOING
+        element.select("p").first()!!.id() == "tag-ongoing" -> SManga.ONGOING
         else -> SManga.COMPLETED
     }
 

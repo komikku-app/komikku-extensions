@@ -92,7 +92,7 @@ class TwoKinds : HttpSource() {
 
     data class TwoKindsPage(val url: String, val name: String)
 
-    fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
+    private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
         val document = response.asJsoup()
 
         val pages = document.select(".chapter-links")
@@ -100,7 +100,7 @@ class TwoKinds : HttpSource() {
             .map { a ->
                 // /comic/1185halloween/ -> 1185halloween
                 val urlPart = a.attr("href").split("/")[2]
-                val name = a.selectFirst("span").text()
+                val name = a.selectFirst("span")!!.text()
 
                 TwoKindsPage(urlPart, name)
             }
@@ -144,7 +144,7 @@ class TwoKinds : HttpSource() {
                 .map { a ->
                     // /comic/1185halloween/ -> 1185halloween
                     val urlPart = a.attr("href").split("/")[2]
-                    val name = a.selectFirst("span").text()
+                    val name = a.selectFirst("span")!!.text()
 
                     TwoKindsPage(urlPart, name)
                 }
@@ -167,7 +167,7 @@ class TwoKinds : HttpSource() {
     override fun imageUrlParse(response: Response): String {
         val document = response.asJsoup()
 
-        return document.select("#content article img").first().attr("src")
+        return document.select("#content article img").first()!!.attr("src")
     }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> = throw Exception("Search functionality is not available.")

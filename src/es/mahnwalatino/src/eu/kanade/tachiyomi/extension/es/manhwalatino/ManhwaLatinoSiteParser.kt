@@ -46,7 +46,7 @@ class ManhwaLatinoSiteParser(
         val manga = SManga.create()
         manga.url =
             getUrlWithoutDomain(
-                element.select(MLConstants.latestUpdatesSelectorUrl).first().attr("abs:href"),
+                element.select(MLConstants.latestUpdatesSelectorUrl).first()!!.attr("abs:href"),
             )
         manga.title = element.select(MLConstants.latestUpdatesSelectorTitle).text().trim()
         manga.thumbnail_url = getImage(element.select(MLConstants.latestUpdatesSelectorThumbnailUrl)).replace("//", "/")
@@ -133,7 +133,7 @@ class ManhwaLatinoSiteParser(
         val tagList = document.select(MLConstants.mangaDetailsTagsHTMLSelector).map { it.text() }
         val genreTagList = genrelist + tagList
 
-        manga.title = titleElements.last().ownText().trim()
+        manga.title = titleElements.last()!!.ownText().trim()
         manga.thumbnail_url = getImage(document.select(MLConstants.mangaDetailsThumbnailUrlHTMLSelector))
         manga.description = descriptionList.joinToString("\n")
         manga.author = author.ifBlank { "Autor Desconocido" }
@@ -148,8 +148,8 @@ class ManhwaLatinoSiteParser(
             return SManga.COMPLETED
         }
         elements.forEach { element ->
-            val key = element.select("div.summary-heading h5")?.text()?.trim()
-            val value = element.select("div.summary-content")?.text()?.trim()
+            val key = element.select("div.summary-heading h5").text().trim()
+            val value = element.select("div.summary-content").text().trim()
 
             if (key == "Estado del comic") {
                 return when (value) {

@@ -73,11 +73,11 @@ class Nana : ParsedHttpSource() {
         "#thumbs_container > .id1"
 
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val a = element.selectFirst(".id3 > a")
+        val a = element.selectFirst(".id3 > a")!!
         setUrlWithoutDomain(a.absUrl("href"))
         title = a.attr("title")
 
-        val img = a.selectFirst("> img")
+        val img = a.selectFirst("> img")!!
         thumbnail_url = img.absUrl("src")
         author = img.attr("alt")
             .replace("$title by ", "")
@@ -91,7 +91,7 @@ class Nana : ParsedHttpSource() {
         initialized = true
     }
 
-    override fun searchMangaNextPageSelector(): String? =
+    override fun searchMangaNextPageSelector(): String =
         "a.paginate_button.current + a.paginate_button"
 
     // Latest
@@ -104,7 +104,7 @@ class Nana : ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SManga =
         throw UnsupportedOperationException("Not used.")
 
-    override fun latestUpdatesNextPageSelector(): String? =
+    override fun latestUpdatesNextPageSelector(): String =
         throw UnsupportedOperationException("Not used.")
 
     // Details

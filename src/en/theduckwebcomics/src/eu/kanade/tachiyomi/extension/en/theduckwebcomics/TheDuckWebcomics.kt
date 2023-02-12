@@ -55,14 +55,14 @@ class TheDuckWebcomics : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element) =
         SManga.create().apply {
-            element.selectFirst(".size24").let {
+            element.selectFirst(".size24")!!.let {
                 title = it.text()
                 url = it.attr("href")
             }
-            genre = element.selectFirst(".size10").text().substringBefore(",")
-            description = element.selectFirst(".comicdescparagraphs").text()
-            thumbnail_url = element.selectFirst("img").absUrl("src")
-            author = element.selectFirst(".size18").text()
+            genre = element.selectFirst(".size10")!!.text().substringBefore(",")
+            description = element.selectFirst(".comicdescparagraphs")!!.text()
+            thumbnail_url = element.selectFirst("img")!!.absUrl("src")
+            author = element.selectFirst(".size18")!!.text()
             artist = author
         }
 
@@ -85,7 +85,7 @@ class TheDuckWebcomics : ParsedHttpSource() {
         }
 
     override fun pageListParse(document: Document) =
-        listOf(Page(0, "", document.selectFirst(".page-image").attr("src")))
+        listOf(Page(0, "", document.selectFirst(".page-image")!!.attr("src")))
 
     override fun mangaDetailsParse(document: Document) =
         throw UnsupportedOperationException("Not used")

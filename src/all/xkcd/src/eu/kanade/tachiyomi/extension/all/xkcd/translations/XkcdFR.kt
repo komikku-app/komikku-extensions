@@ -31,7 +31,7 @@ class XkcdFR : Xkcd("https://xkcd.lapin.org", "fr") {
         }
 
     override fun pageListParse(response: Response) =
-        response.asJsoup().selectFirst(imageSelector).let {
+        response.asJsoup().selectFirst(imageSelector)!!.let {
             // no interactive comics here
             val img = it.child(2).child(0).child(0)
 

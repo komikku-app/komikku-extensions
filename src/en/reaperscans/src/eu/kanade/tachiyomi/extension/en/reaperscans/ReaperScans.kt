@@ -146,7 +146,7 @@ class ReaperScans : ParsedHttpSource() {
             element.select("img").first()?.let {
                 thumbnail_url = it.attr("abs:src")
             }
-            title = element.select("p").first().text()
+            title = element.select("p").first()!!.text()
         }
     }
 
@@ -166,10 +166,10 @@ class ReaperScans : ParsedHttpSource() {
     // Details
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            thumbnail_url = document.select("div > img").first().attr("abs:src")
-            title = document.select("h1").first().text()
+            thumbnail_url = document.select("div > img").first()!!.attr("abs:src")
+            title = document.select("h1").first()!!.text()
 
-            status = when (document.select("dt:contains(Release Status)").next().first().text()) {
+            status = when (document.select("dt:contains(Release Status)").next().first()!!.text()) {
                 "On hold" -> SManga.ON_HIATUS
                 "Complete" -> SManga.COMPLETED
                 "Ongoing" -> SManga.ONGOING
@@ -186,7 +186,7 @@ class ReaperScans : ParsedHttpSource() {
                 }?.let { add(it) }
             }.takeIf { it.isNotEmpty() }?.joinToString(",")
 
-            description = document.select("section > div:nth-child(1) > div > p").first().text()
+            description = document.select("section > div:nth-child(1) > div > p").first()!!.text()
         }
     }
 

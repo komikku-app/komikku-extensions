@@ -23,11 +23,11 @@ class ReadAttackOnTitanShingekiNoKyojinManga : MangaCatalog("Read Attack on Tita
     override fun chapterListSelector(): String = "div.w-full div.grid div.col-span-3"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        val urlElemnt = element.selectFirst("a")
+        val urlElement = element.selectFirst("a")!!
         name = listOfNotNull(
-            urlElemnt.text(),
-            element.selectFirst("div.text-xs").text().takeUnless { it.isBlank() },
+            urlElement.text(),
+            element.selectFirst("div.text-xs")!!.text().takeUnless { it.isBlank() },
         ).joinToString(" - ") { it.trim() }
-        url = urlElemnt.attr("abs:href")
+        url = urlElement.attr("abs:href")
     }
 }

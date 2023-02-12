@@ -110,7 +110,7 @@ class Randowiz : ParsedHttpSource() {
     override fun chapterListSelector() = ".has-post-thumbnail"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val linkTag = element.select(".elementor-post__title a").first()
+        val linkTag = element.select(".elementor-post__title a").first()!!
         val chapter = SChapter.create()
         chapter.name = linkTag.text()
         chapter.url = linkTag.attr("href").split(".com")[1]

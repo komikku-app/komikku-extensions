@@ -51,9 +51,9 @@ class Dilbert : ParsedHttpSource() {
         Observable.just(manga.apply { initialized = true })!!
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        val date = element.first(".comic-title-date").text()
-        url = element.first(".img-comic-link").attr("href")
-        name = element.first(".comic-title-name").text().ifBlank { date }
+        val date = element.first(".comic-title-date")!!.text()
+        url = element.first(".img-comic-link")!!.attr("href")
+        name = element.first(".comic-title-name")!!.text().ifBlank { date }
         date_upload = dateFormat.parse(date)?.time ?: 0L
     }
 
@@ -68,7 +68,7 @@ class Dilbert : ParsedHttpSource() {
     override fun fetchPageList(chapter: SChapter) =
         Observable.just(listOf(Page(0, chapter.url)))!!
 
-    override fun imageUrlParse(document: Document) = document.first(".img-comic").attr("src")!!
+    override fun imageUrlParse(document: Document): String = document.first(".img-comic")!!.attr("src")
 
     private fun chapterListRequest(manga: SManga, page: Int) =
         GET("$baseUrl/search_results?year=${manga.url}&page=$page&sort=date_desc", headers)

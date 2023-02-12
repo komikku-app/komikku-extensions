@@ -104,7 +104,7 @@ class SeriManga : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         setUrlWithoutDomain(element.select("a").attr("href"))
-        name = "${element.select("span").first().text()}: ${element.select("span")[1].text()}"
+        name = "${element.select("span").first()!!.text()}: ${element.select("span")[1].text()}"
         date_upload = dateFormat.parse(element.select("span")[2].ownText())?.time ?: 0
     }
 

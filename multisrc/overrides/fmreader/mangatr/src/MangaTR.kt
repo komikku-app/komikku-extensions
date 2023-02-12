@@ -48,7 +48,7 @@ class MangaTR : FMReader("Manga-TR", "https://manga-tr.com", "tr") {
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
-        val infoElement: Element = document.select("div#tab1").first()
+        val infoElement: Element = document.select("div#tab1").first()!!
 
         manga.author = infoElement.select("table + table tr + tr td a").first()?.text()
         manga.artist = infoElement.select("table + table tr + tr td + td a").first()?.text()

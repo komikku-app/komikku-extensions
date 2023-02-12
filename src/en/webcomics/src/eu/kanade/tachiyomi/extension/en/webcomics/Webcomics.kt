@@ -38,7 +38,7 @@ class Webcomics : ParsedHttpSource() {
 
     private fun mangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        element.select("a").first().let {
+        element.select("a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.select("h5").text()
         }
@@ -73,7 +73,7 @@ class Webcomics : ParsedHttpSource() {
         val manga = SManga.create()
         infoElement.let {
             manga.title = it.select(".wiki-book-title").text().trim()
-            manga.setUrlWithoutDomain(it.select("a").first().attr("href"))
+            manga.setUrlWithoutDomain(it.select("a").first()!!.attr("href"))
         }
         return manga
     }
@@ -97,8 +97,8 @@ class Webcomics : ParsedHttpSource() {
     override fun searchMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
         var nextPage = true
-        val mangas = document.select(searchMangaSelector()).filter {
-            val shouldFilter = it.select(".col-md-2 > a").first().text() == "READ"
+        val mangas = document.select(searchMangaSelector()).toList().filter {
+            val shouldFilter = it.select(".col-md-2 > a").first()!!.text() == "READ"
             if (nextPage) {
                 nextPage = shouldFilter
             }

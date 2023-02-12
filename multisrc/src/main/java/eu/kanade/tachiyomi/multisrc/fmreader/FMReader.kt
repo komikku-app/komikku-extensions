@@ -109,7 +109,7 @@ abstract class FMReader(
         val mangas = document.select(popularMangaSelector()).map { popularMangaFromElement(it) }
 
         // check if there's a next page
-        val hasNextPage = (document.select(popularMangaNextPageSelector())?.first()?.text() ?: "").let {
+        val hasNextPage = (document.select(popularMangaNextPageSelector()).first()?.text() ?: "").let {
             if (it.contains(Regex("""\w*\s\d*\s\w*\s\d*"""))) {
                 it.split(" ").let { pageOf -> pageOf[1] != pageOf[3] } // current page not last page
             } else {
@@ -134,7 +134,7 @@ abstract class FMReader(
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            element.select("$headerSelector").let {
+            element.select(headerSelector).let {
                 setUrlWithoutDomain(it.attr("abs:href"))
                 title = it.text()
             }
@@ -158,7 +158,7 @@ abstract class FMReader(
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.row").first()
+        val infoElement = document.select("div.row").first()!!
 
         return SManga.create().apply {
             author = infoElement.select("li a.btn-info").eachText().filter {
@@ -227,7 +227,7 @@ abstract class FMReader(
     open fun chapterFromElement(element: Element, mangaTitle: String = ""): SChapter {
         return SChapter.create().apply {
             if (chapterUrlSelector != "") {
-                element.select(chapterUrlSelector).first().let {
+                element.select(chapterUrlSelector).first()!!.let {
                     setUrlWithoutDomain(it.attr("abs:href"))
                     name = it.text().substringAfter("$mangaTitle ")
                 }

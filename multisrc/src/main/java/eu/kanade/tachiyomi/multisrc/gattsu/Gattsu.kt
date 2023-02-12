@@ -105,11 +105,11 @@ abstract class Gattsu(
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = "Capítulo único"
         scanlator = element.select("ul.post-itens li:contains(Tradutor) a").firstOrNull()?.text()
-        date_upload = element.ownerDocument().select("meta[property=article:published_time]").firstOrNull()
+        date_upload = element.ownerDocument()!!.select("meta[property=article:published_time]").firstOrNull()
             ?.attr("content")
             .orEmpty()
             .toDate()
-        setUrlWithoutDomain(element.ownerDocument().location())
+        setUrlWithoutDomain(element.ownerDocument()!!.location())
     }
 
     protected open fun pageListSelector(): String =

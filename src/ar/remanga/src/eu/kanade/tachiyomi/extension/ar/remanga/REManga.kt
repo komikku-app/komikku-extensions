@@ -93,12 +93,12 @@ class REManga : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            document.select("div.infox").first().let { info ->
+            document.select("div.infox").first()!!.let { info ->
                 title = info.select("h1").text()
             }
             description = document.select("div.desc > div > p").text()
             genre = document.select("div.spe > span:contains(نوع), div.genre-info > a").joinToString { it.text() }
-            document.select("div.spe > span:contains(الحالة)")?.first()?.text()?.also { statusText ->
+            document.select("div.spe > span:contains(الحالة)").first()?.text()?.also { statusText ->
                 when {
                     statusText.contains("مستمر", true) -> status = SManga.ONGOING
                     else -> status = SManga.COMPLETED

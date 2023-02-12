@@ -49,7 +49,7 @@ open class GenkanOriginal(
     // search the given document for matches
     private fun getMatchesFrom(document: Document): MutableList<SManga> {
         val searchMatches = mutableListOf<SManga>()
-        document.select(searchMangaSelector())
+        document.select(searchMangaSelector()).toList()
             .filter { it.text().contains(searchQuery, ignoreCase = true) }
             .map { searchMatches.add(searchMangaFromElement(it)) }
 

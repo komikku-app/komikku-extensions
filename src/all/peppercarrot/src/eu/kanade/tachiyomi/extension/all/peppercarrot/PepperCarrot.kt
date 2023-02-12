@@ -145,15 +145,15 @@ class PepperCarrot : HttpSource(), ConfigurableSource {
 
         return translatedChapters.map { (number, it) ->
             SChapter.create().apply {
-                url = it.selectFirst(Evaluator.Tag("a")).attr("href").removePrefix(BASE_URL)
-                name = it.selectFirst(Evaluator.Tag("img")).attr("title").run {
+                url = it.selectFirst(Evaluator.Tag("a"))!!.attr("href").removePrefix(BASE_URL)
+                name = it.selectFirst(Evaluator.Tag("img"))!!.attr("title").run {
                     val index = lastIndexOf('（')
                     when {
                         index >= 0 -> substring(0, index).trimEnd()
                         else -> substringBeforeLast('(').trimEnd()
                     }
                 }
-                date_upload = it.selectFirst(Evaluator.Tag("figcaption")).ownText().let {
+                date_upload = it.selectFirst(Evaluator.Tag("figcaption"))!!.ownText().let {
                     val date = dateRegex.find(it)!!.value
                     dateFormat.parse(date)!!.time
                 }

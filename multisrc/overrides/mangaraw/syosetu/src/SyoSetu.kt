@@ -28,8 +28,8 @@ class SyoSetu : MangaRawTheme("SyoSetu", "https://syosetu.top") {
         GET("$baseUrl/page/$page?s=$query")
 
     override fun Document.getSanitizedDetails(): Element =
-        selectFirst(Evaluator.Tag("article")).selectFirst(Evaluator.Class("content-wrap-inner")).apply {
-            selectFirst(Evaluator.Class("chaplist")).remove()
+        selectFirst(Evaluator.Tag("article"))!!.selectFirst(Evaluator.Class("content-wrap-inner"))!!.apply {
+            selectFirst(Evaluator.Class("chaplist"))!!.remove()
         }
 
     override fun chapterListSelector() = ".chaplist a"

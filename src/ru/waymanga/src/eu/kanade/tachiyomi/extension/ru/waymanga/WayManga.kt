@@ -40,8 +40,8 @@ class WayManga : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("div.card-150 > img").first().attr("src")
-        element.select("a").first().let {
+        manga.thumbnail_url = element.select("div.card-150 > img").first()!!.attr("src")
+        element.select("a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
         }
@@ -50,8 +50,8 @@ class WayManga : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("img").first().attr("src")
-        element.select("div.col-6 a").first().let {
+        manga.thumbnail_url = element.select("img").first()!!.attr("src")
+        element.select("div.col-6 a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
         }
@@ -60,8 +60,8 @@ class WayManga : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("img").first().attr("src")
-        element.select("a").first().let {
+        manga.thumbnail_url = element.select("img").first()!!.attr("src")
+        element.select("a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
         }
@@ -76,16 +76,16 @@ class WayManga : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         setUrlWithoutDomain(document.location())
-        title = document.selectFirst("title").text()
-        thumbnail_url = document.selectFirst("img.object-0").attr("src")
+        title = document.selectFirst("title")!!.text()
+        thumbnail_url = document.selectFirst("img.object-0")!!.attr("src")
     }
 
     override fun chapterListSelector() = "div.chapters-list > div"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("a").first()
+        val urlElement = element.select("a").first()!!
         val chapter = SChapter.create()
-        element.select("div.col-5").first().let {
+        element.select("div.col-5").first()!!.let {
             chapter.name = it.text()
             chapter.chapter_number = it.text().substringBefore(" глава").substringAfter("том ").toFloat()
         }

@@ -22,7 +22,7 @@ object ManaToki : NewToki("ManaToki", "comic", manaTokiPreferences) {
 
     fun latestUpdatesElementParse(element: Element): SManga {
         val linkElement = element.select("a.btn-primary")
-        val rawTitle = element.select(".post-subject > a").first().ownText().trim()
+        val rawTitle = element.select(".post-subject > a").first()!!.ownText().trim()
 
         val title = rawTitle.trim().replace(chapterRegex, "")
 

@@ -48,7 +48,7 @@ class Comicastle : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
             title = element.select("p").text()
-            setUrlWithoutDomain(element.select("a").first().attr("href"))
+            setUrlWithoutDomain(element.select("a").first()!!.attr("href"))
             thumbnail_url = element.select("img").attr("data-src")
         }
     }

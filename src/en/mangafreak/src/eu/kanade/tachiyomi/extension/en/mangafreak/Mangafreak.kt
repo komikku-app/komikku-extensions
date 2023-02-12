@@ -64,7 +64,7 @@ class Mangafreak : ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
         thumbnail_url = element.select("img").attr("abs:src").replace("mini", "manga").substringBeforeLast("/") + ".jpg"
         element.select("a").apply {
-            title = first().text()
+            title = first()!!.text()
             url = attr("href")
         }
     }
@@ -141,7 +141,7 @@ class Mangafreak : ParsedHttpSource() {
             } else {
                 val sb = StringBuilder("0.")
                 for (x in match.groupValues[2]) {
-                    sb.append(x.toInt() - 'a'.toInt() + 1)
+                    sb.append(x.code - 'a'.code + 1)
                 }
                 val p2 = sb.toString().toFloat()
                 val p1 = match.groupValues[1].toFloat()

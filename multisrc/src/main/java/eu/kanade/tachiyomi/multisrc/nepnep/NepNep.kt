@@ -77,7 +77,7 @@ abstract class NepNep(
 
     // don't use ";" for substringBefore() !
     private fun directoryFromDocument(document: Document): JsonArray {
-        val str = document.select("script:containsData(MainFunction)").first().data()
+        val str = document.select("script:containsData(MainFunction)").first()!!.data()
             .substringAfter("vm.Directory = ").substringBefore("vm.GetIntValue").trim()
             .replace(";", " ")
         return json.parseToJsonElement(str).jsonArray
@@ -85,7 +85,7 @@ abstract class NepNep(
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        thumbnailUrl = document.select(".SearchResult > .SearchResultCover img").first().attr("ng-src")
+        thumbnailUrl = document.select(".SearchResult > .SearchResultCover img").first()!!.attr("ng-src")
         directory = directoryFromDocument(document).sortedByDescending { it.getString("v") }
         return parseDirectory(1)
     }
@@ -111,7 +111,7 @@ abstract class NepNep(
     private fun getThumbnailUrl(id: String): String {
         if (thumbnailUrl.isNullOrEmpty()) {
             val response = client.newCall(popularMangaRequest(1)).execute()
-            thumbnailUrl = response.asJsoup().select(".SearchResult > .SearchResultCover img").first().attr("ng-src")
+            thumbnailUrl = response.asJsoup().select(".SearchResult > .SearchResultCover img").first()!!.attr("ng-src")
         }
 
         return thumbnailUrl!!.replace("{{Result.i}}", id)
@@ -308,7 +308,7 @@ abstract class NepNep(
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val vmChapters = response.asJsoup().select("script:containsData(MainFunction)").first().data()
+        val vmChapters = response.asJsoup().select("script:containsData(MainFunction)").first()!!.data()
             .substringAfter("vm.Chapters = ").substringBefore(";")
         return json.parseToJsonElement(vmChapters).jsonArray.map { json ->
             val indexChapter = json.getString("Chapter")!!
@@ -330,7 +330,7 @@ abstract class NepNep(
         val document = response.asJsoup()
         val script = document.selectFirst("script:containsData(MainFunction)")?.data()
             ?: client.newCall(GET(document.location().removeSuffix(".html"), headers))
-                .execute().asJsoup().selectFirst("script:containsData(MainFunction)").data()
+                .execute().asJsoup().selectFirst("script:containsData(MainFunction)")!!.data()
         val curChapter = json.parseToJsonElement(script!!.substringAfter("vm.CurChapter = ").substringBefore(";")).jsonObject
 
         val pageTotal = curChapter.getString("Page")!!.toInt()

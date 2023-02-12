@@ -196,7 +196,7 @@ open class Webtoons(
     open fun parseDetailsThumbnail(document: Document): String? {
         val picElement = document.select("#content > div.cont_box > div.detail_body")
         val discoverPic = document.select("#content > div.cont_box > div.detail_header > span.thmb")
-        return discoverPic.select("img").not("[alt='Representative image']").first()?.attr("src") ?: picElement.attr("style")?.substringAfter("url(")?.substringBeforeLast(")")
+        return discoverPic.select("img").not("[alt='Representative image']").first()?.attr("src") ?: picElement.attr("style").substringAfter("url(")?.substringBeforeLast(")")
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
@@ -204,7 +204,7 @@ open class Webtoons(
         val infoElement = document.select("#_asideDetail")
 
         val manga = SManga.create()
-        manga.title = document.selectFirst("h1.subj, h3.subj").text()
+        manga.title = document.selectFirst("h1.subj, h3.subj")!!.text()
         manga.author = detailElement.select(".author:nth-of-type(1)").first()?.ownText()
         manga.artist = detailElement.select(".author:nth-of-type(2)").first()?.ownText() ?: manga.author
         manga.genre = detailElement.select(".genre").joinToString(", ") { it.text() }
@@ -220,7 +220,7 @@ open class Webtoons(
         else -> SManga.UNKNOWN
     }
 
-    override fun imageUrlParse(document: Document): String = document.select("img").first().attr("src")
+    override fun imageUrlParse(document: Document): String = document.select("img").first()!!.attr("src")
 
     // Filters
 
@@ -260,7 +260,7 @@ open class Webtoons(
         if (element.select(".ico_bgm").isNotEmpty()) {
             chapter.name += " ♫"
         }
-        chapter.date_upload = element.select("a > div.row > div.col > div.sub_info > span.date").text()?.let { chapterParseDate(it) } ?: 0
+        chapter.date_upload = element.select("a > div.row > div.col > div.sub_info > span.date").text().let { chapterParseDate(it) } ?: 0
         return chapter
     }
 

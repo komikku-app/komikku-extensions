@@ -33,7 +33,7 @@ class Explosm : HttpSource() {
         return SManga.create().apply {
             initialized = true
             title = "C&H ${element.attr("id").substringAfter("panel")}" // year
-            setUrlWithoutDomain(element.select("li a").first().attr("href")) // January
+            setUrlWithoutDomain(element.select("li a").first()!!.attr("href")) // January
             thumbnail_url = "https://vhx.imgix.net/vitalyuncensored/assets/13ea3806-5ebf-4987-bcf1-82af2b689f77/S2E4_Still1.jpg"
         }
     }
@@ -67,7 +67,7 @@ class Explosm : HttpSource() {
     // Details
 
     override fun mangaDetailsParse(response: Response): SManga {
-        return createManga(response.asJsoup().select("div.content.active").first())
+        return createManga(response.asJsoup().select("div.content.active").first()!!)
     }
 
     // Chapters

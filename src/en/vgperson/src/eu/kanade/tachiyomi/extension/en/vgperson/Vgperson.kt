@@ -59,12 +59,12 @@ class Vgperson : ParsedHttpSource() {
         }
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        status = when (document.select(".chaptername").first().text()) {
+        status = when (document.select(".chaptername").first()!!.text()) {
             "(Complete)" -> SManga.COMPLETED
             "(Series in Progress)" -> SManga.ONGOING
             else -> SManga.UNKNOWN
         }
-        description = document.select(".content").first()
+        description = document.select(".content").first()!!
             .childNodes().drop(5).takeWhile {
                 it.nodeName() != "table"
             }.joinToString("") {
@@ -82,17 +82,17 @@ class Vgperson : ParsedHttpSource() {
     override fun chapterListSelector() = ".chaptertable tbody tr"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        element.select("td > a").first().let {
+        element.select("td > a").first()!!.let {
             name = it.text()
             url = it.attr("href")
         }
         // append the name if it exists & remove the occasional hyphen
-        element.select(".chaptername")?.first()?.let {
+        element.select(".chaptername").first()?.let {
             name += " - ${it.text().substringAfter("- ")}"
         }
         // hardcode special chapter numbers for Three Days of Happiness
         chapter_number = url.substringAfterLast("c=").toFloatOrNull()
-            ?: 16.5f + "0.${url.substringAfterLast("b=")}".toFloat()
+            ?: (16.5f + "0.${url.substringAfterLast("b=")}".toFloat())
         scanlator = "vgperson"
         date_upload = 0L
     }

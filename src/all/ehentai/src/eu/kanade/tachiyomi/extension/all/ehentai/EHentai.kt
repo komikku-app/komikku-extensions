@@ -81,7 +81,7 @@ abstract class EHentai(
                         }
                     }
                     // Get image
-                    it.parent().select(".glthumb img")?.first().apply {
+                    it.parent()?.select(".glthumb img")?.first().apply {
                         thumbnail_url = this?.attr("data-src")?.nullIfBlank()
                             ?: this?.attr("src")
                     }

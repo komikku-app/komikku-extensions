@@ -77,7 +77,7 @@ class Junmeitu : ParsedHttpSource() {
     // Details
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
-        manga.title = document.selectFirst(".news-title,.title").text()
+        manga.title = document.selectFirst(".news-title,.title")!!.text()
         manga.description = document.select(".news-info,.picture-details").text() + "\n" + document.select(".introduce").text()
         manga.genre = document.select(".relation_tags > a").joinToString { it.text() }
         manga.status = SManga.COMPLETED
@@ -86,7 +86,7 @@ class Junmeitu : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(element.select(".position a:last-child").first().attr("abs:href"))
+        chapter.setUrlWithoutDomain(element.select(".position a:last-child").first()!!.attr("abs:href"))
         chapter.chapter_number = -2f
         chapter.name = "Gallery"
         return chapter
@@ -104,7 +104,7 @@ class Junmeitu : ParsedHttpSource() {
                 val index = lastIndexOf('.') // .html
                 baseUrl + "/ajax_" + substring(baseUrl.length + 1, index) + '-'
             }
-            val postfix = document.selectFirst("body > script").data().run {
+            val postfix = document.selectFirst("body > script")!!.data().run {
                 val script = substringAfterLast("pc_cid = ")
                 val categoryId = script.substringBefore(';')
                 val contentId = script.substringAfter("pc_id = ").substringBeforeLast(';')

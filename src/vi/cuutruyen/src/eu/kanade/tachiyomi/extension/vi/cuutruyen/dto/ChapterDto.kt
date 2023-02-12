@@ -31,7 +31,7 @@ data class ChapterDto(
             name += ": ${dto.name}"
         }
 
-        date_upload = kotlin.runCatching {
+        date_upload = runCatching {
             DATE_FORMATTER.parse(dto.updatedAt.replace("+07:00", "Z"))?.time
         }.getOrNull() ?: 0L
 

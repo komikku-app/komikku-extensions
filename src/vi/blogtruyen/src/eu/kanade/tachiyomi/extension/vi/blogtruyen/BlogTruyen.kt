@@ -63,7 +63,7 @@ class BlogTruyen : ParsedHttpSource() {
 
         val manga = document.select(popularMangaSelector()).map {
             val tiptip = it.attr("data-tiptip")
-            popularMangaFromElement(it, document.getElementById(tiptip))
+            popularMangaFromElement(it, document.getElementById(tiptip)!!)
         }
 
         val hasNextPage = document.selectFirst(popularMangaNextPageSelector()) != null
@@ -77,12 +77,12 @@ class BlogTruyen : ParsedHttpSource() {
         throw UnsupportedOperationException("Not used")
 
     private fun popularMangaFromElement(element: Element, tiptip: Element) = SManga.create().apply {
-        val anchor = element.selectFirst("a")
+        val anchor = element.selectFirst("a")!!
         setUrlWithoutDomain(anchor.attr("href"))
         title = anchor.attr("title").replace("truyện tranh ", "").trim()
 
-        thumbnail_url = tiptip.selectFirst("img").attr("abs:src")
-        description = tiptip.selectFirst(".al-j").text()
+        thumbnail_url = tiptip.selectFirst("img")!!.attr("abs:src")
+        description = tiptip.selectFirst(".al-j")!!.text()
     }
 
     override fun popularMangaNextPageSelector() = ".paging:last-child:not(.current_page)"
@@ -112,7 +112,7 @@ class BlogTruyen : ParsedHttpSource() {
                 // it's a chapter, resolve to manga ID
                 if (id.startsWith("c")) {
                     val document = client.newCall(GET("$baseUrl/$id", headers)).execute().asJsoup()
-                    id = document.selectFirst(".breadcrumbs a:last-child").attr("href").removePrefix("/")
+                    id = document.selectFirst(".breadcrumbs a:last-child")!!.attr("href").removePrefix("/")
                 }
 
                 fetchMangaDetails(
@@ -195,7 +195,7 @@ class BlogTruyen : ParsedHttpSource() {
 
         val manga = document.select(searchMangaSelector()).map {
             val tiptip = it.attr("data-tiptip")
-            searchMangaFromElement(it, document.getElementById(tiptip))
+            searchMangaFromElement(it, document.getElementById(tiptip)!!)
         }
 
         val hasNextPage = document.selectFirst(searchMangaNextPageSelector()) != null
@@ -213,13 +213,13 @@ class BlogTruyen : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector() = ".pagination .glyphicon-step-forward"
 
-    private fun getMangaTitle(document: Document) = document.selectFirst(".entry-title a")
+    private fun getMangaTitle(document: Document) = document.selectFirst(".entry-title a")!!
         .attr("title")
         .replaceFirst("truyện tranh", "", false)
         .trim()
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val anchor = document.selectFirst(".entry-title a")
+        val anchor = document.selectFirst(".entry-title a")!!
         setUrlWithoutDomain(anchor.attr("href"))
         title = getMangaTitle(document)
 
@@ -232,7 +232,7 @@ class BlogTruyen : ParsedHttpSource() {
 
         description = StringBuilder().apply {
             // the actual synopsis
-            val synopsisBlock = document.selectFirst(".manga-detail .detail .content")
+            val synopsisBlock = document.selectFirst(".manga-detail .detail .content")!!
 
             // replace the facebook blockquote in synopsis with the link (if there is one)
             val fbElement = synopsisBlock.selectFirst(".fb-page, .fb-group")
@@ -302,13 +302,13 @@ class BlogTruyen : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException("Not used")
 
     private fun chapterFromElement(element: Element, title: String): SChapter = SChapter.create().apply {
-        val anchor = element.select("span > a").first()
+        val anchor = element.select("span > a").first()!!
 
         setUrlWithoutDomain(anchor.attr("href"))
         name = anchor.attr("title").replace(title, "", true).trim()
-        date_upload = kotlin.runCatching {
+        date_upload = runCatching {
             dateFormat.parse(
-                element.selectFirst("span.publishedDate").text(),
+                element.selectFirst("span.publishedDate")!!.text(),
             )?.time
         }.getOrNull() ?: 0L
     }
@@ -323,9 +323,9 @@ class BlogTruyen : ParsedHttpSource() {
     )
 
     private fun countView(document: Document) {
-        val mangaId = document.getElementById("MangaId").attr("value")
-        val chapterId = document.getElementById("ChapterId").attr("value")
-        kotlin.runCatching {
+        val mangaId = document.getElementById("MangaId")!!.attr("value")
+        val chapterId = document.getElementById("ChapterId")!!.attr("value")
+        runCatching {
             client.newCall(countViewRequest(mangaId, chapterId)).execute().close()
         }
     }

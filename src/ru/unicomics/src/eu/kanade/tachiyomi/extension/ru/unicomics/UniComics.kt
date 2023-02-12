@@ -51,7 +51,7 @@ class UniComics : ParsedHttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
-                is getEventsList -> {
+                is GetEventsList -> {
                     if (filter.state > 0) {
                         return GET("$baseDefaultUrl$PATH_events", headers)
                     }
@@ -82,7 +82,7 @@ class UniComics : ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = ".b-pager__next"
     override fun searchMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            element.select("a.b-serp-item__title-link").first().let {
+            element.select("a.b-serp-item__title-link").first()!!.let {
                 val originUrl = it.attr("href")
                 val urlString =
                     "/characters$|/creators$".toRegex().replace(
@@ -115,7 +115,7 @@ class UniComics : ParsedHttpSource() {
         if (document.location().contains("$baseDefaultUrl$PATH_events")) {
             val mangas = document.select(".list_events").map { element ->
                 SManga.create().apply {
-                    element.select("a").first().let {
+                    element.select("a").first()!!.let {
                         setUrlWithoutDomain("/" + it.attr("href"))
                         title = it.text()
                     }
@@ -178,11 +178,11 @@ class UniComics : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select(".left_comics img")!!.first().attr("src").replace(".jpg", "_big.jpg")
-        element.select("a").first().let {
+        manga.thumbnail_url = element.select(".left_comics img").first()!!.attr("src").replace(".jpg", "_big.jpg")
+        element.select("a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
         }
-        manga.title = element.select(".list_title").first().text()
+        manga.title = element.select(".list_title").first()!!.text()
         return manga
     }
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
@@ -199,14 +199,14 @@ class UniComics : ParsedHttpSource() {
     }
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val infoElement = document.select(".left_container div").first()
-        title = infoElement.select("h1").first().text()
+        val infoElement = document.select(".left_container div").first()!!
+        title = infoElement.select("h1").first()!!.text()
         thumbnail_url = if (infoElement.select("img").isNotEmpty()) {
-            infoElement.select("img").first().attr("src")
+            infoElement.select("img").first()!!.attr("src")
         } else {
-            document.select(".left_comics img").first().attr("src").replace(".jpg", "_big.jpg")
+            document.select(".left_comics img").first()!!.attr("src").replace(".jpg", "_big.jpg")
         }
-        description = infoElement.select("H2").first().text() + "\n" + infoElement.select("p").last()?.text().orEmpty()
+        description = infoElement.select("H2").first()!!.text() + "\n" + infoElement.select("p").last()?.text().orEmpty()
         author = infoElement.select("tr:contains(Издательство)").text()
         genre = infoElement.select("tr:contains(Жанр) a").joinToString { it.text() }
     }
@@ -240,9 +240,9 @@ class UniComics : ParsedHttpSource() {
     }
 
     private fun chapterFromElement(element: Element, manga: SManga): SChapter {
-        val urlElement = element.select("td:contains(Читать) a").first()
+        val urlElement = element.select("td:contains(Читать) a").first()!!
         val chapter = SChapter.create()
-        element.select(".list_title").first().text().let {
+        element.select(".list_title").first()!!.text().let {
             val titleNoPrefix = it.removePrefix(manga.title).removePrefix(":").trim()
             chapter.name = if (titleNoPrefix.isNotEmpty()) {
                 titleNoPrefix.replaceFirst(titleNoPrefix.first(), titleNoPrefix.first().uppercaseChar())
@@ -279,9 +279,9 @@ class UniComics : ParsedHttpSource() {
 
     override fun getFilterList() = FilterList(
         Publishers(publishersName),
-        getEventsList(),
+        GetEventsList(),
     )
-    private class getEventsList : Filter.Select<String>(
+    private class GetEventsList : Filter.Select<String>(
         "События (только)",
         arrayOf("Нет", "в комиксах"),
     )

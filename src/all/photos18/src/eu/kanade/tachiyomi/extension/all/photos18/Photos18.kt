@@ -45,14 +45,14 @@ class Photos18 : HttpSource(), ConfigurableSource {
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
         parseCategories(document)
-        val mangas = document.selectFirst(Evaluator.Id("videos")).children().map {
-            val cardBody = it.selectFirst(Evaluator.Class("card-body"))
-            val link = cardBody.selectFirst(Evaluator.Tag("a"))
+        val mangas = document.selectFirst(Evaluator.Id("videos"))!!.children().map {
+            val cardBody = it.selectFirst(Evaluator.Class("card-body"))!!
+            val link = cardBody.selectFirst(Evaluator.Tag("a"))!!
             SManga.create().apply {
                 url = link.attr("href").stripLang()
                 title = link.ownText()
-                thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img")).attr("data-src")
-                genre = cardBody.selectFirst(Evaluator.Tag("label")).ownText()
+                thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img"))!!.attr("data-src")
+                genre = cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()
                 status = SManga.COMPLETED
                 initialized = true
             }
@@ -98,7 +98,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        val images = document.selectFirst(Evaluator.Id("content")).select(Evaluator.Tag("img"))
+        val images = document.selectFirst(Evaluator.Id("content"))!!.select(Evaluator.Tag("img"))
         return images.mapIndexed { index, image ->
             Page(index, imageUrl = image.attr("data-src"))
         }
@@ -145,12 +145,12 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     private fun parseCategories(document: Document) {
         if (categories.isNotEmpty()) return
-        val items = document.selectFirst(Evaluator.Id("w3")).children()
+        val items = document.selectFirst(Evaluator.Id("w3"))!!.children()
         categories = buildList(items.size + 1) {
             add(Pair("All", ""))
             items.mapTo(this) {
                 val value = it.text().substringBefore(" (")
-                val queryValue = it.selectFirst(Evaluator.Tag("a")).attr("href").substringAfterLast('/')
+                val queryValue = it.selectFirst(Evaluator.Tag("a"))!!.attr("href").substringAfterLast('/')
                 Pair(value, queryValue)
             }
         }

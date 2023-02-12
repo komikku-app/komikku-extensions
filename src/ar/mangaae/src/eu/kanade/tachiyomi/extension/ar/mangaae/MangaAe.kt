@@ -70,7 +70,7 @@ class MangaAe : ParsedHttpSource() {
             lazysrc
         }
         setUrlWithoutDomain(element.select("a:has(img)").attr("href"))
-        title = element.select("a").last().text()
+        title = element.select("a").last()!!.text()
     }
 
     override fun latestUpdatesNextPageSelector(): String? = null
@@ -100,7 +100,7 @@ class MangaAe : ParsedHttpSource() {
 
     // Manga summary page
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val infoElement = document.select("div.indexcontainer").first()
+        val infoElement = document.select("div.indexcontainer").first()!!
         title = infoElement.select("h1.EnglishName").text().removeSurrounding("(", ")")
         author = infoElement.select("div.manga-details-author h4")[0].text()
         artist = author
@@ -133,7 +133,7 @@ class MangaAe : ParsedHttpSource() {
     // Pages
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
-        document.select("div#showchaptercontainer img")?.forEach {
+        document.select("div#showchaptercontainer img").forEach {
             pages.add(Page(pages.size, "", it.attr("src")))
         }
         return pages

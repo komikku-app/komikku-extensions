@@ -53,7 +53,7 @@ abstract class Zbulu(
                 setUrlWithoutDomain(it.attr("href").addTrailingSlash())
                 title = it.text()
             }
-            thumbnail_url = element.select("img").first().attr("abs:src")
+            thumbnail_url = element.select("img").first()!!.attr("abs:src")
         }
     }
 
@@ -100,10 +100,10 @@ abstract class Zbulu(
     // Manga summary page
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.single-comic").first()
+        val infoElement = document.select("div.single-comic").first()!!
 
         return SManga.create().apply {
-            title = infoElement.select("h1").first().text()
+            title = infoElement.select("h1").first()!!.text()
             author = infoElement.select("div.author a").text()
             status = parseStatus(infoElement.select("div.update span[style]").text())
             genre = infoElement.select("div.genre a").joinToString { it.text() }
@@ -141,7 +141,7 @@ abstract class Zbulu(
         return SChapter.create().apply {
             setUrlWithoutDomain(element.select("a").attr("href"))
             name = element.select("h2").text()
-            date_upload = element.select("div.chapter-date")?.text().toDate()
+            date_upload = element.select("div.chapter-date").text().toDate()
         }
     }
 

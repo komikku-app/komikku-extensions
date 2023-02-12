@@ -59,7 +59,7 @@ class MangaRawOrg : MangaThemesia("Manga Raw.org", "https://mangaraw.org", "ja")
     }
 
     private fun pageListParse(response: Response, chapterUrl: String): List<Page> {
-        return response.asJsoup().select("span.page-link").first().ownText().substringAfterLast(" ").toInt()
+        return response.asJsoup().select("span.page-link").first()!!.ownText().substringAfterLast(" ").toInt()
             .let { lastNum -> IntRange(1, lastNum) }
             .map { num -> Page(num, "$chapterUrl/$num") }
     }

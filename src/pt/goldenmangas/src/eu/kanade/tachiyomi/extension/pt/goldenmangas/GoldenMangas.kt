@@ -62,8 +62,8 @@ class GoldenMangas : ParsedHttpSource() {
     override fun latestUpdatesSelector() = "div.col-sm-12.atualizacao > div.row"
 
     override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
-        val infoElement = element.select("div.col-sm-10.col-xs-8 h3").first()
-        val thumbElement = element.select("a:first-child div img").first()
+        val infoElement = element.select("div.col-sm-10.col-xs-8 h3").first()!!
+        val thumbElement = element.select("a:first-child div img").first()!!
 
         title = infoElement.text().withoutLanguage()
         thumbnail_url = thumbElement.attr("abs:src")
@@ -96,14 +96,14 @@ class GoldenMangas : ParsedHttpSource() {
     override fun searchMangaNextPageSelector(): String? = null
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val infoElement = document.select("div.row > div.col-sm-8 > div.row").first()
-        val firstColumn = infoElement.select("div.col-sm-4.text-right > img").first()
-        val secondColumn = infoElement.select("div.col-sm-8").first()
+        val infoElement = document.select("div.row > div.col-sm-8 > div.row").first()!!
+        val firstColumn = infoElement.select("div.col-sm-4.text-right > img").first()!!
+        val secondColumn = infoElement.select("div.col-sm-8").first()!!
 
         title = secondColumn.select("h2:eq(0)").text().withoutLanguage()
-        author = secondColumn.select("h5:contains(Autor)")!!.text().withoutLabel()
-        artist = secondColumn.select("h5:contains(Artista)")!!.text().withoutLabel()
-        genre = secondColumn.select("h5:contains(Genero) a")
+        author = secondColumn.select("h5:contains(Autor)").text().withoutLabel()
+        artist = secondColumn.select("h5:contains(Artista)").text().withoutLabel()
+        genre = secondColumn.select("h5:contains(Genero) a").toList()
             .filter { it.text().isNotEmpty() }
             .joinToString { it.text() }
         status = secondColumn.select("h5:contains(Status) a").text().toStatus()
@@ -117,9 +117,9 @@ class GoldenMangas : ParsedHttpSource() {
         val firstColumn = element.select("a > div.col-sm-5")
         val secondColumn = element.select("div.col-sm-5.text-right a[href^='http']")
 
-        name = firstColumn.select("div.col-sm-5").first().text()
+        name = firstColumn.select("div.col-sm-5").first()!!.text()
             .substringBefore("(").trim()
-        scanlator = secondColumn?.joinToString { it.text() }
+        scanlator = secondColumn.joinToString { it.text() }
         date_upload = firstColumn.select("div.col-sm-5 span[style]").text().toDate()
         url = element.select("a").attr("href")
     }
@@ -181,8 +181,6 @@ class GoldenMangas : ParsedHttpSource() {
         private const val ACCEPT_IMAGE = "image/webp,image/apng,image/*,*/*;q=0.8"
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7,es;q=0.6,gl;q=0.5"
         private const val REFERER = "https://google.com/"
-        private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36"
 
         private val FLAG_REGEX = "\\((Pt[-/]br|Scan)\\)".toRegex(RegexOption.IGNORE_CASE)
 

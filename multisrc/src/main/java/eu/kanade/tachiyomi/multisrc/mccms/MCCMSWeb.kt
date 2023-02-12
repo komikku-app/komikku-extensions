@@ -24,14 +24,14 @@ open class MCCMSWeb(
     fun parseListing(document: Document): MangasPage {
         val mangas = document.select(Evaluator.Class("common-comic-item")).map {
             SManga.create().apply {
-                val titleElement = it.selectFirst(Evaluator.Class("comic__title")).child(0)
+                val titleElement = it.selectFirst(Evaluator.Class("comic__title"))!!.child(0)
                 url = titleElement.attr("href")
                 title = titleElement.ownText()
-                thumbnail_url = it.selectFirst(Evaluator.Tag("img")).attr("data-original")
+                thumbnail_url = it.selectFirst(Evaluator.Tag("img"))!!.attr("data-original")
             }.cleanup()
         }
         val hasNextPage = run { // default pagination
-            val buttons = document.selectFirst(Evaluator.Id("Pagination")).select(Evaluator.Tag("a"))
+            val buttons = document.selectFirst(Evaluator.Id("Pagination"))!!.select(Evaluator.Tag("a"))
             val count = buttons.size
             // Next page != Last page
             buttons[count - 1].attr("href") != buttons[count - 2].attr("href")
@@ -85,12 +85,12 @@ open class MCCMSWeb(
         if (manga.url == "/index.php/search") return Observable.just(manga)
         return client.newCall(GET(baseUrl + manga.url, pcHeaders)).asObservableSuccess().map { response ->
             SManga.create().apply {
-                val document = response.asJsoup().selectFirst(Evaluator.Class("de-info__box"))
-                title = document.selectFirst(Evaluator.Class("comic-title")).ownText()
-                thumbnail_url = document.selectFirst(Evaluator.Tag("img")).attr("src")
-                author = document.selectFirst(Evaluator.Class("name")).text()
-                genre = document.selectFirst(Evaluator.Class("comic-status")).select(Evaluator.Tag("a")).joinToString { it.ownText() }
-                description = document.selectFirst(Evaluator.Class("intro-total")).text()
+                val document = response.asJsoup().selectFirst(Evaluator.Class("de-info__box"))!!
+                title = document.selectFirst(Evaluator.Class("comic-title"))!!.ownText()
+                thumbnail_url = document.selectFirst(Evaluator.Tag("img"))!!.attr("src")
+                author = document.selectFirst(Evaluator.Class("name"))!!.text()
+                genre = document.selectFirst(Evaluator.Class("comic-status"))!!.select(Evaluator.Tag("a")).joinToString { it.ownText() }
+                description = document.selectFirst(Evaluator.Class("intro-total"))!!.text()
             }.cleanup()
         }
     }
@@ -98,7 +98,7 @@ open class MCCMSWeb(
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         if (manga.url == "/index.php/search") return Observable.just(emptyList())
         return client.newCall(GET(baseUrl + manga.url, pcHeaders)).asObservableSuccess().map { response ->
-            response.asJsoup().selectFirst(Evaluator.Class("chapter__list-box")).children().map {
+            response.asJsoup().selectFirst(Evaluator.Class("chapter__list-box"))!!.children().map {
                 val link = it.child(0)
                 SChapter.create().apply {
                     url = link.attr("href")

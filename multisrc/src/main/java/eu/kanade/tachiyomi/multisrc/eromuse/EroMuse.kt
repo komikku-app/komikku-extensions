@@ -92,7 +92,7 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
     protected fun parseManga(document: Document): MangasPage {
         fun internalParse(internalDocument: Document): List<SManga> {
             val authorDocument = if (stackItem.pageType == VARIOUS_AUTHORS) {
-                internalDocument.select(albumSelector)?.let {
+                internalDocument.select(albumSelector).let {
                         elements ->
                     elements.reversed().map { pageStack.addLast(StackItem(it.attr("abs:href"), AUTHOR)) }
                 }
@@ -107,7 +107,7 @@ open class EroMuse(override val name: String, override val baseUrl: String) : Ht
         if (stackItem.pageType in listOf(VARIOUS_AUTHORS, SEARCH_RESULTS_OR_BASE)) document.addNextPageToStack()
         val mangas = when (stackItem.pageType) {
             VARIOUS_AUTHORS -> {
-                document.select(albumSelector)?.let {
+                document.select(albumSelector).let {
                         elements ->
                     elements.reversed().map { pageStack.addLast(StackItem(it.attr("abs:href"), AUTHOR)) }
                 }

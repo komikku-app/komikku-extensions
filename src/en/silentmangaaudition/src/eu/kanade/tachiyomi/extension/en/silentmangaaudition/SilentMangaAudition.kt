@@ -73,8 +73,8 @@ class SilentMangaAudition : HttpSource() {
     private fun chapterListSelector(): String = "ol.playlist li a"
 
     private fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        name = element.select("span.ttl")!!.text()
-        scanlator = element.select("span.name")!!.text()
+        name = element.select("span.ttl").text()
+        scanlator = element.select("span.name").text()
         url = element.attr("abs:href")
     }
 

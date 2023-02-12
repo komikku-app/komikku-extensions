@@ -98,7 +98,7 @@ open class NHentai(
         title = element.select("a > div").text().replace("\"", "").let {
             if (displayFullTitle) it.trim() else it.shortenTitle()
         }
-        thumbnail_url = element.select(".cover img").first().let { img ->
+        thumbnail_url = element.select(".cover img").first()!!.let { img ->
             if (img.hasAttr("data-src")) img.attr("abs:data-src") else img.attr("abs:src")
         }
     }
@@ -247,11 +247,11 @@ open class NHentai(
     override fun chapterListSelector() = throw UnsupportedOperationException("Not used")
 
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.select("script:containsData(media_server)").first().data()
-        val media_server = Regex("""media_server\s*:\s*(\d+)""").find(script)?.groupValues!!.get(1)
+        val script = document.select("script:containsData(media_server)").first()!!.data()
+        val mediaServer = Regex("""media_server\s*:\s*(\d+)""").find(script)?.groupValues!![1]
 
         return document.select("div.thumbs a > img").mapIndexed { i, img ->
-            Page(i, "", img.attr("abs:data-src").replace("t.nh", "i.nh").replace("t\\d+.nh".toRegex(), "i$media_server.nh").replace("t.", "."))
+            Page(i, "", img.attr("abs:data-src").replace("t.nh", "i.nh").replace("t\\d+.nh".toRegex(), "i$mediaServer.nh").replace("t.", "."))
         }
     }
 

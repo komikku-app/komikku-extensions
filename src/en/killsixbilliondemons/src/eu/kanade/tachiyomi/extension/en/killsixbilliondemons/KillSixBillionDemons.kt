@@ -14,13 +14,6 @@ import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-/**
- * original creator:
- *  @author Aria Moradi <aria.moradi007@gmail.com>
- * fixed some bugs and added title pages:
- *  @author THE_ORONCO <the_oronco@posteo.net>
- */
-
 class KillSixBillionDemons : HttpSource() {
 
     override val name = "KillSixBillionDemons"
@@ -97,11 +90,7 @@ class KillSixBillionDemons : HttpSource() {
     private fun fetchThumbnailUrl(bookOverviewUrl: String): String {
         val overviewDoc =
             client.newCall(GET(bookOverviewUrl + pagesOrder, headers)).execute().asJsoup()
-        return overviewDoc.selectFirst(".comic-thumbnail-in-archive a img").attr("src")
-    }
-
-    private fun String.lowercase(): String {
-        return this.lowercase(Locale.ROOT)
+        return overviewDoc.selectFirst(".comic-thumbnail-in-archive a img")!!.attr("src")
     }
 
     /**

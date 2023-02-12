@@ -62,16 +62,16 @@ class Vomic : MangabzTheme("vomic", ""), ConfigurableSource {
 
         val mangas = buildList {
             // ranking sidebar
-            addAll(document.selectFirst(Evaluator.Class("rank-list")).children())
+            addAll(document.selectFirst(Evaluator.Class("rank-list"))!!.children())
             // carousel list
-            addAll(document.selectFirst(Evaluator.Class("carousel-right-list")).children())
+            addAll(document.selectFirst(Evaluator.Class("carousel-right-list"))!!.children())
             // recommend list
-            addAll(document.select(Evaluator.Class("index-manga-item")))
+            addAll(document.select(Evaluator.Class("index-manga-item"))!!)
         }.map { element ->
             SManga.create().apply {
-                title = element.selectFirst(paragraph).text()
-                url = element.selectFirst(link).attr("href")
-                thumbnail_url = element.selectFirst(image).attr("src")
+                title = element.selectFirst(paragraph)!!.text()
+                url = element.selectFirst(link)!!.attr("href")
+                thumbnail_url = element.selectFirst(image)!!.attr("src")
             }
         }
 

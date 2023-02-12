@@ -68,8 +68,8 @@ abstract class NoiseManga(override val lang: String) : ParsedHttpSource() {
     override fun mangaDetailsRequest(manga: SManga): Request = GET(baseUrl + manga.url, headers)
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val mainContent = document.select("div.main-content-page").first()
-        val entryContent = mainContent.select("div.entry-content").first()
+        val mainContent = document.select("div.main-content-page").first()!!
+        val entryContent = mainContent.select("div.entry-content").first()!!
         val descriptionSelector = if (lang == "en") "h4 + h4, h4 + div h4" else "h1 + h4"
         val mangaSlug = document.location().replace(baseUrl, "")
 

@@ -299,7 +299,7 @@ class DoujinDesu : ParsedHttpSource() {
     // Search & FIlter
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var url = "$baseUrl/manga/page/$page/".toHttpUrlOrNull()?.newBuilder()!!.addQueryParameter("title", query)
+        val url = "$baseUrl/manga/page/$page/".toHttpUrlOrNull()?.newBuilder()!!.addQueryParameter("title", query)
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is CategoryNames -> {
@@ -341,11 +341,11 @@ class DoujinDesu : ParsedHttpSource() {
     // Detail Parse
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("section.metadata").first()
+        val infoElement = document.select("section.metadata").first()!!
         val manga = SManga.create()
         manga.description = when {
             document.select("section.metadata > div.pb-2 > p:nth-child(1)").isEmpty() -> "Tidak ada deskripsi yang tersedia bosque"
-            else -> document.select("section.metadata > div.pb-2 > p:nth-child(1)").first().text()
+            else -> document.select("section.metadata > div.pb-2 > p:nth-child(1)").first()!!.text()
         }
         val genres = mutableListOf<String>()
         infoElement.select("div.tags > a").forEach { element ->
@@ -354,7 +354,7 @@ class DoujinDesu : ParsedHttpSource() {
         }
         manga.author = document.select("section.metadata > table:nth-child(2) > tbody > tr.pages > td:contains(Author) + td:nth-child(2) > a").joinToString { it.text() }
         manga.genre = infoElement.select("div.tags > a").joinToString { it.text() }
-        manga.status = parseStatus(document.select("section.metadata > table:nth-child(2) > tbody > tr:nth-child(1) > td:nth-child(2) > a").first().text())
+        manga.status = parseStatus(document.select("section.metadata > table:nth-child(2) > tbody > tr:nth-child(1) > td:nth-child(2) > a").first()!!.text())
         manga.thumbnail_url = document.select("figure.thumbnail > img").attr("src")
         manga.artist = document.select("section.metadata > table:nth-child(2) > tbody > tr.pages > td:contains(Character) + td:nth-child(2) > a").joinToString { it.text() }
 

@@ -53,8 +53,8 @@ class Mangahasu : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("img").first().attr("src")
-        element.select("a:has(h3.name-manga), a.name-manga").first().let {
+        manga.thumbnail_url = element.select("img").first()!!.attr("src")
+        element.select("a:has(h3.name-manga), a.name-manga").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
         }
@@ -119,7 +119,7 @@ class Mangahasu : ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select(".info-c").first()
+        val infoElement = document.select(".info-c").first()!!
 
         val manga = SManga.create()
         manga.author = isUpdating(infoElement.select(".info")[0].text())
@@ -145,7 +145,7 @@ class Mangahasu : ParsedHttpSource() {
     override fun chapterListSelector() = "tbody tr"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("a").first()
+        val urlElement = element.select("a").first()!!
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         urlElement.select("span.name-manga").remove()

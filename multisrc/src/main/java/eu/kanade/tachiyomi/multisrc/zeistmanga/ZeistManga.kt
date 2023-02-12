@@ -32,7 +32,7 @@ abstract class ZeistManga(
     open val imgSelectorAttr = "src"
 
     open fun getChaptersUrl(doc: Document): String {
-        val script = doc.selectFirst(scriptSelector)
+        val script = doc.selectFirst(scriptSelector)!!
         val feed = chapterFeedRegex
             .find(script.html())
             ?.groupValues?.get(1)
@@ -109,17 +109,17 @@ abstract class ZeistManga(
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val profileManga = document.selectFirst(".grid.gtc-235fr")
+        val profileManga = document.selectFirst(".grid.gtc-235fr")!!
         return SManga.create().apply {
-            title = profileManga.selectFirst("h1.mt-0.mb-6.fs-20").text()
-            thumbnail_url = profileManga.selectFirst("img").attr("src")
+            title = profileManga.selectFirst("h1.mt-0.mb-6.fs-20")!!.text()
+            thumbnail_url = profileManga.selectFirst("img")!!.attr("src")
             description = profileManga.select("#synopsis").text()
             status = SManga.UNKNOWN
         }
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val images = document.selectFirst("div.check-box")
+        val images = document.selectFirst("div.check-box")!!
         return images.select(imgSelector).mapIndexed { i, img ->
             Page(i, "", img.attr(imgSelectorAttr))
         }
@@ -153,8 +153,8 @@ abstract class ZeistManga(
     override fun searchMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
             setUrlWithoutDomain(element.select(".block").attr("href"))
-            title = element.selectFirst(".clamp.toe.oh.block").text().trim()
-            thumbnail_url = element.selectFirst("img").attr("src")
+            title = element.selectFirst(".clamp.toe.oh.block")!!.text().trim()
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
         }
     }
 

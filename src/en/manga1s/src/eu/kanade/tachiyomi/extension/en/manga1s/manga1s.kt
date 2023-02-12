@@ -75,7 +75,7 @@ class manga1s : ParsedHttpSource() {
             genre = document.select(".novel-categories > a").joinToString { it.text() }
             status =
                 when (
-                    document.select(".novel-info i.fa-flag")[0].parent().parent().select("span")
+                    document.select(".novel-info i.fa-flag")[0].parent()!!.parent()!!.select("span")
                         .text()
                 ) {
                     "On-going" -> SManga.ONGOING

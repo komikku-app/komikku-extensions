@@ -28,7 +28,7 @@ open class MCCMSNsfw(
         GET(baseUrl + chapter.url, headers)
 
     override fun pageListParse(response: Response): List<Page> {
-        val container = response.asJsoup().selectFirst(Evaluator.Class("comic-list"))
+        val container = response.asJsoup().selectFirst(Evaluator.Class("comic-list"))!!
         return container.select(Evaluator.Tag("img")).mapIndexed { index, img ->
             Page(index, imageUrl = img.attr("src"))
         }

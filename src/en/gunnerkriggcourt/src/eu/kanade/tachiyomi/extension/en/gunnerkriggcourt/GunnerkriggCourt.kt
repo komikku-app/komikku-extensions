@@ -57,7 +57,7 @@ class GunnerkriggCourt : ParsedHttpSource() {
         return SChapter.create().apply {
             chapter_number = element.attr("value").toFloat()
             setUrlWithoutDomain("/?p=" + element.attr("value"))
-            name = element.parent().previousElementSibling().text() + " (" + chapter_number.toInt() + ")"
+            name = element.parent()!!.previousElementSibling()!!.text() + " (" + chapter_number.toInt() + ")"
             // date_upload // Find by using hovertext above "Tom" on actual comic page
         }
     }
@@ -72,7 +72,7 @@ class GunnerkriggCourt : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga = throw Exception("Not used")
 
-    override fun searchMangaNextPageSelector(): String? = throw Exception("Not used")
+    override fun searchMangaNextPageSelector(): String = throw Exception("Not used")
 
     override fun searchMangaSelector(): String = throw Exception("Not used")
 
@@ -80,13 +80,13 @@ class GunnerkriggCourt : ParsedHttpSource() {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = throw Exception("Not used")
 
-    override fun popularMangaNextPageSelector(): String? = throw Exception("Not used")
+    override fun popularMangaNextPageSelector(): String = throw Exception("Not used")
 
     override fun popularMangaFromElement(element: Element): SManga = throw Exception("Not used")
 
     override fun mangaDetailsParse(document: Document): SManga = throw Exception("Not used")
 
-    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     override fun latestUpdatesFromElement(element: Element): SManga = throw Exception("Not used")
 

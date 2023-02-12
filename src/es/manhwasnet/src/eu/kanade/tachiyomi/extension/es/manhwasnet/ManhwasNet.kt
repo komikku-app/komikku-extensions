@@ -38,8 +38,8 @@ class ManhwasNet : HttpSource() {
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        val content18 = document.select(".list-unstyled.row").get(0)
-        val content15 = document.select(".list-unstyled.row").get(1)
+        val content18 = document.select(".list-unstyled.row")[0]
+        val content15 = document.select(".list-unstyled.row")[1]
         val manhwas = parseManhwas(content18) + parseManhwas(content15)
         return MangasPage(manhwas, false)
     }
@@ -50,11 +50,11 @@ class ManhwasNet : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
-        val profileManga = document.selectFirst(".anime-single")
+        val profileManga = document.selectFirst(".anime-single")!!
         val manhwa = SManga.create()
-        manhwa.title = profileManga.selectFirst(".title").text()
-        manhwa.thumbnail_url = profileManga.selectFirst("img").attr("src")
-        manhwa.description = profileManga.selectFirst(".sinopsis").text().substringAfter(manhwa.title + " ")
+        manhwa.title = profileManga.selectFirst(".title")!!.text()
+        manhwa.thumbnail_url = profileManga.selectFirst("img")!!.attr("src")
+        manhwa.description = profileManga.selectFirst(".sinopsis")!!.text().substringAfter(manhwa.title + " ")
         val status = profileManga.select(".anime-type-peli.text-white").text()
         manhwa.status = SManga.ONGOING
         if (!status.contains("Publicándose")) manhwa.status = SManga.COMPLETED
@@ -66,7 +66,7 @@ class ManhwasNet : HttpSource() {
         val document = response.asJsoup()
         return document.select("#chapter_imgs img").mapIndexed { i, img ->
             var url = img.attr("src")
-            if (url.toString().equals("/discord.jpg")) {
+            if (url.toString() == "/discord.jpg") {
                 url = "$baseUrl/discord.jpg"
             }
             Page(i, imageUrl = url)
@@ -100,7 +100,7 @@ class ManhwasNet : HttpSource() {
 
     private fun parseLibraryMangas(response: Response): MangasPage {
         val document = response.asJsoup()
-        val content = document.selectFirst(".animes")
+        val content = document.selectFirst(".animes")!!
         val manhwas = parseManhwas(content)
         val hasNextPage = document.selectFirst(".pagination .page-link[rel=\"next\"]") != null
         return MangasPage(manhwas, hasNextPage)
@@ -109,8 +109,8 @@ class ManhwasNet : HttpSource() {
     private fun parseManhwas(element: Element): List<SManga> {
         return element.select(".anime").map { anime ->
             val manhwa = SManga.create()
-            manhwa.title = anime.selectFirst(".title").text().trim()
-            manhwa.thumbnail_url = anime.selectFirst("img").attr("src")
+            manhwa.title = anime.selectFirst(".title")!!.text().trim()
+            manhwa.thumbnail_url = anime.selectFirst("img")!!.attr("src")
             manhwa.url = getUrlWithoutDomain(
                 transformUrl(anime.select("a").attr("href")),
             )

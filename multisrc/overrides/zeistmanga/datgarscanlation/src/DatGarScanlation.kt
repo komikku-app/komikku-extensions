@@ -13,7 +13,7 @@ class DatGarScanlation : ZeistManga("DatGarScanlation", "https://datgarscanlatio
         var script = doc.selectFirst(scriptSelector)
 
         if (script == null) {
-            script = doc.selectFirst(altScriptSelector)
+            script = doc.selectFirst(altScriptSelector)!!
             chapterRegex = altChapterFeedRegex
         }
 

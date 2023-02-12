@@ -8,7 +8,7 @@ class LynxScans : Genkan("LynxScans", "https://lynxscans.com", "en", "/web/comic
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
 
-        val allImages = document.select("div#pages-container + script").first().data()
+        val allImages = document.select("div#pages-container + script").first()!!.data()
             .substringAfter("[").substringBefore("];")
             .replace(Regex("""["\\]"""), "")
             .split(",/")

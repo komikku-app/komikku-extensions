@@ -49,7 +49,7 @@ class SekteKomik : ZManga("Sekte Komik", "https://sektekomik.com", "id") {
     override fun latestUpdatesFromElement(element: Element): SManga {
         return SManga.create().apply {
             setUrlWithoutDomain(element.select("div.flexbox4-content a").attr("href"))
-            title = element.select("div.flexbox4-side .title").first().text()
+            title = element.select("div.flexbox4-side .title").first()!!.text()
             thumbnail_url = element.select("img").attr("abs:src")
         }
     }
@@ -79,7 +79,7 @@ class SekteKomik : ZManga("Sekte Komik", "https://sektekomik.com", "id") {
     override fun searchMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
             setUrlWithoutDomain(element.select("div.flexbox2-content a").attr("href"))
-            title = element.select("div.flexbox2-title > span").first().text()
+            title = element.select("div.flexbox2-title > span").first()!!.text()
             thumbnail_url = element.select("img").attr("abs:src")
         }
     }

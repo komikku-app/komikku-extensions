@@ -87,7 +87,7 @@ open class Mangahub : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
-        manga.author = document.select("div.detail-attr:contains(Автор) div:gt(0)")?.text() // TODO: Add "Сценарист" and "Художник"
+        manga.author = document.select("div.detail-attr:contains(Автор) div:gt(0)").text() // TODO: Add "Сценарист" and "Художник"
         manga.genre = document.select(".tags").text().replace(" ", ", ")
         manga.description = document.select("div.markdown-style").text()
         manga.status = parseStatus(document.select("div.detail-attr:contains(перевод):eq(0)").toString())
@@ -103,12 +103,12 @@ open class Mangahub : ParsedHttpSource() {
     override fun chapterListSelector() = "div.py-2.px-3"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("div.align-items-center > a").first()
+        val urlElement = element.select("div.align-items-center > a").first()!!
         val chapter = SChapter.create()
         chapter.name = urlElement.text()
-        chapter.date_upload = element.select("div.text-muted").text()?.let {
+        chapter.date_upload = element.select("div.text-muted").text().let {
             SimpleDateFormat("dd.MM.yyyy", Locale.US).parse(it)?.time ?: 0L
-        } ?: 0
+        }
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         return chapter
     }

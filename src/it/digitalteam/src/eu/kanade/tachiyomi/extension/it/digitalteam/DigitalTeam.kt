@@ -57,7 +57,7 @@ class DigitalTeam : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select(".manga_title a").text()
         thumbnail_url = element.select("img").attr("src")
-        setUrlWithoutDomain(element.select(".manga_title a").first().attr("href"))
+        setUrlWithoutDomain(element.select(".manga_title a").first()!!.attr("href"))
     }
 
     override fun searchMangaFromElement(element: Element): SManga = throw Exception("Not Used")
@@ -75,11 +75,11 @@ class DigitalTeam : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val infoElement = document.select("#manga_left")
 
-        author = infoElement.select(".info_name:contains(Autore)").next()?.text()
-        artist = infoElement.select(".info_name:contains(Artista)").next()?.text()
-        genre = infoElement.select(".info_name:contains(Genere)").next()?.text()
+        author = infoElement.select(".info_name:contains(Autore)").next().text()
+        artist = infoElement.select(".info_name:contains(Artista)").next().text()
+        genre = infoElement.select(".info_name:contains(Genere)").next().text()
         status = parseStatus(infoElement.select(".info_name:contains(Status)").next().text())
-        description = document.select("div.plot")?.text()
+        description = document.select("div.plot").text()
         thumbnail_url = infoElement.select(".cover img").attr("src")
     }
 
@@ -92,7 +92,7 @@ class DigitalTeam : ParsedHttpSource() {
     override fun chapterListSelector() = ".chapter_list ul li"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        val urlElement = element.select("a").first()
+        val urlElement = element.select("a").first()!!
 
         setUrlWithoutDomain(urlElement.attr("href"))
         name = urlElement.text()
@@ -143,7 +143,7 @@ class DigitalTeam : ParsedHttpSource() {
         val scriptContent = document.body().toString()
             .substringAfter("current_page=")
             .substringBefore(";")
-        val title = document.select("title").first().text()
+        val title = document.select("title").first()!!.text()
         val external = document.select("script[src*='jq_rext.js']").isNotEmpty()
 
         val xhrPages = getXhrPages(scriptContent, title, external)

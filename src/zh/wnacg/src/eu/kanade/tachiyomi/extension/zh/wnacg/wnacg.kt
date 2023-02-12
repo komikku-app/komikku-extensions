@@ -63,11 +63,11 @@ class wnacg : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element) = mangaFromElement(element)
 
     private fun mangaFromElement(element: Element): SManga {
-        val link = element.selectFirst(".title > a")
+        val link = element.selectFirst(".title > a")!!
         val manga = SManga.create()
         manga.url = link.attr("href")
         manga.title = link.text()
-        manga.thumbnail_url = element.selectFirst("img").absUrl("src")
+        manga.thumbnail_url = element.selectFirst("img")!!.absUrl("src")
             .replaceBefore(':', "http")
         // maybe the local cache cause the old source (url) can not be update. but the image can be update on detailpage.
         // ps. new machine can be load img normal.
@@ -89,7 +89,7 @@ class wnacg : ParsedHttpSource() {
         manga.artist = document.selectFirst("div.uwuinfo p")?.text() ?: "Unknown"
         manga.author = document.selectFirst("div.uwuinfo p")?.text() ?: "Unknown"
         manga.thumbnail_url =
-            "http:" + document.selectFirst("div.uwthumb img").attr("src")
+            "http:" + document.selectFirst("div.uwthumb img")!!.attr("src")
         manga.description =
             document.selectFirst("div.asTBcell p")?.html()?.replace("<br>", "\n")
 

@@ -33,7 +33,7 @@ class TsuminoUtils {
                 }
             }
 
-            return if (stringBuilder.toString().isEmpty()) null else stringBuilder.toString()
+            return stringBuilder.toString().ifEmpty { null }
         }
 
         fun getDesc(document: Document): String {
@@ -99,12 +99,12 @@ class TsuminoUtils {
         }
 
         fun cfDecodeEmails(document: Document) {
-            document.select(".__cf_email__")!!
+            document.select(".__cf_email__")
                 .map { it to cfDecodeEmail(it.attr("data-cfemail")) }
                 .forEach { (element, plaintext) -> element.text(plaintext) }
         }
 
-        fun cfDecodeEmail(encoded: String): String {
+        private fun cfDecodeEmail(encoded: String): String {
             val encodedList = encoded
                 .chunked(2)
                 .map { it.toIntOrNull(16) }

@@ -109,7 +109,7 @@ class WieManga : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
 
-        element.select(".col1 a").first().let {
+        element.select(".col1 a").first()!!.let {
             chapter.setUrlWithoutDomain(it.attr("href"))
             chapter.name = it.text()
         }
@@ -125,13 +125,13 @@ class WieManga : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
 
-        document.select("select#page").first().select("option").forEach {
+        document.select("select#page").first()!!.select("option").forEach {
             pages.add(Page(pages.size, it.attr("value")))
         }
         return pages
     }
 
     override fun imageUrlParse(document: Document): String {
-        return document.select("img#comicpic").first().attr("abs:src")
+        return document.select("img#comicpic").first()!!.attr("abs:src")
     }
 }

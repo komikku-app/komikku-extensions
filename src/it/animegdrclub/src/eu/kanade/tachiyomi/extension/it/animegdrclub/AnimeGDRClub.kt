@@ -109,9 +109,9 @@ class AnimeGDRClub : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
 
-        manga.thumbnail_url = "$baseUrl/${element.selectFirst("img").attr("src")}"
-        manga.url = element.selectFirst("a.linkalmanga").attr("href")
-        manga.title = element.selectFirst("div.nomeserie > span").text()
+        manga.thumbnail_url = "$baseUrl/${element.selectFirst("img")!!.attr("src")}"
+        manga.url = element.selectFirst("a.linkalmanga")!!.attr("href")
+        manga.title = element.selectFirst("div.nomeserie > span")!!.text()
 
         return manga
     }
@@ -119,8 +119,8 @@ class AnimeGDRClub : ParsedHttpSource() {
         val manga = SManga.create()
 
         manga.setUrlWithoutDomain("http://www.agcscanlation.it/progetto.php?nome=${element.attr("href").toHttpUrlOrNull()!!.queryParameter("nome")}")
-        manga.title = element.selectFirst(".titolo").text()
-        manga.thumbnail_url = "$baseUrl/${element.selectFirst("img").attr("src")}"
+        manga.title = element.selectFirst(".titolo")!!.text()
+        manga.thumbnail_url = "$baseUrl/${element.selectFirst("img")!!.attr("src")}"
 
         return manga
     }
@@ -139,7 +139,7 @@ class AnimeGDRClub : ParsedHttpSource() {
         manga.genre = infoElement.select("span.generi > a").joinToString(", ") {
             it.text()
         }
-        manga.description = document.select("span.trama")?.text()?.substringAfter("Trama: ")
+        manga.description = document.select("span.trama").text().substringAfter("Trama: ")
 
         return manga
     }

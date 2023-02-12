@@ -24,8 +24,8 @@ class UniversoHentai : Gattsu(
     override fun latestUpdatesSelector() = "div.meio div.videos div.video a[href^=$baseUrl]:not(:has(span.selo-hd))"
 
     override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.selectFirst("span.video-titulo").text().trim()
-        thumbnail_url = element.selectFirst("img.wp-post-image").attr("src")
+        title = element.selectFirst("span.video-titulo")!!.text().trim()
+        thumbnail_url = element.selectFirst("img.wp-post-image")!!.attr("src")
         setUrlWithoutDomain(element.attr("href"))
     }
 
@@ -54,11 +54,11 @@ class UniversoHentai : Gattsu(
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = "Capítulo único"
         scanlator = element.select("ul.paginaPostItens li:contains(Tradutor) a").firstOrNull()?.text()
-        date_upload = element.ownerDocument().select("meta[property=article:published_time]").firstOrNull()
+        date_upload = element.ownerDocument()!!.select("meta[property=article:published_time]").firstOrNull()
             ?.attr("content")
             .orEmpty()
             .toDate()
-        setUrlWithoutDomain(element.selectFirst("a[title=Abrir galeria]").attr("href"))
+        setUrlWithoutDomain(element.selectFirst("a[title=Abrir galeria]")!!.attr("href"))
     }
 
     override fun pageListSelector() = "div.meio div.galeria div.galeria-foto a img"

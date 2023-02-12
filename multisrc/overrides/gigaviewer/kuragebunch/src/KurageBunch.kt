@@ -27,8 +27,8 @@ class KurageBunch : GigaViewer(
     override fun popularMangaSelector(): String = "ul.page-series-list li div.item-box"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.selectFirst("a.series-data-container h4").text()
-        thumbnail_url = element.selectFirst("a.series-thumb img").attr("data-src")
+        title = element.selectFirst("a.series-data-container h4")!!.text()
+        thumbnail_url = element.selectFirst("a.series-thumb img")!!.attr("data-src")
         setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
     }
 

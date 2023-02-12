@@ -51,11 +51,11 @@ abstract class NewToki(
     override fun popularMangaSelector() = "div#webtoon-list > ul > li"
 
     override fun popularMangaFromElement(element: Element): SManga {
-        val linkElement = element.getElementsByTag("a").first()
+        val linkElement = element.getElementsByTag("a").first()!!
 
         val manga = SManga.create()
         manga.url = getUrlPath(linkElement.attr("href"))
-        manga.title = element.select("span.title").first().ownText()
+        manga.title = element.select("span.title").first()!!.ownText()
         manga.thumbnail_url = linkElement.getElementsByTag("img").attr("src")
         return manga
     }
@@ -111,7 +111,7 @@ abstract class NewToki(
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val info = document.select("div.view-title > .view-content").first()
+        val info = document.select("div.view-title > .view-content").first()!!
         val title = document.select("div.view-content > span > b").text()
         val thumbnail = document.select("div.row div.view-img > img").attr("src")
         val descriptionElement = info.select("div.row div.view-content:not([style])")
@@ -150,14 +150,14 @@ abstract class NewToki(
     override fun chapterListSelector() = "div.serial-list > ul.list-body > li.list-item"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val linkElement = element.select(".wr-subject > a.item-subject").last()
+        val linkElement = element.select(".wr-subject > a.item-subject").last()!!
         val rawName = linkElement.ownText().trim()
 
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(linkElement.attr("href"))
         chapter.chapter_number = parseChapterNumber(rawName)
         chapter.name = rawName
-        chapter.date_upload = parseChapterDate(element.select(".wr-date").last().text().trim())
+        chapter.date_upload = parseChapterDate(element.select(".wr-date").last()!!.text().trim())
         return chapter
     }
 

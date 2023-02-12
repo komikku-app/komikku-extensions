@@ -48,7 +48,7 @@ class KomikIndoID : ParsedHttpSource() {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("div.limit img").attr("src")
         manga.title = element.select("div.tt h4").text()
-        element.select("div.animposx > a").first().let {
+        element.select("div.animposx > a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
         }
         return manga
@@ -123,8 +123,8 @@ class KomikIndoID : ParsedHttpSource() {
         return GET(url.toString(), headers)
     }
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.infoanime").first()
-        val descElement = document.select("div.desc > .entry-content.entry-content-single").first()
+        val infoElement = document.select("div.infoanime").first()!!
+        val descElement = document.select("div.desc > .entry-content.entry-content-single").first()!!
         val manga = SManga.create()
         // need authorCleaner to take "pengarang:" string to remove it from author
         val authorCleaner = document.select(".infox .spe b:contains(Pengarang)").text()
@@ -152,7 +152,7 @@ class KomikIndoID : ParsedHttpSource() {
     override fun chapterListSelector() = "#chapter_list li"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select(".lchx a").first()
+        val urlElement = element.select(".lchx a").first()!!
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         chapter.name = urlElement.text()
@@ -160,7 +160,7 @@ class KomikIndoID : ParsedHttpSource() {
         return chapter
     }
 
-    fun parseChapterDate(date: String): Long {
+    private fun parseChapterDate(date: String): Long {
         return if (date.contains("yang lalu")) {
             val value = date.split(' ')[0].toInt()
             when {

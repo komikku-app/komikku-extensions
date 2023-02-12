@@ -7,7 +7,6 @@ import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
@@ -62,7 +61,7 @@ class KomikCast : MangaThemesia(
     override fun searchMangaSelector() = "div.list-update_item"
 
     override fun searchMangaFromElement(element: Element) = super.searchMangaFromElement(element).apply {
-        title = element.selectFirst("h3.title").ownText()
+        title = element.selectFirst("h3.title")!!.ownText()
     }
 
     override val seriesDetailsSelector = "div.komik_info:has(.komik_info-content)"
@@ -78,7 +77,7 @@ class KomikCast : MangaThemesia(
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         val urlElements = element.select("a")
         setUrlWithoutDomain(urlElements.attr("href"))
-        name = element.select(".lch a, .chapternum").text().ifBlank { urlElements.first().text() }
+        name = element.select(".lch a, .chapternum")!!.text().ifBlank { urlElements.first()!!.text() }
         date_upload = parseChapterDate2(element.select(".chapter-link-time").text())
     }
 
@@ -130,7 +129,7 @@ class KomikCast : MangaThemesia(
             var imageServer = "cdn"
             if (!imageList.containsKey(imageServer)) imageServer = imageList.keys.first()
             val imageElement = imageList[imageServer]!!.jsonArray.joinToString("")
-            doc = Jsoup.parse(json.decodeFromString(imageElement))
+            doc = Jsoup.parse(imageElement)
             cssQuery = "img.size-full"
         }
 

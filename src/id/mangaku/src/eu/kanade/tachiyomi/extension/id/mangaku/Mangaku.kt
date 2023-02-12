@@ -113,8 +113,7 @@ class Mangaku : ParsedHttpSource() {
         title = document.select(".post.singlep .titles a").text().replace("Bahasa Indonesia", "").trim()
         thumbnail_url = document.select(".post.singlep img").attr("abs:src")
         document.select("#wrapper-a #content-a .inf").forEach {
-            val key = it.select(".infx").text()
-            when (key) {
+            when (it.select(".infx").text()) {
                 "Genre" -> genre = it.select("p a[rel=tag]").joinToString { it.text() }
                 "Author" -> author = it.select("p").text()
                 "Sinopsis" -> description = it.select("p").text()
@@ -136,7 +135,7 @@ class Mangaku : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val wpRoutineUrl = document.selectFirst("script[src*=wp-routine]").attr("abs:src")
+        val wpRoutineUrl = document.selectFirst("script[src*=wp-routine]")!!.attr("abs:src")
         Log.d("mangaku", "wp-routine: $wpRoutineUrl")
 
         val wpRoutineJs = client.newCall(GET(wpRoutineUrl, headers)).execute().use {
@@ -151,7 +150,7 @@ class Mangaku : ParsedHttpSource() {
             .reversed()
         Log.d("mangaku", "app-mgk: $appMgk")
 
-        val dtxScript = document.selectFirst("script:containsData(var dtx =)").html()
+        val dtxScript = document.selectFirst("script:containsData(var dtx =)")!!.html()
         val dtxIsEqualTo = dtxScript
             .substringAfter("var dtx = ")
             .substringBefore(";")
@@ -159,7 +158,7 @@ class Mangaku : ParsedHttpSource() {
             .substringAfter("var $dtxIsEqualTo= \"")
             .substringBefore("\"")
 
-        val mainScriptTag = document.selectFirst("script:containsData(await jrsx)").html()
+        val mainScriptTag = document.selectFirst("script:containsData(await jrsx)")!!.html()
         val jrsxArgs = mainScriptTag
             .substringAfter("await jrsx(")
             .substringBefore(");")

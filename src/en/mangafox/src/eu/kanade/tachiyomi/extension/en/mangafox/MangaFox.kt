@@ -83,7 +83,7 @@ class MangaFox : ParsedHttpSource() {
     override fun popularMangaSelector(): String = "ul.manga-list-1-list li"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        element.select("a").first().let {
+        element.select("a").first()!!.let {
             setUrlWithoutDomain(it.attr("href"))
             title = it.attr("title")
             thumbnail_url = it.select("img").attr("abs:src")
@@ -147,7 +147,7 @@ class MangaFox : ParsedHttpSource() {
     override fun searchMangaNextPageSelector(): String = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        document.select(".detail-info-right").first().let {
+        document.select(".detail-info-right").first()!!.let {
             author = it.select(".detail-info-right-say a").joinToString(", ") { it.text() }
             genre = it.select(".detail-info-right-tag-list a").joinToString(", ") { it.text() }
             description = it.select("p.fullcontent").first()?.text()
@@ -181,7 +181,7 @@ class MangaFox : ParsedHttpSource() {
                 set(Calendar.MILLISECOND, 0)
             }.timeInMillis
         } else {
-            kotlin.runCatching {
+            runCatching {
                 SimpleDateFormat("MMM d,yyyy", Locale.ENGLISH).parse(date)?.time
             }.getOrNull() ?: 0L
         }
@@ -195,7 +195,7 @@ class MangaFox : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val packed = document.selectFirst("script:containsData(p,a,c,k,e)").data()
+        val packed = document.selectFirst("script:containsData(p,a,c,k,e)")!!.data()
         val imagesRaw = Unpacker.unpack(packed)
             .substringAfter("newImgs=")
             .substringBefore(";")

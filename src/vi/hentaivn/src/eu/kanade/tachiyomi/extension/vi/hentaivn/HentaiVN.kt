@@ -66,7 +66,7 @@ class HentaiVN : ParsedHttpSource() {
     override fun latestUpdatesNextPageSelector() = "ul.pagination > li:contains(Next)"
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
-        element.select(".box-description a").first().let {
+        element.select(".box-description a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text().trim()
         }
@@ -88,7 +88,7 @@ class HentaiVN : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter {
         if (element.select("a").isEmpty()) throw Exception(element.select("h2").html())
         val chapter = SChapter.create()
-        element.select("a").first().let {
+        element.select("a").first()!!.let {
             chapter.name = it.select("h2").text()
             chapter.setUrlWithoutDomain(it.attr("href"))
         }
@@ -115,7 +115,7 @@ class HentaiVN : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select(".main > .page-left > .left-info > .page-info")
         val manga = SManga.create()
-        manga.title = document.selectFirst(".breadcrumb2 li:last-child span").text()
+        manga.title = document.selectFirst(".breadcrumb2 li:last-child span")!!.text()
         manga.author = infoElement.select("p:contains(Tác giả:) a").text()
         manga.description = infoElement.select(":root > p:contains(Nội dung:) + p").text()
         manga.genre = infoElement.select("p:contains(Thể loại:) a").joinToString { it.text() }
@@ -162,7 +162,7 @@ class HentaiVN : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        element.select(".search-des > a, .box-description a").first().let {
+        element.select(".search-des > a, .box-description a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text().trim()
         }

@@ -18,8 +18,8 @@ class NaverWebtoon : NaverComicBase("webtoon") {
     override fun popularMangaSelector() = ".list_area.daily_all .col ul > li"
     override fun popularMangaNextPageSelector() = null
     override fun popularMangaFromElement(element: Element): SManga {
-        val thumb = element.select("div.thumb img").first().attr("src")
-        val title = element.select("a.title").first()
+        val thumb = element.select("div.thumb img").first()!!.attr("src")
+        val title = element.select("a.title").first()!!
 
         val manga = SManga.create()
         manga.url = title.attr("href").substringBefore("&week")

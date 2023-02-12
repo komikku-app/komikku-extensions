@@ -11,7 +11,7 @@ class MangaAiLand : ZeistManga("Manga Ai Land", "https://manga-ai-land.blogspot.
     override val imgSelectorAttr = "href"
 
     override fun getChaptersUrl(doc: Document): String {
-        val script = doc.selectFirst(scriptSelector).attr("src")
+        val script = doc.selectFirst(scriptSelector)!!.attr("src")
         val feed = chapterFeedRegex
             .find(script)
             ?.groupValues?.get(1)

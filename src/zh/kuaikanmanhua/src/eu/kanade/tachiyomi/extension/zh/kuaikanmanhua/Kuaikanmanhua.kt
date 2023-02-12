@@ -23,8 +23,6 @@ import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class Kuaikanmanhua : HttpSource() {
 
@@ -85,12 +83,12 @@ class Kuaikanmanhua : HttpSource() {
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.startsWith(TOPIC_ID_SEARCH_PREFIX)) {
-            val new_query = query.removePrefix(TOPIC_ID_SEARCH_PREFIX)
-            return client.newCall(GET("$apiUrl/v1/topics/$new_query"))
+            val newQuery = query.removePrefix(TOPIC_ID_SEARCH_PREFIX)
+            return client.newCall(GET("$apiUrl/v1/topics/$newQuery"))
                 .asObservableSuccess()
                 .map { response ->
                     val details = mangaDetailsParse(response)
-                    details.url = "/web/topic/$new_query"
+                    details.url = "/web/topic/$newQuery"
                     MangasPage(listOf(details), false)
                 }
         }
@@ -196,7 +194,7 @@ class Kuaikanmanhua : HttpSource() {
         return GET(baseUrl + chapter.url)
     }
 
-    val fixJson: (MatchResult) -> CharSequence = {
+    private val fixJson: (MatchResult) -> CharSequence = {
             match: MatchResult ->
         val str = match.value
         val out = str[0] + "\"" + str.subSequence(1, str.length - 1) + "\"" + str[str.length - 1]
@@ -205,7 +203,7 @@ class Kuaikanmanhua : HttpSource() {
 
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        val script = document.selectFirst("script:containsData(comicImages)").data()
+        val script = document.selectFirst("script:containsData(comicImages)")!!.data()
         val images = script.substringAfter("comicImages:")
             .substringBefore(",is_vip_exclusive")
             .replace("""(:([^\[\{\"]+?)[\},])""".toRegex(), fixJson)
@@ -283,9 +281,5 @@ class Kuaikanmanhua : HttpSource() {
 
     companion object {
         const val TOPIC_ID_SEARCH_PREFIX = "topic:"
-
-        private val DATE_FORMAT by lazy {
-            SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
-        }
     }
 }

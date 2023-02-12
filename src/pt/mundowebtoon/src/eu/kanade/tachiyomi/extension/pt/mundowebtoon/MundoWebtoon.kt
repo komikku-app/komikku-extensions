@@ -99,10 +99,10 @@ class MundoWebtoon : ParsedHttpSource() {
 
         title = infoElement.select("div.mangaTitulo h3").text().withoutLanguage()
         author = infoElement.select("div.BlDataItem a[href*=autor]")
-            ?.joinToString(", ") { it.text() }
+            .joinToString(", ") { it.text() }
         artist = infoElement.select("div.BlDataItem a[href*=artista]")
-            ?.joinToString(", ") { it.text() }
-        genre = infoElement.select("div.col-md-12 a.label-warning[href*=genero]")
+            .joinToString(", ") { it.text() }
+        genre = infoElement.select("div.col-md-12 a.label-warning[href*=genero]").toList()
             .filter { it.text().isNotEmpty() }
             .joinToString { it.text().trim() }
         status = infoElement.selectFirst("div.BlDataItem a[href*=status]")
@@ -114,11 +114,11 @@ class MundoWebtoon : ParsedHttpSource() {
     override fun chapterListSelector() = "div.CapitulosListaTodos div.CapitulosListaItem"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        name = element.selectFirst("h5").ownText()
+        name = element.selectFirst("h5")!!.ownText()
         scanlator = element.select("a.color_gray[target='_blank']")
             .joinToString(", ") { it.text() }
         date_upload = element.select("h5 span[style]").text().toDate()
-        setUrlWithoutDomain(element.selectFirst("a").attr("abs:href"))
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("abs:href"))
     }
 
     override fun pageListRequest(chapter: SChapter): Request {

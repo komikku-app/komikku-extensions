@@ -40,11 +40,11 @@ class ReadM : ParsedHttpSource() {
     // Popular
 
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/popular-manga/$page", headers)
-    override fun popularMangaNextPageSelector(): String? = "div.pagination a:contains(»)"
+    override fun popularMangaNextPageSelector(): String = "div.pagination a:contains(»)"
     override fun popularMangaSelector(): String = "div#discover-response li"
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         thumbnail_url = element.select("img").attr("abs:src")
-        element.select("div.subject-title a").first().apply {
+        element.select("div.subject-title a").first()!!.apply {
             title = this.text().trim()
             url = this.attr("href")
         }
@@ -57,7 +57,7 @@ class ReadM : ParsedHttpSource() {
     override fun latestUpdatesSelector(): String = "ul.latest-updates > li"
     override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
         thumbnail_url = element.select("img").attr("abs:data-src")
-        element.select("h2 a").first().apply {
+        element.select("h2 a").first()!!.apply {
             title = this.text().trim()
             url = this.attr("href")
         }

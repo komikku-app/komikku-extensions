@@ -184,9 +184,9 @@ class NineHentai : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga {
         return SManga.create().apply {
-            response.asJsoup().selectFirst("div#bigcontainer").let { info ->
+            response.asJsoup().selectFirst("div#bigcontainer")!!.let { info ->
                 title = info.select("h1").text()
-                thumbnail_url = info.selectFirst("div#cover v-lazy-image").attr("abs:src")
+                thumbnail_url = info.selectFirst("div#cover v-lazy-image")!!.attr("abs:src")
                 status = SManga.COMPLETED
                 artist = info.selectTextOrNull("div.field-name:contains(Artist:) a.tag")
                 author = info.selectTextOrNull("div.field-name:contains(Group:) a.tag") ?: "Unknown circle"

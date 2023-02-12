@@ -133,10 +133,10 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
             if (params != "") {
                 url += "/$params"
             }
-            if (sortOrder == "") {
-                url += "/index_p$page.html"
+            url += if (sortOrder == "") {
+                "/index_p$page.html"
             } else {
-                url += "/${sortOrder}_p$page.html"
+                "/${sortOrder}_p$page.html"
             }
             return GET(url, headers)
         }
@@ -257,12 +257,12 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = mangaFromElement(element)
     private fun mangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        element.select("a.bcover").first().let {
+        element.select("a.bcover").first()!!.let {
             manga.url = it.attr("href")
             manga.title = it.attr("title").trim()
 
             // Fix thumbnail lazy load
-            val thumbnailElement = it.select("img").first()
+            val thumbnailElement = it.select("img").first()!!
             manga.thumbnail_url = if (thumbnailElement.hasAttr("src")) {
                 thumbnailElement.attr("abs:src")
             } else {
@@ -275,10 +275,10 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
 
-        element.select("div.book-detail").first().let {
-            manga.url = it.select("dl > dt > a").first().attr("href")
-            manga.title = it.select("dl > dt > a").first().attr("title").trim()
-            manga.thumbnail_url = element.select("div.book-cover > a.bcover > img").first().attr("abs:src")
+        element.select("div.book-detail").first()!!.let {
+            manga.url = it.select("dl > dt > a").first()!!.attr("href")
+            manga.title = it.select("dl > dt > a").first()!!.attr("title").trim()
+            manga.thumbnail_url = element.select("div.book-cover > a.bcover > img").first()!!.attr("abs:src")
         }
 
         return manga
@@ -303,9 +303,9 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
                 val hiddenChapterList = Jsoup.parse(decodedHiddenChapterList, response.request.url.toString())
                 if (hiddenChapterList != null) {
                     // Replace R18 warning with actual chapter list
-                    document.select("#erroraudit_show").first().replaceWith(hiddenChapterList)
+                    document.select("#erroraudit_show").first()!!.replaceWith(hiddenChapterList)
                     // Remove hidden chapter list element
-                    document.select("#__VIEWSTATE").first().remove()
+                    document.select("#__VIEWSTATE").first()!!.remove()
                 }
             } else {
                 // "You need to enable R18 switch and restart Tachiyomi to read this manga"
@@ -318,12 +318,12 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
         chapterList.forEach {
             val currentChapter = SChapter.create()
             currentChapter.url = it.attr("href")
-            currentChapter.name = it?.attr("title")?.trim() ?: it.select("span").first().ownText()
+            currentChapter.name = it?.attr("title")?.trim() ?: it.select("span").first()!!.ownText()
             currentChapter.chapter_number = chNumRegex.find(currentChapter.name)?.value?.toFloatOrNull() ?: -1F
 
             // Manhuagui only provide upload date for latest chapter
             if (currentChapter.url == latestChapterHref) {
-                currentChapter.date_upload = parseDate(document.select("div.book-detail > ul.detail-list > li.status > span > span.red").last())
+                currentChapter.date_upload = parseDate(document.select("div.book-detail > ul.detail-list > li.status > span > span.red").last()!!)
             }
             chapters.add(currentChapter)
         }
@@ -349,7 +349,7 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
         manga.thumbnail_url = document.select("p.hcover > img").attr("abs:src")
         manga.author = document.select("span:contains(漫画作者) > a , span:contains(漫畫作者) > a").text().trim().replace(" ", ", ")
         manga.genre = document.select("span:contains(漫画剧情) > a , span:contains(漫畫劇情) > a").text().trim().replace(" ", ", ")
-        manga.status = when (document.select("div.book-detail > ul.detail-list > li.status > span > span").first().text()) {
+        manga.status = when (document.select("div.book-detail > ul.detail-list > li.status > span > span").first()!!.text()) {
             "连载中" -> SManga.ONGOING
             "已完结" -> SManga.COMPLETED
             "連載中" -> SManga.ONGOING

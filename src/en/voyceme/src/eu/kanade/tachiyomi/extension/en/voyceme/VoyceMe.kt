@@ -266,7 +266,7 @@ class VoyceMe : HttpSource() {
         // GraphQL endpoints do not have the chapter images, so we need
         // to get the buildId to fetch the chapter from NextJS static data.
         val document = response.asJsoup()
-        val nextData = document.selectFirst("script#__NEXT_DATA__").data()
+        val nextData = document.selectFirst("script#__NEXT_DATA__")!!.data()
         val nextJson = json.parseToJsonElement(nextData).jsonObject
 
         val buildId = nextJson["buildId"]!!.jsonPrimitive.content

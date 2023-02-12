@@ -22,12 +22,12 @@ class Comicabc : ParsedHttpSource() {
     // Popular
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/comic/h-$page.html", headers)
-    override fun popularMangaNextPageSelector(): String? = "div.pager a span.mdi-skip-next"
+    override fun popularMangaNextPageSelector(): String = "div.pager a span.mdi-skip-next"
     override fun popularMangaSelector(): String = "div.default_row_width > div.col-2"
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.selectFirst("li.cat2_list_name").text()
-        setUrlWithoutDomain(element.selectFirst("a").attr("abs:href"))
-        thumbnail_url = element.selectFirst("img").attr("abs:src")
+        title = element.selectFirst("li.cat2_list_name")!!.text()
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("abs:href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
     }
 
     // Latest
@@ -43,21 +43,21 @@ class Comicabc : ParsedHttpSource() {
         return GET("$baseUrl/member/search.aspx?key=$query&page=$page", headers)
     }
 
-    override fun searchMangaNextPageSelector(): String? = popularMangaNextPageSelector()
+    override fun searchMangaNextPageSelector(): String = popularMangaNextPageSelector()
     override fun searchMangaSelector(): String = popularMangaSelector()
     override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
 
     // Details
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        title = document.selectFirst("div.item-top-content h3.item_name").text()
-        thumbnail_url = document.selectFirst("div.item-topbar img.item_cover").attr("abs:src")
-        author = document.selectFirst("div.item-top-content > li:nth-of-type(3)").ownText()
+        title = document.selectFirst("div.item-top-content h3.item_name")!!.text()
+        thumbnail_url = document.selectFirst("div.item-topbar img.item_cover")!!.attr("abs:src")
+        author = document.selectFirst("div.item-top-content > li:nth-of-type(3)")!!.ownText()
         artist = author
-        description = document.selectFirst("div.item-top-content > li.item_info_detail").text()
+        description = document.selectFirst("div.item-top-content > li.item_info_detail")!!.text()
         status = when {
-            document.selectFirst("div.item_comic_eps_div").text().contains("連載中") -> SManga.ONGOING
-            document.selectFirst("div.item_comic_eps_div").text().contains("已完結") -> SManga.COMPLETED
+            document.selectFirst("div.item_comic_eps_div")!!.text().contains("連載中") -> SManga.ONGOING
+            document.selectFirst("div.item_comic_eps_div")!!.text().contains("已完結") -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
     }
@@ -81,7 +81,7 @@ class Comicabc : ParsedHttpSource() {
     override fun pageListParse(response: Response): List<Page> = mutableListOf<Page>().apply {
         val document = response.asJsoup()
         val url = response.request.url.toString()
-        val script = document.selectFirst("script:containsData(function request)").data()
+        val script = document.selectFirst("script:containsData(function request)")!!.data()
             .replace("function ge(e){return document.getElementById(e);}", "")
             .replace("ge\\(.*\\).src".toRegex(), "imageUrl")
             .replace("spp()", "")

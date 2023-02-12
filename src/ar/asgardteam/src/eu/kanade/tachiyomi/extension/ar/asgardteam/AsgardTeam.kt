@@ -96,7 +96,7 @@ class AsgardTeam : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         return SManga.create().apply {
-            document.select("div.author-info-title").first().let { info ->
+            document.select("div.author-info-title").first()!!.let { info ->
                 title = info.select("h6").text()
             }
             document.select("div.review-author-info").let { info ->

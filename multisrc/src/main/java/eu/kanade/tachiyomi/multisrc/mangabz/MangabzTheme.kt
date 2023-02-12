@@ -46,27 +46,27 @@ abstract class MangabzTheme(
 
     override fun searchMangaParse(response: Response): MangasPage {
         val document = response.asJsoup().also(::parseFilters)
-        val mangas = document.selectFirst(Evaluator.Class("mh-list")).children().map { element ->
+        val mangas = document.selectFirst(Evaluator.Class("mh-list"))!!.children().map { element ->
             SManga.create().apply {
-                title = element.selectFirst(Evaluator.Tag("h2")).text()
-                url = element.selectFirst(Evaluator.Tag("a")).attr("href")
-                thumbnail_url = element.selectFirst(Evaluator.Tag("img")).attr("src")
+                title = element.selectFirst(Evaluator.Tag("h2"))!!.text()
+                url = element.selectFirst(Evaluator.Tag("a"))!!.attr("href")
+                thumbnail_url = element.selectFirst(Evaluator.Tag("img"))!!.attr("src")
             }
         }
         val hasNextPage = document.run {
             val pagination = selectFirst(Evaluator.Class("page-pagination"))
-            pagination != null && pagination.select(Evaluator.Tag("a")).last().text() == ">"
+            pagination != null && pagination.select(Evaluator.Tag("a")).last()!!.text() == ">"
         }
         return MangasPage(mangas, hasNextPage)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
-        val details = document.selectFirst(Evaluator.Class("detail-info-tip")).children()!!
+        val details = document.selectFirst(Evaluator.Class("detail-info-tip"))!!.children()
         return SManga.create().apply {
             url = document.location().removePrefix(baseUrl)
-            title = document.selectFirst(Evaluator.Class("detail-info-title")).ownText()
-            thumbnail_url = document.selectFirst(Evaluator.Class("detail-info-cover")).attr("src")
+            title = document.selectFirst(Evaluator.Class("detail-info-title"))!!.ownText()
+            thumbnail_url = document.selectFirst(Evaluator.Class("detail-info-cover"))!!.attr("src")
             status = when (details[1].child(0).ownText()) {
                 "连载中" -> SManga.ONGOING
                 "已完结" -> SManga.COMPLETED
@@ -76,7 +76,7 @@ abstract class MangabzTheme(
             }
             author = details[0].children().joinToString { it.ownText() }
             genre = details[2].children().joinToString { it.ownText() }
-            description = parseDescription(document.selectFirst(Evaluator.Class("detail-info-content")), title, details)
+            description = parseDescription(document.selectFirst(Evaluator.Class("detail-info-content"))!!, title, details)
             initialized = true
         }
     }
@@ -103,7 +103,7 @@ abstract class MangabzTheme(
         }
         if (list.isEmpty()) return emptyList()
 
-        val listTitle = document.selectFirst(Evaluator.Class("detail-list-form-title")).ownText()
+        val listTitle = document.selectFirst(Evaluator.Class("detail-list-form-title"))!!.ownText()
         try {
             list[0].date_upload = parseDate(listTitle)
         } catch (e: Throwable) {
@@ -113,7 +113,7 @@ abstract class MangabzTheme(
     }
 
     protected open fun getChapterElements(document: Document): Elements =
-        document.selectFirst(Evaluator.Id("chapterlistload")).children()
+        document.selectFirst(Evaluator.Id("chapterlistload"))!!.children()
 
     protected open val needPageCount = true
 

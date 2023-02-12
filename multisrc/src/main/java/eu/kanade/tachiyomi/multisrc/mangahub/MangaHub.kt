@@ -171,14 +171,14 @@ abstract class MangaHub(
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         manga.title = document.select(".breadcrumb .active span").text()
-        manga.author = document.select("div:has(h1) span:contains(Author) + span")?.first()?.text()
-        manga.artist = document.select("div:has(h1) span:contains(Artist) + span")?.first()?.text()
-        manga.genre = document.select(".row p a")?.joinToString { it.text() }
-        manga.description = document.select(".tab-content p")?.first()?.text()
-        manga.thumbnail_url = document.select("img.img-responsive")?.first()
+        manga.author = document.select("div:has(h1) span:contains(Author) + span").first()?.text()
+        manga.artist = document.select("div:has(h1) span:contains(Artist) + span").first()?.text()
+        manga.genre = document.select(".row p a").joinToString { it.text() }
+        manga.description = document.select(".tab-content p").first()?.text()
+        manga.thumbnail_url = document.select("img.img-responsive").first()
             ?.attr("src")
 
-        document.select("div:has(h1) span:contains(Status) + span")?.first()?.text()?.also { statusText ->
+        document.select("div:has(h1) span:contains(Status) + span").first()?.text()?.also { statusText ->
             when {
                 statusText.contains("ongoing", true) -> manga.status = SManga.ONGOING
                 statusText.contains("completed", true) -> manga.status = SManga.COMPLETED

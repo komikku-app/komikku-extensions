@@ -52,7 +52,7 @@ class BacaKomik : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("div.limit img").attr("src")
-        element.select("div.animposx > a").first().let {
+        element.select("div.animposx > a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.attr("title")
         }
@@ -97,8 +97,8 @@ class BacaKomik : ParsedHttpSource() {
         return GET(url.build().toString(), headers)
     }
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.infoanime").first()
-        val descElement = document.select("div.desc > .entry-content.entry-content-single").first()
+        val infoElement = document.select("div.infoanime").first()!!
+        val descElement = document.select("div.desc > .entry-content.entry-content-single").first()!!
         val manga = SManga.create()
         // need authorCleaner to take "pengarang:" string to remove it from author
         val authorCleaner = document.select(".infox .spe b:contains(Pengarang)").text()
@@ -125,7 +125,7 @@ class BacaKomik : ParsedHttpSource() {
     override fun chapterListSelector() = "#chapter_list li"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select(".lchx a").first()
+        val urlElement = element.select(".lchx a").first()!!
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         chapter.name = urlElement.text()
@@ -133,7 +133,7 @@ class BacaKomik : ParsedHttpSource() {
         return chapter
     }
 
-    fun parseChapterDate(date: String): Long {
+    private fun parseChapterDate(date: String): Long {
         return if (date.contains("yang lalu")) {
             val value = date.split(' ')[0].toInt()
             when {
@@ -198,18 +198,18 @@ class BacaKomik : ParsedHttpSource() {
     override fun imageUrlParse(document: Document) = ""
 
     override fun imageRequest(page: Page): Request {
-        if (page.imageUrl!!.contains("i2.wp.com")) {
+        return if (page.imageUrl!!.contains("i2.wp.com")) {
             val headers = Headers.Builder()
             headers.apply {
                 add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3")
             }
-            return GET(page.imageUrl!!, headers.build())
+            GET(page.imageUrl!!, headers.build())
         } else {
             val imgHeader = Headers.Builder().apply {
                 add("User-Agent", "Mozilla/5.0 (Linux; U; Android 4.1.1; en-gb; Build/KLP) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Safari/534.30")
                 add("Referer", baseUrl)
             }.build()
-            return GET(page.imageUrl!!, imgHeader)
+            GET(page.imageUrl!!, imgHeader)
         }
     }
 

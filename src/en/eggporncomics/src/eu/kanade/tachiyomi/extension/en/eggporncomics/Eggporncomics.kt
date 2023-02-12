@@ -126,7 +126,7 @@ class Eggporncomics : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            thumbnail_url = document.select(pageListSelector).first().toFullSizeImage()
+            thumbnail_url = document.select(pageListSelector).first()!!.toFullSizeImage()
             description = document.select("div.links ul").joinToString("\n") { element ->
                 element.select("a")
                     .joinToString(prefix = element.select("span").text().replace(descriptionPrefixRegex, ": ")) { it.text() }

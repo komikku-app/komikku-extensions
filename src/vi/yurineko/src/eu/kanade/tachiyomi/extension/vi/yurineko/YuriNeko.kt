@@ -65,7 +65,7 @@ class YuriNeko : HttpSource() {
     private fun errorIntercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
 
-        if (response.code >= 400 && response.body != null) {
+        if (response.code >= 400) {
             val error = try {
                 response.parseAs<ErrorResponseDto>()
             } catch (_: Throwable) {

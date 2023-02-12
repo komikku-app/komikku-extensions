@@ -134,7 +134,7 @@ abstract class MMRCMS(
         return client.newCall(GET("$baseUrl/changeMangaList?type=text", headers))
             .asObservableSuccess()
             .map { response ->
-                val mangas = response.asJsoup().select("ul.manga-list a")
+                val mangas = response.asJsoup().select("ul.manga-list a").toList()
                     .filter { it.text().contains(query, ignoreCase = true) }
                     .map {
                         SManga.create().apply {
@@ -198,7 +198,7 @@ abstract class MMRCMS(
     private fun latestUpdatesSelector() = "div.mangalist div.manga-item"
     private fun latestUpdatesNextPageSelector() = "a[rel=next]"
     protected open fun latestUpdatesFromElement(element: Element, urlSelector: String): SManga? {
-        return element.select(urlSelector).first().let { titleElement ->
+        return element.select(urlSelector).first()!!.let { titleElement ->
             if (titleElement.text() in latestTitles) {
                 null
             } else {
@@ -305,12 +305,12 @@ abstract class MMRCMS(
 
         for (element in document.select(".row .dl-horizontal dt")) {
             when (element.text().trim().lowercase().removeSuffix(":")) {
-                in detailAuthor -> author = element.nextElementSibling().text()
-                in detailArtist -> artist = element.nextElementSibling().text()
-                in detailGenre -> genre = element.nextElementSibling().select("a").joinToString {
+                in detailAuthor -> author = element.nextElementSibling()!!.text()
+                in detailArtist -> artist = element.nextElementSibling()!!.text()
+                in detailGenre -> genre = element.nextElementSibling()!!.select("a").joinToString {
                     it.text().trim()
                 }
-                in detailStatus -> status = when (element.nextElementSibling().text().trim().lowercase()) {
+                in detailStatus -> status = when (element.nextElementSibling()!!.text().trim().lowercase()) {
                     in detailStatusComplete -> SManga.COMPLETED
                     in detailStatusOngoing -> SManga.ONGOING
                     else -> SManga.UNKNOWN
@@ -367,7 +367,7 @@ abstract class MMRCMS(
         val chapter = SChapter.create()
 
         try {
-            val titleWrapper = element.select("[class^=chapter-title-rtl]").first()
+            val titleWrapper = element.select("[class^=chapter-title-rtl]").first()!!
             // Some websites add characters after "..-rtl" thus the need of checking classes that starts with that
             val url = titleWrapper.getElementsByTag("a")
                 .first { it.attr("href").contains(urlRegex) }

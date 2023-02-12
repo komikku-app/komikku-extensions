@@ -37,7 +37,7 @@ class Manga18fx : Madara(
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
         loadGenres(document)
-        val block = document.selectFirst(Evaluator.Class("trending-block"))
+        val block = document.selectFirst(Evaluator.Class("trending-block"))!!
         val mangas = block.select(Evaluator.Tag("a")).map(::mangaFromElement)
         return MangasPage(mangas, false)
     }
@@ -45,7 +45,7 @@ class Manga18fx : Madara(
     private fun mangaFromElement(element: Element) = SManga.create().apply {
         url = element.attr("href")
         title = element.attr("title")
-        thumbnail_url = element.selectFirst(Evaluator.Tag("img")).attr("data-src")
+        thumbnail_url = element.selectFirst(Evaluator.Tag("img"))!!.attr("data-src")
     }
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/$page", headers)
@@ -54,9 +54,9 @@ class Manga18fx : Madara(
         val document = response.asJsoup()
         loadGenres(document)
         val mangas = document.select(Evaluator.Class("bsx-item")).map {
-            mangaFromElement(it.selectFirst(Evaluator.Tag("a")))
+            mangaFromElement(it.selectFirst(Evaluator.Tag("a"))!!)
         }
-        val nextButton = document.selectFirst(Evaluator.Class("next"))
+        val nextButton = document.selectFirst(Evaluator.Class("next"))!!
         val hasNextPage = nextButton != null && nextButton.hasClass("disabled").not()
         return MangasPage(mangas, hasNextPage)
     }
@@ -91,7 +91,7 @@ class Manga18fx : Madara(
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val container = document.selectFirst(Evaluator.Class("row-content-chapter"))
+        val container = document.selectFirst(Evaluator.Class("row-content-chapter"))!!
         return container.children().map(::chapterFromElement)
     }
 

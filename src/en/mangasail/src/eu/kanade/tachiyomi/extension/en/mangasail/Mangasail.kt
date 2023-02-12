@@ -45,11 +45,11 @@ class Mangasail : ParsedHttpSource() {
     override fun popularMangaSelector() = "tbody tr"
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        element.selectFirst("td:first-of-type a").let {
+        element.selectFirst("td:first-of-type a")!!.let {
             setUrlWithoutDomain(it.attr("href"))
             title = it.text()
         }
-        thumbnail_url = element.selectFirst("td img").attr("src")
+        thumbnail_url = element.selectFirst("td img")!!.attr("src")
     }
 
     override fun popularMangaNextPageSelector() = "table + div.text-center ul.pagination li.next a"
@@ -69,7 +69,7 @@ class Mangasail : ParsedHttpSource() {
         element.select("a:has(img)").let {
             url = it.attr("href")
             // Thumbnails are kind of low-res on latest updates page, transform the img url to get a better version
-            thumbnail_url = it.select("img").first().attr("src").substringBefore("?").replace("styles/minicover/public/", "")
+            thumbnail_url = it.select("img").first()!!.attr("src").substringBefore("?").replace("styles/minicover/public/", "")
         }
     }
 
@@ -92,7 +92,7 @@ class Mangasail : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        element.selectFirst("a").let {
+        element.selectFirst("a")!!.let {
             manga.setUrlWithoutDomain(it.attr("abs:href"))
             manga.title = it.text()
             // Search page doesn't contain cover images, have to get them from the manga's page; but first we need that page's node number
@@ -110,14 +110,14 @@ class Mangasail : ParsedHttpSource() {
     private fun getNodeDetail(node: String, field: String): String? {
         val requestUrl =
             "$baseUrl/sites/all/modules/authcache/modules/authcache_p13n/frontcontroller/authcache.php?a[field][0]=$node:full:en&r=asm/field/node/$field&o[q]=node/$node"
-        val responseString = client.newCall(GET(requestUrl, headers)).execute().body.string() ?: return null
+        val responseString = client.newCall(GET(requestUrl, headers)).execute().body.string()
         val htmlString = json.parseToJsonElement(responseString).jsonObject["field"]!!.jsonObject["$node:full:en"]!!.jsonPrimitive.content
         return parse(htmlString).let {
             when (field) {
-                "field_image2" -> it.selectFirst("img.img-responsive").attr("src")
+                "field_image2" -> it.selectFirst("img.img-responsive")!!.attr("src")
                 "field_status", "field_author", "field_artist" -> it.selectFirst("div.field-item.even")?.text()
                 "body" -> it.selectFirst("div.field-item.even p")?.text()?.substringAfter("summary: ")
-                "field_genres" -> it.select("a")?.text()
+                "field_genres" -> it.select("a").text()
                 else -> null
             }
         }
@@ -130,7 +130,7 @@ class Mangasail : ParsedHttpSource() {
     // On source's website most of these details are loaded through JQuery
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            title = document.select("div.main-content-inner").select("h1").first().text()
+            title = document.select("div.main-content-inner").select("h1").first()!!.text()
             getNodeNumber(document).let { node ->
                 author = getNodeDetail(node, "field_author")
                 artist = getNodeDetail(node, "field_artist")
@@ -154,7 +154,7 @@ class Mangasail : ParsedHttpSource() {
     override fun chapterListSelector() = "tbody tr"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.select("a").first().attr("href"))
+        setUrlWithoutDomain(element.select("a").first()!!.attr("href"))
         name = element.select("a").text()
         date_upload = parseChapterDate(element.select("td + td").text())
     }
@@ -166,7 +166,7 @@ class Mangasail : ParsedHttpSource() {
     // Page List
 
     override fun pageListParse(document: Document): List<Page> {
-        val imgUrlArray = document.selectFirst("script:containsData(paths)").data()
+        val imgUrlArray = document.selectFirst("script:containsData(paths)")!!.data()
             .substringAfter("paths\":").substringBefore(",\"count_p")
         return json.parseToJsonElement(imgUrlArray).jsonArray.mapIndexed { i, el ->
             Page(i, "", el.jsonPrimitive.content)

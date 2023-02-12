@@ -138,7 +138,7 @@ class EarlyManga : ParsedHttpSource() {
                 var next = allChapters
                 repeat(10) {
                     if (next.selectFirst(str2) != null) {
-                        val current = next.select(str5 ?: str3)?.text() ?: str4
+                        val current = next.select(str5 ?: str3).text() ?: str4
                         next.addClass(current)
                     } else {
                         next = next.parent()
@@ -172,7 +172,7 @@ class EarlyManga : ParsedHttpSource() {
         val crypt4 = IvParameterSpec(Base64.decode("totally not some plaintxt".toByteArray(Charsets.UTF_8), Base64.DEFAULT))
         crypt2.init(Cipher.DECRYPT_MODE, crypt3, crypt4)
         val str1 = String(crypt2.doFinal(Base64.decode("ckFyOt1FSclkqG4dG2+mbw==".toByteArray(Charsets.UTF_8), Base64.DEFAULT)))
-        val str2 = element.selectFirst(str1)
+        val str2 = element.selectFirst(str1)!!
 
         setUrlWithoutDomain(str2.attr("href"))
         name = str2.text()

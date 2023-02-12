@@ -110,10 +110,10 @@ class LxHentai : ParsedHttpSource() {
     override fun searchMangaSelector(): String = "div.grid div.manga-vertical"
 
     override fun searchMangaFromElement(element: Element) = SManga.create().apply {
-        setUrlWithoutDomain(element.select("div.p-2.truncate a").first().attr("href"))
-        title = element.select("div.p-2.truncate a").first().text()
+        setUrlWithoutDomain(element.select("div.p-2.truncate a").first()!!.attr("href"))
+        title = element.select("div.p-2.truncate a").first()!!.text()
         thumbnail_url = element.select("div.cover")
-            .first()
+            .first()!!
             .attr("style")
             .substringAfter("url('")
             .substringBefore("')")
@@ -122,7 +122,7 @@ class LxHentai : ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = "li:contains(Cuối)"
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        title = document.select("span.text-lg.ml-1.font-semibold").first().text()
+        title = document.select("span.text-lg.ml-1.font-semibold").first()!!.text()
         author = document.select("div.grow div.mt-2:contains(Tác giả) span a")
             .joinToString { it.text().trim(',', ' ') }
         genre = document.select("div.grow div.mt-2:contains(Thể loại) span a")
@@ -146,12 +146,12 @@ class LxHentai : ParsedHttpSource() {
         }.trim()
 
         thumbnail_url = document.select(".cover")
-            .first()
+            .first()!!
             .attr("style")
             .substringAfter("url('")
             .substringBefore("')")
 
-        val statusString = document.select("div.grow div.mt-2:contains(Tình trạng) a").first().text()
+        val statusString = document.select("div.grow div.mt-2:contains(Tình trạng) a").first()!!.text()
         status = when (statusString) {
             "Đã hoàn thành" -> SManga.COMPLETED
             "Đang tiến hành" -> SManga.ONGOING
@@ -164,7 +164,7 @@ class LxHentai : ParsedHttpSource() {
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         name = element.select("span.text-ellipsis").text()
-        date_upload = kotlin.runCatching {
+        date_upload = runCatching {
             dateFormat.parse(element.select("span.timeago").attr("datetime"))?.time
         }.getOrNull() ?: 0L
 

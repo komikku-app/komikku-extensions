@@ -82,9 +82,9 @@ open class LeerCapitulo : ParsedHttpSource() {
         ".mainpage-manga"
 
     override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
-        setUrlWithoutDomain(element.selectFirst(".media-body > a").attr("abs:href"))
-        title = element.selectFirst("h4").text()
-        thumbnail_url = element.selectFirst("img").attr("abs:src")
+        setUrlWithoutDomain(element.selectFirst(".media-body > a")!!.attr("abs:href"))
+        title = element.selectFirst("h4")!!.text()
+        thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
     }
 
     override fun latestUpdatesNextPageSelector(): String? =
@@ -92,18 +92,18 @@ open class LeerCapitulo : ParsedHttpSource() {
 
     // Details
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        title = document.selectFirst("h1").text()
+        title = document.selectFirst("h1")!!.text()
 
         val altNames = document.selectFirst(".description-update > span:contains(Títulos Alternativos:) + :matchText")?.text()
-        val desc = document.selectFirst("#example2").text()
+        val desc = document.selectFirst("#example2")!!.text()
         description = when (altNames) {
             null -> desc
             else -> "$desc\n\nAlt name(s): $altNames"
         }
 
         genre = document.select(".description-update a[href^='/genre/']").joinToString { it.text() }
-        status = document.selectFirst(".description-update > span:contains(Estado:) + :matchText").text().toStatus()
-        thumbnail_url = document.selectFirst(".cover-detail > img").attr("abs:src")
+        status = document.selectFirst(".description-update > span:contains(Estado:) + :matchText")!!.text().toStatus()
+        thumbnail_url = document.selectFirst(".cover-detail > img")!!.attr("abs:src")
     }
 
     // Chapters
@@ -111,7 +111,7 @@ open class LeerCapitulo : ParsedHttpSource() {
         ".chapter-list > ul > li"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        val a = element.selectFirst("a.xanh")
+        val a = element.selectFirst("a.xanh")!!
         setUrlWithoutDomain(a.attr("abs:href"))
         name = a.text()
         chapter_number = name
@@ -123,8 +123,7 @@ open class LeerCapitulo : ParsedHttpSource() {
 
     // Pages
     override fun pageListParse(document: Document): List<Page> {
-        val urls = document.selectFirst("#arraydata").text().split(',')
-
+        val urls = document.selectFirst("#arraydata")!!.text().split(',')
         return urls.mapIndexed { i, image_url ->
             Page(i, "", image_url)
         }

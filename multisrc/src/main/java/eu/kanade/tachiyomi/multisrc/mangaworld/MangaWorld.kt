@@ -51,7 +51,7 @@ abstract class MangaWorld(
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("a.thumb img").attr("src")
-        element.select("a").first().let {
+        element.select("a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href").removeSuffix("/"))
             manga.title = it.attr("title")
         }

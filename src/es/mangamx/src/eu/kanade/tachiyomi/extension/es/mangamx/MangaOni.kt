@@ -177,7 +177,7 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = document.select("img[src*=cover]").attr("abs:src")
-        manga.description = document.select("div#sinopsis").last().ownText()
+        manga.description = document.select("div#sinopsis").last()!!.ownText()
         manga.author = document.select("div#info-i").text().let {
             if (it.contains("Autor", true)) {
                 it.substringAfter("Autor:").substringBefore("Fecha:").trim()
@@ -187,7 +187,7 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
         }
         manga.artist = manga.author
         manga.genre = document.select("div#categ a").joinToString(", ") { it.text() }
-        manga.status = when (document.select("span#desarrollo")?.first()?.text()) {
+        manga.status = when (document.select("span#desarrollo").first()?.text()) {
             "En desarrollo" -> SManga.ONGOING
             // "Completed" -> SManga.COMPLETED
             else -> SManga.UNKNOWN

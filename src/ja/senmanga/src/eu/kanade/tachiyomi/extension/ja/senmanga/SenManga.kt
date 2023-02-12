@@ -90,9 +90,9 @@ class SenManga : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         title = document.select("h1.series").text()
 
-        thumbnail_url = document.select("div.cover img").first().attr("src")
+        thumbnail_url = document.select("div.cover img").first()!!.attr("src")
 
-        description = document.select("div.summary").first().text()
+        description = document.select("div.summary").first()!!.text()
 
         val seriesElement = document.select("div.series-desc .info ")
 
@@ -119,7 +119,7 @@ class SenManga : ParsedHttpSource() {
 
         setUrlWithoutDomain(linkElement.attr("href"))
 
-        name = linkElement.first().text()
+        name = linkElement.first()!!.text()
 
         chapter_number = element.child(0).text().trim().toFloatOrNull() ?: -1f
 
@@ -131,7 +131,7 @@ class SenManga : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return listOf(1..document.select("select[name=page] option:last-of-type").first().text().toInt()).flatten().map { i ->
+        return listOf(1..document.select("select[name=page] option:last-of-type").first()!!.text().toInt()).flatten().map { i ->
             Page(i - 1, "", "${document.location().replace(baseUrl, "$baseUrl/viewer")}/$i")
         }
     }

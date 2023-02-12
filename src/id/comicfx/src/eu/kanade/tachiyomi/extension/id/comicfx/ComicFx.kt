@@ -156,7 +156,7 @@ class ComicFx : ParsedHttpSource() {
         thumbnail_url = document.select(".thumb img").attr("abs:src")
     }
 
-    protected fun parseStatus(element: String?): Int = when {
+    private fun parseStatus(element: String?): Int = when {
         element == null -> SManga.UNKNOWN
         listOf("ongoing", "publishing").any { it.contains(element, ignoreCase = true) } -> SManga.ONGOING
         listOf("completed").any { it.contains(element, ignoreCase = true) } -> SManga.COMPLETED
@@ -197,8 +197,8 @@ class ComicFx : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         setUrlWithoutDomain(element.attr("href"))
-        name = element.selectFirst("span.chapternum").text()
-        date_upload = parseDate(element.selectFirst("span.chapterdate").text())
+        name = element.selectFirst("span.chapternum")!!.text()
+        date_upload = parseDate(element.selectFirst("span.chapterdate")!!.text())
     }
 
     // Pages
@@ -315,6 +315,4 @@ class ComicFx : ParsedHttpSource() {
         Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray()) {
         fun toUriPart() = vals[state].first
     }
-
-    private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T
 }

@@ -20,12 +20,7 @@ import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-/**
- *  @author THE_ORONCO <the_oronco@posteo.net>
- */
-
 class Buttsmithy : HttpSource() {
-    data class TitleUrlPair(val title: String, val url: String)
 
     override val name = "Buttsmithy"
 
@@ -37,9 +32,9 @@ class Buttsmithy : HttpSource() {
 
     override val lang = "en"
 
-    private final val inCase = "InCase"
-    private final val alfieTitle = "Alfie"
-    private final val alfieDateParser = SimpleDateFormat("HH:mm MMMM dd, yyyy", Locale.US)
+    private val inCase = "InCase"
+    private val alfieTitle = "Alfie"
+    private val alfieDateParser = SimpleDateFormat("HH:mm MMMM dd, yyyy", Locale.US)
 
     override val supportsLatest: Boolean = false
 
@@ -71,7 +66,7 @@ class Buttsmithy : HttpSource() {
         allChapters: MutableList<SChapter> = mutableListOf(),
     ): MutableList<SChapter> {
         val currentDoc = client.newCall(GET(currentPageUrl, headers)).execute().asJsoup()
-        val currentPageComicPage = currentDoc.select("#comic img").first()
+        val currentPageComicPage = currentDoc.select("#comic img").first()!!
         val chapterTitle = currentPageComicPage.attr("alt")
 
         val chapter = SChapter.create().apply {
@@ -225,7 +220,7 @@ class Buttsmithy : HttpSource() {
     }
 
     private fun extractChapterTitleFromPageDoc(doc: Document): String {
-        return doc.select(".comic-chapter a").first().text().lowercase()
+        return doc.select(".comic-chapter a").first()!!.text().lowercase()
     }
 
     private fun chapterTitleToChapterUrlName(chapTitle: String): String {

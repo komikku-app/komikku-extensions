@@ -106,7 +106,7 @@ class MundoHentai : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = "Capítulo"
         chapter_number = 1f
-        setUrlWithoutDomain(element.ownerDocument().location())
+        setUrlWithoutDomain(element.ownerDocument()!!.location())
     }
 
     override fun pageListParse(document: Document): List<Page> {

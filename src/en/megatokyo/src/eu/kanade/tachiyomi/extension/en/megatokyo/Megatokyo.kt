@@ -107,7 +107,7 @@ class Megatokyo : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga = throw Exception("Not used")
 
-    override fun searchMangaNextPageSelector(): String? = throw Exception("Not used")
+    override fun searchMangaNextPageSelector(): String = throw Exception("Not used")
 
     override fun searchMangaSelector(): String = throw Exception("Not used")
 
@@ -116,13 +116,13 @@ class Megatokyo : ParsedHttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request =
         throw Exception("Not used")
 
-    override fun popularMangaNextPageSelector(): String? = throw Exception("Not used")
+    override fun popularMangaNextPageSelector(): String = throw Exception("Not used")
 
     override fun popularMangaFromElement(element: Element): SManga = throw Exception("Not used")
 
     override fun mangaDetailsParse(document: Document): SManga = throw Exception("Not used")
 
-    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     override fun latestUpdatesFromElement(element: Element): SManga = throw Exception("Not used")
 
@@ -130,7 +130,7 @@ class Megatokyo : ParsedHttpSource() {
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
-    protected open fun String.toDate(): Long {
+    private fun String.toDate(): Long {
         return runCatching { dateParser.parse(this.replace("(\\d+)(st|nd|rd|th)".toRegex(), "$1"))?.time }
             .onFailure { print("Something wrong happened: ${it.message}") }.getOrNull() ?: 0L
     }

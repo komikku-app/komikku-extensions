@@ -33,7 +33,7 @@ class XkcdRU : Xkcd("https://xkcd.ru", "ru") {
         }
 
     override fun pageListParse(response: Response) =
-        response.asJsoup().selectFirst(imageSelector).let {
+        response.asJsoup().selectFirst(imageSelector)!!.let {
             // no interactive comics here
             val img = it.child(5).child(0)
 

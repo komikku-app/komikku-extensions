@@ -60,11 +60,11 @@ abstract class MangaBox(
 
     protected fun mangaFromElement(element: Element, urlSelector: String = "h3 a"): SManga {
         return SManga.create().apply {
-            element.select(urlSelector).first().let {
+            element.select(urlSelector).first()!!.let {
                 url = it.attr("abs:href").substringAfter(baseUrl) // intentionally not using setUrlWithoutDomain
                 title = it.text()
             }
-            thumbnail_url = element.select("img").first().attr("abs:src")
+            thumbnail_url = element.select("img").first()!!.attr("abs:src")
         }
     }
 
@@ -145,14 +145,14 @@ abstract class MangaBox(
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
             document.select(mangaDetailsMainSelector).firstOrNull()?.let { infoElement ->
-                title = infoElement.select("h1, h2").first().text()
+                title = infoElement.select("h1, h2").first()!!.text()
                 author = infoElement.select("li:contains(author) a, td:containsOwn(author) + td a").eachText().joinToString()
                 status = parseStatus(infoElement.select("li:contains(status), td:containsOwn(status) + td").text())
                 genre = infoElement.select("div.manga-info-top li:contains(genres)").firstOrNull()
                     ?.select("a")?.joinToString { it.text() } // kakalot
                     ?: infoElement.select("td:containsOwn(genres) + td a").joinToString { it.text() } // nelo
             } ?: checkForRedirectMessage(document)
-            description = document.select(descriptionSelector)?.firstOrNull()?.ownText()
+            description = document.select(descriptionSelector).firstOrNull()?.ownText()
                 ?.replace("""^$title summary:\s""".toRegex(), "")
                 ?.replace("""<\s*br\s*/?>""".toRegex(), "\n")
                 ?.replace("<[^>]*>".toRegex(), "")
@@ -201,7 +201,7 @@ abstract class MangaBox(
 
     private fun Element.selectDateFromElement(): Element {
         val defaultChapterDateSelector = "span"
-        return this.select(defaultChapterDateSelector).lastOrNull() ?: this.select(alternateChapterDateSelector).last()
+        return this.select(defaultChapterDateSelector).lastOrNull() ?: this.select(alternateChapterDateSelector).last()!!
     }
 
     override fun chapterFromElement(element: Element): SChapter {

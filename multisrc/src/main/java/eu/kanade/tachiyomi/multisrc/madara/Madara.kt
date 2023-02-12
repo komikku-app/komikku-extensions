@@ -1156,8 +1156,8 @@ abstract class Madara(
             .orEmpty()
             .map { li ->
                 Genre(
-                    li.selectFirst("label").text(),
-                    li.selectFirst("input[type=checkbox]").`val`(),
+                    li.selectFirst("label")!!.text(),
+                    li.selectFirst("input[type=checkbox]")!!.`val`(),
                 )
             }
     }
@@ -1196,7 +1196,7 @@ abstract class Madara(
                 setOnPreferenceChangeListener { _, newValue ->
                     val customUa = newValue as String
                     preferences.edit().putString(PREF_KEY_CUSTOM_UA, customUa).apply()
-                    if (customUa.isNullOrBlank()) {
+                    if (customUa.isBlank()) {
                         Toast.makeText(screen.context, RESTART_APP_STRING, Toast.LENGTH_LONG).show()
                     } else {
                         userAgent = null

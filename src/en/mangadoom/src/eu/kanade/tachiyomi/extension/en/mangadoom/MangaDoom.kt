@@ -91,14 +91,14 @@ class MangaDoom : HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
 
-        val innerContentElement = document.select("div.content-inner.inner-page").first()
-        val dlElement = innerContentElement.select("div.col-md-8 > dl").first()
+        val innerContentElement = document.select("div.content-inner.inner-page").first()!!
+        val dlElement = innerContentElement.select("div.col-md-8 > dl").first()!!
 
         return SManga.create().apply {
             this.url = response.request.url.toString()
 
             this.title = innerContentElement
-                .select("h5.widget-heading:matchText").first().text()
+                .select("h5.widget-heading:matchText").first()!!.text()
             this.thumbnail_url = innerContentElement
                 .select("div.col-md-4 > img").first()?.attr("src")
 
@@ -184,13 +184,11 @@ class MangaDoom : HttpSource() {
 
         return chapters.map {
             SChapter.create().apply {
-                this.name = it.select("span.val").first().ownText()
-                this.url = it.select("a").first().attr("href")
+                this.name = it.select("span.val").first()!!.ownText()
+                this.url = it.select("a").first()!!.attr("href")
                 this.chapter_number = this.url.split("/").last().replace(Regex("[^0-9.]"), "").toFloat()
 
-                val calculatedDate = it.select("span.date").first().ownText()?.let {
-                    parseDate(it)
-                }
+                val calculatedDate = parseDate(it.select("span.date").first()!!.ownText())
 
                 if (calculatedDate != null) {
                     this.date_upload = calculatedDate
@@ -500,7 +498,7 @@ class MangaDoom : HttpSource() {
 
                 return document.select("ul.manga-cat > li").map {
                     Pair(
-                        it.select("span.fa").first().attr("data-id"),
+                        it.select("span.fa").first()!!.attr("data-id"),
                         it.ownText(),
                     )
                 }
@@ -573,7 +571,7 @@ class MangaDoom : HttpSource() {
      * The last step for parsing popular manga and search results (from jsoup element to [SManga]
      */
     private fun mangaFromMangaListElement(mangaListElement: Element): SManga {
-        val titleElement = mangaListElement.select("div.col-md-4 > a").first()
+        val titleElement = mangaListElement.select("div.col-md-4 > a").first()!!
         return mangaFromMangaTitleElement(titleElement)
     }
 
@@ -584,7 +582,7 @@ class MangaDoom : HttpSource() {
         .apply {
             this.title = mangaTitleElement.attr("title")
             this.setUrlWithoutDomain(mangaTitleElement.attr("href"))
-            this.thumbnail_url = mangaTitleElement.select("img").first()
+            this.thumbnail_url = mangaTitleElement.select("img").first()!!
                 .attr("src")
         }
 }

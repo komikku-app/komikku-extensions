@@ -99,7 +99,7 @@ class TruyenGiHot : ParsedHttpSource() {
                     id += ".html"
                 }
                 if (!id.startsWith("/")) {
-                    id = "/" + id
+                    id = "/$id"
                 }
 
                 fetchMangaDetails(
@@ -182,7 +182,7 @@ class TruyenGiHot : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         setUrlWithoutDomain(element.attr("href"))
 
-        val infoBlock = element.selectFirst("span.info")
+        val infoBlock = element.selectFirst("span.info")!!
         name = infoBlock.select("span.no").text()
         date_upload = parseChapterDate(infoBlock.select("span.date").text())
     }

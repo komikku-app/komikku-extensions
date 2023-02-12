@@ -207,7 +207,7 @@ abstract class LibGroup(
 
         val manga = SManga.create()
 
-        val body = document.select("div.media-info-list").first()
+        val body = document.select("div.media-info-list").first()!!
         val rawCategory = document.select(".media-short-info a.media-short-info__item").text()
         val category = when {
             rawCategory == "Комикс западный" -> "Комикс"
@@ -217,8 +217,8 @@ abstract class LibGroup(
 
         val rawAgeStop = document.select(".media-short-info .media-short-info__item[data-caution]").text()
 
-        val ratingValue = document.select(".media-rating__value").last().text().toFloat() * 2
-        val ratingVotes = document.select(".media-rating__votes").last().text()
+        val ratingValue = document.select(".media-rating__value").last()!!.text().toFloat() * 2
+        val ratingVotes = document.select(".media-rating__votes").last()!!.text()
         val ratingStar = when {
             ratingValue > 9.5 -> "★★★★★"
             ratingValue > 8.5 -> "★★★★✬"
@@ -242,19 +242,19 @@ abstract class LibGroup(
         manga.author = body.select("div.media-info-list__title:contains(Автор) + div a").joinToString { it.text() }
         manga.artist = body.select("div.media-info-list__title:contains(Художник) + div a").joinToString { it.text() }
 
-        val StatusTranslate = body.select("div.media-info-list__title:contains(Статус перевода) + div").text().lowercase(Locale.ROOT)
-        val StatusTitle = body.select("div.media-info-list__title:contains(Статус тайтла) + div").text().lowercase(Locale.ROOT)
+        val statusTranslate = body.select("div.media-info-list__title:contains(Статус перевода) + div").text().lowercase(Locale.ROOT)
+        val statusTitle = body.select("div.media-info-list__title:contains(Статус тайтла) + div").text().lowercase(Locale.ROOT)
 
         manga.status = if (document.html().contains("paper empty section")
         ) {
             SManga.LICENSED
         } else {
             when {
-                StatusTranslate.contains("завершен") && StatusTitle.contains("приостановлен") || StatusTranslate.contains("заморожен") || StatusTranslate.contains("заброшен") -> SManga.ON_HIATUS
-                StatusTranslate.contains("завершен") && StatusTitle.contains("выпуск прекращён") -> SManga.CANCELLED
-                StatusTranslate.contains("продолжается") -> SManga.ONGOING
-                StatusTranslate.contains("завершен") -> SManga.COMPLETED
-                else -> when (StatusTitle) {
+                statusTranslate.contains("завершен") && statusTitle.contains("приостановлен") || statusTranslate.contains("заморожен") || statusTranslate.contains("заброшен") -> SManga.ON_HIATUS
+                statusTranslate.contains("завершен") && statusTitle.contains("выпуск прекращён") -> SManga.CANCELLED
+                statusTranslate.contains("продолжается") -> SManga.ONGOING
+                statusTranslate.contains("завершен") -> SManga.COMPLETED
+                else -> when (statusTitle) {
                     "онгоинг" -> SManga.ONGOING
                     "анонс" -> SManga.ONGOING
                     "завершён" -> SManga.COMPLETED
@@ -445,7 +445,7 @@ abstract class LibGroup(
 
         val chapInfo = document
             .select("script:containsData(window.__info)")
-            .first()
+            .first()!!
             .html()
             .split("window.__info = ")
             .last()
@@ -468,7 +468,7 @@ abstract class LibGroup(
         // Get pages
         val pagesArr = document
             .select("script:containsData(window.__pg)")
-            .first()
+            .first()!!
             .html()
             .trim()
             .removePrefix("window.__pg = ")

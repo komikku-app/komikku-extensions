@@ -83,7 +83,7 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
         // Get image host
         val resp = client.newCall(GET("$baseUrl/update?img_host=${preferences.getString(IMAGE_HOST_KEY, IMAGE_HOST_ENTRY_VALUES[0])}")).execute()
         val document = resp.asJsoup()
-        val imgHost = document.selectFirst(".manga-list-2-cover-img").attr(":src").drop(1).substringBefore("'")
+        val imgHost = document.selectFirst(".manga-list-2-cover-img")!!.attr(":src").drop(1).substringBefore("'")
 
         val jsonObject = json.parseToJsonElement(response.body.string()).jsonObject
         val mangas = jsonObject["books"]!!.jsonArray.map {
@@ -115,20 +115,20 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
     override fun searchMangaNextPageSelector(): String? = null
     override fun searchMangaSelector(): String = "ul.book-list > li"
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.selectFirst("p.book-list-info-title").text()
-        setUrlWithoutDomain(element.selectFirst("a").attr("abs:href"))
-        thumbnail_url = element.selectFirst("img").attr("data-original")
+        title = element.selectFirst("p.book-list-info-title")!!.text()
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("abs:href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("data-original")
     }
 
     // Details
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        title = document.selectFirst("p.detail-main-info-title").text()
-        thumbnail_url = document.selectFirst("div.detail-main-cover > img").attr("data-original")
+        title = document.selectFirst("p.detail-main-info-title")!!.text()
+        thumbnail_url = document.selectFirst("div.detail-main-cover > img")!!.attr("data-original")
         author = document.select("p.detail-main-info-author > span.detail-main-info-value > a").text()
         artist = author
         genre = document.select("div.detail-main-info-class > a.info-tag").eachText().joinToString(", ")
-        description = document.selectFirst("#detail > p.detail-desc").text()
+        description = document.selectFirst("#detail > p.detail-desc")!!.text()
     }
 
     // Chapters

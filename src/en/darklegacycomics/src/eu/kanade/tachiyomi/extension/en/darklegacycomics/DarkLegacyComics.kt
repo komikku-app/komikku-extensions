@@ -23,9 +23,9 @@ class DarkLegacyComics : HttpSource() {
 
     override fun chapterListParse(response: Response) =
         response.asJsoup().select(".archive_link").map {
-            val index = it.selectFirst(".index").text()
-            val date = it.selectFirst(".date").ownText()
-            val title = it.selectFirst(".name").text()
+            val index = it.selectFirst(".index")!!.text()
+            val date = it.selectFirst(".date")!!.ownText()
+            val title = it.selectFirst(".name")!!.text()
             val characters = it.select(".characters").text()
             SChapter.create().apply {
                 url = "/$index"

@@ -62,9 +62,9 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
     override fun latestUpdatesSelector() = "div#book_list > div.item"
 
     override fun latestUpdatesFromElement(element: Element) = SManga.create().apply {
-        setUrlWithoutDomain(element.selectFirst("div.text > h3 > a").attr("href"))
-        title = element.selectFirst("div.text > h3 > a").ownText()
-        thumbnail_url = element.selectFirst("img").attr("abs:src")
+        setUrlWithoutDomain(element.selectFirst("div.text > h3 > a")!!.attr("href"))
+        title = element.selectFirst("div.text > h3 > a")!!.ownText()
+        thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
     }
 
     override fun latestUpdatesNextPageSelector() = "a.next.page-numbers"
@@ -142,7 +142,7 @@ class MangaKatana : ConfigurableSource, ParsedHttpSource() {
             val document = response.asJsoup()
             val manga = SManga.create().apply {
                 thumbnail_url = parseThumbnail(document)
-                title = document.select("h1.heading").first().text()
+                title = document.select("h1.heading").first()!!.text()
             }
             manga.setUrlWithoutDomain(response.request.url.toString())
             MangasPage(listOf(manga), false)

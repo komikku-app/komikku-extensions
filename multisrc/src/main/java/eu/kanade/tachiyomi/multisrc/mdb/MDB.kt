@@ -35,10 +35,10 @@ abstract class MDB(
     override fun popularMangaRequest(page: Int) = GET(listUrl("page-$page"), headers)
     override fun popularMangaSelector() = "div.comic-main-section > div.comic-book-unit"
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        val link = element.selectFirst("h2 > a")
+        val link = element.selectFirst("h2 > a")!!
         setUrlWithoutDomain(link.attr("href"))
         title = link.text()
-        thumbnail_url = element.selectFirst(Evaluator.Tag("img")).absUrl("src")
+        thumbnail_url = element.selectFirst(Evaluator.Tag("img"))!!.absUrl("src")
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
@@ -71,22 +71,22 @@ abstract class MDB(
     protected open fun transformDescription(description: String) = description
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        title = document.selectFirst(Evaluator.Tag("h1")).text().let { transformTitle(it) }
-        author = document.selectFirst(authorSelector).text()
-        description = document.selectFirst("p.comic_story").text().let { transformDescription(it) }
+        title = transformTitle(document.selectFirst(Evaluator.Tag("h1"))!!.text())
+        author = document.selectFirst(authorSelector)!!.text()
+        description = transformDescription(document.selectFirst("p.comic_story")!!.text())
         genre = parseGenre(document).joinToString(", ")
-        status = when (document.selectFirst("a.comic-pub-state").text()) {
+        status = when (document.selectFirst("a.comic-pub-state")!!.text()) {
             "连载中" -> SManga.ONGOING
             "已完结" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
-        thumbnail_url = document.selectFirst("td.comic-cover > img").absUrl("src")
+        thumbnail_url = document.selectFirst("td.comic-cover > img")!!.absUrl("src")
     }
 
     protected open fun parseGenre(document: Document): List<String> {
         val list = mutableListOf<String>()
-        list.add(document.selectFirst("th:contains(地区) + td").text())
-        list.add(document.selectFirst("th:contains(面向读者) + td").text().removeSuffix("漫画"))
+        list.add(document.selectFirst("th:contains(地区) + td")!!.text())
+        list.add(document.selectFirst("th:contains(面向读者) + td")!!.text().removeSuffix("漫画"))
         val tags = document.select("ul.tags > li > a")
         for (i in 1 until tags.size) { // skip status
             list.add(tags[i].text())
@@ -101,12 +101,12 @@ abstract class MDB(
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val imgData = document.selectFirst("body > script:containsData(img_data)").data()
+        val imgData = document.selectFirst("body > script:containsData(img_data)")!!.data()
             .substringAfter("img_data = ").run {
                 val endIndex = indexOf(this[0], startIndex = 1) // find end quote
                 substring(1, endIndex)
             }
-        val readerConfig = document.selectFirst(Evaluator.Class("vg-r-data"))
+        val readerConfig = document.selectFirst(Evaluator.Class("vg-r-data"))!!
         return parseImages(imgData, readerConfig).mapIndexed { i, it ->
             Page(i, imageUrl = it)
         }
@@ -143,7 +143,7 @@ abstract class MDB(
                     values.add(link.text())
                     params.add(link.attr("href").let(::extractParams).let(::parseParam))
                 }
-                val name = children[0].selectFirst(Evaluator.Tag("span")).text()
+                val name = children[0].selectFirst(Evaluator.Tag("span"))!!.text()
                 list.add(Category(name, values.toTypedArray(), params))
             } else if (filterContainer.hasClass("form-row")) { // Dropdown filter
                 for (select in filterContainer.select(Evaluator.Tag("select"))) {

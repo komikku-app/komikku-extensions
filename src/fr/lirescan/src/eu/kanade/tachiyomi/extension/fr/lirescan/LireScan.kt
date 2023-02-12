@@ -57,7 +57,7 @@ class LireScan : ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SManga {
         return SManga.create().apply {
             title = element.text()
-            url = element.nextElementSibling().select("a").first().attr("href")
+            url = element.nextElementSibling()!!.select("a").first()!!.attr("href")
                 .removeSuffix("/").dropLastWhile { it.isDigit() }
         }
     }
@@ -79,7 +79,8 @@ class LireScan : ParsedHttpSource() {
     }
 
     private fun searchMangaParse(response: Response, query: String): MangasPage {
-        val mangas = response.asJsoup().select(popularMangaSelector()).filter { it.text().contains(query, ignoreCase = true) }
+        val mangas = response.asJsoup().select(popularMangaSelector()).toList()
+            .filter { it.text().contains(query, ignoreCase = true) }
             .map { searchMangaFromElement(it) }
 
         return MangasPage(mangas, false)
@@ -107,7 +108,7 @@ class LireScan : ParsedHttpSource() {
         return SChapter.create().apply {
             element.text().let { chNum ->
                 name = "Chapter $chNum"
-                setUrlWithoutDomain("${element.ownerDocument().location()}$chNum/")
+                setUrlWithoutDomain("${element.ownerDocument()!!.location()}$chNum/")
             }
         }
     }
@@ -115,8 +116,9 @@ class LireScan : ParsedHttpSource() {
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
-        val lastPage = document.select("ul.pagination li.page-item:contains(Suiv)").first()
-            .previousElementSibling().text().toInt()
+        val lastPage = document.select("ul.pagination li.page-item:contains(Suiv)").first()!!
+            .previousElementSibling()!!
+            .text().toInt()
 
         return IntRange(1, lastPage).map { num -> Page(num - 1, document.location() + num) }
     }

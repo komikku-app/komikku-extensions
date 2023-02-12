@@ -195,8 +195,8 @@ class WebOfComics : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = baseUrl + element.select(".lazyload").first().attr("data-src").replace("/thumbs", "")
-        element.select(".movie-title").first().let {
+        manga.thumbnail_url = baseUrl + element.select(".lazyload").first()!!.attr("data-src").replace("/thumbs", "")
+        element.select(".movie-title").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.html().substringBefore("<div>")
         }
@@ -239,37 +239,37 @@ class WebOfComics : ParsedHttpSource() {
         }
 
         val manga = SManga.create()
-        val infoElement = document.select(".page-cols").first()
+        val infoElement = document.select(".page-cols").first()!!
         val infoElement2 = document.select(".m-info2 .sliceinfo1")
-        manga.title = infoElement.select("h1").first().text()
-        manga.thumbnail_url = baseUrl + infoElement.select(".lazyload").first().attr("data-src")
-        manga.description = infoElement.select("H2").first().text() + "\n" + ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" + Jsoup.parse(document.select(".slice-this").first().html().replace("<br>", "REPLACbR")).text().replace("REPLACbR", "\n").substringAfter("Описание:").trim()
+        manga.title = infoElement.select("h1").first()!!.text()
+        manga.thumbnail_url = baseUrl + infoElement.select(".lazyload").first()!!.attr("data-src")
+        manga.description = infoElement.select("H2").first()!!.text() + "\n" + ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" + Jsoup.parse(document.select(".slice-this").first()!!.html().replace("<br>", "REPLACbR")).text().replace("REPLACbR", "\n").substringAfter("Описание:").trim()
         manga.author = infoElement2.select(":contains(Автор) a").joinToString { it.text() }
         if (manga.author.isNullOrEmpty()) {
-            manga.author = infoElement.select(".mi-item:contains(Издательство)").first().text()
+            manga.author = infoElement.select(".mi-item:contains(Издательство)").first()!!.text()
         }
         manga.artist = infoElement2.select(":contains(Художник) a").joinToString { it.text() }
         manga.genre = (infoElement.select(".mi-item:contains(Тип) a") + infoElement.select(".mi-item:contains(Возраст) a") + infoElement.select(".mi-item:contains(Формат) a") + infoElement.select(".mi-item:contains(Жанр) a")).joinToString { it.text() }
         manga.status = if (document.toString().contains("Удалено по просьбе правообладателя")) {
             SManga.LICENSED
         } else {
-            parseStatus(infoElement.select(".mi-item:contains(Перевод) a").first().text())
+            parseStatus(infoElement.select(".mi-item:contains(Перевод) a").first()!!.text())
         }
 
         return manga
     }
 
     override fun chapterListRequest(manga: SManga): Request {
-        val TypeSeries = if (manga.url.contains("/manga/")) {
+        val typeSeries = if (manga.url.contains("/manga/")) {
             "xsort='tommanga,glavamanga' template='custom-linkstocomics-xfmanga-guest'"
         } else {
             "xsort='number' template='custom-linkstocomics-xfcomics-guest'"
         }
 
         return POST(
-            baseUrl + "/engine/ajax/customajax.php",
+            "$baseUrl/engine/ajax/customajax.php",
             body = FormBody.Builder()
-                .add("castom", "custom senxf='fastnavigation|${manga.url.substringAfterLast("/").substringBefore("-")}' $TypeSeries limit='3000' sort='asc' cache='yes'")
+                .add("castom", "custom senxf='fastnavigation|${manga.url.substringAfterLast("/").substringBefore("-")}' $typeSeries limit='3000' sort='asc' cache='yes'")
                 .build(),
             headers = headers,
         )
@@ -279,7 +279,7 @@ class WebOfComics : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        element.select("a").first().let {
+        element.select("a").first()!!.let {
             val numberSection = it.text().substringBefore(" - ")
             chapter.name = it.text().substringAfterLast(":")
             chapter.chapter_number = if (numberSection.contains("#")) {
@@ -289,7 +289,7 @@ class WebOfComics : ParsedHttpSource() {
             }
             chapter.setUrlWithoutDomain(it.attr("href"))
         }
-        chapter.date_upload = simpleDateFormat.parse(element.select("div").first().text().trim())?.time ?: 0L
+        chapter.date_upload = simpleDateFormat.parse(element.select("div").first()!!.text().trim())?.time ?: 0L
         return chapter
     }
 
@@ -298,7 +298,7 @@ class WebOfComics : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        var baseImgUrl = document.select("link[rel='image_src']").last().attr("href")
+        var baseImgUrl = document.select("link[rel='image_src']").last()!!.attr("href")
 
         val publicUrl = "/public_html"
         val uploadUrl =

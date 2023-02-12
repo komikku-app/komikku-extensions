@@ -66,10 +66,10 @@ class Komiku : ParsedHttpSource() {
     override fun latestUpdatesSelector() = popularMangaSelector()
 
     override fun latestUpdatesRequest(page: Int): Request {
-        if (page == 1) {
-            return GET("$baseUrl/pustaka/?orderby=modified", headers)
+        return if (page == 1) {
+            GET("$baseUrl/pustaka/?orderby=modified", headers)
         } else {
-            return GET("$baseUrl/pustaka/page/$page/?orderby=modified", headers)
+            GET("$baseUrl/pustaka/page/$page/?orderby=modified", headers)
         }
     }
 
@@ -160,10 +160,10 @@ class Komiku : ParsedHttpSource() {
         Filter.Separator(),
         Filter.Header("NOTE: cant be used with other filter!"),
         Filter.Header("$name Project List page"),
-        ProjectList(ProjectFilter),
+        ProjectList(projectFilter),
     )
 
-    private val ProjectFilter = arrayOf(
+    private val projectFilter = arrayOf(
         Status("Show all manga", ""),
         Status("Show only project manga", "project-filter-on"),
     )
@@ -274,17 +274,17 @@ class Komiku : ParsedHttpSource() {
         name = element.select("a").text()
 
         val timeStamp = element.select("td.tanggalseries")
-        if (timeStamp.text().contains("lalu")) {
-            date_upload = parseRelativeDate(timeStamp.text().trim()) ?: 0
+        date_upload = if (timeStamp.text().contains("lalu")) {
+            parseRelativeDate(timeStamp.text().trim())
         } else {
-            date_upload = parseDate(timeStamp.last())
+            parseDate(timeStamp.last()!!)
         }
     }
 
     private fun parseDate(element: Element): Long = SimpleDateFormat("dd/MM/yyyy", Locale.US).parse(element.text())?.time ?: 0
 
     // Used Google translate here
-    private fun parseRelativeDate(date: String): Long? {
+    private fun parseRelativeDate(date: String): Long {
         val trimmedDate = date.substringBefore(" lalu").removeSuffix("s").split(" ")
 
         val calendar = Calendar.getInstance()

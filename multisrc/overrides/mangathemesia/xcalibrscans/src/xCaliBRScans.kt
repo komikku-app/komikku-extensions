@@ -31,7 +31,7 @@ class xCaliBRScans : MangaThemesia("xCaliBR Scans", "https://xcalibrscans.com", 
             .forEach { element ->
                 when {
                     element.tagName() == "p" -> {
-                        val imgUrl = element.selectFirst("img").imgAttr()
+                        val imgUrl = element.selectFirst("img")!!.imgAttr()
                         imgUrls.add(imgUrl)
                     }
                     element.tagName() == "div" && element.hasClass("kage") -> {

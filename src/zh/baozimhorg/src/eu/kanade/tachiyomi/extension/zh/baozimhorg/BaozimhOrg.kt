@@ -64,10 +64,10 @@ class BaozimhOrg : HttpSource(), ConfigurableSource {
         val document = response.asJsoup().also(::parseGenres)
         val mangas = document.select("article.wp-manga").map { element ->
             SManga.create().apply {
-                val link = element.selectFirst(Evaluator.Tag("h2")).child(0)
+                val link = element.selectFirst(Evaluator.Tag("h2"))!!.child(0)
                 url = getKey(link.attr("href"))
                 title = link.ownText()
-                thumbnail_url = element.selectFirst(Evaluator.Tag("img")).imgSrc
+                thumbnail_url = element.selectFirst(Evaluator.Tag("img"))!!.imgSrc
             }
         }
         val hasNextPage = document.selectFirst(Evaluator.Class("next"))?.tagName() == "a" ||
@@ -101,12 +101,12 @@ class BaozimhOrg : HttpSource(), ConfigurableSource {
 
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
         val document = response.asJsoup()
-        title = document.selectFirst(Evaluator.Tag("h1")).ownText()
-        author = document.selectFirst(Evaluator.Class("author-content")).children().joinToString { it.ownText() }
-        description = document.selectFirst(".descrip_manga_info, .wp-block-stackable-text").text()
-        thumbnail_url = document.selectFirst("img.wp-post-image").imgSrc
+        title = document.selectFirst(Evaluator.Tag("h1"))!!.ownText()
+        author = document.selectFirst(Evaluator.Class("author-content"))!!.children().joinToString { it.ownText() }
+        description = document.selectFirst(".descrip_manga_info, .wp-block-stackable-text")!!.text()
+        thumbnail_url = document.selectFirst("img.wp-post-image")!!.imgSrc
 
-        val genreList = document.selectFirst(Evaluator.Class("genres-content"))
+        val genreList = document.selectFirst(Evaluator.Class("genres-content"))!!
             .children().eachText().toMutableSet()
         if ("连载中" in genreList) {
             genreList.remove("连载中")
@@ -126,7 +126,7 @@ class BaozimhOrg : HttpSource(), ConfigurableSource {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        return document.selectFirst(Evaluator.Class("version-chaps")).children().map {
+        return document.selectFirst(Evaluator.Class("version-chaps"))!!.children().map {
             SChapter.create().apply {
                 url = getKey(it.attr("href"))
                 name = it.ownText()
@@ -152,7 +152,7 @@ class BaozimhOrg : HttpSource(), ConfigurableSource {
 
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
 
-    var genres: Array<Pair<String, String>> = emptyArray()
+    private var genres: Array<Pair<String, String>> = emptyArray()
 
     private fun parseGenres(document: Document) {
         if (!enableGenres || genres.isNotEmpty()) return

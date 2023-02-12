@@ -16,7 +16,7 @@ class NuxScans : ParsedHttpSource() {
 
     override val name = "Nux Scans"
     override val baseUrl = "https://nuxscans.blogspot.com"
-    val baseUrl2 = "https://nuxscans-comics.blogspot.com"
+    private val baseUrl2 = "https://nuxscans-comics.blogspot.com"
     override val lang = "en"
     override val supportsLatest = false
     override val client: OkHttpClient = network.cloudflareClient
@@ -45,7 +45,7 @@ class NuxScans : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SManga = throw UnsupportedOperationException()
 
-    override fun latestUpdatesNextPageSelector(): String? = throw UnsupportedOperationException()
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
     // search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = throw UnsupportedOperationException()
@@ -54,7 +54,7 @@ class NuxScans : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga = throw UnsupportedOperationException()
 
-    override fun searchMangaNextPageSelector(): String? = throw UnsupportedOperationException()
+    override fun searchMangaNextPageSelector(): String = throw UnsupportedOperationException()
 
     // manga details
     override fun mangaDetailsRequest(manga: SManga): Request {
@@ -65,12 +65,6 @@ class NuxScans : ParsedHttpSource() {
         thumbnail_url = document.select("a#unclick").attr("href")
         title = document.select("div.post-header .post-tag").text()
         description = document.select(".gridnux .column1 .text-overflow").joinToString("\n") { it.text() }
-    }
-
-    private fun parseStatus(element: String): Int = when {
-        element.lowercase().contains("ongoing") -> SManga.ONGOING
-        element.lowercase().contains("completed") -> SManga.COMPLETED
-        else -> SManga.UNKNOWN
     }
 
     // chapters
@@ -85,7 +79,7 @@ class NuxScans : ParsedHttpSource() {
     }
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("a").first()
+        val urlElement = element.select("a").first()!!
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         chapter.name = element.select("p").text()

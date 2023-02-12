@@ -107,8 +107,8 @@ class DemoneCeleste : ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
 
-        manga.thumbnail_url = "$baseUrl/${(bgImgUrlRegex.find(element.select("a > div > div").first().attr("style")))!!.groupValues[1]}".replace("pub", "det")
-        element.select("a").first().let {
+        manga.thumbnail_url = "$baseUrl/${(bgImgUrlRegex.find(element.select("a > div > div").first()!!.attr("style")))!!.groupValues[1]}".replace("pub", "det")
+        element.select("a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
         }
@@ -118,8 +118,8 @@ class DemoneCeleste : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
 
-        manga.thumbnail_url = "$baseUrl/${(bgImgUrlRegex.find(element.select(".col-md-auto.no-pad > a > div").first().attr("style")))!!.groupValues[1]}".replace("pub", "det")
-        element.select("a.manga[href^=manga]").first().let {
+        manga.thumbnail_url = "$baseUrl/${(bgImgUrlRegex.find(element.select(".col-md-auto.no-pad > a > div").first()!!.attr("style")))!!.groupValues[1]}".replace("pub", "det")
+        element.select("a.manga[href^=manga]").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
         }
@@ -136,10 +136,10 @@ class DemoneCeleste : ParsedHttpSource() {
             infoElement.text().lowercase().contains("sospeso") -> SManga.ON_HIATUS
             else -> SManga.UNKNOWN
         }
-        manga.author = infoElement.select("p:has(strong:contains(Autore))")?.text()!!.replace("Autore: ", "")
-        manga.artist = infoElement.select("p:has(strong:contains(Artista))")?.text()!!.replace("Artista: ", "")
-        manga.genre = infoElement.select("p:has(strong:contains(Tag))")?.text()!!.replace("Tag: ", "")
-        manga.description = document.select(".text-justify")?.text().let {
+        manga.author = infoElement.select("p:has(strong:contains(Autore))").text().replace("Autore: ", "")
+        manga.artist = infoElement.select("p:has(strong:contains(Artista))").text().replace("Artista: ", "")
+        manga.genre = infoElement.select("p:has(strong:contains(Tag))").text().replace("Tag: ", "")
+        manga.description = document.select(".text-justify").text().let {
             if (it.isNullOrEmpty()) "Questo manga non è ancora stato pubblicato dagli scanner. Controlla tra un po'. Per cercare aggiornamenti riavvia la pagina." else it
         }
 
@@ -164,11 +164,11 @@ class DemoneCeleste : ParsedHttpSource() {
             chapter.setUrlWithoutDomain(element.attr("href") + "#0")
             chapter.name = element.text()
         } else {
-            val container = element.parent().parent()
+            val container = element.parent()!!.parent()!!
 
-            chapter.setUrlWithoutDomain("${element.attr("href")}#${element.parent().select("small").first().text().filter { it.isDigit() }.toInt()}")
-            chapter.name = container.parent().previousElementSibling().text().replace("""Capp.*""".toRegex(), " Ch.").replace("Volume", "Vol.") + element.text().replace(" #", " - ")
-            chapter.date_upload = SimpleDateFormat("dd-MM-yyyy", Locale.ITALY).parse(container.select("small").last().text().replace('/', '-'))!!.time
+            chapter.setUrlWithoutDomain("${element.attr("href")}#${element.parent()!!.select("small").first()!!.text().filter { it.isDigit() }.toInt()}")
+            chapter.name = container.parent()!!.previousElementSibling()!!.text().replace("""Capp.*""".toRegex(), " Ch.").replace("Volume", "Vol.") + element.text().replace(" #", " - ")
+            chapter.date_upload = SimpleDateFormat("dd-MM-yyyy", Locale.ITALY).parse(container.select("small").last()!!.text().replace('/', '-'))!!.time
         }
 
         return chapter

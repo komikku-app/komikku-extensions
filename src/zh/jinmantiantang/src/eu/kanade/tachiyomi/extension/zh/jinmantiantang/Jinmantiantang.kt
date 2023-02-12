@@ -75,8 +75,8 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
         val children = element.children()
         if (children[0].tagName() == "a") children.removeFirst()
         title = children[1].text()
-        setUrlWithoutDomain(children[0].selectFirst("a").attr("href"))
-        val img = children[0].selectFirst("img")
+        setUrlWithoutDomain(children[0].selectFirst("a")!!.attr("href"))
+        val img = children[0].selectFirst("img")!!
         thumbnail_url = img.attr("data-original").ifEmpty { img.attr("src") }.substringBeforeLast('?')
         author = children[2].select("a").joinToString(", ") { it.text() }
         genre = children[3].select("a").joinToString(", ") { it.text() }
@@ -161,16 +161,16 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     // 漫画详情
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        title = document.selectFirst("h1").text()
+        title = document.selectFirst("h1")!!.text()
         // keep thumbnail_url same as the one in popularMangaFromElement()
-        thumbnail_url = document.selectFirst(".thumb-overlay > img").attr("src").substringBeforeLast('.') + "_3x4.jpg"
+        thumbnail_url = document.selectFirst(".thumb-overlay > img")!!.attr("src").substringBeforeLast('.') + "_3x4.jpg"
         author = selectAuthor(document)
         genre = selectDetailsStatusAndGenre(document, 0).trim().split(" ").joinToString(", ")
 
         // When the index passed by the "selectDetailsStatusAndGenre(document: Document, index: Int)" index is 1,
         // it will definitely return a String type of 0, 1 or 2. This warning can be ignored
         status = selectDetailsStatusAndGenre(document, 1).trim().toInt()
-        description = document.selectFirst("#intro-block .p-t-5.p-b-5").text().substringAfter("敘述：").trim()
+        description = document.selectFirst("#intro-block .p-t-5.p-b-5")!!.text().substringAfter("敘述：").trim()
     }
 
     // 查询作者信息
@@ -190,7 +190,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
                 genre
             }
         }
-        val elements: Elements = document.select("span[itemprop=genre]").first().select("a")
+        val elements: Elements = document.select("span[itemprop=genre]").first()!!.select("a")
         for (value in elements) {
             when (val vote: String = value.select("a").text()) {
                 "連載中" -> {
@@ -218,7 +218,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         url = element.select("a").attr("href")
-        name = element.select("a li").first().ownText()
+        name = element.select("a li").first()!!.ownText()
         date_upload = sdf.parse(element.select("a li span.hidden-xs").text().trim())?.time ?: 0
     }
 
@@ -228,7 +228,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
             val singleChapter = SChapter.create().apply {
                 name = "单章节"
                 url = document.select("a[class=col btn btn-primary dropdown-toggle reading]").attr("href")
-                date_upload = sdf.parse(document.select("[itemprop=datePublished]").last().attr("content"))?.time
+                date_upload = sdf.parse(document.select("[itemprop=datePublished]").last()!!.attr("content"))?.time
                     ?: 0
             }
             return listOf(singleChapter)

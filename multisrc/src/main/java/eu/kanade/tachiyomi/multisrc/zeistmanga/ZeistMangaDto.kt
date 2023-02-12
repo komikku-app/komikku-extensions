@@ -53,7 +53,7 @@ data class ZeistMangaEntryDto(
 
     private fun getThumbnail(html: ZeistMangaEntryContentDto): String {
         val document = Jsoup.parse(html.t)
-        return document.selectFirst("img").attr("src")
+        return document.selectFirst("img")!!.attr("src")
     }
 }
 

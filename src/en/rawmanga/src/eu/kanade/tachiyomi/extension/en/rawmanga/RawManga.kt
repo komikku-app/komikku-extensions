@@ -34,7 +34,7 @@ class RawManga : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            url = element.selectFirst("div > a").attr("href")
+            url = element.selectFirst("div > a")!!.attr("href")
             title = element.select("div > a > h2").text().trim()
             thumbnail_url = element.select("a > div > img").attr("src")
         }
@@ -70,9 +70,9 @@ class RawManga : ParsedHttpSource() {
         return SManga.create().apply {
             thumbnail_url = document.select(".img-thumbnail").attr("src")
             title = document.select("#mangaholder h1").text().trim()
-            description = document.selectFirst("#info p").text()
+            description = document.selectFirst("#info p")!!.text()
                 .replace(Regex("^(.*?)This Comic is About"), "").trim() // Removing boilerplate text
-            author = document.selectFirst("#titlecompenents dt").text().trim()
+            author = document.selectFirst("#titlecompenents dt")!!.text().trim()
             genre = document.select("#titlecompenents li").text().trim()
             status = when (document.select("#titlecompenents dt:nth-of-type(2)").text().trim()) {
                 "Ongoing" -> SManga.ONGOING
@@ -87,7 +87,7 @@ class RawManga : ParsedHttpSource() {
     override fun chapterListSelector(): String = "tbody tr"
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val mangaId = response.asJsoup().selectFirst(".btn-danger").attr("onclick")
+        val mangaId = response.asJsoup().selectFirst(".btn-danger")!!.attr("onclick")
             .substringAfter("showAllCHaps(").substringBefore(")")
 
         val chapters = client.newCall(GET("$baseUrl/pieces/chaps.php?mng=$mangaId", headers)).execute()

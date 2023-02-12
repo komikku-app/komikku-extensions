@@ -59,7 +59,7 @@ class DigitalComicMuseum() : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        val baseElement = element.selectFirst("td > a")
+        val baseElement = element.selectFirst("td > a")!!
         manga.setUrlWithoutDomain(baseElement.attr("abs:href"))
         manga.title = baseElement.text()
         return manga
@@ -88,12 +88,12 @@ class DigitalComicMuseum() : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         val elements = document.select(".tableborder")
-        manga.title = elements.first().select("#catname").text()
-        manga.setUrlWithoutDomain(elements.first().select("#catname > a").attr("abs:href"))
-        manga.thumbnail_url = elements.first().selectFirst("table img").attr("abs:src")
+        manga.title = elements.first()!!.select("#catname").text()
+        manga.setUrlWithoutDomain(elements.first()!!.select("#catname > a").attr("abs:href"))
+        manga.thumbnail_url = elements.first()!!.selectFirst("table img")!!.attr("abs:src")
         elements.forEach {
             when (it.select("#catname").text()) {
-                "Description" -> manga.description = it.selectFirst("table").text()
+                "Description" -> manga.description = it.selectFirst("table")!!.text()
             }
         }
         return manga

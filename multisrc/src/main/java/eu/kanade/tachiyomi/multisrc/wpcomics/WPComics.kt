@@ -51,7 +51,7 @@ abstract class WPComics(
                 title = it.text()
                 setUrlWithoutDomain(it.attr("abs:href"))
             }
-            thumbnail_url = imageOrNull(element.select("div.image:first-of-type img").first())
+            thumbnail_url = imageOrNull(element.select("div.image:first-of-type img").first()!!)
         }
     }
 
@@ -106,7 +106,7 @@ abstract class WPComics(
                 title = it.text()
                 setUrlWithoutDomain(it.attr("abs:href"))
             }
-            thumbnail_url = imageOrNull(element.select("div.image a img").first())
+            thumbnail_url = imageOrNull(element.select("div.image a img").first()!!)
         }
     }
 
@@ -121,7 +121,7 @@ abstract class WPComics(
                 status = info.select("li.status p.col-xs-8").text().toStatus()
                 genre = info.select("li.kind p.col-xs-8 a").joinToString { it.text() }
                 description = info.select("div.detail-content p").text()
-                thumbnail_url = imageOrNull(info.select("div.col-image img").first())
+                thumbnail_url = imageOrNull(info.select("div.col-image img").first()!!)
             }
         }
     }

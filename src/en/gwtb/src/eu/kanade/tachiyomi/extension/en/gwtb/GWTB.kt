@@ -29,8 +29,7 @@ class GWTB : HttpSource() {
         }
 
     override fun pageListParse(response: Response) =
-        response.asJsoup().selectFirst(".comic_title + img")
-            .let { listOf(Page(0, "", it.absUrl("src"))) }
+        listOf(Page(0, "", response.asJsoup().selectFirst(".comic_title + img")!!.absUrl("src")))
 
     override fun fetchPopularManga(page: Int): Observable<MangasPage> =
         SManga.create().apply {

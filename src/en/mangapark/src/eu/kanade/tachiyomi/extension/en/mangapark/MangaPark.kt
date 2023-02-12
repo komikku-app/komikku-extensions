@@ -83,7 +83,7 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = nextPageSelector
 
     private fun mangaFromElement(element: Element) = SManga.create().apply {
-        val coverElement = element.getElementsByClass("cover").first()
+        val coverElement = element.getElementsByClass("cover").first()!!
         url = coverElement.attr("href")
         title = coverElement.attr("title")
         thumbnail_url = coverElement.select("img").attr("abs:src")
@@ -91,13 +91,13 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
 
     @SuppressLint("DefaultLocale")
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        document.select(".cover > img").first().let { coverElement ->
+        document.select(".cover > img").first()!!.let { coverElement ->
             title = coverElement.attr("title")
             thumbnail_url = coverElement.attr("abs:src")
         }
 
         document.select(".attr > tbody > tr").forEach {
-            when (it.getElementsByTag("th").first().text().trim().lowercase()) {
+            when (it.getElementsByTag("th").first()!!.text().trim().lowercase()) {
                 "author(s)" -> {
                     author = it.getElementsByTag("a").joinToString(transform = Element::text)
                 }
@@ -193,7 +193,7 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
         fun Float?.orIncrementLastNum() = if (this == null || this < lastNum) lastNum.incremented() else this
 
         return SChapter.create().apply {
-            element.select(".tit > a").first().let {
+            element.select(".tit > a").first()!!.let {
                 url = it.attr("href").removeSuffix("1")
                 name = it.text()
             }
@@ -208,7 +208,7 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
                         else -> lastNum.incremented()
                     }
                 }
-            date_upload = parseDate(element.select(".time").first().text().trim())
+            date_upload = parseDate(element.select(".time").first()!!.text().trim())
             scanlator = source
         }
     }

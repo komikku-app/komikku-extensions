@@ -26,8 +26,8 @@ class KingsOfDarkness : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element) =
         SManga.create().apply {
             url = element.child(0).attr("href")
-            title = element.nextElementSibling().text()
-            thumbnail_url = element.selectFirst("img").image
+            title = element.nextElementSibling()!!.text()
+            thumbnail_url = element.selectFirst("img")!!.image
         }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList) =
@@ -41,8 +41,8 @@ class KingsOfDarkness : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document) =
         SManga.create().apply {
             url = document.location()
-            title = document.selectFirst("#SITE_PAGES h2").text()
-            thumbnail_url = document.selectFirst("#SITE_PAGES img").image
+            title = document.selectFirst("#SITE_PAGES h2")!!.text()
+            thumbnail_url = document.selectFirst("#SITE_PAGES img")!!.image
             document.select("#SITE_PAGES p:last-of-type").let { el ->
                 description = el[0].text().trim()
                 genre = el[1].select("a").joinToString { it.text() }

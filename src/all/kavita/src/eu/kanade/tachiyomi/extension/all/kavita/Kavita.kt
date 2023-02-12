@@ -1164,16 +1164,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                         .execute().use { response ->
 
                             genresListMeta = try {
-                                val responseBody = response.body
-                                if (responseBody != null) {
-                                    responseBody.use { json.decodeFromString(it.string()) }
-                                } else {
-                                    Log.e(
-                                        LOG_TAG,
-                                        "[Filter] Error decoding JSON for genres filter: response body is null. Response code: ${response.code}",
-                                    )
-                                    emptyList()
-                                }
+                                response.body.use { json.decodeFromString(it.string()) }
                             } catch (e: Exception) {
                                 Log.e(LOG_TAG, "[Filter] Error decoding JSON for genres filter -> ${response.body}", e)
                                 emptyList()
@@ -1183,16 +1174,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                     client.newCall(GET("$apiUrl/Metadata/tags", headersBuilder().build()))
                         .execute().use { response ->
                             tagsListMeta = try {
-                                val responseBody = response.body
-                                if (responseBody != null) {
-                                    responseBody.use { json.decodeFromString(it.string()) }
-                                } else {
-                                    Log.e(
-                                        LOG_TAG,
-                                        "[Filter] Error decoding JSON for tagsList filter: response body is null. Response code: ${response.code}",
-                                    )
-                                    emptyList()
-                                }
+                                response.body.use { json.decodeFromString(it.string()) }
                             } catch (e: Exception) {
                                 Log.e(LOG_TAG, "[Filter] Error decoding JSON for tagsList filter", e)
                                 emptyList()
@@ -1202,16 +1184,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                     client.newCall(GET("$apiUrl/Metadata/age-ratings", headersBuilder().build()))
                         .execute().use { response ->
                             ageRatingsListMeta = try {
-                                val responseBody = response.body
-                                if (responseBody != null) {
-                                    responseBody.use { json.decodeFromString(it.string()) }
-                                } else {
-                                    Log.e(
-                                        LOG_TAG,
-                                        "[Filter] Error decoding JSON for age-ratings filter: response body is null. Response code: ${response.code}",
-                                    )
-                                    emptyList()
-                                }
+                                response.body.use { json.decodeFromString(it.string()) }
                             } catch (e: Exception) {
                                 Log.e(
                                     LOG_TAG,
@@ -1225,16 +1198,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                     client.newCall(GET("$apiUrl/Collection", headersBuilder().build()))
                         .execute().use { response ->
                             collectionsListMeta = try {
-                                val responseBody = response.body
-                                if (responseBody != null) {
-                                    responseBody.use { json.decodeFromString(it.string()) }
-                                } else {
-                                    Log.e(
-                                        LOG_TAG,
-                                        "[Filter] Error decoding JSON for collectionsListMeta filter: response body is null. Response code: ${response.code}",
-                                    )
-                                    emptyList()
-                                }
+                                response.body.use { json.decodeFromString(it.string()) }
                             } catch (e: Exception) {
                                 Log.e(
                                     LOG_TAG,
@@ -1248,16 +1212,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                     client.newCall(GET("$apiUrl/Metadata/languages", headersBuilder().build()))
                         .execute().use { response ->
                             languagesListMeta = try {
-                                val responseBody = response.body
-                                if (responseBody != null) {
-                                    responseBody.use { json.decodeFromString(it.string()) }
-                                } else {
-                                    Log.e(
-                                        LOG_TAG,
-                                        "[Filter] Error decoding JSON for languagesListMeta filter: response body is null. Response code: ${response.code}",
-                                    )
-                                    emptyList()
-                                }
+                                response.body.use { json.decodeFromString(it.string()) }
                             } catch (e: Exception) {
                                 Log.e(
                                     LOG_TAG,
@@ -1271,16 +1226,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                     client.newCall(GET("$apiUrl/Library", headersBuilder().build()))
                         .execute().use { response ->
                             libraryListMeta = try {
-                                val responseBody = response.body
-                                if (responseBody != null) {
-                                    responseBody.use { json.decodeFromString(it.string()) }
-                                } else {
-                                    Log.e(
-                                        LOG_TAG,
-                                        "[Filter] Error decoding JSON for libraries filter: response body is null. Response code: ${response.code}",
-                                    )
-                                    emptyList()
-                                }
+                                response.body.use { json.decodeFromString(it.string()) }
                             } catch (e: Exception) {
                                 Log.e(
                                     LOG_TAG,
@@ -1294,16 +1240,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                     client.newCall(GET("$apiUrl/Metadata/people", headersBuilder().build()))
                         .execute().use { response ->
                             peopleListMeta = try {
-                                val responseBody = response.body
-                                if (responseBody != null) {
-                                    responseBody.use { json.decodeFromString(it.string()) }
-                                } else {
-                                    Log.e(
-                                        LOG_TAG,
-                                        "error while decoding JSON for peopleListMeta filter: response body is null. Response code: ${response.code}",
-                                    )
-                                    emptyList()
-                                }
+                                response.body.use { json.decodeFromString(it.string()) }
                             } catch (e: Exception) {
                                 Log.e(
                                     LOG_TAG,
@@ -1316,16 +1253,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                     client.newCall(GET("$apiUrl/Metadata/publication-status", headersBuilder().build()))
                         .execute().use { response ->
                             pubStatusListMeta = try {
-                                val responseBody = response.body
-                                if (responseBody != null) {
-                                    responseBody.use { json.decodeFromString(it.string()) }
-                                } else {
-                                    Log.e(
-                                        LOG_TAG,
-                                        "error while decoding JSON for publicationStatusListMeta filter: response body is null. Response code: ${response.code}",
-                                    )
-                                    emptyList()
-                                }
+                                response.body.use { json.decodeFromString(it.string()) }
                             } catch (e: Exception) {
                                 Log.e(
                                     LOG_TAG,
@@ -1345,9 +1273,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                 .subscribe(
                     {},
                     { tr ->
-                        /**
-                         * Avoid polluting logs with traces of exception
-                         * **/
+                        // Avoid polluting logs with traces of exception
                         if (tr is EmptyRequestBody || tr is LoginErrorException) {
                             Log.e(LOG_TAG, "error while doing initial calls\n${tr.cause}")
                             return@subscribe

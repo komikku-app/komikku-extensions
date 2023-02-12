@@ -156,14 +156,14 @@ class HBrowse : ParsedHttpSource(), ConfigurableSource {
 
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            with(document.select("div#main").first()) {
-                title = select("td:contains(title) + td.listLong").first().text()
+            with(document.select("div#main").first()!!) {
+                title = select("td:contains(title) + td.listLong").first()!!.text()
                 artist = select("td:contains(artist) + td.listLong").text()
                 genre = select("td:contains(genre) + td.listLong").joinToString { it.text() }
                 description = select("tr:has(.listLong)")
                     .filterNot { it.select("td:first-child").text().contains(Regex("""(Title|Artist|Genre)""")) }
                     .joinToString("\n") { tr -> tr.select("td").joinToString(": ") { it.text() } }
-                thumbnail_url = select("tbody img").first().attr("abs:src")
+                thumbnail_url = select("tbody img").first()!!.attr("abs:src")
             }
         }
     }
@@ -186,9 +186,9 @@ class HBrowse : ParsedHttpSource(), ConfigurableSource {
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.select("script:containsData(imageDir)").first().data()
-        val imageDir = Regex("""imageDir\s*=\s*"(.+?)";""").find(script)?.groupValues!!.get(1)
-        var images = json.decodeFromString<List<String>>(Regex("""list\s*=\s*(\[.+?]);""").find(script)?.groupValues!!.get(1))
+        val script = document.select("script:containsData(imageDir)").first()!!.data()
+        val imageDir = Regex("""imageDir\s*=\s*"(.+?)";""").find(script)?.groupValues!![1]
+        var images = json.decodeFromString<List<String>>(Regex("""list\s*=\s*(\[.+?]);""").find(script)?.groupValues!![1])
         images = images.subList(0, images.size - 2)
         return images.mapIndexed { index, element -> Page(index, "", baseUrl + imageDir + element) }
     }

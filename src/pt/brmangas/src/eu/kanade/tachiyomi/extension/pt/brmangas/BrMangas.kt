@@ -92,7 +92,7 @@ class BrMangas : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val infoElement = document.select("div.serie-geral div.infoall").first()!!
 
-        title = document.select("title").first().text().substringBeforeLast(" - ")
+        title = document.select("title").first()!!.text().substringBeforeLast(" - ")
         author = infoElement.select("div.serie-infos li:contains(Autor)").firstOrNull()?.ownText()
         genre = infoElement.select("a.category.tag").joinToString { it.text() }
         description = document.select("div.manga_sinopse ~ p").text().trim()

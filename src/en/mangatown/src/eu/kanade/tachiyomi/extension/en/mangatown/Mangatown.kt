@@ -47,7 +47,7 @@ class Mangatown : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            element.select("p.title a").first().let {
+            element.select("p.title a").first()!!.let {
                 setUrlWithoutDomain(it.attr("href"))
                 title = it.text()
             }

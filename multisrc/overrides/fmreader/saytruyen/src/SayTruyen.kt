@@ -10,7 +10,7 @@ import org.jsoup.nodes.Document
 
 class SayTruyen : FMReader("Say Truyen", "https://saytruyenvip.com", "vi") {
     override fun mangaDetailsParse(document: Document): SManga {
-        val info = document.select("div.row").first()
+        val info = document.select("div.row").first()!!
         return SManga.create().apply {
             author = info.select("div.row li:has(b:contains(Tác giả)) small").text()
             genre = info.select("div.row li:has(b:contains(Thể loại)) small a").joinToString { it.text() }

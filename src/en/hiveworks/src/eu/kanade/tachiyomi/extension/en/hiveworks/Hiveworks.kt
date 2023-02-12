@@ -39,7 +39,7 @@ class Hiveworks : ParsedHttpSource() {
         .readTimeout(1, TimeUnit.MINUTES)
         .retryOnConnectionFailure(true)
         .followRedirects(true)
-        .build()!!
+        .build()
 
     // Popular
 
@@ -51,7 +51,7 @@ class Hiveworks : ParsedHttpSource() {
         val document = response.asJsoup()
 
         val mangas = document.select(popularMangaSelector()).filterNot {
-            val url = it.select("a.comiclink").first().attr("abs:href")
+            val url = it.select("a.comiclink").first()!!.attr("abs:href")
             url.contains("sparklermonthly.com") || url.contains("explosm.net") // Filter Unsupported Comics
         }.map { element ->
             popularMangaFromElement(element)
@@ -107,7 +107,7 @@ class Hiveworks : ParsedHttpSource() {
         val url = response.request.url.toString()
         val document = response.asJsoup()
 
-        val selectManga = document.select(searchMangaSelector())
+        val selectManga = document.select(searchMangaSelector()).toList()
         val mangas = when {
             url.endsWith("localSearch") -> {
                 selectManga.filter { it.text().contains(searchQuery, true) }.map { element -> searchMangaFromElement(element) }
@@ -134,14 +134,14 @@ class Hiveworks : ParsedHttpSource() {
         author = element.select("div.header").text().substringAfter("by").trim()
         artist = author
         description = element.select("div.description").text().trim()
-        url = element.select("a").first().attr("href")
+        url = element.select("a").first()!!.attr("href")
     }
 
     // Common
 
     private fun mangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.url = element.select("a.comiclink").first().attr("abs:href")
+        manga.url = element.select("a.comiclink").first()!!.attr("abs:href")
         manga.title = element.select("h1").text().trim()
         manga.thumbnail_url = element.select("img").attr("abs:src")
         manga.artist = element.select("h2").text().removePrefix("by").trim()
@@ -168,7 +168,7 @@ class Hiveworks : ParsedHttpSource() {
     private fun mangaDetailsParse(response: Response, url: String): SManga {
         val document = response.asJsoup()
         return document.select(popularMangaSelector())
-            .firstOrNull { url == it.select("a.comiclink").first().attr("abs:href") }
+            .firstOrNull { url == it.select("a.comiclink").first()!!.attr("abs:href") }
             ?.let { mangaFromElement(it) } ?: SManga.create()
     }
 
@@ -239,7 +239,7 @@ class Hiveworks : ParsedHttpSource() {
         val document = response.asJsoup()
         val pages = mutableListOf<Page>()
 
-        document.select("div#cc-comicbody img")?.forEach {
+        document.select("div#cc-comicbody img").forEach {
             pages.add(Page(pages.size, "", it.attr("src")))
         }
 

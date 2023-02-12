@@ -46,7 +46,7 @@ class MeDocTruyenTranh : ParsedHttpSource() {
         val document = response.asJsoup()
 
         // trying to build URLs from this JSONObject could cause issues but we need it to get thumbnails
-        val nextData = document.select("script#__NEXT_DATA__").first()
+        val nextData = document.select("script#__NEXT_DATA__").first()!!
             .let { json.parseToJsonElement(it.data()).jsonObject }
 
         val titleCoverMap = nextData["props"]!!
@@ -54,14 +54,12 @@ class MeDocTruyenTranh : ParsedHttpSource() {
             .jsonObject["initialState"]!!
             .jsonObject["classify"]!!
             .jsonObject["comics"]!!
-            .jsonArray
-            .map {
+            .jsonArray.associate {
                 Pair(
                     it.jsonObject["title"]!!.jsonPrimitive.content,
                     it.jsonObject["coverimg"]!!.jsonPrimitive.content,
                 )
             }
-            .toMap()
 
         val mangas = document.select(popularMangaSelector()).map {
             popularMangaFromElement(it).apply {
@@ -87,7 +85,7 @@ class MeDocTruyenTranh : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        val jsonData = element.ownerDocument().select("#__NEXT_DATA__").first()!!.data()
+        val jsonData = element.ownerDocument()!!.select("#__NEXT_DATA__").first()!!.data()
 
         manga.setUrlWithoutDomain(element.attr("href"))
         manga.title = element.select("div.storytitle").text()
@@ -102,7 +100,7 @@ class MeDocTruyenTranh : ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val nextData = document.select("script#__NEXT_DATA__").first()
+        val nextData = document.select("script#__NEXT_DATA__").first()!!
             .let { json.parseToJsonElement(it.data()).jsonObject }
 
         val mangaDetail = nextData["props"]!!
@@ -129,7 +127,7 @@ class MeDocTruyenTranh : ParsedHttpSource() {
     override fun chapterListSelector() = "div.chapters  a"
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val nextData = response.asJsoup().select("script#__NEXT_DATA__").first()
+        val nextData = response.asJsoup().select("script#__NEXT_DATA__").first()!!
             .let { json.parseToJsonElement(it.data()).jsonObject }
 
         return nextData["props"]!!

@@ -98,9 +98,9 @@ class Bakai : ParsedHttpSource() {
         name = element.selectFirst("p:contains(Tipo:) a")!!.text()
         scanlator = element.select("p:contains(Tradução:) a").firstOrNull()
             ?.text()?.trim()
-        date_upload = element.ownerDocument().select("div.ipsPageHeader__meta time").firstOrNull()
+        date_upload = element.ownerDocument()!!.select("div.ipsPageHeader__meta time").firstOrNull()
             ?.attr("datetime")?.toDate() ?: 0L
-        setUrlWithoutDomain(element.ownerDocument().location())
+        setUrlWithoutDomain(element.ownerDocument()!!.location())
     }
 
     override fun pageListParse(document: Document): List<Page> {

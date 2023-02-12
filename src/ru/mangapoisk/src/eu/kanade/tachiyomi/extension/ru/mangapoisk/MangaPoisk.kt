@@ -89,13 +89,11 @@ class MangaPoisk : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            thumbnail_url = getImage(element.select("a > img").first())
+            thumbnail_url = getImage(element.select("a > img").first()!!)
 
-            element.select("a.card-about").first().let {
-                setUrlWithoutDomain(it.attr("href"))
-            }
+            setUrlWithoutDomain(element.select("a.card-about").first()!!.attr("href"))
 
-            element.select("a > h2.entry-title").first().let {
+            element.select("a > h2.entry-title").first()!!.let {
                 title = it.text().split("/").first()
             }
         }
@@ -113,7 +111,7 @@ class MangaPoisk : ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("article div.card-body").first()
+        val infoElement = document.select("article div.card-body").first()!!
         val manga = SManga.create()
         val entitle = infoElement.select(".post-name-en")
         manga.title = if (entitle.isNullOrEmpty()) { infoElement.select(".post-name").text() } else entitle.text().replaceRange(0, 2, "")
@@ -124,7 +122,7 @@ class MangaPoisk : ParsedHttpSource() {
         } else {
             parseStatus(infoElement.select(".post-info > span:eq(7)").text())
         }
-        manga.thumbnail_url = infoElement.select("img.img-fluid").first().attr("src")
+        manga.thumbnail_url = infoElement.select("img.img-fluid").first()!!.attr("src")
         return manga
     }
 
@@ -164,8 +162,8 @@ class MangaPoisk : ParsedHttpSource() {
     override fun chapterListSelector() = ".chapter-item"
 
     private fun chapterFromElement(element: Element, manga: SManga): SChapter {
-        val title = element.select("span.chapter-title").first().text()
-        val urlElement = element.select("a").first()
+        val title = element.select("span.chapter-title").first()!!.text()
+        val urlElement = element.select("a").first()!!
         val urlText = urlElement.text()
 
         val chapter = SChapter.create()

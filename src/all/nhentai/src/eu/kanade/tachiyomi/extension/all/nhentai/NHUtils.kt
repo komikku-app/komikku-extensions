@@ -51,7 +51,7 @@ object NHUtils {
     }
 
     fun getNumPages(document: Document): String {
-        return document.select("#tags > div:nth-child(8) > span > a .name").first().cleanTag()
+        return document.select("#tags > div:nth-child(8) > span > a .name").first()!!.cleanTag()
     }
 
     fun getTime(document: Document): Long {

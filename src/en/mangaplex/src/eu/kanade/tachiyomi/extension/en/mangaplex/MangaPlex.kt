@@ -101,7 +101,7 @@ class MangaPlex : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        var chapterNameSelector = element.select(".post-title a").attr("title")
+        val chapterNameSelector = element.select(".post-title a").attr("title")
         chapter.setUrlWithoutDomain(element.select(".post-title a").attr("href"))
         chapter.name =
             if (chapterNameSelector.startsWith("chapter", true) && chapterNameSelector.contains("–")) {
@@ -115,7 +115,7 @@ class MangaPlex : ParsedHttpSource() {
 
     // pages
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("#the-post .entry-content > img")
+        return document.select("#the-post .entry-content > img").toList()
             .filter { it.attr("src").isNotEmpty() }
             .mapIndexed { i, el -> Page(i, "", el.attr("src")) }
     }

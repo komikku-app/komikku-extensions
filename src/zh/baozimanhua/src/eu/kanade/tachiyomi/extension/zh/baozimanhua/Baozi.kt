@@ -66,7 +66,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             document.select(Evaluator.Class("comics-chapters"))
         } else {
             // chapters are listed oldest to newest in the source
-            fullListTitle.parent().select(Evaluator.Class("comics-chapters")).reversed()
+            fullListTitle.parent()!!.select(Evaluator.Class("comics-chapters")).reversed()
         }.map { chapterFromElement(it) }.apply {
             val chapterOrderPref = preferences.getString(CHAPTER_ORDER_PREF, CHAPTER_ORDER_DISABLED)
             if (chapterOrderPref != CHAPTER_ORDER_DISABLED) {
@@ -97,9 +97,9 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            setUrlWithoutDomain(element.attr("href")!!.trim())
-            title = element.attr("title")!!.trim()
-            thumbnail_url = element.select("> amp-img").attr("src")!!.trim()
+            setUrlWithoutDomain(element.attr("href").trim())
+            title = element.attr("title").trim()
+            thumbnail_url = element.select("> amp-img").attr("src").trim()
         }
     }
 
@@ -128,7 +128,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             thumbnail_url = document.select("div.pure-g div > amp-img").attr("src").trim()
             author = document.select("h2.comics-detail__author").text()
             description = document.select("p.comics-detail__desc").text()
-            status = when (document.selectFirst("div.tag-list > span.tag").text()) {
+            status = when (document.selectFirst("div.tag-list > span.tag")!!.text()) {
                 "连载中", "連載中" -> SManga.ONGOING
                 "已完结", "已完結" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
@@ -144,7 +144,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
         while (true) {
             val document = client.newCall(GET(url, headers)).execute().asJsoup()
             document.select(".comic-contain amp-img").dropWhile { element ->
-                element.selectFirst(pageNumberSelector).text().substringBefore('/').toInt() <= i
+                element.selectFirst(pageNumberSelector)!!.text().substringBefore('/').toInt() <= i
             }.mapTo(pageList) { element ->
                 Page(i++, imageUrl = element.attr("src"))
             }

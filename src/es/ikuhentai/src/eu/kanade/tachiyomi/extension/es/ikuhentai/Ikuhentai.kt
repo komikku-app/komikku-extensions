@@ -45,7 +45,7 @@ class Ikuhentai : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select("img").attr("data-src")
-        element.select("div.tab-thumb > a").first().let {
+        element.select("div.tab-thumb > a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.attr("title")
         }
@@ -110,11 +110,11 @@ class Ikuhentai : ParsedHttpSource() {
     // max 200 results
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.site-content").first()
+        val infoElement = document.select("div.site-content").first()!!
 
         val manga = SManga.create()
-        manga.author = infoElement.select("div.author-content")?.text()
-        manga.artist = infoElement.select("div.artist-content")?.text()
+        manga.author = infoElement.select("div.author-content").text()
+        manga.artist = infoElement.select("div.artist-content").text()
 
         val genres = mutableListOf<String>()
         infoElement.select("div.genres-content a").forEach { element ->
@@ -124,7 +124,7 @@ class Ikuhentai : ParsedHttpSource() {
         manga.genre = genres.joinToString(", ")
         manga.status = parseStatus(infoElement.select("div.post-status > div:nth-child(2) > div.summary-content").text())
 
-        manga.description = document.select("div.description-summary")?.text()
+        manga.description = document.select("div.description-summary").text()
         manga.thumbnail_url = document.select("div.summary_image > a > img").attr("data-src")
 
         return manga
@@ -139,7 +139,7 @@ class Ikuhentai : ParsedHttpSource() {
     override fun chapterListSelector() = "li.wp-manga-chapter"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("a").first()
+        val urlElement = element.select("a").first()!!
         var url = urlElement.attr("href")
         url = url.replace("/p/1", "")
         url += "?style=list"

@@ -29,13 +29,13 @@ class MeituaTop : HttpSource() {
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        val mangas = document.selectFirst(Evaluator.Class("thumbnail-group")).children().map {
+        val mangas = document.selectFirst(Evaluator.Class("thumbnail-group"))!!.children().map {
             SManga.create().apply {
-                url = it.selectFirst(Evaluator.Tag("a")).attr("href")
-                val image = it.selectFirst(Evaluator.Tag("img"))
+                url = it.selectFirst(Evaluator.Tag("a"))!!.attr("href")
+                val image = it.selectFirst(Evaluator.Tag("img"))!!
                 title = image.attr("alt")
                 thumbnail_url = image.attr("src")
-                val info = it.selectFirst(Evaluator.Tag("p")).ownText().split(" - ")
+                val info = it.selectFirst(Evaluator.Tag("p"))!!.ownText().split(" - ")
                 genre = info[0]
                 description = info[1]
                 status = SManga.COMPLETED
@@ -86,8 +86,8 @@ class MeituaTop : HttpSource() {
 
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        val images = document.selectFirst(Evaluator.Class("ttnr")).select(Evaluator.Tag("img"))
-            .map { it.attr("src")!! }.distinct()
+        val images = document.selectFirst(Evaluator.Class("ttnr"))!!.select(Evaluator.Tag("img"))
+            .map { it.attr("src") }.distinct()
         return images.mapIndexed { index, imageUrl -> Page(index, imageUrl = imageUrl) }
     }
 

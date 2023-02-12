@@ -58,7 +58,7 @@ class Tappytoon(override val lang: String) : HttpSource() {
 
     private val apiHeaders by lazy {
         val res = client.newCall(GET(baseUrl, headers)).execute()
-        val data = res.asJsoup().getElementById("__NEXT_DATA__")
+        val data = res.asJsoup().getElementById("__NEXT_DATA__")!!
         val obj = json.parseToJsonElement(data.data())
             .jsonObject["props"]!!.jsonObject["initialState"]!!
             .jsonObject["axios"]!!.jsonObject["headers"]!!.jsonObject

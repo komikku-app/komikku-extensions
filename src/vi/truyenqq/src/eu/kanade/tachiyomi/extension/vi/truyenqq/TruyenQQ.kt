@@ -50,7 +50,7 @@ class TruyenQQ : ParsedHttpSource() {
     override fun popularMangaSelector(): String = "ul.grid > li"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val anchor = element.selectFirst(".book_info .qtip a")
+        val anchor = element.selectFirst(".book_info .qtip a")!!
         setUrlWithoutDomain(anchor.attr("href"))
         title = anchor.text()
         thumbnail_url = element.select(".book_avatar img").attr("abs:src")
@@ -95,7 +95,7 @@ class TruyenQQ : ParsedHttpSource() {
     override fun searchMangaNextPageSelector(): String = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val info = document.selectFirst(".list-info")
+        val info = document.selectFirst(".list-info")!!
 
         title = document.select("h1").text()
         author = info.select(".org").joinToString { it.text() }
@@ -124,7 +124,7 @@ class TruyenQQ : ParsedHttpSource() {
         date_upload = parseDate(element.select(".time-chap").text())
     }
 
-    private fun parseDate(date: String): Long = kotlin.runCatching {
+    private fun parseDate(date: String): Long = runCatching {
         dateFormat.parse(date)?.time
     }.getOrNull() ?: 0L
 

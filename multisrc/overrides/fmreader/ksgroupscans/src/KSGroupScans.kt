@@ -9,7 +9,7 @@ class KSGroupScans : FMReader("KSGroupScans", "https://ksgroupscans.com", "en") 
 
     override fun chapterFromElement(element: Element, mangaTitle: String): SChapter {
         return SChapter.create().apply {
-            element.select(chapterUrlSelector).first().let {
+            element.select(chapterUrlSelector).first()!!.let {
                 setUrlWithoutDomain(it.attr("abs:href"))
                 name = element.select(".chapter-name").text()
             }

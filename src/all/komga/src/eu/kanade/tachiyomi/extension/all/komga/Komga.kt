@@ -581,13 +581,7 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
                 try {
                     client.newCall(GET("$baseUrl/api/v1/tags", headers)).execute().use { response ->
                         tags = try {
-                            val responseBody = response.body
-                            if (responseBody != null) {
-                                responseBody.use { json.decodeFromString(it.string()) }
-                            } else {
-                                Log.e(LOG_TAG, "error while decoding JSON for tags filter: response body is null. Response code: ${response.code}")
-                                emptySet()
-                            }
+                            response.body.use { json.decodeFromString(it.string()) }
                         } catch (e: Exception) {
                             Log.e(LOG_TAG, "error while decoding JSON for tags filter", e)
                             emptySet()
@@ -600,13 +594,7 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
                 try {
                     client.newCall(GET("$baseUrl/api/v1/publishers", headers)).execute().use { response ->
                         publishers = try {
-                            val responseBody = response.body
-                            if (responseBody != null) {
-                                responseBody.use { json.decodeFromString(it.string()) }
-                            } else {
-                                Log.e(LOG_TAG, "error while decoding JSON for publishers filter: response body is null. Response code: ${response.code}")
-                                emptySet()
-                            }
+                            response.body.use { json.decodeFromString(it.string()) }
                         } catch (e: Exception) {
                             Log.e(LOG_TAG, "error while decoding JSON for publishers filter", e)
                             emptySet()
@@ -619,14 +607,9 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
                 try {
                     client.newCall(GET("$baseUrl/api/v1/authors", headers)).execute().use { response ->
                         authors = try {
-                            val responseBody = response.body
-                            if (responseBody != null) {
-                                val list: List<AuthorDto> = responseBody.use { json.decodeFromString(it.string()) }
-                                list.groupBy { it.role }
-                            } else {
-                                Log.e(LOG_TAG, "error while decoding JSON for authors filter: response body is null. Response code: ${response.code}")
-                                emptyMap()
-                            }
+                            response.body
+                                .use { json.decodeFromString<List<AuthorDto>>(it.string()) }
+                                .groupBy { it.role }
                         } catch (e: Exception) {
                             Log.e(LOG_TAG, "error while decoding JSON for authors filter", e)
                             emptyMap()

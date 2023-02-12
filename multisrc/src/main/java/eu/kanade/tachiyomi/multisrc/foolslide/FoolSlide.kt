@@ -65,7 +65,7 @@ abstract class FoolSlide(
     }
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        element.select("a[title]").first().let {
+        element.select("a[title]").first()!!.let {
             setUrlWithoutDomain(it.attr("href"))
             title = it.text()
         }
@@ -75,7 +75,7 @@ abstract class FoolSlide(
     }
 
     override fun latestUpdatesFromElement(element: Element) = SManga.create().apply {
-        element.select("a[title]").first().let {
+        element.select("a[title]").first()!!.let {
             setUrlWithoutDomain(it.attr("href"))
             title = it.text()
         }
@@ -95,7 +95,7 @@ abstract class FoolSlide(
 
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        element.select("a[title]").first().let {
+        element.select("a[title]").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
         }
@@ -111,7 +111,7 @@ abstract class FoolSlide(
     // if there's no image on the details page, get the first page of the first chapter
     protected fun getDetailsThumbnail(document: Document, urlSelector: String = chapterUrlSelector): String? {
         return document.select("div.thumbnail img, table.thumb img").firstOrNull()?.attr("abs:src")
-            ?: document.select(chapterListSelector()).last().select(urlSelector).attr("abs:href")
+            ?: document.select(chapterListSelector()).last()!!.select(urlSelector).attr("abs:href")
                 .let { url -> client.newCall(allowAdult(GET(url))).execute() }
                 .let { response -> pageListParse(response).first().imageUrl }
     }
@@ -142,13 +142,11 @@ abstract class FoolSlide(
     protected open val chapterUrlSelector = "a[title]"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        val urlElement = element.select(chapterUrlSelector).first()
-        val dateElement = element.select(chapterDateSelector).first()
+        val urlElement = element.select(chapterUrlSelector).first()!!
+        val dateElement = element.select(chapterDateSelector).first()!!
         setUrlWithoutDomain(urlElement.attr("href"))
         name = urlElement.text()
-        date_upload = dateElement.text()?.let {
-            parseChapterDate(it.substringAfter(", "))
-        } ?: 0
+        date_upload = parseChapterDate(dateElement.text().substringAfter(", ")) ?: 0
     }
 
     protected open fun parseChapterDate(date: String): Long? {

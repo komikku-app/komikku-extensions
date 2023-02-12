@@ -26,9 +26,9 @@ class Seemangas : MangaSar(
     override fun popularMangaSelector() = "ul.sidebar-popular li.popular-treending"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.selectFirst("h4.title").text()
-        thumbnail_url = element.selectFirst("div.tumbl img").attr("data-lazy-src")
-        setUrlWithoutDomain(element.selectFirst("a").attr("abs:href"))
+        title = element.selectFirst("h4.title")!!.text()
+        thumbnail_url = element.selectFirst("div.tumbl img")!!.attr("data-lazy-src")
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("abs:href"))
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
@@ -58,15 +58,15 @@ class Seemangas : MangaSar(
 
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
-        val infoElement = document.selectFirst("div.box-single:has(div.mangapage)")
+        val infoElement = document.selectFirst("div.box-single:has(div.mangapage)")!!
 
         return SManga.create().apply {
-            title = infoElement.selectFirst("h1.kw-title").text()
-            author = infoElement.selectFirst("div.mdq.author").text().trim()
-            description = infoElement.selectFirst("div.sinopse-page").text()
-            genre = infoElement.select("div.generos a.widget-btn").joinToString { it.text() }
-            status = infoElement.selectFirst("span.mdq").text().toStatus()
-            thumbnail_url = infoElement.selectFirst("div.thumb img").attr("abs:data-lazy-src")
+            title = infoElement.selectFirst("h1.kw-title")!!.text()
+            author = infoElement.selectFirst("div.mdq.author")!!.text().trim()
+            description = infoElement.selectFirst("div.sinopse-page")!!.text()
+            genre = infoElement.select("div.generos a.widget-btn")!!.joinToString { it.text() }
+            status = infoElement.selectFirst("span.mdq")!!.text().toStatus()
+            thumbnail_url = infoElement.selectFirst("div.thumb img")!!.attr("abs:data-lazy-src")
         }
     }
     override fun chapterListPaginatedRequest(mangaUrl: String, page: Int): Request {

@@ -16,8 +16,8 @@ class FallenAngels : MMRCMS("Fallen Angels", "https://manga.fascans.com", "en") 
     override fun nullableChapterFromElement(element: Element): SChapter? {
         val chapter = SChapter.create()
 
-        val titleWrapper = element.select("[class^=chapter-title-rtl]").first()
-        val chapterElement = titleWrapper.getElementsByTag("a")
+        val titleWrapper = element.select("[class^=chapter-title-rtl]").first()!!
+        val chapterElement = titleWrapper.getElementsByTag("a")!!
         val url = chapterElement.attr("href")
 
         chapter.url = getUrlWithoutBaseUrl(url)
@@ -28,7 +28,7 @@ class FallenAngels : MMRCMS("Fallen Angels", "https://manga.fascans.com", "en") 
         val chapterText = chapterElement.text()
         val numberRegex = Regex("""[1-9]\d*(\.\d+)*""")
         val chapterNumber = numberRegex.find(chapterText)?.value.orEmpty()
-        val chapterTitle = titleWrapper.getElementsByTag("em").text()
+        val chapterTitle = titleWrapper.getElementsByTag("em")!!.text()
         chapter.name = "Chapter $chapterNumber : $chapterTitle"
 
         // Parse date

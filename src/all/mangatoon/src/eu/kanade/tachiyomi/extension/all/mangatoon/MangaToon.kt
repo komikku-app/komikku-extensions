@@ -60,7 +60,7 @@ open class MangaToon(
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("div.content-title").text().trim()
         thumbnail_url = element.select("img").attr("abs:src").toNormalPosterUrl()
-        url = element.selectFirst("a").attr("href")
+        url = element.selectFirst("a")!!.attr("href")
     }
 
     override fun popularMangaNextPageSelector() = "span.next"
@@ -88,7 +88,7 @@ open class MangaToon(
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("div.recommend-comics-title").text().trim()
         thumbnail_url = element.select("img").attr("abs:src").toNormalPosterUrl()
-        url = element.selectFirst("a").attr("href")
+        url = element.selectFirst("a")!!.attr("href")
     }
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()

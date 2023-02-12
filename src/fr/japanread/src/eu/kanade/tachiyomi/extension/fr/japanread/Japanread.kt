@@ -213,7 +213,7 @@ class Japanread : ParsedHttpSource() {
         val document = response.asJsoup()
         val mangaId = document.select("div[data-avg]").attr("data-avg")
 
-        client.newCall(GET(baseUrl + document.select("#chapters div[data-row=chapter]").first().select("div.col-lg-5 a").attr("href"), headers)).execute()
+        client.newCall(GET(baseUrl + document.select("#chapters div[data-row=chapter]").first()!!.select("div.col-lg-5 a").attr("href"), headers)).execute()
 
         val apiResponse = client.newCall(GET("$baseUrl/api/?id=$mangaId&type=manga", apiHeaders())).execute()
 

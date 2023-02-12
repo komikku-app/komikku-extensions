@@ -78,7 +78,7 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
         return GET(uri.toString(), headers)
     }
 
-    override fun searchMangaNextPageSelector(): String? = "div.pg > a.nxt"
+    override fun searchMangaNextPageSelector(): String = "div.pg > a.nxt"
     override fun searchMangaSelector(): String = "a.uk-card, div.uk-card"
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = getTitle(element.select("p.mt5").text())
@@ -91,11 +91,11 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         title = getTitle(document.select("li.uk-active > h3.uk-heading-line").text())
         thumbnail_url = document.select("div.uk-width-medium > img").attr("abs:src")
-        author = document.selectFirst("div.cl > a.uk-label").text().substring(3)
+        author = document.selectFirst("div.cl > a.uk-label")!!.text().substring(3)
         artist = author
         genre = document.select("div.cl > a.uk-label, div.cl > span.uk-label").eachText().joinToString(", ")
         description = document.select("li > div.uk-alert").html().replace("<br>", "")
-        status = when (document.select("div.cl > span.uk-label").last().text()) {
+        status = when (document.select("div.cl > span.uk-label").last()!!.text()) {
             "连载中" -> SManga.ONGOING
             "已完结" -> SManga.COMPLETED
             else -> SManga.UNKNOWN

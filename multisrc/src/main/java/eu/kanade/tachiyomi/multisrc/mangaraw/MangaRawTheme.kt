@@ -22,8 +22,8 @@ abstract class MangaRawTheme(
     protected abstract fun String.sanitizeTitle(): String
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        setUrlWithoutDomain(element.selectFirst(Evaluator.Tag("a")).attr("href"))
-        title = element.selectFirst(Evaluator.Tag("h3")).text().sanitizeTitle()
+        setUrlWithoutDomain(element.selectFirst(Evaluator.Tag("a"))!!.attr("href"))
+        title = element.selectFirst(Evaluator.Tag("h3"))!!.text().sanitizeTitle()
         thumbnail_url = element.selectFirst(Evaluator.Tag("img"))?.absUrl("data-src")
     }
 
@@ -69,7 +69,7 @@ abstract class MangaRawTheme(
     override fun pageListParse(document: Document): List<Page> {
         val imgSelector = Evaluator.Tag("img")
         return document.select(pageSelector()).mapIndexed { index, element ->
-            Page(index, imageUrl = element.selectFirst(imgSelector).attr("data-src"))
+            Page(index, imageUrl = element.selectFirst(imgSelector)!!.attr("data-src"))
         }
     }
 

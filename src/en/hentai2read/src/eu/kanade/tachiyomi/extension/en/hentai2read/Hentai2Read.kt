@@ -125,7 +125,7 @@ class Hentai2Read : ParsedHttpSource() {
     // If the user wants to search by a sort order other than alphabetical, we have to make another call
     private fun parseSearch(response: Response, page: Int, sortOrder: String?): MangasPage {
         val document = if (page == 1 && sortOrder != null) {
-            response.asJsoup().select("li.dropdown li:contains($sortOrder) a").first().attr("abs:href")
+            response.asJsoup().select("li.dropdown li:contains($sortOrder) a").first()!!.attr("abs:href")
                 .let { client.newCall(GET(it, headers)).execute().asJsoup() }
         } else {
             response.asJsoup()
@@ -154,16 +154,16 @@ class Hentai2Read : ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("ul.list-simple-mini").first()
+        val infoElement = document.select("ul.list-simple-mini").first()!!
 
         val manga = SManga.create()
-        manga.author = infoElement.select("li:contains(Author) > a")?.text()
-        manga.artist = infoElement.select("li:contains(Artist) > a")?.text()
+        manga.author = infoElement.select("li:contains(Author) > a").text()
+        manga.artist = infoElement.select("li:contains(Artist) > a").text()
         manga.genre = infoElement.select("li:contains(Category) > a, li:contains(Content) > a").joinToString(", ") { it.text() }
         manga.description = buildDescription(infoElement)
-        manga.status = infoElement.select("li:contains(Status) > a")?.text().orEmpty().let { parseStatus(it) }
-        manga.thumbnail_url = document.select("a#js-linkNext > img")?.attr("src")
-        manga.title = document.select("h3.block-title > a").first().ownText().trim()
+        manga.status = infoElement.select("li:contains(Status) > a").text().orEmpty().let { parseStatus(it) }
+        manga.thumbnail_url = document.select("a#js-linkNext > img").attr("src")
+        manga.title = document.select("h3.block-title > a").first()!!.ownText().trim()
         return manga
     }
 
@@ -171,7 +171,7 @@ class Hentai2Read : ParsedHttpSource() {
         val topDescriptions = listOf(
             Pair(
                 "Alternative Title",
-                infoElement.select("li").first().text().let {
+                infoElement.select("li").first()!!.text().let {
                     if (it.trim() == "-") {
                         emptyList()
                     } else {
@@ -181,7 +181,7 @@ class Hentai2Read : ParsedHttpSource() {
             ),
             Pair(
                 "Storyline",
-                listOf(infoElement.select("li:contains(Storyline) > p")?.text()),
+                listOf(infoElement.select("li:contains(Storyline) > p").text()),
             ),
         )
 
@@ -192,7 +192,7 @@ class Hentai2Read : ParsedHttpSource() {
             "Language",
         ).map { it to infoElement.select("li:contains($it) a").map { v -> v.text() } }
             .let { topDescriptions + it } // start with topDescriptions
-            .filter { !it.second.isNullOrEmpty() && it.second[0] != "-" }
+            .filter { !it.second.isEmpty() && it.second[0] != "-" }
             .map { "${it.first}:\n${it.second.joinToString()}" }
 
         return descriptions.joinToString("\n\n")
@@ -209,7 +209,7 @@ class Hentai2Read : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
             setUrlWithoutDomain(element.attr("href"))
-            var time = element.select("div > small").text().substringAfter("about").substringBefore("ago")
+            val time = element.select("div > small").text().substringAfter("about").substringBefore("ago")
             name = element.ownText().trim()
             if (time != "") {
                 date_upload = parseChapterDate(time)

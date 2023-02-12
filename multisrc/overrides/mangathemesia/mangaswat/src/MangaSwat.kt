@@ -31,7 +31,7 @@ class MangaSwat : MangaThemesia(
     override val seriesStatusSelector = "span:contains(الحالة)"
 
     override fun pageListParse(document: Document): List<Page> {
-        val scriptContent = document.selectFirst("script:containsData(ts_reader)").data()
+        val scriptContent = document.selectFirst("script:containsData(ts_reader)")!!.data()
         val jsonString = scriptContent.substringAfter("ts_reader.run(").substringBefore(");")
         val tsReader = json.decodeFromString<TSReader>(jsonString)
         val imageUrls = tsReader.sources.firstOrNull()?.images ?: return emptyList()

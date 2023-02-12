@@ -109,7 +109,7 @@ class LoadingArtist : HttpSource() {
     // Pages
 
     override fun pageListParse(response: Response): List<Page> {
-        val imageUrl = response.asJsoup().selectFirst("div.main-image-container img")
+        val imageUrl = response.asJsoup().selectFirst("div.main-image-container img")!!
             .attr("abs:src")
         return listOf(Page(0, response.request.url.toString(), imageUrl))
     }
