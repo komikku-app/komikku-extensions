@@ -61,10 +61,6 @@ abstract class BakkinReaderX(
     override fun headersBuilder() =
         Headers.Builder().add("User-Agent", userAgent)
 
-    // Request the actual manga URL for the webview
-    override fun mangaDetailsRequest(manga: SManga) =
-        GET("$baseUrl#m=${manga.url}", headers)
-
     override fun fetchPopularManga(page: Int) =
         fetchSearchManga(page, "", FilterList())
 
@@ -115,6 +111,13 @@ abstract class BakkinReaderX(
                 .mapIndexed { idx, page -> Page(idx, "", baseUrl + page) }
         }
 
+    override fun getMangaUrl(manga: SManga) = "$baseUrl#m=${manga.url}"
+
+    override fun getChapterUrl(chapter: SChapter): String {
+        val (m, v, c) = chapter.url.split('/')
+        return "$baseUrl#m=$m&v=$v&c=$c"
+    }
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = "quality"
@@ -137,6 +140,9 @@ abstract class BakkinReaderX(
         throw UnsupportedOperationException("Not used!")
 
     override fun latestUpdatesRequest(page: Int) =
+        throw UnsupportedOperationException("Not used!")
+
+    override fun mangaDetailsRequest(manga: SManga) =
         throw UnsupportedOperationException("Not used!")
 
     override fun searchMangaParse(response: Response) =
