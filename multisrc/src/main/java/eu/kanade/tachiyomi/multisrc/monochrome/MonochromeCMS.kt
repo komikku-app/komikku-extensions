@@ -56,10 +56,6 @@ open class MonochromeCMS(
         }
     }
 
-    // Request the actual manga URL for the webview
-    override fun mangaDetailsRequest(manga: SManga) =
-        GET("$baseUrl/manga/${manga.url}", headers)
-
     override fun fetchMangaDetails(manga: SManga) =
         Observable.just(manga.apply { initialized = true })!!
 
@@ -87,6 +83,11 @@ open class MonochromeCMS(
         return Observable.just(pages)
     }
 
+    override fun getMangaUrl(manga: SManga) = "$baseUrl/manga/${manga.url}"
+
+    override fun getChapterUrl(chapter: SChapter) =
+        "$baseUrl/chapters/${chapter.url.subSequence(37, 73)}"
+
     private fun mangaFromAPI(manga: Manga) =
         SManga.create().apply {
             url = manga.id
@@ -109,6 +110,9 @@ open class MonochromeCMS(
         throw UnsupportedOperationException("Not used!")
 
     override fun latestUpdatesRequest(page: Int) =
+        throw UnsupportedOperationException("Not used!")
+
+    override fun mangaDetailsRequest(manga: SManga) =
         throw UnsupportedOperationException("Not used!")
 
     override fun popularMangaParse(response: Response) =
