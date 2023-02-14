@@ -39,7 +39,7 @@ abstract class ReaderFront(
         GET("$apiUrl?query=${works(i18n.id, "stub", "ASC", page, 120)}", headers)
 
     override fun mangaDetailsRequest(manga: SManga) =
-        GET("$baseUrl/work/$lang/${manga.url}", headers)
+        GET("$apiUrl?query=${work(i18n.id, manga.url)}", headers)
 
     override fun chapterListRequest(manga: SManga) =
         GET("$apiUrl?query=${chaptersByWork(i18n.id, manga.url)}", headers)
@@ -105,10 +105,10 @@ abstract class ReaderFront(
             }
         }
 
-    override fun fetchMangaDetails(manga: SManga) =
-        GET("$apiUrl?query=${work(i18n.id, manga.url)}", headers).let {
-            client.newCall(it).asObservableSuccess().map(::mangaDetailsParse)
-        }!!
+    override fun getMangaUrl(manga: SManga) = "$baseUrl/work/$lang/${manga.url}"
+
+    override fun getChapterUrl(chapter: SChapter) =
+        throw UnsupportedOperationException("Not implemented!")
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList) =
         client.newCall(popularMangaRequest(page)).asObservableSuccess().map { res ->
