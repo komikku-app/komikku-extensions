@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
@@ -43,6 +44,7 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
             title = it.attr("data-title")
             thumbnail_url = it.attr("data-content").substringAfter("src=\"").substringBeforeLast("\"")
             setUrlWithoutDomain(it.select("td.text-left > a").attr("href"))
+            update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
         }
     }
 
@@ -106,7 +108,7 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
         if (getPageMethodPref() == "cascade") {
             document.select("div#content-images img.content-image").forEach {
-                add(Page(size, "", it.attr("data-original")))
+                add(Page(size, "", it.attr("abs:data-original")))
             }
         } else {
             val pageList = document.select("select#select-page").first()!!.select("option").map { it.attr("value").toInt() }
@@ -118,9 +120,7 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
         }
     }
 
-    override fun imageUrlParse(document: Document): String = document.select("div#content-images img.content-image").attr("data-original")
-
-    override fun imageRequest(page: Page) = GET("$baseUrl${page.imageUrl!!}", headers)
+    override fun imageUrlParse(document: Document): String = document.select("div#content-images img.content-image").attr("abs:data-original")
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = "$baseUrl/section/all?view=list".toHttpUrlOrNull()!!.newBuilder()
@@ -232,7 +232,7 @@ class TMOHentai : ConfigurableSource, ParsedHttpSource() {
     )
 
     /**
-     * Last check: 17/02/2021
+     * Last check: 13/02/2023
      * https://tmohentai.com/section/hentai
      *
      * Array.from(document.querySelectorAll('#advancedSearch .list-group .list-group-item'))

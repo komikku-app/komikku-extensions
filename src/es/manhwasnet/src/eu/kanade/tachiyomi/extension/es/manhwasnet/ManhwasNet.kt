@@ -65,10 +65,7 @@ class ManhwasNet : HttpSource() {
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
         return document.select("#chapter_imgs img").mapIndexed { i, img ->
-            var url = img.attr("src")
-            if (url.toString() == "/discord.jpg") {
-                url = "$baseUrl/discord.jpg"
-            }
+            val url = img.attr("abs:src")
             Page(i, imageUrl = url)
         }
     }

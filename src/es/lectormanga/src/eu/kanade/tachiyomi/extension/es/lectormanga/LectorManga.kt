@@ -210,15 +210,14 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
 
         // Regular list of chapters
         val chapterNames = document.select("#chapters h4.text-truncate")
-        val chapterNumbers = chapterNames.map { it.text().substringAfter("Capítulo").substringBefore("|").trim().toFloat() }
         val chapterInfos = document.select("#chapters .chapter-list")
 
         chapterNames.forEachIndexed { index, _ ->
             val scanlator = chapterInfos[index].select("li")
             if (getScanlatorPref()) {
-                scanlator.forEach { add(regularChapterFromElement(chapterNames[index].text(), it, chapterNumbers[index])) }
+                scanlator.forEach { add(regularChapterFromElement(chapterNames[index].text(), it)) }
             } else {
-                scanlator.last { add(regularChapterFromElement(chapterNames[index].text(), it, chapterNumbers[index])) }
+                scanlator.last { add(regularChapterFromElement(chapterNames[index].text(), it)) }
             }
         }
     }
@@ -237,14 +236,13 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
             ?: 0
     }
 
-    private fun regularChapterFromElement(chapterName: String, info: Element, number: Float) = SChapter.create().apply {
+    private fun regularChapterFromElement(chapterName: String, info: Element) = SChapter.create().apply {
         url = info.select("div.row > .text-right > a").attr("href")
         name = chapterName
         scanlator = info.select("div.col-12.col-sm-12.col-md-4.text-truncate span").text()
         date_upload = info.select("span.badge.badge-primary.p-2").first()?.text()?.let {
             parseChapterDate(it)
         } ?: 0
-        chapter_number = number
     }
 
     private fun parseChapterDate(date: String): Long {
