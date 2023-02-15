@@ -74,10 +74,6 @@ class Izneo(override val lang: String) : ConfigurableSource, HttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
         GET("$apiUrl/free?offset=${page - 1}&order=3&abo=0", apiHeaders)
 
-    // Request the real URL for the webview
-    override fun mangaDetailsRequest(manga: SManga) =
-        GET(ORIGIN + manga.url, headers)
-
     override fun pageListRequest(chapter: SChapter) =
         GET(ORIGIN + "/book/" + chapter.url, apiHeaders)
 
@@ -155,6 +151,11 @@ class Izneo(override val lang: String) : ConfigurableSource, HttpSource() {
         return Observable.just(chapters)
     }
 
+    override fun getMangaUrl(manga: SManga) = ORIGIN + manga.url
+
+    override fun getChapterUrl(chapter: SChapter) =
+        throw UnsupportedOperationException("Not implemented!")
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         EditTextPreference(screen.context).apply {
             key = "username"
@@ -193,6 +194,9 @@ class Izneo(override val lang: String) : ConfigurableSource, HttpSource() {
                 }
             }
         }.jsonObject
+
+    override fun mangaDetailsRequest(manga: SManga) =
+        throw UnsupportedOperationException("Not used")
 
     override fun chapterListRequest(manga: SManga) =
         throw UnsupportedOperationException("Not used")
