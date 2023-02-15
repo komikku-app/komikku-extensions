@@ -1,3 +1,5 @@
+@file:Suppress("PrivatePropertyName")
+
 package eu.kanade.tachiyomi.extension.all.netcomics
 
 import kotlinx.serialization.Serializable

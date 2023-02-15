@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.netcomics
 
 import android.app.Application
-import android.net.Uri
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
@@ -19,6 +18,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -56,7 +57,7 @@ class Netcomics(
         System.currentTimeMillis().toString()
     }
 
-    private val apiUri by lazy { Uri.parse(API_URL) }
+    private val apiUrl by lazy { API_URL.toHttpUrl() }
 
     private val apiHeaders by lazy {
         headers.newBuilder()
@@ -79,10 +80,6 @@ class Netcomics(
             else -> ""
         }
     }
-
-    // Request the real URL for the webview
-    override fun mangaDetailsRequest(manga: SManga) =
-        GET("$baseUrl/$site/comic/${manga.slug}", headers)
 
     override fun searchMangaParse(response: Response) =
         response.data<List<Title>>().ifEmpty {
@@ -119,49 +116,55 @@ class Netcomics(
         }
 
     override fun fetchLatestUpdates(page: Int) =
-        apiUri.fetch("title", ::searchMangaParse) {
-            appendEncodedPath("new")
-            appendQueryParameter("no", page.toString())
-            appendQueryParameter("size", "20")
-            appendQueryParameter("day", day)
+        apiUrl.fetch("title", ::searchMangaParse) {
+            addEncodedPathSegment("new")
+            addEncodedQueryParameter("no", page.toString())
+            addEncodedQueryParameter("size", "20")
+            addEncodedQueryParameter("day", day)
         }
 
     override fun fetchPopularManga(page: Int) =
-        apiUri.fetch("title", ::searchMangaParse) {
-            appendEncodedPath("free")
-            appendQueryParameter("no", page.toString())
-            appendQueryParameter("size", "20")
+        apiUrl.fetch("title", ::searchMangaParse) {
+            addEncodedPathSegment("free")
+            addEncodedQueryParameter("no", page.toString())
+            addEncodedQueryParameter("size", "20")
         }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList) =
-        apiUri.fetch("title", ::searchMangaParse) {
+        apiUrl.fetch("title", ::searchMangaParse) {
             if (query.isNotBlank()) {
-                appendEncodedPath("search/text")
-                appendQueryParameter("text", query)
+                addEncodedPathSegments("search/text")
+                addQueryParameter("text", query)
             } else {
-                appendEncodedPath("genre")
-                appendQueryParameter("genre", filters.genre)
+                addEncodedPathSegment("genre")
+                addQueryParameter("genre", filters.genre)
             }
-            appendQueryParameter("no", page.toString())
-            appendQueryParameter("size", "20")
+            addEncodedQueryParameter("no", page.toString())
+            addEncodedQueryParameter("size", "20")
         }
 
     override fun fetchMangaDetails(manga: SManga) =
         rx.Observable.just(manga.apply { initialized = true })!!
 
     override fun fetchChapterList(manga: SManga) =
-        apiUri.fetch("chapter", ::chapterListParse) {
-            appendEncodedPath("list")
-            appendEncodedPath(manga.id)
-            appendEncodedPath("rent")
+        apiUrl.fetch("chapter", ::chapterListParse) {
+            addEncodedPathSegment("list")
+            addEncodedPathSegment(manga.id)
+            addEncodedPathSegment("rent")
         }
 
     override fun fetchPageList(chapter: SChapter) =
-        apiUri.fetch("chapter", ::pageListParse) {
-            appendEncodedPath("viewer")
-            appendEncodedPath(quality)
-            appendEncodedPath(chapter.url)
+        apiUrl.fetch("chapter", ::pageListParse) {
+            addEncodedPathSegment("viewer")
+            addEncodedPathSegment(quality)
+            addEncodedPathSegments(chapter.url)
         }
+
+    override fun getMangaUrl(manga: SManga) =
+        "$baseUrl/$site/comic/${manga.slug}"
+
+    override fun getChapterUrl(chapter: SChapter) =
+        "$baseUrl/viewer/${chapter.url}"
 
     override fun getFilterList() =
         FilterList(GenreFilter.NOTE, GenreFilter())
@@ -213,6 +216,9 @@ class Netcomics(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
         throw UnsupportedOperationException("Not used")
 
+    override fun mangaDetailsRequest(manga: SManga) =
+        throw UnsupportedOperationException("Not used")
+
     override fun chapterListRequest(manga: SManga) =
         throw UnsupportedOperationException("Not used")
 
@@ -249,11 +255,11 @@ class Netcomics(
             },
         )
 
-    private inline fun <R> Uri.fetch(
+    private inline fun <R> HttpUrl.fetch(
         path: String,
         noinline parse: (Response) -> R,
-        block: Uri.Builder.() -> Uri.Builder,
-    ) = buildUpon().appendEncodedPath(path).let(block).toString().run {
-        client.newCall(GET(this, apiHeaders)).asObservable().map(parse)!!
+        block: HttpUrl.Builder.() -> HttpUrl.Builder,
+    ) = newBuilder().addEncodedPathSegment(path).let(block).run {
+        client.newCall(GET(build(), apiHeaders)).asObservable().map(parse)!!
     }
 }
