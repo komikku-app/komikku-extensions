@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.zeistmanga
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -25,7 +26,9 @@ abstract class ZeistManga(
 ) : ParsedHttpSource() {
 
     override val supportsLatest = false
-    val json: Json by injectLazy()
+    open val hasFilters = false
+    protected val json: Json by injectLazy()
+    protected val intl by lazy { ZeistMangaIntl(lang) }
     open val chapterFeedRegex = """clwd\.run\('([^']+)'""".toRegex()
     open val scriptSelector = "#clwd > script"
     open val imgSelector = "img[src]"
@@ -38,12 +41,10 @@ abstract class ZeistManga(
             ?.groupValues?.get(1)
             ?: throw Exception("Failed to find chapter feed")
 
-        val url = apiUrl(feed)
-            .addQueryParameter("start-index", "2") // Only get chapters
+        return apiUrl("Chapter")
+            .addPathSegments(feed)
             .addQueryParameter("max-results", "999999") // Get all chapters
-            .build()
-
-        return url.toString()
+            .build().toString()
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
@@ -51,15 +52,12 @@ abstract class ZeistManga(
 
         val url = getChaptersUrl(document)
 
-        // Call JSON API
         val req = GET(url, headers)
         val res = client.newCall(req).execute()
 
-        // Parse JSON API response
         val jsonString = res.body.string()
         val result = json.decodeFromString<ZeistMangaDto>(jsonString)
 
-        // Transform JSON response into List<SChapter>
         return result.feed?.entry?.map { it.toSChapter(baseUrl) }
             ?: throw Exception("Failed to parse from chapter API")
     }
@@ -108,6 +106,18 @@ abstract class ZeistManga(
         throw UnsupportedOperationException("Not used.")
     }
 
+    override fun searchMangaFromElement(element: Element): SManga {
+        throw UnsupportedOperationException("Not used.")
+    }
+
+    override fun searchMangaNextPageSelector(): String? {
+        throw UnsupportedOperationException("Not used.")
+    }
+
+    override fun searchMangaSelector(): String {
+        throw UnsupportedOperationException("Not used.")
+    }
+
     override fun mangaDetailsParse(document: Document): SManga {
         val profileManga = document.selectFirst(".grid.gtc-235fr")!!
         return SManga.create().apply {
@@ -115,6 +125,8 @@ abstract class ZeistManga(
             thumbnail_url = profileManga.selectFirst("img")!!.attr("src")
             description = profileManga.select("#synopsis").text()
             status = SManga.UNKNOWN
+            genre = profileManga.select("div.mt-15 > a[rel=tag]")
+                .joinToString { it.text() }
         }
     }
 
@@ -128,9 +140,12 @@ abstract class ZeistManga(
     override fun popularMangaParse(response: Response): MangasPage {
         val jsonString = response.body.string()
         val result = json.decodeFromString<ZeistMangaDto>(jsonString)
-        // Transform JSON response into List<SManga>
-        val mangas = result.feed!!.entry?.map { it.toSManga(baseUrl) }
-        val mangalist = mangas!!.toMutableList()
+
+        val mangas = result.feed?.entry.orEmpty()
+            .filter { !it.category.orEmpty().any { category -> category.term == "Anime" } } // Skip animes
+            .map { it.toSManga(baseUrl) }
+
+        val mangalist = mangas.toMutableList()
         if (mangas.size == maxResults + 1) {
             mangalist.removeLast()
             return MangasPage(mangalist, true)
@@ -146,33 +161,139 @@ abstract class ZeistManga(
             .addQueryParameter("start-index", startIndex.toString())
             .build()
 
-        return GET(url.toString(), headers)
+        return GET(url, headers)
     }
 
-    override fun searchMangaSelector(): String = ".grid.gtc-f141a > div"
-    override fun searchMangaFromElement(element: Element): SManga {
-        return SManga.create().apply {
-            setUrlWithoutDomain(element.select(".block").attr("href"))
-            title = element.selectFirst(".clamp.toe.oh.block")!!.text().trim()
-            thumbnail_url = element.selectFirst("img")!!.attr("src")
-        }
-    }
+    override fun searchMangaParse(response: Response) = popularMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search".toHttpUrl().newBuilder()
-            .addQueryParameter("q", query)
-            .build()
+        val startIndex = maxResults * (page - 1) + 1
+        val url = apiUrl()
+            .addQueryParameter("max-results", (maxResults + 1).toString())
+            .addQueryParameter("start-index", startIndex.toString())
 
-        return GET(url.toString(), headers)
+        if (query.isNotBlank()) {
+            url.addQueryParameter("q", query)
+            return GET(url.build(), headers)
+        }
+
+        filters.forEach { filter ->
+            when (filter) {
+                is StatusList -> {
+                    url.addPathSegment(filter.selected.value)
+                }
+
+                is TypeList -> {
+                    url.addPathSegment(filter.selected.value)
+                }
+
+                is LanguageList -> {
+                    url.addPathSegment(filter.selected.value)
+                }
+
+                is GenreList -> {
+                    filter.state.forEach { genre ->
+                        when (genre.state) {
+                            true -> url.addPathSegment(genre.value)
+                            false -> {}
+                        }
+                    }
+                }
+
+                else -> {}
+            }
+        }
+
+        return GET(url.build(), headers)
     }
-
-    override fun searchMangaNextPageSelector(): String? = null
 
     open fun apiUrl(feed: String = "Series"): HttpUrl.Builder {
         return "$baseUrl/feeds/posts/default/-/".toHttpUrl().newBuilder()
             .addPathSegment(feed)
             .addQueryParameter("alt", "json")
     }
+
+    override fun getFilterList(): FilterList {
+        if (!hasFilters) {
+            return FilterList(emptyList())
+        }
+
+        return FilterList(
+            Filter.Header(intl.filterWarning),
+            Filter.Separator(),
+            StatusList(intl.statusFilterTitle, getStatusList()),
+            TypeList(intl.typeFilterTitle, getTypeList()),
+            LanguageList(intl.languageFilterTitle, getLanguageList()),
+            GenreList(intl.genreFilterTitle, getGenreList()),
+        )
+    }
+
+    // Theme Default Status
+    protected open fun getStatusList(): List<Status> = listOf(
+        Status(intl.statusAll, ""),
+        Status(intl.statusOngoing, "Ongoing"),
+        Status(intl.statusCompleted, "Completed"),
+        Status(intl.statusDropped, "Dropped"),
+        Status(intl.statusUpcoming, "Upcoming"),
+    )
+
+    // Theme Default Types
+    protected open fun getTypeList(): List<Type> = listOf(
+        Type(intl.typeAll, ""),
+        Type(intl.typeManga, "Manga"),
+        Type(intl.typeManhua, "Manhua"),
+        Type(intl.typeManhwa, "Manhwa"),
+        Type(intl.typeNovel, "Novel"),
+    )
+
+    // Theme Default Genres
+    protected open fun getGenreList(): List<Genre> = listOf(
+        Genre("Action", "Action"),
+        Genre("Adventurer", "Adventurer"),
+        Genre("Comedy", "Comedy"),
+        Genre("Dementia", "Dementia"),
+        Genre("Drama", "Drama"),
+        Genre("Ecchi", "Ecchi"),
+        Genre("Fantasy", "Fantasy"),
+        Genre("Game", "Game"),
+        Genre("Harem", "Harem"),
+        Genre("Historical", "Historical"),
+        Genre("Horror", "Horror"),
+        Genre("Josei", "Josei"),
+        Genre("Magic", "Magic"),
+        Genre("Martial Arts", "Martial Arts"),
+        Genre("Mecha", "Mecha"),
+        Genre("Military", "Military"),
+        Genre("Music", "Music"),
+        Genre("Mystery", "Mystery"),
+        Genre("Parody", "Parody"),
+        Genre("Police", "Police"),
+        Genre("Psychological", "Psychological"),
+        Genre("Romance", "Romance"),
+        Genre("Samurai", "Samurai"),
+        Genre("School", "School"),
+        Genre("Sci-fi", "Sci-fi"),
+        Genre("Seinen", "Seinen"),
+        Genre("Shoujo", "Shoujo"),
+        Genre("Shoujo Ai", "Shoujo Ai"),
+        Genre("Shounen", "Shounen"),
+        Genre("Slice of Life", "Slice of Life"),
+        Genre("Space", "Space"),
+        Genre("Sports", "Sports"),
+        Genre("Super Power", "Super Power"),
+        Genre("SuperNatural", "SuperNatural"),
+        Genre("Thriller", "Thriller"),
+        Genre("Vampire", "Vampire"),
+        Genre("Work Life", "Work Life"),
+        Genre("Yuri", "Yuri"),
+    )
+
+    // Theme Default Languages
+    protected open fun getLanguageList(): List<Language> = listOf(
+        Language(intl.languageAll, ""),
+        Language("Indonesian", "Indonesian"),
+        Language("English", "English"),
+    )
 
     companion object {
         private const val maxResults = 20

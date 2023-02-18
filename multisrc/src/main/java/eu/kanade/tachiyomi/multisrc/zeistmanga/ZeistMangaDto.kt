@@ -31,6 +31,7 @@ data class ZeistMangaFeedDto(
 data class ZeistMangaEntryDto(
     val title: ZeistMangaEntryTitleDto? = null,
     val published: ZeistMangaEntryPublishedDto? = null,
+    val category: List<ZeistMangaEntryCategory>? = emptyList(),
     @SerialName("link") val url: List<ZeistMangaEntryLink>? = emptyList(),
     val content: ZeistMangaEntryContentDto? = null,
 ) {
@@ -76,4 +77,9 @@ data class ZeistMangaEntryContentDto(
 data class ZeistMangaEntryLink(
     val rel: String,
     val href: String,
+)
+
+@Serializable
+data class ZeistMangaEntryCategory(
+    val term: String,
 )
