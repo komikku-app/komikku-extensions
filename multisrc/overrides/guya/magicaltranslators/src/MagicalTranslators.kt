@@ -24,9 +24,6 @@ abstract class MagicalTranslatorsCommon(lang: String) :
     override fun latestUpdatesParse(response: Response): MangasPage =
         filterMangasPage(super.latestUpdatesParse(response))
 
-    override fun proxySearchMangaParse(response: Response, query: String): MangasPage =
-        filterMangasPage(super.proxySearchMangaParse(response, query))
-
     override fun searchMangaParseWithSlug(response: Response, slug: String): MangasPage =
         filterMangasPage(super.searchMangaParseWithSlug(response, slug))
 

@@ -74,7 +74,7 @@ abstract class Guya(
         for (series in payload.keys()) {
             val json = payload.getJSONObject(series)
             val timestamp = json.getLong("last_updated")
-            mangas[timestamp] = parseMangaFromJson(json, "", series)
+            mangas[timestamp] = parseMangaFromJson(json, series)
         }
 
         return MangasPage(mangas.values.reversed(), false)
@@ -82,54 +82,32 @@ abstract class Guya(
 
     // Overridden to use our overload
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return when {
-            manga.url.startsWith(PROXY_PREFIX) -> {
-                client.newCall(proxyChapterListRequest(manga))
-                    .asObservableSuccess()
-                    .map { response ->
-                        proxyMangaDetailsParse(response, manga)
-                    }
+        return client.newCall(mangaDetailsRequest(manga))
+            .asObservableSuccess()
+            .map { response ->
+                mangaDetailsParse(response, manga)
             }
-            else -> {
-                client.newCall(chapterListRequest(manga))
-                    .asObservableSuccess()
-                    .map { response ->
-                        mangaDetailsParse(response, manga)
-                    }
-            }
-        }
     }
 
-    // Called when the series is loaded, or when opening in browser
     override fun mangaDetailsRequest(manga: SManga): Request {
-        return when {
-            manga.url.startsWith(PROXY_PREFIX) -> proxySeriesRequest(manga.url, false)
-            else -> GET("$baseUrl/reader/series/${manga.url}/", headers)
-        }
+        return GET("$baseUrl/api/series/${manga.url}/", headers)
     }
 
     private fun mangaDetailsParse(response: Response, manga: SManga): SManga {
         val res = response.body.string()
-        return parseMangaFromJson(JSONObject(res), "", manga.title)
+        return parseMangaFromJson(JSONObject(res), manga.title)
+    }
+
+    override fun getMangaUrl(manga: SManga): String {
+        return "$baseUrl/reader/series/${manga.url}/"
     }
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        return when {
-            manga.url.startsWith(PROXY_PREFIX) -> {
-                client.newCall(proxyChapterListRequest(manga))
-                    .asObservableSuccess()
-                    .map { response ->
-                        proxyChapterListParse(response, manga)
-                    }
+        return client.newCall(chapterListRequest(manga))
+            .asObservableSuccess()
+            .map { response ->
+                chapterListParse(response, manga)
             }
-            else -> {
-                client.newCall(chapterListRequest(manga))
-                    .asObservableSuccess()
-                    .map { response ->
-                        chapterListParse(response, manga)
-                    }
-            }
-        }
     }
 
     // Gets the chapter list based on the series being viewed
@@ -142,24 +120,17 @@ abstract class Guya(
         return parseChapterList(response.body.string(), manga)
     }
 
+    override fun getChapterUrl(chapter: SChapter): String {
+        return "$baseUrl/read/manga/${chapter.url.replace('.', '-')}/1/"
+    }
+
     // Overridden fetch so that we use our overloaded method instead
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
-        return when {
-            chapter.url.startsWith(PROXY_PREFIX) -> {
-                client.newCall(proxyPageListRequest(chapter))
-                    .asObservableSuccess()
-                    .map { response ->
-                        proxyPageListParse(response, chapter)
-                    }
+        return client.newCall(pageListRequest(chapter))
+            .asObservableSuccess()
+            .map { response ->
+                pageListParse(response, chapter)
             }
-            else -> {
-                client.newCall(pageListRequest(chapter))
-                    .asObservableSuccess()
-                    .map { response ->
-                        pageListParse(response, chapter)
-                    }
-            }
-        }
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
@@ -197,13 +168,6 @@ abstract class Guya(
                     .asObservableSuccess()
                     .map { response ->
                         searchMangaParseWithSlug(response, slug)
-                    }
-            }
-            query.startsWith(PROXY_PREFIX) && query.contains("/") -> {
-                client.newCall(proxySearchMangaRequest(query))
-                    .asObservableSuccess()
-                    .map { response ->
-                        proxySearchMangaParse(response, query)
                     }
             }
             else -> {
@@ -273,75 +237,6 @@ abstract class Guya(
         screen.addPreference(preference)
     }
 
-    // ---------------- Proxy methods ------------------
-
-    private fun proxySeriesRequest(query: String, api: Boolean = true): Request {
-        val res = query.removePrefix(PROXY_PREFIX)
-        val options = res.split("/")
-        val proxyType = options[0]
-        val slug = options[1]
-        return if (api) {
-            GET("$baseUrl/proxy/api/$proxyType/series/$slug/", headers)
-        } else {
-            GET("$baseUrl/proxy/$proxyType/$slug/", headers)
-        }
-    }
-
-    private fun proxyMangaDetailsParse(response: Response, manga: SManga): SManga {
-        return mangaDetailsParse(response, manga)
-    }
-
-    private fun proxyChapterListRequest(manga: SManga): Request {
-        return proxySeriesRequest(manga.url)
-    }
-
-    private fun proxyChapterListParse(response: Response, manga: SManga): List<SChapter> {
-        return chapterListParse(response, manga)
-    }
-
-    private fun proxyPageListRequest(chapter: SChapter): Request {
-        val proxyUrl = chapter.url.removePrefix(PROXY_PREFIX)
-        return when {
-            proxyUrl.startsWith(NESTED_PROXY_API_PREFIX) -> {
-                GET("$baseUrl$proxyUrl", headers)
-            }
-            else -> proxySeriesRequest(chapter.url)
-        }
-    }
-
-    private fun proxyPageListParse(response: Response, chapter: SChapter): List<Page> {
-        val res = response.body.string()
-        val pages = if (chapter.url.removePrefix(PROXY_PREFIX).startsWith(NESTED_PROXY_API_PREFIX)) {
-            JSONArray(res)
-        } else {
-            val json = JSONObject(res)
-            val metadata = chapter.url.split("/").takeLast(2)
-            val chapterNum = metadata[0]
-            val groupNum = metadata[1]
-            json.getJSONObject("chapters")
-                .getJSONObject(chapterNum)
-                .getJSONObject("groups")
-                .getJSONArray(groupNum)
-        }
-        return List(pages.length()) {
-            Page(
-                it + 1,
-                "",
-                pages.optJSONObject(it)?.getString("src")
-                    ?: pages[it].toString(),
-            )
-        }
-    }
-
-    private fun proxySearchMangaRequest(query: String): Request {
-        return proxySeriesRequest(query)
-    }
-
-    protected open fun proxySearchMangaParse(response: Response, query: String): MangasPage {
-        val json = JSONObject(response.body.string())
-        return MangasPage(listOf(parseMangaFromJson(json, query)), false)
-    }
-
     // ------------- Helpers and whatnot ---------------
 
     private fun parseChapterList(payload: String, manga: SManga): List<SChapter> {
@@ -393,12 +288,7 @@ abstract class Guya(
                         }
                         chapter.name = chapterNum + " - " + chapterObj.getString("title")
                         chapter.chapter_number = chapterNum.toFloat()
-                        chapter.url =
-                            if (groups.optJSONArray(groupNum) != null) {
-                                "${manga.url}/$chapterNum/$groupNum"
-                            } else {
-                                "$PROXY_PREFIX${groups.getString(groupNum)}"
-                            }
+                        chapter.url = "${manga.url}/$chapterNum"
                         chapterList.add(chapter)
                     }
                 }
@@ -414,14 +304,14 @@ abstract class Guya(
 
         for (series in payload.keys()) {
             val json = payload.getJSONObject(series)
-            mangas += parseMangaFromJson(json, "", series)
+            mangas += parseMangaFromJson(json, series)
         }
 
         return MangasPage(mangas, false)
     }
 
     // Takes a json of the manga to parse
-    private fun parseMangaFromJson(json: JSONObject, slug: String, title: String = ""): SManga {
+    private fun parseMangaFromJson(json: JSONObject, title: String = ""): SManga {
         val manga = SManga.create()
         manga.title = title.ifEmpty { json.getString("title") }
         manga.artist = json.optString("artist")
@@ -433,7 +323,7 @@ abstract class Guya(
                 text()
             }
         }
-        manga.url = if (slug.startsWith(PROXY_PREFIX)) slug else json.getString("slug")
+        manga.url = json.getString("slug")
 
         val cover = json.optString("cover")
         manga.thumbnail_url = when {
@@ -454,7 +344,7 @@ abstract class Guya(
         chapter.date_upload = json.getJSONObject("release_date").getLong(firstGroupId) * 1000
         chapter.name = num + " - " + json.getString("title")
         chapter.chapter_number = num.toFloat()
-        chapter.url = "$slug/$num/$firstGroupId"
+        chapter.url = "$slug/$num"
 
         return chapter
     }
@@ -586,9 +476,6 @@ abstract class Guya(
 
     companion object {
         const val SLUG_PREFIX = "slug:"
-        const val PROXY_PREFIX = "proxy:"
-        const val NESTED_PROXY_API_PREFIX = "/proxy/api/"
-
         private const val scanlatorPreference = "SCANLATOR_PREFERENCE"
     }
 }
