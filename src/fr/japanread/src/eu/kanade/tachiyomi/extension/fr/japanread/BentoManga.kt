@@ -24,11 +24,13 @@ import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 
-class Japanread : ParsedHttpSource() {
+class BentoManga : ParsedHttpSource() {
 
-    override val name = "Japanread"
+    override val name = "Bento Manga"
 
-    override val baseUrl = "https://www.japanread.cc"
+    override val id: Long = 4697148576707003393
+
+    override val baseUrl = "https://www.bentomanga.com"
 
     override val lang = "fr"
 
@@ -44,18 +46,20 @@ class Japanread : ParsedHttpSource() {
     // Generic (used by popular/latest/search)
     private fun mangaListFromElement(element: Element): SManga {
         return SManga.create().apply {
-            title = element.select("img").attr("alt")
-            setUrlWithoutDomain(element.select("a").attr("abs:href"))
-            thumbnail_url = element.select("img").attr("src").replace("manga_medium", "manga_large")
+            title = element.select("a.component-manga-cover span.div-manga_cover-title")
+                .text()
+            setUrlWithoutDomain(element.select("a").attr("href"))
+            thumbnail_url = element.select("a.component-manga-cover img ")
+                .attr("src")
         }
     }
 
-    private fun mangaListSelector() = "div#manga-container div.col-lg-6"
-    private fun mangaListNextPageSelector() = "a[rel=next]"
+    private fun mangaListSelector() = "div#mangas_content div.div-manga div.div-manga_cover"
+    private fun mangaListNextPageSelector() = ".paginator button:contains(>)"
 
     // Popular
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/manga-list?sortType=9&page=$page", headers)
+        return GET("$baseUrl/manga_list?withoutTypes=5&order_by=views&limit=" + (page - 1), headers)
     }
 
     override fun popularMangaSelector() = mangaListSelector()
@@ -64,7 +68,7 @@ class Japanread : ParsedHttpSource() {
 
     // Latest
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/manga-list?sortType=0&page=$page", headers)
+        return GET("$baseUrl/manga_list?withoutTypes=5&limit=" + (page - 1), headers)
     }
 
     override fun latestUpdatesSelector() = mangaListSelector()
@@ -75,11 +79,11 @@ class Japanread : ParsedHttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         // If there is any search text, use text search, otherwise use filter search
         val uri = if (query.isNotBlank()) {
-            Uri.parse("$baseUrl/search")
+            Uri.parse("$baseUrl/manga_list?withoutTypes=5")
                 .buildUpon()
-                .appendQueryParameter("q", query)
+                .appendQueryParameter("search", query)
         } else {
-            val uri = Uri.parse("$baseUrl/manga-list").buildUpon()
+            val uri = Uri.parse("$baseUrl/manga_list?withoutTypes=5").buildUpon()
             // Append uri filters
             filters.forEach {
                 if (it is UriFilter) {
@@ -89,7 +93,7 @@ class Japanread : ParsedHttpSource() {
             uri
         }
         // Append page number
-        uri.appendQueryParameter("page", page.toString())
+        uri.appendQueryParameter("limit", (page - 1).toString())
         return GET(uri.toString())
     }
 
@@ -98,20 +102,27 @@ class Japanread : ParsedHttpSource() {
     override fun searchMangaNextPageSelector() = mangaListNextPageSelector()
 
     // Details
+
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            title = document.select("h1.card-header").text()
-            artist = document.select("div.col-lg-3:contains(Artiste) + div").text()
-            author = document.select("div.col-lg-3:contains(Auteur) + div").text()
-            description = document.select("div.col-lg-3:contains(Description) + div").text()
-            genre = document.select("div.col-lg-3:contains(Type - Catégories) + div .badge").joinToString { it.text() }
-            status = document.select("div.col-lg-3:contains(Statut) + div").text().let {
+            title = document.select("div.manga div.manga-infos div.component-manga-title div.component-manga-title_main h1 ")
+                .text()
+            artist = document.select("div.datas div.datas_more-artists div.datas_more-artists-people a").text()
+            author = document.select("div.datas div.datas_more-authors div.datas_more-authors-peoples div a").text()
+            description = document.select("div.datas div.datas_synopsis").text()
+            genre = document.select("div.manga div.manga-infos div.component-manga-categories a")
+                .joinToString(" , ") { it.text() }
+            status = document.select("div.datas div.datas_more div.datas_more-status div.datas_more-status-data")?.first()?.text()?.let {
                 when {
                     it.contains("En cours") -> SManga.ONGOING
                     it.contains("Terminé") -> SManga.COMPLETED
+                    it.contains("En pause") -> SManga.ON_HIATUS
+                    it.contains("Licencié") -> SManga.LICENSED
+                    it.contains("Abandonné") -> SManga.CANCELLED
                     else -> SManga.UNKNOWN
                 }
-            }
+            } ?: SManga.UNKNOWN
+
             thumbnail_url = document.select("img[alt=couverture manga]").attr("src")
         }
     }
@@ -144,22 +155,22 @@ class Japanread : ParsedHttpSource() {
         return calendar.timeInMillis
     }
 
-    override fun chapterListSelector() = "#chapters div[data-row=chapter]"
+    override fun chapterListSelector() = "div.page_content div.chapters_content div.div-item"
 
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
-            name = element.select("div.col-lg-5 a").text()
-            setUrlWithoutDomain(element.select("div.col-lg-5 a").attr("href"))
-            date_upload = parseRelativeDate(element.select("div.order-lg-8").text())
-            scanlator = element.select(".chapter-list-group a").joinToString { it.text() }
+            name = element.select("div.component-chapter-title a span.chapter_volume").text()
+            setUrlWithoutDomain(element.select("div.component-chapter-title a").attr("href"))
+            date_upload = parseRelativeDate(element.select("div.component-chapter-date").text())
+            scanlator = element.select("div.component-chapter-teams a span").joinToString(" + ") { it.text() }
         }
     }
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         val requestUrl = if (manga.url.startsWith("http")) {
-            "${manga.url}?page="
+            "${manga.url}"
         } else {
-            "$baseUrl${manga.url}?page="
+            "$baseUrl${manga.url}"
         }
         return client.newCall(GET(requestUrl, headers))
             .asObservableSuccess()
@@ -167,18 +178,19 @@ class Japanread : ParsedHttpSource() {
                 chapterListParse(response, requestUrl)
             }
     }
-
     private fun chapterListParse(response: Response, requestUrl: String): List<SChapter> {
         val chapters = mutableListOf<SChapter>()
         var document = response.asJsoup()
         var moreChapters = true
-        var nextPage = 2
-
+        var nextPage = 1
+        val pagemax = if (!document.select(".paginator button:contains(>>)").isNullOrEmpty()) {
+            document.select(".paginator button:contains(>>)")?.first()?.attr("data-limit")?.toInt()?.plus(1) ?: 1
+        } else { 1 }
         // chapters are paginated
-        while (moreChapters) {
+        while (moreChapters && nextPage <= pagemax) {
             document.select(chapterListSelector()).map { chapters.add(chapterFromElement(it)) }
-            if (!document.select("a[rel=next]").isNullOrEmpty()) {
-                document = client.newCall(GET(requestUrl + nextPage, headers)).execute().asJsoup()
+            if (nextPage < pagemax) {
+                document = client.newCall(GET("$requestUrl?limit=$nextPage", headers)).execute().asJsoup()
                 nextPage++
             } else {
                 moreChapters = false
@@ -272,13 +284,14 @@ class Japanread : ParsedHttpSource() {
 
     private class SortFilter : UriSelectFilter(
         "Tri",
-        "sortType",
+        "order_by",
         arrayOf(
-            Pair("9", "Les + vus"),
-            Pair("7", "Les mieux notés"),
-            Pair("2", "A - Z"),
-            Pair("5", "Les + commentés"),
-            Pair("0", "Les + récents"),
+            Pair("views", "Les + vus"),
+            Pair("top", "Les mieux notés"),
+            Pair("name", "A - Z"),
+            Pair("comment", "Les + commentés"),
+            Pair("update", "Les + récents"),
+            Pair("create", "Par date de sortie"),
         ),
         firstIsUnspecified = false,
     )
@@ -303,6 +316,9 @@ class Japanread : ParsedHttpSource() {
             Pair("0", "Tous"),
             Pair("1", "En cours"),
             Pair("2", "Terminé"),
+            Pair("3", "En pause"),
+            Pair("4", "Licencié"),
+            Pair("5", "Abandonné"),
         ),
     )
 

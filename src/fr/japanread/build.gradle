@@ -3,10 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = 'Japanread'
+    extName = 'Bento Manga'
     pkgNameSuffix = 'fr.japanread'
-    extClass = '.Japanread'
-    extVersionCode = 10
+    extClass = '.BentoManga'
+    extVersionCode = 11
     isNsfw = true
 }
 
