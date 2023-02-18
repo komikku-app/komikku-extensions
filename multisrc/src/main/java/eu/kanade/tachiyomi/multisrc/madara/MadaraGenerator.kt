@@ -59,7 +59,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Boruto Explorer", "https://leitor.borutoexplorer.com.br", "pt-BR", overrideVersionCode = 1),
         SingleLang("BoysLove", "https://boyslove.me", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("Café com Yaoi", "http://cafecomyaoi.com.br", "pt-BR", pkgName = "cafecomyaoi", className = "CafeComYaoi", isNsfw = true, overrideVersionCode = 1),
-        SingleLang("Cartel de Manhwas", "https://carteldemws.com", "es"),
         SingleLang("CAT-translator", "https://cats-translator.com/manga", "th", className = "CatTranslator", overrideVersionCode = 2),
         SingleLang("Cat300", "https://cat300.com", "th", isNsfw = true, className = "Cat300", overrideVersionCode = 1),
         SingleLang("CatOnHeadTranslations", "https://catonhead.com", "en", overrideVersionCode = 2),

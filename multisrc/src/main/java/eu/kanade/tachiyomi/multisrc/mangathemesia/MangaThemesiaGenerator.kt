@@ -24,6 +24,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("ARESManga", "https://aresmanga.net", "ar", pkgName = "iimanga", overrideVersionCode = 4),
         SingleLang("Azure Scans", "https://azuremanga.com", "en", overrideVersionCode = 1),
         SingleLang("Boosei", "https://boosei.net", "id", overrideVersionCode = 2),
+        SingleLang("Cartel de Manhwas", "https://carteldemanhwas.com", "es", overrideVersionCode = 5),
         SingleLang("Clayrer", "https://clayrer.net", "es"),
         SingleLang("Constellar Scans", "https://constellarscans.com", "en", isNsfw = true, overrideVersionCode = 14),
         SingleLang("Cosmic Scans", "https://cosmicscans.com", "en", overrideVersionCode = 1),
