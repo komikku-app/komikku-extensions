@@ -35,16 +35,19 @@ data class Author(private val nickname: String) {
 
 @Serializable
 data class Album(
-    val id: String,
+    private val id: String,
     private val title: String,
-    private val volume: String,
+    private val chapter: String,
     val publicationDate: String,
     private val fullAvailable: Boolean,
     private val inUserLibrary: Boolean,
     private val inUserSubscription: Boolean,
 ) {
     val number: Float
-        get() = volume.toFloat()
+        get() = chapter.toFloat()
+
+    val path: String
+        get() = "/episode-$chapter-$id/read/1"
 
     private inline val isLocked: Boolean
         get() = !fullAvailable && !(inUserLibrary || inUserSubscription)

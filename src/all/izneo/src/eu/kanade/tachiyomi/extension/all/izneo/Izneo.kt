@@ -34,6 +34,8 @@ class Izneo(override val lang: String) : ConfigurableSource, HttpSource() {
 
     override val supportsLatest = true
 
+    override val versionId = 2
+
     override val client = network.client.newBuilder()
         .addInterceptor(ImageInterceptor).build()
 
@@ -75,14 +77,18 @@ class Izneo(override val lang: String) : ConfigurableSource, HttpSource() {
         GET("$apiUrl/free?offset=${page - 1}&order=3&abo=0", apiHeaders)
 
     override fun pageListRequest(chapter: SChapter) =
-        GET(ORIGIN + "/book/" + chapter.url, apiHeaders)
+        GET(ORIGIN + "/book/" + chapter.id, apiHeaders)
 
     override fun imageRequest(page: Page) =
         GET(ORIGIN + "/book/" + page.imageUrl!!, apiHeaders)
 
     override fun latestUpdatesParse(response: Response) =
         response.parse().run {
-            val count = get("series_count")!!.jsonPrimitive.int
+            val count = try {
+                get("series_count")!!.jsonPrimitive.int
+            } catch (_: IllegalArgumentException) {
+                return@run MangasPage(emptyList(), false)
+            }
             val series = get("series")!!.jsonObject.values.flatMap {
                 json.decodeFromJsonElement<List<Series>>(it)
             }.also { seriesCount += it.size }
@@ -106,17 +112,6 @@ class Izneo(override val lang: String) : ConfigurableSource, HttpSource() {
     override fun searchMangaParse(response: Response) =
         latestUpdatesParse(response)
 
-    override fun chapterListParse(response: Response) =
-        response.parse()["albums"]!!.jsonArray.map {
-            val album = json.decodeFromJsonElement<Album>(it)
-            SChapter.create().apply {
-                url = album.id
-                name = album.toString()
-                date_upload = album.timestamp
-                chapter_number = album.number
-            }
-        }
-
     override fun pageListParse(response: Response) =
         response.parse()["data"]!!.jsonObject.run {
             val id = get("id")!!.jsonPrimitive.content
@@ -135,26 +130,32 @@ class Izneo(override val lang: String) : ConfigurableSource, HttpSource() {
         Observable.just(manga.apply { initialized = true })!!
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val url = "$ORIGIN/$lang/api/web/serie/" +
-            manga.url.substringAfterLast('-') + "/volumes/old"
+        val id = manga.url.substringAfterLast('-')
+        val url = "$ORIGIN/$lang/api/web/serie/$id/chapters/old"
         val chapters = mutableListOf<SChapter>()
         var cutoff = 0
         var current = LIMIT
         while (current == LIMIT) {
-            client.newCall(GET("$url/$cutoff/$LIMIT", apiHeaders))
-                .execute().run(::chapterListParse).let {
-                    cutoff += LIMIT
-                    current = it.size
-                    chapters.addAll(it)
-                }
+            val albums = client.newCall(GET("$url/$cutoff/$LIMIT", apiHeaders))
+                .execute().parse()["albums"]!!.jsonArray
+            albums.forEach {
+                val album = json.decodeFromJsonElement<Album>(it)
+                val chapter = SChapter.create()
+                chapter.url = manga.url + album.path
+                chapter.name = album.toString()
+                chapter.date_upload = album.timestamp
+                chapter.chapter_number = album.number
+                chapters.add(chapter)
+            }
+            cutoff += LIMIT
+            current = albums.size
         }
         return Observable.just(chapters)
     }
 
     override fun getMangaUrl(manga: SManga) = ORIGIN + manga.url
 
-    override fun getChapterUrl(chapter: SChapter) =
-        throw UnsupportedOperationException("Not implemented!")
+    override fun getChapterUrl(chapter: SChapter) = ORIGIN + chapter.url
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         EditTextPreference(screen.context).apply {
@@ -183,6 +184,9 @@ class Izneo(override val lang: String) : ConfigurableSource, HttpSource() {
     private inline val Album.timestamp: Long
         get() = dateFormat.parse(publicationDate)?.time ?: 0L
 
+    private inline val SChapter.id: String
+        get() = url.substringAfterLast('-').substringBefore('/')
+
     private fun String.btoa() = Base64.encode(toByteArray(), Base64.DEFAULT)
 
     private fun Response.parse() =
@@ -204,11 +208,14 @@ class Izneo(override val lang: String) : ConfigurableSource, HttpSource() {
     override fun mangaDetailsParse(response: Response) =
         throw UnsupportedOperationException("Not used")
 
+    override fun chapterListParse(response: Response) =
+        throw UnsupportedOperationException("Not used")
+
     override fun imageUrlParse(response: Response) =
         throw UnsupportedOperationException("Not used")
 
     companion object {
-        private const val ORIGIN = "https://izneo.com"
+        private const val ORIGIN = "https://www.izneo.com"
 
         private const val LIMIT = 50
 
