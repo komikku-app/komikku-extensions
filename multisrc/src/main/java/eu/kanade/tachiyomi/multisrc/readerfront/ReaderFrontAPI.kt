@@ -32,9 +32,9 @@ data class Work(
 @Serializable
 data class Release(
     val id: Int,
-    private val chapter: Int,
-    private val subchapter: Int,
-    private val volume: Int,
+    val chapter: Int,
+    val subchapter: Int,
+    val volume: Int,
     private val name: String,
     private val releaseDate: String,
 ) {

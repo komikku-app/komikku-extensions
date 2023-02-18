@@ -9,7 +9,7 @@ class ReaderFrontGenerator : ThemeSourceGenerator {
 
     override val themeClass = "ReaderFront"
 
-    override val baseVersionCode = 7
+    override val baseVersionCode = 8
 
     override val sources = listOf(
         MultiLang("Ravens Scans", "https://ravens-scans.com", listOf("es", "en"), true),
