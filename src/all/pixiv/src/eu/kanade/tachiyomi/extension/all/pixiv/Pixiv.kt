@@ -28,7 +28,7 @@ class Pixiv(override val lang: String) : HttpSource() {
     override val supportsLatest = true
 
     private val siteLang: String = if (lang == "all") "ja" else lang
-    private val illustCache = LruCache<String, PixivIllust>(50)
+    private val illustCache by lazy { LruCache<String, PixivIllust>(50) }
 
     private val json: Json by injectLazy()
     private val dateFormat by lazy { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH) }
