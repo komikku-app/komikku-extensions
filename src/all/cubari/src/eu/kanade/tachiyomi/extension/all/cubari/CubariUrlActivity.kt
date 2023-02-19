@@ -17,7 +17,8 @@ class CubariUrlActivity : Activity() {
         if (host != null && pathSegments != null) {
             val query = with(host) {
                 when {
-                    equals("m.imgur.com") || equals("imgur.com") -> fromImgur(pathSegments)
+                    equals("m.imgur.com") || equals("imgur.com") -> fromSource("imgur", pathSegments)
+                    equals("m.reddit.com") || equals("reddit.com") || equals("www.reddit.com") -> fromSource("reddit", pathSegments)
                     else -> fromCubari(pathSegments)
                 }
             }
@@ -45,11 +46,11 @@ class CubariUrlActivity : Activity() {
         exitProcess(0)
     }
 
-    private fun fromImgur(pathSegments: List<String>): String? {
+    private fun fromSource(source: String, pathSegments: List<String>): String? {
         if (pathSegments.size >= 2) {
             val id = pathSegments[1]
 
-            return "${Cubari.PROXY_PREFIX}imgur/$id"
+            return "${Cubari.PROXY_PREFIX}$source/$id"
         }
         return null
     }

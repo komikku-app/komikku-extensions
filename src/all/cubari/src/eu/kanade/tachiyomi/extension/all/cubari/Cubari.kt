@@ -180,21 +180,20 @@ open class Cubari(override val lang: String) : HttpSource() {
     private fun seriesJsonPageListParse(response: Response, chapter: SChapter): List<Page> {
         val jsonObj = json.parseToJsonElement(response.body.string()).jsonObject
         val groups = jsonObj["groups"]!!.jsonObject
-        val groupMap = groups.entries
-            .map { Pair(it.value.jsonPrimitive.content, it.key) }
-            .toMap()
+        val groupMap = groups.entries.associateBy({ it.value.jsonPrimitive.content.ifEmpty { "default" } }, { it.key })
+        val chapterScanlator = chapter.scanlator ?: "default" // workaround for "" as group causing NullPointerException (#13772)
 
         val chapters = jsonObj["chapters"]!!.jsonObject
 
         val pages = if (chapters[chapter.chapter_number.toString()] != null) {
             chapters[chapter.chapter_number.toString()]!!
                 .jsonObject["groups"]!!
-                .jsonObject[groupMap[chapter.scanlator]]!!
+                .jsonObject[groupMap[chapterScanlator]]!!
                 .jsonArray
         } else {
             chapters[chapter.chapter_number.toInt().toString()]!!
                 .jsonObject["groups"]!!
-                .jsonObject[groupMap[chapter.scanlator]]!!
+                .jsonObject[groupMap[chapterScanlator]]!!
                 .jsonArray
         }
 
@@ -283,8 +282,8 @@ open class Cubari(override val lang: String) : HttpSource() {
                     scanlator = groups[groupNum]!!.jsonPrimitive.content
                     chapter_number = chapterNum.toFloatOrNull() ?: -1f
 
-                    if (releaseDate != null) {
-                        date_upload = releaseDate.jsonPrimitive.double.toLong() * 1000
+                    date_upload = if (releaseDate != null) {
+                        releaseDate.jsonPrimitive.double.toLong() * 1000
                     } else {
                         val currentTimeMillis = System.currentTimeMillis()
 
@@ -292,7 +291,7 @@ open class Cubari(override val lang: String) : HttpSource() {
                             seriesPrefsEditor.putLong(chapterNum, currentTimeMillis)
                         }
 
-                        date_upload = seriesPrefs.getLong(chapterNum, currentTimeMillis)
+                        seriesPrefs.getLong(chapterNum, currentTimeMillis)
                     }
 
                     name = if (volume != null) {
