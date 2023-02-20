@@ -41,6 +41,7 @@
 - MangaPro https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13989
 - Mangawow https://github.com/tachiyomiorg/tachiyomi-extensions/issues/5367
 - Manhwaid.org https://github.com/tachiyomiorg/tachiyomi-extensions/issues/10751
+- MHScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15319
 - NarTag https://github.com/tachiyomiorg/tachiyomi-extensions/issues/8038
 - Plot-twistnf-scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/4242
 - Reset Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13168
