@@ -183,7 +183,10 @@ open class Cubari(override val lang: String) : HttpSource() {
         val groupMap = groups.entries.associateBy({ it.value.jsonPrimitive.content.ifEmpty { "default" } }, { it.key })
         val chapterScanlator = chapter.scanlator ?: "default" // workaround for "" as group causing NullPointerException (#13772)
 
-        val chapters = jsonObj["chapters"]!!.jsonObject
+        // prevent NullPointerException when chapters.key is 084 and chapter.chapter_number is 84
+        val chapters = jsonObj["chapters"]!!.jsonObject.mapKeys {
+            it.key.replace(Regex("^0+(?!$)"), "")
+        }
 
         val pages = if (chapters[chapter.chapter_number.toString()] != null) {
             chapters[chapter.chapter_number.toString()]!!
