@@ -1,14 +1,17 @@
 package eu.kanade.tachiyomi.extension.es.datgarscanlation
 
+import eu.kanade.tachiyomi.multisrc.zeistmanga.Language
 import eu.kanade.tachiyomi.multisrc.zeistmanga.ZeistManga
 import org.jsoup.nodes.Document
 
 class DatGarScanlation : ZeistManga("DatGarScanlation", "https://datgarscanlation.blogspot.com", "es") {
 
+    override val hasFilters = true
+
     private val altChapterFeedRegex = """label\s*=\s*'([^']+)'""".toRegex()
     private val altScriptSelector = "#latest > script"
 
-    override fun getChaptersUrl(doc: Document): String {
+    override fun getApiUrl(doc: Document): String {
         var chapterRegex = chapterFeedRegex
         var script = doc.selectFirst(scriptSelector)
 
@@ -29,4 +32,8 @@ class DatGarScanlation : ZeistManga("DatGarScanlation", "https://datgarscanlatio
 
         return url.toString()
     }
+
+    override fun getLanguageList(): List<Language> = listOf(
+        Language(intl.all, ""),
+    )
 }

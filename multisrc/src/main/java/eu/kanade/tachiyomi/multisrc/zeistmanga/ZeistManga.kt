@@ -29,13 +29,29 @@ abstract class ZeistManga(
     open val hasFilters = false
     protected val json: Json by injectLazy()
     protected val intl by lazy { ZeistMangaIntl(lang) }
+
     open val chapterFeedRegex = """clwd\.run\('([^']+)'""".toRegex()
     open val scriptSelector = "#clwd > script"
+
+    open val oldChapterFeedRegex = """([^']+)\?""".toRegex()
+    open val oldScriptSelector = "#myUL > script"
+
     open val imgSelector = "img[src]"
     open val imgSelectorAttr = "src"
 
-    open fun getChaptersUrl(doc: Document): String {
-        val script = doc.selectFirst(scriptSelector)!!
+    open fun getApiUrl(doc: Document): String {
+        val script = doc.selectFirst(scriptSelector)
+
+        if (script == null) {
+            val altScript = doc.selectFirst(oldScriptSelector)!!.attr("src")
+            val feed = oldChapterFeedRegex
+                .find(altScript)
+                ?.groupValues?.get(1)
+                ?: throw Exception("Failed to find chapter feed")
+
+            return "$baseUrl$feed?alt=json&start-index=2&max-results=999999"
+        }
+
         val feed = chapterFeedRegex
             .find(script.html())
             ?.groupValues?.get(1)
@@ -50,7 +66,7 @@ abstract class ZeistManga(
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
 
-        val url = getChaptersUrl(document)
+        val url = getApiUrl(document)
 
         val req = GET(url, headers)
         val res = client.newCall(req).execute()
@@ -121,10 +137,8 @@ abstract class ZeistManga(
     override fun mangaDetailsParse(document: Document): SManga {
         val profileManga = document.selectFirst(".grid.gtc-235fr")!!
         return SManga.create().apply {
-            title = profileManga.selectFirst("h1.mt-0.mb-6.fs-20")!!.text()
             thumbnail_url = profileManga.selectFirst("img")!!.attr("src")
             description = profileManga.select("#synopsis").text()
-            status = SManga.UNKNOWN
             genre = profileManga.select("div.mt-15 > a[rel=tag]")
                 .joinToString { it.text() }
         }
@@ -150,6 +164,7 @@ abstract class ZeistManga(
             mangalist.removeLast()
             return MangasPage(mangalist, true)
         }
+
         return MangasPage(mangalist, false)
     }
 
@@ -230,20 +245,26 @@ abstract class ZeistManga(
 
     // Theme Default Status
     protected open fun getStatusList(): List<Status> = listOf(
-        Status(intl.statusAll, ""),
+        Status(intl.all, ""),
         Status(intl.statusOngoing, "Ongoing"),
         Status(intl.statusCompleted, "Completed"),
         Status(intl.statusDropped, "Dropped"),
         Status(intl.statusUpcoming, "Upcoming"),
+        Status(intl.statusHiatus, "Hiatus"),
+        Status(intl.statusCancelled, "Cancelled"),
     )
 
     // Theme Default Types
     protected open fun getTypeList(): List<Type> = listOf(
-        Type(intl.typeAll, ""),
+        Type(intl.all, ""),
         Type(intl.typeManga, "Manga"),
         Type(intl.typeManhua, "Manhua"),
         Type(intl.typeManhwa, "Manhwa"),
         Type(intl.typeNovel, "Novel"),
+        Type(intl.typeWebNovelJP, "Web Novel (JP)"),
+        Type(intl.typeWebNovelKR, "Web Novel (KR)"),
+        Type(intl.typeWebNovelCN, "Web Novel (CN)"),
+        Type(intl.typeDoujinshi, "Doujinshi"),
     )
 
     // Theme Default Genres
@@ -290,7 +311,7 @@ abstract class ZeistManga(
 
     // Theme Default Languages
     protected open fun getLanguageList(): List<Language> = listOf(
-        Language(intl.languageAll, ""),
+        Language(intl.all, ""),
         Language("Indonesian", "Indonesian"),
         Language("English", "English"),
     )
