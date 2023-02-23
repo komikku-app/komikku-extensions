@@ -88,7 +88,7 @@ class Pixiv(override val lang: String) : HttpSource() {
         apiResponseParse(response)
 
     override fun popularMangaRequest(page: Int): Request =
-        searchMangaRequest(page, "漫画", FilterList())
+        searchMangaRequest(page, "", FilterList())
 
     override fun popularMangaParse(response: Response) = MangasPage(
         mangas = apiResponseParse<PixivSearchResults>(response)
@@ -111,7 +111,7 @@ class Pixiv(override val lang: String) : HttpSource() {
             }
         }
 
-        val word = URLEncoder.encode(query, "UTF-8")
+        val word = URLEncoder.encode(query.ifBlank { "漫画" }, "UTF-8").replace("+", "%20")
         val type = if (includeNonManga) "artworks" else "manga"
 
         val parameters = mapOf(
@@ -142,7 +142,7 @@ class Pixiv(override val lang: String) : HttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request =
-        searchMangaRequest(page, "漫画", FilterList())
+        searchMangaRequest(page, "", FilterList())
 
     override fun latestUpdatesParse(response: Response): MangasPage =
         searchMangaParse(response)
