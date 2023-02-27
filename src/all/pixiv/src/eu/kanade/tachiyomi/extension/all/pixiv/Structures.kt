@@ -40,8 +40,9 @@ internal data class PixivTags(
 
 @Serializable
 internal data class PixivSearchResults(
-    val manga: PixivSearchResultsIllusts? = null,
     val illustManga: PixivSearchResultsIllusts? = null,
+    val illust: PixivSearchResultsIllusts? = null,
+    val manga: PixivSearchResultsIllusts? = null,
     val popular: PixivSearchResultsPopular? = null,
 )
 

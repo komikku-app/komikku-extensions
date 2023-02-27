@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.all.pixiv
 
 import android.util.LruCache
 import eu.kanade.tachiyomi.network.asObservable
-import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -35,23 +34,18 @@ class Pixiv(override val lang: String) : HttpSource() {
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
+        .add("Accept-Language", siteLang)
 
-    class SortFilter : Filter.Sort("Sort", arrayOf("Date Uploaded"), Selection(0, false))
-    class NonMangaFilter : Filter.CheckBox("Include non-manga posts", false)
-
-    private fun apiRequest(method: String, path: String, params: Map<String, String> = emptyMap()): Request {
-        val url = baseUrl.toHttpUrl().newBuilder()
+    private fun apiRequest(method: String, path: String, params: Map<String, String> = emptyMap()) = Request(
+        url = baseUrl.toHttpUrl().newBuilder()
             .addEncodedPathSegments("ajax$path")
             .addEncodedQueryParameter("lang", siteLang)
             .apply { params.forEach { (k, v) -> addEncodedQueryParameter(k, v) } }
-            .build()
+            .build(),
 
-        val headers = headersBuilder()
-            .add("Accept", "application/json")
-            .build()
-
-        return Request(url, headers, method)
-    }
+        headers = headersBuilder().add("Accept", "application/json").build(),
+        method = method,
+    )
 
     private inline fun <reified T> apiResponseParse(response: Response): T {
         if (!response.isSuccessful) {
@@ -67,19 +61,26 @@ class Pixiv(override val lang: String) : HttpSource() {
     private fun illustUrlToId(url: String): String =
         url.substringAfterLast("/")
 
+    private fun urlEncode(string: String): String =
+        URLEncoder.encode(string, "UTF-8").replace("+", "%20")
+
     private fun parseTimestamp(string: String) =
         runCatching { dateFormat.parse(string)?.time!! }.getOrDefault(0)
 
+    private fun parseSearchResult(result: PixivSearchResult) = SManga.create().apply {
+        url = "/artworks/${result.id!!}"
+        title = result.title ?: ""
+        thumbnail_url = result.url
+    }
+
     private fun fetchIllust(url: String): Observable<PixivIllust> =
-        Observable.fromCallable { illustCache.get(url) }
-            .filter { it != null }
-            .switchIfEmpty(
-                Observable.defer {
-                    client.newCall(illustRequest(url)).asObservable()
-                        .map { illustParse(it) }
-                        .doOnNext { illustCache.put(url, it) }
-                },
-            )
+        Observable.fromCallable { illustCache.get(url) }.filter { it != null }.switchIfEmpty(
+            Observable.defer {
+                client.newCall(illustRequest(url)).asObservable()
+                    .map { illustParse(it) }
+                    .doOnNext { illustCache.put(url, it) }
+            },
+        )
 
     private fun illustRequest(url: String): Request =
         apiRequest("GET", "/illust/${illustUrlToId(url)}")
@@ -93,52 +94,54 @@ class Pixiv(override val lang: String) : HttpSource() {
     override fun popularMangaParse(response: Response) = MangasPage(
         mangas = apiResponseParse<PixivSearchResults>(response)
             .popular?.run { recent.orEmpty() + permanent.orEmpty() }
-            ?.map(::searchResultParse)
+            ?.map(::parseSearchResult)
             .orEmpty(),
 
         hasNextPage = false,
     )
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var includeNonManga = false
-        var ascendingSort = false
+        val word = urlEncode(query.ifBlank { "漫画" })
 
-        filters.forEach {
-            when (it) {
-                is NonMangaFilter -> includeNonManga = it.state
-                is SortFilter -> ascendingSort = it.state!!.ascending
-                else -> throw IllegalStateException("Filter unrecognized")
+        val parameters = mutableMapOf(
+            "word" to query,
+            "order" to "date_d",
+            "mode" to "all",
+            "p" to page.toString(),
+            "s_mode" to "s_tag_full",
+            "type" to "manga",
+        )
+
+        filters.forEach { filter ->
+            when (filter) {
+                is FilterType -> parameters["type"] = filter.value
+                is FilterRating -> parameters["mode"] = filter.value
+                is FilterSearchMode -> parameters["s_mode"] = filter.value
+                is FilterOrder -> parameters["order"] = filter.value
+                is FilterDateBefore -> filter.value?.let { parameters["ecd"] = it }
+                is FilterDateAfter -> filter.value?.let { parameters["scd"] = it }
+                else -> {}
             }
         }
 
-        val word = URLEncoder.encode(query.ifBlank { "漫画" }, "UTF-8").replace("+", "%20")
-        val type = if (includeNonManga) "artworks" else "manga"
+        val endpoint = when (parameters["type"]) {
+            "all" -> "artworks"
+            "illust" -> "illustrations"
+            "manga" -> "manga"
+            else -> ""
+        }
 
-        val parameters = mapOf(
-            "mode" to "all",
-            "order" to if (ascendingSort) "date" else "date_d",
-            "p" to page.toString(),
-            "type" to if (includeNonManga) "all" else "manga",
-            "word" to query,
-        )
-
-        return apiRequest("GET", "/search/$type/$word", parameters)
+        return apiRequest("GET", "/search/$endpoint/$word", parameters)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
         val mangas = apiResponseParse<PixivSearchResults>(response)
-            .run { manga ?: illustManga }?.data
+            .run { illustManga ?: illust ?: manga }?.data
             ?.filter { it.isAdContainer != true }
-            ?.map(::searchResultParse)
+            ?.map(::parseSearchResult)
             .orEmpty()
 
         return MangasPage(mangas, hasNextPage = mangas.isNotEmpty())
-    }
-
-    private fun searchResultParse(result: PixivSearchResult) = SManga.create().apply {
-        url = "/artworks/${result.id!!}"
-        title = result.title ?: ""
-        thumbnail_url = result.url
     }
 
     override fun latestUpdatesRequest(page: Int): Request =
@@ -151,7 +154,7 @@ class Pixiv(override val lang: String) : HttpSource() {
         illustRequest(manga.url)
 
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
-        val illust = apiResponseParse<PixivIllust>(response)
+        val illust = illustParse(response)
 
         url = "/artworks/${illust.id!!}"
         title = illust.title ?: ""
@@ -200,5 +203,14 @@ class Pixiv(override val lang: String) : HttpSource() {
     override fun getChapterUrl(chapter: SChapter): String =
         baseUrl + chapter.url
 
-    override fun getFilterList() = FilterList(listOf(SortFilter(), NonMangaFilter()))
+    override fun getFilterList() = FilterList(
+        listOf(
+            FilterType(),
+            FilterRating(),
+            FilterSearchMode(),
+            FilterOrder(),
+            FilterDateBefore(),
+            FilterDateAfter(),
+        ),
+    )
 }
