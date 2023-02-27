@@ -35,6 +35,6 @@ object MLConstants {
     const val chapterLinkParser = "a"
     const val chapterReleaseDateLinkParser = "span.chapter-release-date a"
     const val chapterReleaseDateIParser = "span.chapter-release-date i"
-    const val pageListParseSelector = "div.read-container img"
+    const val pageListParseSelector = "div.read-container script"
     const val imageAttribute = "abs:data-src"
 }

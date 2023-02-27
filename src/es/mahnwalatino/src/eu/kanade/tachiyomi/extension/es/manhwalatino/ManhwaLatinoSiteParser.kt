@@ -1,7 +1,9 @@
 package eu.kanade.tachiyomi.extension.es.manhwalatino
 
 import android.net.Uri
+import android.util.Base64
 import eu.kanade.tachiyomi.extension.es.manhwalatino.filters.UriFilter
+import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -10,6 +12,10 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -17,6 +23,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -38,6 +45,8 @@ class ManhwaLatinoSiteParser(
      * Type of search ( FREE, FILTER)
      */
     private var searchType = SearchType.SEARCH_FREE
+
+    private val json by injectLazy<Json>()
 
     /**
      * The Latest Updates are in a Slider, this Methods get a Manga from the slide
@@ -251,12 +260,32 @@ class ManhwaLatinoSiteParser(
      * @param response the response from the site.
      */
     fun getPageListParse(response: Response): List<Page> {
-        val list =
-            response.asJsoup().select(MLConstants.pageListParseSelector)
-                .mapIndexed { index, imgElement ->
-                    Page(index, "", getImage(imgElement))
-                }
-        return list
+        val document = response.asJsoup()
+        val scripUrl = document.select(MLConstants.pageListParseSelector).attr("src")
+        val script = client.newCall(GET(scripUrl, headers)).execute().asJsoup().text()
+
+        val password = script
+            .substringAfter("wpmangaprotectornonce='")
+            .substringBefore("';")
+
+        val chapterData = json.parseToJsonElement(
+            script
+                .substringAfter("chapter_data='")
+                .substringBefore("';")
+                .replace("\\/", "/"),
+        ).jsonObject
+
+        val unsaltedCiphertext = Base64.decode(chapterData["ct"]!!.jsonPrimitive.content, Base64.DEFAULT)
+        val salt = chapterData["s"]!!.jsonPrimitive.content.decodeHex()
+        val ciphertext = SALTED + salt + unsaltedCiphertext
+
+        val rawImgArray = CryptoAES.decrypt(Base64.encodeToString(ciphertext, Base64.DEFAULT), password)
+        val imgArrayString = json.parseToJsonElement(rawImgArray).jsonPrimitive.content
+        val imgArray = json.parseToJsonElement(imgArrayString).jsonArray
+
+        return imgArray.mapIndexed { idx, it ->
+            Page(idx, document.location(), it.jsonPrimitive.content)
+        }
     }
 
     /**
@@ -329,16 +358,15 @@ class ManhwaLatinoSiteParser(
         return imageUrl
     }
 
-    /**
-     * Extract the Image from the Html Element
-     * The website changes often the attr of the images
-     * data-src or src
-     */
-    private fun getImage(element: Element): String {
-        var imageUrl = element.attr(MLConstants.imageAttribute)
-        if (imageUrl.isEmpty()) {
-            imageUrl = element.attr("abs:src")
-        }
-        return imageUrl
+    private fun String.decodeHex(): ByteArray {
+        check(length % 2 == 0) { "Must have an even length" }
+
+        return chunked(2)
+            .map { it.toInt(16).toByte() }
+            .toByteArray()
+    }
+
+    companion object {
+        val SALTED = "Salted__".toByteArray(Charsets.UTF_8)
     }
 }
