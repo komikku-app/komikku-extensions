@@ -48,7 +48,6 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -88,18 +87,20 @@ class Remanga : ConfigurableSource, HttpSource() {
 
         val cookies = client.cookieJar.loadForRequest(baseUrl.replace("api.", "").toHttpUrl())
         val authCookie = cookies
-            .firstOrNull { cookie -> cookie.name == USER_COOKIE_NAME }
+            .firstOrNull { cookie -> cookie.name == "user" }
             ?.let { cookie -> URLDecoder.decode(cookie.value, "UTF-8") }
             ?.let { jsonString -> json.decodeFromString<UserDto>(jsonString) }
             ?: return chain.proceed(request)
 
-        if (authCookie.access_token == null) {
-            throw IOException("Авторизация слетела. Очистите cookies и переавторизуйтесь.")
-        }
+        val access_token = cookies
+            .firstOrNull { cookie -> cookie.name == "token" }
+            ?.let { cookie -> URLDecoder.decode(cookie.value, "UTF-8") }
+            ?: return chain.proceed(request)
 
         USER_ID = authCookie.id.toString()
+
         val authRequest = request.newBuilder()
-            .addHeader("Authorization", "bearer ${authCookie.access_token}")
+            .addHeader("Authorization", "bearer $access_token")
             .build()
         return chain.proceed(authRequest)
     }
@@ -143,7 +144,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 it.title.toSManga()
             }
 
-            return MangasPage(mangas, page.props.page < page.props.total_pages)
+            return MangasPage(mangas, true)
         } else {
             val page = json.decodeFromString<PageWrapperDto<LibraryDto>>(response.body.string())
             var content = page.content
@@ -155,7 +156,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 it.toSManga()
             }
 
-            if (mangas.isEmpty() && page.props.page < page.props.total_pages && preferences.getBoolean(isLib_PREF, false)) {
+            if (mangas.isEmpty() && page.props.page < page.props.total_pages!! && preferences.getBoolean(isLib_PREF, false)) {
                 mangas = listOf(
                     SManga.create().apply {
                         val nextPage = "Пустая страница. Всё в «Закладках»"
@@ -165,7 +166,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                     },
                 )
             }
-            return MangasPage(mangas, page.props.page < page.props.total_pages)
+            return MangasPage(mangas, page.props.page < page.props.total_pages!!)
         }
     }
 
@@ -223,9 +224,6 @@ class Remanga : ConfigurableSource, HttpSource() {
                 }
                 is AgeList -> filter.state.forEach { age ->
                     if (age.state) {
-                        if ((age.id == "2") and (USER_ID == "")) {
-                            throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
-                        }
                         url.addQueryParameter("age_limit", age.id)
                     }
                 }
@@ -762,8 +760,6 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     companion object {
         private var USER_ID = ""
-
-        private const val USER_COOKIE_NAME = "user"
 
         const val PREFIX_SLUG_SEARCH = "slug:"
 

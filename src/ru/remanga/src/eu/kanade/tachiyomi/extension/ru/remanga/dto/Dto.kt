@@ -64,7 +64,7 @@ data class MangaDetDto(
 
 @Serializable
 data class PropsDto(
-    val total_pages: Int,
+    val total_pages: Int? = 0,
     val page: Int,
 )
 
@@ -117,5 +117,4 @@ data class ChunksPageDto(
 @Serializable
 data class UserDto(
     val id: Long,
-    val access_token: String? = null,
 )
