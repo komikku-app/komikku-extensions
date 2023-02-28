@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Manga(
     val hid: String,
-    val slug: String,
     val title: String,
     val cover_url: String,
 )
@@ -20,12 +19,10 @@ data class MangaDetails(
 
 @Serializable
 data class Comic(
-    val id: Int,
+    val hid: String,
     val title: String,
-    val slug: String,
     val desc: String = "N/A",
     val status: Int,
-    val chapter_count: Int?,
     val cover_url: String,
 )
 
@@ -49,12 +46,13 @@ data class Genre(
 
 @Serializable
 data class ChapterList(
-    val chapters: Array<Chapter>,
+    val chapters: MutableList<Chapter>,
+    val total: Int,
 )
 
 @Serializable
 data class Chapter(
-    val hid: String = "",
+    val hid: String,
     val title: String = "",
     val created_at: String = "",
     val chap: String = "",

@@ -45,8 +45,8 @@ internal class FromYearFilter(name: String) : Text(name)
 
 internal class ToYearFilter(name: String) : Text(name)
 
-internal class SortFilter(name: String, sortList: Array<Pair<String, String>>) :
-    Select(name, sortList)
+internal class SortFilter(name: String, sortList: Array<Pair<String, String>>, state: Int = 0) :
+    Select(name, sortList, state)
 
 /** Generics **/
 internal open class Group(name: String, values: List<Any>) :
@@ -58,8 +58,8 @@ internal open class Text(name: String) : Filter.Text(name)
 
 internal open class CheckBox(name: String, val value: String = "") : Filter.CheckBox(name)
 
-internal open class Select(name: String, private val vals: Array<Pair<String, String>>) :
-    Filter.Select<String>(name, vals.map { it.first }.toTypedArray()) {
+internal open class Select(name: String, private val vals: Array<Pair<String, String>>, state: Int = 0) :
+    Filter.Select<String>(name, vals.map { it.first }.toTypedArray(), state) {
     fun getValue() = vals[state].second
 }
 
@@ -171,7 +171,8 @@ private val getCreatedAtList: Array<Pair<String, String>> = arrayOf(
     Pair("1 year", "365"),
 )
 
-private val getSortsList: Array<Pair<String, String>> = arrayOf(
+internal val getSortsList: Array<Pair<String, String>> = arrayOf(
+    Pair("Most popular", "follow"),
     Pair("Most follows", "user_follow_count"),
     Pair("Most views", "view"),
     Pair("High rating", "rating"),
