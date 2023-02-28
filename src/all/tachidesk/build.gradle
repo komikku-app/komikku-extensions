@@ -6,7 +6,7 @@ ext {
     extName = 'Suwayomi'
     pkgNameSuffix = 'all.tachidesk'
     extClass = '.Tachidesk'
-    extVersionCode = 8
+    extVersionCode = 9
 }
 
 dependencies {
