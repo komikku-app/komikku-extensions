@@ -34,6 +34,7 @@ open class AsuraScans(
     }
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(uaIntercept)
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .rateLimit(1, 3, TimeUnit.SECONDS)
@@ -86,7 +87,9 @@ open class AsuraScans(
                     .commit()
             }
         }
+
         screen.addPreference(permanentMangaUrlPref)
+        addRandomAndCustomUserAgentPreferences(screen)
     }
 
     private fun getPermanentMangaUrlPreferenceKey(): String {
