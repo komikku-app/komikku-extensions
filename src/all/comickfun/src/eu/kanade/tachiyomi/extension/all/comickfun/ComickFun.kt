@@ -15,6 +15,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import rx.Observable
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -53,6 +54,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
             ),
         )
     }
+
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
 
     /** Latest Manga **/
@@ -69,6 +71,17 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     override fun latestUpdatesParse(response: Response) = searchMangaParse(response)
 
     /** Manga Search **/
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        if (!query.startsWith(SLUG_SEARCH_PREFIX)) {
+            return super.fetchSearchManga(page, query, filters)
+        }
+
+        val slugOrHid = query.substringAfter(SLUG_SEARCH_PREFIX)
+        return fetchMangaDetails(SManga.create().apply { this.url = "/comic/$slugOrHid#" }).map {
+            MangasPage(listOf(it), false)
+        }
+    }
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = apiUrl.toHttpUrl().newBuilder().apply {
             addPathSegment("search")
@@ -195,7 +208,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun getMangaUrl(manga: SManga): String {
-        return "$baseUrl${manga.url}"
+        return "$baseUrl${manga.url.removeSuffix("#")}"
     }
 
     /** Manga Chapter List **/
@@ -288,6 +301,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     protected open val defaultPopularSort: Int = 0
     protected open val defaultLatestSort: Int = 4
+
     override fun getFilterList() = FilterList(
         getFilters(),
     )
