@@ -58,6 +58,12 @@ jobs:
                 "regex": ".*shinigami\\.id.*",
                 "ignoreCase": true,
                 "message": "Duplicate of #15408"
+              },
+              {
+                "type": "body",
+                "regex": ".*olympusscans\\.com.*",
+                "ignoreCase": true,
+                "message": "Duplicate of #15330"
               }
             ]
           auto-close-ignore-label: do-not-autoclose
