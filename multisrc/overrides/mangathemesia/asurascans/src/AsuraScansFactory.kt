@@ -18,7 +18,8 @@ class AsuraScansEn : AsuraScans("https://asura.gg", "en", SimpleDateFormat("MMM 
 
     override val seriesDescriptionSelector = "div.desc p, div.entry-content p, div[itemprop=description]:not(:has(p))"
 
-    override val pageSelector = "div.rdminimal > img, div.rdminimal > p > img, div.rdminimal > a > img, div.rdminimal > p > a > img"
+    override val pageSelector = "div.rdminimal > img, div.rdminimal > p > img, div.rdminimal > a > img, div.rdminimal > p > a > img, " +
+        "div.rdminimal > noscript > img, div.rdminimal > p > noscript > img, div.rdminimal > a > noscript > img, div.rdminimal > p > a > noscript > img"
 
     // Skip scriptPages
     override fun pageListParse(document: Document): List<Page> {
