@@ -103,6 +103,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Fox White", "https://foxwhite.com.br", "pt-BR"),
         SingleLang("Free Manga", "https://freemanga.me", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("FreeWebtoonCoins", "https://freewebtooncoins.com", "en", overrideVersionCode = 1),
+        SingleLang("FR-Scan", "https://fr-scan.com", "fr", className = "FRScan"),
         SingleLang("Fug Manga", "https://fugmanga.net", "ar", overrideVersionCode = 1),
         SingleLang("Fukushuu no Yuusha", "https://fny-scantrad.com", "fr", overrideVersionCode = 2),
         SingleLang("Furio Scans", "https://furioscans.com", "pt-BR", overrideVersionCode = 4),
