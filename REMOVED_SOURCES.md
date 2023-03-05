@@ -25,6 +25,7 @@
 
 ### Requested removal by the scanlator team
 
+- ARES Manga https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15396
 - Astra Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13845
 - Coven Scan https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14499
 - Dragontea https://github.com/tachiyomiorg/tachiyomi-extensions/issues/10103
