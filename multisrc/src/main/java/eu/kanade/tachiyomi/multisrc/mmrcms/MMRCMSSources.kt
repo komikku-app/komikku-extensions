@@ -41,7 +41,6 @@ class MMRCMSSources {
             SourceData.Single("Read Comics Online", "https://readcomicsonline.ru", "en"),
             SourceData.Single("Fallen Angels", "https://manga.fascans.com", "en", overrideVersionCode = 2),
             SourceData.Single("Zahard", "https://zahard.xyz", "en", overrideVersionCode = 2),
-            SourceData.Single("Manhwas Men", "https://manhwas.men", "en", isNsfw = true, overrideVersionCode = 1),
             SourceData.Single("Scan FR", "https://www.scan-fr.org", "fr", overrideVersionCode = 2),
             SourceData.Single("Scan VF", "https://www.scan-vf.net", "fr", overrideVersionCode = 1),
             SourceData.Single("Scan OP", "https://scan-op.cc", "fr"),

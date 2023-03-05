@@ -289,6 +289,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("ManhwaClan", "https://manhwaclan.com", "en"),
         SingleLang("Manhwafull", "https://manhwafull.com", "en", overrideVersionCode = 1),
         SingleLang("Manhwahentai.me", "https://manhwahentai.me", "en", className = "ManhwahentaiMe", isNsfw = true, overrideVersionCode = 2),
+        SingleLang("Manhwas Men", "https://manhwas.men", "en", className = "ManhwasMen", isNsfw = true),
         SingleLang("ManhwaTime", "https://manhwatime.com", "ar"),
         SingleLang("Manhwatop", "https://manhwatop.com", "en", overrideVersionCode = 2),
         SingleLang("ManhwaWorld", "https://manhwaworld.com", "en"),
