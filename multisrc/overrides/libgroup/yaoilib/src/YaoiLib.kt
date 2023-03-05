@@ -8,7 +8,7 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-class YaoiLib : LibGroup("YaoiLib", "https://v1.yaoilib.net", "ru") {
+class YaoiLib : LibGroup("YaoiLib", "https://v1.slashlib.me", "ru") {
 
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::imageContentTypeIntercept)
