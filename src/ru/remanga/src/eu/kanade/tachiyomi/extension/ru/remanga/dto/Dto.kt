@@ -97,6 +97,16 @@ data class BookDto(
 )
 
 @Serializable
+data class SeriesExWrapperDto<T>(
+    val data: T,
+)
+
+@Serializable
+data class ExBookDto(
+    val id: Long,
+)
+
+@Serializable
 data class PagesDto(
     val id: Int,
     val height: Int,
