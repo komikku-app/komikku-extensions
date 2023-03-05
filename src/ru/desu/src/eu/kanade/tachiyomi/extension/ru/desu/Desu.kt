@@ -227,6 +227,10 @@ class Desu : HttpSource() {
         return GET(baseUrl + API_URL + chapter.url.substringAfterLast("#apiChapter"), headers)
     }
 
+    override fun getChapterUrl(chapter: SChapter): String {
+        return baseUrl + chapter.url.substringBeforeLast("#apiChapter")
+    }
+
     override fun pageListParse(response: Response): List<Page> {
         val obj = json.parseToJsonElement(response.body.string())
             .jsonObject["response"]!!
