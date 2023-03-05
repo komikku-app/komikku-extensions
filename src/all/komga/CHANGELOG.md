@@ -1,3 +1,12 @@
+## 1.4.46
+
+Minimum Komga version required: `0.151.0`
+
+### Feat
+
+* Update to extension-lib 1.4
+  - Clicking on chapter WebView should now open the chapter/book page.
+
 ## 1.3.45
 
 Minimum Komga version required: `0.151.0`
