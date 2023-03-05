@@ -291,7 +291,7 @@ class Newbie : ConfigurableSource, HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val series = json.decodeFromString<MangaDetDto>(response.body.string())
-        branches[series.title.en] = series.branches
+        branches[series.id.toString()] = series.branches
         return series.toSManga()
     }
 
@@ -310,13 +310,13 @@ class Newbie : ConfigurableSource, HttpSource() {
     private fun mangaBranches(manga: SManga): List<BranchesDto> {
         val response = client.newCall(titleDetailsRequest(manga)).execute()
         val series = json.decodeFromString<MangaDetDto>(response.body.string())
-        branches[series.title.en] = series.branches
+        branches[series.id.toString()] = series.branches
         return series.branches
     }
 
     private fun selector(b: BranchesDto): Boolean = b.is_default
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val branch = branches.getOrElse(manga.title) { mangaBranches(manga) }
+        val branch = branches.getOrElse(manga.url) { mangaBranches(manga) }
         return when {
             branch.isEmpty() -> {
                 return Observable.just(listOf())
@@ -363,6 +363,10 @@ class Newbie : ConfigurableSource, HttpSource() {
     @TargetApi(Build.VERSION_CODES.N)
     override fun pageListRequest(chapter: SChapter): Request {
         return GET(API_URL + "/chapters/${chapter.url.substringAfterLast("/")}/pages", headers)
+    }
+
+    override fun getChapterUrl(chapter: SChapter): String {
+        return baseUrl + chapter.url
     }
 
     private fun pageListParse(response: Response, urlRequest: String): List<Page> {
