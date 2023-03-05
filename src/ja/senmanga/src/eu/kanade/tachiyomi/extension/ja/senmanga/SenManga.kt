@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import org.jsoup.nodes.Document
@@ -41,14 +42,12 @@ class SenManga : ParsedHttpSource() {
         it.proceed(request)
     }.build()
 
-    override fun popularMangaSelector() = "div.item"
+    override fun popularMangaSelector() = ".mng"
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        element.select("a").let {
-            setUrlWithoutDomain(it.attr("href"))
-            title = it.select("div.series-title").text()
-        }
-        thumbnail_url = element.select("img").attr("abs:src")
+        setUrlWithoutDomain(element.select("a").attr("href"))
+        title = element.select("div.series-title").text()
+        thumbnail_url = element.select(".cover img").attr("data-src")
     }
 
     override fun popularMangaNextPageSelector() = "ul.pagination a[rel=next]"
@@ -72,13 +71,14 @@ class SenManga : ParsedHttpSource() {
 
         filters.forEach { filter ->
             when (filter) {
-                is GenreFilter -> {
-                    val genreInclude = filter.state.filter { it.isIncluded() }.joinToString("%2C") { it.id }
-                    val genreExclude = filter.state.filter { it.isExcluded() }.joinToString("%2C") { it.id }
-                    url.addQueryParameter("genre", genreInclude)
-                    url.addQueryParameter("nogenre", genreExclude)
+                is GenreFilter -> filter.state.forEach { genre ->
+                    if (genre.state) {
+                        url.addQueryParameter("genre[]", genre.id)
+                    }
                 }
-                is SortFilter -> url.addQueryParameter("sort", filter.toUriPart())
+                is StatusFilter -> url.addQueryParameter("status", filter.toUriPart())
+                is TypeFilter -> url.addQueryParameter("type", filter.toUriPart())
+                is OrderFilter -> url.addQueryParameter("order", filter.toUriPart())
                 else -> {}
             }
         }
@@ -94,16 +94,20 @@ class SenManga : ParsedHttpSource() {
 
         description = document.select("div.summary").first()!!.text()
 
-        val seriesElement = document.select("div.series-desc .info ")
+        val seriesElement = document.select("div.series-desc .info")
 
-        genre = seriesElement.select(".item:eq(0)").text().substringAfter(": ")
-        status = seriesElement.select(".item:eq(1)").first()?.text().orEmpty().let { parseStatus(it.substringAfter("Status:")) }
-        author = seriesElement.select(".item:eq(3)").text().substringAfter(": ")
+        genre = seriesElement.select(".item.genre a").joinToString(", ") { it.text() }
+        status = seriesElement.select(".item:has(strong:contains(Status))").first()?.text().orEmpty().let {
+            parseStatus(it.substringAfter("Status:"))
+        }
+        author = seriesElement.select(".item:has(strong:contains(Author)) a").text()
     }
 
     private fun parseStatus(status: String) = when {
         status.contains("Ongoing") -> SManga.ONGOING
         status.contains("Complete") -> SManga.COMPLETED
+        status.contains("Hiatus") -> SManga.ON_HIATUS
+        status.contains("Dropped") -> SManga.CANCELLED
         else -> SManga.UNKNOWN
     }
 
@@ -131,8 +135,24 @@ class SenManga : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return listOf(1..document.select("select[name=page] option:last-of-type").first()!!.text().toInt()).flatten().map { i ->
-            Page(i - 1, "", "${document.location().replace(baseUrl, "$baseUrl/viewer")}/$i")
+        val pageCount = document
+            .select("select.page-list option:last-of-type")
+            .first()!!
+            .attr("value")
+            .toInt()
+        val firstUrl = document.select("img.picture").first()!!.attr("src")
+        return if (firstUrl.contains(baseUrl)) {
+            listOf(1..pageCount).flatten().map { i ->
+                Page(i - 1, "", "${document.location().replace(baseUrl, "$baseUrl/viewer")}/$i")
+            }
+        } else {
+            // request each page for image url
+            listOf(Page(0, "", firstUrl)) + listOf(1 until pageCount).flatten().map { i ->
+                val url = "${document.location()}/${i + 1}"
+                val doc = client.newCall(GET(url)).execute().asJsoup()
+                val imageUrl = doc.select("img.picture").first()!!.attr("src")
+                Page(i, "", imageUrl)
+            }
         }
     }
 
@@ -141,10 +161,12 @@ class SenManga : ParsedHttpSource() {
 
     override fun getFilterList() = FilterList(
         GenreFilter(getGenreList()),
-        SortFilter(),
+        StatusFilter(),
+        TypeFilter(),
+        OrderFilter(),
     )
 
-    private class Genre(name: String, val id: String = name) : Filter.TriState(name)
+    private class Genre(name: String, val id: String = name) : Filter.CheckBox(name)
     private class GenreFilter(genres: List<Genre>) : Filter.Group<Genre>("Genre", genres)
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
@@ -152,51 +174,72 @@ class SenManga : ParsedHttpSource() {
         fun toUriPart() = vals[state].first
     }
 
-    private class SortFilter : UriPartFilter(
-        "Sort By",
+    private class StatusFilter : UriPartFilter(
+        "Status",
         arrayOf(
-            Pair("total_views", "Total Views"),
-            Pair("title", "Title"),
-            Pair("rank", "Rank"),
-            Pair("last_update", "Last Update"),
+            Pair("", "All"),
+            Pair("Ongoing", "Ongoing"),
+            Pair("Completed", "Completed"),
+            Pair("Hiatus", "Hiatus"),
+        ),
+    )
+    private class TypeFilter : UriPartFilter(
+        "Type",
+        arrayOf(
+            Pair("", "All"),
+            Pair("Manga", "Manga"),
+            Pair("Manhua", "Manhua"),
+            Pair("Manhwa", "Manhwa"),
+        ),
+    )
+    private class OrderFilter : UriPartFilter(
+        "Order",
+        arrayOf(
+            Pair("", "Default"),
+            Pair("A-Z", "A-Z"),
+            Pair("Z-A", "Z-A"),
+            Pair("Update", "Update"),
+            Pair("Added", "Added"),
+            Pair("Popular", "Popular"),
+            Pair("Rating", "Rating"),
         ),
     )
 
     private fun getGenreList(): List<Genre> = listOf(
-        Genre("Action", "Action"),
-        Genre("Adult", "Adult"),
-        Genre("Adventure", "Adventure"),
-        Genre("Comedy", "Comedy"),
-        Genre("Cooking", "Cooking"),
-        Genre("Drama", "Drama"),
-        Genre("Ecchi", "Ecchi"),
-        Genre("Fantasy", "Fantasy"),
-        Genre("Gender Bender", "Gender+Bender"),
-        Genre("Harem", "Harem"),
-        Genre("Historical", "Historical"),
-        Genre("Horror", "Horror"),
-        Genre("Josei", "Josei"),
-        Genre("Light Novel", "Light+Novel"),
-        Genre("Martial Arts", "Martial+Arts"),
-        Genre("Mature", "Mature"),
-        Genre("Music", "Music"),
-        Genre("Mystery", "Mystery"),
-        Genre("Psychological", "Psychological"),
-        Genre("Romance", "Romance"),
-        Genre("School Life", "School+Life"),
-        Genre("Sci-Fi", "Sci+Fi"),
-        Genre("Seinen", "Seinen"),
-        Genre("Shoujo", "Shoujo"),
-        Genre("Shoujo Ai", "Shoujo+Ai"),
-        Genre("Shounen", "Shounen"),
-        Genre("Shounen Ai", "Shounen+Ai"),
-        Genre("Slice of Life", "Slice+of+Life"),
-        Genre("Smut", "Smut"),
-        Genre("Sports", "Sports"),
-        Genre("Supernatural", "Supernatural"),
-        Genre("Tragedy", "Tragedy"),
-        Genre("Webtoons", "Webtoons"),
-        Genre("Yaoi", "Yaoi"),
-        Genre("Yuri", "Yuri"),
+        Genre("Action"),
+        Genre("Adult"),
+        Genre("Adventure"),
+        Genre("Comedy"),
+        Genre("Cooking"),
+        Genre("Drama"),
+        Genre("Ecchi"),
+        Genre("Fantasy"),
+        Genre("Gender Bender"),
+        Genre("Harem"),
+        Genre("Historical"),
+        Genre("Horror"),
+        Genre("Josei"),
+        Genre("Light Novel"),
+        Genre("Martial Arts"),
+        Genre("Mature"),
+        Genre("Music"),
+        Genre("Mystery"),
+        Genre("Psychological"),
+        Genre("Romance"),
+        Genre("School Life"),
+        Genre("Sci-Fi"),
+        Genre("Seinen"),
+        Genre("Shoujo"),
+        Genre("Shoujo Ai"),
+        Genre("Shounen"),
+        Genre("Shounen Ai"),
+        Genre("Slice of Life"),
+        Genre("Smut"),
+        Genre("Sports"),
+        Genre("Supernatural"),
+        Genre("Tragedy"),
+        Genre("Webtoons"),
+        Genre("Yaoi"),
+        Genre("Yuri"),
     )
 }
