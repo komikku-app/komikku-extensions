@@ -96,12 +96,12 @@ class CuuTruyenImageInterceptor : Interceptor {
 
     /*
         rollup -f iife -p terser -n cuudrm cuudrm_bg.js
-        
+
         Previous script:
-        
+
         cuudrm_bg.js - https://gist.githubusercontent.com/beerpiss/9fe90191d4e67bba1ab69a14618e2036/raw/ce078b70265633f0b619fb6c0d454c0c3c195ab3/cuudrm_bg.js
         cuudrm_bg.wasm.js - wasm2js + https://cuutruyen.net/ec6c013a024fb3d1.module.wasm
-        
+
         Current script:
 
         cuudrm_bg.js - https://gist.githubusercontent.com/AccountForStealingCode/1dfe44d7ae704d8f37fc0b9cafc1a960/raw/5d5ac99fe1b4dc048aa10c222ea70c8462056b6a/cuudrm_bg.js

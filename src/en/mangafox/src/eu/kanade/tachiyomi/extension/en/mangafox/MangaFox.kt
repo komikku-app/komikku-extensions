@@ -10,8 +10,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.Headers
@@ -20,8 +18,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
-import uy.kohesive.injekt.injectLazy
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -37,12 +35,12 @@ class MangaFox : ParsedHttpSource() {
     override val lang: String = "en"
 
     override val supportsLatest: Boolean = true
-    
+
     private val json by injectLazy<Json>()
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimit(1, 1)
-    // Force readway=2 cookie to get all page URLs at once
+        // Force readway=2 cookie to get all page URLs at once
         .cookieJar(
             object : CookieJar {
                 private val cookieManager by lazy { CookieManager.getInstance() }
@@ -285,7 +283,7 @@ class MangaFox : ParsedHttpSource() {
             Pair("3 stars", "3"),
             Pair("4 stars", "4"),
             Pair("5 stars", "5"),
-        )
+        ),
     )
 
     private class RatingFilter : Filter.Group<UriPartFilter>("Rating", listOf(RatingMethodFilter(), RatingValueFilter()))
