@@ -17,7 +17,7 @@ class MangaCrab : Madara(
     "es",
     SimpleDateFormat("dd/MM/yyyy", Locale("es")),
 ) {
-    override fun chapterListSelector() = "li.capitulos"
+    override fun chapterListSelector() = "div.listing-chapters_wrap > ul > li"
     override val mangaDetailsSelectorDescription = "div.c-page__content div.contenedor"
 
     override fun pageListParse(document: Document): List<Page> {
