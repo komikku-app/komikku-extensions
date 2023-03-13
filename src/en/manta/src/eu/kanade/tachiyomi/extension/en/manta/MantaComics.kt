@@ -11,6 +11,9 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
@@ -24,10 +27,23 @@ class MantaComics : HttpSource() {
 
     override val supportsLatest = false
 
+    private var token: String? = null
+
+    override val client = network.client.newBuilder()
+        .cookieJar(
+            object : CookieJar {
+                override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+                    token = cookies.find { it.matches(url) && it.name == "token" }?.value
+                }
+
+                override fun loadForRequest(url: HttpUrl) = emptyList<Cookie>()
+            },
+        ).build()
+
     private val json by injectLazy<Json>()
 
     override fun headersBuilder() = super.headersBuilder()
-        .set("User-Agent", "Manta/167").set("Origin", baseUrl)
+        .set("Origin", baseUrl).set("Authorization", "Bearer $token")
 
     override fun latestUpdatesRequest(page: Int) =
         GET("$baseUrl/manta/v1/search/series?cat=New", headers)
@@ -52,9 +68,8 @@ class MantaComics : HttpSource() {
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList) =
         searchMangaRequest(page, query, filters).fetch(::searchMangaParse)
 
-    // Request the actual manga URL for the webview
     override fun mangaDetailsRequest(manga: SManga) =
-        GET("$baseUrl/series/${manga.url}")
+        GET("$baseUrl/front/v1/series/${manga.url}", headers)
 
     override fun mangaDetailsParse(response: Response) =
         SManga.create().apply {
@@ -71,10 +86,10 @@ class MantaComics : HttpSource() {
         }
 
     override fun fetchMangaDetails(manga: SManga) =
-        chapterListRequest(manga).fetch(::mangaDetailsParse)
+        mangaDetailsRequest(manga).fetch(::mangaDetailsParse)
 
     override fun chapterListRequest(manga: SManga) =
-        GET("$baseUrl/front/v1/series/${manga.url}", headers)
+        mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response) =
         response.parse<Series<Title>>().episodes!!.map {
@@ -93,13 +108,16 @@ class MantaComics : HttpSource() {
         GET("$baseUrl/front/v1/episodes/${chapter.url}", headers)
 
     override fun pageListParse(response: Response) =
-        response.parse<Episode>().run {
-            if (!isLocked) return@run cutImages!!
-            error("This episode will be available $waitingTime.")
-        }.mapIndexed { idx, img -> Page(idx, "", img.toString()) }
+        response.parse<Episode>().cutImages?.mapIndexed { idx, img ->
+            Page(idx, "", img.toString())
+        } ?: emptyList()
 
     override fun fetchPageList(chapter: SChapter) =
         pageListRequest(chapter).fetch(::pageListParse)
+
+    override fun getMangaUrl(manga: SManga) = "$baseUrl/series/${manga.url}"
+
+    override fun getChapterUrl(chapter: SChapter) = "$baseUrl/episodes/${chapter.url}"
 
     override fun getFilterList() = FilterList(Category())
 
