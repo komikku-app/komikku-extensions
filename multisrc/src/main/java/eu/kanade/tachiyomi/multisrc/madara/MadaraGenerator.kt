@@ -443,6 +443,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("YugenMangas", "https://yugenmangas.com.br", "pt-BR", overrideVersionCode = 1),
         SingleLang("Yuri Verso", "https://yuri.live", "pt-BR", overrideVersionCode = 3),
         SingleLang("Zero Scan", "https://zeroscan.com.br", "pt-BR", isNsfw = true),
+        SingleLang("ZinChanManga", "https://zinchanmanga.com", "en", isNsfw = true),
         SingleLang("Zinmanga", "https://zinmanga.com", "en", overrideVersionCode = 1),
         SingleLang("Zinmanhwa", "https://zinmanhwa.com", "en"),
         SingleLang("ZuttoManga", "https://zuttomanga.com", "en", overrideVersionCode = 1),
