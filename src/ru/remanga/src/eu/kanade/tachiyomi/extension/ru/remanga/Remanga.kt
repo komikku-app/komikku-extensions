@@ -50,6 +50,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.io.IOException
 import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -84,12 +85,12 @@ class Remanga : ConfigurableSource, HttpSource() {
     private val userAgentRandomizer = "${Random.nextInt().absoluteValue}"
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 Edg/100.0.$userAgentRandomizer")
+        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.$userAgentRandomizer Safari/537.36")
         .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/jxl,image/webp,*/*;q=0.8")
         .add("Referer", baseUrl.replace("api.", ""))
 
     private fun exHeaders() = Headers.Builder()
-        .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.57")
+        .set("User-Agent", "Tachiyomi")
         .set("Accept", "image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
         .set("Referer", baseUrl.replace("api.", ""))
         .build()
@@ -148,11 +149,23 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     private var mangaIDs = mutableMapOf<String, Long>()
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/api/search/catalog/?ordering=-rating&count=$count&page=$page", headers)
+    override fun popularMangaRequest(page: Int): Request {
+        val url = "$baseUrl/api/search/catalog/?ordering=-rating&count=$count&page=$page&count_chapters_gte=1".toHttpUrl().newBuilder()
+        if (preferences.getBoolean(isLib_PREF, false)) {
+            url.addQueryParameter("exclude_bookmarks", "1")
+        }
+        return GET(url.toString(), headers)
+    }
 
     override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/api/search/catalog/?ordering=-chapter_date&count=$count&page=$page", headers)
+    override fun latestUpdatesRequest(page: Int): Request {
+        val url = "$baseUrl/api/search/catalog/?ordering=-chapter_date&count=$count&page=$page&count_chapters_gte=1".toHttpUrl().newBuilder()
+        if (preferences.getBoolean(isLib_PREF, false)) {
+            url.addQueryParameter("exclude_bookmarks", "1")
+        }
+        return GET(url.toString(), headers)
+    }
 
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
@@ -166,25 +179,11 @@ class Remanga : ConfigurableSource, HttpSource() {
             return MangasPage(mangas, true)
         } else {
             val page = json.decodeFromString<PageWrapperDto<LibraryDto>>(response.body.string())
-            var content = page.content
-            if (preferences.getBoolean(isLib_PREF, false)) {
-                content = content.filter { it.bookmark_type.isNullOrEmpty() }
-            }
 
-            var mangas = content.map {
+            val mangas = page.content.map {
                 it.toSManga()
             }
 
-            if (mangas.isEmpty() && page.props.page < page.props.total_pages!! && preferences.getBoolean(isLib_PREF, false)) {
-                mangas = listOf(
-                    SManga.create().apply {
-                        val nextPage = "Пустая страница. Всё в «Закладках»"
-                        title = nextPage
-                        url = nextPage
-                        thumbnail_url = "$baseUrl/icon.png"
-                    },
-                )
-            }
             return MangasPage(mangas, page.props.page < page.props.total_pages!!)
         }
     }
@@ -215,7 +214,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var url = "$baseUrl/api/search/catalog/?page=$page".toHttpUrl().newBuilder()
+        var url = "$baseUrl/api/search/catalog/?page=$page&count_chapters_gte=1".toHttpUrl().newBuilder()
         if (query.isNotEmpty()) {
             url = "$baseUrl/api/search/?page=$page".toHttpUrl().newBuilder()
             url.addQueryParameter("query", query)
@@ -261,9 +260,19 @@ class Remanga : ConfigurableSource, HttpSource() {
                         return GET(UserProfileUrl.toString(), headers)
                     }
                 }
+                is RequireChapters -> {
+                    if (filter.state == 1) {
+                        url.setQueryParameter("count_chapters_gte", "0")
+                    }
+                }
                 else -> {}
             }
         }
+
+        if (preferences.getBoolean(isLib_PREF, false)) {
+            url.addQueryParameter("exclude_bookmarks", "1")
+        }
+
         return GET(url.toString(), headers)
     }
 
@@ -372,8 +381,7 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     private fun selector(b: BranchesDto): Int = b.count_chapters
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val branch = branches.getOrElse(manga.url.substringAfter("/api/titles/").substringBefore("/")) { mangaBranches(manga) }
-        val mangaID = mangaIDs[manga.url.substringAfter("/api/titles/").substringBefore("/")]
+        val branch = branches.getOrElse(manga.url.substringAfter("/api/titles/").substringBefore("/").substringBefore("?")) { mangaBranches(manga) }
         return when {
             manga.status == SManga.LICENSED && branch.isEmpty() -> {
                 Observable.error(Exception("Лицензировано - Нет глав"))
@@ -382,10 +390,20 @@ class Remanga : ConfigurableSource, HttpSource() {
                 return Observable.just(listOf())
             }
             else -> {
+                val mangaID = mangaIDs[manga.url.substringAfter("/api/titles/").substringBefore("/").substringBefore("?")]
+                val exChapters = if (preferences.getBoolean(exPAID_PREF, true)) {
+                    try {
+                        json.decodeFromString<SeriesExWrapperDto<List<ExBookDto>>>(client.newCall(GET("$exManga/chapter/history/$mangaID", exHeaders())).execute().body.string()).data
+                    } catch (_: Exception) {
+                        throw Exception("Домен $exManga сервиса exmanga недоступен, выберите другой в настройках расширения")
+                    }
+                } else {
+                    emptyList()
+                }
                 val selectedBranch = branch.maxByOrNull { selector(it) }!!
                 return (1..(selectedBranch.count_chapters / 100 + 1)).map {
                     val response = chapterListRequest(selectedBranch.id, it)
-                    chapterListParse(response, manga, mangaID)
+                    chapterListParse(response, manga, exChapters)
                 }.let { Observable.just(it.flatten()) }
             }
         }
@@ -407,17 +425,9 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     override fun chapterListParse(response: Response) = throw UnsupportedOperationException("chapterListParse(response: Response, manga: SManga)")
 
-    private fun chapterListParse(response: Response, manga: SManga, mangaID: Long?): List<SChapter> {
+    private fun chapterListParse(response: Response, manga: SManga, exChapters: List<ExBookDto>): List<SChapter> {
         val chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body.string()).content
-        val exChapters = if (preferences.getBoolean(exPAID_PREF, true)) {
-            try {
-                json.decodeFromString<SeriesExWrapperDto<List<ExBookDto>>>(client.newCall(GET("$exManga/chapter/history/$mangaID", exHeaders())).execute().body.string()).data
-            } catch (_: Exception) {
-                throw Exception("Домен $exManga сервиса exmanga недоступен, выберите другой в настройках расширения")
-            }
-        } else {
-            emptyList()
-        }
+
         var chaptersList = chapters.map { chapter ->
             SChapter.create().apply {
                 chapter_number = chapter.chapter.split(".").take(2).joinToString(".").toFloat()
@@ -431,7 +441,7 @@ class Remanga : ConfigurableSource, HttpSource() {
 
                 var exChID = exChapters.find { (it.id == chapter.id) }
                 if (preferences.getBoolean(exPAID_PREF, true)) {
-                    if (chapter.is_paid) {
+                    if (chapter.is_paid and (chapter.is_bought != true)) {
                         if (exChID != null) {
                             url = "$exManga/chapter?id=${exChID.id}"
                             scanlator = "exmanga"
@@ -466,19 +476,10 @@ class Remanga : ConfigurableSource, HttpSource() {
     }
 
     @TargetApi(Build.VERSION_CODES.N)
-    override fun pageListParse(response: Response): List<Page> {
+    private fun pageListParse(response: Response, urlRequest: String): List<Page> {
         val body = response.body.string()
         val heightEmptyChunks = 10
-        try {
-            val exPage = json.decodeFromString<SeriesExWrapperDto<List<List<PagesDto>>>>(body)
-            val result = mutableListOf<Page>()
-            exPage.data.forEach {
-                it.filter { page -> page.height > heightEmptyChunks }.forEach { page ->
-                    result.add(Page(result.size, "", page.link))
-                }
-            }
-            return result
-        } catch (e: SerializationException) {
+        if (urlRequest.contains(baseUrl)) {
             return try {
                 val page = json.decodeFromString<SeriesWrapperDto<PageDto>>(body)
                 page.content.pages.filter { it.height > heightEmptyChunks }.map {
@@ -494,18 +495,41 @@ class Remanga : ConfigurableSource, HttpSource() {
                 }
                 return result
             }
+        } else {
+            try {
+                val exPage = json.decodeFromString<SeriesExWrapperDto<List<List<PagesDto>>>>(body)
+                val result = mutableListOf<Page>()
+                exPage.data.forEach {
+                    it.filter { page -> page.height > heightEmptyChunks }.forEach { page ->
+                        result.add(Page(result.size, "", page.link))
+                    }
+                }
+                return result
+            } catch (e: SerializationException) {
+                throw IOException("Главы больше нет на exmanga. Попробуйте обновить список глав (свайп сверху).")
+            }
         }
     }
+
+    override fun pageListParse(response: Response): List<Page> = throw UnsupportedOperationException("pageListParse(response: Response, urlRequest: String)")
 
     override fun pageListRequest(chapter: SChapter): Request {
         return if (chapter.url.contains(exManga)) {
             GET(chapter.url, exHeaders())
         } else {
             if (chapter.name.contains("\uD83D\uDCB2")) {
-                throw Exception("Глава платная. Если вы покупаете главу, то, пожалуйста, поделитесь с другими через браузерное расширение exmanga.")
+                throw IOException("Глава платная. Если вы покупаете главу, то, пожалуйста, поделитесь с другими через браузерное расширение exmanga.")
             }
-            GET(baseUrl + "/api/titles/chapters/" + chapter.url.substringAfterLast("/ch"), headers)
+            GET(baseUrl + "/api/titles/chapters/" + chapter.url.substringAfterLast("/ch") + "/", headers)
         }
+    }
+
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
+        return client.newCall(pageListRequest(chapter))
+            .asObservableSuccess()
+            .map { response ->
+                pageListParse(response, pageListRequest(chapter).url.toString())
+            }
     }
 
     override fun getChapterUrl(chapter: SChapter): String {
@@ -567,6 +591,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         StatusList(getStatusList()),
         AgeList(getAgeList()),
         MyList(MyStatus),
+        RequireChapters(),
     )
 
     private class OrderBy : Filter.Sort(
@@ -761,6 +786,11 @@ class Remanga : ConfigurableSource, HttpSource() {
         MyListUnit("Отложено", "5"),
         MyListUnit("Не интересно ", "6"),
     )
+
+    private class RequireChapters : Filter.Select<String>(
+        "Только проекты с главами",
+        arrayOf("Да", "Все"),
+    )
     private var isEng: String? = preferences.getString(LANGUAGE_PREF, "eng")
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
         val domainPref = ListPreference(screen.context).apply {
@@ -784,7 +814,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         }
         val titleLanguagePref = ListPreference(screen.context).apply {
             key = LANGUAGE_PREF
-            title = LANGUAGE_PREF_Title
+            title = "Выбор языка на обложке"
             entries = arrayOf("Английский", "Русский")
             entryValues = arrayOf("eng", "rus")
             summary = "%s"
@@ -839,7 +869,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         }
         val bookmarksHide = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = isLib_PREF
-            title = isLib_PREF_Title
+            title = "Скрыть «Закладки»"
             summary = "Скрывает мангу находящуюся в закладках пользователя на сайте."
             setDefaultValue(false)
 
@@ -869,13 +899,11 @@ class Remanga : ConfigurableSource, HttpSource() {
         private const val exDOMAIN_PREF = "EXMangaDomain"
 
         private const val LANGUAGE_PREF = "ReMangaTitleLanguage"
-        private const val LANGUAGE_PREF_Title = "Выбор языка на обложке"
 
         private const val PAID_PREF = "PaidChapter"
 
         private const val exPAID_PREF = "ExChapter"
 
         private const val isLib_PREF = "LibBookmarks"
-        private const val isLib_PREF_Title = "Скрыть «Закладки»"
     }
 }
