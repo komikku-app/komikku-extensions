@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Base64
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -15,16 +14,12 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -43,16 +38,12 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
 
     override val client = network.cloudflareClient
 
-    private var csrfToken = ""
-
-    private val json: Json by injectLazy()
-
     override fun popularMangaRequest(page: Int) = GET(
         url = "$baseUrl/directorio?genero=false&estado=false&filtro=visitas&tipo=false&adulto=${if (hideNSFWContent()) "0" else "false"}&orden=desc&p=$page",
         headers = headers,
     )
 
-    override fun popularMangaNextPageSelector() = ".page-item a[rel=next]"
+    override fun popularMangaNextPageSelector() = "ul.pagination a[rel=next]"
 
     override fun popularMangaSelector() = "#article-div a"
 
@@ -64,7 +55,6 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        csrfToken = document.select("meta[name=csrf-token]").attr("content")
 
         val mangas = document.select(popularMangaSelector()).map { element ->
             popularMangaFromElement(element)
@@ -92,18 +82,12 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val uri = Uri.parse("$baseUrl/${if (query.isNotBlank()) "buscar" else "directorio"}").buildUpon()
+
         if (query.isNotBlank()) {
-            val formBody = FormBody.Builder()
-                .add("buscar", query)
-                .add("_token", csrfToken)
-                .build()
-            val searchHeaders = headers.newBuilder()
-                .add("X-Requested-With", "XMLHttpRequest")
-                .add("Referer", baseUrl).build()
-            return POST(url = "$baseUrl/buscar", headers = searchHeaders, body = formBody)
+            uri.appendQueryParameter("q", query)
         } else {
-            val uri = Uri.parse("$baseUrl/directorio").buildUpon()
-            uri.appendQueryParameter("adulto", if (hideNSFWContent()) { "0" } else { "1" })
+            uri.appendQueryParameter("adulto", if (hideNSFWContent()) { "0" } else { "false" })
 
             for (filter in filters) {
                 when (filter) {
@@ -126,52 +110,46 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
                         "genero",
                         genresArray[filter.state].second,
                     )
+                    is AdultContentFilter -> uri.appendQueryParameter(
+                        "adulto",
+                        adultContentArray[filter.state].second,
+                    )
                     else -> {}
                 }
             }
-            uri.appendQueryParameter("p", page.toString())
-            return GET(uri.toString(), headers)
         }
+        uri.appendQueryParameter("p", page.toString())
+        return GET(uri.toString(), headers)
     }
 
     override fun searchMangaNextPageSelector(): String? = popularMangaNextPageSelector()
 
-    override fun searchMangaSelector(): String = popularMangaSelector()
+    override fun searchMangaSelector(): String = "#article-div > div"
 
-    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
+    override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
+        thumbnail_url = element.select("img").attr("src")
+        element.select("div a").apply {
+            title = this.text().trim()
+            setUrlWithoutDomain(this.attr("href"))
+        }
+    }
 
     override fun searchMangaParse(response: Response): MangasPage {
         if (!response.isSuccessful) throw Exception("Búsqueda fallida ${response.code}")
 
-        if ("directorio" in response.request.url.toString()) {
-            val document = response.asJsoup()
-            val mangas = document.select(searchMangaSelector()).map { element ->
-                searchMangaFromElement(element)
-            }
+        val document = response.asJsoup()
 
-            val hasNextPage = searchMangaNextPageSelector()?.let { selector ->
-                document.select(selector).first()
-            } != null
-
-            return MangasPage(mangas, hasNextPage)
+        val mangas = if (document.location().startsWith("$baseUrl/directorio")) {
+            document.select(popularMangaSelector()).map { popularMangaFromElement(it) }
         } else {
-            val jsonString = response.body.string()
-            val result = json.decodeFromString<ResponseDto>(jsonString)
-
-            if (result.mangaList.isEmpty()) {
-                return MangasPage(emptyList(), hasNextPage = false)
-            }
-            val mangaList = result.mangaList
-                .map(::searchMangaFromObject)
-
-            return MangasPage(mangaList, hasNextPage = false)
+            document.select(searchMangaSelector()).map { searchMangaFromElement(it) }
         }
-    }
 
-    private fun searchMangaFromObject(manga: MangaDto): SManga = SManga.create().apply {
-        title = manga.name
-        thumbnail_url = manga.img.replace("/thumb", "/cover")
-        setUrlWithoutDomain(manga.url)
+        val hasNextPage = searchMangaNextPageSelector()?.let { selector ->
+            document.select(selector).first()
+        } != null
+
+        return MangasPage(mangas, hasNextPage)
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
@@ -187,9 +165,9 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
         }
         manga.artist = manga.author
         manga.genre = document.select("div#categ a").joinToString(", ") { it.text() }
-        manga.status = when (document.select("span#desarrollo").first()?.text()) {
+        manga.status = when (document.select("strong:contains(Estado) + span").first()?.text()) {
             "En desarrollo" -> SManga.ONGOING
-            // "Completed" -> SManga.COMPLETED
+            "Finalizado" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
         return manga
@@ -222,14 +200,23 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
 
     override fun imageUrlParse(document: Document) = throw Exception("Not Used")
 
-    override fun getFilterList() = FilterList(
-        Filter.Header("NOTA: Se ignoran si se usa el buscador"),
-        Filter.Separator(),
-        SortBy("Ordenar por", sortables),
-        StatusFilter("Estado", statusArray),
-        TypeFilter("Tipo", typedArray),
-        GenreFilter("Géneros", genresArray),
-    )
+    override fun getFilterList(): FilterList {
+        val filterList = mutableListOf(
+            Filter.Header("NOTA: Se ignoran si se usa el buscador"),
+            Filter.Separator(),
+            SortBy("Ordenar por", sortables),
+            StatusFilter("Estado", statusArray),
+            TypeFilter("Tipo", typedArray),
+            GenreFilter("Géneros", genresArray),
+        )
+
+        if (!hideNSFWContent()) {
+            filterList.add(
+                AdultContentFilter("Contenido +18", adultContentArray),
+            )
+        }
+        return FilterList(filterList)
+    }
 
     private class StatusFilter(name: String, values: Array<Pair<String, String>>) :
         Filter.Select<String>(name, values.map { it.first }.toTypedArray())
@@ -238,6 +225,9 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
         Filter.Select<String>(name, values.map { it.first }.toTypedArray())
 
     private class GenreFilter(name: String, values: Array<Pair<String, String>>) :
+        Filter.Select<String>(name, values.map { it.first }.toTypedArray())
+
+    private class AdultContentFilter(name: String, values: Array<Pair<String, String>>) :
         Filter.Select<String>(name, values.map { it.first }.toTypedArray())
 
     class SortBy(name: String, values: Array<Pair<String, String>>) : Filter.Sort(
@@ -267,9 +257,15 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
         Pair("Alfabético", "nombre"),
     )
 
+    private val adultContentArray = arrayOf(
+        Pair("Mostrar todo", "false"),
+        Pair("Mostrar solo +18", "1"),
+        Pair("No mostrar +18", "0"),
+    )
+
     /**
      * Url: https://manga-mx.com/directorio/
-     * Last check: 27/03/2021
+     * Last check: 12/03/2023
      * JS script: Array.from(document.querySelectorAll('select[name="genero"] option'))
      * .map(a => `Pair("${a.innerText}", "${a.value}")`).join(',\n')
      */
@@ -339,7 +335,7 @@ open class MangaOni : ConfigurableSource, ParsedHttpSource() {
     companion object {
         private const val CONTENT_PREF = "showNSFWContent"
         private const val CONTENT_PREF_TITLE = "Ocultar contenido +18"
-        private const val CONTENT_PREF_SUMMARY = "Ocultar el contenido erótico en explorar y buscar, no funciona en los mangas recientes."
+        private const val CONTENT_PREF_SUMMARY = "Ocultar el contenido erótico en mangas populares y filtros, no funciona en los mangas recientes ni búsquedas textuales."
         private const val CONTENT_PREF_DEFAULT_VALUE = false
     }
 }
