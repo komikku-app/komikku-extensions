@@ -129,7 +129,7 @@ abstract class LibGroup(
     }
 
     private fun fetchLatestMangaFromApi(page: Int): Observable<MangasPage> {
-        return client.newCall(POST("$baseUrl/filterlist?dir=desc&sort=last_chapter_at&page=$page", catalogHeaders()))
+        return client.newCall(POST("$baseUrl/filterlist?dir=desc&sort=last_chapter_at&page=$page&chapters[min]=1", catalogHeaders()))
             .asObservableSuccess()
             .map { response ->
                 latestUpdatesParse(response)
@@ -156,7 +156,7 @@ abstract class LibGroup(
     }
 
     private fun fetchPopularMangaFromApi(page: Int): Observable<MangasPage> {
-        return client.newCall(POST("$baseUrl/filterlist?dir=desc&sort=views&page=$page", catalogHeaders()))
+        return client.newCall(POST("$baseUrl/filterlist?dir=desc&sort=views&page=$page&chapters[min]=1", catalogHeaders()))
             .asObservableSuccess()
             .map { response ->
                 popularMangaParse(response)
@@ -539,7 +539,7 @@ abstract class LibGroup(
             val resBody = tokenResponse.body.string()
             csrfToken = "_token\" content=\"(.*)\"".toRegex().find(resBody)!!.groups[1]!!.value
         }
-        val url = "$baseUrl/filterlist?page=$page".toHttpUrlOrNull()!!.newBuilder()
+        val url = "$baseUrl/filterlist?page=$page&chapters[min]=1".toHttpUrlOrNull()!!.newBuilder()
         if (query.isNotEmpty()) {
             url.addQueryParameter("name", query)
         }
@@ -579,6 +579,11 @@ abstract class LibGroup(
                         url.addQueryParameter(if (favorite.isIncluded()) "bookmarks[include][]" else "bookmarks[exclude][]", favorite.id)
                     }
                 }
+                is RequireChapters -> {
+                    if (filter.state == 1) {
+                        url.setQueryParameter("chapters[min]", "0")
+                    }
+                }
                 else -> {}
             }
         }
@@ -606,6 +611,7 @@ abstract class LibGroup(
         StatusList(getStatusList()),
         StatusTitleList(getStatusTitleList()),
         MyList(getMyList()),
+        RequireChapters(),
     )
 
     private class OrderBy : Filter.Sort(
@@ -701,6 +707,12 @@ abstract class LibGroup(
         SearchFilter("Прочитано", "4"),
         SearchFilter("Любимые", "5"),
     )
+
+    private class RequireChapters : Filter.Select<String>(
+        "Только проекты с главами",
+        arrayOf("Да", "Все"),
+    )
+
     companion object {
         const val PREFIX_SLUG_SEARCH = "slug:"
         private const val SERVER_PREF = "MangaLibImageServer"
