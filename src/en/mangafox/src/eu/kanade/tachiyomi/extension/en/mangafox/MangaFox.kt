@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.mangafox
 
 import android.webkit.CookieManager
-import eu.kanade.tachiyomi.lib.unpacker.Unpacker
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
@@ -21,8 +20,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
+import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -38,12 +37,12 @@ class MangaFox : ParsedHttpSource() {
     override val lang: String = "en"
 
     override val supportsLatest: Boolean = true
-
+    
     private val json by injectLazy<Json>()
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimit(1, 1)
-        // Force readway=2 cookie to get all page URLs at once
+    // Force readway=2 cookie to get all page URLs at once
         .cookieJar(
             object : CookieJar {
                 private val cookieManager by lazy { CookieManager.getInstance() }
@@ -188,27 +187,17 @@ class MangaFox : ParsedHttpSource() {
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
-        val headers = headersBuilder()
-            .set("Referer", "$mobileUrl/")
-            .build()
-        return GET("$mobileUrl${chapter.url}", headers)
+        val mobilePath = chapter.url.replace("/manga/", "/roll_manga/")
+
+        val headers = headersBuilder().set("Referer", "$mobileUrl/").build()
+
+        return GET("$mobileUrl$mobilePath", headers)
     }
 
-    override fun pageListParse(document: Document): List<Page> {
-        val packed = document.selectFirst("script:containsData(p,a,c,k,e)")!!.data()
-        val imagesRaw = Unpacker.unpack(packed)
-            .substringAfter("newImgs=")
-            .substringBefore(";")
-        return json.parseToJsonElement(imagesRaw).jsonArray.mapIndexed { idx, it ->
-            val rawImageUrl = it.jsonPrimitive.content
-            val imageUrl = if (rawImageUrl.startsWith("http")) {
-                rawImageUrl
-            } else {
-                "${mobileUrl.substringBefore("://")}:$rawImageUrl"
-            }
-            Page(idx, imageUrl = imageUrl)
+    override fun pageListParse(document: Document): List<Page> =
+        document.select("#viewer img").mapIndexed { idx, it ->
+            Page(idx, imageUrl = it.attr("abs:data-original"))
         }
-    }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
 
@@ -296,7 +285,7 @@ class MangaFox : ParsedHttpSource() {
             Pair("3 stars", "3"),
             Pair("4 stars", "4"),
             Pair("5 stars", "5"),
-        ),
+        )
     )
 
     private class RatingFilter : Filter.Group<UriPartFilter>("Rating", listOf(RatingMethodFilter(), RatingValueFilter()))
