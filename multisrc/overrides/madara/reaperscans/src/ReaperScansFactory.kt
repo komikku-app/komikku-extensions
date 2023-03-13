@@ -11,7 +11,6 @@ import java.util.Locale
 class ReaperScansFactory : SourceFactory {
     override fun createSources() = listOf(
         ReaperScansTr(),
-        ReaperScansId(),
         ReaperScansFr(),
     )
 }
@@ -44,12 +43,6 @@ class ReaperScansTr : ReaperScans(
     "tr",
     SimpleDateFormat("MMMMM dd, yyyy", Locale("tr")),
 ) {
-
-    // Tags are useless as they are just SEO keywords.
-    override val mangaDetailsSelectorTag = ""
-}
-
-class ReaperScansId : ReaperScans("https://reaperscans.id", "id") {
 
     // Tags are useless as they are just SEO keywords.
     override val mangaDetailsSelectorTag = ""
