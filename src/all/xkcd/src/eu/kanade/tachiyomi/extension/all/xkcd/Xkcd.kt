@@ -30,8 +30,7 @@ open class Xkcd(
         "A webcomic of romance, sarcasm, math and language."
 
     protected open val interactiveText =
-        "To experience the interactive version of this comic," +
-            "\nopen it in WebView/browser."
+        "To experience the interactive version of this comic, open it in WebView/browser."
 
     protected open val altTextUrl = LATIN_ALT_TEXT_URL
 
@@ -98,7 +97,7 @@ open class Xkcd(
         // if the img tag is empty or has siblings then it is an interactive comic
         val img = response.asJsoup().selectFirst(imageSelector)?.takeIf {
             it.nextElementSibling() == null
-        } ?: return listOf(Page(0, "", interactiveText.image()))
+        } ?: error(interactiveText)
 
         // if an HD image is available it'll be the srcset attribute
         val image = when {

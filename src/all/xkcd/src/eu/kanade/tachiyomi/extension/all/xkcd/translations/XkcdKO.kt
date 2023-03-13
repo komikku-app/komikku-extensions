@@ -13,7 +13,7 @@ class XkcdKO : Xkcd("https://xkcdko.com", "ko") {
 
     // Google translated, sorry
     override val interactiveText =
-        "이 만화의 대화형 버전을 경험하려면\nWebView/브라우저에서 엽니다."
+        "이 만화의 대화형 버전을 경험하려면 WebView/브라우저에서 엽니다."
 
     override val altTextUrl = CJK_ALT_TEXT_URL
 
@@ -33,8 +33,7 @@ class XkcdKO : Xkcd("https://xkcdko.com", "ko") {
 
     override fun pageListParse(response: Response): List<Page> {
         // if the img tag is empty then it is an interactive comic
-        val img = response.asJsoup().selectFirst(imageSelector)
-            ?: return listOf(Page(0, "", interactiveText.image()))
+        val img = response.asJsoup().selectFirst(imageSelector) ?: error(interactiveText)
 
         // if an HD image is available it'll be the srcset attribute
         val image = when {

@@ -11,8 +11,7 @@ class XkcdES : Xkcd("https://es.xkcd.com", "es") {
 
     // Google translated, sorry
     override val interactiveText =
-        "Para experimentar la versión interactiva de este cómic," +
-            "\nábralo en WebView/navegador."
+        "Para experimentar la versión interactiva de este cómic, ábralo en WebView/navegador."
 
     override val chapterListSelector = "#archive-ul > ul > li > a"
 

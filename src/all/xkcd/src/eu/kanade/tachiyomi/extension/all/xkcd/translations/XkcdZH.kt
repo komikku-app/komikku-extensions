@@ -21,7 +21,7 @@ class XkcdZH : Xkcd("https://xkcd.tw", "zh", "yyyy-MM-dd HH:mm:ss") {
 
     // Google translated, sorry
     override val interactiveText =
-        "要體驗本漫畫的互動版\n請在WebView/瀏覽器中打開。"
+        "要體驗本漫畫的互動版請在WebView/瀏覽器中打開。"
 
     override val altTextUrl = CJK_ALT_TEXT_URL
 
@@ -49,8 +49,7 @@ class XkcdZH : Xkcd("https://xkcd.tw", "zh", "yyyy-MM-dd HH:mm:ss") {
 
     override fun pageListParse(response: Response): List<Page> {
         // if img tag is empty then it is an interactive comic
-        val img = response.asJsoup().selectFirst(imageSelector)
-            ?: return listOf(Page(0, "", interactiveText.image()))
+        val img = response.asJsoup().selectFirst(imageSelector) ?: error(interactiveText)
 
         val image = img.attr("abs:src")
 
