@@ -30,7 +30,7 @@ class TruyenGiHot : ParsedHttpSource() {
 
     override val name: String = "TruyenGiHot"
 
-    override val baseUrl: String = "https://truyengihay.net"
+    override val baseUrl: String = "https://truyengihotne.com"
 
     override val lang: String = "vi"
 

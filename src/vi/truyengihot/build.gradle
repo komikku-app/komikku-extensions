@@ -5,7 +5,7 @@ ext {
     extName = 'TruyenGiHot'
     pkgNameSuffix = 'vi.truyengihot'
     extClass = '.TruyenGiHot'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = true
 }
 

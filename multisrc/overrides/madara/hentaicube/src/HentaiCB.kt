@@ -9,7 +9,7 @@ import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class HentaiCB : Madara("Hentai CB", "https://hentaicb.xyz", "vi", SimpleDateFormat("dd/MM/yyyy", Locale("vi"))) {
+class HentaiCB : Madara("Hentai CB", "https://hencb.top", "vi", SimpleDateFormat("dd/MM/yyyy", Locale("vi"))) {
     override val id: Long = 823638192569572166
     override val useLoadMoreSearch = false
     override fun pageListParse(document: Document): List<Page> {
