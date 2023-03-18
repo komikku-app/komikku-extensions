@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 
-class LKDTT : MyMangaCMS("LKDTT", "https://lkdttzz.com", "vi") {
+class LKDTT : MyMangaCMS("LKDTT", "https://lkdttee.com", "vi") {
     override val dateFormatter = SimpleDateFormat("dd/MM/yy", Locale.US).apply {
         timeZone = TimeZone.getTimeZone(super.timeZone)
     }
