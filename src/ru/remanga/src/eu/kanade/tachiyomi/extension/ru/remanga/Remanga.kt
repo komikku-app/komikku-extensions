@@ -37,12 +37,17 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
+import okhttp3.CacheControl
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.Jsoup
@@ -55,6 +60,7 @@ import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit.MINUTES
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 
@@ -68,6 +74,20 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    private fun PUT(
+        url: String,
+        headers: Headers = Headers.Builder().build(),
+        body: RequestBody = FormBody.Builder().build(),
+        cache: CacheControl = CacheControl.Builder().maxAge(10, MINUTES).build(),
+    ): Request {
+        return Request.Builder()
+            .url(url)
+            .put(body)
+            .headers(headers)
+            .cacheControl(cache)
+            .build()
     }
 
     private val baseOrig: String = "https://api.remanga.org"
@@ -447,6 +467,12 @@ class Remanga : ConfigurableSource, HttpSource() {
                             scanlator = "exmanga"
                         }
                     }
+
+                    if (chapter.is_paid and (chapter.is_bought == true)) {
+                        if (exChID == null) {
+                            url = "$url#is_bought"
+                        }
+                    }
                 } else {
                     exChID = null
                 }
@@ -476,10 +502,35 @@ class Remanga : ConfigurableSource, HttpSource() {
     }
 
     @TargetApi(Build.VERSION_CODES.N)
-    private fun pageListParse(response: Response, urlRequest: String): List<Page> {
+    private fun pageListParse(response: Response, urlChapter: String): List<Page> {
         val body = response.body.string()
         val heightEmptyChunks = 10
-        if (urlRequest.contains(baseUrl)) {
+        if (urlChapter.contains(exManga)) {
+            try {
+                val exPage = json.decodeFromString<SeriesExWrapperDto<List<List<PagesDto>>>>(body)
+                val result = mutableListOf<Page>()
+                exPage.data.forEach {
+                    it.filter { page -> page.height > heightEmptyChunks }.forEach { page ->
+                        result.add(Page(result.size, "", page.link))
+                    }
+                }
+                return result
+            } catch (e: SerializationException) {
+                throw IOException("Главы больше нет на exmanga. Попробуйте обновить список глав (свайп сверху).")
+            }
+        } else {
+            if (urlChapter.contains("#is_bought") and (preferences.getBoolean(exPAID_PREF, true))) {
+                val newHeaders = exHeaders().newBuilder()
+                    .add("Content-Type", "application/json")
+                    .build()
+                client.newCall(
+                    PUT(
+                        "$exManga/chapter",
+                        newHeaders,
+                        body.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()),
+                    ),
+                ).execute()
+            }
             return try {
                 val page = json.decodeFromString<SeriesWrapperDto<PageDto>>(body)
                 page.content.pages.filter { it.height > heightEmptyChunks }.map {
@@ -495,19 +546,6 @@ class Remanga : ConfigurableSource, HttpSource() {
                 }
                 return result
             }
-        } else {
-            try {
-                val exPage = json.decodeFromString<SeriesExWrapperDto<List<List<PagesDto>>>>(body)
-                val result = mutableListOf<Page>()
-                exPage.data.forEach {
-                    it.filter { page -> page.height > heightEmptyChunks }.forEach { page ->
-                        result.add(Page(result.size, "", page.link))
-                    }
-                }
-                return result
-            } catch (e: SerializationException) {
-                throw IOException("Главы больше нет на exmanga. Попробуйте обновить список глав (свайп сверху).")
-            }
         }
     }
 
@@ -518,9 +556,12 @@ class Remanga : ConfigurableSource, HttpSource() {
             GET(chapter.url, exHeaders())
         } else {
             if (chapter.name.contains("\uD83D\uDCB2")) {
-                throw IOException("Глава платная. Если вы покупаете главу, то, пожалуйста, поделитесь с другими через браузерное расширение exmanga.")
+                val noEX = if (preferences.getBoolean(exPAID_PREF, true)) {
+                    "Если вы покупаете главу, то вы делитесь с другими пользователями exmanga."
+                } else { "Функции exmanga отключены." }
+                throw IOException("Глава платная. $noEX")
             }
-            GET(baseUrl + "/api/titles/chapters/" + chapter.url.substringAfterLast("/ch") + "/", headers)
+            GET(baseUrl + "/api/titles/chapters/" + chapter.url.substringAfterLast("/ch").substringBefore("#is_bought") + "/", headers)
         }
     }
 
@@ -528,12 +569,12 @@ class Remanga : ConfigurableSource, HttpSource() {
         return client.newCall(pageListRequest(chapter))
             .asObservableSuccess()
             .map { response ->
-                pageListParse(response, pageListRequest(chapter).url.toString())
+                pageListParse(response, chapter.url)
             }
     }
 
     override fun getChapterUrl(chapter: SChapter): String {
-        return if (chapter.url.contains(exManga)) chapter.url else baseUrl.replace("api.", "") + chapter.url
+        return if (chapter.url.contains(exManga)) chapter.url else baseUrl.replace("api.", "") + chapter.url.substringBefore("#is_bought")
     }
 
     override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
@@ -840,7 +881,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         val exChapterShow = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = exPAID_PREF
             title = "Показывать главы из exmanga"
-            summary = "Показывает главы купленные другими людьми и поделившиеся ими через браузерное расширение exmanga"
+            summary = "Показывает главы купленные другими людьми и поделившиеся ими через браузерное расширение exmanga. Также отключает отправку ваших глав из Tachiyomi в exmanga."
             setDefaultValue(true)
 
             setOnPreferenceChangeListener { _, newValue ->
