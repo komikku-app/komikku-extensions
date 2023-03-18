@@ -217,7 +217,7 @@ abstract class LibGroup(
 
         val rawAgeStop = document.select(".media-short-info .media-short-info__item[data-caution]").text()
 
-        val ratingValue = document.select(".media-rating__value").last()!!.text().toFloat() * 2
+        val ratingValue = document.select(".media-rating__value").last()!!.text().toFloat()
         val ratingVotes = document.select(".media-rating__votes").last()!!.text()
         val ratingStar = when {
             ratingValue > 9.5 -> "★★★★★"
