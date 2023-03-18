@@ -340,6 +340,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Platinum Crown", "https://platinumscans.com", "en", overrideVersionCode = 1),
         SingleLang("Pojok Manga", "https://pojokmanga.net", "id", overrideVersionCode = 4),
         SingleLang("PoManga", "https://pomanga.com", "en"),
+        SingleLang("Pornhwa18", "https://pornhwa18.com", "id", isNsfw = true),
         SingleLang("PornComix", "https://www.porncomixonline.net", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Pornwha", "https://pornwha.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Portal Yaoi", "https://portalyaoi.com", "pt-BR", isNsfw = true),
