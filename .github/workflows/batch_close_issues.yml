@@ -20,7 +20,7 @@ jobs:
         days-before-issue-close: 0
         any-of-issue-labels: "Source request"
         exempt-issue-labels: do-not-autoclose
-        close-issue-message: "In an effort to have a more manageable issue backlog, we're closing older requests that weren't addressed. If you think the source may still benefit others, please open a new request."
+        close-issue-message: "In an effort to have a more manageable issue backlog, we're closing older requests that weren't addressed. If you think the source may still benefit others, please [open a new request](https://github.com/tachiyomiorg/tachiyomi-extensions/issues/new?assignees=&labels=Source+request&template=request_source.yml)."
         close-issue-reason: not_planned
         ascending: true
         operations-per-run: 250
