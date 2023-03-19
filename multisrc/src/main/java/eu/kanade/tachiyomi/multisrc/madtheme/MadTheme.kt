@@ -214,8 +214,39 @@ abstract class MadTheme(
         val html = document.html()
 
         if (!html.contains("var mainServer = \"")) {
-            // No fancy CDN, all images are available directly in <img> tags
-            return document.select("#chapter-images img").mapIndexed { index, element ->
+            val chapterImagesFromHtml = document.select("#chapter-images img")
+
+            // 17/03/2023: Certain hosts only embed two pages in their "#chapter-images" and leave
+            // the rest to be lazily(?) loaded by javascript. Let's extract `chapImages` and compare
+            // the count against our select query. If both counts are the same, extract the original
+            // images directly from the <img> tags otherwise pick the higher count. (heuristic)
+            // First things first, let's verify `chapImages` actually exists.
+            if (html.contains("var chapImages = '")) {
+                val chapterImagesFromJs = html
+                    .substringAfter("var chapImages = '")
+                    .substringBefore("'")
+                    .split(',')
+
+                // Make sure chapter images we've got from javascript all have a host, otherwise
+                // we've got no choice but to fallback to chapter images from HTML.
+                // TODO: This might need to be solved one day ^
+                if (chapterImagesFromJs.all { e ->
+                    e.startsWith("http://") || e.startsWith("https://")
+                }
+                ) {
+                    // Great, we can use these.
+                    if (chapterImagesFromHtml.count() < chapterImagesFromJs.count()) {
+                        // Seems like we've hit such a host, let's use the images we've obtained
+                        // from the javascript string.
+                        return chapterImagesFromJs.mapIndexed { index, path ->
+                            Page(index, imageUrl = path)
+                        }
+                    }
+                }
+            }
+
+            // No fancy CDN, all images are available directly in <img> tags (hopefully)
+            return chapterImagesFromHtml.mapIndexed { index, element ->
                 Page(index, imageUrl = element.attr("abs:data-src"))
             }
         }
