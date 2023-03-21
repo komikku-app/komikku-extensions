@@ -28,6 +28,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     private val apiUrl = "https://api.comick.fun"
 
+    private val cdnUrl = "https://meo3.comick.pictures"
+
     override val supportsLatest = true
 
     private val json = Json {
@@ -83,8 +85,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = apiUrl.toHttpUrl().newBuilder().apply {
-            addPathSegment("search")
+        val url = "$apiUrl/v1.0/search".toHttpUrl().newBuilder().apply {
             if (query.isEmpty()) {
                 filters.forEach { it ->
                     when (it) {
@@ -161,12 +162,14 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                 addQueryParameter("q", query)
             }
             addQueryParameter("tachiyomi", "true")
+            addQueryParameter("limit", "50")
             addQueryParameter("page", "$page")
         }.build()
         return GET(url, headers)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
+        val isQueryPresent = response.request.url.queryParameterNames.contains("q")
         val result = json.decodeFromString<List<Manga>>(response.body.string())
         return MangasPage(
             result.map { data ->
@@ -174,10 +177,16 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                     // appennding # at end as part of migration from slug to hid
                     url = "/comic/${data.hid}#"
                     title = data.title
-                    thumbnail_url = data.cover_url
+                    thumbnail_url = "$cdnUrl/${data.md_covers[0].b2key}"
                 }
             },
-            hasNextPage = result.size >= 30,
+            /*
+                api always returns `limit` amount of results
+                for text search and page>=2 is always empty
+                so here we are checking if url has the text query parameter
+                to avoid false 'No result found' toasts.
+             */
+            hasNextPage = !isQueryPresent && result.size >= 50,
         )
     }
 
@@ -203,7 +212,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
             description = beautifyDescription(mangaData.comic.desc)
             genre = mangaData.genres.joinToString { it.name.trim() }
             status = parseStatus(mangaData.comic.status)
-            thumbnail_url = mangaData.comic.cover_url
+            thumbnail_url = "$cdnUrl/${mangaData.comic.md_covers[0].b2key}"
         }
     }
 
@@ -236,9 +245,9 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     override fun chapterListParse(response: Response): List<SChapter> {
         val chapterListResponse = json.decodeFromString<ChapterList>(response.body.string())
 
-        val mangaUrl = "/" + response.request.url.toString()
+        val mangaUrl = response.request.url.toString()
             .substringBefore("/chapters")
-            .substringAfter("$apiUrl/")
+            .substringAfter(apiUrl)
 
         var resultSize = chapterListResponse.chapters.size
         var page = 2
@@ -265,7 +274,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                         0L
                     }
                 }
-                scanlator = chapter.group_name.joinToString().takeUnless { it.isBlank() }
+                scanlator = chapter.group_name.joinToString().takeUnless { it.isBlank() } ?: "Unknown"
             }
         }
     }
