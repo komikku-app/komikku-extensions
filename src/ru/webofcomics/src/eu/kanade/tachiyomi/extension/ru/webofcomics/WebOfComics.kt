@@ -22,6 +22,8 @@ import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 
 class WebOfComics : ParsedHttpSource() {
 
@@ -33,8 +35,10 @@ class WebOfComics : ParsedHttpSource() {
 
     override val supportsLatest = true
 
+    private val userAgentRandomizer = "${Random.nextInt().absoluteValue}"
+
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 Edg/100.0.1185.50")
+        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.$userAgentRandomizer Safari/537.36")
         .add("Referer", baseUrl)
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
@@ -300,7 +304,16 @@ class WebOfComics : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         var baseImgUrl = document.select("link[rel='image_src']").last()!!.attr("href")
 
-        val publicUrl = "/public_html"
+        if (baseImgUrl.isEmpty()) {
+            return document.select(".readtab .lazyload").mapIndexed { index, element ->
+                Page(
+                    index,
+                    "",
+                    "https://read.webofcomics.ru/webofcomics.ru/www/webofcomics.ru/public_html/uploads/" + element.attr("data-src").substringAfter("/uploads/"),
+                )
+            }
+        }
+
         val uploadUrl =
             with(baseImgUrl) {
                 when {
@@ -310,13 +323,8 @@ class WebOfComics : ParsedHttpSource() {
                     else -> "errorUploads"
                 }
             }
+
         baseImgUrl = baseImgUrl.substringBefore(uploadUrl)
-        if (baseImgUrl.contains(publicUrl)) {
-            baseImgUrl =
-                baseImgUrl.substringBefore(publicUrl) + "/www/" +
-                baseUrl.substringAfter("://") + publicUrl +
-                baseImgUrl.substringAfter(publicUrl)
-        }
 
         if (document.select(".readtab .lazyload").isNotEmpty()) {
             return document.select(".readtab .lazyload").mapIndexed { index, element ->

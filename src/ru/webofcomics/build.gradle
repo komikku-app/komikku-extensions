@@ -5,7 +5,7 @@ ext {
     extName = 'Web of Comics'
     pkgNameSuffix = 'ru.webofcomics'
     extClass = '.WebOfComics'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 apply from: "$rootDir/common.gradle"
