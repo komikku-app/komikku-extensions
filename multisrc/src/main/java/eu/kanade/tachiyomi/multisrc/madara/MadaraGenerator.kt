@@ -127,7 +127,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Hentai Manga", "https://hentaimanga.me", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Hentai Teca", "https://hentaiteca.net", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Hentai20", "https://hentai20.io", "en", isNsfw = true, overrideVersionCode = 3),
-        SingleLang("Hentaidexy", "https://hentaidexy.net", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("HentaiRead", "https://hentairead.com", "en", isNsfw = true, className = "Hentairead", overrideVersionCode = 3),
         SingleLang("HentaiWebtoon", "https://hentaiwebtoon.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("HentaiXComic", "https://hentaixcomic.com", "en", isNsfw = true),
