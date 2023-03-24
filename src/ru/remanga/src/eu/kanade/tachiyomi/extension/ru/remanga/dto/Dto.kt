@@ -104,6 +104,8 @@ data class SeriesExWrapperDto<T>(
 @Serializable
 data class ExBookDto(
     val id: Long,
+    val tome: Int,
+    val chapter: String,
 )
 
 @Serializable

@@ -415,7 +415,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                     try {
                         json.decodeFromString<SeriesExWrapperDto<List<ExBookDto>>>(client.newCall(GET("$exManga/chapter/history/$mangaID", exHeaders())).execute().body.string()).data
                     } catch (_: Exception) {
-                        throw Exception("Домен $exManga сервиса exmanga недоступен, выберите другой в настройках расширения")
+                        throw Exception("Домен $exManga сервиса ExManga недоступен, выберите другой в настройках расширения")
                     }
                 } else {
                     emptyList()
@@ -489,7 +489,15 @@ class Remanga : ConfigurableSource, HttpSource() {
             }
         }
         if (!preferences.getBoolean(PAID_PREF, false)) {
-            chaptersList = chaptersList.filter { !it.name.contains("\uD83D\uDCB2") }
+            chaptersList = chaptersList.filter {
+                !it.name.contains("\uD83D\uDCB2") || (
+                    it.name.substringBefore(
+                        ". Глава",
+                    ).toIntOrNull()!! <=
+                        (exChapters.firstOrNull()?.tome ?: -2) &&
+                        it.chapter_number < exChapters.firstOrNull()?.chapter?.toFloatOrNull()!!
+                    )
+            }
         }
         return chaptersList
     }
@@ -516,7 +524,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 }
                 return result
             } catch (e: SerializationException) {
-                throw IOException("Главы больше нет на exmanga. Попробуйте обновить список глав (свайп сверху).")
+                throw IOException("Главы больше нет на ExManga. Попробуйте обновить список глав (свайп сверху).")
             }
         } else {
             if (urlChapter.contains("#is_bought") and (preferences.getBoolean(exPAID_PREF, true))) {
@@ -557,8 +565,8 @@ class Remanga : ConfigurableSource, HttpSource() {
         } else {
             if (chapter.name.contains("\uD83D\uDCB2")) {
                 val noEX = if (preferences.getBoolean(exPAID_PREF, true)) {
-                    "Если вы покупаете главу, то вы делитесь с другими пользователями exmanga."
-                } else { "Функции exmanga отключены." }
+                    "Расширение отправляет данные на удаленный сервер ExManga только при открытии глав покупаемой манги."
+                } else { "Функции ExManga отключены." }
                 throw IOException("Глава платная. $noEX")
             }
             GET(baseUrl + "/api/titles/chapters/" + chapter.url.substringAfterLast("/ch").substringBefore("#is_bought") + "/", headers)
@@ -652,10 +660,9 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("Манхва", "1"),
         SearchFilter("Маньхуа", "2"),
         SearchFilter("Западный комикс", "3"),
-        SearchFilter("Русскомикс", "4"),
+        SearchFilter("Рукомикс", "4"),
         SearchFilter("Индонезийский комикс", "5"),
-        SearchFilter("Новелла", "6"),
-        SearchFilter("Другое", "7"),
+        SearchFilter("Другое", "6"),
     )
 
     private fun getStatusList() = listOf(
@@ -770,7 +777,6 @@ class Remanga : ConfigurableSource, HttpSource() {
     )
 
     private fun getGenreList() = listOf(
-        SearchFilter("боевик", "2"),
         SearchFilter("боевые искусства", "3"),
         SearchFilter("гарем", "5"),
         SearchFilter("гендерная интрига", "6"),
@@ -779,7 +785,6 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("дзёсэй", "9"),
         SearchFilter("додзинси", "10"),
         SearchFilter("драма", "11"),
-        SearchFilter("игра", "12"),
         SearchFilter("история", "13"),
         SearchFilter("киберпанк", "14"),
         SearchFilter("кодомо", "15"),
@@ -787,6 +792,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("махо-сёдзё", "17"),
         SearchFilter("меха", "18"),
         SearchFilter("мистика", "19"),
+        SearchFilter("мурим", "51"),
         SearchFilter("научная фантастика", "20"),
         SearchFilter("повседневность", "21"),
         SearchFilter("постапокалиптика", "22"),
@@ -806,11 +812,12 @@ class Remanga : ConfigurableSource, HttpSource() {
         SearchFilter("ужасы", "36"),
         SearchFilter("фантастика", "37"),
         SearchFilter("фэнтези", "38"),
-        SearchFilter("школа", "39"),
+        SearchFilter("школьная жизнь", "39"),
+        SearchFilter("экшен", "2"),
         SearchFilter("элементы юмора", "16"),
+        SearchFilter("эротика", "42"),
         SearchFilter("этти", "40"),
         SearchFilter("юри", "41"),
-        SearchFilter("яой", "43"),
     )
     private class MyList(favorites: Array<String>) : Filter.Select<String>("Закладки (только)", favorites)
     private data class MyListUnit(val name: String, val id: String)
@@ -869,7 +876,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         }
         val paidChapterShow = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = PAID_PREF
-            title = "Показывать платные главы"
+            title = "Показывать все платные главы"
             summary = "Показывает не купленные\uD83D\uDCB2 главы(может вызвать ошибки при обновлении/автозагрузке)"
             setDefaultValue(false)
 
@@ -880,8 +887,10 @@ class Remanga : ConfigurableSource, HttpSource() {
         }
         val exChapterShow = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = exPAID_PREF
-            title = "Показывать главы из exmanga"
-            summary = "Показывает главы купленные другими людьми и поделившиеся ими через браузерное расширение exmanga. Также отключает отправку ваших глав из Tachiyomi в exmanga."
+            title = "Показывать главы из ExManga"
+            summary = "Показывает главы купленные другими людьми и поделившиеся ими через браузерное расширение ExManga. \n\n" +
+                "ⓘЧастично отображает не купленные\uD83D\uDCB2 главы для соблюдения порядка глав. \n\n" +
+                "ⓘТакже отправляет купленные главы из Tachiyomi в ExManga."
             setDefaultValue(true)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -891,7 +900,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         }
         val domainExPref = ListPreference(screen.context).apply {
             key = exDOMAIN_PREF
-            title = "Выбор домена для exmanga"
+            title = "Выбор домена для ExManga"
             entries = arrayOf("Россия (exmanga.ru)", "Украина (ex.euromc.com.ua)")
             entryValues = arrayOf(baseRuss, baseUkr)
             summary = "%s"
