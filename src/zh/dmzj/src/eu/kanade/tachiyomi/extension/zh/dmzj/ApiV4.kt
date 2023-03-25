@@ -18,8 +18,8 @@ import kotlin.reflect.typeOf
 
 object ApiV4 {
 
-    private const val v4apiUrl = "https://nnv4api.dmzj.com"
-    private const val imageSmallCDNUrl = "https://imgsmall.dmzj.com"
+    private const val v4apiUrl = "https://nnv4api.idmzj.com"
+    private const val imageSmallCDNUrl = "https://imgsmall.idmzj.com"
 
     fun mangaInfoUrl(id: String) = "$v4apiUrl/comic/detail/$id?uid=2665531"
 

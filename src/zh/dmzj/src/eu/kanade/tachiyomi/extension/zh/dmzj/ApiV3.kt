@@ -10,7 +10,7 @@ import okhttp3.Response
 
 object ApiV3 {
 
-    private const val v3apiUrl = "https://v3api.dmzj.com"
+    private const val v3apiUrl = "https://v3api.idmzj.com"
     private const val apiUrl = "https://api.dmzj.com"
 
     fun popularMangaUrl(page: Int) = "$v3apiUrl/classify/0/0/${page - 1}.json"
@@ -33,7 +33,15 @@ object ApiV3 {
     }
 
     fun parseChapterListV1(response: Response): List<SChapter> {
-        return parseMangaInfoV1(response).data.list.map { it.toSChapter() }
+        val data = parseMangaInfoV1(response).data
+        return buildList(data.list.size + data.alone.size) {
+            data.list.mapTo(this) {
+                it.toSChapter()
+            }
+            data.alone.mapTo(this) {
+                it.toSChapter().apply { name = "单行本: $name" }
+            }
+        }
     }
 
     fun chapterCommentsUrl(path: String) = "$v3apiUrl/viewPoint/0/$path.json"
@@ -92,7 +100,7 @@ object ApiV3 {
     }
 
     @Serializable
-    class DataDto(val info: MangaDto, val list: List<ChapterDto>)
+    class DataDto(val info: MangaDto, val list: List<ChapterDto>, val alone: List<ChapterDto>)
 
     @Serializable
     class ResponseDto(val data: DataDto)

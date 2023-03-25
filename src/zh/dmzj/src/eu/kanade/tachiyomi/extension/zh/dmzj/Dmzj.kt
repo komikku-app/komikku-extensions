@@ -28,7 +28,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
     override val lang = "zh"
     override val supportsLatest = true
     override val name = "动漫之家"
-    override val baseUrl = "https://m.dmzj.com"
+    override val baseUrl = "https://m.idmzj.com"
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -47,7 +47,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
         .build()
 
     private fun fetchIdBySlug(slug: String): String {
-        val request = GET("https://manhua.dmzj.com/$slug/", headers)
+        val request = GET("https://manhua.idmzj.com/$slug/", headers)
         val html = client.newCall(request).execute().body.string()
         val start = "g_comic_id = \""
         val startIndex = html.indexOf(start) + start.length
@@ -133,7 +133,6 @@ class Dmzj : ConfigurableSource, HttpSource() {
         throw UnsupportedOperationException()
     }
 
-    // Bypass mangaDetailsRequest, fetch api url directly
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         val id = manga.url.extractMangaId()
         return Observable.fromCallable { fetchMangaDetails(id) }
@@ -147,11 +146,13 @@ class Dmzj : ConfigurableSource, HttpSource() {
         return ApiV3.parseMangaDetailsV1(response)
     }
 
-    // Workaround to allow "Open in browser" use human readable webpage url.
-    // headers are not needed
     override fun mangaDetailsRequest(manga: SManga): Request {
+        throw UnsupportedOperationException()
+    }
+
+    override fun getMangaUrl(manga: SManga): String {
         val cid = manga.url.extractMangaId()
-        return GET("$baseUrl/info/$cid.html")
+        return "$baseUrl/info/$cid.html"
     }
 
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
@@ -178,8 +179,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
         throw UnsupportedOperationException()
     }
 
-    // for WebView, headers are not needed
-    override fun pageListRequest(chapter: SChapter) = GET("$baseUrl/view/${chapter.url}.html")
+    override fun getChapterUrl(chapter: SChapter) = "$baseUrl/view/${chapter.url}.html"
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
         val path = chapter.url

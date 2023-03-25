@@ -10,7 +10,7 @@ import okhttp3.Response
 object ApiSearch {
 
     fun textSearchUrl(query: String) =
-        "http://s.acg.dmzj.com/comicsum/search.php".toHttpUrl().newBuilder()
+        "http://sacg.idmzj.com/comicsum/search.php".toHttpUrl().newBuilder()
             .addQueryParameter("s", query)
             .toString()
 
