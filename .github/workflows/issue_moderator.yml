@@ -14,10 +14,15 @@ jobs:
         uses: tachiyomiorg/issue-moderator-action@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
           duplicate-check-enabled: true
-          duplicate-check-label: Source request
+          duplicate-check-labels: |
+            ["Source request", "Domain changed"]
+
           existing-check-enabled: true
-          existing-check-label: Source request
+          existing-check-labels: |
+            ["Source request", "Domain changed"]
+
           auto-close-rules: |
             [
               {
