@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.zh.jinmantiantang
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 
@@ -30,10 +31,17 @@ internal fun getPreferenceList(context: Context) = arrayOf(
         key = USE_MIRROR_URL_PREF
         title = "使用镜像网址"
         entries = Array(count) { "${SITE_ENTRIES_ARRAY_DESCRIPTION[it]} (${SITE_ENTRIES_ARRAY[it]})" }
-        entryValues = Array(count) { "$it" }
-        summary = "使用镜像网址。需要重启软件以生效。"
+        entryValues = Array(count) { "$it" }.apply { this[count - 1] = "-1" }
+        summary = "%s\n重启后生效。"
 
         setDefaultValue("0")
+    },
+
+    EditTextPreference(context).apply {
+        key = OVERRIDE_BASE_URL_PREF
+        title = "自定义网址"
+        summary = "需要在上一个设置选择“自定义”，重启后生效。" +
+            "不需要输入 https:// 前缀。最新网址可在 jmcomic1.bet 找到。"
     },
 
     EditTextPreference(context).apply {
@@ -47,6 +55,18 @@ internal fun getPreferenceList(context: Context) = arrayOf(
     },
 )
 
+val SharedPreferences.baseUrl: String
+    get() {
+        val list = SITE_ENTRIES_ARRAY
+        val index = getString(USE_MIRROR_URL_PREF, "0")!!.toInt()
+            .coerceAtMost(list.size - 1)
+        return if (index == -1) {
+            getString(OVERRIDE_BASE_URL_PREF, list[0])!!
+        } else {
+            list[index]
+        }
+    }
+
 internal const val BLOCK_PREF = "BLOCK_GENRES_LIST"
 
 internal const val MAINSITE_RATELIMIT_PREF = "mainSiteRateLimitPreference"
@@ -55,26 +75,29 @@ internal const val MAINSITE_RATELIMIT_PREF_DEFAULT = 1.toString()
 internal const val MAINSITE_RATELIMIT_PERIOD = "mainSiteRateLimitPeriodPreference"
 internal const val MAINSITE_RATELIMIT_PERIOD_DEFAULT = 3.toString()
 
-internal const val USE_MIRROR_URL_PREF = "useMirrorWebsitePreference"
+private const val USE_MIRROR_URL_PREF = "useMirrorWebsitePreference"
+private const val OVERRIDE_BASE_URL_PREF = "overrideBaseUrl"
 
-internal val SITE_ENTRIES_ARRAY_DESCRIPTION = arrayOf(
+private val SITE_ENTRIES_ARRAY_DESCRIPTION = arrayOf(
     "主站",
     "海外分流",
-    "中国大陆线路1",
-    "中国大陆线路2/已被墙",
     "东南亚线路1",
     "东南亚线路2",
+    "中国大陆线路1",
+    "中国大陆线路2",
     "中国大陆线路3",
+    "自定义", // -1
 )
 
 // List is based on https://jmcomic1.bet/
 // Please also update AndroidManifest
-internal val SITE_ENTRIES_ARRAY = arrayOf(
+private val SITE_ENTRIES_ARRAY = arrayOf(
     "18comic.vip",
     "18comic.org",
-    "jmcomic.onl",
-    "jmcomic2.onl",
     "jmcomic.me",
     "jmcomic1.me",
-    "jmcomic1.onl",
+    "jmcomic1.group",
+    "jmcomic2.group",
+    "jm-comic.cc",
+    "自定义", // -1
 )

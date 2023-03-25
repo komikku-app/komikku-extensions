@@ -10,19 +10,20 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.math.floor
 
 object ScrambledImageInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val url = chain.request().url.toString()
-        val response = chain.proceed(chain.request())
-        if (!url.contains("media/photos", ignoreCase = true)) return response // 对非漫画图片连接直接放行
-        if (url.substring(url.indexOf("photos/") + 7, url.lastIndexOf("/")).toInt() < scrambleId) return response // 对在漫画章节ID为220980之前的图片未进行图片分割,直接放行
+        val request = chain.request()
+        val url = request.url
+        val response = chain.proceed(request)
+        if (!url.toString().contains("media/photos", ignoreCase = true)) return response // 对非漫画图片连接直接放行
+        val pathSegments = url.pathSegments
+        val aid = pathSegments[pathSegments.size - 2].toInt()
+        if (aid < scrambleId) return response // 对在漫画章节ID为220980之前的图片未进行图片分割,直接放行
 // 章节ID:220980(包含)之后的漫画(2020.10.27之后)图片进行了分割getRows倒序处理
-        val aid = url.substring(url.indexOf("photos/") + 7, url.lastIndexOf("/")).toInt()
-        val imgIndex: String = url.substringAfterLast("/").substringBefore(".")
+        val imgIndex: String = pathSegments.last().substringBefore('.')
         val res = response.body.byteStream().use {
             decodeImage(it, getRows(aid, imgIndex))
         }
@@ -35,19 +36,19 @@ object ScrambledImageInterceptor : Interceptor {
     // 图片开始分割的ID编号
     private const val scrambleId = 220980
 
-    private fun getRows(aid: Int, imgIndex: String): Int {
-        fun md5(input: String): String {
-            val md = MessageDigest.getInstance("MD5")
-            return BigInteger(1, md.digest(input.toByteArray())).toString(16).padStart(32, '0')
-        }
+    private fun md5LastCharCode(input: String): Int {
+        val md5 = MessageDigest.getInstance("MD5")
+        val lastByte = md5.digest(input.toByteArray()).last().toInt() and 0xFF
+        return lastByte.toString(16).last().code
+    }
 
-        return if (aid >= 421926) {
-            2 * (md5(aid.toString() + imgIndex).last().code % 8) + 2
-        } else if (aid >= 268850) {
-            2 * (md5(aid.toString() + imgIndex).last().code % 10) + 2
-        } else {
-            10
+    private fun getRows(aid: Int, imgIndex: String): Int {
+        val modulus = when {
+            aid >= 421926 -> 8
+            aid >= 268850 -> 10
+            else -> return 10
         }
+        return 2 * (md5LastCharCode(aid.toString() + imgIndex) % modulus) + 2
     }
 
     // 对被分割的图片进行分割,排序处理

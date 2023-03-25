@@ -38,8 +38,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-    override val baseUrl: String = "https://" + preferences.getString(USE_MIRROR_URL_PREF, "0")!!
-        .toInt().coerceAtMost(SITE_ENTRIES_ARRAY.size - 1).let { SITE_ENTRIES_ARRAY[it] }
+    override val baseUrl: String = "https://" + preferences.baseUrl
 
     // 处理URL请求
     override val client: OkHttpClient = network.cloudflareClient
@@ -63,7 +62,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     }
 
     private fun List<SManga>.filterGenre(): List<SManga> {
-        val removedGenres = preferences.getString("BLOCK_GENRES_LIST", "")!!.substringBefore("//").trim()
+        val removedGenres = preferences.getString(BLOCK_PREF, "")!!.substringBefore("//").trim()
         if (removedGenres.isEmpty()) return this
         val removedList = removedGenres.lowercase().split(' ')
         return this.filterNot { manga ->
