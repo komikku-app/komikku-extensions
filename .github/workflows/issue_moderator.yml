@@ -57,12 +57,6 @@ jobs:
                 "regex": ".*(?:fail(?:ed|ure)?|can\\s*(?:no|')?t|unable|get past|(?<!n[o']?t )blocked by|error) (?:to )?(?:bypass|penetrate)?.*cloudfl?are.*",
                 "ignoreCase": true,
                 "message": "Refer to the **Solving Cloudflare issues** section at https://tachiyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues. If it doesn't work, migrate to other sources or wait until they lower their protection."
-              },
-              {
-                "type": "body",
-                "regex": ".*olympusscans\\.com.*",
-                "ignoreCase": true,
-                "message": "Duplicate of #15330"
               }
             ]
           auto-close-ignore-label: do-not-autoclose
