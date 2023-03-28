@@ -1,7 +1,11 @@
 package eu.kanade.tachiyomi.extension.zh.happymh
 
+import android.app.Application
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -16,18 +20,32 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
-class Happymh : HttpSource() {
+class Happymh : HttpSource(), ConfigurableSource {
     override val name: String = "嗨皮漫画"
     override val lang: String = "zh"
     override val supportsLatest: Boolean = true
     override val baseUrl: String = "https://m.happymh.com"
     override val client: OkHttpClient = network.cloudflareClient
     private val json: Json by injectLazy()
+
+    override fun headersBuilder(): Headers.Builder {
+        val builder = super.headersBuilder()
+        val preferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+        val userAgent = preferences.getString(USER_AGENT_PREF, "")!!
+        return if (userAgent.isNotBlank()) {
+            builder.set("User-Agent", userAgent)
+        } else {
+            builder
+        }
+    }
 
     // Popular
 
@@ -119,4 +137,16 @@ class Happymh : HttpSource() {
     }
 
     override fun imageUrlParse(response: Response): String = throw Exception("Not Used")
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        EditTextPreference(screen.context).apply {
+            key = USER_AGENT_PREF
+            title = "User Agent"
+            summary = "留空则使用应用设置中的默认 User Agent"
+        }.let(screen::addPreference)
+    }
+
+    companion object {
+        private const val USER_AGENT_PREF = "userAgent"
+    }
 }
