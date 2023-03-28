@@ -9,7 +9,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl
@@ -18,7 +17,6 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
@@ -111,20 +109,17 @@ class Webnovel : HttpSource() {
     }
 
     // Manga details
-    // TODO: Cleanup this block when ext-lib 1.4 is released
-    override fun mangaDetailsRequest(manga: SManga): Request {
-        return GET("$baseUrl/comic/${manga.getId}", headers)
-    }
+    override fun getMangaUrl(manga: SManga): String = "$baseUrl/comic/${manga.getId}"
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(internalMangaDetailsRequest(manga))
+        return client.newCall(mangaDetailsRequest(manga))
             .asObservableSuccess()
             .map { response ->
                 mangaDetailsParse(response)
             }
     }
 
-    private fun internalMangaDetailsRequest(manga: SManga): Request {
+    override fun mangaDetailsRequest(manga: SManga): Request {
         return GET("$baseApiUrl/comic/getComicDetailPage?comicId=${manga.getId}", headers)
     }
 
@@ -158,8 +153,8 @@ class Webnovel : HttpSource() {
         val updateTimes = chapters.map { it.publishTime.toDate() }
         val filteredChapters = chapters
             // You can pay to get some chapter earlier than others. This privilege is divided into some tiers
-            // We check if user has same tier unlocked as chapter's.
-            .filter { it.userLevel == it.chapterLevel }
+            // We check if user's tier same or more than chapter's.
+            .filter { it.userLevel >= it.chapterLevel }
 
         // When new privileged chapter is released oldest privileged chapter becomes normal one (in most cases)
         // but since those normal chapter retain the original upload time we improvise. (This isn't optimal but meh)
@@ -185,44 +180,40 @@ class Webnovel : HttpSource() {
         if (contains("now", ignoreCase = true)) return Date().time
 
         val number = DIGIT_REGEX.find(this)?.value?.toIntOrNull() ?: return 0
-        val cal = Calendar.getInstance()
-
-        return when {
-            contains("yr") -> cal.apply { add(Calendar.YEAR, -number) }.timeInMillis
-            contains("mth") -> cal.apply { add(Calendar.MONTH, -number) }.timeInMillis
-            contains("d") -> cal.apply { add(Calendar.DAY_OF_MONTH, -number) }.timeInMillis
-            contains("h") -> cal.apply { add(Calendar.HOUR, -number) }.timeInMillis
-            contains("min") -> cal.apply { add(Calendar.MINUTE, -number) }.timeInMillis
-            else -> 0
+        val field = when {
+            contains("yr") -> Calendar.YEAR
+            contains("mth") -> Calendar.MONTH
+            contains("d") -> Calendar.DAY_OF_MONTH
+            contains("h") -> Calendar.HOUR
+            contains("min") -> Calendar.MINUTE
+            else -> return 0
         }
+
+        return Calendar.getInstance().apply { add(field, -number) }.timeInMillis
     }
 
     // Pages
-    // TODO: Cleanup this block when ext-lib 1.4 is released
-    override fun pageListRequest(chapter: SChapter): Request {
+    override fun getChapterUrl(chapter: SChapter): String {
         val (comicId, chapterId) = chapter.getMangaAndChapterId
-        return GET("$baseUrl/comic/$comicId/$chapterId", headers)
+        return "$baseUrl/comic/$comicId/$chapterId"
     }
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
-        return client.newCall(internalPageListRequest(chapter))
+        return client.newCall(pageListRequest(chapter))
             .asObservableSuccess()
             .map { response ->
                 pageListParse(response)
             }
     }
 
-    private fun internalPageListRequest(chapter: SChapter): Request {
+    override fun pageListRequest(chapter: SChapter): Request {
         val (comicId, chapterId) = chapter.getMangaAndChapterId
         return pageListRequest(comicId, chapterId)
     }
 
-    private val pageRequestHeaders by lazy {
-        headers.newBuilder().set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:108.0) Gecko/20100101 Firefox/108.0").build()
-    }
-
     private fun pageListRequest(comicId: String, chapterId: String): Request {
-        return GET("$baseUrl/comic/$comicId/$chapterId", pageRequestHeaders)
+        // Given a high [width] parameter it gives the highest resolution image available
+        return GET("$baseApiUrl/comic/getContent?comicId=$comicId&chapterId=$chapterId&width=${Short.MAX_VALUE}")
     }
 
     data class ChapterPage(
@@ -239,20 +230,10 @@ class Webnovel : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val document = response.asJsoup()
-        val chapterId = response.request.url.pathSegments[2]
-        return document.parseToChapterPage(chapterId).mapIndexed { i, chapterPage ->
-            Page(i, imageUrl = chapterPage.url)
-        }
-    }
-
-    private fun Document.parseToChapterPage(chapterId: String): List<ChapterPage> {
-        return select("#comicPageContainer img").map {
-            ChapterPage(
-                id = it.attr("data-page"),
-                url = it.attr("data-original"),
-            )
-        }.also { chapterPageCache[chapterId] = it }
+        val chapterContent = response.checkAndParseAs<ChapterContentResponseDto>().chapterContent
+        return chapterContent.pages.map { ChapterPage(it.id, it.url) }
+            .also { chapterPageCache[chapterContent.id.toString()] = it }
+            .mapIndexed { i, chapterPage -> Page(i, imageUrl = chapterPage.url) }
     }
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not Used")
@@ -267,7 +248,7 @@ class Webnovel : HttpSource() {
 
     private val SManga.getId: String
         get() {
-            if (url.toLongOrNull() == null) throw Exception(MIGRATE_MESSAGE)
+            url.toLongOrNull() ?: throw Exception(MIGRATE_MESSAGE)
             return url
         }
 
@@ -291,7 +272,7 @@ class Webnovel : HttpSource() {
             ?.takeIf { csrfTokenName in it }
             ?.substringAfter("$csrfTokenName=")
             ?.substringBefore(";")
-            ?: throw IOException("'$csrfTokenName' cookie not found.\nOpen in webview to set it.")
+            ?: throw IOException("Open in WebView to set necessary cookies.")
 
         val newUrl = originalRequestUrl.newBuilder()
             .addQueryParameter(csrfTokenName, csrfToken)
@@ -318,11 +299,9 @@ class Webnovel : HttpSource() {
         if (cachedPageUrl != null && isPageUrlStillValid(cachedPageUrl.toHttpUrl())) return chain.proceed(originalRequest)
 
         // Time to get it from site
-        val pageListResponse = chain.proceed(pageListRequest(comicId, chapterId))
-        val chapterPages = pageListResponse.asJsoup().parseToChapterPage(chapterId)
-        pageListResponse.close()
+        chain.proceed(pageListRequest(comicId, chapterId)).use { pageListParse(it) }
 
-        val newPageUrl = chapterPages.firstOrNull { it.id == pageId }?.url?.toHttpUrl()
+        val newPageUrl = chapterPageCache[chapterId]?.firstOrNull { it.id == pageId }?.url?.toHttpUrl()
             ?: throw IOException("Couldn't regenerate expired image url")
 
         val newRequest = originalRequest.newBuilder().url(newPageUrl).build()
@@ -330,11 +309,11 @@ class Webnovel : HttpSource() {
     }
 
     private fun isPageUrlStillValid(imageUrl: HttpUrl): Boolean {
-        val urlGenerationTime = imageUrl.queryParameter("t")?.toLongOrNull()
-            ?: throw IOException("Parameter 't' missing from page url or isn't a long")
+        val urlGenerationTime = imageUrl.queryParameter("t")?.toLongOrNull()?.times(1000)
+            ?: throw IOException("Couldn't get image generation time from page url")
 
         // Urls are valid for 10 minutes after generation. We check for 9min and 30s just to be safe
-        return (Date().time / 1000) - urlGenerationTime <= 570
+        return Date().time - urlGenerationTime <= 570000
     }
 
     private inline fun <reified T> Response.checkAndParseAs(): T = use {
@@ -351,7 +330,7 @@ class Webnovel : HttpSource() {
         private const val QUERY_SEARCH_PATH = "/search/result"
         private const val FILTER_SEARCH_PATH = "/category/categoryAjax"
 
-        private const val MIGRATE_MESSAGE = "Migrate this entry from \"Webnovel.com\" to \"Webnovel.com\" to update url"
+        private const val MIGRATE_MESSAGE = "Migrate this entry from \"Webnovel.com\" to \"Webnovel.com\" to update its URL"
 
         private val DIGIT_REGEX = "(\\d+)".toRegex()
 
