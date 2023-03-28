@@ -276,8 +276,9 @@ class ReaperScans : ParsedHttpSource() {
 
     // Page
     override fun pageListParse(document: Document): List<Page> {
+        document.select("noscript").remove()
         return document.select("img.max-w-full").mapIndexed { index, element ->
-            Page(index, imageUrl = element.attr("abs:src"))
+            Page(index, imageUrl = element.imgAttr())
         }
     }
 
@@ -323,6 +324,13 @@ class ReaperScans : ParsedHttpSource() {
             contains("year") -> cal.apply { add(Calendar.YEAR, -number) }.timeInMillis
             else -> 0
         }
+    }
+
+    fun Element.imgAttr(): String = when {
+        hasAttr("data-lazy-src") -> attr("abs:data-lazy-src")
+        hasAttr("data-src") -> attr("abs:data-src")
+        hasAttr("data-cfsrc") -> attr("abs:data-cfsrc")
+        else -> attr("abs:src")
     }
 
     // Unused
