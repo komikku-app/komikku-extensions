@@ -136,9 +136,14 @@ class APairOf2 : ParsedHttpSource() {
         return document.select(".swiper-slide img").mapIndexed { index, img ->
             Page(
                 index = index,
-                imageUrl = img.attr("src").let { "$baseUrl/$it" },
+                imageUrl = img.imgAttr()
             )
         }
+    }
+
+    private fun Element.imgAttr(): String = when {
+        hasAttr("data-pagespeed-lazy-src") -> attr("abs:data-pagespeed-lazy-src")
+        else -> attr("abs:src")
     }
 
     override fun imageUrlParse(document: Document): String {
