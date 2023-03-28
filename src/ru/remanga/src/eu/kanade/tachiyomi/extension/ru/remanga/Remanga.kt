@@ -365,7 +365,7 @@ class Remanga : ConfigurableSource, HttpSource() {
             .asObservable().doOnNext { response ->
                 if (!response.isSuccessful) {
                     response.close()
-                    if (response.code == 401) warnLogin = true else throw Exception("HTTP error ${response.code}")
+                    if (response.code == 404 && USER_ID == "") warnLogin = true else throw Exception("HTTP error ${response.code}")
                 }
             }
             .map { response ->
@@ -404,11 +404,15 @@ class Remanga : ConfigurableSource, HttpSource() {
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         val branch = branches.getOrElse(manga.url.substringAfter("/api/titles/").substringBefore("/").substringBefore("?")) { mangaBranches(manga) }
         return when {
-            manga.status == SManga.LICENSED && branch.isEmpty() -> {
+            manga.status == SManga.LICENSED && branch.maxByOrNull { selector(it) }!!.count_chapters == 0 -> {
                 Observable.error(Exception("Лицензировано - Нет глав"))
             }
             branch.isEmpty() -> {
-                return Observable.just(listOf())
+                if (USER_ID == "") {
+                    Observable.error(Exception("Для просмотра 18+ контента необходима авторизация через WebView"))
+                } else {
+                    return Observable.just(listOf())
+                }
             }
             else -> {
                 val mangaID = mangaIDs[manga.url.substringAfter("/api/titles/").substringBefore("/").substringBefore("?")]
