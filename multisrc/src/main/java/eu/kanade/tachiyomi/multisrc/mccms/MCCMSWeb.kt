@@ -21,7 +21,7 @@ open class MCCMSWeb(
     hasCategoryPage: Boolean = true,
 ) : MCCMS(name, baseUrl, lang, hasCategoryPage) {
 
-    fun parseListing(document: Document): MangasPage {
+    protected open fun parseListing(document: Document): MangasPage {
         val mangas = document.select(Evaluator.Class("common-comic-item")).map {
             SManga.create().apply {
                 val titleElement = it.selectFirst(Evaluator.Class("comic__title"))!!.child(0)
@@ -84,6 +84,12 @@ open class MCCMSWeb(
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         if (manga.url == "/index.php/search") return Observable.just(manga)
         return client.newCall(GET(baseUrl + manga.url, pcHeaders)).asObservableSuccess().map { response ->
+            mangaDetailsParse(response)
+        }
+    }
+
+    override fun mangaDetailsParse(response: Response): SManga {
+        return run {
             SManga.create().apply {
                 val document = response.asJsoup().selectFirst(Evaluator.Class("de-info__box"))!!
                 title = document.selectFirst(Evaluator.Class("comic-title"))!!.ownText()
@@ -98,6 +104,12 @@ open class MCCMSWeb(
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         if (manga.url == "/index.php/search") return Observable.just(emptyList())
         return client.newCall(GET(baseUrl + manga.url, pcHeaders)).asObservableSuccess().map { response ->
+            chapterListParse(response)
+        }
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        return run {
             response.asJsoup().selectFirst(Evaluator.Class("chapter__list-box"))!!.children().map {
                 val link = it.child(0)
                 SChapter.create().apply {

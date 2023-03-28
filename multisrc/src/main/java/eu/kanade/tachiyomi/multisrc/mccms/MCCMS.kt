@@ -18,7 +18,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
-import rx.Single
 import uy.kohesive.injekt.injectLazy
 import kotlin.concurrent.thread
 
@@ -49,13 +48,14 @@ open class MCCMS(
         .add("Referer", baseUrl)
 
     protected open fun SManga.cleanup(): SManga = this
+    protected open fun MangaDto.prepare(): MangaDto = this
 
     override fun popularMangaRequest(page: Int): Request =
         GET("$baseUrl/api/data/comic?page=$page&size=$PAGE_SIZE&order=hits", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
         val list: List<MangaDto> = response.parseAs()
-        return MangasPage(list.map { it.toSManga().cleanup() }, list.size >= PAGE_SIZE)
+        return MangasPage(list.map { it.prepare().toSManga().cleanup() }, list.size >= PAGE_SIZE)
     }
 
     override fun latestUpdatesRequest(page: Int): Request =
@@ -91,14 +91,14 @@ open class MCCMS(
             .toString()
         return client.newCall(GET(url, headers))
             .asObservableSuccess().map { response ->
-                val list: List<MangaDto> = response.parseAs()
+                val list = response.parseAs<List<MangaDto>>().map { it.prepare() }
                 list.find { it.url == manga.url }!!.toSManga().cleanup()
             }
     }
 
-    override fun mangaDetailsParse(response: Response) = throw UnsupportedOperationException("Not used.")
+    override fun mangaDetailsParse(response: Response): SManga = throw UnsupportedOperationException("Not used.")
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Single.create<List<SChapter>> { subscriber ->
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
         val id = getMangaId(manga.url)
         val dataResponse = client.newCall(GET("$baseUrl/api/data/chapter?mid=$id", headers)).execute()
         val dataList: List<ChapterDataDto> = dataResponse.parseAs() // unordered
@@ -107,12 +107,12 @@ open class MCCMS(
         val response = client.newCall(GET("$baseUrl/api/comic/chapter?mid=$id", headers)).execute()
         val list: List<ChapterDto> = response.parseAs()
         val result = list.map { it.toSChapter(date = dateMap[it.id.toInt()] ?: 0) }.asReversed()
-        subscriber.onSuccess(result)
-    }.toObservable()
+        result
+    }
 
     protected open fun getMangaId(url: String) = url.substringAfterLast('/')
 
-    override fun chapterListParse(response: Response) = throw UnsupportedOperationException("Not used.")
+    override fun chapterListParse(response: Response): List<SChapter> = throw UnsupportedOperationException("Not used.")
 
     override fun pageListRequest(chapter: SChapter): Request =
         GET(baseUrl + chapter.url, pcHeaders)

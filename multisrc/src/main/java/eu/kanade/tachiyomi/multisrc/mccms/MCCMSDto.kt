@@ -9,7 +9,8 @@ import java.util.Locale
 internal const val PAGE_SIZE = 30
 
 @Serializable
-class MangaDto(
+data class MangaDto(
+    val id: String,
     private val name: String,
     private val pic: String,
     private val serialize: String,
@@ -28,8 +29,8 @@ class MangaDto(
         val date = dateFormat.parse(addtime)?.time ?: 0
         val isUpdating = System.currentTimeMillis() - date <= 30L * 24 * 3600 * 1000 // a month
         status = when {
-            serialize.startsWith('连') || isUpdating -> SManga.ONGOING
-            serialize.startsWith('完') -> SManga.COMPLETED
+            '连' in serialize || isUpdating -> SManga.ONGOING
+            '完' in serialize -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
         thumbnail_url = pic
