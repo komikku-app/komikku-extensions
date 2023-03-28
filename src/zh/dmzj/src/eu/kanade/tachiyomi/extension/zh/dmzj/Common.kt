@@ -1,11 +1,14 @@
 package eu.kanade.tachiyomi.extension.zh.dmzj
 
+import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
 import java.net.URLDecoder
+import kotlin.math.max
 
 const val PREFIX_ID_SEARCH = "id:"
 
@@ -37,6 +40,29 @@ fun String.formatChapterName(): String {
     val (number, optionalType) = match.destructured
     val type = optionalType.ifEmpty { "话" }
     return "第$number$type"
+}
+
+private const val imageSmallUrl = "https://imgsmall.idmzj.com"
+
+fun parsePageList(
+    mangaId: Int,
+    chapterId: Int,
+    images: List<String>,
+    lowResImages: List<String>,
+): ArrayList<Page> {
+    // page count can be messy, see manga ID 55847 chapters 107-109
+    val pageCount = max(images.size, lowResImages.size)
+    val list = ArrayList<Page>(pageCount + 1) // for comments page
+    for (i in 0 until pageCount) {
+        val imageUrl = images.getOrNull(i)?.fixFilename()?.toHttps()
+        val lowResUrl = lowResImages.getOrElse(i) {
+            // this is sometimes different in low-res URLs and might fail, see manga ID 56649
+            val initial = imageUrl!!.decodePath().toHttpUrl().pathSegments[0]
+            "$imageSmallUrl/$initial/$mangaId/$chapterId/$i.jpg"
+        }.toHttps()
+        list.add(Page(i, url = lowResUrl, imageUrl = imageUrl ?: lowResUrl))
+    }
+    return list
 }
 
 fun String.toHttps() = "https:" + substringAfter(':')

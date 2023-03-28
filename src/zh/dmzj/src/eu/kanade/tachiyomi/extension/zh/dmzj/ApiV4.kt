@@ -10,16 +10,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoBuf
 import kotlinx.serialization.protobuf.ProtoNumber
 import kotlinx.serialization.serializer
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
-import kotlin.math.max
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 object ApiV4 {
 
     private const val v4apiUrl = "https://nnv4api.idmzj.com"
-    private const val imageSmallCDNUrl = "https://imgsmall.idmzj.com"
 
     fun mangaInfoUrl(id: String) = "$v4apiUrl/comic/detail/$id?uid=2665531"
 
@@ -136,21 +133,7 @@ object ApiV4 {
         @ProtoNumber(6) private val lowResImages: List<String>,
         @ProtoNumber(8) private val images: List<String>,
     ) {
-        // page count can be messy, see manga ID 55847 chapters 107-109
-        fun toPageList(): ArrayList<Page> {
-            val pageCount = max(images.size, lowResImages.size)
-            val list = ArrayList<Page>(pageCount + 1) // for comments page
-            for (i in 0 until pageCount) {
-                val imageUrl = images.getOrNull(i)?.fixFilename()?.toHttps()
-                val lowResUrl = lowResImages.getOrElse(i) {
-                    // this is sometimes different in low-res URLs and might fail, see manga ID 56649
-                    val initial = imageUrl!!.decodePath().toHttpUrl().pathSegments[0]
-                    "$imageSmallCDNUrl/$initial/$mangaId/$id/$i.jpg"
-                }.toHttps()
-                list.add(Page(i, url = lowResUrl, imageUrl = imageUrl ?: lowResUrl))
-            }
-            return list
-        }
+        fun toPageList() = parsePageList(mangaId, id, images, lowResImages)
     }
 
     // same as ApiV3.MangaDto
