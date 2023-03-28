@@ -17,6 +17,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -24,6 +25,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -57,11 +59,7 @@ class Kumanga : HttpSource() {
     private val json: Json by injectLazy()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:79.0) Gecko/20100101 Firefox/79.0")
-
-    private val chapterImagesHeaders = headersBuilder()
         .add("Referer", baseUrl)
-        .build()
 
     private var kumangaToken = ""
 
@@ -83,7 +81,7 @@ class Kumanga : HttpSource() {
         return kumangaToken
     }
 
-    private fun getMangaCover(mangaId: String) = "https://static.kumanga.com/manga_covers/$mangaId.jpg?w=201"
+    private fun getMangaCover(mangaId: String) = "$baseUrl/kumathumb.php?src=$mangaId"
 
     private fun getMangaUrl(mangaId: String, mangaSlug: String, page: Int) = "/manga/$mangaId/p/$page/$mangaSlug#cl"
 
@@ -97,6 +95,7 @@ class Kumanga : HttpSource() {
     }
 
     override fun popularMangaRequest(page: Int): Request {
+        getKumangaToken() // Get new token every request (prevent http 400)
         return POST("$baseUrl/backend/ajax/searchengine.php?page=$page&perPage=10&keywords=&retrieveCategories=true&retrieveAuthors=false&contentType=manga&token=$kumangaToken", headers)
     }
 
@@ -117,7 +116,7 @@ class Kumanga : HttpSource() {
 
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
         val body = response.asJsoup()
-
+        thumbnail_url = body.selectFirst("div.km-img-gral-2 img")?.attr("abs:src")
         body.select("div#tab2").let {
             status = parseStatus(it.select("span").text().orEmpty())
             author = it.select("p:nth-child(3) > a").text()
@@ -171,28 +170,46 @@ class Kumanga : HttpSource() {
 
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        val imagesJsonRaw = document.select("script:containsData(var pUrl=)").firstOrNull()
-            ?.data()
-            ?.substringAfter("var pUrl=")
-            ?.substringBefore(";")
-            ?.let { decodeBase64(decodeBase64(it).reversed().dropLast(10).drop(10)) }
-            ?: throw Exception("imagesJsonListStr null")
+        val form = document.selectFirst("form#myForm[action]")
+        if (form != null) {
+            val url = form.attr("action")
+            val bodyBuilder = FormBody.Builder()
+            val inputs = form.select("input")
+            inputs.map { input ->
+                bodyBuilder.add(input.attr("name"), input.attr("value"))
+            }
+            return pageListParse(client.newCall(POST(url, headers, bodyBuilder.build())).execute())
+        } else {
+            val imagesJsonRaw = document.select("script:containsData(var pUrl=)").firstOrNull()
+                ?.data()
+                ?.substringAfter("var pUrl=")
+                ?.substringBefore(";")
+                ?.let { decodeBase64(decodeBase64(it).reversed().dropLast(10).drop(10)) }
+                ?: throw Exception("imagesJsonListStr null")
 
-        val jsonResult = json.parseToJsonElement(imagesJsonRaw).jsonArray
+            val jsonResult = json.parseToJsonElement(imagesJsonRaw).jsonArray
 
-        return jsonResult.mapIndexed { i, jsonEl ->
-            val jsonObj = jsonEl.jsonObject
-            val imagePath = jsonObj["imgURL"]!!.jsonPrimitive.content.replace("\\", "")
-
-            Page(i, "", baseUrl + imagePath)
+            return jsonResult.mapIndexed { i, jsonEl ->
+                val jsonObj = jsonEl.jsonObject
+                val imagePath = jsonObj["imgURL"]!!.jsonPrimitive.content.replace("\\", "")
+                val docUrl = document.location()
+                val baseUrl = URL(docUrl).protocol + "://" + URL(docUrl).host // For some reason baseUri returns the full url
+                Page(i, baseUrl, "$baseUrl/$imagePath")
+            }
         }
     }
 
-    override fun imageRequest(page: Page) = GET(page.imageUrl!!, chapterImagesHeaders)
+    override fun imageRequest(page: Page): Request {
+        val imageHeaders = Headers.Builder()
+            .add("Referer", page.url)
+            .build()
+        return GET(page.imageUrl!!, imageHeaders)
+    }
 
     override fun imageUrlParse(response: Response) = throw Exception("Not Used")
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        getKumangaToken()
         val url = "$baseUrl/backend/ajax/searchengine.php?page=$page&perPage=10&keywords=$query&retrieveCategories=true&retrieveAuthors=false&contentType=manga&token=$kumangaToken".toHttpUrlOrNull()!!.newBuilder()
 
         filters.forEach { filter ->

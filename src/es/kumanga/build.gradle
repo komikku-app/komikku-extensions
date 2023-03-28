@@ -6,7 +6,7 @@ ext {
     extName = 'Kumanga'
     pkgNameSuffix = 'es.kumanga'
     extClass = '.Kumanga'
-    extVersionCode = 7
+    extVersionCode = 8
 }
 
 apply from: "$rootDir/common.gradle"
