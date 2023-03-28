@@ -524,10 +524,7 @@ class MangaDoom : HttpSource() {
                     ),
                 ).enqueue(
                     object : Callback {
-                        override fun onFailure(call: Call, e: IOException) {
-                            throw e
-                        }
-
+                        override fun onFailure(call: Call, e: IOException) = e.printStackTrace()
                         override fun onResponse(call: Call, response: Response) {
                             genreFilterContentFrom = response.receivedResponseAtMillis
                             genreFiltersContent = responseToGenreFilterContentPair(response)
