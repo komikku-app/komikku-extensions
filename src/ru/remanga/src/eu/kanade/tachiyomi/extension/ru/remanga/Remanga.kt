@@ -104,11 +104,12 @@ class Remanga : ConfigurableSource, HttpSource() {
 
     private val userAgentRandomizer = "${Random.nextInt().absoluteValue}"
 
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+    override fun headersBuilder(): Headers.Builder = Headers.Builder().apply {
         // Magic User-Agent, no change/update, does not cause 403
-        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 Edg/100.0.$userAgentRandomizer")
-        .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/jxl,image/webp,*/*;q=0.8")
-        .add("Referer", baseUrl.replace("api.", ""))
+        if (!preferences.getBoolean(userAgent_PREF, false)) { add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 Edg/100.0.$userAgentRandomizer") }
+        add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/jxl,image/webp,*/*;q=0.8")
+        add("Referer", baseUrl.replace("api.", ""))
+    }
 
     private fun exHeaders() = Headers.Builder()
         .set("User-Agent", "Tachiyomi")
@@ -162,6 +163,15 @@ class Remanga : ConfigurableSource, HttpSource() {
             .rateLimitHost(exManga.toHttpUrl(), 2)
             .addInterceptor { imageContentTypeIntercept(it) }
             .addInterceptor { authIntercept(it) }
+            .addNetworkInterceptor { chain ->
+                val originalRequest = chain.request()
+                val response = chain.proceed(originalRequest)
+                if (originalRequest.url.toString().contains(baseUrl) and ((response.code == 403) or (response.code == 500))) {
+                    val indicateUAgant = if (headers["User-Agent"].orEmpty().contains(userAgentRandomizer)) "☒" else "☑"
+                    throw IOException("HTTP error ${response.code}. Попробуйте сменить Домен ${baseUrl.replace(baseMirr.substringAfter("api."), "реманга.орг").substringAfter("//")} и/или User-Agent$indicateUAgant в настройках ⚙️ расширения.")
+                }
+                response
+            }
             .build()
 
     private val count = 30
@@ -349,7 +359,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 altName = "Альтернативные названия:\n" + another_name + "\n\n"
             }
             val mediaNameLanguage = if (isEng.equals("rus")) en_name else rus_name
-            this.description = mediaNameLanguage + "\n" + ratingStar + " " + ratingValue + " (голосов: " + count_rating + ")\n" + altName + Jsoup.parse(o.description).text()
+            this.description = mediaNameLanguage + "\n" + ratingStar + " " + ratingValue + " (голосов: " + count_rating + ")\n" + altName + Jsoup.parse(o.description.replace("<p>", "").replace("</p>", "REPLACbR")).text().replace("REPLACbR", "\n")
             genre = (parseType(type) + ", " + parseAge(age_limit) + ", " + (genres + categories).joinToString { it.name }).split(", ").filter { it.isNotEmpty() }.joinToString { it.trim() }
             status = parseStatus(o.status.id)
         }
@@ -420,7 +430,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                     try {
                         json.decodeFromString<SeriesExWrapperDto<List<ExBookDto>>>(client.newCall(GET("$exManga/chapter/history/$mangaID", exHeaders())).execute().body.string()).data
                     } catch (_: Exception) {
-                        throw Exception("Домен $exManga сервиса ExManga недоступен, выберите другой в настройках расширения")
+                        throw Exception("Домен ${exManga.substringAfter("//")} сервиса ExManga недоступен, выберите другой в настройках ⚙️ расширения")
                     }
                 } else {
                     emptyList()
@@ -846,23 +856,29 @@ class Remanga : ConfigurableSource, HttpSource() {
     )
     private var isEng: String? = preferences.getString(LANGUAGE_PREF, "eng")
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
+        val userAgentSystem = androidx.preference.CheckBoxPreference(screen.context).apply {
+            key = userAgent_PREF
+            title = "User-Agent приложения"
+            summary = "Использует User-Agent приложения, прописанный в настройках приложения (Настройки -> Дополнительно)"
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val warning = "Для смены User-Agent(а) необходимо перезапустить приложение с полной остановкой."
+                Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
+                true
+            }
+        }
         val domainPref = ListPreference(screen.context).apply {
             key = DOMAIN_PREF
             title = "Выбор домена"
-            entries = arrayOf("Основной (remanga.org)", "Зеркало (реманга.орг)")
-            entryValues = arrayOf(baseOrig, baseMirr)
+            entries = arrayOf("Основной (remanga.org)", "Основной (api.remanga.org)", "Зеркало (реманга.орг)", "Зеркало (api.реманга.орг)")
+            entryValues = arrayOf(baseOrig.replace("api.", ""), baseOrig, baseMirr.replace("api.", ""), baseMirr)
             summary = "%s"
-            setDefaultValue(baseOrig)
+            setDefaultValue(baseOrig.replace("api.", ""))
             setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val res = preferences.edit().putString(DOMAIN_PREF, newValue as String).commit()
-                    val warning = "Для смены домена необходимо перезапустить приложение с полной остановкой."
-                    Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
-                    res
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
+                val warning = "Для смены домена необходимо перезапустить приложение с полной остановкой."
+                Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
+                true
             }
         }
         val titleLanguagePref = ListPreference(screen.context).apply {
@@ -873,10 +889,9 @@ class Remanga : ConfigurableSource, HttpSource() {
             summary = "%s"
             setDefaultValue("eng")
             setOnPreferenceChangeListener { _, newValue ->
-                val titleLanguage = preferences.edit().putString(LANGUAGE_PREF, newValue as String).commit()
                 val warning = "Если язык обложки не изменился очистите базу данных в приложении (Настройки -> Дополнительно -> Очистить базу данных)"
                 Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
-                titleLanguage
+                true
             }
         }
         val paidChapterShow = androidx.preference.CheckBoxPreference(screen.context).apply {
@@ -884,11 +899,6 @@ class Remanga : ConfigurableSource, HttpSource() {
             title = "Показывать все платные главы"
             summary = "Показывает не купленные\uD83D\uDCB2 главы(может вызвать ошибки при обновлении/автозагрузке)"
             setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit().putBoolean(key, checkValue).commit()
-            }
         }
         val exChapterShow = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = exPAID_PREF
@@ -897,11 +907,6 @@ class Remanga : ConfigurableSource, HttpSource() {
                 "ⓘЧастично отображает не купленные\uD83D\uDCB2 главы для соблюдения порядка глав. \n\n" +
                 "ⓘТакже отправляет купленные главы из Tachiyomi в ExManga."
             setDefaultValue(true)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit().putBoolean(key, checkValue).commit()
-            }
         }
         val domainExPref = ListPreference(screen.context).apply {
             key = exDOMAIN_PREF
@@ -911,15 +916,9 @@ class Remanga : ConfigurableSource, HttpSource() {
             summary = "%s"
             setDefaultValue(baseRuss)
             setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val res = preferences.edit().putString(exDOMAIN_PREF, newValue as String).commit()
-                    val warning = "Для смены домена необходимо перезапустить приложение с полной остановкой."
-                    Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
-                    res
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
+                val warning = "Для смены домена необходимо перезапустить приложение с полной остановкой."
+                Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
+                true
             }
         }
         val bookmarksHide = androidx.preference.CheckBoxPreference(screen.context).apply {
@@ -927,12 +926,8 @@ class Remanga : ConfigurableSource, HttpSource() {
             title = "Скрыть «Закладки»"
             summary = "Скрывает мангу находящуюся в закладках пользователя на сайте."
             setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit().putBoolean(key, checkValue).commit()
-            }
         }
+        screen.addPreference(userAgentSystem)
         screen.addPreference(domainPref)
         screen.addPreference(titleLanguagePref)
         screen.addPreference(paidChapterShow)
@@ -948,6 +943,8 @@ class Remanga : ConfigurableSource, HttpSource() {
         private var USER_ID = ""
 
         const val PREFIX_SLUG_SEARCH = "slug:"
+
+        private const val userAgent_PREF = "UAgent"
 
         private const val DOMAIN_PREF = "REMangaDomain"
 
