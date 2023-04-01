@@ -7,9 +7,8 @@ import java.util.Locale
 
 class SushiScan : MangaThemesia("Sushi-Scan", "https://sushiscan.ru", "fr", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.FRENCH)) {
     override val altNamePrefix = "Nom alternatif : "
-    override val seriesStatusSelector = ".tsinfo .imptdt:contains(Statut)"
-    override val seriesArtistSelector = ".tsinfo .imptdt:contains(Dessinateur) i"
-
+    override val seriesAuthorSelector = ".infotable tr:contains(Auteur) td:last-child"
+    override val seriesStatusSelector = ".infotable tr:contains(Statut) td:last-child"
     override fun String?.parseStatus(): Int = when {
         this == null -> SManga.UNKNOWN
         this.contains("En Cours", ignoreCase = true) -> SManga.ONGOING
