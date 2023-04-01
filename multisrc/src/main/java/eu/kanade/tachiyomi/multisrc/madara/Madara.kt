@@ -719,6 +719,7 @@ abstract class Madara(
     protected val completedStatusList: Array<String> = arrayOf(
         "Completed",
         "Completo",
+        "Completado",
         "Concluído",
         "Concluido",
         "Terminé",
@@ -730,15 +731,19 @@ abstract class Madara(
     protected val ongoingStatusList: Array<String> = arrayOf(
         "OnGoing", "Продолжается", "Updating", "Em Lançamento", "Em lançamento", "Em andamento",
         "Em Andamento", "En cours", "Ativo", "Lançando", "Đang Tiến Hành", "Devam Ediyor",
-        "Devam ediyor", "In Corso", "In Arrivo", "مستمرة", "مستمر", "En Curso",
+        "Devam ediyor", "In Corso", "In Arrivo", "مستمرة", "مستمر", "En Curso", "Emision",
+        "En marcha",
     )
 
     protected val hiatusStatusList: Array<String> = arrayOf(
         "On Hold",
+        "Pausado",
+        "En espera",
     )
 
     protected val canceledStatusList: Array<String> = arrayOf(
         "Canceled",
+        "Cancelado",
     )
 
     override fun mangaDetailsParse(document: Document): SManga {
