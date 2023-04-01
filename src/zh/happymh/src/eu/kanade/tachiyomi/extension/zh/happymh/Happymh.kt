@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.zh.happymh
 
 import android.app.Application
+import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
@@ -139,10 +140,22 @@ class Happymh : HttpSource(), ConfigurableSource {
     override fun imageUrlParse(response: Response): String = throw Exception("Not Used")
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        EditTextPreference(screen.context).apply {
+        val context = screen.context
+
+        EditTextPreference(context).apply {
             key = USER_AGENT_PREF
             title = "User Agent"
-            summary = "留空则使用应用设置中的默认 User Agent"
+            summary = "留空则使用应用设置中的默认 User Agent，重启生效"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    Headers.Builder().add("User-Agent", newValue as String)
+                    true
+                } catch (e: Throwable) {
+                    Toast.makeText(context, "User Agent 无效：${e.message}", Toast.LENGTH_LONG).show()
+                    false
+                }
+            }
         }.let(screen::addPreference)
     }
 
