@@ -2,8 +2,6 @@ package eu.kanade.tachiyomi.extension.zh.zerobyw
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.net.Uri
-import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -13,6 +11,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -23,76 +22,79 @@ import uy.kohesive.injekt.api.get
 class Zerobyw : ParsedHttpSource(), ConfigurableSource {
     override val name: String = "zero搬运网"
     override val lang: String = "zh"
-    override val supportsLatest: Boolean = false
+    override val supportsLatest: Boolean get() = false
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-    // Url can be found at https://cdn.jsdelivr.net/gh/zerozzz123456/1/url.json
-    // or just search for "zerobyw" in google
-    private val defaultBaseUrl = "http://www.zerobywblac.com"
+    override val client = network.cloudflareClient.newBuilder()
+        .addInterceptor(UpdateUrlInterceptor(preferences))
+        .build()
 
-    override val baseUrl = preferences.getString("ZEROBYW_BASEURL", defaultBaseUrl)!!
+    override val baseUrl get() = when {
+        isCi -> ciGetUrl(client)
+        else -> preferences.baseUrl
+    }
+
+    private val isCi = System.getenv("CI") == "true"
 
     // Popular
     // Website does not provide popular manga, this is actually latest manga
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/plugin.php?id=jameson_manhua&c=index&a=ku&&page=$page", headers)
+    override fun popularMangaRequest(page: Int) = GET("$baseUrl/plugin.php?id=jameson_manhua&c=index&a=ku&page=$page", headers)
     override fun popularMangaNextPageSelector(): String = "div.pg > a.nxt"
     override fun popularMangaSelector(): String = "div.uk-card"
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = getTitle(element.select("p.mt5 > a").text())
-        setUrlWithoutDomain(element.select("p.mt5 > a").attr("abs:href"))
-        thumbnail_url = element.select("img").attr("src")
+        val link = element.selectFirst("p.mt5 > a")!!
+        title = getTitle(link.text())
+        setUrlWithoutDomain(link.absUrl("href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
     }
 
     // Latest
 
-    override fun latestUpdatesRequest(page: Int) = throw Exception("Not used")
-    override fun latestUpdatesNextPageSelector() = throw Exception("Not used")
-    override fun latestUpdatesSelector() = throw Exception("Not used")
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
+    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException()
+    override fun latestUpdatesSelector() = throw UnsupportedOperationException()
+    override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException()
 
     // Search
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val uri = Uri.parse(baseUrl).buildUpon()
+        val builder = "$baseUrl/plugin.php".toHttpUrl().newBuilder()
+            .addEncodedQueryParameter("id", "jameson_manhua")
         if (query.isNotBlank()) {
-            uri.appendPath("plugin.php")
-                .appendQueryParameter("id", "jameson_manhua")
-                .appendQueryParameter("a", "search")
-                .appendQueryParameter("c", "index")
-                .appendQueryParameter("keyword", query)
-                .appendQueryParameter("page", page.toString())
+            builder
+                .addEncodedQueryParameter("a", "search")
+                .addEncodedQueryParameter("c", "index")
+                .addQueryParameter("keyword", query)
         } else {
-            uri.appendPath("plugin.php")
-                .appendQueryParameter("id", "jameson_manhua")
-                .appendQueryParameter("c", "index")
-                .appendQueryParameter("a", "ku")
+            builder
+                .addEncodedQueryParameter("c", "index")
+                .addEncodedQueryParameter("a", "ku")
             filters.forEach {
                 if (it is UriSelectFilterPath && it.toUri().second.isNotEmpty()) {
-                    uri.appendQueryParameter(it.toUri().first, it.toUri().second)
+                    builder.addQueryParameter(it.toUri().first, it.toUri().second)
                 }
             }
-            uri.appendQueryParameter("page", page.toString())
         }
-        return GET(uri.toString(), headers)
+        builder.addEncodedQueryParameter("page", page.toString())
+        return GET(builder.build(), headers)
     }
 
     override fun searchMangaNextPageSelector(): String = "div.pg > a.nxt"
     override fun searchMangaSelector(): String = "a.uk-card, div.uk-card"
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = getTitle(element.select("p.mt5").text())
-        setUrlWithoutDomain(element.select("a").attr("abs:href"))
-        thumbnail_url = element.select("img").attr("src")
+        title = getTitle(element.selectFirst("p.mt5")!!.text())
+        setUrlWithoutDomain(element.selectFirst("a")!!.absUrl("href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
     }
 
     // Details
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        title = getTitle(document.select("li.uk-active > h3.uk-heading-line").text())
-        thumbnail_url = document.select("div.uk-width-medium > img").attr("abs:src")
+        title = getTitle(document.selectFirst("h3.uk-heading-line")!!.text())
+        thumbnail_url = document.selectFirst("div.uk-width-medium > img")!!.absUrl("src")
         author = document.selectFirst("div.cl > a.uk-label")!!.text().substring(3)
-        artist = author
         genre = document.select("div.cl > a.uk-label, div.cl > span.uk-label").eachText().joinToString(", ")
         description = document.select("li > div.uk-alert").html().replace("<br>", "")
         status = when (document.select("div.cl > span.uk-label").last()!!.text()) {
@@ -106,16 +108,16 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
 
     override fun chapterListSelector(): String = "div.uk-grid-collapse > div.muludiv"
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        setUrlWithoutDomain(element.select("a.uk-button-default").attr("abs:href"))
-        name = element.select("a.uk-button-default").text()
+        setUrlWithoutDomain(element.selectFirst("a.uk-button-default")!!.absUrl("href"))
+        name = element.selectFirst("a.uk-button-default")!!.text()
     }
     override fun chapterListParse(response: Response): List<SChapter> {
-        return super.chapterListParse(response).reversed()
+        return super.chapterListParse(response).asReversed()
     }
 
     // Pages
 
-    override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
+    override fun pageListParse(document: Document): List<Page> {
         val images = document.select("div.uk-text-center > img")
         if (images.size == 0) {
             var message = document.select("div#messagetext > p")
@@ -126,12 +128,12 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
                 throw Exception(message.text())
             }
         }
-        images.forEach {
-            add(Page(size, "", it.attr("src")))
+        return images.mapIndexed { index, img ->
+            Page(index, imageUrl = img.attr("src"))
         }
     }
 
-    override fun imageUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // Filters
 
@@ -199,23 +201,18 @@ class Zerobyw : ParsedHttpSource(), ConfigurableSource {
         fun toUri() = Pair(key, vals[state].first)
     }
 
+    private val commentRegex = Regex("【\\d+")
+
     private fun getTitle(title: String): String {
-        val result = Regex("【\\d+").find(title)
+        val result = commentRegex.find(title)
         return if (result != null) {
-            title.substringBefore(result.value)
+            title.substring(0, result.range.first)
         } else {
-            title.substringBefore("【")
+            title.substringBefore('【')
         }
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        EditTextPreference(screen.context)
-            .apply {
-                key = "ZEROBYW_BASEURL"
-                title = "zerobyw网址"
-                setDefaultValue(defaultBaseUrl)
-                summary = "可在 https://cdn.jsdelivr.net/gh/zerozzz123456/1/url.json 中找到网址，或者通过google搜索\"zerobyw\"得到"
-            }
-            .let { screen.addPreference(it) }
+        screen.addPreference(getBaseUrlPreference(screen.context))
     }
 }
