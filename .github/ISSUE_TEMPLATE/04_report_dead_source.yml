@@ -1,27 +1,40 @@
-name: ⭐ Feature request
-description: Suggest a feature to improve an existing source
-labels: [Feature request]
+name: ❌ Dead source report
+description: Source is down and website is closed
+labels: [Source is down]
 body:
+
+  - type: markdown
+    attributes:
+      value: |
+        ### Notice
+        If you have a lot of dead sources to report, please go back and submit a single meta request.
 
   - type: input
     id: source
     attributes:
-      label: Source name and language
+      label: Source name
       description: |
         You can find the extension name in **Browse → Extensions**.
       placeholder: |
-        Example: "Mangahere (English)"
+        Example: "NotRealScans"
     validations:
       required: true
 
-  - type: textarea
-    id: feature-description
+  - type: input
+    id: language
     attributes:
-      label: Describe your suggested feature
-      description: How can an existing extension be improved?
+      label: Source language
       placeholder: |
-        Example:
-          "It should work like this..."
+        Example: "English"
+    validations:
+      required: true
+
+  - type: input
+    id: link
+    attributes:
+      label: Source link
+      placeholder: |
+        Example: "https://notrealscans.org"
     validations:
       required: true
 
@@ -40,11 +53,11 @@ body:
       options:
         - label: I have searched the existing issues and this is a new ticket, **NOT** a duplicate or related to another open or closed issue.
           required: true
-        - label: I have written a short but informative title.
+        - label: I have written a title with source name.
           required: true
-        - label: If this is an issue with the app itself, I should be opening an issue in the [app repository](https://github.com/tachiyomiorg/tachiyomi/issues/new/choose).
+        - label: I have updated all installed extensions.
           required: true
-        - label: I have updated the app to version **[0.14.5](https://github.com/tachiyomiorg/tachiyomi/releases/latest)**.
+        - label: I have opened WebView and checked that the source website is down.
           required: true
         - label: I will fill out all of the requested information in this form.
           required: true

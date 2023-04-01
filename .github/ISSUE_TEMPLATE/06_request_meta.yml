@@ -1,25 +1,16 @@
-name: 🔗 URL change report
-description: Report a URL change for an existing source
-labels: [Bug,Domain changed]
+name: 🧠 Meta request
+description: Suggest improvements to the project
+labels: [Meta request]
 body:
 
-  - type: input
-    id: source
+  - type: textarea
+    id: feature-description
     attributes:
-      label: Source information and language
-      description: |
-        You can find the extension name and version in **Browse → Extensions**.
+      label: Describe why this should be added
+      description: How can the project be improved?
       placeholder: |
-        Example: "NotRealScans 1.3.1 (English)"
-    validations:
-      required: true
-
-  - type: input
-    id: link
-    attributes:
-      label: Source new URL
-      placeholder: |
-        Example: "https://notrealscans.org"
+        Example:
+          "It should work like this..."
     validations:
       required: true
 
@@ -40,9 +31,11 @@ body:
           required: true
         - label: I have written a short but informative title.
           required: true
-        - label: I have updated all installed extensions.
+        - label: If this is an issue with the app itself, I should be opening an issue in the [app repository](https://github.com/tachiyomiorg/tachiyomi/issues/new/choose).
           required: true
-        - label: I have checked if the source URL is not already updated by opening WebView.
+        - label: I have updated the app to version **[0.14.5](https://github.com/tachiyomiorg/tachiyomi/releases/latest)**.
+          required: true
+        - label: I have updated all installed extensions.
           required: true
         - label: I will fill out all of the requested information in this form.
           required: true

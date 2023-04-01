@@ -24,7 +24,7 @@ body:
   - type: input
     id: language
     attributes:
-      label: Language
+      label: Source language
       placeholder: |
         Example: "English"
     validations:

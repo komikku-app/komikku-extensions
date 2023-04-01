@@ -1,13 +1,33 @@
-name: 🧠 Meta feature request
-description: Suggest improvements to the project
-labels: [Meta request]
+name: ⭐ Feature request
+description: Suggest a feature to improve an existing source
+labels: [Feature request]
 body:
+
+  - type: input
+    id: source
+    attributes:
+      label: Source name
+      description: |
+        You can find the extension name in **Browse → Extensions**.
+      placeholder: |
+        Example: "Mangahere"
+    validations:
+      required: true
+
+  - type: input
+    id: language
+    attributes:
+      label: Source language
+      placeholder: |
+        Example: "English"
+    validations:
+      required: true
 
   - type: textarea
     id: feature-description
     attributes:
-      label: Describe why this should be added
-      description: How can the project be improved?
+      label: Describe your suggested feature
+      description: How can an existing extension be improved?
       placeholder: |
         Example:
           "It should work like this..."
@@ -34,8 +54,6 @@ body:
         - label: If this is an issue with the app itself, I should be opening an issue in the [app repository](https://github.com/tachiyomiorg/tachiyomi/issues/new/choose).
           required: true
         - label: I have updated the app to version **[0.14.5](https://github.com/tachiyomiorg/tachiyomi/releases/latest)**.
-          required: true
-        - label: I have updated all installed extensions.
           required: true
         - label: I will fill out all of the requested information in this form.
           required: true
