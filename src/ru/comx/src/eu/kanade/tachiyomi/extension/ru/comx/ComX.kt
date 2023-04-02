@@ -305,6 +305,9 @@ class ComX : ParsedHttpSource() {
             if (chapter.name.isEmpty()) {
                 chapter.name = it.jsonObject["title"]!!.jsonPrimitive.content
             }
+            if (chapter.name == "[перевода не существует]") {
+                chapter.name = it.jsonObject["title"]!!.jsonPrimitive.content + " " + "[перевода не существует]"
+            }
             chapter.date_upload = simpleDateFormat.parse(it.jsonObject["date"]!!.jsonPrimitive.content)?.time ?: 0L
             chapter.chapter_number = it.jsonObject["posi"]!!.jsonPrimitive.float
             chapter.setUrlWithoutDomain("/readcomix/" + data["news_id"] + "/" + it.jsonObject["id"]!!.jsonPrimitive.content + ".html")
