@@ -117,7 +117,7 @@ abstract class GroupLe(
         }
 
         val ratingValue =
-            infoElement.select(".col-sm-7 .rating-block").attr("data-score").toFloat() * 2
+            infoElement.select(".rating-block").attr("data-score").toFloat() * 2
         val ratingValueOver =
             infoElement.select(".info-icon").attr("data-content").substringBeforeLast("/5</b><br/>")
                 .substringAfterLast(": <b>").replace(",", ".").toFloat() * 2
