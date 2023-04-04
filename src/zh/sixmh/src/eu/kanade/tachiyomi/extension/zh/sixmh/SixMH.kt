@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.extension.zh.sixmh
 import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.lib.unpacker.Unpacker
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -37,9 +36,15 @@ class SixMH : HttpSource(), ConfigurableSource {
     override val lang = "zh"
     override val supportsLatest = true
 
+    private val isCi = System.getenv("CI") == "true"
+    override val baseUrl get() = when {
+        isCi -> MIRRORS.zip(MIRROR_NAMES) { domain, name -> "http://www.$domain#$name" }.joinToString()
+        else -> _baseUrl
+    }
+
     private val mirrorIndex: Int
     private val pcUrl: String
-    override val baseUrl: String
+    private val _baseUrl: String
 
     init {
         val preferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -53,7 +58,7 @@ class SixMH : HttpSource(), ConfigurableSource {
 
         mirrorIndex = index
         pcUrl = "http://www.$domain"
-        baseUrl = "http://$domain"
+        _baseUrl = "http://$domain"
     }
 
     private val json: Json by injectLazy()
@@ -164,7 +169,7 @@ class SixMH : HttpSource(), ConfigurableSource {
             }
         }
 
-        if (isNewDateLogic && list.isNotEmpty()) {
+        if (list.isNotEmpty()) {
             document.selectFirst(".cy_zhangjie_top font")?.run {
                 list[0].date_upload = dateFormat.parse(ownText())?.time ?: 0
             }
@@ -211,7 +216,6 @@ class SixMH : HttpSource(), ConfigurableSource {
         val MIRRORS get() = arrayOf("6mh67.com", "qiximh3.com")
         val MIRROR_NAMES get() = arrayOf("6漫画", "七夕漫画")
 
-        private val isNewDateLogic = AppInfo.getVersionCode() >= 81
         private val dateFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH) }
     }
 }

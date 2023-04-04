@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import com.github.stevenyomi.baozibanner.BaoziBanner
-import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -77,7 +76,6 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
                     }
                 }
             }
-            if (!isNewDateLogic) return@apply
             val date = document.select("em").text()
             if (date.contains('年')) {
                 this[0].date_upload = date.removePrefix("(").removeSuffix(" 更新)")
@@ -282,6 +280,5 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
         private const val CHAPTER_ORDER_AGGRESSIVE = "2"
 
         private val DATE_FORMAT by lazy { SimpleDateFormat("yyyy年MM月dd日", Locale.ENGLISH) }
-        private val isNewDateLogic = AppInfo.getVersionCode() >= 81
     }
 }

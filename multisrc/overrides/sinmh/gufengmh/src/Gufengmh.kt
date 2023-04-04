@@ -9,7 +9,7 @@ import org.jsoup.nodes.Document
 import rx.Observable
 import rx.Single
 
-class Gufengmh : SinMH("古风漫画网", "https://www.123gf.com") {
+class Gufengmh : SinMH("古风漫画网", "https://www.gufengmh.com") {
 
     override fun mangaDetailsParse(document: Document): SManga =
         super.mangaDetailsParse(document).apply {

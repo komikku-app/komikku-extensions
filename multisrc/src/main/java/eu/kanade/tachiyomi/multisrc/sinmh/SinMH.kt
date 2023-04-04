@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.multisrc.sinmh
 
-import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
@@ -166,7 +165,7 @@ abstract class SinMH(
         val list = document.select(sectionSelector).sectionsDescending().flatMap { section ->
             section.select(itemSelector).map { chapterFromElement(it) }.sortedDescending()
         }
-        if (isNewDateLogic && list.isNotEmpty()) {
+        if (list.isNotEmpty()) {
             val date = document.selectFirst(dateSelector)!!.textNodes().last().text()
             list[0].date_upload = DATE_FORMAT.parse(date)?.time ?: 0L
         }
@@ -267,7 +266,6 @@ abstract class SinMH(
 
     companion object {
         private val DATE_FORMAT by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH) }
-        private val isNewDateLogic = AppInfo.getVersionCode() >= 81
         private val sortNames = arrayOf("按发布排序", "按发布排序(逆序)", "按更新排序", "按更新排序(逆序)", "按点击排序", "按点击排序(逆序)")
         private val sortKeys = arrayOf("post/", "-post/", "update/", "-update/", "click/", "-click/")
     }

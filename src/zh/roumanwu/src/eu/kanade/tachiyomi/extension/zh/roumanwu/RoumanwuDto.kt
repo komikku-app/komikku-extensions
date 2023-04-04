@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.zh.roumanwu
 
-import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -46,7 +45,7 @@ data class Book(
             name = it
         }
     }.apply {
-        if (isNewDateLogic && !updatedAt.isNullOrBlank()) {
+        if (!updatedAt.isNullOrBlank()) {
             this[lastIndex].date_upload = DATE_FORMAT.parse(updatedAt)?.time ?: 0L
         }
     }
@@ -57,16 +56,6 @@ data class Book(
 
     companion object {
         private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH)
-        private val isNewDateLogic = run {
-            val commitCount = AppInfo.getVersionName().substringAfter('-', "")
-            if (commitCount.isNotEmpty()) {
-                // Preview
-                commitCount.toInt() >= 4442
-            } else {
-                // Stable
-                AppInfo.getVersionCode() >= 81
-            }
-        }
     }
 }
 

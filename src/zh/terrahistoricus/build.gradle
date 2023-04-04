@@ -6,7 +6,7 @@ ext {
     extName = 'Terra Historicus'
     pkgNameSuffix = 'zh.terrahistoricus'
     extClass = '.TerraHistoricus'
-    extVersionCode = 2
+    extVersionCode = 3
 }
 
 apply from: "$rootDir/common.gradle"

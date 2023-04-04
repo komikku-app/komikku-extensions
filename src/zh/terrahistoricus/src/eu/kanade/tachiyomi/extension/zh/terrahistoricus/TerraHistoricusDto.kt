@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.zh.terrahistoricus
 
-import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.Serializable
@@ -57,23 +56,11 @@ data class THComic(
             }
         }
     }.apply {
-        if (isNewDateLogic) {
-            this[0].date_upload = (updateTime ?: 0L) * 1000
-        }
+        this[0].date_upload = (updateTime ?: 0L) * 1000
     }
 
     companion object {
         private val EPISODE_TYPES = arrayOf("", "正篇", "番外", "贺图", "公告")
-        private val isNewDateLogic = run {
-            val commitCount = AppInfo.getVersionName().substringAfter('-', "")
-            if (commitCount.isNotEmpty()) {
-                // Preview
-                commitCount.toInt() >= 4442
-            } else {
-                // Stable
-                AppInfo.getVersionCode() >= 81
-            }
-        }
     }
 }
 
