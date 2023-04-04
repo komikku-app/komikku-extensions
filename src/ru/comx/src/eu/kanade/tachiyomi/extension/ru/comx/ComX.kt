@@ -298,18 +298,37 @@ class ComX : ParsedHttpSource() {
 
         val data = json.decodeFromString<JsonObject>(dataStr)
         val chaptersList = data["chapters"]?.jsonArray
+
+        // If chapter name starts with #number or every chapter starts with same name before #number then it is not crossover-event
+        fun checkCrossEvent(strTitKey: String): Boolean {
+            return !(
+                chaptersList.orEmpty().any {
+                    it.jsonObject[strTitKey]!!.jsonPrimitive.content.startsWith("#")
+                } || chaptersList.orEmpty().all {
+                    it.jsonObject[strTitKey]!!.jsonPrimitive.content.substringBefore('#') ==
+                        chaptersList!![0].jsonObject[strTitKey]!!.jsonPrimitive.content.substringBefore('#')
+                }
+                )
+        }
+
+        val isCrossoverEvent = checkCrossEvent("title_en") || checkCrossEvent("title")
+
         val chapters: List<SChapter>? = chaptersList?.map {
             val chapter = SChapter.create()
-            // title_en is full chapter name, no english name
-            chapter.name = it.jsonObject["title_en"]!!.jsonPrimitive.content
-            if (chapter.name.isEmpty()) {
-                chapter.name = it.jsonObject["title"]!!.jsonPrimitive.content
-            }
-            if (chapter.name == "[перевода не существует]") {
-                chapter.name = it.jsonObject["title"]!!.jsonPrimitive.content + " " + "[перевода не существует]"
+            // Usually "title" is main chapter name info, "title_en" is additional chapter name info.
+            // I decided to keep them both because who knows where they decided to put useful info today.
+            // Except when they are the same.
+            chapter.name = if (it.jsonObject["title"]!!.jsonPrimitive.content == it.jsonObject["title_en"]!!.jsonPrimitive.content) {
+                it.jsonObject["title"]!!.jsonPrimitive.content
+            } else {
+                it.jsonObject["title"]!!.jsonPrimitive.content + " " + it.jsonObject["title_en"]!!.jsonPrimitive.content
             }
             chapter.date_upload = simpleDateFormat.parse(it.jsonObject["date"]!!.jsonPrimitive.content)?.time ?: 0L
             chapter.chapter_number = it.jsonObject["posi"]!!.jsonPrimitive.float
+            // when it is Crossover-Event add reading order numbers as prefix
+            if (isCrossoverEvent) {
+                chapter.name = chapter.chapter_number.toInt().toString() + " " + chapter.name
+            }
             chapter.setUrlWithoutDomain("/readcomix/" + data["news_id"] + "/" + it.jsonObject["id"]!!.jsonPrimitive.content + ".html")
             chapter
         }
