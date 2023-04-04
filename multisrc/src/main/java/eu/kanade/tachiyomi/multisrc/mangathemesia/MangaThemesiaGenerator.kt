@@ -89,7 +89,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Ngomik", "https://ngomik.net", "id", overrideVersionCode = 2),
         SingleLang("NIGHT SCANS", "https://nightscans.org", "en", isNsfw = true, className = "NightScans", overrideVersionCode = 1),
         SingleLang("Nocturnal Scans", "https://nocturnalscans.com", "en", overrideVersionCode = 1),
-        SingleLang("Omega Scans", "https://omegascans.org", "en", isNsfw = true),
         SingleLang("Origami Orpheans", "https://origami-orpheans.com.br", "pt-BR", overrideVersionCode = 9),
         SingleLang("Ozul Scans", "https://ozulscans.com", "ar"),
         SingleLang("Patatescans", "https://patatescans.com", "fr", isNsfw = true, overrideVersionCode = 2),
