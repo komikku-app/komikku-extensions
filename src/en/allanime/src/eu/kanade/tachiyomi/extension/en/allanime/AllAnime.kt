@@ -22,6 +22,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -81,33 +82,16 @@ class AllAnime : ConfigurableSource, HttpSource() {
             put("query", POPULAR_QUERY)
         }
 
-        val body = payload.toString().toRequestBody(JSON_MEDIA_TYPE)
-
-        val newHeaders = headersBuilder()
-            .add("Content-Length", body.contentLength().toString())
-            .add("Content-Type", body.contentType().toString())
-            .build()
-
-        return POST(apiUrl, newHeaders, body)
+        return apiRequest(payload)
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
         val result = json.decodeFromString<ApiPopularResponse>(response.body.string())
 
-        val titleStyle = preferences.getString(TITLE_PREF, "romaji")!!
-
         val mangaList = result.data.queryPopular.recommendations
             .mapNotNull { it.anyCard }
             .map { manga ->
-                SManga.create().apply {
-                    title = when (titleStyle) {
-                        "romaji" -> manga.name
-                        "eng" -> manga.englishName ?: manga.name
-                        else -> manga.nativeName ?: manga.name
-                    }
-                    url = "/manga/${manga._id}/${manga.name.titleToSlug()}"
-                    thumbnail_url = manga.thumbnail.parseThumbnailUrl()
-                }
+                toSManga(manga)
             }
 
         return MangasPage(mangaList, mangaList.size == limit)
@@ -173,32 +157,15 @@ class AllAnime : ConfigurableSource, HttpSource() {
             put("query", SEARCH_QUERY)
         }
 
-        val body = payload.toString().toRequestBody(JSON_MEDIA_TYPE)
-
-        val newHeaders = headersBuilder()
-            .add("Content-Length", body.contentLength().toString())
-            .add("Content-Type", body.contentType().toString())
-            .build()
-
-        return POST(apiUrl, newHeaders, body)
+        return apiRequest(payload)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
         val result = json.decodeFromString<ApiSearchResponse>(response.body.string())
 
-        val titleStyle = preferences.getString(TITLE_PREF, "romaji")!!
-
         val mangaList = result.data.mangas.edges
             .map { manga ->
-                SManga.create().apply {
-                    title = when (titleStyle) {
-                        "romaji" -> manga.name
-                        "eng" -> manga.englishName ?: manga.name
-                        else -> manga.nativeName ?: manga.name
-                    }
-                    url = "/manga/${manga._id}/${manga.name.titleToSlug()}"
-                    thumbnail_url = manga.thumbnail.parseThumbnailUrl()
-                }
+                toSManga(manga)
             }
 
         return MangasPage(mangaList, mangaList.size == limit)
@@ -217,45 +184,14 @@ class AllAnime : ConfigurableSource, HttpSource() {
             put("query", DETAILS_QUERY)
         }
 
-        val body = payload.toString().toRequestBody(JSON_MEDIA_TYPE)
-
-        val newHeaders = headersBuilder()
-            .add("Content-Length", body.contentLength().toString())
-            .add("Content-Type", body.contentType().toString())
-            .build()
-
-        return POST(apiUrl, newHeaders, body)
+        return apiRequest(payload)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
         val result = json.decodeFromString<ApiMangaDetailsResponse>(response.body.string())
         val manga = result.data.manga
 
-        val titleStyle = preferences.getString(TITLE_PREF, "romaji")!!
-
-        return SManga.create().apply {
-            title = when (titleStyle) {
-                "romaji" -> manga.name
-                "eng" -> manga.englishName ?: manga.name
-                else -> manga.nativeName ?: manga.name
-            }
-            url = "/manga/${manga._id}/${manga.name.titleToSlug()}"
-            thumbnail_url = manga.thumbnail.parseThumbnailUrl()
-            description = Jsoup.parse(
-                manga.description?.replace("<br>", "br2n") ?: "",
-            ).text().replace("br2n", "\n")
-            description += if (manga.altNames != null) {
-                "\n\nAlternative Names: ${manga.altNames.joinToString { it.trim() }}"
-            } else {
-                ""
-            }
-            if (manga.authors?.isNotEmpty() == true) {
-                author = manga.authors.first().trim()
-                artist = author
-            }
-            genre = "${manga.genres?.joinToString { it.trim() }}, ${manga.tags?.joinToString { it.trim() }}"
-            status = manga.status.parseStatus()
-        }
+        return toSManga(manga)
     }
 
     override fun getMangaUrl(manga: SManga): String {
@@ -281,14 +217,7 @@ class AllAnime : ConfigurableSource, HttpSource() {
             put("query", CHAPTERS_QUERY)
         }
 
-        val body = payload.toString().toRequestBody(JSON_MEDIA_TYPE)
-
-        val newHeaders = headersBuilder()
-            .add("Content-Length", body.contentLength().toString())
-            .add("Content-Type", body.contentType().toString())
-            .build()
-
-        return POST(apiUrl, newHeaders, body)
+        return apiRequest(payload)
     }
 
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
@@ -337,14 +266,7 @@ class AllAnime : ConfigurableSource, HttpSource() {
             put("query", PAGE_QUERY)
         }
 
-        val body = payload.toString().toRequestBody(JSON_MEDIA_TYPE)
-
-        val newHeaders = headersBuilder()
-            .add("Content-Length", body.contentLength().toString())
-            .add("Content-Type", body.contentType().toString())
-            .build()
-
-        return POST(apiUrl, newHeaders, body)
+        return apiRequest(payload)
     }
 
     private fun pageListParse(response: Response, chapter: SChapter): List<Page> {
@@ -393,6 +315,45 @@ class AllAnime : ConfigurableSource, HttpSource() {
     }
 
     /* Helpers */
+    private fun apiRequest(payload: JsonObject): Request {
+        val body = payload.toString().toRequestBody(JSON_MEDIA_TYPE)
+
+        val newHeaders = headersBuilder()
+            .add("Content-Length", body.contentLength().toString())
+            .add("Content-Type", body.contentType().toString())
+            .build()
+
+        return POST(apiUrl, newHeaders, body)
+    }
+
+    private fun toSManga(manga: Manga): SManga {
+        val titleStyle = preferences.getString(TITLE_PREF, "romaji")!!
+
+        return SManga.create().apply {
+            title = when (titleStyle) {
+                "romaji" -> manga.name
+                "eng" -> manga.englishName ?: manga.name
+                else -> manga.nativeName ?: manga.name
+            }
+            url = "/manga/${manga._id}/${manga.name.titleToSlug()}"
+            thumbnail_url = manga.thumbnail.parseThumbnailUrl()
+            description = Jsoup.parse(
+                manga.description?.replace("<br>", "br2n") ?: "",
+            ).text().replace("br2n", "\n")
+            description += if (manga.altNames != null) {
+                "\n\nAlternative Names: ${manga.altNames.joinToString { it.trim() }}"
+            } else {
+                ""
+            }
+            if (manga.authors?.isNotEmpty() == true) {
+                author = manga.authors.first().trim()
+                artist = author
+            }
+            genre = "${manga.genres?.joinToString { it.trim() }}, ${manga.tags?.joinToString { it.trim() }}"
+            status = manga.status.parseStatus()
+        }
+    }
+
     private fun String.parseThumbnailUrl(): String {
         return if (this.matches(urlRegex)) {
             this

@@ -16,17 +16,8 @@ data class ApiPopularResponse(
         ) {
             @Serializable
             data class Recommendation(
-                val anyCard: Card? = null,
-            ) {
-                @Serializable
-                data class Card(
-                    val _id: String,
-                    val name: String,
-                    val thumbnail: String,
-                    val englishName: String? = null,
-                    val nativeName: String? = null,
-                )
-            }
+                val anyCard: Manga? = null,
+            )
         }
     }
 }
@@ -41,17 +32,8 @@ data class ApiSearchResponse(
     ) {
         @Serializable
         data class SearchResultMangas(
-            val edges: List<SearchResultEdge>,
-        ) {
-            @Serializable
-            data class SearchResultEdge(
-                val _id: String,
-                val name: String,
-                val thumbnail: String,
-                val englishName: String? = null,
-                val nativeName: String? = null,
-            )
-        }
+            val edges: List<Manga>,
+        )
     }
 }
 
@@ -61,24 +43,24 @@ data class ApiMangaDetailsResponse(
 ) {
     @Serializable
     data class MangaDetailsData(
-        val manga: MangaDetails,
-    ) {
-        @Serializable
-        data class MangaDetails(
-            val _id: String,
-            val name: String,
-            val thumbnail: String,
-            val description: String?,
-            val authors: List<String>?,
-            val genres: List<String>?,
-            val tags: List<String>?,
-            val status: String?,
-            val altNames: List<String>?,
-            val englishName: String? = null,
-            val nativeName: String? = null,
-        )
-    }
+        val manga: Manga,
+    )
 }
+
+@Serializable
+data class Manga(
+    val _id: String,
+    val name: String,
+    val thumbnail: String,
+    val description: String?,
+    val authors: List<String>?,
+    val genres: List<String>?,
+    val tags: List<String>?,
+    val status: String?,
+    val altNames: List<String>?,
+    val englishName: String? = null,
+    val nativeName: String? = null,
+)
 
 @Serializable
 data class ApiChapterListResponse(
