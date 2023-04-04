@@ -1,7 +1,11 @@
 package eu.kanade.tachiyomi.extension.es.leercapitulo
 
+import android.app.Application
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.extension.es.leercapitulo.dto.MangaDto
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -15,18 +19,38 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import kotlin.random.Random
 
-open class LeerCapitulo : ParsedHttpSource() {
+class LeerCapitulo : ParsedHttpSource(), ConfigurableSource {
     override val name = "LeerCapitulo"
-
-    override val baseUrl = "https://www.leercapitulo.com"
 
     override val lang = "es"
 
     override val supportsLatest = true
 
     private val json: Json by injectLazy()
+
+    private val isCi = System.getenv("CI") == "true"
+
+    override val baseUrl
+        get() = when {
+            isCi -> MIRRORS.joinToString("#, ")
+            else -> _baseUrl
+        }
+
+    private val _baseUrl = run {
+        val preferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+        val mirrors = MIRRORS
+        var index = preferences.getString(MIRROR_PREF, "-1")!!.toInt()
+        if (index !in mirrors.indices) {
+            index = Random.nextInt(0, mirrors.size)
+            preferences.edit().putString(MIRROR_PREF, index.toString()).apply()
+        }
+        mirrors[index]
+    }
 
     // Popular
     override fun popularMangaRequest(page: Int): Request =
@@ -125,7 +149,7 @@ open class LeerCapitulo : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val urls = document.selectFirst("#arraydata")!!.text().split(',')
         return urls.mapIndexed { i, image_url ->
-            Page(i, "", image_url)
+            Page(i, imageUrl = image_url.replace("https://cdn.statically.io/img/", "https://")) // just redirects
         }
     }
 
@@ -134,8 +158,27 @@ open class LeerCapitulo : ParsedHttpSource() {
 
     // Other
     private fun String.toStatus() = when (this) {
-        "Publicándose" -> SManga.ONGOING
-        "Pausado", "FINALIZADO", "CANCELADO" -> SManga.COMPLETED
+        "Ongoing" -> SManga.ONGOING
+        "Paused" -> SManga.ON_HIATUS
+        "Completed" -> SManga.COMPLETED
+        "Cancelled" -> SManga.CANCELLED
         else -> SManga.UNKNOWN
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            val mirrors = MIRRORS
+
+            key = MIRROR_PREF
+            title = "Mirror"
+            summary = "%s\nRequires restart to take effect"
+            entries = mirrors
+            entryValues = Array(mirrors.size, Int::toString)
+        }.let(screen::addPreference)
+    }
+
+    companion object {
+        private const val MIRROR_PREF = "MIRROR"
+        private val MIRRORS get() = arrayOf("https://www.leercapitulo.com", "https://olympusscan.top")
     }
 }
