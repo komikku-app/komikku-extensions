@@ -57,7 +57,7 @@ open class Mangahub : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = baseUrl + element.select("div.fast-view-layer-scale").attr("data-background-image")
+        manga.thumbnail_url = element.select("div.fast-view-layer-scale").attr("data-background-image")
         manga.title = element.select("a.fw-medium").text()
         manga.setUrlWithoutDomain(element.select("a.fw-medium").attr("href"))
         return manga
@@ -88,10 +88,10 @@ open class Mangahub : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         manga.author = document.select("div.detail-attr:contains(Автор) div:gt(0)").text() // TODO: Add "Сценарист" and "Художник"
-        manga.genre = document.select(".tags").text().replace(" ", ", ")
+        manga.genre = document.select(".tags a").joinToString { it.text() }
         manga.description = document.select("div.markdown-style").text()
         manga.status = parseStatus(document.select("div.detail-attr:contains(перевод):eq(0)").toString())
-        manga.thumbnail_url = baseUrl + document.select("img.cover-detail").attr("src")
+        manga.thumbnail_url = document.select("img.cover-detail").attr("src")
         return manga
     }
 
