@@ -66,7 +66,7 @@ class Madokami : ConfigurableSource, ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.setUrlWithoutDomain(element.attr("href"))
+        manga.url = element.attr("href")
         manga.title = URLDecoder.decode(element.attr("href").split("/").last(), "UTF-8").trimStart('!')
         return manga
     }
