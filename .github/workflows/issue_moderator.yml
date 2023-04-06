@@ -49,14 +49,15 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(komiktap|gourmet\\s*scans|mangawow|hikari\\s*scans|mangagegecesi|knightnoscanlations|ahstudios|mangagecesi|nartag|xxx\\s*yaoi|yaoi\\s*fan\\s*clube|luminous|dragontea|hunters\\s*scan|reset(?:\\s*|-)scan|astra\\s*scans|manganoon|manga(?:-|\\s*)pro|coven\\s*scans?|shinobiscans|plot ?twist ?no ?fansub(?: ?scans?)?|plot-twistnf-scans(?:\\.com)?|mhscans).*",
+                "regex": ".*(komiktap|gourmet\\s*scans|mangawow|hikari\\s*scans|mangagegecesi|knightnoscanlations|ahstudios|mangagecesi|nartag|xxx\\s*yaoi|yaoi\\s*fan\\s*clube|luminous|dragontea|hunters\\s*scan|reset(?:\\s*|-)scan|astra\\s*scans|manganoon|manga(?:-|\\s*)pro|coven\\s*scans?|shinobiscans|plot ?twist ?no ?fansub(?: ?scans?)?|plot-twistnf-scans(?:\\.com)?|mhscans|aresmanga).*",
                 "ignoreCase": true,
                 "message": "{match} will not be added back as the scanlator team has requested it to be removed. Read #3475 for more information."
               },
               {
                 "type": "both",
-                "regex": ".*(?:fail(?:ed|ure)?|can\\s*(?:no|')?t|unable|get past|(?<!n[o']?t )blocked by|error) (?:to )?(?:bypass|penetrate)?.*cloudfl?are.*",
+                "regex": ".*(?:fail(?:ed|ure|s)?|can\\s*(?:no|')?t|(?:not|un).*able|(?<!n[o']?t )blocked by|error) (?:to )?(?:get past|by ?pass|penetrate)?.*cloud ?fl?are.*",
                 "ignoreCase": true,
+                "labels": ["Cloudflare protected"],
                 "message": "Refer to the **Solving Cloudflare issues** section at https://tachiyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues. If it doesn't work, migrate to other sources or wait until they lower their protection."
               }
             ]
