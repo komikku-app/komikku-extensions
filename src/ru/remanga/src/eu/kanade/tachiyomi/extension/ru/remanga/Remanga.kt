@@ -156,11 +156,14 @@ class Remanga : ConfigurableSource, HttpSource() {
             response
         }
     }
+
+    private val loadLimit = if (!preferences.getBoolean(bLoad_PREF, false)) 1 else 3
+
     override val client: OkHttpClient =
         network.cloudflareClient.newBuilder()
-            .rateLimitHost("https://img3.reimg.org".toHttpUrl(), 2)
-            .rateLimitHost("https://img5.reimg.org".toHttpUrl(), 2)
-            .rateLimitHost(exManga.toHttpUrl(), 2)
+            .rateLimitHost("https://img3.reimg.org".toHttpUrl(), loadLimit, 2)
+            .rateLimitHost("https://img5.reimg.org".toHttpUrl(), loadLimit, 2)
+            .rateLimitHost(exManga.toHttpUrl(), 3)
             .addInterceptor { imageContentTypeIntercept(it) }
             .addInterceptor { authIntercept(it) }
             .addNetworkInterceptor { chain ->
@@ -868,6 +871,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 true
             }
         }
+
         val domainPref = ListPreference(screen.context).apply {
             key = DOMAIN_PREF
             title = "Выбор домена"
@@ -927,6 +931,20 @@ class Remanga : ConfigurableSource, HttpSource() {
             summary = "Скрывает мангу находящуюся в закладках пользователя на сайте."
             setDefaultValue(false)
         }
+
+        val boostLoad = androidx.preference.CheckBoxPreference(screen.context).apply {
+            key = bLoad_PREF
+            title = "Ускорить скачивание глав"
+            summary = "Увеличивает количество скачиваемых страниц в секунду, но Remanga быстрее ограничит скорость скачивания."
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val warning = "Для применения настройки необходимо перезапустить приложение с полной остановкой."
+                Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
+                true
+            }
+        }
+
         screen.addPreference(userAgentSystem)
         screen.addPreference(domainPref)
         screen.addPreference(titleLanguagePref)
@@ -934,6 +952,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         screen.addPreference(exChapterShow)
         screen.addPreference(domainExPref)
         screen.addPreference(bookmarksHide)
+        screen.addPreference(boostLoad)
     }
 
     private val json: Json by injectLazy()
@@ -945,6 +964,8 @@ class Remanga : ConfigurableSource, HttpSource() {
         const val PREFIX_SLUG_SEARCH = "slug:"
 
         private const val userAgent_PREF = "UAgent"
+
+        private const val bLoad_PREF = "boostLoad_PREF"
 
         private const val DOMAIN_PREF = "REMangaDomain"
 
