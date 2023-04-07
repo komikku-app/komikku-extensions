@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.multisrc.mmrcms
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.os.Build
-import eu.kanade.tachiyomi.multisrc.mmrcms.MMRCMSSources.Companion.sourceList
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -214,7 +213,7 @@ class MMRCMSJsonGen {
     )
 
     companion object {
-        val sources = sourceList
+        val sources = MMRCMSGenerator().sources
 
         val relativePath = System.getProperty("user.dir")!! + "/multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/mmrcms/SourceData.kt"
 

@@ -508,6 +508,11 @@ multisrc
 - `multisrc/overrides/<themepkg>/<sourcepkg>/additional.gradle` defines additional gradle code, this will be copied at the end of the generated gradle file below the theme's `additional.gradle`.
 - `multisrc/overrides/<themepkg>/<sourcepkg>/AndroidManifest.xml` is copied as an override to the default `AndroidManifest.xml` generation if it exists.
 
+> **Note**
+>
+> Files ending with `Gen.kt` (i.e. `multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/<theme>/XxxGen.kt`)
+> are considered helper files and won't be copied to generated sources.
+
 ### Development workflow
 There are three steps in running and testing a theme source:
 

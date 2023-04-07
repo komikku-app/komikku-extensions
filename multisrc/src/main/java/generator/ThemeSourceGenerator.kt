@@ -171,7 +171,7 @@ interface ThemeSourceGenerator {
             File(themeDestPath).mkdirs()
 
             File(themeSrcPath).list()
-                ?.filter { it.endsWith(".kt") && !it.endsWith("Generator.kt") }
+                ?.filter { it.endsWith(".kt") && !it.endsWith("Generator.kt") && !it.endsWith("Gen.kt") }
                 ?.forEach { Files.copy(File("$themeSrcPath/$it").toPath(), File("$themeDestPath/$it").toPath(), StandardCopyOption.REPLACE_EXISTING) }
         }
 
