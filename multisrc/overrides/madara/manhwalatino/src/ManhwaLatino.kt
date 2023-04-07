@@ -27,10 +27,13 @@ class ManhwaLatino : Madara(
 
     override val chapterUrlSelector = "a:eq(1)"
 
+    override val mangaDetailsSelectorStatus = "div.post-content_item:contains(Estado del comic) > div.summary-content"
+
     override fun pageListParse(document: Document): List<Page> {
         val script = document.selectFirst("div.read-container script")
+            ?: return super.pageListParse(document)
 
-        val scriptData: String = if (script!!.hasAttr("src")) {
+        val scriptData: String = if (script.hasAttr("src")) {
             client.newCall(GET(script.attr("src"), headers)).execute().body.string()
         } else {
             script.data()
