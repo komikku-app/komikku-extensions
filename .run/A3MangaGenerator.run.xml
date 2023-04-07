@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="A3MangaThemeGenerator" type="JetRunConfigurationType" nameIsGenerated="true">
+  <configuration default="false" name="A3MangaGenerator" type="JetRunConfigurationType" nameIsGenerated="true">
     <module name="tachiyomi-extensions.multisrc.main" />
     <option name="MAIN_CLASS_NAME" value="eu.kanade.tachiyomi.multisrc.a3manga.A3MangaGenerator" />
     <method v="2">

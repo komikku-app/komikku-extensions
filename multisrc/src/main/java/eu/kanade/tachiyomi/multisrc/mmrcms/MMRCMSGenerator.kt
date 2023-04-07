@@ -27,7 +27,7 @@ class MMRCMSGenerator : ThemeSourceGenerator {
         SingleLang("Mangadoor", "https://mangadoor.com", "es", overrideVersionCode = 1),
         SingleLang("Utsukushii", "https://manga.utsukushii-bg.com", "bg", overrideVersionCode = 1),
         SingleLang("Phoenix-Scans", "https://phoenix-scans.pl", "pl", className = "PhoenixScans", overrideVersionCode = 1),
-        SingleLang("Scan-1", "https://wwv.scan-1.com", "fr", className = "ScanOne", overrideVersionCode = 1),
+        SingleLang("Scan-1", "https://wwv.scan-1.com", "fr", className = "ScanOne", overrideVersionCode = 2),
         SingleLang("Lelscan-VF", "https://lelscanvf.com", "fr", className = "LelscanVF", overrideVersionCode = 1),
         SingleLang("AnimaRegia", "https://animaregia.net", "pt-BR", overrideVersionCode = 4),
         SingleLang("MangaVadisi", "http://manga-v2.mangavadisi.org", "tr", overrideVersionCode = 1),
