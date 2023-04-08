@@ -45,12 +45,14 @@ jobs:
                 "type": "both",
                 "regex": ".*(hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|colamanhua|mangadig|hitomi\\.la|copymanga|neox|1manga\\.co|mangafox\\.fun|mangahere\\.onl|mangakakalot\\.fun|manganel(?!o)|mangaonline\\.fun|mangatoday|manga\\.town|onemanga\\.info|koushoku|ksk\\.moe|comikey).*",
                 "ignoreCase": true,
+                "labels": ["invalid"],
                 "message": "{match} will not be added back as it is too difficult to maintain. Read #3475 for more information."
               },
               {
                 "type": "both",
                 "regex": ".*(komiktap|gourmet\\s*scans|mangawow|hikari\\s*scans|mangagegecesi|knightnoscanlations|ahstudios|mangagecesi|nartag|xxx\\s*yaoi|yaoi\\s*fan\\s*clube|luminous|dragontea|hunters\\s*scan|reset(?:\\s*|-)scan|astra\\s*scans|manganoon|manga(?:-|\\s*)pro|coven\\s*scans?|shinobiscans|plot ?twist ?no ?fansub(?: ?scans?)?|plot-twistnf-scans(?:\\.com)?|mhscans|aresmanga).*",
                 "ignoreCase": true,
+                "labels": ["invalid"],
                 "message": "{match} will not be added back as the scanlator team has requested it to be removed. Read #3475 for more information."
               },
               {
