@@ -22,7 +22,6 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("Kirishima Fansub", "https://www.kirishimafansub.net", "es"),
         SingleLang("Le Cercle du Scan", "https://lel.lecercleduscan.com", "fr", className = "LeCercleDuScan", overrideVersionCode = 1),
         SingleLang("Lilyreader", "https://manga.smuglo.li", "en"),
-        SingleLang("Mabushimajo", "http://mabushimajo.com", "tr"),
         SingleLang("MangaScouts", "http://onlinereader.mangascouts.org", "de", overrideVersionCode = 1),
         SingleLang("Mangatellers", "https://reader.mangatellers.gr", "en"),
         SingleLang("Menudo-Fansub", "https://www.menudo-fansub.com", "es", className = "MenudoFansub", overrideVersionCode = 1),
