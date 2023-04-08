@@ -43,6 +43,7 @@
 - MHScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15319
 - NarTag https://github.com/tachiyomiorg/tachiyomi-extensions/issues/8038
 - Plot-twistnf-scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/4242
+- Realm Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15586
 - Reset Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13168
 - SetsuScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/11040
 - ShinobiScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14457
