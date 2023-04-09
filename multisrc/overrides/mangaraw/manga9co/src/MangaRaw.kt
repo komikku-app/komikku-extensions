@@ -22,8 +22,14 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
     override val versionId = 2
     override val id = 4572869149806246133
 
+    private val isCi = System.getenv("CI") == "true"
+    override val baseUrl get() = when {
+        isCi -> MIRRORS.joinToString("#, ") { "https://$it" }
+        else -> _baseUrl
+    }
+
     override val supportsLatest = true
-    override val baseUrl: String
+    private val _baseUrl: String
     private val selectors: Selectors
     private val needUrlSanitize: Boolean
     private val isPagesShuffled: Boolean
@@ -38,7 +44,7 @@ class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
             preferences.edit().putString(MIRROR_PREF, mirrorIndex.toString()).apply()
         }
 
-        baseUrl = "https://" + mirrors[mirrorIndex]
+        _baseUrl = "https://" + mirrors[mirrorIndex]
         selectors = getSelectors(mirrorIndex)
         needUrlSanitize = needUrlSanitize(mirrorIndex)
         isPagesShuffled = isPagesShuffled(mirrorIndex)
