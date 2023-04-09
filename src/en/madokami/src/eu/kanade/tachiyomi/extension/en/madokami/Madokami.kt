@@ -86,10 +86,17 @@ class Madokami : ConfigurableSource, ParsedHttpSource() {
     override fun mangaDetailsRequest(manga: SManga): Request {
         val url = (baseUrl + manga.url).toHttpUrlOrNull()!!
         if (url.pathSize > 5 && url.pathSegments[0] == "Manga" && url.pathSegments[1].length == 1) {
-            return authenticate(GET(url.newBuilder().removePathSegment(5).build().toUrl().toExternalForm(), headers))
+            val builder = url.newBuilder()
+            for (i in 5 until url.pathSize) { builder.removePathSegment(5) }
+            return authenticate(GET(builder.build().toUrl().toExternalForm(), headers))
         }
         if (url.pathSize > 2 && url.pathSegments[0] == "Raws") {
-            return authenticate(GET(url.newBuilder().removePathSegment(2).build().toUrl().toExternalForm(), headers))
+            val builder = url.newBuilder()
+            // to accomodate path pattern of /Raws/Magz/Series, this will remove all latter path segments that starts with !
+            // will fails if there's ever manga with ! prefix, but for now it works
+            var i = url.pathSize - 1
+            while (url.pathSegments[i].startsWith("!") && i >= 2) { builder.removePathSegment(i); i--; }
+            return authenticate(GET(builder.build().toUrl().toExternalForm(), headers))
         }
         return authenticate(GET(url.toUrl().toExternalForm(), headers))
     }
@@ -108,6 +115,8 @@ class Madokami : ConfigurableSource, ParsedHttpSource() {
         manga.thumbnail_url = document.select("div.manga-info img[itemprop=\"image\"]").attr("src")
         return manga
     }
+
+    override fun getMangaUrl(manga: SManga) = "$baseUrl/" + manga.url.trimStart('/')
 
     override fun chapterListRequest(manga: SManga) = authenticate(GET("$baseUrl/" + manga.url, headers))
 
