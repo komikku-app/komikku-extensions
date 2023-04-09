@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.es.mangastk
+package eu.kanade.tachiyomi.extension.es.mangastkxyz
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -7,9 +7,9 @@ import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class MangasTK : Madara(
-    "MangasTK",
-    "https://mangastk.net",
+class MangasTkXyz : Madara(
+    "MangasTK.xyz",
+    "https://mangastk.xyz",
     "es",
     SimpleDateFormat("dd.MM.yyyy", Locale("es")),
 ) {
