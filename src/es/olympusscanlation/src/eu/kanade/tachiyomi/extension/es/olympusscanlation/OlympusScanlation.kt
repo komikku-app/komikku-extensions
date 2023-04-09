@@ -1,12 +1,5 @@
 package eu.kanade.tachiyomi.extension.es.olympusscanlation
 
-import eu.kanade.tachiyomi.extension.es.olympusscanlation.dto.OlympusScanlationDto.ChapterDto
-import eu.kanade.tachiyomi.extension.es.olympusscanlation.dto.OlympusScanlationDto.MangaDetailDto
-import eu.kanade.tachiyomi.extension.es.olympusscanlation.dto.OlympusScanlationDto.MangaDto
-import eu.kanade.tachiyomi.extension.es.olympusscanlation.dto.OlympusScanlationDto.PayloadChapterDto
-import eu.kanade.tachiyomi.extension.es.olympusscanlation.dto.OlympusScanlationDto.PayloadHomeDto
-import eu.kanade.tachiyomi.extension.es.olympusscanlation.dto.OlympusScanlationDto.PayloadMangaDto
-import eu.kanade.tachiyomi.extension.es.olympusscanlation.dto.OlympusScanlationDto.PayloadPagesDto
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -20,6 +13,9 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 class OlympusScanlation : HttpSource() {
 
     override val baseUrl: String = "https://olympusscans.com"
@@ -29,6 +25,7 @@ class OlympusScanlation : HttpSource() {
     override val versionId = 2
     override val supportsLatest: Boolean = true
     private val json: Json by injectLazy()
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.US)
 
     // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -81,10 +78,10 @@ class OlympusScanlation : HttpSource() {
             description = result.data.summary
         }
     }
+
     override fun imageUrlParse(response: Response): String = throw Exception("Not used")
 
     // Chapters
-
     override fun chapterListRequest(manga: SManga): Request {
         return paginatedChapterListRequest(
             manga.url
@@ -106,13 +103,13 @@ class OlympusScanlation : HttpSource() {
             .toString()
             .substringAfter("/series/")
             .substringBefore("/chapters")
-        var data = json.decodeFromString<PayloadChapterDto>(response.body.string())
+        val data = json.decodeFromString<PayloadChapterDto>(response.body.string())
         var resultSize = data.data.size
         var page = 2
         while (data.meta.total > resultSize) {
-            val newRequest = paginatedChapterListRequest("$slug", page)
+            val newRequest = paginatedChapterListRequest(slug, page)
             val newResponse = client.newCall(newRequest).execute()
-            var newData = json.decodeFromString<PayloadChapterDto>(newResponse.body.string())
+            val newData = json.decodeFromString<PayloadChapterDto>(newResponse.body.string())
             data.data += newData.data
             resultSize += newData.data.size
             page += 1
@@ -123,12 +120,15 @@ class OlympusScanlation : HttpSource() {
     private fun chapterFromObject(chapter: ChapterDto, slug: String) = SChapter.create().apply {
         url = "/capitulo/${chapter.id}/comic-$slug"
         name = "Capitulo ${chapter.name}"
-        chapter_number = chapter.name.toFloatOrNull() ?: -1f
+        date_upload = runCatching { dateFormat.parse(chapter.date)?.time }
+            .getOrNull() ?: 0L
     }
-    // Pages
 
+    override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url
+
+    // Pages
     override fun pageListRequest(chapter: SChapter): Request {
-        var id = chapter.url
+        val id = chapter.url
             .substringAfter("/capitulo/")
             .substringBefore("/chapters")
             .substringBefore("/comic")
@@ -157,6 +157,7 @@ class OlympusScanlation : HttpSource() {
         }
         return MangasPage(mangaList, hasNextPage = false)
     }
+
     override fun popularMangaRequest(page: Int): Request {
         val apiUrl = "$apiBaseUrl/api/home".toHttpUrl().newBuilder()
             .build()
