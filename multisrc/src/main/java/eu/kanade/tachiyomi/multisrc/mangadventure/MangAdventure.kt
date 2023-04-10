@@ -155,10 +155,12 @@ abstract class MangAdventure(
             status = if (series.licensed == true) {
                 SManga.LICENSED
             } else {
-                when (series.completed) {
-                    true -> SManga.COMPLETED
-                    false -> SManga.ONGOING
-                    null -> SManga.UNKNOWN
+                when (series.status) {
+                    "completed" -> SManga.COMPLETED
+                    "ongoing" -> SManga.ONGOING
+                    "hiatus" -> SManga.ON_HIATUS
+                    "canceled" -> SManga.CANCELLED
+                    else -> SManga.UNKNOWN
                 }
             }
         }
