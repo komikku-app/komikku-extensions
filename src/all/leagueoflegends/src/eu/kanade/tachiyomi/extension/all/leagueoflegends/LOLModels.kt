@@ -24,22 +24,22 @@ data class LOLData(
 
 @Serializable
 data class LOLComic(
-    val title: String,
+    val title: String? = null,
     val subtitle: String? = null,
     val index: Float? = null,
-    private val url: String,
-    val description: String,
-    val background: LOLImage,
+    private val url: String? = null,
+    val description: String? = null,
+    val background: LOLImage? = null,
     @SerialName("featured-champions")
     val champions: List<LOLChampion>? = null,
 ) {
-    override fun toString() = url.substringAfter("/comic/")
+    override fun toString() = url?.substringAfter("/comic/") ?: error("Empty URL")
 }
 
 @Serializable
 data class LOLIssues(
     private val issues: List<LOLComic>,
-) : Iterable<LOLComic> by issues
+) : Iterable<LOLComic> by issues.reversed()
 
 @Serializable
 data class LOLPages(
