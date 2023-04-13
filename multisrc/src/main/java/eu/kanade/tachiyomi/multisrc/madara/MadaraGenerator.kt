@@ -111,6 +111,8 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("GalaxyDegenScans", "https://gdscans.com", "en", overrideVersionCode = 4),
         SingleLang("Gatemanga", "https://gatemanga.com", "ar", overrideVersionCode = 1),
         SingleLang("GeassToon", "https://geasstoon.com", "tr"),
+        SingleLang("Gekkou Hentai", "https://hentai.gekkouscans.com.br", "pt-BR", isNsfw = true),
+        SingleLang("Gekkou Scans", "https://gekkou.com.br", "pt-BR", isNsfw = true, pkgName = "gekkouscan"),
         SingleLang("Glorious Scan", "https://gloriousscan.com", "pt-BR"),
         SingleLang("Glory Manga", "https://glorymanga.com", "tr"),
         SingleLang("Goof Fansub", "https://gooffansub.com", "pt-BR", isNsfw = true),

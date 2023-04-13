@@ -34,8 +34,6 @@ class MMRCMSGenerator : ThemeSourceGenerator {
         SingleLang("Op-VF", "https://www.op-vf.com", "fr", className = "OpVF"),
         SingleLang("FR Scan", "https://frscan.ws", "fr", overrideVersionCode = 2),
         SingleLang("Ama Scans", "https://amascan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
-        SingleLang("Gekkou Scans", "https://gekkou.com.br", "pt-BR", isNsfw = true, pkgName = "gekkouscan", overrideVersionCode = 12),
-        SingleLang("Gekkou Hentai", "https://hentai.gekkouscans.com.br", "pt-BR", isNsfw = true),
         // NOTE: THIS SOURCE CONTAINS A CUSTOM LANGUAGE SYSTEM (which will be ignored)!
         SingleLang("HentaiShark", "https://www.hentaishark.com", "all", isNsfw = true),
     )
