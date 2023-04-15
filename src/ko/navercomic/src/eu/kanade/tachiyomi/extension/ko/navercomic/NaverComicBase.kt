@@ -1,18 +1,25 @@
 package eu.kanade.tachiyomi.extension.ko.navercomic
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -20,74 +27,65 @@ import java.util.Locale
 abstract class NaverComicBase(protected val mType: String) : ParsedHttpSource() {
     override val lang: String = "ko"
     override val baseUrl: String = "https://comic.naver.com"
-    private val mobileUrl = "https://m.comic.naver.com"
+    internal val mobileUrl = "https://m.comic.naver.com"
     override val supportsLatest = true
     override val client: OkHttpClient = network.client
+    internal val json: Json by injectLazy()
 
     private val mobileHeaders = super.headersBuilder()
         .add("Referer", mobileUrl)
         .build()
 
-    override fun searchMangaSelector() = ".resultList > li h5 > a"
-    override fun searchMangaNextPageSelector() = ".paginate a.next"
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = GET("$baseUrl/search.nhn?m=$mType&keyword=$query&type=title&page=$page")
-    override fun searchMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        manga.url = element.attr("href").substringBefore("&week").substringBefore("&listPage=")
-        manga.title = element.text().trim()
-        return manga
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = GET("$baseUrl/api/search/$mType?keyword=$query&page=$page")
+
+    override fun searchMangaNextPageSelector() = throw UnsupportedOperationException("Not used")
+    override fun searchMangaSelector() = throw UnsupportedOperationException("Not used")
+    override fun searchMangaFromElement(element: Element) = throw UnsupportedOperationException("Not used")
+
+    override fun searchMangaParse(response: Response): MangasPage {
+        val result = json.decodeFromString<ApiMangaSearchResponse>(response.body.string())
+        val mangas = result.searchList.map {
+            SManga.create().apply {
+                title = it.titleName
+                description = it.synopsis
+                thumbnail_url = it.thumbnailUrl
+                url = "/$mType/list?titleId=${it.titleId}"
+            }
+        }
+
+        return MangasPage(mangas, result.pageInfo.nextPage != 0)
     }
 
-    override fun chapterListSelector() = "div#ct > ul.section_episode_list li.item"
-
-    // Chapter list is paginated, use mobile version of site for speed and data savings
+    override fun chapterListSelector() = throw UnsupportedOperationException("Not used")
     override fun chapterListRequest(manga: SManga) = chapterListRequest(manga.url, 1)
-
     private fun chapterListRequest(mangaUrl: String, page: Int): Request {
-        return GET("$mobileUrl$mangaUrl&page=$page", mobileHeaders)
+        val titleId = Uri.parse("$baseUrl$mangaUrl").getQueryParameter("titleId")
+        return GET("$baseUrl/api/article/list?titleId=$titleId&page=$page")
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        var document = response.asJsoup()
+        var result = json.decodeFromString<ApiMangaChapterListResponse>(response.body.string())
         val chapters = mutableListOf<SChapter>()
-        document.select(chapterListSelector()).map { chapters.add(chapterFromElement(it)) }
-        var nextPage = 2
-        while (document.select(paginationNextPageSelector).isNotEmpty()) {
-            document.select(paginationNextPageSelector).let {
-                document = client.newCall(chapterListRequest(it.attr("href"), nextPage)).execute().asJsoup()
-                document.select(chapterListSelector()).map { element -> chapters.add(chapterFromElement(element)) }
-                nextPage++
-            }
+        chapters.addAll(result.articleList.map { createChapter(it, result.titleId) })
+
+        while (result.pageInfo.nextPage != 0) {
+            result = json.decodeFromString(client.newCall(chapterListRequest("/$mType/list?titleId=${result.titleId}", result.pageInfo.nextPage)).execute().body.string())
+            chapters.addAll(result.articleList.map { createChapter(it, result.titleId) })
         }
+
         return chapters
     }
 
-    open val paginationNextPageSelector = "a.btn_next:not(.disabled)"
-
-    override fun chapterFromElement(element: Element): SChapter {
-        val chapter = SChapter.create()
-        val rawName = element.select("span.name").text()
-        chapter.url = element.select("a").attr("href")
-        chapter.chapter_number = parseChapterNumber(rawName)
-        chapter.name = rawName
-        chapter.date_upload = parseChapterDate(element.select("span.date").text().trim())
-
-        return chapter
-    }
-
-    protected fun parseChapterNumber(name: String): Float {
-        try {
-            if (name.contains("[단편]")) return 1f
-            // `특별` means `Special`, so It can be buggy. so pad `편`(Chapter) to prevent false return
-            if (name.contains("번외") || name.contains("특별편")) return -2f
-            val regex = Regex("([0-9]+)(?:[-.]([0-9]+))?(?:화)")
-            val (ch_primal, ch_second) = regex.find(name)!!.destructured
-            return (ch_primal + if (ch_second.isBlank()) "" else ".$ch_second").toFloatOrNull() ?: -1f
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return -1f
+    private fun createChapter(chapter: MangaChapter, id: Int): SChapter {
+        return SChapter.create().apply {
+            url = "/$mType/detail?titleId=$id&no=${chapter.no}"
+            name = chapter.subtitle
+            chapter_number = chapter.no.toFloat()
+            date_upload = parseChapterDate(chapter.serviceDateDescription)
         }
     }
+
+    override fun chapterFromElement(element: Element) = throw UnsupportedOperationException("Not used")
 
     @SuppressLint("SimpleDateFormat")
     private fun parseChapterDate(date: String): Long {
@@ -103,16 +101,24 @@ abstract class NaverComicBase(protected val mType: String) : ParsedHttpSource() 
         }
     }
 
-    override fun mangaDetailsParse(document: Document): SManga {
-        val element = document.select(".comicinfo")
-        val titleElement = element.select(".detail > h2")
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        val titleId = Uri.parse(manga.url).getQueryParameter("titleId")
+        return client.newCall(GET("$baseUrl/api/article/list/info?titleId=$titleId")).asObservableSuccess().map { mangaDetailsParse(it) }
+    }
 
-        val manga = SManga.create()
-        manga.title = titleElement.first()!!.ownText().trim()
-        manga.author = titleElement.select("span").text().trim()
-        manga.description = document.select("div.detail p").text().trim()
-        manga.thumbnail_url = element.select(".thumb > a > img").last()!!.attr("src")
-        return manga
+    override fun mangaDetailsParse(response: Response): SManga {
+        val manga = json.decodeFromString<Manga>(response.body.string())
+        val authors = manga.author.run {
+            setOf(writers, painters, originAuthors).flatten().map { it.name }
+        }.joinToString()
+
+        return SManga.create().apply {
+            title = manga.titleName
+            author = authors
+            description = manga.synopsis
+            thumbnail_url = manga.thumbnailUrl
+            status = if (manga.finished) SManga.COMPLETED else SManga.ONGOING
+        }
     }
 
     override fun pageListParse(document: Document): List<Page> {
@@ -133,26 +139,104 @@ abstract class NaverComicBase(protected val mType: String) : ParsedHttpSource() 
     }
 
     // We are able to get the image URL directly from the page list
-    override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("This method should not be called!")
+    override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
 
     override fun getFilterList() = FilterList()
 }
 
 abstract class NaverComicChallengeBase(mType: String) : NaverComicBase(mType) {
-    override fun popularMangaSelector() = ".weekchallengeBox tbody td:not([class])"
-    override fun popularMangaNextPageSelector(): String? = ".paginate .page_wrap a.next"
-    override fun popularMangaFromElement(element: Element): SManga {
-        val thumb = element.select("a img").first()!!.attr("src")
-        val title = element.select(".challengeTitle a").first()!!
+    override fun popularMangaSelector() = throw UnsupportedOperationException("Not used")
+    override fun popularMangaNextPageSelector() = throw UnsupportedOperationException("Not used")
+    override fun popularMangaFromElement(element: Element) = throw UnsupportedOperationException("Not used")
+    override fun popularMangaParse(response: Response): MangasPage {
+        val apiMangaResponse = json.decodeFromString<ApiMangaChallengeResponse>(response.body.string())
+        val mangas = apiMangaResponse.list.map {
+            SManga.create().apply {
+                title = it.titleName
+                thumbnail_url = it.thumbnailUrl
+                url = "/$mType/list?titleId=${it.titleId}"
+            }
+        }
 
-        val manga = SManga.create()
-        manga.url = title.attr("href").substringBefore("&week")
-        manga.title = title.text().trim()
-        manga.thumbnail_url = thumb
-        return manga
+        var pageInfo = apiMangaResponse.pageInfo
+
+        if (pageInfo == null) {
+            val page = response.request.url.queryParameter("page")
+            pageInfo = client.newCall(GET("$baseUrl/api/$mType/pageInfo?order=VIEW&page=$page")).execute().let { parsePageInfo(it) }
+        }
+
+        return MangasPage(mangas, pageInfo?.nextPage != 0)
     }
 
     override fun latestUpdatesSelector() = popularMangaSelector()
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
     override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
+    override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
+
+    private fun parsePageInfo(response: Response): PageInfo? {
+        return json.decodeFromString<ApiMangaChallengeResponse>(response.body.string()).pageInfo
+    }
 }
+
+@Serializable
+data class ApiMangaSearchResponse(
+    val pageInfo: PageInfo,
+    val searchList: List<Manga>,
+)
+
+@Serializable
+data class ApiMangaChallengeResponse(
+    val pageInfo: PageInfo?,
+    val list: List<MangaChallenge>,
+)
+
+@Serializable
+data class ApiMangaChapterListResponse(
+    val pageInfo: PageInfo,
+    val titleId: Int,
+    val articleList: List<MangaChapter>,
+)
+
+@Serializable
+data class PageInfo(
+    val nextPage: Int,
+)
+
+@Serializable
+data class MangaChapter(
+    val serviceDateDescription: String,
+    val subtitle: String,
+    val no: Int,
+)
+
+@Serializable
+data class Manga(
+    val thumbnailUrl: String,
+    val titleName: String,
+    val titleId: Int,
+    val finished: Boolean,
+    val author: AuthorList,
+    val synopsis: String,
+)
+
+@Serializable
+data class MangaChallenge(
+    val thumbnailUrl: String,
+    val titleName: String,
+    val titleId: Int,
+    val finish: Boolean,
+    val author: String,
+)
+
+@Serializable
+data class AuthorList(
+    val writers: List<Author>,
+    val painters: List<Author>,
+    val originAuthors: List<Author>,
+)
+
+@Serializable
+data class Author(
+    val id: Int,
+    val name: String,
+)
