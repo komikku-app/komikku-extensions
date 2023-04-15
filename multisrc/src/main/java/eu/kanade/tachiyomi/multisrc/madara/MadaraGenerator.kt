@@ -209,7 +209,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Manga-Online.co", "https://www.manga-online.co", "th", className = "MangaOnlineCo"),
         SingleLang("Manga-Scantrad", "https://manga-scantrad.io", "fr", className = "MangaScantrad", overrideVersionCode = 3),
         SingleLang("Manga-TX", "https://manga-tx.com", "en", className = "Mangatxunoriginal"),
-        SingleLang("Manga18fx", "https://manga18fx.com", "en", isNsfw = true, overrideVersionCode = 4),
+        SingleLang("Manga18fx", "https://manga18fx.com", "en", isNsfw = true, overrideVersionCode = 5),
         SingleLang("Manga1st", "https://manga1st.com", "en", overrideVersionCode = 2),
         SingleLang("Manga1st.online", "https://manga1st.online", "en", className = "MangaFirstOnline", overrideVersionCode = 1),
         SingleLang("Manga347", "https://manga347.com", "en", overrideVersionCode = 3),
