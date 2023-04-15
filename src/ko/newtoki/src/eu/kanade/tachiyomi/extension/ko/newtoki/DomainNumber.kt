@@ -2,25 +2,9 @@ package eu.kanade.tachiyomi.extension.ko.newtoki
 
 import android.util.Log
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Interceptor
 import okhttp3.Response
 import java.io.IOException
-
-/**
- * Source changes domain names every few days (e.g. newtoki31.net to newtoki32.net)
- * The domain name was newtoki32 on 2019-11-14, this attempts to match the rate at which the domain changes
- *
- * Since 2020-09-20, They changed manga side to Manatoki.
- * It was merged after shutdown of ManaMoa.
- * This is by the head of Manamoa, as they decided to move to Newtoki.
- *
- * Updated on 2023-02-10, see `domain_log.md`.
- * To avoid going too fast and to utilize redirections,
- * the number is decremented by 1 initially,
- * and increments every 8 days which is a bit slower than the average.
- */
-val fallbackDomainNumber get() = (217 - 1) + ((System.currentTimeMillis() - 1675818000_000) / 691200_000).toInt()
 
 var domainNumber = ""
     get() {
@@ -33,7 +17,7 @@ var domainNumber = ""
             return prefValue
         }
 
-        val fallback = fallbackDomainNumber.toString()
+        val fallback = fallbackDomainNumber
         domainNumber = fallback
         return fallback
     }
@@ -55,13 +39,10 @@ object DomainInterceptor : Interceptor {
             Log.e("NewToki", "failed to fetch ${request.url}", e)
 
             val newDomainNumber = try {
-                val document = chain.proceed(GET("https://t.me/s/newtoki5")).asJsoup()
-                val description = document.select("a[href^=https://newtoki]").last()!!.attr("href")
-                numberRegex.find(description)!!.value
+                val domainNumberUrl = "https://stevenyomi.github.io/source-domains/newtoki.txt"
+                chain.proceed(GET(domainNumberUrl)).body.string().also { it.toInt() }
             } catch (_: Throwable) {
-                fallbackDomainNumber
-                    .also { if (it <= domainNumber.toInt()) throw e }
-                    .toString()
+                throw IOException(editDomainNumber(), e)
             }
             domainNumber = newDomainNumber
 
@@ -88,5 +69,5 @@ object DomainInterceptor : Interceptor {
         return response
     }
 
-    private val numberRegex by lazy { Regex("""\d+""") }
+    private val numberRegex by lazy { Regex("""\d+|$fallbackDomainNumber""") }
 }
