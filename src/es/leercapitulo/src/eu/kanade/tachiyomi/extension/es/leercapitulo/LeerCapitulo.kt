@@ -147,8 +147,13 @@ class LeerCapitulo : ParsedHttpSource(), ConfigurableSource {
 
     // Pages
     override fun pageListParse(document: Document): List<Page> {
+        val order = document.selectFirst("meta[property=ad:check]")?.attr("content")
+            ?.replace("[^\\d]+".toRegex(), "-")
+            ?.split("-")
         val urls = document.selectFirst("#arraydata")!!.text().split(',')
-        return urls.mapIndexed { i, image_url ->
+        val sortedUrl = order?.map { urls[it.toInt()] } ?: urls
+
+        return sortedUrl.mapIndexed { i, image_url ->
             Page(i, imageUrl = image_url.replace("https://cdn.statically.io/img/", "https://")) // just redirects
         }
     }
