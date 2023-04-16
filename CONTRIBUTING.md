@@ -392,6 +392,7 @@ open class UriPartFilter(displayName: String, private val vals: Array<Pair<Strin
 - If the source provides all the `Page.imageUrl`'s directly, you can fill them and let the `Page.url` empty, so the app will skip the `fetchImageUrl` source and call directly `fetchImage`.
 - The `Page.url` and `Page.imageUrl` attributes **should be set as an absolute URL**.
 - Chapter pages numbers start from `0`.
+- The list of `Page`s should be returned already sorted, the `index` field is ignored.
 
 ### Misc notes
 
