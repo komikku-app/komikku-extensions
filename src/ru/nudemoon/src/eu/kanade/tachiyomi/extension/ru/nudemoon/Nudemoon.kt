@@ -202,6 +202,9 @@ class Nudemoon : ParsedHttpSource() {
         val nameAndUrl = element.select("tr[valign=top] a:has(h2)")
         name = nameAndUrl.select("h2").text()
         setUrlWithoutDomain(nameAndUrl.attr("abs:href"))
+        if (url.contains(baseUrl)) {
+            url = url.replace(baseUrl, "")
+        }
         val informBlock = element.select("tr[valign=top] td[align=left]")
         scanlator = informBlock.select("a[href*=perevod]").text()
         date_upload = informBlock.select("span.small2")
