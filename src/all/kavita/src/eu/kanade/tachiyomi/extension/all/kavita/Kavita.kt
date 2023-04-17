@@ -106,9 +106,10 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
     private val apiUrl by lazy { getPrefApiUrl() }
     override val baseUrl by lazy { getPrefBaseUrl() }
     private val address by lazy { getPrefAddress() } // Address for the Kavita OPDS url. Should be http(s)://host:(port)/api/opds/api-key
+    private val apiKey by lazy { getPrefApiKey() }
     private var jwtToken = "" // * JWT Token for authentication with the server. Stored in memory.
     private val LOG_TAG = """extension.all.kavita_${"[$suffix]_" + preferences.getString(KavitaConstants.customSourceNamePref,"[$suffix]")!!.replace(' ','_')}"""
-    private var isLoged = false // Used to know if login was correct and not send login requests anymore
+    private var isLogged = false // Used to know if login was correct and not send login requests anymore
 
     private val json: Json by injectLazy()
     private val helper = KavitaHelper()
@@ -135,7 +136,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
     private var series = emptyList<SeriesDto>() // Acts as a cache
 
     override fun popularMangaRequest(page: Int): Request {
-        if (!isLoged) {
+        if (!isLogged) {
             doLogin()
         }
         return POST(
@@ -149,7 +150,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
         try {
             val result = response.parseAs<List<SeriesDto>>()
             series = result
-            val mangaList = result.map { item -> helper.createSeriesDto(item, apiUrl) }
+            val mangaList = result.map { item -> helper.createSeriesDto(item, apiUrl, apiKey) }
             return MangasPage(mangaList, helper.hasNextPage(response))
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Possible outdated kavita", e)
@@ -158,7 +159,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        if (!isLoged) {
+        if (!isLogged) {
             doLogin()
         }
         return POST(
@@ -378,13 +379,13 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
 
         val existingSeries = series.find { dto -> dto.id == result.seriesId }
         if (existingSeries != null) {
-            val manga = helper.createSeriesDto(existingSeries, apiUrl)
+            val manga = helper.createSeriesDto(existingSeries, apiUrl, apiKey)
             manga.url = "$apiUrl/Series/${result.seriesId}"
             manga.artist = result.coverArtists.joinToString { it.name }
             manga.description = result.summary
             manga.author = result.writers.joinToString { it.name }
             manga.genre = result.genres.joinToString { it.title }
-            manga.thumbnail_url = "$apiUrl/image/series-cover?seriesId=${result.seriesId}"
+            manga.thumbnail_url = "$apiUrl/image/series-cover?seriesId=${result.seriesId}&apiKey=$apiKey"
 
             return manga
         }
@@ -504,7 +505,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
             pages.add(
                 Page(
                     index = i,
-                    imageUrl = "$apiUrl/Reader/image?chapterId=$chapterId&page=$i&extractPdf=true",
+                    imageUrl = "$apiUrl/Reader/image?chapterId=$chapterId&page=$i&extractPdf=true&apiKey=$apiKey",
                 ),
             )
         }
@@ -1045,6 +1046,12 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
         return path
     }
 
+    private fun getPrefApiKey(): String {
+        // http(s)://host:(port)/api/opds/api-key
+        var existingKey = preferences.getString("APIKEY", "")
+        return existingKey!!.ifEmpty { preferences.getString(ADDRESS_TITLE, "")!!.split("/opds/")[1] }
+    }
+
     companion object {
         private const val ADDRESS_TITLE = "Address"
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
@@ -1119,7 +1126,7 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
             if (it.code == 200) {
                 try {
                     jwtToken = it.parseAs<AuthenticationDto>().token
-                    isLoged = true
+                    isLogged = true
                 } catch (e: Exception) {
                     Log.e(LOG_TAG, "Possible outdated kavita", e)
                     throw IOException("Please check your kavita version.\nv0.5+ is required for the extension to work properly")

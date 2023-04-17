@@ -38,11 +38,11 @@ class KavitaHelper {
         return url.split("/").last().toInt()
     }
 
-    fun createSeriesDto(obj: SeriesDto, baseUrl: String): SManga =
+    fun createSeriesDto(obj: SeriesDto, baseUrl: String, apiKey: String): SManga =
         SManga.create().apply {
             url = "$baseUrl/Series/${obj.id}"
             title = obj.name
             // Deprecated: description = obj.summary
-            thumbnail_url = "$baseUrl/image/series-cover?seriesId=${obj.id}"
+            thumbnail_url = "$baseUrl/image/series-cover?seriesId=${obj.id}&apiKey=$apiKey"
         }
 }

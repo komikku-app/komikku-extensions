@@ -1,4 +1,10 @@
-## 1.3.8
+## 1.3.10
+
+### Features
+
+* API Change for Kavita v0.7.2
+
+## 1.3.9
 
 ### Features
 
