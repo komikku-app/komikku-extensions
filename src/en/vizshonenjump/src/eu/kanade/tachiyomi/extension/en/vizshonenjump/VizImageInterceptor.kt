@@ -4,30 +4,60 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
-import com.drew.imaging.ImageMetadataReader
+import com.drew.imaging.jpeg.JpegMetadataReader
 import com.drew.metadata.exif.ExifSubIFDDirectory
+import eu.kanade.tachiyomi.network.GET
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import okhttp3.Headers
 import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
+import uy.kohesive.injekt.injectLazy
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.io.InputStream
 
 class VizImageInterceptor : Interceptor {
 
+    private val json: Json by injectLazy()
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
 
-        if (chain.request().url.queryParameter(SIGNATURE) == null) {
+        if (!chain.request().url.toString().contains(IMAGE_URL_ENDPOINT)) {
             return response
         }
 
-        val image = response.body.byteStream().decodeImage()
+        val imageUrl = imageUrlParse(response)
+        val imageResponse = chain.proceed(imageRequest(imageUrl))
+
+        val image = imageResponse.body.byteStream().decodeImage()
         val body = image.toResponseBody(MEDIA_TYPE)
-        return response.newBuilder()
+
+        return imageResponse.newBuilder()
             .body(body)
+            .header("Content-Type", MEDIA_TYPE.toString())
             .build()
+    }
+
+    private fun imageUrlParse(response: Response): String {
+        return response.use { json.decodeFromString<VizPageUrlDto>(it.body.string()) }
+            .data?.values?.firstOrNull() ?: throw IOException(FAILED_TO_FETCH_PAGE_URL)
+    }
+
+    private fun imageRequest(url: String): Request {
+        val headers = Headers.Builder()
+            .add("Accept", "*/*")
+            .add("Origin", "https://www.viz.com")
+            .add("Referer", "https://www.viz.com/")
+            .add("User-Agent", VizShonenJump.USER_AGENT)
+            .build()
+
+        return GET(url, headers)
     }
 
     private fun InputStream.decodeImage(): ByteArray {
@@ -110,7 +140,7 @@ class VizImageInterceptor : Interceptor {
         }
 
         val output = ByteArrayOutputStream()
-        result.compress(Bitmap.CompressFormat.PNG, 100, output)
+        result.compress(Bitmap.CompressFormat.JPEG, 95, output)
         return output.toByteArray()
     }
 
@@ -129,7 +159,7 @@ class VizImageInterceptor : Interceptor {
     }
 
     private fun ByteArrayInputStream.getImageData(): ImageData? {
-        val metadata = ImageMetadataReader.readMetadata(this)
+        val metadata = JpegMetadataReader.readMetadata(this)
 
         val sizeDir = metadata.directories.firstOrNull {
             it.containsTag(ExifSubIFDDirectory.TAG_IMAGE_WIDTH) &&
@@ -155,8 +185,10 @@ class VizImageInterceptor : Interceptor {
     }
 
     companion object {
-        private const val SIGNATURE = "Signature"
-        private val MEDIA_TYPE = "image/png".toMediaTypeOrNull()
+        private const val IMAGE_URL_ENDPOINT = "get_manga_url"
+        private val MEDIA_TYPE = "image/jpeg".toMediaType()
+
+        private const val FAILED_TO_FETCH_PAGE_URL = "Something went wrong while trying to fetch page."
 
         private const val CELL_WIDTH_COUNT = 10
         private const val CELL_HEIGHT_COUNT = 15
