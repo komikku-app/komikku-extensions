@@ -7,11 +7,14 @@ import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.util.concurrent.TimeUnit
@@ -91,6 +94,7 @@ class MundoHentai : ParsedHttpSource() {
 
     override fun mangaDetailsParse(document: Document): SManga {
         val post = document.select("div.post-box")
+        val isMultipleChapters = document.selectFirst("div.listaImagens div.galeriaTab") != null
 
         return SManga.create().apply {
             author = post.select("ul.post-itens li:contains(Artista:) a").text()
@@ -98,22 +102,47 @@ class MundoHentai : ParsedHttpSource() {
             description = post.select("ul.post-itens li:contains(Cor:)").text()
             status = SManga.COMPLETED
             thumbnail_url = post.select("div.post-capa img").attr("src")
+            update_strategy = if (isMultipleChapters) UpdateStrategy.ALWAYS_UPDATE else UpdateStrategy.ONLY_FETCH_ONCE
         }
     }
 
-    override fun chapterListSelector(): String = "div.post-box"
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val document = response.asJsoup()
+        val multipleChapters = document.select("div.listaImagens div.galeriaTab")
+
+        if (multipleChapters.isNotEmpty()) {
+            return multipleChapters.map(::chapterFromElement).reversed()
+        }
+
+        return listOf(singleChapterFromElement(document.body()))
+    }
+
+    override fun chapterListSelector(): String = "div.post-box.listaImagens"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
+        val chapterId = element.attr("data-id")
+        val title = element.selectFirst("div.galeriaTabTitulo")?.text()
+
+        name = "Capítulo $chapterId" + (if (!title.isNullOrEmpty()) " - $title" else "")
+        chapter_number = chapterId.toFloatOrNull() ?: -1f
+        setUrlWithoutDomain("${element.ownerDocument()!!.location()}#$chapterId")
+    }
+
+    private fun singleChapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = "Capítulo"
         chapter_number = 1f
         setUrlWithoutDomain(element.ownerDocument()!!.location())
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("div.listaImagens ul.post-fotos img")
-            .mapIndexed { i, el ->
-                Page(i, document.location(), el.attr("src"))
-            }
+        val chapterId = document.location().substringAfterLast("#")
+        val gallerySelector = when {
+            chapterId.isNotEmpty() -> "div.listaImagens #galeria-$chapterId img"
+            else -> "div.listaImagens ul.post-fotos img"
+        }
+
+        return document.select(gallerySelector)
+            .mapIndexed { i, el -> Page(i, document.location(), el.attr("src")) }
     }
 
     override fun imageUrlParse(document: Document) = ""
