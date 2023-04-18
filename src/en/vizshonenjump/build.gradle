@@ -6,7 +6,7 @@ ext {
     extName = 'VIZ Shonen Jump'
     pkgNameSuffix = 'en.vizshonenjump'
     extClass = '.VizShonenJump'
-    extVersionCode = 16
+    extVersionCode = 17
 }
 
 dependencies {

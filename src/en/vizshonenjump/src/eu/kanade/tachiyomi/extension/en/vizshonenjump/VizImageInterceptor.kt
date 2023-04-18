@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
-import com.drew.imaging.jpeg.JpegMetadataReader
+import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifSubIFDDirectory
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
@@ -14,12 +14,12 @@ import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import uy.kohesive.injekt.injectLazy
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.io.InputStream
 
 class VizImageInterceptor : Interceptor {
 
@@ -35,12 +35,15 @@ class VizImageInterceptor : Interceptor {
         val imageUrl = imageUrlParse(response)
         val imageResponse = chain.proceed(imageRequest(imageUrl))
 
-        val image = imageResponse.body.byteStream().decodeImage()
-        val body = image.toResponseBody(MEDIA_TYPE)
+        if (!imageResponse.isSuccessful) {
+            imageResponse.close()
+            throw IOException(FAILED_TO_FETCH_PAGE_URL)
+        }
+
+        val imageBody = imageResponse.decodeImage()
 
         return imageResponse.newBuilder()
-            .body(body)
-            .header("Content-Type", MEDIA_TYPE.toString())
+            .body(imageBody)
             .build()
     }
 
@@ -60,17 +63,18 @@ class VizImageInterceptor : Interceptor {
         return GET(url, headers)
     }
 
-    private fun InputStream.decodeImage(): ByteArray {
+    private fun Response.decodeImage(): ResponseBody {
         // See: https://stackoverflow.com/a/5924132
         // See: https://github.com/tachiyomiorg/tachiyomi-extensions/issues/2678#issuecomment-645857603
         val byteOutputStream = ByteArrayOutputStream()
-        copyTo(byteOutputStream)
+            .apply { body.byteStream().copyTo(this) }
+        val contentType = headers["Content-Type"]?.toMediaType()
 
         val byteInputStreamForImage = ByteArrayInputStream(byteOutputStream.toByteArray())
         val byteInputStreamForMetadata = ByteArrayInputStream(byteOutputStream.toByteArray())
 
-        val imageData = byteInputStreamForMetadata.getImageData()
-            ?: return byteOutputStream.toByteArray()
+        val imageData = byteInputStreamForMetadata.getImageData().getOrNull()
+            ?: return byteOutputStream.toByteArray().toResponseBody(contentType)
 
         val input = BitmapFactory.decodeStream(byteInputStreamForImage)
         val width = input.width
@@ -139,9 +143,10 @@ class VizImageInterceptor : Interceptor {
             )
         }
 
-        val output = ByteArrayOutputStream()
-        result.compress(Bitmap.CompressFormat.JPEG, 95, output)
-        return output.toByteArray()
+        return ByteArrayOutputStream()
+            .apply { result.compress(Bitmap.CompressFormat.JPEG, 95, this) }
+            .toByteArray()
+            .toResponseBody(JPEG_MEDIA_TYPE)
     }
 
     private fun Canvas.drawImage(
@@ -158,8 +163,13 @@ class VizImageInterceptor : Interceptor {
         drawBitmap(from, srcRect, dstRect, null)
     }
 
-    private fun ByteArrayInputStream.getImageData(): ImageData? {
-        val metadata = JpegMetadataReader.readMetadata(this)
+    private fun ByteArrayInputStream.getImageData(): Result<ImageData?> = runCatching {
+        val metadata = ImageMetadataReader.readMetadata(this)
+
+        val keyDir = metadata.directories
+            .firstOrNull { it.containsTag(ExifSubIFDDirectory.TAG_IMAGE_UNIQUE_ID) }
+        val metaUniqueId = keyDir?.getString(ExifSubIFDDirectory.TAG_IMAGE_UNIQUE_ID)
+            ?: return@runCatching null
 
         val sizeDir = metadata.directories.firstOrNull {
             it.containsTag(ExifSubIFDDirectory.TAG_IMAGE_WIDTH) &&
@@ -168,13 +178,7 @@ class VizImageInterceptor : Interceptor {
         val metaWidth = sizeDir?.getInt(ExifSubIFDDirectory.TAG_IMAGE_WIDTH) ?: COMMON_WIDTH
         val metaHeight = sizeDir?.getInt(ExifSubIFDDirectory.TAG_IMAGE_HEIGHT) ?: COMMON_HEIGHT
 
-        val keyDir = metadata.directories.firstOrNull {
-            it.containsTag(ExifSubIFDDirectory.TAG_IMAGE_UNIQUE_ID)
-        }
-        val metaUniqueId = keyDir?.getString(ExifSubIFDDirectory.TAG_IMAGE_UNIQUE_ID)
-            ?: return null
-
-        return ImageData(metaWidth, metaHeight, metaUniqueId)
+        ImageData(metaWidth, metaHeight, metaUniqueId)
     }
 
     private data class ImageData(val width: Int, val height: Int, val uniqueId: String) {
@@ -186,9 +190,9 @@ class VizImageInterceptor : Interceptor {
 
     companion object {
         private const val IMAGE_URL_ENDPOINT = "get_manga_url"
-        private val MEDIA_TYPE = "image/jpeg".toMediaType()
+        private val JPEG_MEDIA_TYPE = "image/jpeg".toMediaType()
 
-        private const val FAILED_TO_FETCH_PAGE_URL = "Something went wrong while trying to fetch page."
+        private const val FAILED_TO_FETCH_PAGE_URL = "Something went wrong while trying to fetch the page."
 
         private const val CELL_WIDTH_COUNT = 10
         private const val CELL_HEIGHT_COUNT = 15
