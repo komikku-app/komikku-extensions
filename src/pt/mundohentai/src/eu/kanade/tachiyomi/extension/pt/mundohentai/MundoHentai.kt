@@ -108,16 +108,22 @@ class MundoHentai : ParsedHttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val multipleChapters = document.select("div.listaImagens div.galeriaTab")
+        val multipleChapters = document.select(chapterListSelector())
 
         if (multipleChapters.isNotEmpty()) {
             return multipleChapters.map(::chapterFromElement).reversed()
         }
 
-        return listOf(singleChapterFromElement(document.body()))
+        val singleChapter = SChapter.create().apply {
+            name = "Capítulo"
+            chapter_number = 1f
+            setUrlWithoutDomain(document.location())
+        }
+
+        return listOf(singleChapter)
     }
 
-    override fun chapterListSelector(): String = "div.post-box.listaImagens"
+    override fun chapterListSelector(): String = "div.listaImagens div.galeriaTab"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         val chapterId = element.attr("data-id")
@@ -128,14 +134,8 @@ class MundoHentai : ParsedHttpSource() {
         setUrlWithoutDomain("${element.ownerDocument()!!.location()}#$chapterId")
     }
 
-    private fun singleChapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        name = "Capítulo"
-        chapter_number = 1f
-        setUrlWithoutDomain(element.ownerDocument()!!.location())
-    }
-
     override fun pageListParse(document: Document): List<Page> {
-        val chapterId = document.location().substringAfterLast("#")
+        val chapterId = document.location().substringAfterLast("#", "")
         val gallerySelector = when {
             chapterId.isNotEmpty() -> "div.listaImagens #galeria-$chapterId img"
             else -> "div.listaImagens ul.post-fotos img"
