@@ -206,7 +206,6 @@ abstract class MadTheme(
 
         name = element.select(".chapter-title").first()!!.text()
         date_upload = parseChapterDate(element.select(".chapter-update").first()?.text())
-        chapter_number = name.substringAfterLast(' ').toFloatOrNull() ?: -1f
     }
 
     // Pages

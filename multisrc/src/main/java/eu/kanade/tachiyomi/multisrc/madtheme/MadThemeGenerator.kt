@@ -9,7 +9,7 @@ class MadThemeGenerator : ThemeSourceGenerator {
 
     override val themeClass = "MadTheme"
 
-    override val baseVersionCode: Int = 12
+    override val baseVersionCode: Int = 13
 
     override val sources = listOf(
         SingleLang("BeeHentai", "https://beehentai.com", "en", isNsfw = true),
