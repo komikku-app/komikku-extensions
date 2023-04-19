@@ -57,6 +57,7 @@ abstract class HeanCms(
             orderBy = "total_views",
             status = "Ongoing",
             type = "Comic",
+            tagIds = emptyList(),
         )
 
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
@@ -96,6 +97,7 @@ abstract class HeanCms(
             orderBy = "latest",
             status = "Ongoing",
             type = "Comic",
+            tagIds = emptyList(),
         )
 
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
@@ -325,8 +327,8 @@ abstract class HeanCms(
             page = page,
             order = "desc",
             orderBy = "total_views",
-            status = "",
             type = "Comic",
+            tagIds = emptyList(),
         )
 
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)

@@ -41,7 +41,7 @@ data class HeanCmsSearchDto(
 
         title = this@HeanCmsSearchDto.title
         thumbnail_url = when {
-            thumbnailFileName.isNotEmpty() -> "$apiUrl/$coverPath$thumbnailFileName"
+            thumbnailFileName.isNotEmpty() -> createThumbnailUrl(apiUrl, coverPath, thumbnailFileName)
             else -> ""
         }
         url = "/series/$slugOnly"
@@ -75,10 +75,14 @@ data class HeanCmsSeriesDto(
         genre = tags.orEmpty()
             .sortedBy(HeanCmsTagDto::name)
             .joinToString { it.name }
-        thumbnail_url = "$apiUrl/$coverPath$thumbnail"
+        thumbnail_url = createThumbnailUrl(apiUrl, coverPath, thumbnail)
         status = this@HeanCmsSeriesDto.status?.toStatus() ?: SManga.UNKNOWN
         url = "/series/${slug.replace(HeanCms.TIMESTAMP_REGEX, "")}"
     }
+}
+
+private fun createThumbnailUrl(apiUrl: String, coverPath: String, thumbnail: String): String {
+    return if (thumbnail.startsWith("https://")) thumbnail else "$apiUrl/$coverPath$thumbnail"
 }
 
 @Serializable
@@ -116,9 +120,9 @@ data class HeanCmsQuerySearchPayloadDto(
     val order: String,
     val page: Int,
     @SerialName("order_by") val orderBy: String,
-    @SerialName("series_status") val status: String,
+    @SerialName("series_status") val status: String? = null,
     @SerialName("series_type") val type: String,
-    @SerialName("tags_ids") val tagIds: List<Int> = emptyList(),
+    @SerialName("tags_ids") val tagIds: List<Int>?,
 )
 
 @Serializable

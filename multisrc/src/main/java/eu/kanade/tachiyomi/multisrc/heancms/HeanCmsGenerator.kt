@@ -9,7 +9,7 @@ class HeanCmsGenerator : ThemeSourceGenerator {
 
     override val themeClass = "HeanCms"
 
-    override val baseVersionCode: Int = 10
+    override val baseVersionCode: Int = 11
 
     override val sources = listOf(
         SingleLang("Omega Scans", "https://omegascans.org", "en", isNsfw = true, overrideVersionCode = 16),
