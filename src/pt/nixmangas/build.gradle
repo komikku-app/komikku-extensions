@@ -6,7 +6,7 @@ ext {
     extName = 'Nix Mangás'
     pkgNameSuffix = 'pt.nixmangas'
     extClass = '.NixMangas'
-    extVersionCode = 1
+    extVersionCode = 2
     isNsfw = true
 }
 

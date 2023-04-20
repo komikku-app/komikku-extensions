@@ -67,32 +67,22 @@ class NixMangas : HttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         // The search with query isn't working in their direct API for some reason,
         // so we use their site wrapped API instead for now.
-        val apiUrl = "$baseUrl/obras".toHttpUrl().newBuilder()
+        val apiUrl = "$API_URL/mangas".toHttpUrl().newBuilder()
             .addQueryParameter("page", page.toString())
-            .addQueryParameter("q", query)
-            .addQueryParameter("_data", "routes/__app/obras/index")
-            .toString()
+            .addQueryParameter("search", query)
+            .build()
 
         return GET(apiUrl, apiHeaders)
     }
 
-    override fun searchMangaParse(response: Response): MangasPage {
-        val result = response.parseAs<NixMangasSearchDto>()
-        val workList = result.mangas.data.map(NixMangasWorkDto::toSManga)
-
-        return MangasPage(workList, result.mangas.hasNextPage)
-    }
+    override fun searchMangaParse(response: Response): MangasPage = latestUpdatesParse(response)
 
     override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
 
     override fun mangaDetailsRequest(manga: SManga): Request {
-        // Their API doesn't have an endpoint for the manga details, so we
-        // use their site wrapped API instead for now.
-        val apiUrl = (baseUrl + manga.url).toHttpUrl().newBuilder()
-            .addQueryParameter("_data", "routes/__app/obras/\$slug")
-            .toString()
+        val slug = manga.url.substringAfter("/obras/")
 
-        return GET(apiUrl, apiHeaders)
+        return GET("$API_URL/mangas/$slug/details", apiHeaders)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
