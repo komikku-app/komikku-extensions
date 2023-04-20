@@ -19,7 +19,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -34,7 +33,15 @@ abstract class HeanCms(
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    protected val json: Json by injectLazy()
+    /**
+     * Custom Json instance to make usage of `encodeDefaults`,
+     * which is not enabled on the injected instance of the app.
+     */
+    protected val json: Json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = false
+        encodeDefaults = true
+    }
 
     protected val intl by lazy { HeanCmsIntl(lang) }
 
@@ -57,7 +64,6 @@ abstract class HeanCms(
             orderBy = "total_views",
             status = "Ongoing",
             type = "Comic",
-            tagIds = emptyList(),
         )
 
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
@@ -97,7 +103,6 @@ abstract class HeanCms(
             orderBy = "latest",
             status = "Ongoing",
             type = "Comic",
-            tagIds = emptyList(),
         )
 
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
@@ -328,7 +333,6 @@ abstract class HeanCms(
             order = "desc",
             orderBy = "total_views",
             type = "Comic",
-            tagIds = emptyList(),
         )
 
         val payload = json.encodeToString(payloadObj).toRequestBody(JSON_MEDIA_TYPE)
