@@ -5,8 +5,6 @@ import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -17,7 +15,7 @@ private const val DEFAULT_BASE_URL = "http://www.zerobyw4090.com"
 
 private const val BASE_URL_PREF = "ZEROBYW_BASEURL"
 private const val DEFAULT_BASE_URL_PREF = "defaultBaseUrl"
-private const val JSON_URL = "https://cdn.jsdelivr.net/gh/zerozzz123456/1/url.json"
+private const val LATEST_DOMAIN_URL = "https://stevenyomi.github.io/source-domains/zerobyw.txt"
 
 var SharedPreferences.baseUrl: String
     get() = getString(BASE_URL_PREF, DEFAULT_BASE_URL)!!
@@ -36,7 +34,7 @@ fun getBaseUrlPreference(context: Context) = EditTextPreference(context).apply {
     key = BASE_URL_PREF
     title = "网址"
     summary = "正常情况下会自动更新。" +
-        "如果出现错误，请在 GitHub 上报告，并且可以在 $JSON_URL 找到最新网址手动填写。" +
+        "如果出现错误，请在 GitHub 上报告，并且可以在 GitHub 仓库 zerozzz123456/1 找到最新网址手动填写。" +
         "填写时按照 $DEFAULT_BASE_URL 格式。"
     setDefaultValue(DEFAULT_BASE_URL)
 
@@ -52,23 +50,14 @@ fun getBaseUrlPreference(context: Context) = EditTextPreference(context).apply {
 }
 
 fun ciGetUrl(client: OkHttpClient): String {
-    println("[Zerobyw] CI detected, getting latest URL...")
     return try {
-        val response = client.newCall(GET(JSON_URL)).execute()
-        parseJson(response).also { println("[Zerobyw] Latest URL is $it") }
+        val response = client.newCall(GET(LATEST_DOMAIN_URL)).execute()
+        response.body.string()
     } catch (e: Throwable) {
-        println("[Zerobyw] Failed to fetch latest URL")
+        println("::error ::Zerobyw: Failed to fetch latest URL")
         e.printStackTrace()
         DEFAULT_BASE_URL
     }
-}
-
-private fun parseJson(response: Response): String {
-    val string = response.body.string()
-    val json: HashMap<String, String> = Json.decodeFromString(string)
-    val newUrl = json["url"]!!.trim()
-    checkBaseUrl(newUrl)
-    return newUrl
 }
 
 private fun checkBaseUrl(url: String) {
@@ -97,11 +86,10 @@ class UpdateUrlInterceptor(
         }
 
         val newUrl = try {
-            val response = chain.proceed(GET(JSON_URL))
-            val newUrl = parseJson(response)
+            val newUrl = chain.proceed(GET(LATEST_DOMAIN_URL)).body.string()
             require(newUrl != baseUrl)
             newUrl
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             return failedResult.getOrThrow()
         }
 
