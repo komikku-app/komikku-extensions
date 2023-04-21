@@ -28,11 +28,11 @@ class Dmzj : ConfigurableSource, HttpSource() {
     override val lang = "zh"
     override val supportsLatest = true
     override val name = "动漫之家"
-    override val baseUrl = "https://m.idmzj.com"
+    override val baseUrl = "https://m.dmzj.com"
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
+            .migrate()
 
     override val client: OkHttpClient = network.client.newBuilder()
         .addInterceptor(ImageUrlInterceptor)
@@ -47,7 +47,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
         .build()
 
     private fun fetchIdBySlug(slug: String): String {
-        val request = GET("https://manhua.idmzj.com/$slug/", headers)
+        val request = GET("https://manhua.dmzj.com/$slug/", headers)
         val html = client.newCall(request).execute().body.string()
         val start = "g_comic_id = \""
         val startIndex = html.indexOf(start) + start.length
@@ -142,7 +142,6 @@ class Dmzj : ConfigurableSource, HttpSource() {
         if (id !in preferences.hiddenList) {
             fetchMangaInfoV4(id)?.run { return toSManga() }
         }
-        throw Exception("目前无法获取特殊漫画类型 (2) 的详情 (ID: $id)")
         val response = client.newCall(GET(ApiV3.mangaInfoUrlV1(id), headers)).execute()
         return ApiV3.parseMangaDetailsV1(response)
     }
@@ -171,7 +170,6 @@ class Dmzj : ConfigurableSource, HttpSource() {
                     return@fromCallable result.parseChapterList()
                 }
             }
-            throw Exception("目前无法获取特殊漫画的章节目录 (ID: $id)")
             val response = client.newCall(GET(ApiV3.mangaInfoUrlV1(id), headers)).execute()
             ApiV3.parseChapterListV1(response)
         }

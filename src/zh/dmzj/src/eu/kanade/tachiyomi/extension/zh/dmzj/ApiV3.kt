@@ -11,7 +11,7 @@ import okhttp3.Response
 object ApiV3 {
 
     private const val v3apiUrl = "https://v3api.idmzj.com"
-    private const val apiUrl = "https://api.idmzj.com"
+    private const val apiUrl = "https://api.dmzj.com"
 
     fun popularMangaUrl(page: Int) = "$v3apiUrl/classify/0/0/${page - 1}.json"
 

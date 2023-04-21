@@ -85,6 +85,19 @@ private fun SharedPreferences.addToSet(key: String, id: String, oldSet: Set<Stri
     edit().putStringSet(key, newSet).apply()
 }
 
+fun SharedPreferences.migrate(): SharedPreferences {
+    val currentVersion = 1
+    val versionPref = "version"
+    val oldVersion = getInt(versionPref, 0)
+    if (oldVersion >= currentVersion) return this
+    val editor = edit()
+    if (oldVersion < 1) {
+        editor.remove(LICENSED_LIST_PREF).remove(HIDDEN_LIST_PREF)
+    }
+    editor.putInt(versionPref, currentVersion).apply()
+    return this
+}
+
 private const val IMAGE_QUALITY_PREF = "imageSourcePreference"
 const val AUTO_RES = "PREFER_ORIG_RES"
 const val ORIGINAL_RES = "ORIG_RES_ONLY"
