@@ -14,7 +14,7 @@ import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 import kotlin.math.min
 
-object MangaReaderImageInterceptor : Interceptor {
+object ImageInterceptor : Interceptor {
 
     private val memo = hashMapOf<Int, IntArray>()
 
@@ -22,11 +22,9 @@ object MangaReaderImageInterceptor : Interceptor {
         val request = chain.request()
         val response = chain.proceed(request)
 
-        val url = request.url
-        // TODO: remove the query parameter check (legacy) in later versions
-        if (url.fragment != SCRAMBLED && url.queryParameter("shuffled") == null) return response
+        if (request.url.fragment != SCRAMBLED) return response
 
-        val image = descramble(response.body.byteStream())
+        val image = response.body.byteStream().use(::descramble)
         val body = image.toResponseBody("image/jpeg".toMediaType())
         return response.newBuilder()
             .body(body)

@@ -1,3 +1,8 @@
+## 1.3.4
+
+- Refactor and make multisrc
+- Chapter page list now requires only 1 network request (those fetched in old versions still need 2)
+
 ## 1.3.3
 
 - Appended `.to` to extension name
