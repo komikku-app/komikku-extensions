@@ -24,14 +24,6 @@ class MCCMSGenerator : ThemeSourceGenerator {
             sourceName = "好漫6 (g-lens)",
             overrideVersionCode = 0,
         ),
-        SingleLang( // same as: caiji.haoman8.com
-            name = "Haoman8",
-            baseUrl = "https://www.haoman8.com",
-            lang = "zh",
-            className = "Haoman8",
-            sourceName = "好漫8",
-            overrideVersionCode = 0,
-        ),
         SingleLang(
             name = "Kuaikuai Manhua 3",
             baseUrl = "https://mobile3.manhuaorg.com",
