@@ -11,7 +11,7 @@ data class Manga(
 
 @Serializable
 data class MDcovers(
-    val b2key: String,
+    val b2key: String?,
 )
 
 @Serializable

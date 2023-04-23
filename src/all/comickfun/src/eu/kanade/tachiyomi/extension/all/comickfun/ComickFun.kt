@@ -177,11 +177,9 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
                     // appennding # at end as part of migration from slug to hid
                     url = "/comic/${data.hid}#"
                     title = data.title
-                    thumbnail_url = if (data.md_covers.isNotEmpty()) {
-                        "$cdnUrl/${data.md_covers[0].b2key}"
-                    } else {
-                        "$baseUrl/static/failed_to_load.png"
-                    }
+                    thumbnail_url = runCatching {
+                        "$cdnUrl/${data.md_covers.first().b2key}"
+                    }.getOrNull()
                 }
             },
             /*
@@ -216,11 +214,9 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
             description = beautifyDescription(mangaData.comic.desc)
             genre = mangaData.genres.joinToString { it.name.trim() }
             status = parseStatus(mangaData.comic.status)
-            thumbnail_url = if (mangaData.comic.md_covers.isNotEmpty()) {
-                "$cdnUrl/${mangaData.comic.md_covers[0].b2key}"
-            } else {
-                "$baseUrl/static/failed_to_load.png"
-            }
+            thumbnail_url = runCatching {
+                "$cdnUrl/${mangaData.comic.md_covers.first().b2key}"
+            }.getOrNull()
         }
     }
 
