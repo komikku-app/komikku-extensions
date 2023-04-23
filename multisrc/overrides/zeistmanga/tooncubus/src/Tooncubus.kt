@@ -8,7 +8,9 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
 import org.jsoup.nodes.Document
 
-class Tooncubus : ZeistManga("Tooncubus", "https://www.tooncubus.site", "id") {
+class Tooncubus : ZeistManga("Tooncubus", "https://www.tooncubus.top", "id") {
+
+    override val pageListSelector = "div.check-box center"
 
     override fun chapterListParse(response: Response): List<SChapter> {
         return response.asJsoup().selectFirst("ul.series-chapterlist")!!.select("div.flexch-infoz").map { element ->

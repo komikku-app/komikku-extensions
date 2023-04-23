@@ -10,7 +10,4 @@ class KLManhua : ZeistManga("KLManhua", "https://klmanhua.blogspot.com", "id") {
     override fun getLanguageList(): List<Language> = listOf(
         Language(intl.all, ""),
     )
-
-    override val imgSelector = "a[href]"
-    override val imgSelectorAttr = "href"
 }

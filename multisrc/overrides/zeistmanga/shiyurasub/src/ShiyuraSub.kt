@@ -7,9 +7,6 @@ class ShiyuraSub : ZeistManga("ShiyuraSub", "https://shiyurasub.blogspot.com", "
 
     override val hasFilters = true
 
-    override val imgSelector = "a[href]"
-    override val imgSelectorAttr = "href"
-
     override fun getLanguageList(): List<Language> = listOf(
         Language(intl.all, ""),
     )

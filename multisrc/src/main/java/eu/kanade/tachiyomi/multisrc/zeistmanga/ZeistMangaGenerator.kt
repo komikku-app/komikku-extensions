@@ -9,7 +9,7 @@ class ZeistMangaGenerator : ThemeSourceGenerator {
 
     override val themeClass = "ZeistManga"
 
-    override val baseVersionCode: Int = 5
+    override val baseVersionCode: Int = 6
 
     override val sources = listOf(
         SingleLang("Asupan Komik", "https://www.asupankomik.my.id", "id", overrideVersionCode = 1),
@@ -20,7 +20,7 @@ class ZeistMangaGenerator : ThemeSourceGenerator {
         SingleLang("Muslos No Sekai", "https://muslosnosekai.blogspot.com", "es"),
         SingleLang("Noromax", "https://www.noromax.xyz", "id"),
         SingleLang("ShiyuraSub", "https://shiyurasub.blogspot.com", "id"),
-        SingleLang("Tooncubus", "https://www.tooncubus.site", "id", isNsfw = true),
+        SingleLang("Tooncubus", "https://www.tooncubus.top", "id", isNsfw = true),
     )
 
     companion object {

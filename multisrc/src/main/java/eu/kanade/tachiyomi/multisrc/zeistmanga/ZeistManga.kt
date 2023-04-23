@@ -36,8 +36,7 @@ abstract class ZeistManga(
     open val oldChapterFeedRegex = """([^']+)\?""".toRegex()
     open val oldScriptSelector = "#myUL > script"
 
-    open val imgSelector = "img[src]"
-    open val imgSelectorAttr = "src"
+    open val pageListSelector = "div.check-box div.separator"
 
     open fun getApiUrl(doc: Document): String {
         val script = doc.selectFirst(scriptSelector)
@@ -145,9 +144,9 @@ abstract class ZeistManga(
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val images = document.selectFirst("div.check-box")!!
-        return images.select(imgSelector).mapIndexed { i, img ->
-            Page(i, "", img.attr(imgSelectorAttr))
+        val images = document.select(pageListSelector)
+        return images.select("img[src]").mapIndexed { i, img ->
+            Page(i, "", img.attr("src"))
         }
     }
 

@@ -8,9 +8,6 @@ class MangaAiLand : ZeistManga("Manga Ai Land", "https://manga-ai-land.blogspot.
 
     override val hasFilters = true
 
-    override val imgSelector = "a[href]"
-    override val imgSelectorAttr = "href"
-
     override fun getLanguageList(): List<Language> = listOf(
         Language(intl.all, ""),
     )
