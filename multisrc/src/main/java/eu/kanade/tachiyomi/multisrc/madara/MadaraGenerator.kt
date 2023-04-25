@@ -421,6 +421,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Ver Manhwas", "https://vermanhwa.es", "es", isNsfw = true, overrideVersionCode = 1),
         SingleLang("VinManga", "https://vinload.com", "en", isNsfw = true),
         SingleLang("Visbellum", "https://visbellum.com", "pt-BR", overrideVersionCode = 2),
+        SingleLang("VoirComic", "https://voircomic.com", "fr"),
         SingleLang("Wakamics", "https://wakamics.net", "en"),
         SingleLang("Wakascan", "https://wakascan.com", "fr", overrideVersionCode = 1),
         SingleLang("War Queen Scan", "https://wqscan.com", "pt-BR", overrideVersionCode = 6),
