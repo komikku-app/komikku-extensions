@@ -439,10 +439,25 @@ class Remanga : ConfigurableSource, HttpSource() {
                     emptyList()
                 }
                 val selectedBranch = branch.maxByOrNull { selector(it) }!!
-                return (1..(selectedBranch.count_chapters / 100 + 1)).map {
+                val tempChaptersList = mutableListOf<SChapter>()
+                if (branch.size > 1) {
+                    val selectedBranch2 =
+                        branch.filter { it.id != selectedBranch.id }.maxByOrNull { selector(it) }!!
+                    if (selectedBranch.count_chapters < json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(
+                            chapterListRequest(selectedBranch2.id, 1).body.string(),
+                        ).content.firstOrNull()?.chapter?.toFloatOrNull()!!
+                    ) {
+                        (1..(selectedBranch2.count_chapters / 100 + 1)).map {
+                            val response = chapterListRequest(selectedBranch2.id, it)
+                            chapterListParse(response, manga, exChapters)
+                        }.let { tempChaptersList.addAll(it.flatten()) }
+                    }
+                }
+                (1..(selectedBranch.count_chapters / 100 + 1)).map {
                     val response = chapterListRequest(selectedBranch.id, it)
                     chapterListParse(response, manga, exChapters)
-                }.let { Observable.just(it.flatten()) }
+                }.let { tempChaptersList.addAll(it.flatten()) }
+                return tempChaptersList.distinctBy { it.name.substringBefore(". Глава") + "--" + it.chapter_number }.sortedWith(compareBy({ -it.chapter_number }, { it.name.substringBefore(". Глава") })).let { Observable.just(it) }
             }
         }
     }
