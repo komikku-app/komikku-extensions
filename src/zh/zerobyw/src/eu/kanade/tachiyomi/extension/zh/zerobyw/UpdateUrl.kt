@@ -11,7 +11,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import java.io.IOException
 
-private const val DEFAULT_BASE_URL = "http://www.zerobyw4090.com"
+private const val DEFAULT_BASE_URL = "http://www.zerobyw3.com"
 
 private const val BASE_URL_PREF = "ZEROBYW_BASEURL"
 private const val DEFAULT_BASE_URL_PREF = "defaultBaseUrl"
@@ -78,7 +78,7 @@ class UpdateUrlInterceptor(
 
         val failedResult = try {
             val response = chain.proceed(request)
-            if (response.code < 500) return response
+            if (response.isSuccessful) return response
             Result.success(response)
         } catch (e: IOException) {
             if (chain.call().isCanceled()) throw e
