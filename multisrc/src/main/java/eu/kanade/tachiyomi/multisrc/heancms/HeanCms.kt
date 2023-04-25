@@ -117,6 +117,17 @@ abstract class HeanCms(
 
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        if (!query.startsWith(SEARCH_PREFIX)) {
+            return super.fetchSearchManga(page, query, filters)
+        }
+
+        val slug = query.substringAfter(SEARCH_PREFIX)
+        val manga = SManga.create().apply { url = "/series/$slug" }
+
+        return fetchMangaDetails(manga).map { MangasPage(listOf(it), false) }
+    }
+
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         /**
          * Their query search endpoint doesn't return the thumbnails, so we need to do
@@ -224,7 +235,8 @@ abstract class HeanCms(
             ?: throw Exception(intl.urlChangedError(name))
 
         return seriesDetails.apply {
-            status = response.request.url.fragment?.toIntOrNull() ?: SManga.UNKNOWN
+            status = status.takeUnless { it == SManga.UNKNOWN }
+                ?: response.request.url.fragment?.toIntOrNull() ?: SManga.UNKNOWN
         }
     }
 
@@ -395,5 +407,7 @@ abstract class HeanCms(
         private val JSON_MEDIA_TYPE = "application/json".toMediaType()
 
         val TIMESTAMP_REGEX = "-\\d+$".toRegex()
+
+        const val SEARCH_PREFIX = "slug:"
     }
 }

@@ -29,6 +29,7 @@ data class HeanCmsSearchDto(
     @SerialName("series_slug") val slug: String,
     @SerialName("series_type") val type: String,
     val title: String,
+    val thumbnail: String? = null,
 ) {
 
     fun toSManga(
@@ -40,7 +41,8 @@ data class HeanCmsSearchDto(
         val thumbnailFileName = slugMap[slugOnly]?.thumbnailFileName
 
         title = this@HeanCmsSearchDto.title
-        thumbnail_url = thumbnailFileName?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
+        thumbnail_url = thumbnail?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
+            ?: thumbnailFileName?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
         url = "/series/$slugOnly"
     }
 }

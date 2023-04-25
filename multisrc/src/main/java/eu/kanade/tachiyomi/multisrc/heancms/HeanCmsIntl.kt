@@ -25,7 +25,7 @@ class HeanCmsIntl(lang: String) {
     val statusOnHiatus: String = when (availableLang) {
         BRAZILIAN_PORTUGUESE -> "Em hiato"
         SPANISH -> "En hiatus"
-        else -> "Ongoing"
+        else -> "On Hiatus"
     }
 
     val statusDropped: String = when (availableLang) {
