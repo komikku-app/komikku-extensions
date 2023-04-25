@@ -6,6 +6,10 @@ import eu.kanade.tachiyomi.source.model.SManga
 import org.jsoup.nodes.Element
 
 class MMScans : Madara("MMScans", "https://mm-scans.org", "en") {
+
+    // The site customized the listing and does not include a .manga class.
+    override val filterNonMangaItems = false
+
     override val popularMangaUrlSelector = "div.item-summary a"
     override fun chapterListSelector() = "li.chapter-li"
     override fun searchMangaSelector() = "a"

@@ -9,6 +9,8 @@ class Shinigami : Madara("Shinigami", "https://shinigami.id", "id") {
     // moved from Reaper Scans (id) to Shinigami (id)
     override val id = 3411809758861089969
 
+    override val mangaSubString = "series"
+
     // Tags are useless as they are just SEO keywords.
     override val mangaDetailsSelectorTag = ""
 

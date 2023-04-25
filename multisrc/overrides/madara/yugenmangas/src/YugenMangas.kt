@@ -28,6 +28,8 @@ class YugenMangas : Madara(
 
     override val useNewChapterEndpoint: Boolean = true
 
+    override val mangaSubString = "series"
+
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = element.selectFirst("p.chapter-manhwa-title")!!.text()
         date_upload = parseChapterDate(element.selectFirst("span.chapter-release-date i")?.text())

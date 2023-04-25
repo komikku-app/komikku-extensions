@@ -178,6 +178,12 @@ abstract class Madara(
      */
     protected open val fetchGenres: Boolean = true
 
+    /**
+     * The path used in the URL for the manga pages. Can be
+     * changed if needed as some sites modify it to other words.
+     */
+    protected open val mangaSubString = "manga"
+
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", "$baseUrl/")
 
@@ -246,8 +252,6 @@ abstract class Madara(
     }
 
     // Search Manga
-
-    open val mangaSubString = "manga"
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.startsWith(URL_SEARCH_PREFIX)) {
