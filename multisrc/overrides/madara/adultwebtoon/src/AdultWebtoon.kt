@@ -6,13 +6,11 @@ import okhttp3.CacheControl
 import okhttp3.Request
 
 class AdultWebtoon : Madara("Adult Webtoon", "https://adultwebtoon.com", "en") {
-
-    override val useLoadMoreSearch = false
     override fun popularMangaRequest(page: Int): Request {
         val pageSuffix = if (page != 1) "page/$page/" else ""
         return GET(
             "$baseUrl/manga/$pageSuffix?m_orderby=trending",
-            formHeaders,
+            headers,
             CacheControl.FORCE_NETWORK,
         )
     }
@@ -20,7 +18,7 @@ class AdultWebtoon : Madara("Adult Webtoon", "https://adultwebtoon.com", "en") {
         val pageSuffix = if (page != 1) "page/$page/" else ""
         return GET(
             "$baseUrl/manga/$pageSuffix?m_orderby=latest",
-            formHeaders,
+            headers,
             CacheControl.FORCE_NETWORK,
         )
     }

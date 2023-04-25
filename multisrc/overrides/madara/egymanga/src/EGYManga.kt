@@ -14,7 +14,6 @@ class EGYManga : Madara(
 ) {
 
     // The website does not flag the content.
-    override val useLoadMoreSearch = false
     override val filterNonMangaItems = false
 
     override val pageListParseSelector = "div.separator"

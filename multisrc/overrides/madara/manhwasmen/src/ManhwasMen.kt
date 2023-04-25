@@ -16,7 +16,6 @@ class ManhwasMen : Madara("Manhwas Men", "https://manhwas.men", "en") {
 
     override val fetchGenres = false
     override val sendViewCount = false
-    override val useLoadMoreSearch = false
 
     // popular
     override fun popularMangaSelector() = "div.col-6"

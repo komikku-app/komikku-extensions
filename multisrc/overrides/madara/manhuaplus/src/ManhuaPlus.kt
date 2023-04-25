@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 class ManhuaPlus : Madara("Manhua Plus", "https://manhuaplus.com", "en") {
 
     // The website does not flag the content.
-    override val useLoadMoreSearch = false
     override val filterNonMangaItems = false
 
     override val pageListParseSelector = ".read-container img"

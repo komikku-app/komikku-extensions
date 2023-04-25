@@ -11,8 +11,6 @@ import java.util.Locale
 
 class PojokManga : Madara("Pojok Manga", "https://pojokmanga.net", "id", SimpleDateFormat("MMM dd, yyyy", Locale.US)) {
 
-    override val useLoadMoreSearch = false
-
     override val useNewChapterEndpoint = true
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {

@@ -18,7 +18,6 @@ class AiYuManga : Madara(
     SimpleDateFormat("MM/dd/yyyy", Locale("es")),
 ) {
     override val useNewChapterEndpoint = true
-    override val useLoadMoreSearch = true
     override val chapterUrlSuffix = ""
 
     override val mangaDetailsSelectorStatus = "div.post-content_item:contains(Status) > div.summary-content"

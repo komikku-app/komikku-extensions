@@ -13,7 +13,6 @@ class VerManhwas : Madara(
     dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale("es")),
 ) {
     override val useNewChapterEndpoint = true
-    override val useLoadMoreSearch = false
 
     override fun genresRequest(): Request {
         return GET("$baseUrl/?s=&post_type=wp-manga", headers)

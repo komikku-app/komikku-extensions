@@ -21,8 +21,6 @@ class ManhwaLatino : Madara(
 
     override val supportsLatest = false
 
-    override val useLoadMoreSearch = false
-
     override val useNewChapterEndpoint = true
 
     override val chapterUrlSelector = "a:eq(1)"

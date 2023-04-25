@@ -30,7 +30,6 @@ class Manga18fx : Madara(
 
     override val fetchGenres = false
     override val sendViewCount = false
-    override val useLoadMoreSearch = false
 
     override fun popularMangaRequest(page: Int) = GET(baseUrl, headers)
 

@@ -18,7 +18,6 @@ class DoujinHentai : Madara(
     SimpleDateFormat("d MMM. yyyy", Locale.ENGLISH),
 ) {
 
-    override val useLoadMoreSearch = false
     override val fetchGenres = false
 
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/lista-manga-hentai?orderby=views&page=$page", headers)

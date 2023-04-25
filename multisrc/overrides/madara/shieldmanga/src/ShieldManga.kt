@@ -14,7 +14,6 @@ class ShieldManga : Madara("Shield Manga", "https://shieldmanga.io", "en") {
         .build()
 
     // The website does not flag the content.
-    override val useLoadMoreSearch = false
     override val filterNonMangaItems = false
 
     override fun chapterListSelector() = "li.wp-manga-hapter, .version-chap li"

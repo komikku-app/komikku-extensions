@@ -5,6 +5,5 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 class Manhwatop : Madara("Manhwatop", "https://manhwatop.com", "en") {
 
     // The website does not flag the content.
-    override val useLoadMoreSearch = false
     override val filterNonMangaItems = false
 }

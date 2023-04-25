@@ -23,7 +23,6 @@ class InariManga : Madara(
     override val mangaDetailsSelectorStatus = "div.card-body tr:has(th:contains(Estatus)) > td"
     override val mangaDetailsSelectorGenre = "div.my-auto > div.inline-block > a"
 
-    override val useLoadMoreSearch = false
     override val useNewChapterEndpoint = true
 
     override fun chapterListSelector() = "tr.wp-manga-chapter"

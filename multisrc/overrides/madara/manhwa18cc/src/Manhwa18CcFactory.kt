@@ -37,8 +37,6 @@ abstract class Manhwa18Cc(
     lang: String,
 ) : Madara(name, baseUrl, lang, SimpleDateFormat("dd MMM yyyy", Locale.US)) {
 
-    override val useLoadMoreSearch = false
-
     override val fetchGenres = false
 
     override fun popularMangaSelector() = "div.manga-item"

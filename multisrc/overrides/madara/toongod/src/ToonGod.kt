@@ -11,7 +11,6 @@ class ToonGod : Madara("ToonGod", "https://www.toongod.com", "en", SimpleDateFor
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/webtoons/page/$page/?m_orderby=views", headers)
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/webtoons/page/$page/?m_orderby=latest", headers)
     override val mangaSubString = "webtoons"
-    override val useLoadMoreSearch = false
     override fun imageRequest(page: Page): Request {
         return GET(page.imageUrl!!, headers)
     }

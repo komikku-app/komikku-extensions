@@ -9,6 +9,5 @@ class TopManhua : Madara("Top Manhua", "https://topmanhua.com", "en", SimpleDate
     override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", baseUrl)
 
     // The website does not flag the content.
-    override val useLoadMoreSearch = false
     override val filterNonMangaItems = false
 }
