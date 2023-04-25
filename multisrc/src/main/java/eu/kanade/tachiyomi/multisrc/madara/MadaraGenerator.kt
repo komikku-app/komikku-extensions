@@ -13,6 +13,7 @@ class MadaraGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 29
 
     override val sources = listOf(
+        MultiLang("Atlantis Scan", "https://atlantisscan.com", listOf("es", "pt-BR"), isNsfw = true),
         MultiLang("Leviatan Scans", "https://leviatanscans.com", listOf("en", "es"), className = "LeviatanScansFactory", overrideVersionCode = 13),
         MultiLang("MangaForFree.net", "https://mangaforfree.net", listOf("en", "ko", "all"), isNsfw = true, className = "MangaForFreeFactory", pkgName = "mangaforfree", overrideVersionCode = 1),
         MultiLang("Manhwa18.cc", "https://manhwa18.cc", listOf("en", "ko", "all"), isNsfw = true, className = "Manhwa18CcFactory", pkgName = "manhwa18cc", overrideVersionCode = 4),
@@ -45,7 +46,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Astral Library", "https://www.astrallibrary.net", "en", overrideVersionCode = 2),
         SingleLang("Astral-Manga", "https://astral-manga.fr", "fr", className = "AstralManga"),
         SingleLang("Atikrost", "https://atikrost.com", "tr", overrideVersionCode = 1),
-        SingleLang("Atlantis scan", "https://atlantisscan.com", "es"),
         SingleLang("AZManhwa", "https://azmanhwa.net", "en"),
         SingleLang("Azora", "https://azoranov.com", "ar", overrideVersionCode = 5),
         SingleLang("Bakaman", "https://bakaman.net", "th", overrideVersionCode = 1),
