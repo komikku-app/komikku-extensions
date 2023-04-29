@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.mangahub
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -12,16 +13,18 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -52,6 +55,9 @@ abstract class MangaHub(
         .add("Upgrade-Insecure-Requests", "1")
 
     open val json: Json by injectLazy()
+
+    private var baseApiUrl = "https://api.mghubcdn.com"
+    private var baseCdnUrl = "https://imgx.mghubcdn.com"
 
     private var userAgent: String? = null
     private var checkedUa = false
@@ -271,62 +277,45 @@ abstract class MangaHub(
     }
 
     // pages
-    private fun findPageCount(urlTemplate: String, extension: String): Int {
-        var lowerBound = 1
-        var upperBound = 500
+    override fun pageListRequest(chapter: SChapter): Request {
+        val body = buildJsonObject {
+            put("query", PAGES_QUERY)
+            put(
+                "variables",
+                buildJsonObject {
+                    val mangaSource = when (name) {
+                        "MangaHub" -> "m01"
+                        "MangaReader.site" -> "mr01"
+                        "MangaPanda.onl" -> "mr02"
+                        else -> null
+                    }
+                    val chapterUrl = chapter.url.split("/")
 
-        while (lowerBound <= upperBound) {
-            val midpoint = lowerBound + (upperBound - lowerBound) / 2
-            val url = urlTemplate.replaceAfterLast("/", "$midpoint.$extension")
-            val request = Request.Builder()
-                .url(url)
-                .headers(headers)
-                .head()
-                .build()
-            val response = try {
-                client.newCall(request).execute()
-            } catch (e: IOException) {
-                throw Exception("Failed to fetch $url")
-            }
-
-            if (response.code == 404) {
-                upperBound = midpoint - 1
-            } else {
-                lowerBound = midpoint + 1
-            }
+                    put("mangaSource", mangaSource)
+                    put("slug", chapterUrl[2])
+                    put("number", chapterUrl[3].substringAfter("-").toFloat())
+                },
+            )
         }
+            .toString()
+            .toRequestBody()
 
-        return lowerBound - 1
-    }
-
-    override fun pageListParse(document: Document): List<Page> {
-        val pages = mutableListOf<Page>()
-        val urlTemplate = document.select("#mangareader img").attr("abs:src")
-        val extension = urlTemplate.substringAfterLast(".")
-
-        // make some calls to check if the pages exist using findPageCount()
-        // increase or decreasing by using binary search algorithm
-        val maxPage = findPageCount(urlTemplate, extension)
-
-        for (page in 1..maxPage) {
-            val url = urlTemplate.replaceAfterLast("/", "$page.$extension")
-            val pageObject = Page(page - 1, "", url)
-            pages.add(pageObject)
-        }
-
-        return pages
-    }
-
-    override fun imageUrlRequest(page: Page): Request {
         val newHeaders = headersBuilder()
-            .set("Accept", "image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
-            .set("Sec-Fetch-Dest", "image")
-            .set("Sec-Fetch-Mode", "no-cors")
-            .set("Sec-Fetch-Site", "cross-site")
-            .removeAll("Upgrade-Insecure-Requests")
+            .set("Content-Type", "application/json")
+            .set("Origin", baseUrl)
             .build()
 
-        return GET(page.url, newHeaders)
+        return POST("$baseApiUrl/graphql", newHeaders, body)
+    }
+
+    override fun pageListParse(document: Document): List<Page> = throw UnsupportedOperationException("Not used")
+    override fun pageListParse(response: Response): List<Page> {
+        val pagesString = json.decodeFromString<ApiChapterPagesResponse>(response.body.string()).data.chapter.pages
+        val pages = json.decodeFromString<ApiChapterPages>(pagesString)
+
+        return pages.i.mapIndexed { i, page ->
+            Page(i, "", "$baseCdnUrl/${pages.p}$page")
+        }
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
