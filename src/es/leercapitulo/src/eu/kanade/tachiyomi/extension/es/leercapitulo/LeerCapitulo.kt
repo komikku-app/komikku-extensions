@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.es.leercapitulo
 
 import android.app.Application
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.extension.es.leercapitulo.dto.MangaDto
@@ -22,6 +23,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.nio.charset.Charset
 import kotlin.random.Random
 
 class LeerCapitulo : ParsedHttpSource(), ConfigurableSource {
@@ -147,14 +149,23 @@ class LeerCapitulo : ParsedHttpSource(), ConfigurableSource {
 
     // Pages
     override fun pageListParse(document: Document): List<Page> {
-        val order = document.selectFirst("meta[property=ad:check]")?.attr("content")
+        val orderList = document.selectFirst("meta[property=ad:check]")?.attr("content")
             ?.replace("[^\\d]+".toRegex(), "-")
             ?.split("-")
-        val urls = document.selectFirst("#arraydata")!!.text().split(',')
-        val sortedUrl = order?.map { urls[it.toInt()] } ?: urls
 
-        return sortedUrl.mapIndexed { i, image_url ->
-            Page(i, imageUrl = image_url.replace("https://cdn.statically.io/img/", "https://")) // just redirects
+        val arrayData = document.selectFirst("#arraydata")!!.text()
+
+        val encodedUrls = arrayData.replace(Regex("[A-Z0-9]", RegexOption.IGNORE_CASE)) {
+            val index = "BoevQJylkhcAxZVb4sXTgfaHu3zr7tP61L9qGNUmCpYKREdijD28OSwWInF5M0".indexOf(it.value)
+            "GQiMUkPrKIgpzVcu87AY4LnvO2a0oBy9JFbRhSx6qdfme5wZsEWlT1CN3XjDHt"[index].toString()
+        }
+
+        val urlList = String(Base64.decode(encodedUrls, Base64.DEFAULT), Charset.forName("UTF-8")).split(",")
+
+        val sortedUrls = orderList?.map { urlList[it.reversed().toInt()] }?.reversed() ?: urlList
+
+        return sortedUrls.mapIndexed { i, image_url ->
+            Page(i, imageUrl = image_url)
         }
     }
 

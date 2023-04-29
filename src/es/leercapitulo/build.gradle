@@ -6,7 +6,7 @@ ext {
     extName = 'LeerCapitulo / OlympusScan.top'
     pkgNameSuffix = 'es.leercapitulo'
     extClass = '.LeerCapitulo'
-    extVersionCode = 3
+    extVersionCode = 4
 }
 
 apply from: "$rootDir/common.gradle"
