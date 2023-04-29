@@ -628,7 +628,7 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
         private const val PREF_PASSWORD = "Password"
         private const val PASSWORD_DEFAULT = ""
 
-        private val supportedImageTypes = listOf("image/jpeg", "image/png", "image/gif", "image/webp", "image/jxl")
+        private val supportedImageTypes = listOf("image/jpeg", "image/png", "image/gif", "image/webp", "image/jxl", "image/heif", "image/avif")
 
         private const val TYPE_SERIES = "Series"
         private const val TYPE_READLISTS = "Read lists"

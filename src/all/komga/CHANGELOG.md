@@ -1,3 +1,11 @@
+## 1.4.47
+
+Minimum Komga version required: `0.151.0`
+
+### Feat
+
+* add support for AVIF and HEIF image types
+
 ## 1.4.46
 
 Minimum Komga version required: `0.151.0`
