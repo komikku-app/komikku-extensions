@@ -20,7 +20,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         MultiLang("Miau Scan", "https://miauscan.com", listOf("es", "pt-BR")),
         SingleLang("Animated Glitched Scans", "https://anigliscans.com", "en"),
         SingleLang("Arcane scan", "https://arcanescan.fr", "fr"),
-        SingleLang("Arena Scans", "https://arenascans.net", "en"),
+        SingleLang("Arena Scans", "https://arenascans.net", "en", overrideVersionCode = 1),
         SingleLang("Azure Scans", "https://azuremanga.com", "en", overrideVersionCode = 1),
         SingleLang("Boosei", "https://boosei.net", "id", overrideVersionCode = 2),
         SingleLang("Babel Wuxia", "https://babelwuxia.com", "en", overrideVersionCode = 1),
