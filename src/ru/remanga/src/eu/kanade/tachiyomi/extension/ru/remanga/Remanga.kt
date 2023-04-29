@@ -166,6 +166,14 @@ class Remanga : ConfigurableSource, HttpSource() {
             .rateLimitHost(exManga.toHttpUrl(), 3)
             .addInterceptor { imageContentTypeIntercept(it) }
             .addInterceptor { authIntercept(it) }
+            .addInterceptor { chain ->
+                val originalRequest = chain.request()
+                val response = chain.proceed(originalRequest)
+                if (originalRequest.url.toString().contains(exManga) and !response.isSuccessful) {
+                    throw IOException("HTTP error ${response.code}. Домен ${exManga.substringAfter("//")} сервиса ExManga недоступен, выберите другой в настройках ⚙️ расширения")
+                }
+                response
+            }
             .addNetworkInterceptor { chain ->
                 val originalRequest = chain.request()
                 val response = chain.proceed(originalRequest)
@@ -430,11 +438,7 @@ class Remanga : ConfigurableSource, HttpSource() {
             else -> {
                 val mangaID = mangaIDs[manga.url.substringAfter("/api/titles/").substringBefore("/").substringBefore("?")]
                 val exChapters = if (preferences.getBoolean(exPAID_PREF, true)) {
-                    try {
-                        json.decodeFromString<SeriesExWrapperDto<List<ExBookDto>>>(client.newCall(GET("$exManga/chapter/history/$mangaID", exHeaders())).execute().body.string()).data
-                    } catch (_: Exception) {
-                        throw Exception("Домен ${exManga.substringAfter("//")} сервиса ExManga недоступен, выберите другой в настройках ⚙️ расширения")
-                    }
+                    json.decodeFromString<SeriesExWrapperDto<List<ExBookDto>>>(client.newCall(GET("$exManga/chapter/history/$mangaID", exHeaders())).execute().body.string()).data
                 } else {
                     emptyList()
                 }
@@ -443,21 +447,25 @@ class Remanga : ConfigurableSource, HttpSource() {
                 if (branch.size > 1) {
                     val selectedBranch2 =
                         branch.filter { it.id != selectedBranch.id }.maxByOrNull { selector(it) }!!
-                    if (selectedBranch.count_chapters < json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(
-                            chapterListRequest(selectedBranch2.id, 1).body.string(),
-                        ).content.firstOrNull()?.chapter?.toFloatOrNull()!!
-                    ) {
-                        (1..(selectedBranch2.count_chapters / 100 + 1)).map {
-                            val response = chapterListRequest(selectedBranch2.id, it)
-                            chapterListParse(response, manga, exChapters)
-                        }.let { tempChaptersList.addAll(it.flatten()) }
+                    if (selectedBranch2.count_chapters > 0) {
+                        if (selectedBranch.count_chapters < (
+                            json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(
+                                    chapterListRequest(selectedBranch2.id, 1).body.string(),
+                                ).content.firstOrNull()?.chapter?.toFloatOrNull() ?: -2F
+                            )
+                        ) {
+                            (1..(selectedBranch2.count_chapters / 100 + 1)).map {
+                                val response = chapterListRequest(selectedBranch2.id, it)
+                                chapterListParse(response, manga, exChapters)
+                            }.let { tempChaptersList.addAll(it.flatten()) }
+                        }
                     }
                 }
                 (1..(selectedBranch.count_chapters / 100 + 1)).map {
                     val response = chapterListRequest(selectedBranch.id, it)
                     chapterListParse(response, manga, exChapters)
                 }.let { tempChaptersList.addAll(it.flatten()) }
-                return tempChaptersList.distinctBy { it.name.substringBefore(". Глава") + "--" + it.chapter_number }.sortedWith(compareBy({ -it.chapter_number }, { it.name.substringBefore(". Глава") })).let { Observable.just(it) }
+                return tempChaptersList.distinctBy { it.name.substringBefore(". Глава") + "--" + it.chapter_number }.sortedWith(compareBy({ it.name.substringBefore(". Глава") }, { it.chapter_number })).reversed().let { Observable.just(it) }
             }
         }
     }
