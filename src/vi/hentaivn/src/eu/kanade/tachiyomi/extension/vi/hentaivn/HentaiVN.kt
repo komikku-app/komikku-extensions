@@ -53,7 +53,7 @@ class HentaiVN : ParsedHttpSource() {
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Referer", baseUrl)
-        .add("Cookie", "view4=1") // Get popular manga
+        .add("Cookie", "view1=1; view4=1") // bypass "captcha" and get popular manga
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
 
