@@ -369,7 +369,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Sagrado Império da Britannia", "https://imperiodabritannia.com", "pt-BR", className = "ImperioDaBritannia"),
         SingleLang("SamuraiScan", "https://samuraiscan.com", "es", overrideVersionCode = 1),
         SingleLang("Sawamics", "https://sawamics.com", "en"),
-        SingleLang("ScamberTraslator", "https://scambertraslator.com", "es", overrideVersionCode = 1),
+        SingleLang("ScamberTraslator", "https://scambertraslator.com", "es", overrideVersionCode = 2),
         SingleLang("Scans Raw", "https://scansraw.com", "en", overrideVersionCode = 1),
         SingleLang("Sdl scans", "https://sdlscans.com", "es", className = "SdlScans"),
         SingleLang("Sensaina Yuri", "https://sensainayuri.dropescan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
