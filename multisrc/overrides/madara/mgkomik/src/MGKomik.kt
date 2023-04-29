@@ -7,4 +7,7 @@ import java.util.Locale
 class MGKomik : Madara("MG Komik", "https://mgkomik.com", "id", SimpleDateFormat("dd MMM yy", Locale.US)) {
 
     override val chapterUrlSuffix = ""
+    override val mangaSubString = "komik"
+
+    override fun searchMangaNextPageSelector() = "a.page.larger"
 }
