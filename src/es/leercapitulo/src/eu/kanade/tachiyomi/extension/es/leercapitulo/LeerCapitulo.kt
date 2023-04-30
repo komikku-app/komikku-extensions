@@ -146,23 +146,29 @@ class LeerCapitulo : ParsedHttpSource(), ConfigurableSource {
             .toFloatOrNull()
             ?: -1f
     }
+    private val keyRepoUrl = "https://raw.githubusercontent.com/seew3l/tachiyomi-scripts/main/leercapitulo_keys.txt"
 
-    // Pages
     override fun pageListParse(document: Document): List<Page> {
         val orderList = document.selectFirst("meta[property=ad:check]")?.attr("content")
             ?.replace("[^\\d]+".toRegex(), "-")
             ?.split("-")
 
+        val useReversedString = orderList?.any { it == "01" }
+
         val arrayData = document.selectFirst("#arraydata")!!.text()
 
+        val (key1, key2) = client.newCall(GET(keyRepoUrl)).execute().body.string().split("\n")
+
         val encodedUrls = arrayData.replace(Regex("[A-Z0-9]", RegexOption.IGNORE_CASE)) {
-            val index = "BoevQJylkhcAxZVb4sXTgfaHu3zr7tP61L9qGNUmCpYKREdijD28OSwWInF5M0".indexOf(it.value)
-            "GQiMUkPrKIgpzVcu87AY4LnvO2a0oBy9JFbRhSx6qdfme5wZsEWlT1CN3XjDHt"[index].toString()
+            val index = key2.indexOf(it.value)
+            key1[index].toString()
         }
 
         val urlList = String(Base64.decode(encodedUrls, Base64.DEFAULT), Charset.forName("UTF-8")).split(",")
 
-        val sortedUrls = orderList?.map { urlList[it.reversed().toInt()] }?.reversed() ?: urlList
+        val sortedUrls = orderList?.map {
+            if (useReversedString == true) urlList[it.reversed().toInt()] else urlList[it.toInt()]
+        }?.reversed() ?: urlList
 
         return sortedUrls.mapIndexed { i, image_url ->
             Page(i, imageUrl = image_url)
