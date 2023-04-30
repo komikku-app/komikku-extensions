@@ -9,6 +9,7 @@
 - Hitomi.la https://github.com/tachiyomiorg/tachiyomi-extensions/pull/11613
 - HQ Dragon https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7065
 - Koushoku https://github.com/tachiyomiorg/tachiyomi-extensions/pull/13329
+- LeerCapitulo https://github.com/tachiyomiorg/tachiyomi-extensions/pull/16255
 - Mangá Host https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7065
 - Mangá Livre and Leitor.net https://github.com/tachiyomiorg/tachiyomi-extensions/pull/8679
 - MangaDig https://github.com/tachiyomiorg/tachiyomi-extensions/pull/14974
