@@ -22,6 +22,7 @@ import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 
 class Webnovel : HttpSource() {
 
@@ -130,11 +131,18 @@ class Webnovel : HttpSource() {
             url = comic.id
             thumbnail_url = getCoverUrl(comic.id)
             author = comic.authorName
-            description = comic.description
+            description = buildString {
+                append(comic.description)
+                if (comic.actionStatus == ComicDetailInfoDto.ONGOING && comic.updateCycle.isNotBlank()) {
+                    append("\n\nInformation:")
+                    append("\n• ${comic.updateCycle.replaceFirstChar { it.uppercase(Locale.ENGLISH) }}")
+                }
+            }
             genre = comic.categoryName
             status = when (comic.actionStatus) {
-                1 -> SManga.ONGOING
-                2 -> SManga.COMPLETED
+                ComicDetailInfoDto.ONGOING -> SManga.ONGOING
+                ComicDetailInfoDto.COMPLETED -> SManga.COMPLETED
+                ComicDetailInfoDto.ON_HIATUS -> SManga.ON_HIATUS
                 else -> SManga.UNKNOWN
             }
         }
