@@ -504,7 +504,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 if (preferences.getBoolean(exPAID_PREF, true)) {
                     if (chapter.is_paid and (chapter.is_bought != true)) {
                         if (exChID != null) {
-                            url = "$exManga/chapter?id=${exChID.id}"
+                            url = "/chapter?id=${exChID.id}"
                             scanlator = "exmanga"
                         }
                     }
@@ -551,10 +551,10 @@ class Remanga : ConfigurableSource, HttpSource() {
     }
 
     @TargetApi(Build.VERSION_CODES.N)
-    private fun pageListParse(response: Response, urlChapter: String): List<Page> {
+    private fun pageListParse(response: Response, chapter: SChapter): List<Page> {
         val body = response.body.string()
         val heightEmptyChunks = 10
-        if (urlChapter.contains(exManga)) {
+        if (chapter.scanlator.equals("exmanga")) {
             try {
                 val exPage = json.decodeFromString<SeriesExWrapperDto<List<List<PagesDto>>>>(body)
                 val result = mutableListOf<Page>()
@@ -568,7 +568,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 throw IOException("Главы больше нет на ExManga. Попробуйте обновить список глав (свайп сверху).")
             }
         } else {
-            if (urlChapter.contains("#is_bought") and (preferences.getBoolean(exPAID_PREF, true))) {
+            if (chapter.url.contains("#is_bought") and (preferences.getBoolean(exPAID_PREF, true))) {
                 val newHeaders = exHeaders().newBuilder()
                     .add("Content-Type", "application/json")
                     .build()
@@ -601,8 +601,8 @@ class Remanga : ConfigurableSource, HttpSource() {
     override fun pageListParse(response: Response): List<Page> = throw UnsupportedOperationException("pageListParse(response: Response, urlRequest: String)")
 
     override fun pageListRequest(chapter: SChapter): Request {
-        return if (chapter.url.contains(exManga)) {
-            GET(chapter.url, exHeaders())
+        return if (chapter.scanlator.equals("exmanga")) {
+            GET(exManga + chapter.url, exHeaders())
         } else {
             if (chapter.name.contains("\uD83D\uDCB2")) {
                 val noEX = if (preferences.getBoolean(exPAID_PREF, true)) {
@@ -618,12 +618,12 @@ class Remanga : ConfigurableSource, HttpSource() {
         return client.newCall(pageListRequest(chapter))
             .asObservableSuccess()
             .map { response ->
-                pageListParse(response, chapter.url)
+                pageListParse(response, chapter)
             }
     }
 
     override fun getChapterUrl(chapter: SChapter): String {
-        return if (chapter.url.contains(exManga)) chapter.url else baseUrl.replace("api.", "") + chapter.url.substringBefore("#is_bought")
+        return if (chapter.scanlator.equals("exmanga")) exManga + chapter.url else baseUrl.replace("api.", "") + chapter.url.substringBefore("#is_bought")
     }
 
     override fun fetchImageUrl(page: Page): Observable<String> = Observable.just(page.imageUrl!!)
