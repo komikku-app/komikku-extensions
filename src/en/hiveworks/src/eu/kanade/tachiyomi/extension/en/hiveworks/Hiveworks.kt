@@ -91,6 +91,7 @@ class Hiveworks : ParsedHttpSource() {
                 is OriginalsFilter -> if (filter.state) return GET("$baseUrl/originals", headers)
                 is KidsFilter -> if (filter.state) return GET("$baseUrl/kids", headers)
                 is CompletedFilter -> if (filter.state) return GET("$baseUrl/completed", headers)
+                is HiatusFilter -> if (filter.state) return GET("$baseUrl/hiatus", headers)
                 else -> { /*Do nothing*/ }
             }
         }
@@ -279,11 +280,13 @@ class Hiveworks : ParsedHttpSource() {
         OriginalsFilter(),
         KidsFilter(),
         CompletedFilter(),
+        HiatusFilter(),
     )
 
     private class OriginalsFilter : Filter.CheckBox("Original Comics")
     private class KidsFilter : Filter.CheckBox("Kids Comics")
     private class CompletedFilter : Filter.CheckBox("Completed Comics")
+    private class HiatusFilter : Filter.CheckBox("On Hiatus Comics")
 
     private open class UriSelectFilter(
         displayName: String,
