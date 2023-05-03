@@ -295,7 +295,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 is MyList -> {
                     if (filter.state > 0) {
                         if (USER_ID == "") {
-                            throw Exception("Пользователь не найден, необходима авторизация через WebView")
+                            throw Exception("Пользователь не найден, необходима авторизация через WebView\uD83C\uDF0E")
                         }
                         val TypeQ = getMyList()[filter.state].id
                         val UserProfileUrl = "$baseUrl/api/users/$USER_ID/bookmarks/?type=$TypeQ&page=$page".toHttpUrl().newBuilder()
@@ -390,7 +390,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 }
             }
             .map { response ->
-                (if (warnLogin) manga.apply { description = "Для просмотра 18+ контента необходима авторизация через WebView" } else mangaDetailsParse(response))
+                (if (warnLogin) manga.apply { description = "Для просмотра контента необходима авторизация через WebView\uD83C\uDF0E︎" } else mangaDetailsParse(response))
                     .apply {
                         initialized = true
                     }
@@ -421,6 +421,29 @@ class Remanga : ConfigurableSource, HttpSource() {
         }
     }
 
+    private fun filterPaid(tempChaptersList: MutableList<SChapter>): MutableList<SChapter> {
+        val lastEx = tempChaptersList.findLast { it.scanlator.equals("exmanga") }
+        return if (!preferences.getBoolean(PAID_PREF, false)) {
+            tempChaptersList.filter {
+                !it.name.contains("\uD83D\uDCB2") || if (lastEx != null) {
+                    (
+                        (
+                            it.name.substringBefore(
+                                ". Глава",
+                            ).toIntOrNull()!! <=
+                                (lastEx.name.substringBefore(". Глава").toIntOrNull()!!)
+                            ) &&
+                            (it.chapter_number < lastEx.chapter_number)
+                        )
+                } else {
+                    false
+                }
+            } as MutableList<SChapter>
+        } else {
+            tempChaptersList
+        }
+    }
+
     private fun selector(b: BranchesDto): Int = b.count_chapters
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         val branch = branches.getOrElse(manga.url.substringAfter("/api/titles/").substringBefore("/").substringBefore("?")) { mangaBranches(manga) }
@@ -430,7 +453,7 @@ class Remanga : ConfigurableSource, HttpSource() {
             }
             branch.isEmpty() -> {
                 if (USER_ID == "") {
-                    Observable.error(Exception("Для просмотра 18+ контента необходима авторизация через WebView"))
+                    Observable.error(Exception("Для просмотра контента необходима авторизация через WebView\uD83C\uDF0E"))
                 } else {
                     return Observable.just(listOf())
                 }
@@ -444,6 +467,10 @@ class Remanga : ConfigurableSource, HttpSource() {
                 }
                 val selectedBranch = branch.maxByOrNull { selector(it) }!!
                 val tempChaptersList = mutableListOf<SChapter>()
+                (1..(selectedBranch.count_chapters / 100 + 1)).map {
+                    val response = chapterListRequest(selectedBranch.id, it)
+                    chapterListParse(response, manga, exChapters)
+                }.let { tempChaptersList.addAll(it.flatten()) }
                 if (branch.size > 1) {
                     val selectedBranch2 =
                         branch.filter { it.id != selectedBranch.id }.maxByOrNull { selector(it) }!!
@@ -457,15 +484,13 @@ class Remanga : ConfigurableSource, HttpSource() {
                             (1..(selectedBranch2.count_chapters / 100 + 1)).map {
                                 val response = chapterListRequest(selectedBranch2.id, it)
                                 chapterListParse(response, manga, exChapters)
-                            }.let { tempChaptersList.addAll(it.flatten()) }
+                            }.let { tempChaptersList.addAll(0, it.flatten()) }
+                            return filterPaid(tempChaptersList).distinctBy { it.name.substringBefore(". Глава") + "--" + it.chapter_number }.sortedWith(compareBy({ it.name.substringBefore(". Глава").toFloat() }, { it.chapter_number })).reversed().let { Observable.just(it) }
                         }
                     }
                 }
-                (1..(selectedBranch.count_chapters / 100 + 1)).map {
-                    val response = chapterListRequest(selectedBranch.id, it)
-                    chapterListParse(response, manga, exChapters)
-                }.let { tempChaptersList.addAll(it.flatten()) }
-                return tempChaptersList.distinctBy { it.name.substringBefore(". Глава") + "--" + it.chapter_number }.sortedWith(compareBy({ it.name.substringBefore(". Глава") }, { it.chapter_number })).reversed().let { Observable.just(it) }
+
+                return filterPaid(tempChaptersList).let { Observable.just(it) }
             }
         }
     }
@@ -489,7 +514,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     private fun chapterListParse(response: Response, manga: SManga, exChapters: List<ExBookDto>): List<SChapter> {
         val chapters = json.decodeFromString<SeriesWrapperDto<List<BookDto>>>(response.body.string()).content
 
-        var chaptersList = chapters.map { chapter ->
+        val chaptersList = chapters.map { chapter ->
             SChapter.create().apply {
                 chapter_number = chapter.chapter.split(".").take(2).joinToString(".").toFloat()
                 url = "/manga/${manga.url.substringAfterLast("/api/titles/")}ch${chapter.id}"
@@ -500,7 +525,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                     null
                 }
 
-                var exChID = exChapters.find { (it.id == chapter.id) }
+                var exChID = exChapters.find { (it.id == chapter.id) || ((it.tome == chapter.tome) && (it.chapter == chapter.chapter)) }
                 if (preferences.getBoolean(exPAID_PREF, true)) {
                     if (chapter.is_paid and (chapter.is_bought != true)) {
                         if (exChID != null) {
@@ -527,17 +552,6 @@ class Remanga : ConfigurableSource, HttpSource() {
                 }
 
                 name = chapterName
-            }
-        }
-        if (!preferences.getBoolean(PAID_PREF, false)) {
-            chaptersList = chaptersList.filter {
-                !it.name.contains("\uD83D\uDCB2") || (
-                    it.name.substringBefore(
-                        ". Глава",
-                    ).toIntOrNull()!! <=
-                        (exChapters.firstOrNull()?.tome ?: -2) &&
-                        it.chapter_number < exChapters.firstOrNull()?.chapter?.toFloatOrNull()!!
-                    )
             }
         }
         return chaptersList
