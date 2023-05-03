@@ -22,7 +22,7 @@ class Toonily : Madara(
         .addNetworkInterceptor(cookieInterceptor)
         .build()
 
-    override val mangaSubString = "webtoons"
+    override val mangaSubString = "webtoon"
 
     override fun searchPage(page: Int): String {
         return if (page > 1) {

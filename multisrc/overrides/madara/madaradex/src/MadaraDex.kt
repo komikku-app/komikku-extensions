@@ -9,4 +9,6 @@ class MadaraDex : Madara(
     "https://madaradex.org",
     "en",
     dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US),
-)
+) {
+    override val mangaSubString = "title"
+}

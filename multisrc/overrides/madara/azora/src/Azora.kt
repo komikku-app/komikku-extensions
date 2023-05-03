@@ -7,6 +7,7 @@ import okhttp3.Request
 import org.jsoup.nodes.Element
 
 class Azora : Madara("Azora", "https://azoranov.com", "ar") {
+    override val mangaSubString = "series"
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/page/$page/?m_orderby=views", headers)
     override fun chapterListSelector() = "li.wp-manga-chapter:not(.premium-block)" // Filter fake chapters
     override fun chapterFromElement(element: Element): SChapter {
