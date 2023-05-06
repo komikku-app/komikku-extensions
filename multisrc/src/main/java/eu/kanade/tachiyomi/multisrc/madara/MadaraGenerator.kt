@@ -55,7 +55,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Bichen Traduções", "https://bichentraducoes.com", "pt-BR", isNsfw = true, className = "BichenTraducoes"),
         SingleLang("BL Manhwa Club", "https://blmanhwa.club", "pt-BR", isNsfw = true, className = "BlManhwaClub", overrideVersionCode = 2),
         SingleLang("BlogManga", "https://blogmanga.net", "en"),
-        SingleLang("BokugenTranslation", "https://bokugents.com", "es"),
+        SingleLang("BokugenTranslation", "https://bokugents.com", "es", overrideVersionCode = 1),
         SingleLang("Boruto Explorer", "https://leitor.borutoexplorer.com.br", "pt-BR", overrideVersionCode = 1),
         SingleLang("BoysLove", "https://boyslove.me", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("Café com Yaoi", "http://cafecomyaoi.com.br", "pt-BR", pkgName = "cafecomyaoi", className = "CafeComYaoi", isNsfw = true, overrideVersionCode = 1),
