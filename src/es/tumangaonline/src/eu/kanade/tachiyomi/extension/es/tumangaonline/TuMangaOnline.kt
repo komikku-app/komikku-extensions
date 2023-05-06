@@ -2,7 +2,13 @@ package eu.kanade.tachiyomi.extension.es.tumangaonline
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.os.Handler
+import android.os.Looper
+import android.view.View
+import android.webkit.WebChromeClient
+import android.webkit.WebView
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -14,6 +20,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -26,6 +33,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.CountDownLatch
 
 class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
 
@@ -52,7 +60,44 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private var loadWebView = true
     override val client: OkHttpClient = network.client.newBuilder()
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val url = request.url.toString()
+            if (url.startsWith(imageCDNUrl) && loadWebView) {
+                val handler = Handler(Looper.getMainLooper())
+                val latch = CountDownLatch(1)
+                var webView: WebView? = null
+                handler.post {
+                    val webview = WebView(Injekt.get<Application>())
+                    webView = webview
+                    webview.settings.domStorageEnabled = true
+                    webview.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                    webview.settings.useWideViewPort = false
+                    webview.settings.loadWithOverviewMode = false
+                    webview.settings.userAgentString = userAgent
+
+                    webview.webChromeClient = object : WebChromeClient() {
+                        override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                            if (newProgress == 100) {
+                                latch.countDown()
+                            }
+                        }
+                    }
+
+                    val headers = mutableMapOf<String, String>()
+                    headers["Referer"] = baseUrl
+
+                    webview.loadUrl(url, headers)
+                }
+
+                latch.await()
+                loadWebView = false
+                handler.post { webView?.destroy() }
+            }
+            chain.proceed(request)
+        }
         .rateLimitHost(
             baseUrl.toHttpUrlOrNull()!!,
             preferences.getString(WEB_RATELIMIT_PREF, WEB_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
@@ -218,17 +263,19 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         return GET(chapter.url, headers)
     }
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        val currentUrl = document.body().baseUri()
+        var doc = redirectToReadPage(document)
 
-        val newUrl = if (getPageMethodPref() == "cascade" && currentUrl.contains("paginated")) {
+        val currentUrl = doc.location()
+
+        val newUrl = if (getPageMethodPref() == "cascade") {
             currentUrl.substringBefore("paginated") + "cascade"
-        } else if (getPageMethodPref() == "paginated" && currentUrl.contains("cascade")) {
+        } else if (getPageMethodPref() == "paginated") {
             currentUrl.substringBefore("cascade") + "paginated"
         } else {
             currentUrl
         }
 
-        val doc = client.newCall(GET(newUrl, headers)).execute().asJsoup()
+        doc = client.newCall(GET(newUrl, headers)).execute().asJsoup()
 
         if (getPageMethodPref() == "cascade") {
             doc.select("div.viewer-container img").forEach {
@@ -255,7 +302,42 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         }
     }
 
-    // Note: At this moment (24/08/2021) it's necessary to make the image request with headers to prevent 403.
+    //Some old chapters uses JavaScript to redirect to read page
+    private fun redirectToReadPage(document: Document): Document {
+
+        val script1 = document.selectFirst("script:containsData(uniqid)")
+        val script2 = document.selectFirst("script:containsData(window.location.replace)")
+
+        if (script1 != null) {
+            val data = script1.data()
+            val regexParams = """\{uniqid:'(.+)',cascade:(.+)\}""".toRegex()
+            val regexAction = """form\.action\s?=\s?'(.+)'""".toRegex()
+            val params = regexParams.find(data)!!
+            val action = regexAction.find(data)!!.groupValues[1]
+
+            val bodyBuilder = FormBody.Builder()
+            bodyBuilder.add("uniqid", params.groupValues[1])
+            bodyBuilder.add("cascade", params.groupValues[2])
+
+            return redirectToReadPage(
+                client.newCall(POST(action, headers, bodyBuilder.build())).execute().asJsoup()
+            )
+        }
+
+        if (script2 != null) {
+            val data = script2.data()
+            val regexRedirect = """window\.location\.replace\('(.+)'\)""".toRegex()
+            val url = regexRedirect.find(data)!!.groupValues[1]
+
+            return redirectToReadPage(
+                client.newCall(GET(url, headers)).execute().asJsoup()
+            )
+        }
+
+        return document
+    }
+
+    // Note: At this moment (05/04/2023) it's necessary to make the image request with headers to prevent 403.
     override fun imageRequest(page: Page) = GET(page.imageUrl!!, headers)
 
     override fun imageUrlParse(document: Document): String {
