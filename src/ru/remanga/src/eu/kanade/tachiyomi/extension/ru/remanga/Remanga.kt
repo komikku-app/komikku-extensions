@@ -422,7 +422,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     }
 
     private fun filterPaid(tempChaptersList: MutableList<SChapter>): MutableList<SChapter> {
-        val lastEx = tempChaptersList.findLast { it.scanlator.equals("exmanga") }
+        val lastEx = tempChaptersList.find { it.scanlator.equals("exmanga") }
         return if (!preferences.getBoolean(PAID_PREF, false)) {
             tempChaptersList.filter {
                 !it.name.contains("\uD83D\uDCB2") || if (lastEx != null) {
@@ -485,7 +485,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                                 val response = chapterListRequest(selectedBranch2.id, it)
                                 chapterListParse(response, manga, exChapters)
                             }.let { tempChaptersList.addAll(0, it.flatten()) }
-                            return filterPaid(tempChaptersList).distinctBy { it.name.substringBefore(". Глава") + "--" + it.chapter_number }.sortedWith(compareBy({ it.name.substringBefore(". Глава").toFloat() }, { it.chapter_number })).reversed().let { Observable.just(it) }
+                            return filterPaid(tempChaptersList).distinctBy { it.name.substringBefore(". Глава") + "--" + it.chapter_number }.sortedWith(compareBy({ it.name.substringBefore(". Глава").toIntOrNull()!! }, { it.chapter_number })).reversed().let { Observable.just(it) }
                         }
                     }
                 }
