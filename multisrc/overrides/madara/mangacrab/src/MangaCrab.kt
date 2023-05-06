@@ -3,13 +3,16 @@ package eu.kanade.tachiyomi.extension.es.mangacrab
 import android.util.Base64
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.multisrc.madara.Madara
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.OkHttpClient
 import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class MangaCrab : Madara(
     "Manga Crab",
@@ -17,6 +20,13 @@ class MangaCrab : Madara(
     "es",
     SimpleDateFormat("dd/MM/yyyy", Locale("es")),
 ) {
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(uaIntercept)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .rateLimit(1, 2)
+        .build()
+
     override fun chapterListSelector() = "div.listing-chapters_wrap > ul > li"
     override val mangaDetailsSelectorDescription = "div.c-page__content div.contenedor"
 
