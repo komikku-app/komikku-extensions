@@ -22,7 +22,7 @@ class Mangafreak : ParsedHttpSource() {
 
     override val lang: String = "en"
 
-    override val baseUrl: String = "https://w14.mangafreak.net"
+    override val baseUrl: String = "https://w15.mangafreak.net"
 
     override val supportsLatest: Boolean = true
 
@@ -75,7 +75,7 @@ class Mangafreak : ParsedHttpSource() {
         val url = baseUrl.toHttpUrlOrNull()!!.newBuilder()
 
         if (query.isNotBlank()) {
-            url.addPathSegments("Search/$query")
+            url.addPathSegments("Find/$query")
         }
 
         filters.forEach { filter ->
