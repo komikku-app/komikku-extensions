@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -20,6 +21,8 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Evaluator
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 open class MangaFire(
     override val lang: String,
@@ -31,7 +34,7 @@ open class MangaFire(
 
     private val json: Json by injectLazy()
 
-    override val client = network.client.newBuilder()
+    override val client = network.cloudflareClient.newBuilder()
         .addInterceptor(ImageInterceptor)
         .build()
 
@@ -138,6 +141,26 @@ open class MangaFire(
             ?.selectFirst(".numberlist[data-lang=$langCode]")
             ?: return emptyList()
         return container.children().map { it.child(0) }
+    }
+
+    override fun updateChapterList(manga: SManga, chapters: List<SChapter>) {
+        val document = client.newCall(mangaDetailsRequest(manga)).execute().asJsoup()
+        val elements = document.selectFirst(".chapter-list[data-name=$langCode]")!!.children()
+        val chapterCount = chapters.size
+        if (elements.size != chapterCount) throw Exception("Chapter count doesn't match. Try updating again.")
+        val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.US)
+        for (i in 0 until chapterCount) {
+            val chapter = chapters[i]
+            val element = elements[i]
+            val number = element.attr("data-number").toFloatOrNull() ?: -1f
+            if (chapter.chapter_number != number) throw Exception("Chapter number doesn't match. Try updating again.")
+            val date = element.select(Evaluator.Tag("span"))[1].ownText()
+            chapter.date_upload = try {
+                dateFormat.parse(date)!!.time
+            } catch (_: Throwable) {
+                0
+            }
+        }
     }
 
     override fun pageListRequest(chapter: SChapter): Request {

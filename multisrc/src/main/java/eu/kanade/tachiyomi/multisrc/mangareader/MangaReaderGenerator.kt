@@ -21,6 +21,7 @@ class MangaReaderGenerator : ThemeSourceGenerator {
             baseUrl = "https://mangafire.to",
             langs = listOf("en", "es", "es-419", "fr", "ja", "pt", "pt-BR"),
             isNsfw = true,
+            overrideVersionCode = 1,
         ),
     )
 

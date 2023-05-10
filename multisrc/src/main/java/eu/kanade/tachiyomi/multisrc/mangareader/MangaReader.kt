@@ -71,6 +71,8 @@ abstract class MangaReader : HttpSource(), ConfigurableSource {
 
     override fun chapterListParse(response: Response) = throw UnsupportedOperationException()
 
+    open fun updateChapterList(manga: SManga, chapters: List<SChapter>) = Unit
+
     final override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
         val path = manga.url
         val isVolume = path.endsWith(VOLUME_URL_SUFFIX)
@@ -96,7 +98,7 @@ abstract class MangaReader : HttpSource(), ConfigurableSource {
                 }
                 setUrlWithoutDomain(link.attr("href") + '#' + type + '/' + element.attr("data-id"))
             }
-        }
+        }.also { if (!isVolume && it.isNotEmpty()) updateChapterList(manga, it) }
     }
 
     final override fun getChapterUrl(chapter: SChapter) = baseUrl + chapter.url.substringBeforeLast('#')
