@@ -5,7 +5,7 @@ ext {
     extName = 'HentaiVN'
     pkgNameSuffix = 'vi.hentaivn'
     extClass = '.HentaiVN'
-    extVersionCode = 23
+    extVersionCode = 24
     isNsfw = true
 }
 
