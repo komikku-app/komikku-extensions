@@ -6,7 +6,7 @@ import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class HentaiCB : Madara("Hentai CB", "https://hencb.top", "vi", SimpleDateFormat("dd/MM/yyyy", Locale("vi"))) {
+class HentaiCB : Madara("Hentai CB", "https://cubeteam.xyz", "vi", SimpleDateFormat("dd/MM/yyyy", Locale("vi"))) {
     override val id: Long = 823638192569572166
     override fun pageListParse(document: Document): List<Page> {
         return super.pageListParse(document).distinctBy { it.imageUrl }
