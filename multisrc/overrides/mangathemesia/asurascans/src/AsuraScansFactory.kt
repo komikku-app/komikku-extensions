@@ -1,7 +1,11 @@
 package eu.kanade.tachiyomi.extension.all.asurascans
 
 import eu.kanade.tachiyomi.source.SourceFactory
+import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -12,7 +16,7 @@ class AsuraScansFactory : SourceFactory {
     )
 }
 
-class AsuraScansEn : AsuraScans("https://asura.gg", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
+class AsuraScansEn : AsuraScans("https://www.asurascans.com", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
 
     override val seriesDescriptionSelector = "div.desc p, div.entry-content p, div[itemprop=description]:not(:has(p))"
 
@@ -35,4 +39,23 @@ class AsuraScansTr : AsuraScans("https://asurascanstr.com", "tr", SimpleDateForm
         this.contains("Tamamlandı", ignoreCase = true) -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
+
+    override fun pageListParse(document: Document): List<Page> {
+        val scriptContent = document.selectFirst("script:containsData(ts_reader)")!!.data()
+        val jsonString = scriptContent.substringAfter("ts_reader.run(").substringBefore(");")
+        val tsReader = json.decodeFromString<TSReader>(jsonString)
+        val imageUrls = tsReader.sources.firstOrNull()?.images ?: return emptyList()
+        return imageUrls.mapIndexed { index, imageUrl -> Page(index, imageUrl = imageUrl) }
+    }
+
+    @Serializable
+    data class TSReader(
+        val sources: List<ReaderImageSource>,
+    )
+
+    @Serializable
+    data class ReaderImageSource(
+        val source: String,
+        val images: List<String>,
+    )
 }
