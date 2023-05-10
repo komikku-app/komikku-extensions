@@ -46,15 +46,15 @@ class BentoManga : ParsedHttpSource() {
     // Generic (used by popular/latest/search)
     private fun mangaListFromElement(element: Element): SManga {
         return SManga.create().apply {
-            title = element.select("a.component-manga-cover span.div-manga_cover-title")
+            title = element.select("div").select("div.manga_header h1")
                 .text()
             setUrlWithoutDomain(element.select("a").attr("href"))
-            thumbnail_url = element.select("a.component-manga-cover img ")
+            thumbnail_url = element.select("div").select("img[alt=couverture manga]")
                 .attr("src")
         }
     }
 
-    private fun mangaListSelector() = "div#mangas_content div.div-manga div.div-manga_cover"
+    private fun mangaListSelector() = "div#mangas_content div.manga"
     private fun mangaListNextPageSelector() = ".paginator button:contains(>)"
 
     // Popular
@@ -178,6 +178,7 @@ class BentoManga : ParsedHttpSource() {
                 chapterListParse(response, requestUrl)
             }
     }
+
     private fun chapterListParse(response: Response, requestUrl: String): List<SChapter> {
         val chapters = mutableListOf<SChapter>()
         var document = response.asJsoup()
