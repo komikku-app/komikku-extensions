@@ -27,7 +27,7 @@ data class ApiChapterPagesResponse(
 
 @Serializable
 data class ApiChapterData(
-    val chapter: ApiChapter,
+    val chapter: ApiChapter?,
 )
 
 @Serializable
