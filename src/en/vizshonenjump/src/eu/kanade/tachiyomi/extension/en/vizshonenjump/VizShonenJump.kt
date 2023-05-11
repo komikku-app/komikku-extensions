@@ -114,6 +114,15 @@ class VizShonenJump : ParsedHttpSource() {
     override fun latestUpdatesNextPageSelector(): String? = null
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        if (query.startsWith(PREFIX_URL_SEARCH)) {
+            return fetchMangaDetails(
+                SManga.create().apply {
+                    this.url = query.substringAfter(PREFIX_URL_SEARCH)
+                    this.title = ""
+                    this.initialized = false
+                },
+            ).map { MangasPage(listOf(it), false) }
+        }
         return super.fetchSearchManga(page, query, filters)
             .map {
                 val filteredMangas = it.mangas.filter { m -> m.title.contains(query, true) }
@@ -159,7 +168,17 @@ class VizShonenJump : ParsedHttpSource() {
             artist = author
             status = SManga.ONGOING
             description = seriesIntro.select("div.line-solid").firstOrNull()?.text()
-            thumbnail_url = mangaFromList?.thumbnail_url ?: ""
+            thumbnail_url = if (!mangaFromList?.thumbnail_url.isNullOrEmpty()) {
+                mangaFromList!!.thumbnail_url // Can't be null in this branch
+            } else {
+                document.selectFirst("section.section_chapters td a > img")?.attr("data-original") ?: ""
+            }
+            url = mangaUrl
+            title = if (!mangaFromList?.title.isNullOrEmpty()) {
+                mangaFromList!!.title // Can't be null in this branch
+            } else {
+                seriesIntro.selectFirst("h2.type-lg")?.text() ?: ""
+            }
         }
     }
 
@@ -342,5 +361,7 @@ class VizShonenJump : ParsedHttpSource() {
 
         private const val REFRESH_LOGIN_LINKS_URL = "account/refresh_login_links"
         private const val MANGA_AUTH_CHECK_URL = "manga/auth"
+
+        const val PREFIX_URL_SEARCH = "url:"
     }
 }
