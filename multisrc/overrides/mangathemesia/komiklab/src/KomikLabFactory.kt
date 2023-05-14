@@ -10,11 +10,9 @@ class KomikLabFactory : SourceFactory {
     )
 }
 
-class KomikLabEn : MangaThemesia("KomikLab Scans", "https://scans.komiklab.com", "en") {
-    override val hasProjectPage = true
-}
+class KomikLabEn : MangaThemesia("KomikLab Scans", "https://komiklab.com", "en")
 
-class KomikLabId : MangaThemesia("Komik Lab", "https://komiklab.com", "id") {
+class KomikLabId : MangaThemesia("Komik Lab", "https://komiklab.net", "id") {
     override val hasProjectPage = true
 
     override val seriesDetailsSelector = ".seriestucon"
