@@ -99,7 +99,7 @@ abstract class MangaHub(
 
         val cookie = client.cookieJar
             .loadForRequest(baseUrl.toHttpUrl())
-            .firstOrNull { it.name == "mhub_access" }
+            .firstOrNull { it.name == "mhub_access" && it.value.isNotEmpty() }
 
         val request =
             if (originalRequest.url.toString() == "$baseApiUrl/graphql" && cookie != null) {
@@ -126,6 +126,10 @@ abstract class MangaHub(
         } else {
             baseUrl.toHttpUrl()
         }
+
+        // Clear key cookie
+        val cookie = Cookie.parse(url, "mhub_access=; Max-Age=0; Path=/")!!
+        client.cookieJar.saveFromResponse(url, listOf(cookie))
 
         // Set required cookie (for cache busting?)
         val recently = buildJsonObject {
