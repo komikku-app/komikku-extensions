@@ -47,15 +47,6 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
 
     private val imageCDNUrl = "https://img1.japanreader.com"
 
-    private val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-        "(KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36"
-
-    override fun headersBuilder(): Headers.Builder {
-        return Headers.Builder()
-            .add("User-Agent", userAgent)
-            .add("Referer", "$baseUrl/")
-    }
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -76,7 +67,6 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
                     webview.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
                     webview.settings.useWideViewPort = false
                     webview.settings.loadWithOverviewMode = false
-                    webview.settings.userAgentString = userAgent
 
                     webview.webChromeClient = object : WebChromeClient() {
                         override fun onProgressChanged(view: WebView?, newProgress: Int) {
@@ -267,44 +257,35 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
 
         val currentUrl = doc.location()
 
-        val newUrl = if (getPageMethodPref() == "cascade") {
+        val newUrl = if (!currentUrl.contains("cascade")) {
             currentUrl.substringBefore("paginated") + "cascade"
-        } else if (getPageMethodPref() == "paginated") {
-            currentUrl.substringBefore("cascade") + "paginated"
         } else {
             currentUrl
         }
 
-        doc = client.newCall(GET(newUrl, headers)).execute().asJsoup()
+        if (currentUrl != newUrl) {
+            doc = client.newCall(GET(newUrl, headers)).execute().asJsoup()
+        }
 
-        if (getPageMethodPref() == "cascade") {
-            doc.select("div.viewer-container img").forEach {
-                add(
-                    Page(
-                        size,
-                        "",
-                        it.let {
-                            if (it.hasAttr("data-src")) {
-                                it.attr("abs:data-src")
-                            } else {
-                                it.attr("abs:src")
-                            }
-                        },
-                    ),
-                )
-            }
-        } else {
-            val pageList = doc.select("#viewer-pages-select").first()!!.select("option").map { it.attr("value").toInt() }
-            val url = doc.baseUri()
-            pageList.forEach {
-                add(Page(it, "$url/$it"))
-            }
+        doc.select("div.viewer-container img:not(noscript img)").forEach {
+            add(
+                Page(
+                    size,
+                    doc.location(),
+                    it.let {
+                        if (it.hasAttr("data-src")) {
+                            it.attr("abs:data-src")
+                        } else {
+                            it.attr("abs:src")
+                        }
+                    },
+                ),
+            )
         }
     }
 
-    //Some old chapters uses JavaScript to redirect to read page
+    // Some chapters uses JavaScript to redirect to read page
     private fun redirectToReadPage(document: Document): Document {
-
         val script1 = document.selectFirst("script:containsData(uniqid)")
         val script2 = document.selectFirst("script:containsData(window.location.replace)")
 
@@ -315,13 +296,12 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             val params = regexParams.find(data)!!
             val action = regexAction.find(data)!!.groupValues[1]
 
-            val bodyBuilder = FormBody.Builder()
-            bodyBuilder.add("uniqid", params.groupValues[1])
-            bodyBuilder.add("cascade", params.groupValues[2])
+            val formBody = FormBody.Builder()
+                .add("uniqid", params.groupValues[1])
+                .add("cascade", params.groupValues[2])
+                .build()
 
-            return redirectToReadPage(
-                client.newCall(POST(action, headers, bodyBuilder.build())).execute().asJsoup()
-            )
+            return redirectToReadPage(client.newCall(POST(action, headers, formBody)).execute().asJsoup())
         }
 
         if (script2 != null) {
@@ -329,20 +309,21 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             val regexRedirect = """window\.location\.replace\('(.+)'\)""".toRegex()
             val url = regexRedirect.find(data)!!.groupValues[1]
 
-            return redirectToReadPage(
-                client.newCall(GET(url, headers)).execute().asJsoup()
-            )
+            return redirectToReadPage(client.newCall(GET(url, headers)).execute().asJsoup())
         }
 
         return document
     }
 
     // Note: At this moment (05/04/2023) it's necessary to make the image request with headers to prevent 403.
-    override fun imageRequest(page: Page) = GET(page.imageUrl!!, headers)
-
-    override fun imageUrlParse(document: Document): String {
-        return document.select("div.viewer-container > div.img-container > img.viewer-image").attr("src")
+    override fun imageRequest(page: Page): Request {
+        val imageHeaders = Headers.Builder()
+            .add("Referer", baseUrl)
+            .build()
+        return GET(page.imageUrl!!, imageHeaders)
     }
+
+    override fun imageUrlParse(document: Document) = throw Exception("Not Used")
 
     private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/$PREFIX_LIBRARY/$id", headers)
 
@@ -548,25 +529,6 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             }
         }
 
-        val pageMethodPref = androidx.preference.ListPreference(screen.context).apply {
-            key = PAGE_METHOD_PREF
-            title = PAGE_METHOD_PREF_TITLE
-            entries = arrayOf("Cascada", "Páginado")
-            entryValues = arrayOf("cascade", "paginated")
-            summary = PAGE_METHOD_PREF_SUMMARY
-            setDefaultValue(PAGE_METHOD_PREF_DEFAULT_VALUE)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val setting = preferences.edit().putString(PAGE_METHOD_PREF, newValue as String).commit()
-                    setting
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
-            }
-        }
-
         // Rate limit
         val apiRateLimitPreference = androidx.preference.ListPreference(screen.context).apply {
             key = WEB_RATELIMIT_PREF
@@ -608,7 +570,6 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
 
         screen.addPreference(sfwModePref)
         screen.addPreference(scanlatorPref)
-        screen.addPreference(pageMethodPref)
         screen.addPreference(apiRateLimitPreference)
         screen.addPreference(imgCDNRateLimitPreference)
     }
@@ -616,8 +577,6 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     private fun getScanlatorPref(): Boolean = preferences.getBoolean(SCANLATOR_PREF, SCANLATOR_PREF_DEFAULT_VALUE)
 
     private fun getSFWModePref(): Boolean = preferences.getBoolean(SFW_MODE_PREF, SFW_MODE_PREF_DEFAULT_VALUE)
-
-    private fun getPageMethodPref() = preferences.getString(PAGE_METHOD_PREF, PAGE_METHOD_PREF_DEFAULT_VALUE)
 
     companion object {
         private const val SCANLATOR_PREF = "scanlatorPref"
@@ -631,11 +590,6 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         private const val SFW_MODE_PREF_DEFAULT_VALUE = false
         private val SFW_MODE_PREF_EXCLUDE_GENDERS = listOf("6", "17", "18", "19")
 
-        private const val PAGE_METHOD_PREF = "pageMethodPref"
-        private const val PAGE_METHOD_PREF_TITLE = "Método para descargar imágenes"
-        private const val PAGE_METHOD_PREF_SUMMARY = "Previene ser banneado por el servidor cuando se usa la configuración \"Cascada\" ya que esta reduce la cantidad de solicitudes.\nPuedes usar \"Páginado\" cuando las imágenes no carguen usando \"Cascada\".\nConfiguración actual: %s"
-        private const val PAGE_METHOD_PREF_DEFAULT_VALUE = "cascade"
-
         private const val WEB_RATELIMIT_PREF = "webRatelimitPreference"
 
         // Ratelimit permits per second for main website
@@ -643,7 +597,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
 
         // This value affects network request amount to TMO url. Lower this value may reduce the chance to get HTTP 429 error, but loading speed will be slower too. Tachiyomi restart required. \nCurrent value: %s
         private const val WEB_RATELIMIT_PREF_SUMMARY = "Este valor afecta la cantidad de solicitudes de red a la URL de TMO. Reducir este valor puede disminuir la posibilidad de obtener un error HTTP 429, pero la velocidad de descarga será más lenta. Se requiere reiniciar Tachiyomi. \nValor actual: %s"
-        private const val WEB_RATELIMIT_PREF_DEFAULT_VALUE = "10"
+        private const val WEB_RATELIMIT_PREF_DEFAULT_VALUE = "8"
 
         private const val IMAGE_CDN_RATELIMIT_PREF = "imgCDNRatelimitPreference"
 
@@ -652,7 +606,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
 
         // This value affects network request amount for loading image. Lower this value may reduce the chance to get error when loading image, but loading speed will be slower too. Tachiyomi restart required. \nCurrent value: %s
         private const val IMAGE_CDN_RATELIMIT_PREF_SUMMARY = "Este valor afecta la cantidad de solicitudes de red para descargar imágenes. Reducir este valor puede disminuir errores al cargar imagenes, pero la velocidad de descarga será más lenta. Se requiere reiniciar Tachiyomi. \nValor actual: %s"
-        private const val IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE = "10"
+        private const val IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE = "50"
 
         private val ENTRIES_ARRAY = listOf(1, 2, 3, 5, 6, 7, 8, 9, 10, 15, 20, 30, 40, 50, 100).map { i -> i.toString() }.toTypedArray()
 

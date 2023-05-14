@@ -5,7 +5,7 @@ ext {
     extName = 'LectorManga'
     pkgNameSuffix = 'es.lectormanga'
     extClass = '.LectorManga'
-    extVersionCode = 27
+    extVersionCode = 28
     isNsfw = true
 }
 
