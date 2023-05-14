@@ -26,6 +26,7 @@ import eu.kanade.tachiyomi.extension.all.mangadex.dto.ScanlationGroupDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.StatusDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.TagAttributesDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.TagDto
+import eu.kanade.tachiyomi.extension.all.mangadex.dto.UnknownEntity
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.UserAttributes
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.UserDto
 import eu.kanade.tachiyomi.network.GET
@@ -68,6 +69,7 @@ class MangaDexHelper(lang: String) {
                 subclass(ScanlationGroupDto::class)
                 subclass(TagDto::class)
                 subclass(UserDto::class)
+                defaultDeserializer { UnknownEntity.serializer() }
             }
 
             polymorphic(AttributesDto::class) {
