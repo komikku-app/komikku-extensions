@@ -116,7 +116,9 @@ class ChapterImagesDto(
     @ProtoNumber(3) val name: String,
     @ProtoNumber(4) val order: Int,
     @ProtoNumber(5) val direction: Int,
+    // initial letter is sometimes different from that in original URLs, see manga ID 56649
     @ProtoNumber(6) val lowResImages: List<String>,
+    // page count of low-res images
     @ProtoNumber(7) val pageCount: Int?,
     @ProtoNumber(8) val images: List<String>,
     @ProtoNumber(9) val commentCount: Int,

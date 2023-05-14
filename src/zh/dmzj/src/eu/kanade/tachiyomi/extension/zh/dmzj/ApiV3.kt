@@ -97,11 +97,9 @@ object ApiV3 {
 
     @Serializable
     class ChapterImagesDto(
-        private val id: Int,
-        private val comic_id: Int,
         private val page_url: List<String>,
     ) {
-        fun toPageList() = parsePageList(comic_id, id, page_url, emptyList())
+        fun toPageList() = parsePageList(page_url)
     }
 
     @Serializable

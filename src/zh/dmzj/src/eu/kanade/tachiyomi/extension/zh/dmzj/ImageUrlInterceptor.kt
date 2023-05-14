@@ -11,7 +11,7 @@ object ImageUrlInterceptor : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        val tag = request.tag(Tag::class.java) ?: return chain.proceed(request)
+        val tag = request.tag(Tag::class) ?: return chain.proceed(request)
 
         try {
             val response = chain.proceed(request)

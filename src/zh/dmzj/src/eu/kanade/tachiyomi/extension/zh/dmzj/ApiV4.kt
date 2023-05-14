@@ -20,20 +20,17 @@ object ApiV4 {
 
     fun mangaInfoUrl(id: String) = "$v4apiUrl/comic/detail/$id?uid=2665531"
 
-    fun parseMangaInfo(response: Response): ParseResult {
+    fun parseMangaInfo(response: Response): MangaDto? {
         val result: ResponseDto<MangaDto> = response.decrypt()
-        return when (val manga = result.data) {
-            null -> ParseResult.Error(result.message)
-            else -> ParseResult.Ok(manga)
-        }
+        return result.data
     }
 
     // path = "mangaId/chapterId"
     fun chapterImagesUrl(path: String) = "$v4apiUrl/comic/chapter/$path"
 
-    fun parseChapterImages(response: Response): ArrayList<Page> {
+    fun parseChapterImages(response: Response, isLowRes: Boolean): ArrayList<Page> {
         val result: ResponseDto<ChapterImagesDto> = response.decrypt()
-        return result.data!!.toPageList()
+        return result.data!!.toPageList(isLowRes)
     }
 
     fun rankingUrl(page: Int, filters: RankingGroup) =
@@ -128,12 +125,18 @@ object ApiV4 {
 
     @Serializable
     class ChapterImagesDto(
-        @ProtoNumber(1) private val id: Int,
-        @ProtoNumber(2) private val mangaId: Int,
         @ProtoNumber(6) private val lowResImages: List<String>,
         @ProtoNumber(8) private val images: List<String>,
     ) {
-        fun toPageList() = parsePageList(mangaId, id, images, lowResImages)
+        fun toPageList(isLowRes: Boolean) =
+            // page count can be messy, see manga ID 55847 chapters 107-109
+            if (images.size == lowResImages.size) {
+                parsePageList(images, lowResImages)
+            } else if (isLowRes) {
+                parsePageList(lowResImages, lowResImages)
+            } else {
+                parsePageList(images)
+            }
     }
 
     // same as ApiV3.MangaDto
@@ -166,11 +169,6 @@ object ApiV4 {
         @ProtoNumber(2) val message: String?,
         @ProtoNumber(3) val data: T?,
     )
-
-    sealed interface ParseResult {
-        class Ok(val manga: MangaDto) : ParseResult
-        class Error(val message: String?) : ParseResult
-    }
 
     private val cipher by lazy { RSA.getPrivateKey("MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAK8nNR1lTnIfIes6oRWJNj3mB6OssDGx0uGMpgpbVCpf6+VwnuI2stmhZNoQcM417Iz7WqlPzbUmu9R4dEKmLGEEqOhOdVaeh9Xk2IPPjqIu5TbkLZRxkY3dJM1htbz57d/roesJLkZXqssfG5EJauNc+RcABTfLb4IiFjSMlTsnAgMBAAECgYEAiz/pi2hKOJKlvcTL4jpHJGjn8+lL3wZX+LeAHkXDoTjHa47g0knYYQteCbv+YwMeAGupBWiLy5RyyhXFoGNKbbnvftMYK56hH+iqxjtDLnjSDKWnhcB7089sNKaEM9Ilil6uxWMrMMBH9v2PLdYsqMBHqPutKu/SigeGPeiB7VECQQDizVlNv67go99QAIv2n/ga4e0wLizVuaNBXE88AdOnaZ0LOTeniVEqvPtgUk63zbjl0P/pzQzyjitwe6HoCAIpAkEAxbOtnCm1uKEp5HsNaXEJTwE7WQf7PrLD4+BpGtNKkgja6f6F4ld4QZ2TQ6qvsCizSGJrjOpNdjVGJ7bgYMcczwJBALvJWPLmDi7ToFfGTB0EsNHZVKE66kZ/8Stx+ezueke4S556XplqOflQBjbnj2PigwBN/0afT+QZUOBOjWzoDJkCQClzo+oDQMvGVs9GEajS/32mJ3hiWQZrWvEzgzYRqSf3XVcEe7PaXSd8z3y3lACeeACsShqQoc8wGlaHXIJOHTcCQQCZw5127ZGs8ZDTSrogrH73Kw/HvX55wGAeirKYcv28eauveCG7iyFR0PFB/P/EDZnyb+ifvyEFlucPUI0+Y87F") }
 }

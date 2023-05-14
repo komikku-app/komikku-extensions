@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.zh.dmzj
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -32,7 +31,6 @@ class Dmzj : ConfigurableSource, HttpSource() {
 
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-            .migrate()
 
     override val client: OkHttpClient = network.client.newBuilder()
         .addInterceptor(ImageUrlInterceptor)
@@ -57,18 +55,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
 
     private fun fetchMangaInfoV4(id: String): ApiV4.MangaDto? {
         val response = retryClient.newCall(GET(ApiV4.mangaInfoUrl(id), headers)).execute()
-        return when (val result = ApiV4.parseMangaInfo(response)) {
-            is ApiV4.ParseResult.Ok -> {
-                val manga = result.manga
-                if (manga.isLicensed) preferences.addLicensed(id)
-                manga
-            }
-            is ApiV4.ParseResult.Error -> {
-                Log.e("DMZJ", "no data for manga $id: ${result.message}")
-                preferences.addHidden(id)
-                null
-            }
-        }
+        return ApiV4.parseMangaInfo(response)
     }
 
     override fun popularMangaRequest(page: Int) = GET(ApiV3.popularMangaUrl(page), headers)
@@ -139,9 +126,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
     }
 
     private fun fetchMangaDetails(id: String): SManga {
-        if (id !in preferences.hiddenList) {
-            fetchMangaInfoV4(id)?.run { return toSManga() }
-        }
+        fetchMangaInfoV4(id)?.run { return toSManga() }
         val response = client.newCall(GET(ApiV3.mangaInfoUrlV1(id), headers)).execute()
         return ApiV3.parseMangaDetailsV1(response)
     }
@@ -159,16 +144,14 @@ class Dmzj : ConfigurableSource, HttpSource() {
         throw UnsupportedOperationException()
     }
 
-    override fun chapterListRequest(manga: SManga): Request = throw UnsupportedOperationException("Not used.")
+    override fun chapterListRequest(manga: SManga): Request = throw UnsupportedOperationException()
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         return Observable.fromCallable {
             val id = manga.url.extractMangaId()
-            if (id !in preferences.licensedList && id !in preferences.hiddenList) {
-                val result = fetchMangaInfoV4(id)
-                if (result != null && !result.isLicensed) {
-                    return@fromCallable result.parseChapterList()
-                }
+            val result = fetchMangaInfoV4(id)
+            if (result != null && !result.isLicensed) {
+                return@fromCallable result.parseChapterList()
             }
             val response = client.newCall(GET(ApiV3.mangaInfoUrlV1(id), headers)).execute()
             ApiV3.parseChapterListV1(response)
@@ -186,7 +169,7 @@ class Dmzj : ConfigurableSource, HttpSource() {
         return Observable.fromCallable {
             val response = retryClient.newCall(GET(ApiV4.chapterImagesUrl(path), headers)).execute()
             val result = try {
-                ApiV4.parseChapterImages(response)
+                ApiV4.parseChapterImages(response, preferences.imageQuality == LOW_RES)
             } catch (_: Throwable) {
                 client.newCall(GET(ApiV3.chapterImagesUrlV1(path), headers)).execute()
                     .let(ApiV3::parseChapterImagesV1)
@@ -204,31 +187,31 @@ class Dmzj : ConfigurableSource, HttpSource() {
 
     // see https://github.com/tachiyomiorg/tachiyomi-extensions/issues/10475
     override fun imageRequest(page: Page): Request {
-        val url = page.url
+        val url = page.url.takeIf { it.isNotEmpty() }
         val imageUrl = page.imageUrl!!
         if (url == COMMENTS_FLAG) {
             return GET(imageUrl, headers).newBuilder()
-                .tag(CommentsInterceptor.Tag::class.java, CommentsInterceptor.Tag())
+                .tag(CommentsInterceptor.Tag::class, CommentsInterceptor.Tag())
                 .build()
         }
         val fallbackUrl = when (preferences.imageQuality) {
             AUTO_RES -> url
             ORIGINAL_RES -> null
-            LOW_RES -> return GET(url, headers)
+            LOW_RES -> if (url == null) null else return GET(url, headers)
             else -> url
         }
         return GET(imageUrl, headers).newBuilder()
-            .tag(ImageUrlInterceptor.Tag::class.java, ImageUrlInterceptor.Tag(fallbackUrl))
+            .tag(ImageUrlInterceptor.Tag::class, ImageUrlInterceptor.Tag(fallbackUrl))
             .build()
     }
 
     // Unused, we can get image urls directly from the chapter page
     override fun imageUrlParse(response: Response) =
-        throw UnsupportedOperationException("This method should not be called!")
+        throw UnsupportedOperationException()
 
     override fun getFilterList() = getFilterListInternal(preferences.isMultiGenreFilter)
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        getPreferencesInternal(screen.context, preferences).forEach(screen::addPreference)
+        getPreferencesInternal(screen.context).forEach(screen::addPreference)
     }
 }
