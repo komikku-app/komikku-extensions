@@ -45,6 +45,11 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
 
     override val supportsLatest = true
 
+    override fun headersBuilder(): Headers.Builder {
+        return Headers.Builder()
+            .add("Referer", "$baseUrl/")
+    }
+
     private val imageCDNUrl = "https://img1.japanreader.com"
 
     private val preferences: SharedPreferences by lazy {
@@ -289,6 +294,10 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         val script1 = document.selectFirst("script:containsData(uniqid)")
         val script2 = document.selectFirst("script:containsData(window.location.replace)")
 
+        val redirectHeaders = Headers.Builder()
+            .add("Referer", document.baseUri())
+            .build()
+
         if (script1 != null) {
             val data = script1.data()
             val regexParams = """\{uniqid:'(.+)',cascade:(.+)\}""".toRegex()
@@ -301,7 +310,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
                 .add("cascade", params.groupValues[2])
                 .build()
 
-            return redirectToReadPage(client.newCall(POST(action, headers, formBody)).execute().asJsoup())
+            return redirectToReadPage(client.newCall(POST(action, redirectHeaders, formBody)).execute().asJsoup())
         }
 
         if (script2 != null) {
@@ -309,7 +318,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             val regexRedirect = """window\.location\.replace\('(.+)'\)""".toRegex()
             val url = regexRedirect.find(data)!!.groupValues[1]
 
-            return redirectToReadPage(client.newCall(GET(url, headers)).execute().asJsoup())
+            return redirectToReadPage(client.newCall(GET(url, redirectHeaders)).execute().asJsoup())
         }
 
         return document
