@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.es.lectormanga
 import android.app.Application
 import android.content.SharedPreferences
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -14,6 +15,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -251,7 +253,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        var doc = document
+        var doc = redirectToReadPage(document)
         val currentUrl = doc.location()
 
         val newUrl = if (!currentUrl.contains("cascade")) {
@@ -264,7 +266,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
             doc = client.newCall(GET(newUrl, headers)).execute().asJsoup()
         }
 
-        doc.select("div.viewer-image-container img").forEach {
+        doc.select("div.viewer-container img:not(noscript img)").forEach {
             add(
                 Page(
                     size,
@@ -279,6 +281,41 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
                 ),
             )
         }
+    }
+
+    // Some chapters uses JavaScript to redirect to read page
+    private fun redirectToReadPage(document: Document): Document {
+        val script1 = document.selectFirst("script:containsData(uniqid)")
+        val script2 = document.selectFirst("script:containsData(window.location.replace)")
+
+        val redirectHeaders = Headers.Builder()
+            .add("Referer", document.baseUri())
+            .build()
+
+        if (script1 != null) {
+            val data = script1.data()
+            val regexParams = """\{uniqid:'(.+)',cascade:(.+)\}""".toRegex()
+            val regexAction = """form\.action\s?=\s?'(.+)'""".toRegex()
+            val params = regexParams.find(data)!!
+            val action = regexAction.find(data)!!.groupValues[1]
+
+            val formBody = FormBody.Builder()
+                .add("uniqid", params.groupValues[1])
+                .add("cascade", params.groupValues[2])
+                .build()
+
+            return redirectToReadPage(client.newCall(POST(action, redirectHeaders, formBody)).execute().asJsoup())
+        }
+
+        if (script2 != null) {
+            val data = script2.data()
+            val regexRedirect = """window\.location\.replace\('(.+)'\)""".toRegex()
+            val url = regexRedirect.find(data)!!.groupValues[1]
+
+            return redirectToReadPage(client.newCall(GET(url, redirectHeaders)).execute().asJsoup())
+        }
+
+        return document
     }
 
     override fun imageRequest(page: Page) = GET(
