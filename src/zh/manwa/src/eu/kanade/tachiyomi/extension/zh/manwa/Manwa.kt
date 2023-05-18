@@ -123,7 +123,7 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
     // Details
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        title = document.selectFirst("p.detail-main-info-title")!!.text()
+        title = document.selectFirst(".detail-main-info-title")!!.text()
         thumbnail_url = document.selectFirst("div.detail-main-cover > img")!!.attr("data-original")
         author = document.select("p.detail-main-info-author > span.detail-main-info-value > a").text()
         artist = author
