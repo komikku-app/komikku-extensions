@@ -1,6 +1,9 @@
 package eu.kanade.tachiyomi.extension.en.apairof2
 
+import eu.kanade.tachiyomi.lib.dataimage.DataImageInterceptor
+import eu.kanade.tachiyomi.lib.dataimage.dataImageAsUrl
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -28,7 +31,10 @@ class APairOf2 : ParsedHttpSource() {
 
     override val versionId = 2
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(DataImageInterceptor())
+        .rateLimit(4)
+        .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Referer", "$baseUrl/")
@@ -44,7 +50,7 @@ class APairOf2 : ParsedHttpSource() {
         return SManga.create().apply {
             title = element.select("div > h2").text()
             url = element.select("div > a").attr("href").let { "/$it" }
-            thumbnail_url = element.select("img").attr("data-src").let { "$baseUrl/$it" }
+            thumbnail_url = element.select("img").attr("abs:data-src")
         }
     }
 
@@ -64,7 +70,7 @@ class APairOf2 : ParsedHttpSource() {
                 url = it.attr("href").let { "/$it" }
                 title = it.text()
             }
-            thumbnail_url = element.select("img").attr("data-src").let { "$baseUrl/$it" }
+            thumbnail_url = element.select("img").attr("abs:data-src")
         }
     }
 
@@ -101,7 +107,7 @@ class APairOf2 : ParsedHttpSource() {
             artist = author
             status = document.select(".status > span:nth-child(2)").text().parseStatus()
             description = document.select(".summary p").text()
-            thumbnail_url = document.select("div.series-image img").attr("src").let { "$baseUrl/$it" }
+            thumbnail_url = document.select("div.series-image img").attr("abs:src")
         }
     }
 
@@ -142,8 +148,9 @@ class APairOf2 : ParsedHttpSource() {
     }
 
     private fun Element.imgAttr(): String = when {
-        hasAttr("data-pagespeed-lazy-src") -> attr("abs:data-pagespeed-lazy-src")
-        else -> attr("abs:src")
+        hasAttr("data-pagespeed-high-res-src") -> dataImageAsUrl("data-pagespeed-high-res-src")
+        hasAttr("data-pagespeed-lazy-src") -> dataImageAsUrl("data-pagespeed-lazy-src")
+        else -> dataImageAsUrl("src")
     }
 
     override fun imageUrlParse(document: Document): String {
