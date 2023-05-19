@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.zh.wnacg
 
-import android.app.Application
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -17,8 +16,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 
 // URL can be found at https://www.wnacglink.top/
 class wnacg : ParsedHttpSource(), ConfigurableSource {
@@ -26,8 +23,18 @@ class wnacg : ParsedHttpSource(), ConfigurableSource {
     override val lang = "zh"
     override val supportsLatest = false
 
-    private val preferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)!!
-    override val baseUrl = preferences.baseUrl
+    private val preferences = getSharedPreferences(id)
+
+    override val baseUrl = when (System.getenv("CI")) {
+        "true" -> getCiBaseUrl()
+        else -> preferences.baseUrl
+    }
+
+    private val updateUrlInterceptor = UpdateUrlInterceptor(preferences)
+
+    override val client = network.client.newBuilder()
+        .addInterceptor(updateUrlInterceptor)
+        .build()
 
     override fun popularMangaSelector() = ".gallary_item"
     override fun latestUpdatesSelector() = throw Exception("Not used")
@@ -155,6 +162,6 @@ class wnacg : ParsedHttpSource(), ConfigurableSource {
     // <<< Filters <<<
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        getPreferencesInternal(screen.context, preferences).forEach(screen::addPreference)
+        getPreferencesInternal(screen.context, preferences, updateUrlInterceptor.isUpdated).forEach(screen::addPreference)
     }
 }

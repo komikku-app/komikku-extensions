@@ -1,43 +1,113 @@
 package eu.kanade.tachiyomi.extension.zh.wnacg
 
+import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
+import eu.kanade.tachiyomi.network.GET
+import okhttp3.Interceptor
+import okhttp3.Response
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+import java.io.IOException
+import kotlin.random.Random
 
-private const val BASE_URL = "http://www.htmanga3.top"
+private const val DEFAULT_LIST = "https://www.htmanga3.top,https://www.htmanga4.top,https://www.htmanga5.top"
 
-fun getPreferencesInternal(context: Context, preferences: SharedPreferences) = arrayOf(
-    EditTextPreference(context).apply {
-        key = OVERRIDE_BASE_URL_PREF
+fun getPreferencesInternal(
+    context: Context,
+    preferences: SharedPreferences,
+    isUrlUpdated: Boolean,
+) = arrayOf(
+    ListPreference(context).apply {
+        key = URL_INDEX_PREF
         title = "网址"
-        summary = "默认网址为：$BASE_URL\n" +
-            "可以尝试的网址有：\n" +
-            "    http://www.htmanga4.top\n" +
-            "    http://www.htmanga5.top\n" +
-            "可以到 www.wnacglink.top 查看最新网址。\n" +
-            "如果默认网址失效，可以在此填写新的网址。重启生效。"
+        summary = if (isUrlUpdated) "%s\n网址已自动更新，请重启应用。" else "%s\n正常情况下会自动更新。重启生效。"
 
-        setOnPreferenceChangeListener { _, _ ->
-            preferences.edit().putString(DEFAULT_BASE_URL_PREF, BASE_URL).apply()
-            true
-        }
+        val options = preferences.urlList
+        val count = options.size
+        entries = options.toTypedArray()
+        entryValues = Array(count, Int::toString)
     },
 )
 
 val SharedPreferences.baseUrl: String
     get() {
-        val overrideBaseUrl = getString(OVERRIDE_BASE_URL_PREF, "")!!
-        if (overrideBaseUrl.isNotEmpty()) {
-            val defaultBaseUrl = getString(DEFAULT_BASE_URL_PREF, "")!!
-            if (defaultBaseUrl == BASE_URL) return overrideBaseUrl
-            // Outdated
-            edit()
-                .remove(OVERRIDE_BASE_URL_PREF)
-                .remove(DEFAULT_BASE_URL_PREF)
-                .apply()
-        }
-        return BASE_URL
+        val list = urlList
+        return list.getOrNull(urlIndex) ?: list[0]
     }
 
-private const val OVERRIDE_BASE_URL_PREF = "overrideBaseUrl"
-private const val DEFAULT_BASE_URL_PREF = "defaultBaseUrl"
+val SharedPreferences.urlIndex get() = getString(URL_INDEX_PREF, "-1")!!.toInt()
+val SharedPreferences.urlList get() = getString(URL_LIST_PREF, DEFAULT_LIST)!!.split(",")
+
+fun getCiBaseUrl() = DEFAULT_LIST.replace(",", ", ")
+
+fun getSharedPreferences(id: Long): SharedPreferences {
+    val preferences: SharedPreferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    if (preferences.getString(DEFAULT_LIST_PREF, "")!! == DEFAULT_LIST) return preferences
+    preferences.edit()
+        .remove("overrideBaseUrl")
+        .putString(DEFAULT_LIST_PREF, DEFAULT_LIST)
+        .setUrlList(DEFAULT_LIST, preferences.urlIndex)
+        .apply()
+    return preferences
+}
+
+fun SharedPreferences.Editor.setUrlList(urlList: String, oldIndex: Int): SharedPreferences.Editor {
+    putString(URL_LIST_PREF, urlList)
+    val maxIndex = urlList.count { it == ',' }
+    if (oldIndex in 0..maxIndex) return this
+    val newIndex = Random.nextInt(0, maxIndex + 1)
+    return putString(URL_INDEX_PREF, newIndex.toString())
+}
+
+class UpdateUrlInterceptor(private val preferences: SharedPreferences) : Interceptor {
+    private val baseUrl = preferences.baseUrl
+    var isUpdated = false
+
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val request = chain.request()
+        if (!request.url.toString().startsWith(baseUrl)) return chain.proceed(request)
+
+        val failedResponse = try {
+            val response = chain.proceed(request)
+            if (response.isSuccessful) return response
+            Result.success(response)
+        } catch (e: Throwable) {
+            if (chain.call().isCanceled()) throw e
+            Result.failure(e)
+        }
+
+        if (isUpdated || updateUrl(chain)) {
+            failedResponse.onSuccess(Response::close)
+            throw IOException("网址已自动更新，请重启应用")
+        }
+        return failedResponse.getOrThrow()
+    }
+
+    @Synchronized
+    private fun updateUrl(chain: Interceptor.Chain): Boolean {
+        if (isUpdated) return true
+        val response = try {
+            chain.proceed(GET("https://stevenyomi.github.io/source-domains/wnacg.txt"))
+        } catch (_: Throwable) {
+            return false
+        }
+        if (!response.isSuccessful) {
+            response.close()
+            return false
+        }
+        val newList = response.body.string()
+        if (newList != preferences.getString(URL_LIST_PREF, "")!!) {
+            preferences.edit()
+                .setUrlList(newList, preferences.urlIndex)
+                .apply()
+        }
+        isUpdated = true
+        return true
+    }
+}
+
+private const val DEFAULT_LIST_PREF = "defaultBaseUrl"
+private const val URL_LIST_PREF = "baseUrlList"
+private const val URL_INDEX_PREF = "baseUrlIndex"
