@@ -1,0 +1,11 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'FMTEAM'
+    pkgNameSuffix = 'fr.fmteam'
+    extClass = '.FMTEAM'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
