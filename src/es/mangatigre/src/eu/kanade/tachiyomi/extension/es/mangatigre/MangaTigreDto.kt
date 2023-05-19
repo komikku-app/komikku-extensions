@@ -38,7 +38,7 @@ data class MangasDataDto(
 @Serializable
 data class ChapterDto(
     val manga: ChapterMangaInfoDto,
-    val number: Int,
+    val number: Float,
     val images: Map<String, ChapterImagesDto>,
 )
 
