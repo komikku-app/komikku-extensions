@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.zh.jinmantiantang
 
-import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
@@ -24,8 +23,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import rx.Observable
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -36,9 +33,11 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     override val supportsLatest: Boolean = true
 
     private val preferences: SharedPreferences =
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+        getSharedPreferences(id)
 
     override val baseUrl: String = "https://" + preferences.baseUrl
+
+    private val updateUrlInterceptor = UpdateUrlInterceptor(preferences)
 
     // 处理URL请求
     override val client: OkHttpClient = network.cloudflareClient
@@ -49,6 +48,7 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
             preferences.getString(MAINSITE_RATELIMIT_PREF, MAINSITE_RATELIMIT_PREF_DEFAULT)!!.toInt(),
             preferences.getString(MAINSITE_RATELIMIT_PERIOD, MAINSITE_RATELIMIT_PERIOD_DEFAULT)!!.toLong(),
         )
+        .addInterceptor(updateUrlInterceptor)
         .addInterceptor(ScrambledImageInterceptor).build()
 
     // 点击量排序(人气)
@@ -110,8 +110,8 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        return if (query.startsWith(PREFIX_ID_SEARCH)) {
-            val id = query.removePrefix(PREFIX_ID_SEARCH)
+        return if (query.startsWith(PREFIX_ID_SEARCH_NO_COLON, true) || query.toIntOrNull() != null) {
+            val id = query.removePrefix(PREFIX_ID_SEARCH_NO_COLON).removePrefix(":")
             client.newCall(searchMangaByIdRequest(id))
                 .asObservableSuccess()
                 .map { response -> searchMangaByIdParse(response, id) }
@@ -383,9 +383,10 @@ class Jinmantiantang : ParsedHttpSource(), ConfigurableSource {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        getPreferenceList(screen.context).forEach { screen.addPreference(it) }
+        getPreferenceList(screen.context, preferences, updateUrlInterceptor.isUpdated).forEach(screen::addPreference)
     }
     companion object {
-        const val PREFIX_ID_SEARCH = "JM:"
+        private const val PREFIX_ID_SEARCH_NO_COLON = "JM"
+        const val PREFIX_ID_SEARCH = "$PREFIX_ID_SEARCH_NO_COLON:"
     }
 }

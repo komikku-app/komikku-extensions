@@ -30,18 +30,6 @@
                     android:host="jmcomic1.me"
                     android:pathPattern="/album/..*"
                     android:scheme="https" />
-                <data
-                    android:host="jmcomic1.group"
-                    android:pathPattern="/album/..*"
-                    android:scheme="https" />
-                <data
-                    android:host="jmcomic2.group"
-                    android:pathPattern="/album/..*"
-                    android:scheme="https" />
-                <data
-                    android:host="jm-comic.cc"
-                    android:pathPattern="/album/..*"
-                    android:scheme="https" />
             </intent-filter>
         </activity>
     </application>
