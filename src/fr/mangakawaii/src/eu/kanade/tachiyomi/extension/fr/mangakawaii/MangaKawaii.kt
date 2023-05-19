@@ -29,7 +29,7 @@ class MangaKawaii : ParsedHttpSource() {
 
     override val name = "Mangakawaii"
     override val baseUrl = "https://www.mangakawaii.io"
-    private val cdnUrl = "https://cdn.mangakawaii.pics"
+    private val cdnUrl = "https://cdn.mangakawaii.io"
     override val lang = "fr"
     override val supportsLatest = true
 
