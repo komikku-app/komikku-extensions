@@ -15,12 +15,11 @@ jobs:
     - uses: actions/stale@v8
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        # Close everything older than ~6 months
-        days-before-issue-stale: 180
+        # Close everything older than a year
+        days-before-issue-stale: 365
         days-before-issue-close: 0
-        any-of-issue-labels: "Source request"
-        exempt-issue-labels: do-not-autoclose
-        close-issue-message: "In an effort to have a more manageable issue backlog, we're closing older requests that weren't addressed. If you think the source may still benefit others, please [open a new request](https://github.com/tachiyomiorg/tachiyomi-extensions/issues/new?assignees=&labels=Source+request&template=request_source.yml)."
+        exempt-issue-labels: "do-not-autoclose,Meta request"
+        close-issue-message: "In an effort to have a more manageable issue backlog, we're closing older requests that weren't addressed since there's a low chance of it being addressed if it hasn't already. If your request is still relevant, please [open a new request](https://github.com/tachiyomiorg/tachiyomi-extensions/issues/new/choose)."
         close-issue-reason: not_planned
         ascending: true
         operations-per-run: 250

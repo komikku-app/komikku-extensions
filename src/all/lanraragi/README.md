@@ -24,7 +24,7 @@ You can visit the [LANraragi](https://github.com/Difegue/LANraragi) github page 
 Make sure that your LANraragi server and extension are on the newest version.
 
 ### Can I add more than one LANraragi server or user?
-No, currently there is only support for 1 instances in Tachiyomi, if you need more instances please open a feature request on [tachiyomi-extensions](https://github.com/tachiyomiorg/tachiyomi-extensions/issues/new?assignees=&labels=Feature+request&template=request_feature.yml) repo.
+No, currently there is only support for 1 instances in Tachiyomi, if you need more instances please open a feature request on [tachiyomi-extensions](https://github.com/tachiyomiorg/tachiyomi-extensions/issues/new/choose) repo.
 
 ### Can I test the LANraragi extension before setting up my own server?
 Yes, you can try it out with the DEMO server `https://lrr.tvc-16.science`.
