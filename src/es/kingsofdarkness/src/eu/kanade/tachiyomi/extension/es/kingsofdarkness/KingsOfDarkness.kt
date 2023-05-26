@@ -18,7 +18,7 @@ class KingsOfDarkness : ParsedHttpSource() {
 
     override val supportsLatest = false
 
-    override fun popularMangaSelector() = "#SITE_PAGES div[title]"
+    override fun popularMangaSelector() = "#SITE_PAGES div.wixui-image"
 
     override fun popularMangaRequest(page: Int) =
         GET("$baseUrl/proyectos", headers)
