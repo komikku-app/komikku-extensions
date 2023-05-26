@@ -26,7 +26,11 @@ object ApiV3 {
 
     fun mangaInfoUrlV1(id: String) = "$apiUrl/dynamic/comicinfo/$id.json"
 
-    private fun parseMangaInfoV1(response: Response): ResponseDto = response.parseAs()
+    private fun parseMangaInfoV1(response: Response): ResponseDto = try {
+        response.parseAs()
+    } catch (_: Throwable) {
+        throw Exception("获取漫画信息失败")
+    }
 
     fun parseMangaDetailsV1(response: Response): SManga {
         return parseMangaInfoV1(response).data.info.toSManga()
