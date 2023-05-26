@@ -545,7 +545,7 @@ abstract class Madara(
         "OnGoing", "Продолжается", "Updating", "Em Lançamento", "Em lançamento", "Em andamento",
         "Em Andamento", "En cours", "Ativo", "Lançando", "Đang Tiến Hành", "Devam Ediyor",
         "Devam ediyor", "In Corso", "In Arrivo", "مستمرة", "مستمر", "En Curso", "En curso", "Emision",
-        "En marcha", "Publicandose", "En emision", "连载中",
+        "Curso", "En marcha", "Publicandose", "En emision", "连载中",
     )
 
     protected val hiatusStatusList: Array<String> = arrayOf(
