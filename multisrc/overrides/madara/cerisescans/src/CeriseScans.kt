@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 
 class CeriseScans : Madara(
     "Cerise Scans",
-    "https://cerisescan.com",
+    "https://cerisescans.com",
     "pt-BR",
     SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")),
 ) {
