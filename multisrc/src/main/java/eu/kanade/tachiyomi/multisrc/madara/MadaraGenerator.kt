@@ -142,7 +142,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("HM2D", "https://mangadistrict.com/hdoujin", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("hManhwa", "https://hmanhwa.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Hscans", "https://hscans.com", "en", overrideVersionCode = 3),
-        SingleLang("Hunter Fansub", "https://hunterfansub.com", "es", overrideVersionCode = 1),
         SingleLang("I Love Manhwa", "https://ilovemanhwa.com", "en", isNsfw = true),
         SingleLang("Ichirin No Hana Yuri", "https://ichirinnohanayuriscan.com", "pt-BR", isNsfw = true, overrideVersionCode = 4),
         SingleLang("Ikifeng", "https://ikifeng.com", "es", isNsfw = true),
@@ -460,7 +459,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("مانجا عرب تيم Manga Arab Team", "https://mangaarbteam.com", "ar", className = "MangaArabTeam", overrideVersionCode = 1),
         SingleLang("مانجا ليك", "https://mangalek.com", "ar", className = "Mangalek", overrideVersionCode = 2),
         SingleLang("مانجا لينك", "https://mangalink.io", "ar", className = "MangaLinkio", overrideVersionCode = 3),
-        SingleLang("Chunchunmaru Translations", "https://chunchunmarutl.com", "es", className = "ChunchunmaruTranslations"),
         SingleLang("巴卡漫画", "https://bakamh.com", "zh", isNsfw = true, className = "Bakamh"),
     )
 
