@@ -18,14 +18,6 @@ class MyMangaCMSGenerator : ThemeSourceGenerator {
             "vi",
             overrideVersionCode = 9,
         ),
-        SingleLang(
-            "Phê Manga",
-            "https://phemanga.net",
-            "vi",
-            true,
-            "PheManga",
-            "phemanga",
-        ),
         SingleLang("LKDTT", "https://lkdttee.com", "vi", true, overrideVersionCode = 4),
     )
 
