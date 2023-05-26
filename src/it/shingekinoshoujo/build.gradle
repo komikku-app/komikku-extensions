@@ -5,7 +5,7 @@ ext {
     extName = 'Shingeki no Shoujo'
     pkgNameSuffix = 'it.shingekinoshoujo'
     extClass = '.ShingekiNoShoujo'
-    extVersionCode = 1
+    extVersionCode = 2
 }
 
 apply from: "$rootDir/common.gradle"

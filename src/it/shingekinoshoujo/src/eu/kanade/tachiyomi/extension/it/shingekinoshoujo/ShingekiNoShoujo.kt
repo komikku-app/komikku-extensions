@@ -19,15 +19,14 @@ import org.jsoup.nodes.Element
 class ShingekiNoShoujo : ParsedHttpSource() {
 
     override val name = "Shingeki no Shoujo"
-    override val baseUrl = "https://shingekinoshoujo.to"
+    override val baseUrl = "https://shingekinoshoujo.it"
     override val lang = "it"
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
 
     //region REQUESTS
-
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/", headers)
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/novita", headers)
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/category/novita/", headers)
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.isNotEmpty()) {
             return GET("$baseUrl/page/$page/?s=$query", headers)
@@ -52,6 +51,7 @@ class ShingekiNoShoujo : ParsedHttpSource() {
     //region CONTENTS INFO
     private fun mangasParse(response: Response, selector: String, num: Int): MangasPage {
         val document = response.asJsoup()
+        if (document.select("#login > .custom-message").size > 0) throw Exception("Devi accedere al sito web con il tuo account!\nPremi WebView (il pulsante con il globo)\ne accedi normalmente")
 
         val mangas = document.select(selector).map { element ->
             when (num) {
@@ -62,47 +62,37 @@ class ShingekiNoShoujo : ParsedHttpSource() {
         }
         return MangasPage(
             mangas,
-            !document.select(searchMangaNextPageSelector()).isNullOrEmpty(),
+            !document.select(searchMangaNextPageSelector()).isEmpty(),
         )
     }
     override fun popularMangaParse(response: Response): MangasPage = mangasParse(response, popularMangaSelector(), 1)
     override fun latestUpdatesParse(response: Response): MangasPage = mangasParse(response, latestUpdatesSelector(), 2)
     override fun searchMangaParse(response: Response): MangasPage = mangasParse(response, searchMangaSelector(), 3)
 
-    override fun popularMangaSelector() = ".ultp-block-item > .ultp-block-content-wrap"
-    override fun latestUpdatesSelector() = ".spiffy-popup > a"
-    override fun searchMangaSelector() = "article[id^=post].format-standard:contains(Genere)"
+    override fun popularMangaSelector() = ".lp-box"
+    override fun latestUpdatesSelector() = "article"
+    override fun searchMangaSelector() = "article.type-post"
 
-    override fun popularMangaFromElement(element: Element): SManga {
-        val manga = SManga.create().apply {
-            thumbnail_url = element.selectFirst("img")!!.attr("src")
-            element.select("a").last()!!.let {
-                setUrlWithoutDomain(it.attr("href"))
-                title = it.text()
-            }
-        }
-        return manga
-    }
-    override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
-        thumbnail_url = element.select("img").first()!!.attr("src")
-        setUrlWithoutDomain(element.attr("href"))
-        title = element.select("span").first()!!.text()
-    }
-    override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
-        thumbnail_url = element.select(".entry-thumbnail > img").attr("src") ?: ""
+    override fun popularMangaFromElement(element: Element) = SManga.create().apply {
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
         element.select("a").first()!!.let {
             setUrlWithoutDomain(it.attr("href"))
             title = it.text()
         }
     }
+    override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
+    override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
 
     override fun mangaDetailsParse(document: Document): SManga {
         val statusElementText = document.select("blockquote").last()!!.text().lowercase()
         return SManga.create().apply {
-            thumbnail_url = document.select(".entry-thumbnail > img").attr("src")
+            thumbnail_url = document.select(".header-image").attr("src")
             status = when {
                 statusElementText.contains("in corso") -> SManga.ONGOING
                 statusElementText.contains("fine") -> SManga.COMPLETED
+                statusElementText.contains("diritti") -> SManga.LICENSED
+                statusElementText.contains("sospeso") -> SManga.CANCELLED
+                statusElementText.contains("hiatus") -> SManga.ON_HIATUS
                 else -> SManga.UNKNOWN
             }
             author = document.select("span:has(strong:contains(Autore))").text().substringAfter("Autore:").trim()
@@ -114,9 +104,9 @@ class ShingekiNoShoujo : ParsedHttpSource() {
 
     //region NEXT SELECTOR  -  Not used
 
-    override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
-    override fun latestUpdatesNextPageSelector(): String? = null
-    override fun searchMangaNextPageSelector() = ".nav-previous:contains(Articoli meno recenti)"
+    override fun popularMangaNextPageSelector(): String? = null
+    override fun latestUpdatesNextPageSelector() = searchMangaNextPageSelector()
+    override fun searchMangaNextPageSelector() = ".next.page-numbers"
     //endregion
 
     //region CHAPTER and PAGES
@@ -124,7 +114,7 @@ class ShingekiNoShoujo : ParsedHttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
         val chapters = mutableListOf<SChapter>()
-        document.select(chapterListSelector().replace("<chapName>", document.location().toString().substringAfter("$baseUrl/").substringBefore("/"))).forEachIndexed { i, it ->
+        document.select(chapterListSelector().replace("<chapName>", document.location().substringAfter("$baseUrl/").substringBefore("/"))).forEachIndexed { i, it ->
             chapters.add(
                 SChapter.create().apply {
                     setUrlWithoutDomain(it.attr("href"))
@@ -139,7 +129,7 @@ class ShingekiNoShoujo : ParsedHttpSource() {
         chapters.reverse()
         return chapters
     }
-    override fun chapterListSelector() = ".entry-content > blockquote > p > a[href], .entry-content > ul > li a[href*=<chapName>]:not(:has(img))"
+    override fun chapterListSelector() = ".entry-content > ul > li"
     override fun chapterFromElement(element: Element) = throw Exception("Not used")
 
     override fun pageListParse(document: Document): List<Page> {
@@ -150,8 +140,6 @@ class ShingekiNoShoujo : ParsedHttpSource() {
         }
         if (document.toString().contains("che state leggendo")) {
             pages.add(Page(1, "", "https://i.imgur.com/l0eZuoO.png"))
-        } else if (pages.isEmpty()) {
-            pages.add(Page(1, "", "https://i.imgur.com/DPZ6K2q.png"))
         }
 
         return pages
