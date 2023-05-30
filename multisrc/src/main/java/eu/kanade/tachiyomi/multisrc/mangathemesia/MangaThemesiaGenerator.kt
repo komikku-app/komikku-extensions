@@ -33,6 +33,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Dojing.net", "https://dojing.net", "id", isNsfw = true, className = "DojingNet"),
         SingleLang("DragonTranslation", "https://dragontranslation.com", "es", isNsfw = true, overrideVersionCode = 9),
         SingleLang("DuniaKomik.id", "https://duniakomik.id", "id", className = "DuniaKomikId"),
+        SingleLang("ElarcPage", "https://elarcpage.com", "en"),
         SingleLang("FlameScans.fr", "https://flamescans.fr", "fr", className = "FlameScansFR"),
         SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true),
         SingleLang("Gecenin Lordu", "https://geceninlordu.com", "tr", overrideVersionCode = 1),
