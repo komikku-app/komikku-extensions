@@ -102,7 +102,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Ryukonesia", "https://ryukonesia.net", "id"),
         SingleLang("Sekaikomik", "https://www.sekaikomik.pro", "id", isNsfw = true, overrideVersionCode = 10),
         SingleLang("Sekte Doujin", "https://sektedoujin.lol", "id", isNsfw = true, overrideVersionCode = 4),
-        SingleLang("Senpai Ediciones", "http://senpaiediciones.com", "es"),
+        SingleLang("Senpai Ediciones", "http://senpaiediciones.com", "es", overrideVersionCode = 1),
         SingleLang("Shadow Mangas", "https://shadowmangas.com", "es", overrideVersionCode = 1),
         SingleLang("Shea Manga", "https://sheakomik.com", "id", overrideVersionCode = 4),
         SingleLang("Silence Scan", "https://silencescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 5),
