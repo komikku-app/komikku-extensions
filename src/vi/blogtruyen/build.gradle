@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'BlogTruyen'
+    pkgNameSuffix = 'vi.blogtruyen'
+    extClass = '.BlogTruyen'
+    extVersionCode = 15
+    isNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
