@@ -220,7 +220,7 @@ abstract class HeanCms(
 
         val seriesDetails = seriesSlugMap?.get(seriesSlug)
         val currentSlug = seriesDetails?.slug ?: seriesSlug
-        val currentStatus = seriesDetails?.status ?: SManga.UNKNOWN
+        val currentStatus = seriesDetails?.status ?: manga.status
 
         val apiHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
@@ -248,6 +248,7 @@ abstract class HeanCms(
         val currentTimestamp = System.currentTimeMillis()
 
         return result.chapters.orEmpty()
+            .filterNot { it.price == 1 }
             .map { it.toSChapter(seriesSlug, dateFormat) }
             .filter { it.date_upload <= currentTimestamp }
             .reversed()

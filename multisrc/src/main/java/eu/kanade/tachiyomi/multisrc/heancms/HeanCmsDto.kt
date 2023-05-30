@@ -91,6 +91,7 @@ data class HeanCmsChapterDto(
     @SerialName("chapter_slug") val slug: String,
     val index: String,
     @SerialName("created_at") val createdAt: String,
+    val price: Int? = null,
 ) {
 
     fun toSChapter(seriesSlug: String, dateFormat: SimpleDateFormat): SChapter = SChapter.create().apply {
