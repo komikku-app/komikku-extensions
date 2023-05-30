@@ -1,7 +1,12 @@
 package eu.kanade.tachiyomi.extension.all.comickfun
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -16,19 +21,21 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
-import java.text.ParseException
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-abstract class ComickFun(override val lang: String, private val comickFunLang: String) : HttpSource() {
+abstract class ComickFun(
+    override val lang: String,
+    private val comickFunLang: String,
+) : HttpSource(), ConfigurableSource {
 
     override val name = "Comick"
 
     override val baseUrl = "https://comick.app"
 
     private val apiUrl = "https://api.comick.fun"
-
-    private val cdnUrl = "https://meo3.comick.pictures"
 
     override val supportsLatest = true
 
@@ -44,7 +51,14 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         add("User-Agent", "Tachiyomi ${System.getProperty("http.agent")}")
     }
 
-    override val client: OkHttpClient = network.client.newBuilder().rateLimit(4, 1).build()
+    override val client: OkHttpClient = network.client.newBuilder()
+        .addNetworkInterceptor(::thumbnailIntercept)
+        .rateLimit(4, 1)
+        .build()
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     /** Popular Manga **/
     override fun popularMangaRequest(page: Int): Request {
@@ -79,7 +93,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         }
 
         val slugOrHid = query.substringAfter(SLUG_SEARCH_PREFIX)
-        return fetchMangaDetails(SManga.create().apply { this.url = "/comic/$slugOrHid#" }).map {
+        val manga = SManga.create().apply { this.url = "/comic/$slugOrHid#" }
+        return fetchMangaDetails(manga).map {
             MangasPage(listOf(it), false)
         }
     }
@@ -170,18 +185,9 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
 
     override fun searchMangaParse(response: Response): MangasPage {
         val isQueryPresent = response.request.url.queryParameterNames.contains("q")
-        val result = json.decodeFromString<List<Manga>>(response.body.string())
+        val result = response.parseAs<List<SearchManga>>()
         return MangasPage(
-            result.map { data ->
-                SManga.create().apply {
-                    // appennding # at end as part of migration from slug to hid
-                    url = "/comic/${data.hid}#"
-                    title = data.title
-                    thumbnail_url = runCatching {
-                        "$cdnUrl/${data.md_covers.first().b2key}"
-                    }.getOrNull()
-                }
-            },
+            result.map { it.toSManga(useScaledCover) },
             /*
                 api always returns `limit` amount of results
                 for text search and page>=2 is always empty
@@ -204,20 +210,8 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val mangaData = json.decodeFromString<MangaDetails>(response.body.string())
-        return SManga.create().apply {
-            // appennding # at end as part of migration from slug to hid
-            url = "/comic/${mangaData.comic.hid}#"
-            title = mangaData.comic.title
-            artist = mangaData.artists.joinToString { it.name.trim() }
-            author = mangaData.authors.joinToString { it.name.trim() }
-            description = beautifyDescription(mangaData.comic.desc)
-            genre = mangaData.genres.joinToString { it.name.trim() }
-            status = parseStatus(mangaData.comic.status)
-            thumbnail_url = runCatching {
-                "$cdnUrl/${mangaData.comic.md_covers.first().b2key}"
-            }.getOrNull()
-        }
+        val mangaData = response.parseAs<Manga>()
+        return mangaData.toSManga(useScaledCover)
     }
 
     override fun getMangaUrl(manga: SManga): String {
@@ -247,7 +241,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val chapterListResponse = json.decodeFromString<ChapterList>(response.body.string())
+        val chapterListResponse = response.parseAs<ChapterList>()
 
         val mangaUrl = response.request.url.toString()
             .substringBefore("/chapters")
@@ -259,7 +253,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
         while (chapterListResponse.total > resultSize) {
             val newRequest = paginatedChapterListRequest(mangaUrl, page)
             val newResponse = client.newCall(newRequest).execute()
-            val newChapterListResponse = json.decodeFromString<ChapterList>(newResponse.body.string())
+            val newChapterListResponse = newResponse.parseAs<ChapterList>()
 
             chapterListResponse.chapters += newChapterListResponse.chapters
 
@@ -267,24 +261,7 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
             page += 1
         }
 
-        return chapterListResponse.chapters.map { chapter ->
-            SChapter.create().apply {
-                url = "$mangaUrl/${chapter.hid}-chapter-${chapter.chap}-$comickFunLang"
-                name = beautifyChapterName(chapter.vol, chapter.chap, chapter.title)
-                date_upload = chapter.created_at.let {
-                    try {
-                        dateFormat.parse(it)?.time ?: 0L
-                    } catch (e: ParseException) {
-                        0L
-                    }
-                }
-                scanlator = chapter.group_name.joinToString().takeUnless { it.isBlank() } ?: "Unknown"
-            }
-        }
-    }
-
-    private val dateFormat by lazy {
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH)
+        return chapterListResponse.chapters.map { it.toSChapter(mangaUrl) }
     }
 
     override fun getChapterUrl(chapter: SChapter): String {
@@ -298,14 +275,14 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = json.decodeFromString<PageList>(response.body.string())
+        val result = response.parseAs<PageList>()
         return result.chapter.images.mapIndexedNotNull { index, data ->
             if (data.url == null) null else Page(index = index, imageUrl = data.url)
         }
     }
 
-    companion object {
-        const val SLUG_SEARCH_PREFIX = "id:"
+    private inline fun <reified T> Response.parseAs(): T {
+        return json.decodeFromString(body.string())
     }
 
     override fun imageUrlParse(response: Response): String {
@@ -318,4 +295,30 @@ abstract class ComickFun(override val lang: String, private val comickFunLang: S
     override fun getFilterList() = FilterList(
         getFilters(),
     )
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = coverQualityPref
+            title = "Cover Quality"
+            entries = arrayOf("Original", "Scaled")
+            entryValues = arrayOf("orig", "scaled")
+            setDefaultValue("orig")
+            summary = "%s"
+        }.let { screen.addPreference(it) }
+    }
+
+    private val useScaledCover: Boolean by lazy {
+        preferences.getString(coverQualityPref, "orig") != "orig"
+    }
+
+    companion object {
+        const val SLUG_SEARCH_PREFIX = "id:"
+        val dateFormat by lazy {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH)
+        }
+        val markdownLinksRegex = "\\[([^]]+)\\]\\(([^)]+)\\)".toRegex()
+        val markdownItalicBoldRegex = "\\*+\\s*([^\\*]*)\\s*\\*+".toRegex()
+        val markdownItalicRegex = "_+\\s*([^_]*)\\s*_+".toRegex()
+        private const val coverQualityPref = "pref_cover_quality"
+    }
 }

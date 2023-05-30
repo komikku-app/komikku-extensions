@@ -1,25 +1,66 @@
 package eu.kanade.tachiyomi.extension.all.comickfun
 
-import android.os.Build
-import android.text.Html
+import eu.kanade.tachiyomi.extension.all.comickfun.ComickFun.Companion.dateFormat
+import eu.kanade.tachiyomi.extension.all.comickfun.ComickFun.Companion.markdownItalicBoldRegex
+import eu.kanade.tachiyomi.extension.all.comickfun.ComickFun.Companion.markdownItalicRegex
+import eu.kanade.tachiyomi.extension.all.comickfun.ComickFun.Companion.markdownLinksRegex
 import eu.kanade.tachiyomi.source.model.SManga
-import org.jsoup.Jsoup
+import okhttp3.Interceptor
+import okhttp3.Response
+import org.jsoup.parser.Parser
 
-internal fun beautifyDescription(description: String): String {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        return Html.fromHtml(description, Html.FROM_HTML_MODE_LEGACY).toString()
-    }
-    return Jsoup.parse(description).text()
+internal fun String.beautifyDescription(): String {
+    return Parser.unescapeEntities(this, false)
+        .replace(markdownLinksRegex, "")
+        .replace(markdownItalicBoldRegex, "")
+        .replace(markdownItalicRegex, "")
+        .trim()
 }
 
-internal fun parseStatus(status: Int): Int {
-    return when (status) {
+internal fun Int.parseStatus(translationComplete: Boolean): Int {
+    return when (this) {
         1 -> SManga.ONGOING
-        2 -> SManga.COMPLETED
+        2 -> {
+            if (translationComplete) {
+                SManga.COMPLETED
+            } else {
+                SManga.PUBLISHING_FINISHED
+            }
+        }
         3 -> SManga.CANCELLED
         4 -> SManga.ON_HIATUS
         else -> SManga.UNKNOWN
     }
+}
+
+internal fun parseCover(thumbnailUrl: String?, mdCovers: List<MDcovers>, useScaled: Boolean): String? {
+    val b2key = runCatching { mdCovers.first().b2key }
+        .getOrNull() ?: ""
+
+    return if (useScaled) {
+        "$thumbnailUrl#$b2key"
+    } else {
+        thumbnailUrl?.replaceAfterLast("/", b2key)
+    }
+}
+
+internal fun thumbnailIntercept(chain: Interceptor.Chain): Response {
+    val request = chain.request()
+    val frag = request.url.fragment
+    if (frag.isNullOrEmpty()) return chain.proceed(request)
+    val response = chain.proceed(request)
+    if (!response.isSuccessful && response.code == 404) {
+        response.close()
+        val url = request.url.toString()
+            .replaceAfterLast("/", frag)
+
+        return chain.proceed(
+            request.newBuilder()
+                .url(url)
+                .build(),
+        )
+    }
+    return response
 }
 
 internal fun beautifyChapterName(vol: String, chap: String, title: String): String {
@@ -34,4 +75,9 @@ internal fun beautifyChapterName(vol: String, chap: String, title: String): Stri
             if (chap.isEmpty()) append(title) else append(": $title")
         }
     }
+}
+
+internal fun String.parseDate(): Long {
+    return runCatching { dateFormat.parse(this)?.time }
+        .getOrNull() ?: 0L
 }
