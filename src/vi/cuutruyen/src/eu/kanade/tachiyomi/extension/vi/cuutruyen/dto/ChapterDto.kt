@@ -43,8 +43,8 @@ data class ChapterDto(
 data class PageDto(
     val id: Int,
     val order: Int,
-    val width: Int,
-    val height: Int,
+    val width: Int?,
+    val height: Int?,
     val status: String,
     @SerialName("image_url") val imageUrl: String,
     @SerialName("image_url_size") val imageUrlSize: Int,

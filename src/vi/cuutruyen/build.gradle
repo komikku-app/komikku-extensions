@@ -6,7 +6,8 @@ ext {
     extName = 'Cứu Truyện'
     pkgNameSuffix = 'vi.cuutruyen'
     extClass = '.CuuTruyen'
-    extVersionCode = 4
+    extVersionCode = 5
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
