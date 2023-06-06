@@ -100,7 +100,7 @@ data class Chapter(
     val hid: String,
     val lang: String,
     val title: String = "",
-    val updated_at: String = "",
+    val created_at: String = "",
     val chap: String = "",
     val vol: String = "",
     val group_name: List<String> = emptyList(),
@@ -108,7 +108,7 @@ data class Chapter(
     fun toSChapter(mangaUrl: String) = SChapter.create().apply {
         url = "$mangaUrl/$hid-chapter-$chap-$lang"
         name = beautifyChapterName(vol, chap, title)
-        date_upload = updated_at.parseDate()
+        date_upload = created_at.parseDate()
         scanlator = group_name.joinToString().takeUnless { it.isBlank() } ?: "Unknown"
     }
 }
