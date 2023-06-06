@@ -94,6 +94,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Ozul Scans", "https://ozulscans.com", "ar"),
         SingleLang("Patatescans", "https://patatescans.com", "fr", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Phantom Scans", "https://phantomscans.com", "en", overrideVersionCode = 1),
+        SingleLang("PhenixScans", "https://phenixscans.fr", "fr", className = "PhenixScans"),
         SingleLang("Pi Scans", "https://piscans.in", "id", overrideVersionCode = 1),
         SingleLang("PMScans", "https://rackusreads.com", "en", overrideVersionCode = 3),
         SingleLang("Raiki Scan", "https://raikiscan.com", "es"),
