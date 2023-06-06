@@ -345,7 +345,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Projeto Scanlator", "https://projetoscanlator.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("ROG Mangás", "https://rogmangas.com", "pt-BR", pkgName = "mangasoverall", className = "RogMangas", overrideVersionCode = 1),
         SingleLang("Ragnarok Scanlation", "https://ragnarokscanlation.com", "es", className = "RagnarokScanlation"),
-        SingleLang("RagnarokScan", "https://ragnarokscan.com", "es"),
+        SingleLang("RagnarokScan", "https://ragnarokscan.com", "es", overrideVersionCode = 1),
         SingleLang("Rainbow Fairy Scan", "https://rainbowfairyscan.com", "pt-BR"),
         SingleLang("Random Scan", "https://randomscans.com", "pt-BR", overrideVersionCode = 5),
         SingleLang("RawDEX", "https://rawdex.net", "ko", isNsfw = true, overrideVersionCode = 1),
