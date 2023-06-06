@@ -97,18 +97,46 @@ class Mangainua : ParsedHttpSource() {
         return SManga.create().apply {
             title = document.select("span.UAname").text()
             description = document.select("div.item__full-description").text()
-            genre = document.select("div.item__full-sideba--header:eq(4) span").first()!!.select("a").joinToString { it.text() }
             thumbnail_url = document.select("div.item__full-sidebar--poster img").first()!!.attr("abs:src")
+            status = when (document.select("div.item__full-sideba--header:has(div:containsOwn(Статус перекладу:))").first()?.select("span.item__full-sidebar--description")?.first()?.text()) {
+                "Триває" -> SManga.ONGOING
+                "Покинуто" -> SManga.CANCELLED
+                "Закінчений" -> SManga.COMPLETED
+                else -> SManga.UNKNOWN
+            }
+            val type = when (document.select("div.item__full-sideba--header:has(div:containsOwn(Тип:))").first()?.select("span.item__full-sidebar--description")?.first()!!.text()) {
+                "ВЕБМАНХВА" -> "Manhwa"
+                "МАНХВА" -> "Manhwa"
+                "МАНЬХВА" -> "Manhua"
+                "ВЕБМАНЬХВА" -> "Manhua"
+                else -> "Manga"
+            }
+            genre = document.select("div.item__full-sideba--header:has(div:containsOwn(Жанри:))").first()?.select("span.item__full-sidebar--description")?.first()!!.select("a").joinToString { it.text() } + ", " + type
         }
     }
 
     // Chapters
     override fun chapterListSelector() = "div.ltcitems"
+
+    private var previousChapterName: String? = null
+    private var previousChapterNumber: Float = 0.0f
+
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
             element.select("a").let { urlElement ->
                 setUrlWithoutDomain(urlElement.attr("href"))
-                name = urlElement.text().substringAfter("НОВЕ").trim()
+                val chapterName = urlElement.text().substringAfter("НОВЕ").trim()
+                val chapterNumber = urlElement.text().substringAfter("Розділ").substringBefore("-").trim()
+                if (chapterName.contains("Альтернативний переклад")) {
+                    name = previousChapterName.toString().substringBefore("-").trim()
+                    scanlator = urlElement.text().substringAfter("від:").trim()
+                    chapter_number = previousChapterNumber
+                } else {
+                    name = chapterName
+                    previousChapterName = chapterName
+                    chapter_number = chapterNumber.toFloat()
+                    previousChapterNumber = chapterNumber.toFloat()
+                }
             }
             date_upload = parseDate(element.select("div.ltcright:containsOwn(.)").text())
         }

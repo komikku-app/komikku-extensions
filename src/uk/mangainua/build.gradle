@@ -5,7 +5,7 @@ ext {
     extName = 'MangaInUa'
     pkgNameSuffix = 'uk.mangainua'
     extClass = '.Mangainua'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = true
 }
 
