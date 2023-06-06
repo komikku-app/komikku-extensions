@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.es.mangatigre
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class PayloadManga(
@@ -38,7 +39,7 @@ data class MangasDataDto(
 @Serializable
 data class ChapterDto(
     val manga: ChapterMangaInfoDto,
-    val number: Float,
+    val number: JsonPrimitive, // Can be Int or Float
     val images: Map<String, ChapterImagesDto>,
 )
 

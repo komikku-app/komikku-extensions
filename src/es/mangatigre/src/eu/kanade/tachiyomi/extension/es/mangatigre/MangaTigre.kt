@@ -25,7 +25,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okio.Buffer
-import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 
@@ -54,7 +54,7 @@ class MangaTigre : HttpSource() {
 
                 if (response.code == 419) {
                     response.close()
-                    getToken()
+                    setToken()
 
                     val newBody = json.parseToJsonElement(request.bodyString).jsonObject.toMutableMap().apply {
                         this["_token"] = JsonPrimitive(mtToken)
@@ -81,7 +81,7 @@ class MangaTigre : HttpSource() {
         .rateLimitHost(baseUrl.toHttpUrl(), 1, 2)
         .build()
 
-    private fun getToken() {
+    private fun setToken() {
         val document = client.newCall(GET(baseUrl, headers)).execute().asJsoup()
         mtToken = document.selectFirst("input.input-search[data-csrf]")!!.attr("data-csrf")
     }
@@ -249,31 +249,36 @@ class MangaTigre : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
+
         return SManga.create().apply {
-            description = createDescription(document)
-            genre = createGenres(document)
-            thumbnail_url = document.selectFirst("div.manga-image > img")!!.attr("abs:data-src")
-            author = document.selectFirst("li.list-group-item:has(strong:contains(Autor)) > a")?.ownText()?.trim()
-            artist = document.selectFirst("li.list-group-item:has(strong:contains(Artista)) > a")?.ownText()?.trim()
-            status = document.selectFirst("li.list-group-item:has(strong:contains(Estado))")?.ownText()?.trim()!!.toStatus()
+            document.selectFirst("div.mangas-content")!!.let { mangasContent ->
+                thumbnail_url = mangasContent.selectFirst("div.manga-image > img")!!.attr("abs:data-src")
+                val summary = mangasContent.selectFirst("div.synopsis > p")?.ownText()?.trim() ?: ""
+                with(mangasContent.selectFirst("ul.list-group")!!) {
+                    description = createDescription(this, summary)
+                    genre = createGenres(this)
+                    author = selectFirst("li:has(strong:contains(Autor)) > a")?.ownText()?.trim()
+                    artist = selectFirst("li:has(strong:contains(Artista)) > a")?.ownText()?.trim()
+                    status = selectFirst("li:has(strong:contains(Estado))")?.ownText()?.trim()!!.toStatus()
+                }
+            }
         }
     }
 
-    private fun createGenres(document: Document): String {
-        val demographic = document.select("li.list-group-item:has(strong:contains(Demografía)) a").joinToString { it.text() }
-        val genres = document.select("li.list-group-item:has(strong:contains(Géneros)) a").joinToString { it.text() }
-        val themes = document.select("li.list-group-item:has(strong:contains(Temas)) a").joinToString { it.text() }
-        val content = document.select("li.list-group-item:has(strong:contains(Contenido)) a").joinToString { it.text() }
+    private fun createGenres(element: Element): String {
+        val demographic = element.select("li:has(strong:contains(Demografía)) a").joinToString { it.text() }
+        val genres = element.select("li:has(strong:contains(Géneros)) a").joinToString { it.text() }
+        val themes = element.select("li:has(strong:contains(Temas)) a").joinToString { it.text() }
+        val content = element.select("li:has(strong:contains(Contenido)) a").joinToString { it.text() }
         return listOf(demographic, genres, themes, content).joinToString(", ")
     }
 
-    private fun createDescription(document: Document): String {
-        val originalName = document.selectFirst("li.list-group-item:has(strong:contains(Original))")?.ownText()?.trim() ?: ""
-        val alternativeName = document.select("li.list-group-item:has(strong:contains(Alternativo)) span.alter-name").text()
-        val year = document.selectFirst("li.list-group-item:has(strong:contains(Año))")?.ownText()?.trim() ?: ""
-        val animeAdaptation = document.selectFirst("li.list-group-item:has(strong:contains(Anime))")?.ownText()?.trim() ?: ""
-        val country = document.selectFirst("li.list-group-item:has(strong:contains(País))")?.ownText()?.trim() ?: ""
-        val summary = document.selectFirst("div.synopsis > p")?.ownText()?.trim() ?: ""
+    private fun createDescription(element: Element, summary: String): String {
+        val originalName = element.selectFirst("li:has(strong:contains(Original))")?.ownText()?.trim() ?: ""
+        val alternativeName = element.select("li:has(strong:contains(Alternativo)) span.alter-name").text()
+        val year = element.selectFirst("li:has(strong:contains(Año))")?.ownText()?.trim() ?: ""
+        val animeAdaptation = element.selectFirst("li:has(strong:contains(Anime))")?.ownText()?.trim() ?: ""
+        val country = element.selectFirst("li:has(strong:contains(País))")?.ownText()?.trim() ?: ""
         return StringBuilder()
             .appendLine("Nombre Original: $originalName")
             .appendLine("Títulos Alternativos: $alternativeName")
@@ -317,7 +322,7 @@ class MangaTigre : HttpSource() {
 
         val result = json.decodeFromString<ChapterDto>(jsonString)
         val slug = result.manga.slug
-        val number = result.number
+        val number = result.number.toString()
 
         return result.images.map {
             val imageUrl = "$imgCDNUrl/chapters/$slug/$number/${it.value.name}.${it.value.format}"
