@@ -15,6 +15,9 @@
                 <data android:host="m.blogtruyen.vn" />
                 <data android:scheme="https" />
 
+                <data android:pathPattern="/tac-gia/..*" />
+                <data android:pathPattern="/nhom-dich/..*" />
+
                 <!--
                     Try to ensure that the passed URL is a chapter `c{id}` or a manga `{id}`, with `id`
                     being a number.

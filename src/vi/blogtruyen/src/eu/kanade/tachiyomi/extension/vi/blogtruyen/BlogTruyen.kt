@@ -2,8 +2,8 @@ package eu.kanade.tachiyomi.extension.vi.blogtruyen
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -17,6 +17,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -35,7 +36,7 @@ class BlogTruyen : ParsedHttpSource() {
 
     override val lang = "vi"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimit(1)
@@ -45,60 +46,59 @@ class BlogTruyen : ParsedHttpSource() {
 
     private val dateFormat: SimpleDateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.ENGLISH)
 
-    private lateinit var directory: List<Element>
+    companion object {
+        const val PREFIX_ID_SEARCH = "id:"
+        const val PREFIX_AUTHOR_SEARCH = "author:"
+        const val PREFIX_TEAM_SEARCH = "team:"
+    }
 
     override fun headersBuilder(): Headers.Builder =
         super.headersBuilder().add("Referer", "$baseUrl/")
 
-    override fun fetchPopularManga(page: Int): Observable<MangasPage> {
-        return if (page == 1) {
-            client.newCall(popularMangaRequest(page))
-                .asObservableSuccess()
-                .map { response ->
-                    popularMangaParse(response)
-                }
-        } else {
-            Observable.just(parseDirectory(page))
-        }
-    }
-
     override fun popularMangaRequest(page: Int): Request =
-        GET("https://forum.blogtruyen.vn/anh-em-doc-tam/anh-em-doc-tam-75733")
+        GET("$baseUrl/ajax/Search/AjaxLoadListManga?key=tatca&orderBy=3&p=$page", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        directory = document.select(popularMangaSelector())
-        return parseDirectory(1)
-    }
 
-    private fun parseDirectory(page: Int): MangasPage {
-        val mangas = mutableListOf<SManga>()
-        val endRange = ((page * 24) - 1).let { if (it <= directory.lastIndex) it else directory.lastIndex }
-
-        for (i in (((page - 1) * 24)..endRange)) {
-            mangas.add(popularMangaFromElement(directory[i]))
+        val manga = document.select(popularMangaSelector()).map {
+            val tiptip = it.attr("data-tiptip")
+            popularMangaFromElement(it, document.getElementById(tiptip)!!)
         }
 
-        return MangasPage(mangas, endRange < directory.lastIndex)
+        val hasNextPage = document.selectFirst(popularMangaNextPageSelector()) != null
+
+        return MangasPage(manga, hasNextPage)
     }
 
-    override fun popularMangaSelector() = "div.topic-content div a"
+    override fun popularMangaSelector() = ".list .tiptip"
 
-    override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
-        title = element.text()
-        thumbnail_url = element.selectFirst("img")?.attr("src")
+    override fun popularMangaFromElement(element: Element): SManga =
+        throw UnsupportedOperationException("Not used")
+
+    private fun popularMangaFromElement(element: Element, tiptip: Element) = SManga.create().apply {
+        val anchor = element.selectFirst("a")!!
+        setUrlWithoutDomain(anchor.attr("href"))
+        title = anchor.attr("title").replace("truyện tranh ", "").trim()
+
+        thumbnail_url = tiptip.selectFirst("img")!!.attr("abs:src")
+        description = tiptip.selectFirst(".al-j")!!.text()
     }
 
-    override fun popularMangaNextPageSelector(): String? = null
+    override fun popularMangaNextPageSelector() = ".paging:last-child:not(.current_page)"
 
-    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException("Unused")
+    override fun latestUpdatesRequest(page: Int): Request =
+        GET(baseUrl + if (page != 1) "/page-$page" else "", headers)
 
-    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException("Unused")
+    override fun latestUpdatesSelector() = ".storyitem .fl-l"
 
-    override fun latestUpdatesFromElement(element: Element): SManga = throw UnsupportedOperationException("Unused")
+    override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
+        setUrlWithoutDomain(element.select("a").attr("href"))
+        title = element.select("a").attr("title")
+        thumbnail_url = element.select("img").attr("abs:src")
+    }
 
-    override fun latestUpdatesNextPageSelector(): String? = null
+    override fun latestUpdatesNextPageSelector() = "select.slcPaging option:last-child:not([selected])"
 
     override fun fetchSearchManga(
         page: Int,
@@ -112,8 +112,6 @@ class BlogTruyen : ParsedHttpSource() {
                 // it's a chapter, resolve to manga ID
                 if (id.startsWith("c")) {
                     val document = client.newCall(GET("$baseUrl/$id", headers)).execute().asJsoup()
-                    throwIfUnapprovedManga(document)
-
                     id = document.selectFirst(".breadcrumbs a:last-child")!!.attr("href").removePrefix("/")
                 }
 
@@ -124,34 +122,96 @@ class BlogTruyen : ParsedHttpSource() {
                 )
                     .map { MangasPage(listOf(it.apply { url = "/$id" }), false) }
             }
-            page == 1 -> client.newCall(searchMangaRequest(page, query, filters))
-                .asObservableSuccess()
-                .map { response ->
-                    searchMangaParse(response, query, filters)
+            else -> super.fetchSearchManga(page, query, filters)
+        }
+    }
+
+    private fun extractIdFromQuery(prefix: String, query: String): String {
+        val q = query.substringAfter(prefix).trim()
+        return if (q.contains("-")) {
+            q.substringAfterLast("-")
+        } else {
+            q
+        }
+    }
+
+    private val ajaxSearchUrls: Map<String, String> = mapOf(
+        PREFIX_AUTHOR_SEARCH to "Author/AjaxLoadMangaByAuthor?orderBy=3",
+        PREFIX_TEAM_SEARCH to "TranslateTeam/AjaxLoadMangaByTranslateTeam",
+    )
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        ajaxSearchUrls.keys.forEach {
+            if (!query.startsWith(it)) {
+                return@forEach
+            }
+            val id = extractIdFromQuery(it, query)
+            val url = "$baseUrl/ajax/${ajaxSearchUrls[it]}".toHttpUrl().newBuilder()
+                .addQueryParameter("id", id)
+                .addQueryParameter("p", page.toString())
+                .build()
+                .toString()
+            return GET(url, headers)
+        }
+
+        val url = "$baseUrl/timkiem/nangcao/1".toHttpUrl().newBuilder().apply {
+            addQueryParameter("txt", query)
+            addQueryParameter("p", page.toString())
+
+            val genres = mutableListOf<Int>()
+            val genresEx = mutableListOf<Int>()
+            var status = 0
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is GenreList -> filter.state.forEach {
+                        when (it.state) {
+                            Filter.TriState.STATE_INCLUDE -> genres.add(it.id)
+                            Filter.TriState.STATE_EXCLUDE -> genresEx.add(it.id)
+                            else -> {}
+                        }
+                    }
+                    is Author -> {
+                        addQueryParameter("aut", filter.state)
+                    }
+                    is Scanlator -> {
+                        addQueryParameter("gr", filter.state)
+                    }
+                    is Status -> {
+                        status = filter.state
+                    }
+                    else -> {}
                 }
-            else -> Observable.just(parseDirectory(page))
-        }
+            }
+
+            addPathSegment(status.toString())
+            addPathSegment(genres.joinToString(","))
+            addPathSegment(genresEx.joinToString(","))
+        }.build().toString()
+        return GET(url, headers)
     }
 
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request =
-        popularMangaRequest(1)
+    override fun searchMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
 
-    private fun searchMangaParse(response: Response, query: String, filters: FilterList): MangasPage {
-        val trimmedQuery = query.trim()
-
-        directory = response.asJsoup().select(popularMangaSelector()).filter { it ->
-            it.text().contains(trimmedQuery, ignoreCase = true)
+        val manga = document.select(searchMangaSelector()).map {
+            val tiptip = it.attr("data-tiptip")
+            searchMangaFromElement(it, document.getElementById(tiptip)!!)
         }
 
-        return parseDirectory(1)
+        val hasNextPage = document.selectFirst(searchMangaNextPageSelector()) != null
+
+        return MangasPage(manga, hasNextPage)
     }
 
-    override fun searchMangaSelector(): String = throw UnsupportedOperationException("Unused")
+    override fun searchMangaSelector() = popularMangaSelector()
 
     override fun searchMangaFromElement(element: Element): SManga =
-        throw UnsupportedOperationException("Unused")
+        throw UnsupportedOperationException("Not used")
 
-    override fun searchMangaNextPageSelector(): String? = null
+    private fun searchMangaFromElement(element: Element, tiptip: Element) =
+        popularMangaFromElement(element, tiptip)
+
+    override fun searchMangaNextPageSelector() = ".pagination .glyphicon-step-forward"
 
     private fun getMangaTitle(document: Document) = document.selectFirst(".entry-title a")!!
         .attr("title")
@@ -159,8 +219,6 @@ class BlogTruyen : ParsedHttpSource() {
         .trim()
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        throwIfUnapprovedManga(document)
-
         val anchor = document.selectFirst(".entry-title a")!!
         setUrlWithoutDomain(anchor.attr("href"))
         title = getMangaTitle(document)
@@ -235,9 +293,6 @@ class BlogTruyen : ParsedHttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-
-        throwIfUnapprovedManga(document)
-
         val title = getMangaTitle(document)
         return document.select(chapterListSelector()).map { chapterFromElement(it, title) }
     }
@@ -276,8 +331,6 @@ class BlogTruyen : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        throwIfUnapprovedManga(document)
-
         val pages = mutableListOf<Page>()
 
         document.select("#content > img").forEachIndexed { i, e ->
@@ -301,30 +354,79 @@ class BlogTruyen : ParsedHttpSource() {
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
 
-    private fun isPageUnblocked(document: Document): Boolean {
-        val anchor = document.selectFirst("center b a")?.attr("href") ?: return true
-        val img = document.selectFirst("center img")?.attr("src") ?: return true
+    private class Status : Filter.Select<String>(
+        "Status",
+        arrayOf("Sao cũng được", "Đang tiến hành", "Đã hoàn thành", "Tạm ngưng"),
+    )
 
-        val content = document.body().text()
+    private class Author : Filter.Text("Tác giả")
+    private class Scanlator : Filter.Text("Nhóm dịch")
+    private class Genre(name: String, val id: Int) : Filter.TriState(name)
+    private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Thể loại", genres)
 
-        if (content != UNDERGOING_CHECK || anchor != APPROVED_MANGA_POST || img != DONATION_IMAGE) {
-            return true
-        }
+    override fun getFilterList() = FilterList(
+        Author(),
+        Scanlator(),
+        Status(),
+        GenreList(getGenreList()),
+    )
 
-        return false
-    }
-
-    private fun throwIfUnapprovedManga(document: Document) {
-        if (!isPageUnblocked(document)) {
-            throw Exception("Truyện chưa được kiểm duyệt!")
-        }
-    }
-
-    companion object {
-        const val PREFIX_ID_SEARCH = "id:"
-
-        const val UNDERGOING_CHECK = "Website đang rà soát lại nội dung. Anh em đọc tạm một số truyện nhẹ nhàng lành mạnh đã được kiểm duyệt TẠI ĐÂY Website đang trong giai đoạn khó khăn, nhưng hãy donate chỉ khi bạn sẵn lòng và vui vẻ thôi nhé \uD83D\uDC96"
-        const val APPROVED_MANGA_POST = "https://forum.blogtruyen.vn/anh-em-doc-tam/anh-em-doc-tam-75733"
-        const val DONATION_IMAGE = "https://blogtruyen.vn/xin-donate.png"
-    }
+    private fun getGenreList() = listOf(
+        Genre("16+", 54),
+        Genre("18+", 45),
+        Genre("Action", 1),
+        Genre("Adult", 2),
+        Genre("Adventure", 3),
+        Genre("Anime", 4),
+        Genre("Comedy", 5),
+        Genre("Comic", 6),
+        Genre("Doujinshi", 7),
+        Genre("Drama", 49),
+        Genre("Ecchi", 48),
+        Genre("Even BT", 60),
+        Genre("Fantasy", 50),
+        Genre("Game", 61),
+        Genre("Gender Bender", 51),
+        Genre("Harem", 12),
+        Genre("Historical", 13),
+        Genre("Horror", 14),
+        Genre("Isekai/Dị Giới", 63),
+        Genre("Josei", 15),
+        Genre("Live Action", 16),
+        Genre("Magic", 46),
+        Genre("Manga", 55),
+        Genre("Manhua", 17),
+        Genre("Manhwa", 18),
+        Genre("Martial Arts", 19),
+        Genre("Mature", 20),
+        Genre("Mecha", 21),
+        Genre("Mystery", 22),
+        Genre("Nấu ăn", 56),
+        Genre("NTR", 62),
+        Genre("One shot", 23),
+        Genre("Psychological", 24),
+        Genre("Romance", 25),
+        Genre("School Life", 26),
+        Genre("Sci-fi", 27),
+        Genre("Seinen", 28),
+        Genre("Shoujo", 29),
+        Genre("Shoujo Ai", 30),
+        Genre("Shounen", 31),
+        Genre("Shounen Ai", 32),
+        Genre("Slice of Life", 33),
+        Genre("Smut", 34),
+        Genre("Soft Yaoi", 35),
+        Genre("Soft Yuri", 36),
+        Genre("Sports", 37),
+        Genre("Supernatural", 38),
+        Genre("Tạp chí truyện tranh", 39),
+        Genre("Tragedy", 40),
+        Genre("Trap", 58),
+        Genre("Trinh thám", 57),
+        Genre("Truyện scan", 41),
+        Genre("Video clip", 53),
+        Genre("VnComic", 42),
+        Genre("Webtoon", 52),
+        Genre("Yuri", 59),
+    )
 }

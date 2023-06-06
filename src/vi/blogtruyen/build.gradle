@@ -5,7 +5,7 @@ ext {
     extName = 'BlogTruyen'
     pkgNameSuffix = 'vi.blogtruyen'
     extClass = '.BlogTruyen'
-    extVersionCode = 15
+    extVersionCode = 16
     isNsfw = true
 }
 

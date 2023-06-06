@@ -16,7 +16,13 @@ class BlogTruyenUrlActivity : Activity() {
                 startActivity(
                     Intent().apply {
                         action = "eu.kanade.tachiyomi.SEARCH"
-                        putExtra("query", "${BlogTruyen.PREFIX_ID_SEARCH}${pathSegments[0]}/${pathSegments[1]}")
+                        with(pathSegments[0]) {
+                            when {
+                                equals("tac-gia") -> putExtra("query", "${BlogTruyen.PREFIX_AUTHOR_SEARCH}${pathSegments[1]}")
+                                equals("nhom-dich") -> putExtra("query", "${BlogTruyen.PREFIX_TEAM_SEARCH}${pathSegments[1]}")
+                                else -> putExtra("query", "${BlogTruyen.PREFIX_ID_SEARCH}${pathSegments[0]}/${pathSegments[1]}")
+                            }
+                        }
                         putExtra("filter", packageName)
                     },
                 )
