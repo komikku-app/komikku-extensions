@@ -1,7 +1,13 @@
 package eu.kanade.tachiyomi.extension.ru.desu
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.ListPreference
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -20,13 +26,19 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
-class Desu : HttpSource() {
+class Desu : ConfigurableSource, HttpSource() {
     override val name = "Desu"
+
+    override val id: Long = 6684416167758830305
 
     override val baseUrl = "https://desu.me"
 
@@ -36,10 +48,19 @@ class Desu : HttpSource() {
 
     private val json: Json by injectLazy()
 
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
     override fun headersBuilder() = Headers.Builder().apply {
         add("User-Agent", "Tachiyomi")
         add("Referer", baseUrl)
     }
+
+    override val client: OkHttpClient =
+        network.cloudflareClient.newBuilder()
+            .rateLimitHost(baseUrl.toHttpUrl(), 3)
+            .build()
 
     private fun mangaPageFromJSON(jsonStr: String, next: Boolean): MangasPage {
         val mangaList = json.parseToJsonElement(jsonStr).jsonArray
@@ -56,9 +77,15 @@ class Desu : HttpSource() {
         val id = obj["id"]!!.jsonPrimitive.int
 
         url = "/$id"
-        title = obj["name"]!!.jsonPrimitive.content
-            .split(" / ")
-            .first()
+        title = if (isEng.equals("rus")) {
+            obj["russian"]!!.jsonPrimitive.content
+                .split(" / ")
+                .first()
+        } else {
+            obj["name"]!!.jsonPrimitive.content
+                .split(" / ")
+                .first()
+        }
         thumbnail_url = obj["image"]!!.jsonObject["original"]!!.jsonPrimitive.content
 
         val ratingValue = obj["score"]!!.jsonPrimitive.floatOrNull ?: 0F
@@ -95,11 +122,19 @@ class Desu : HttpSource() {
         if (obj["synonyms"]?.jsonPrimitive?.content.orEmpty().isNotEmpty() && obj["synonyms"]!!.jsonPrimitive.contentOrNull != null) {
             altName = "Альтернативные названия:\n" +
                 obj["synonyms"]!!.jsonPrimitive.content
-                    .replace("|", " / ") +
+                    .replace("/", " / ") +
                 "\n\n"
         }
 
-        description = obj["russian"]!!.jsonPrimitive.content + "\n" +
+        description = if (isEng.equals("rus")) {
+            obj["name"]!!.jsonPrimitive.content
+                .split(" / ")
+                .first()
+        } else {
+            obj["russian"]!!.jsonPrimitive.content
+                .split(" / ")
+                .first()
+        } + "\n" +
             ratingStar + " " + ratingValue +
             " (голосов: " +
             obj["score_users"]!!.jsonPrimitive.int +
@@ -343,8 +378,27 @@ class Desu : HttpSource() {
         Genre("Яой", "Yaoi"),
     )
 
+    private var isEng: String? = preferences.getString(LANGUAGE_PREF, "eng")
+    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
+        val titleLanguagePref = ListPreference(screen.context).apply {
+            key = LANGUAGE_PREF
+            title = "Выбор языка на обложке"
+            entries = arrayOf("Английский", "Русский")
+            entryValues = arrayOf("eng", "rus")
+            summary = "%s"
+            setDefaultValue("eng")
+            setOnPreferenceChangeListener { _, newValue ->
+                val warning = "Если язык обложки не изменился очистите базу данных в приложении (Настройки -> Дополнительно -> Очистить базу данных)"
+                Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
+                true
+            }
+        }
+        screen.addPreference(titleLanguagePref)
+    }
     companion object {
         const val PREFIX_SLUG_SEARCH = "slug:"
+
+        private const val LANGUAGE_PREF = "DesuTitleLanguage"
 
         private const val API_URL = "/manga/api"
     }
