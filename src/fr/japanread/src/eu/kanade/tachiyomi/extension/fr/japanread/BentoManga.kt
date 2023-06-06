@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.fr.japanread
 import android.net.Uri
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -23,6 +24,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 class BentoManga : ParsedHttpSource() {
 
@@ -38,7 +40,11 @@ class BentoManga : ParsedHttpSource() {
 
     private val json: Json by injectLazy()
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .rateLimit(2,1)
+        .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", "$baseUrl/")
