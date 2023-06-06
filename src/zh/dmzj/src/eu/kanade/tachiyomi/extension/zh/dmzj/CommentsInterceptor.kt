@@ -26,9 +26,7 @@ object CommentsInterceptor : Interceptor {
         val response = chain.proceed(request)
         if (request.tag(Tag::class) == null) return response
 
-        val comments = ApiV3.parseChapterComments(response)
-            .take(MAX_HEIGHT / (UNIT * 2))
-            .ifEmpty { listOf("没有吐槽") }
+        val comments = ApiV3.parseChapterComments(response, MAX_HEIGHT / (UNIT * 2))
 
         val paint = TextPaint().apply {
             color = Color.BLACK

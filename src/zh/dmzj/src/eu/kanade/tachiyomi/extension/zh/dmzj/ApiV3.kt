@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.Response
+import org.jsoup.parser.Parser
 
 object ApiV3 {
 
@@ -55,10 +56,14 @@ object ApiV3 {
 
     fun chapterCommentsUrl(path: String) = "$v3apiUrl/viewPoint/0/$path.json"
 
-    fun parseChapterComments(response: Response): List<String> {
+    fun parseChapterComments(response: Response, count: Int): List<String> {
         val result: List<ChapterCommentDto> = response.parseAs()
-        (result as MutableList<ChapterCommentDto>).sort()
-        return result.map { it.toString() }
+        if (result.isEmpty()) return listOf("没有吐槽")
+        val aggregated = result.groupBy({ it.content }, { it.num }).map { (content, likes) ->
+            ChapterCommentDto(Parser.unescapeEntities(content, false), likes.sum())
+        } as ArrayList
+        aggregated.sort()
+        return aggregated.take(count).map { it.toString() }
     }
 
     @Serializable
@@ -108,8 +113,8 @@ object ApiV3 {
 
     @Serializable
     class ChapterCommentDto(
-        private val content: String,
-        private val num: Int,
+        val content: String,
+        val num: Int,
     ) : Comparable<ChapterCommentDto> {
         override fun toString() = if (num > 0) "$content [+$num]" else content
         override fun compareTo(other: ChapterCommentDto) = other.num.compareTo(num) // descending
