@@ -1,21 +1,24 @@
 package eu.kanade.tachiyomi.extension.en.allanime
 
-fun buildQuery(queryAction: () -> String): String {
+import eu.kanade.tachiyomi.extension.en.allanime.AllAnime.Companion.whitespace
+
+private fun buildQuery(queryAction: () -> String): String {
     return queryAction()
         .trimIndent()
+        .replace(whitespace, " ")
         .replace("%", "$")
 }
 
 val POPULAR_QUERY: String = buildQuery {
     """
-        query(
-                %type: VaildPopularTypeEnumType!
-                %size: Int!
-                %page: Int
-                %dateRange: Int
-                %allowAdult: Boolean
-                %allowUnknown: Boolean
-            ) {
+        query (
+            %type: VaildPopularTypeEnumType!
+            %size: Int!
+            %page: Int
+            %dateRange: Int
+            %allowAdult: Boolean
+            %allowUnknown: Boolean
+        ) {
             queryPopular(
                 type: %type
                 size: %size
@@ -40,13 +43,13 @@ val POPULAR_QUERY: String = buildQuery {
 
 val SEARCH_QUERY: String = buildQuery {
     """
-        query(
-                %search: SearchInput
-                %limit: Int
-                %page: Int
-                %translationType: VaildTranslationTypeMangaEnumType
-                %countryOrigin: VaildCountryOriginEnumType
-            ) {
+        query (
+            %search: SearchInput
+            %limit: Int
+            %page: Int
+            %translationType: VaildTranslationTypeMangaEnumType
+            %countryOrigin: VaildCountryOriginEnumType
+        ) {
             mangas(
                 search: %search
                 limit: %limit
@@ -68,10 +71,8 @@ val SEARCH_QUERY: String = buildQuery {
 
 val DETAILS_QUERY: String = buildQuery {
     """
-        query (%_id: String!) {
-            manga(
-                _id: %_id
-            ) {
+        query (%id: String!) {
+            manga(_id: %id) {
                 _id
                 name
                 thumbnail
@@ -90,11 +91,25 @@ val DETAILS_QUERY: String = buildQuery {
 
 val CHAPTERS_QUERY: String = buildQuery {
     """
-        query (%_id: String!) {
-            manga(
-                _id: %_id
-            ) {
+        query (%id: String!) {
+            manga(_id: %id) {
                 availableChaptersDetail
+            }
+        }
+    """
+}
+
+val CHAPTERS_DETAILS_QUERY: String = buildQuery {
+    """
+        query (%id: String!, %chapterNumStart: Float!, %chapterNumEnd: Float!) {
+            episodeInfos(
+                showId: %id
+                episodeNumStart: %chapterNumStart
+                episodeNumEnd: %chapterNumEnd
+            ) {
+                episodeIdNum
+                notes
+                uploadDates
             }
         }
     """
@@ -102,15 +117,15 @@ val CHAPTERS_QUERY: String = buildQuery {
 
 val PAGE_QUERY: String = buildQuery {
     """
-        query(
-                %mangaId: String!,
-                %translationType: VaildTranslationTypeMangaEnumType!,
-                %chapterString: String!
-            ) {
+        query (
+            %id: String!
+            %translationType: VaildTranslationTypeMangaEnumType!
+            %chapterNum: String!
+        ) {
             chapterPages(
-                mangaId: %mangaId
+                mangaId: %id
                 translationType: %translationType
-                chapterString: %chapterString
+                chapterString: %chapterNum
             ) {
                 edges {
                     pictureUrls

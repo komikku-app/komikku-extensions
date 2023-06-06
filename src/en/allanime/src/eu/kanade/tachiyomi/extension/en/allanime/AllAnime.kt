@@ -10,8 +10,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
-import eu.kanade.tachiyomi.source.model.Filter.TriState.Companion.STATE_EXCLUDE
-import eu.kanade.tachiyomi.source.model.Filter.TriState.Companion.STATE_INCLUDE
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -20,24 +18,18 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.jsoup.Jsoup
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
 import java.util.Locale
 
 class AllAnime : ConfigurableSource, HttpSource() {
@@ -48,18 +40,41 @@ class AllAnime : ConfigurableSource, HttpSource() {
 
     override val supportsLatest = true
 
-    private val json: Json by injectLazy()
+    private val json: Json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = false
+        encodeDefaults = true
+        coerceInputValues = true
+    }
 
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-    private val domain = preferences.getString(DOMAIN_PREF, "allanime.to")
+    private val domain = preferences.domainPref
 
     override val baseUrl = "https://$domain"
 
     private val apiUrl = "https://api.$domain/allanimeapi"
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val frag = request.url.fragment
+            val quality = preferences.imageQuality
+
+            if (frag.isNullOrEmpty() || quality == IMAGE_QUALITY_PREF_DEFAULT) {
+                return@addInterceptor chain.proceed(request)
+            }
+
+            val oldUrl = request.url.toString()
+            val newUrl = oldUrl.replace(imageQualityRegex, "$image_cdn/$1?w=$quality")
+
+            return@addInterceptor chain.proceed(
+                request.newBuilder()
+                    .url(newUrl)
+                    .build(),
+            )
+        }
         .rateLimitHost(apiUrl.toHttpUrl(), 1)
         .build()
 
@@ -68,31 +83,22 @@ class AllAnime : ConfigurableSource, HttpSource() {
 
     /* Popular */
     override fun popularMangaRequest(page: Int): Request {
-        val showAdult = preferences.getBoolean(SHOW_ADULT_PREF, false)
+        val payloadObj = ApiPopularPayload(
+            size = limit,
+            dateRange = 0,
+            page = page,
+            allowAdult = preferences.allowAdult,
+        )
 
-        val payload = buildJsonObject {
-            putJsonObject("variables") {
-                put("type", "manga")
-                put("size", limit)
-                put("dateRange", 0)
-                put("page", page)
-                put("allowAdult", showAdult)
-                put("allowUnknown", false)
-            }
-            put("query", POPULAR_QUERY)
-        }
-
-        return apiRequest(payload)
+        return apiRequest(payloadObj)
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<ApiPopularResponse>(response.body.string())
+        val result = response.parseAs<ApiPopularResponse>()
+        val titleStyle = preferences.titlePref
 
-        val mangaList = result.data.queryPopular.recommendations
-            .mapNotNull { it.anyCard }
-            .map { manga ->
-                toSManga(manga)
-            }
+        val mangaList = result.data.popular.mangas
+            .mapNotNull { it.manga?.toSManga(titleStyle) }
 
         return MangasPage(mangaList, mangaList.size == limit)
     }
@@ -115,58 +121,26 @@ class AllAnime : ConfigurableSource, HttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val showAdult = preferences.getBoolean(SHOW_ADULT_PREF, false)
-        var country = "ALL"
-        val includeGenres = mutableListOf<String>()
-        val excludeGenres = mutableListOf<String>()
+        val payloadObj = ApiSearchPayload(
+            query = query,
+            size = limit,
+            page = page,
+            genres = filters.firstInstanceOrNull<GenreFilter>()?.included,
+            excludeGenres = filters.firstInstanceOrNull<GenreFilter>()?.excluded,
+            translationType = "sub",
+            countryOrigin = filters.firstInstanceOrNull<CountryFilter>()?.getValue() ?: "ALL",
+            allowAdult = preferences.allowAdult,
+        )
 
-        filters.forEach { filter ->
-            when (filter) {
-                is GenreFilter -> {
-                    filter.state.forEach { genreState ->
-                        when (genreState.state) {
-                            STATE_INCLUDE -> includeGenres.add(genreState.name)
-                            STATE_EXCLUDE -> excludeGenres.add(genreState.name)
-                        }
-                    }
-                }
-                is CountryFilter -> {
-                    country = filter.getValue()
-                }
-                else -> {}
-            }
-        }
-
-        val payload = buildJsonObject {
-            putJsonObject("variables") {
-                putJsonObject("search") {
-                    if (includeGenres.isNotEmpty() || excludeGenres.isNotEmpty()) {
-                        put("genres", JsonArray(includeGenres.map { JsonPrimitive(it) }))
-                        put("excludeGenres", JsonArray(excludeGenres.map { JsonPrimitive(it) }))
-                    }
-                    if (query.isNotEmpty()) put("query", query)
-                    put("allowAdult", showAdult)
-                    put("allowUnknown", false)
-                    put("isManga", true)
-                }
-                put("limit", limit)
-                put("page", page)
-                put("translationType", "sub")
-                put("countryOrigin", country)
-            }
-            put("query", SEARCH_QUERY)
-        }
-
-        return apiRequest(payload)
+        return apiRequest(payloadObj)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<ApiSearchResponse>(response.body.string())
+        val result = response.parseAs<ApiSearchResponse>()
+        val titleStyle = preferences.titlePref
 
-        val mangaList = result.data.mangas.edges
-            .map { manga ->
-                toSManga(manga)
-            }
+        val mangaList = result.data.mangas.mangas
+            .map { it.toSManga(titleStyle) }
 
         return MangasPage(mangaList, mangaList.size == limit)
     }
@@ -176,22 +150,15 @@ class AllAnime : ConfigurableSource, HttpSource() {
     /* Details */
     override fun mangaDetailsRequest(manga: SManga): Request {
         val mangaId = manga.url.split("/")[2]
+        val payloadObj = ApiIDPayload(mangaId, DETAILS_QUERY)
 
-        val payload = buildJsonObject {
-            putJsonObject("variables") {
-                put("_id", mangaId)
-            }
-            put("query", DETAILS_QUERY)
-        }
-
-        return apiRequest(payload)
+        return apiRequest(payloadObj)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val result = json.decodeFromString<ApiMangaDetailsResponse>(response.body.string())
-        val manga = result.data.manga
+        val result = response.parseAs<ApiMangaDetailsResponse>()
 
-        return toSManga(manga)
+        return result.data.manga.toSManga(preferences.titlePref)
     }
 
     override fun getMangaUrl(manga: SManga): String {
@@ -209,30 +176,44 @@ class AllAnime : ConfigurableSource, HttpSource() {
 
     override fun chapterListRequest(manga: SManga): Request {
         val mangaId = manga.url.split("/")[2]
+        val payloadObj = ApiIDPayload(mangaId, CHAPTERS_QUERY)
 
-        val payload = buildJsonObject {
-            putJsonObject("variables") {
-                put("_id", mangaId)
-            }
-            put("query", CHAPTERS_QUERY)
-        }
+        return apiRequest(payloadObj)
+    }
 
-        return apiRequest(payload)
+    private fun chapterDetailsRequest(manga: SManga, start: String, end: String): Request {
+        val mangaId = manga.url.split("/")[2]
+        val payloadObj = ApiChapterListDetailsPayload(mangaId, start.toFloat(), end.toFloat())
+
+        return apiRequest(payloadObj)
     }
 
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
-        val result = json.decodeFromString<ApiChapterListResponse>(response.body.string())
+        val result = response.parseAs<ApiChapterListResponse>()
+        val chapters = result.data.manga.chapters.sub
+            ?.sortedBy { it.toFloat() }
+            ?: return emptyList()
 
-        val chapters = result.data.manga.availableChaptersDetail.sub
+        val chapterDetails = client.newCall(
+            chapterDetailsRequest(manga, chapters.first(), chapters.last()),
+        ).execute()
+            .use {
+                it.parseAs<ApiChapterListDetailsResponse>()
+            }.data.chapterList
+            ?.sortedBy { it.chapterNum }
 
         val mangaUrl = manga.url.substringAfter("/manga/")
 
-        return chapters?.map { chapter ->
+        return chapterDetails?.zip(chapters)?.map { (details, chapterNum) ->
             SChapter.create().apply {
-                name = "Chapter $chapter"
-                url = "/read/$mangaUrl/chapter-$chapter-sub"
+                name = "Chapter $chapterNum"
+                if (!details.title.isNullOrEmpty() && !details.title.contains(numberRegex)) {
+                    name += ": ${details.title}"
+                }
+                url = "/read/$mangaUrl/chapter-$chapterNum-sub"
+                date_upload = details.uploadDates?.sub.parseDate()
             }
-        } ?: emptyList()
+        }?.reversed() ?: emptyList()
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
@@ -257,24 +238,21 @@ class AllAnime : ConfigurableSource, HttpSource() {
         val mangaId = chapterUrl[2]
         val chapterNo = chapterUrl[4].split("-")[1]
 
-        val payload = buildJsonObject {
-            putJsonObject("variables") {
-                put("mangaId", mangaId)
-                put("translationType", "sub")
-                put("chapterString", chapterNo)
-            }
-            put("query", PAGE_QUERY)
-        }
+        val payloadObj = ApiPageListPayload(
+            id = mangaId,
+            chapterNum = chapterNo,
+            translationType = "sub",
+        )
 
-        return apiRequest(payload)
+        return apiRequest(payloadObj)
     }
 
     private fun pageListParse(response: Response, chapter: SChapter): List<Page> {
         val result = json.decodeFromString<ApiPageListResponse>(response.body.string())
-        val pages = result.data.chapterPages?.edges?.get(0) ?: return emptyList()
+        val pages = result.data.pageList?.serverList?.get(0) ?: return emptyList()
 
-        val imageDomain = if (!pages.pictureUrlHead.isNullOrEmpty()) {
-            pages.pictureUrlHead.let { server ->
+        val imageDomain = if (!pages.serverUrl.isNullOrEmpty()) {
+            pages.serverUrl.let { server ->
                 if (server.matches(urlRegex)) {
                     server
                 } else {
@@ -301,7 +279,7 @@ class AllAnime : ConfigurableSource, HttpSource() {
         return pages.pictureUrls.mapIndexed { index, image ->
             Page(
                 index = index,
-                imageUrl = "$imageDomain${image.url}",
+                imageUrl = "$imageDomain${image.url}#page",
             )
         }
     }
@@ -315,68 +293,28 @@ class AllAnime : ConfigurableSource, HttpSource() {
     }
 
     /* Helpers */
-    private fun apiRequest(payload: JsonObject): Request {
-        val body = payload.toString().toRequestBody(JSON_MEDIA_TYPE)
+    private inline fun <reified T> apiRequest(payloadObj: T): Request {
+        val payload = json.encodeToString(payloadObj)
+            .toRequestBody(JSON_MEDIA_TYPE)
 
         val newHeaders = headersBuilder()
-            .add("Content-Length", body.contentLength().toString())
-            .add("Content-Type", body.contentType().toString())
+            .add("Content-Length", payload.contentLength().toString())
+            .add("Content-Type", payload.contentType().toString())
             .build()
 
-        return POST(apiUrl, newHeaders, body)
+        return POST(apiUrl, newHeaders, payload)
     }
 
-    private fun toSManga(manga: Manga): SManga {
-        val titleStyle = preferences.getString(TITLE_PREF, "romaji")!!
+    private inline fun <reified T> Response.parseAs(): T = json.decodeFromString(body.string())
 
-        return SManga.create().apply {
-            title = when (titleStyle) {
-                "romaji" -> manga.name
-                "eng" -> manga.englishName ?: manga.name
-                else -> manga.nativeName ?: manga.name
-            }
-            url = "/manga/${manga._id}/${manga.name.titleToSlug()}"
-            thumbnail_url = manga.thumbnail.parseThumbnailUrl()
-            description = Jsoup.parse(
-                manga.description?.replace("<br>", "br2n") ?: "",
-            ).text().replace("br2n", "\n")
-            description += if (manga.altNames != null) {
-                "\n\nAlternative Names: ${manga.altNames.joinToString { it.trim() }}"
-            } else {
-                ""
-            }
-            if (manga.authors?.isNotEmpty() == true) {
-                author = manga.authors.first().trim()
-                artist = author
-            }
-            genre = "${manga.genres?.joinToString { it.trim() }}, ${manga.tags?.joinToString { it.trim() }}"
-            status = manga.status.parseStatus()
-        }
+    private inline fun <reified R> List<*>.firstInstanceOrNull(): R? =
+        filterIsInstance<R>().firstOrNull()
+
+    private fun String?.parseDate(): Long {
+        return runCatching {
+            dateFormat.parse(this!!)!!.time
+        }.getOrDefault(0L)
     }
-
-    private fun String.parseThumbnailUrl(): String {
-        return if (this.matches(urlRegex)) {
-            this
-        } else {
-            "$image_cdn$this?w=250"
-        }
-    }
-
-    private fun String?.parseStatus(): Int {
-        if (this == null) {
-            return SManga.UNKNOWN
-        }
-
-        return when {
-            this.contains("releasing", true) -> SManga.ONGOING
-            this.contains("finished", true) -> SManga.COMPLETED
-            else -> SManga.UNKNOWN
-        }
-    }
-
-    private fun String.titleToSlug() = this.trim()
-        .lowercase(Locale.US)
-        .replace(titleSpecialCharactersRegex, "-")
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
@@ -384,8 +322,17 @@ class AllAnime : ConfigurableSource, HttpSource() {
             title = "Preferred domain"
             entries = arrayOf("allanime.to", "allanime.co")
             entryValues = arrayOf("allanime.to", "allanime.co")
-            setDefaultValue("allanime.to")
+            setDefaultValue(DOMAIN_PREF_DEFAULT)
             summary = "Requires App Restart"
+        }.let { screen.addPreference(it) }
+
+        ListPreference(screen.context).apply {
+            key = IMAGE_QUALITY_PREF
+            title = "Image Quality"
+            entries = arrayOf("Original", "Wp-800", "Wp-480")
+            entryValues = arrayOf("original", "800", "480")
+            setDefaultValue(IMAGE_QUALITY_PREF_DEFAULT)
+            summary = "Warning: Wp quality servers can be slow and might not work sometimes"
         }.let { screen.addPreference(it) }
 
         ListPreference(screen.context).apply {
@@ -393,28 +340,52 @@ class AllAnime : ConfigurableSource, HttpSource() {
             title = "Preferred Title Style"
             entries = arrayOf("Romaji", "English", "Native")
             entryValues = arrayOf("romaji", "eng", "native")
-            setDefaultValue("romaji")
+            setDefaultValue(TITLE_PREF_DEFAULT)
             summary = "%s"
         }.let { screen.addPreference(it) }
 
         SwitchPreferenceCompat(screen.context).apply {
             key = SHOW_ADULT_PREF
             title = "Show Adult Content"
-            setDefaultValue(false)
+            setDefaultValue(SHOW_ADULT_PREF_DEFAULT)
         }.let { screen.addPreference(it) }
     }
 
+    private val SharedPreferences.domainPref
+        get() = getString(DOMAIN_PREF, DOMAIN_PREF_DEFAULT)!!
+
+    private val SharedPreferences.titlePref
+        get() = getString(TITLE_PREF, TITLE_PREF_DEFAULT)
+
+    private val SharedPreferences.allowAdult
+        get() = getBoolean(SHOW_ADULT_PREF, SHOW_ADULT_PREF_DEFAULT)
+
+    private val SharedPreferences.imageQuality
+        get() = getString(IMAGE_QUALITY_PREF, IMAGE_QUALITY_PREF_DEFAULT)!!
+
     companion object {
-        private const val limit = 26
+        private const val limit = 20
+        private val numberRegex by lazy { Regex("\\d") }
+        val whitespace by lazy { Regex("\\s+") }
+        val dateFormat by lazy {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH)
+        }
         const val SEARCH_PREFIX = "id:"
-        private const val image_cdn = "https://wp.youtube-anime.com/aln.youtube-anime.com/"
+        const val thumbnail_cdn = "https://wp.youtube-anime.com/aln.youtube-anime.com/"
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
-        private val urlRegex = Regex("^https?://.*")
-        private val titleSpecialCharactersRegex = Regex("[^a-z\\d]+")
+        val urlRegex = Regex("^https?://.*")
+        private const val image_cdn = "https://wp.youtube-anime.com"
+        private val imageQualityRegex = Regex("^https?://(.*)#.*")
+        val titleSpecialCharactersRegex = Regex("[^a-z\\d]+")
         private val imageUrlFromPageRegex = Regex("selectedPicturesServer:\\[\\{.*?url:\"(.*?)\".*?\\}\\]")
 
         private const val DOMAIN_PREF = "pref_domain"
+        private const val DOMAIN_PREF_DEFAULT = "allanime.to"
         private const val TITLE_PREF = "pref_title"
+        private const val TITLE_PREF_DEFAULT = "romaji"
         private const val SHOW_ADULT_PREF = "pref_adult"
+        private const val SHOW_ADULT_PREF_DEFAULT = false
+        private const val IMAGE_QUALITY_PREF = "pref_quality"
+        private const val IMAGE_QUALITY_PREF_DEFAULT = "original"
     }
 }

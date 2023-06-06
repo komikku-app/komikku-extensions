@@ -1,22 +1,26 @@
 package eu.kanade.tachiyomi.extension.en.allanime
 
+import eu.kanade.tachiyomi.source.model.SManga
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.jsoup.Jsoup
+import java.util.Locale
 
 @Serializable
 data class ApiPopularResponse(
-    val data: PopularResultData,
+    val data: PopularResponseData,
 ) {
     @Serializable
-    data class PopularResultData(
-        val queryPopular: QueryPopularData,
+    data class PopularResponseData(
+        @SerialName("queryPopular") val popular: PopularData,
     ) {
         @Serializable
-        data class QueryPopularData(
-            val recommendations: List<Recommendation>,
+        data class PopularData(
+            @SerialName("recommendations") val mangas: List<Popular>,
         ) {
             @Serializable
-            data class Recommendation(
-                val anyCard: Manga? = null,
+            data class Popular(
+                @SerialName("anyCard") val manga: SearchManga? = null,
             )
         }
     }
@@ -24,16 +28,31 @@ data class ApiPopularResponse(
 
 @Serializable
 data class ApiSearchResponse(
-    val data: SearchResultData,
+    val data: SearchResponseData,
 ) {
     @Serializable
-    data class SearchResultData(
+    data class SearchResponseData(
         val mangas: SearchResultMangas,
     ) {
         @Serializable
         data class SearchResultMangas(
-            val edges: List<Manga>,
+            @SerialName("edges") val mangas: List<SearchManga>,
         )
+    }
+}
+
+@Serializable
+data class SearchManga(
+    @SerialName("_id") val id: String,
+    val name: String,
+    val thumbnail: String? = null,
+    val englishName: String? = null,
+    val nativeName: String? = null,
+) {
+    fun toSManga(titleStyle: String?) = SManga.create().apply {
+        title = titleStyle.preferedName(name, englishName, nativeName)
+        url = "/manga/$id/${name.titleToSlug()}"
+        thumbnail_url = thumbnail?.parseThumbnailUrl()
     }
 }
 
@@ -44,23 +63,42 @@ data class ApiMangaDetailsResponse(
     @Serializable
     data class MangaDetailsData(
         val manga: Manga,
-    )
+    ) {
+        @Serializable
+        data class Manga(
+            @SerialName("_id") val id: String,
+            val name: String,
+            val thumbnail: String? = null,
+            val description: String? = null,
+            val authors: List<String>? = emptyList(),
+            val genres: List<String>? = emptyList(),
+            val tags: List<String>? = emptyList(),
+            val status: String? = null,
+            val altNames: List<String>? = emptyList(),
+            val englishName: String? = null,
+            val nativeName: String? = null,
+        ) {
+            fun toSManga(titleStyle: String?) = SManga.create().apply {
+                title = titleStyle.preferedName(name, englishName, nativeName)
+                url = "/manga/$id/${name.titleToSlug()}"
+                thumbnail_url = thumbnail?.parseThumbnailUrl()
+                description = this@Manga.description?.parseDescription()
+                if (!altNames.isNullOrEmpty()) {
+                    description += altNames.joinToString(
+                        prefix = "\n\nAlternative Names:\n* ",
+                        separator = "\n* ",
+                    ) { it.trim() }
+                }
+                if (authors?.isNotEmpty() == true) {
+                    author = authors.first().trim()
+                    artist = author
+                }
+                genre = "${genres?.joinToString { it.trim() }}, ${tags?.joinToString { it.trim() }}"
+                status = this@Manga.status.parseStatus()
+            }
+        }
+    }
 }
-
-@Serializable
-data class Manga(
-    val _id: String,
-    val name: String,
-    val thumbnail: String,
-    val description: String?,
-    val authors: List<String>?,
-    val genres: List<String>?,
-    val tags: List<String>?,
-    val status: String?,
-    val altNames: List<String>?,
-    val englishName: String? = null,
-    val nativeName: String? = null,
-)
 
 @Serializable
 data class ApiChapterListResponse(
@@ -72,11 +110,33 @@ data class ApiChapterListResponse(
     ) {
         @Serializable
         data class ChapterList(
-            val availableChaptersDetail: AvailableChapters,
+            @SerialName("availableChaptersDetail") val chapters: AvailableChapters,
         ) {
             @Serializable
             data class AvailableChapters(
                 val sub: List<String>? = null,
+            )
+        }
+    }
+}
+
+@Serializable
+data class ApiChapterListDetailsResponse(
+    val data: ChapterListData,
+) {
+    @Serializable
+    data class ChapterListData(
+        @SerialName("episodeInfos") val chapterList: List<ChapterData>? = emptyList(),
+    ) {
+        @Serializable
+        data class ChapterData(
+            @SerialName("episodeIdNum") val chapterNum: Float,
+            @SerialName("notes") val title: String? = null,
+            val uploadDates: DateDto? = null,
+        ) {
+            @Serializable
+            data class DateDto(
+                val sub: String? = null,
             )
         }
     }
@@ -88,15 +148,15 @@ data class ApiPageListResponse(
 ) {
     @Serializable
     data class PageListData(
-        val chapterPages: PageList?,
+        @SerialName("chapterPages") val pageList: PageList?,
     ) {
         @Serializable
         data class PageList(
-            val edges: List<Servers>?,
+            @SerialName("edges") val serverList: List<Servers>?,
         ) {
             @Serializable
             data class Servers(
-                val pictureUrlHead: String? = null,
+                @SerialName("pictureUrlHead") val serverUrl: String? = null,
                 val pictureUrls: List<PageUrl>,
             ) {
                 @Serializable
@@ -106,4 +166,42 @@ data class ApiPageListResponse(
             }
         }
     }
+}
+
+fun String.parseThumbnailUrl(): String {
+    return if (this.matches(AllAnime.urlRegex)) {
+        this
+    } else {
+        "${AllAnime.thumbnail_cdn}$this?w=250"
+    }
+}
+
+fun String?.parseStatus(): Int {
+    if (this == null) {
+        return SManga.UNKNOWN
+    }
+
+    return when {
+        this.contains("releasing", true) -> SManga.ONGOING
+        this.contains("finished", true) -> SManga.COMPLETED
+        else -> SManga.UNKNOWN
+    }
+}
+
+private fun String.titleToSlug() = this.trim()
+    .lowercase(Locale.US)
+    .replace(AllAnime.titleSpecialCharactersRegex, "-")
+
+private fun String?.preferedName(name: String, englishName: String?, nativeName: String?): String {
+    return when (this) {
+        "eng" -> englishName
+        "native" -> nativeName
+        else -> name
+    } ?: name
+}
+
+private fun String.parseDescription(): String {
+    return Jsoup.parse(
+        this.replace("<br>", "br2n"),
+    ).text().replace("br2n", "\n")
 }

@@ -11,7 +11,13 @@ internal class CountryFilter(name: String, private val countries: List<Pair<Stri
 }
 
 internal class GenreFilter(title: String, genres: List<Genre>) :
-    Filter.Group<Genre>(title, genres)
+    Filter.Group<Genre>(title, genres) {
+    val included: List<String>
+        get() = state.filter { it.isIncluded() }.map { it.name }
+
+    val excluded: List<String>
+        get() = state.filter { it.isExcluded() }.map { it.name }
+}
 
 private val genreList: List<Genre> = listOf(
     Genre("4 Koma"),
