@@ -48,7 +48,9 @@ open class OtakuSanctuary(
         headers,
         FormBody.Builder().apply {
             add("Lang", helper.otakusanLang())
-            add("PageSize", "24")
+            add("Page", page.toString())
+            add("Type", "Include")
+            add("Dir", "NewPostedDate")
         }.build(),
     )
 

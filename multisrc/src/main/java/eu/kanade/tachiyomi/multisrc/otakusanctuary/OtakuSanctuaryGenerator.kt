@@ -9,7 +9,7 @@ class OtakuSanctuaryGenerator : ThemeSourceGenerator {
 
     override val themeClass = "OtakuSanctuary"
 
-    override val baseVersionCode: Int = 2
+    override val baseVersionCode: Int = 3
 
     override val sources = listOf(
         MultiLang(
