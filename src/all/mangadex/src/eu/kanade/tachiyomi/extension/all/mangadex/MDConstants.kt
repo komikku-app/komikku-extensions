@@ -125,6 +125,11 @@ object MDConstants {
         return "${tryUsingFirstVolumeCoverPref}_$dexLang"
     }
 
+    private const val altTitlesInDescPref = "altTitlesInDesc"
+    fun getAltTitlesInDescPrefKey(dexLang: String): String {
+        return "${altTitlesInDescPref}_$dexLang"
+    }
+
     private const val tagGroupContent = "content"
     private const val tagGroupFormat = "format"
     private const val tagGroupGenre = "genre"
@@ -133,4 +138,11 @@ object MDConstants {
 
     const val tagAnthologyUuid = "51d83883-4103-437c-b4b1-731cb73d786c"
     const val tagOneShotUuid = "0234a31e-a729-4e28-9d6a-3f87c4966b9e"
+
+    val romanizedLangCodes = mapOf(
+        MangaDexIntl.JAPANESE to "ja-ro",
+        MangaDexIntl.KOREAN to "ko-ro",
+        MangaDexIntl.CHINESE to "zh-ro",
+        "zh-hk" to "zh-ro",
+    )
 }

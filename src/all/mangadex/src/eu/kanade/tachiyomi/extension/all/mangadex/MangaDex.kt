@@ -402,6 +402,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             fetchFirstVolumeCover(manga),
             dexLang,
             preferences.coverQuality,
+            preferences.altTitlesInDesc,
         )
     }
 
@@ -727,10 +728,26 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             }
         }
 
+        val altTitlesInDescPref = SwitchPreferenceCompat(screen.context).apply {
+            key = MDConstants.getAltTitlesInDescPrefKey(dexLang)
+            title = helper.intl.altTitlesInDesc
+            summary = helper.intl.altTitlesInDescSummary
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+
+                preferences.edit()
+                    .putBoolean(MDConstants.getAltTitlesInDescPrefKey(dexLang), checkValue)
+                    .commit()
+            }
+        }
+
         screen.addPreference(coverQualityPref)
         screen.addPreference(tryUsingFirstVolumeCoverPref)
         screen.addPreference(dataSaverPref)
         screen.addPreference(standardHttpsPortPref)
+        screen.addPreference(altTitlesInDescPref)
         screen.addPreference(contentRatingPref)
         screen.addPreference(originalLanguagePref)
         screen.addPreference(blockedGroupsPref)
@@ -802,6 +819,9 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
     private val SharedPreferences.useDataSaver
         get() = getBoolean(MDConstants.getDataSaverPreferenceKey(dexLang), false)
+
+    private val SharedPreferences.altTitlesInDesc
+        get() = getBoolean(MDConstants.getAltTitlesInDescPrefKey(dexLang), false)
 
     /**
      * Previous versions of the extension allowed invalid UUID values to be stored in the

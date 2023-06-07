@@ -294,6 +294,7 @@ class MangaDexHelper(lang: String) {
         firstVolumeCover: String?,
         lang: String,
         coverSuffix: String?,
+        altTitlesInDesc: Boolean,
     ): SManga {
         val attr = mangaDataDto.attributes!!
 
@@ -334,10 +335,20 @@ class MangaDexHelper(lang: String) {
 
         val genreList = MDConstants.tagGroupsOrder.flatMap { genresMap[it].orEmpty() } + nonGenres
 
-        val desc = attr.description
+        var desc = attr.description[lang] ?: attr.description["en"] ?: ""
+
+        if (altTitlesInDesc) {
+            val romanizedOriginalLang = MDConstants.romanizedLangCodes[attr.originalLanguage] ?: ""
+            val altTitles = attr.altTitles.filter { it.containsKey(lang) || it.containsKey(romanizedOriginalLang) }
+                .mapNotNull { it.values.singleOrNull() }
+            if (altTitles.isNotEmpty()) {
+                val altTitlesDesc = intl.altTitleText + altTitles.joinToString("\n", "\n")
+                desc += (if (desc.isNullOrBlank()) "" else "\n\n") + altTitlesDesc
+            }
+        }
 
         return createBasicManga(mangaDataDto, coverFileName, coverSuffix, lang).apply {
-            description = (desc[lang] ?: desc["en"] ?: "").removeEntitiesAndMarkdown()
+            description = desc.removeEntitiesAndMarkdown()
             author = authors.joinToString(", ")
             artist = artists.joinToString(", ")
             status = getPublicationStatus(attr, chapters)
