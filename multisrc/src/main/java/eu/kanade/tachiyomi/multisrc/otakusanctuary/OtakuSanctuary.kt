@@ -91,7 +91,8 @@ open class OtakuSanctuary(
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
         val collection = document.select("div.mdl-card")
-        return MangasPage(parseMangaCollection(collection), collection.size >= 24)
+        val hasNextPage = !document.select("button.btn-loadmore").text().contains("Hết")
+        return MangasPage(parseMangaCollection(collection), hasNextPage)
     }
 
     override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException("Not used")
