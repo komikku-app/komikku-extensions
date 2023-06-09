@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -24,6 +25,19 @@ open class NineManga(
 ) : ParsedHttpSource() {
 
     override val supportsLatest: Boolean = true
+
+    override val client: OkHttpClient = network.client.newBuilder()
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val url = request.url.toString()
+            if (url.contains("""img\d.\.niadd.com""".toRegex())) {
+                val newRequest = request.newBuilder()
+                    .addHeader("Referer", "$baseUrl/")
+                    .build()
+                return@addInterceptor chain.proceed(newRequest)
+            }
+            chain.proceed(request)
+        }.build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Accept-Language", "es-ES,es;q=0.9,en;q=0.8,gl;q=0.7")
