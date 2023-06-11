@@ -335,7 +335,7 @@ class MangaDexHelper(lang: String) {
 
         val genreList = MDConstants.tagGroupsOrder.flatMap { genresMap[it].orEmpty() } + nonGenres
 
-        var desc = attr.description[lang] ?: attr.description["en"] ?: ""
+        var desc = (attr.description[lang] ?: attr.description["en"] ?: "").removeEntitiesAndMarkdown()
 
         if (altTitlesInDesc) {
             val romanizedOriginalLang = MDConstants.romanizedLangCodes[attr.originalLanguage] ?: ""
@@ -343,12 +343,12 @@ class MangaDexHelper(lang: String) {
                 .mapNotNull { it.values.singleOrNull() }
             if (altTitles.isNotEmpty()) {
                 val altTitlesDesc = intl.altTitleText + altTitles.joinToString("\n", "\n")
-                desc += (if (desc.isNullOrBlank()) "" else "\n\n") + altTitlesDesc
+                desc += (if (desc.isNullOrBlank()) "" else "\n\n") + altTitlesDesc.removeEntitiesAndMarkdown()
             }
         }
 
         return createBasicManga(mangaDataDto, coverFileName, coverSuffix, lang).apply {
-            description = desc.removeEntitiesAndMarkdown()
+            description = desc
             author = authors.joinToString(", ")
             artist = artists.joinToString(", ")
             status = getPublicationStatus(attr, chapters)
