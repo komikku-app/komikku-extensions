@@ -293,9 +293,7 @@ abstract class ComickFun(
     protected open val defaultPopularSort: Int = 0
     protected open val defaultLatestSort: Int = 4
 
-    override fun getFilterList() = FilterList(
-        getFilters(),
-    )
+    override fun getFilterList() = getFilters()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {

@@ -8,7 +8,7 @@ class Genre(
     val id: String,
 ) : Filter.TriState(name)
 
-internal class GenreFilter(name: String, private val genres: List<Genre>) :
+internal class GenreFilter(name: String, genres: List<Genre>) :
     Filter.Group<Genre>(name, genres)
 
 private val genreList = listOf(
@@ -86,7 +86,7 @@ private val statusFilter: Array<String> = arrayOf(
     "Completed",
 )
 
-val filters = FilterList(
+fun getFilters() = FilterList(
     TypeFilter("Type", typeFilter),
     AuthorFilter("Author"),
     ArtistFilter("Artist"),

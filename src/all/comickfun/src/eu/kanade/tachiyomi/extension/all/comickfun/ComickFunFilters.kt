@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.extension.all.comickfun
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 
-internal fun getFilters(): FilterList {
+fun getFilters(): FilterList {
     return FilterList(
         Filter.Header(name = "NOTE: Everything below is ignored if using text search"),
         CompletedFilter("Completed translation"),

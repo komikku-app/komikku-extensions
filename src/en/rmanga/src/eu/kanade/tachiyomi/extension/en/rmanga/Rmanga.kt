@@ -119,7 +119,7 @@ class Rmanga : ConfigurableSource, ParsedHttpSource() {
         return POST("$baseUrl/detailed-search", headers, payload)
     }
 
-    override fun getFilterList() = filters
+    override fun getFilterList() = getFilters()
 
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
 

@@ -97,7 +97,7 @@ private val countryList: List<Pair<String, String>> = listOf(
     Pair("Korea", "KR"),
 )
 
-val filters = FilterList(
+fun getFilters() = FilterList(
     CountryFilter("Countries", countryList),
     GenreFilter("Genres", genreList),
 )

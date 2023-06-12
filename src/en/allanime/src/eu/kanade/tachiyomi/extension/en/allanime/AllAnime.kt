@@ -145,7 +145,7 @@ class AllAnime : ConfigurableSource, HttpSource() {
         return MangasPage(mangaList, mangaList.size == limit)
     }
 
-    override fun getFilterList() = filters
+    override fun getFilterList() = getFilters()
 
     /* Details */
     override fun mangaDetailsRequest(manga: SManga): Request {
@@ -271,17 +271,17 @@ class AllAnime : ConfigurableSource, HttpSource() {
                     ?.groupValues
                     ?.getOrNull(1)
                     ?.replace("\\u002F", "/")
-                    ?.substringBeforeLast(pages.pictureUrls.first().toString(), "")
+                    ?.substringBeforeLast(pages.pictureUrls?.first().toString(), "")
             }
             url?.takeIf { it.isNotEmpty() } ?: return emptyList()
         }
 
-        return pages.pictureUrls.mapIndexed { index, image ->
+        return pages.pictureUrls?.mapIndexed { index, image ->
             Page(
                 index = index,
                 imageUrl = "$imageDomain${image.url}#page",
             )
-        }
+        } ?: emptyList()
     }
 
     override fun pageListParse(response: Response): List<Page> {

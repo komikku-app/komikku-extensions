@@ -157,7 +157,7 @@ data class ApiPageListResponse(
             @Serializable
             data class Servers(
                 @SerialName("pictureUrlHead") val serverUrl: String? = null,
-                val pictureUrls: List<PageUrl>,
+                val pictureUrls: List<PageUrl>?,
             ) {
                 @Serializable
                 data class PageUrl(
