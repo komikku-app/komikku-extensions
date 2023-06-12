@@ -30,7 +30,6 @@
 - ARES Manga https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15396
 - Astra Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13845
 - Coven Scan https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14499
-- Dragontea https://github.com/tachiyomiorg/tachiyomi-extensions/issues/10103
 - Gourmet Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6192
 - Hikari Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6611
 - Hunter Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/12392
