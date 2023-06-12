@@ -91,13 +91,30 @@ class NixMangas : HttpSource() {
         return result.manga.toSManga()
     }
 
-    override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
+    override fun chapterListRequest(manga: SManga): Request {
+        val slug = manga.url.substringAfter("/obras/")
+
+        return chapterListPaginatedRequest(slug)
+    }
+
+    private fun chapterListPaginatedRequest(slug: String, page: Int = 1): Request {
+        return GET("$API_URL/mangas/$slug/chapters?page=$page", apiHeaders)
+    }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = response.parseAs<NixMangasDetailsDto>()
+        var result = response.parseAs<NixMangasPaginatedContent<NixMangasChapterDto>>()
         val currentTimeStamp = System.currentTimeMillis()
+        val chapters = result.data.toMutableList()
+        val slug = response.request.url.pathSegments[2]
 
-        return result.manga.chapters
+        while (result.currentPage < result.lastPage) {
+            val nextRequest = chapterListPaginatedRequest(slug, result.currentPage + 1)
+            result = client.newCall(nextRequest).execute().parseAs()
+
+            chapters += result.data
+        }
+
+        return chapters
             .filter { it.isPublished }
             .map(NixMangasChapterDto::toSChapter)
             .filter { it.date_upload <= currentTimeStamp }
@@ -107,11 +124,9 @@ class NixMangas : HttpSource() {
     override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url
 
     override fun pageListRequest(chapter: SChapter): Request {
-        val apiUrl = (baseUrl + chapter.url).toHttpUrl().newBuilder()
-            .addQueryParameter("_data", "routes/__leitor/ler.\$manga.\$chapter")
-            .toString()
+        val id = chapter.url.substringAfter("/ler/")
 
-        return GET(apiUrl, apiHeaders)
+        return GET("$API_URL/chapters/$id")
     }
 
     override fun pageListParse(response: Response): List<Page> {

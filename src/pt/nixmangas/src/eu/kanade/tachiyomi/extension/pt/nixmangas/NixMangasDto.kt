@@ -60,6 +60,7 @@ data class NixMangasGenreDto(val name: String)
 
 @Serializable
 data class NixMangasChapterDto(
+    val id: String,
     @SerialName("is_published") val isPublished: Boolean,
     val number: Float,
     val pages: List<NixMangasPageDto> = emptyList(),
@@ -72,7 +73,7 @@ data class NixMangasChapterDto(
         chapter_number = number
         date_upload = runCatching { DATE_FORMATTER.parse(publishedAt!!)?.time }
             .getOrNull() ?: 0L
-        url = "/ler/$slug"
+        url = "/ler/$id"
     }
 
     companion object {
