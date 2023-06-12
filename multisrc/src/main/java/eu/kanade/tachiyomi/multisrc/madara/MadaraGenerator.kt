@@ -365,6 +365,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Sawamics", "https://sawamics.com", "en"),
         SingleLang("ScamberTraslator", "https://scambertraslator.com", "es", overrideVersionCode = 3),
         SingleLang("Scans Raw", "https://scansraw.com", "en", overrideVersionCode = 1),
+        SingleLang("Scantrad-VF", "https://scantrad-vf.co", "fr", className = "ScantradVF"),
         SingleLang("Sdl scans", "https://sdlscans.com", "es", className = "SdlScans"),
         SingleLang("Sensaina Yuri", "https://sensainayuri.dropescan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("ShavelProiection", "https://www.shavelproiection.com", "it", true),
