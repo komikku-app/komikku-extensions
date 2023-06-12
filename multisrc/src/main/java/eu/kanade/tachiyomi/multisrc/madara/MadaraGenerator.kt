@@ -136,6 +136,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("HerenScan", "https://herenscan.com", "es"),
         SingleLang("HipercooL", "https://hipercool.xyz", "pt-BR", isNsfw = true, className = "Hipercool"),
         SingleLang("Hiperdex", "https://1sthiperdex.com", "en", isNsfw = true, overrideVersionCode = 9),
+        SingleLang("HistoireDHentai", "https://hhentai.fr", "fr", isNsfw = true),
         SingleLang("Hizomanga", "https://hizomanga.com", "ar", overrideVersionCode = 1),
         SingleLang("HM2D", "https://mangadistrict.com/hdoujin", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("hManhwa", "https://hmanhwa.com", "en", isNsfw = true, overrideVersionCode = 1),
