@@ -8,8 +8,6 @@ import eu.kanade.tachiyomi.multisrc.libgroup.LibGroup
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
-import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -22,20 +20,6 @@ class YaoiLib : LibGroup("YaoiLib", "https://v1.slashlib.me", "ru") {
 
     private var domain: String = preferences.getString(DOMAIN_TITLE, DOMAIN_DEFAULT)!!
     override val baseUrl: String = domain
-
-    override val client: OkHttpClient = super.client.newBuilder()
-        .addInterceptor(::imageContentTypeIntercept)
-        .build()
-
-    private var csrfToken: String = ""
-
-    private fun catalogHeaders() = Headers.Builder()
-        .apply {
-            add("Accept", "application/json, text/plain, */*")
-            add("X-Requested-With", "XMLHttpRequest")
-            add("x-csrf-token", csrfToken)
-        }
-        .build()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (csrfToken.isEmpty()) {

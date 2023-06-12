@@ -45,7 +45,6 @@ import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 
@@ -63,7 +62,7 @@ abstract class LibGroup(
 
     override val supportsLatest = true
 
-    protected fun imageContentTypeIntercept(chain: Interceptor.Chain): Response {
+    private fun imageContentTypeIntercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         val response = chain.proceed(originalRequest)
         val urlRequest = originalRequest.url.toString()
@@ -77,9 +76,8 @@ abstract class LibGroup(
         }
     }
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .connectTimeout(20, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .rateLimit(2)
+        .rateLimit(3)
+        .addNetworkInterceptor { imageContentTypeIntercept(it) }
         .addInterceptor { chain ->
             val response = chain.proceed(chain.request())
             if (response.code == 419) {
@@ -101,9 +99,9 @@ abstract class LibGroup(
 
     private val userAgentRandomizer = "${Random.nextInt().absoluteValue}"
 
-    private var csrfToken: String = ""
+    protected var csrfToken: String = ""
 
-    private fun catalogHeaders() = Headers.Builder()
+    protected fun catalogHeaders() = Headers.Builder()
         .apply {
             add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 Edg/100.0.$userAgentRandomizer")
             add("Accept", "application/json, text/plain, */*")
@@ -395,7 +393,7 @@ abstract class LibGroup(
 
         val teamId = if (teamIdParam != null) "&bid=$teamIdParam" else ""
 
-        val url = "$baseUrl/$slug/v$volume/c$number?ui=$userId$teamId"
+        val url = "/$slug/v$volume/c$number?ui=$userId$teamId"
 
         chapter.setUrlWithoutDomain(url)
 
