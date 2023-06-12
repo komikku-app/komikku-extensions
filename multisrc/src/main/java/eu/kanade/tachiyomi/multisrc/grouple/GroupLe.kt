@@ -205,7 +205,7 @@ abstract class GroupLe(
     }
 
     override fun chapterListSelector() =
-        "div.chapters-link > table > tbody > tr:has(td > a):has(td.date:not(.text-info))"
+        "div.chapters table tr:has(td > a):has(td.date:not(.text-info))"
 
     private fun chapterFromElement(element: Element, manga: SManga): SChapter {
         val urlElement = element.select("a.chapter-link").first()!!
