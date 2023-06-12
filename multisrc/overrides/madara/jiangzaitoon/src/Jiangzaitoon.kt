@@ -4,4 +4,4 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class Jiangzaitoon : Madara("Jiangzaitoon", "https://jiangzaitoon.biz", "tr", SimpleDateFormat("d MMM yyy", Locale("tr")))
+class Jiangzaitoon : Madara("Jiangzaitoon", "https://jiangzaitoon.co", "tr", SimpleDateFormat("d MMM yyy", Locale("tr")))
