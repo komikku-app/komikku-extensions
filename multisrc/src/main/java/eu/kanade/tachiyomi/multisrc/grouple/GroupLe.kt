@@ -48,7 +48,7 @@ abstract class GroupLe(
         .addNetworkInterceptor { chain ->
             val originalRequest = chain.request()
             val response = chain.proceed(originalRequest)
-            if (originalRequest.url.toString().contains(baseUrl) and (
+            if (originalRequest.url.toString().contains(baseUrl) && (
                 originalRequest.url.toString()
                     .contains("internal/redirect") or (response.code == 301)
                 )
@@ -195,17 +195,20 @@ abstract class GroupLe(
                     chapterListParse(response, manga)
                 }
         } else {
-            Observable.error(java.lang.Exception("Licensed - No chapters to show"))
+            Observable.error(java.lang.Exception("Лицензировано - Нет глав"))
         }
     }
 
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
         val document = response.asJsoup()
+        if ((document.select(".expandable.hide-dn").isNotEmpty() || document.select("img.logo").first()?.attr("title")?.contains("Allhentai") == true) && document.select(".user-avatar").isNullOrEmpty()) {
+            throw Exception("Для просмотра контента необходима авторизация через WebView\uD83C\uDF0E")
+        }
         return document.select(chapterListSelector()).map { chapterFromElement(it, manga) }
     }
 
     override fun chapterListSelector() =
-        "div.chapters table tr:has(td > a):has(td.date:not(.text-info))"
+        "tr.item-row:has(td > a):has(td.date:not(.text-info))"
 
     private fun chapterFromElement(element: Element, manga: SManga): SChapter {
         val urlElement = element.select("a.chapter-link").first()!!
@@ -213,7 +216,7 @@ abstract class GroupLe(
         val urlText = urlElement.text()
 
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(urlElement.attr("href") + "?mtr=true") // mtr is 18+ skip
+        chapter.setUrlWithoutDomain(urlElement.attr("href") + "?mtr=true") // mtr is 18+ fractional skip
 
         val translatorElement = urlElement.attr("title")
 
@@ -289,19 +292,12 @@ abstract class GroupLe(
         }
 
         if (!html.contains(readerMark)) {
-            val isSourceSelector = ".account-menu"
-
-            val isAuthSelector = ".user-avatar"
-
-            val isAdultContent = document.select(isSourceSelector).let {
-                it.isNotEmpty() && it.select(isAuthSelector).isNullOrEmpty()
+            if (document.select(".input-lg").isNotEmpty() || (document.select(".user-avatar").isNullOrEmpty() && document.select("img.logo").first()?.attr("title")?.contains("Allhentai") == true)) {
+                throw Exception("Для просмотра контента необходима авторизация через WebView\uD83C\uDF0E")
             }
-
-            if (isAdultContent) {
-                throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
+            if (!response.request.url.toString().contains(baseUrl)) {
+                throw Exception("Не удалось загрузить главу. Url: ${response.request.url}")
             }
-
-            throw Exception("Не удалось загрузить главу. Url: ${response.request.url}")
         }
 
         val beginIndex = html.indexOf(readerMark)
