@@ -29,7 +29,6 @@ class FoolSlideGenerator : ThemeSourceGenerator {
         SingleLang("Rama", "https://www.ramareader.it", "it"),
         SingleLang("Silent Sky", "https://reader.silentsky-scans.net", "en"),
         SingleLang("Wanted Team", "https://reader.onepiecenakama.pl", "pl"),
-        SingleLang("Zandy no Fansub", "https://zandynofansub.aishiteru.org", "en"),
         SingleLang("Русификация", "https://rusmanga.ru", "ru", className = "Russification"),
     )
 
