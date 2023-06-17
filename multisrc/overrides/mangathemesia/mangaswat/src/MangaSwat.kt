@@ -53,6 +53,8 @@ class MangaSwat : MangaThemesia(
         return imageUrls.mapIndexed { index, imageUrl -> Page(index, imageUrl = imageUrl) }
     }
 
+    override fun chapterListSelector() = "div.bxcl li, ul div:has(span.lchx)"
+
     @Serializable
     data class TSReader(
         val sources: List<ReaderImageSource>,
