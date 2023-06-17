@@ -84,22 +84,30 @@ abstract class LibGroup(
                 throw IOException("HTTP error ${response.code}. Проверьте сайт. Для завершения авторизации необходимо перезапустить приложение с полной остановкой.")
             }
             if (response.code == 404) {
-                throw IOException("HTTP error ${response.code}. Проверьте сайт. Попробуйте авторизоваться через WebView и обновите список глав.")
+                throw IOException("HTTP error ${response.code}. Проверьте сайт. Попробуйте авторизоваться через WebView\uD83C\uDF0E︎ и обновите список глав.")
             }
             return@addInterceptor response
         }
         .build()
 
-    override fun headersBuilder() = Headers.Builder().apply {
-        // User-Agent required for authorization through third-party accounts (mobile version for correct display in WebView)
-        add("User-Agent", "Mozilla/5.0 (Linux; Android 10; SM-G980F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Mobile Safari/537.36")
-        add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
-        add("Referer", baseUrl)
-    }
+    private val userAgentMobile = "Mozilla/5.0 (Linux; Android 10; SM-G980F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Mobile Safari/537.36"
 
     private val userAgentRandomizer = "${Random.nextInt().absoluteValue}"
 
     protected var csrfToken: String = ""
+
+    override fun headersBuilder() = Headers.Builder().apply {
+        // User-Agent required for authorization through third-party accounts (mobile version for correct display in WebView)
+        add("User-Agent", userAgentMobile)
+        add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+        add("Referer", baseUrl)
+    }
+
+    private fun imgHeader() = Headers.Builder().apply {
+        add("User-Agent", userAgentMobile)
+        add("Accept", "image/avif,image/webp,*/*")
+        add("Referer", baseUrl)
+    }.build()
 
     protected fun catalogHeaders() = Headers.Builder()
         .apply {
@@ -283,7 +291,7 @@ abstract class LibGroup(
         return client.newCall(mangaDetailsRequest(manga))
             .asObservable().doOnNext { response ->
                 if (!response.isSuccessful) {
-                    if (response.code == 404 && response.asJsoup().select(".m-menu__sign-in").isNotEmpty()) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView") else throw Exception("HTTP error ${response.code}")
+                    if (response.code == 404 && response.asJsoup().select(".m-menu__sign-in").isNotEmpty()) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView\uD83C\uDF0E︎") else throw Exception("HTTP error ${response.code}")
                 }
             }
             .map { response ->
@@ -296,7 +304,7 @@ abstract class LibGroup(
         val document = response.asJsoup()
         val rawAgeStop = document.select(".media-short-info .media-short-info__item[data-caution]").text()
         if (rawAgeStop == "18+" && document.select(".m-menu__sign-in").isNotEmpty()) {
-            throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
+            throw Exception("Для просмотра 18+ контента необходима авторизация через WebView\uD83C\uDF0E︎")
         }
         val redirect = document.html()
         if (redirect.contains("paper empty section")) {
@@ -332,7 +340,7 @@ abstract class LibGroup(
         return client.newCall(mangaDetailsRequest(manga))
             .asObservable().doOnNext { response ->
                 if (!response.isSuccessful) {
-                    if (response.code == 404 && response.asJsoup().select(".m-menu__sign-in").isNotEmpty()) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView") else throw Exception("HTTP error ${response.code}")
+                    if (response.code == 404 && response.asJsoup().select(".m-menu__sign-in").isNotEmpty()) throw Exception("HTTP error ${response.code}. Для просмотра 18+ контента необходима авторизация через WebView\uD83C\uDF0E︎") else throw Exception("HTTP error ${response.code}")
                 }
             }
             .map { response ->
@@ -437,7 +445,7 @@ abstract class LibGroup(
         val redirect = document.html()
         if (!redirect.contains("window.__info")) {
             if (redirect.contains("auth-layout")) {
-                throw Exception("Для просмотра 18+ контента необходима авторизация через WebView")
+                throw Exception("Для просмотра 18+ контента необходима авторизация через WebView\uD83C\uDF0E︎")
             }
         }
 
@@ -487,7 +495,7 @@ abstract class LibGroup(
     }
 
     private fun checkImage(url: String): Boolean {
-        val response = client.newCall(Request.Builder().url(url).headers(headers).build()).execute()
+        val response = client.newCall(Request.Builder().url(url).headers(imgHeader()).build()).execute()
         return response.isSuccessful && (response.header("content-length", "0")?.toInt()!! > 600)
     }
 
@@ -505,6 +513,10 @@ abstract class LibGroup(
     }
 
     override fun imageUrlParse(response: Response): String = ""
+
+    override fun imageRequest(page: Page): Request {
+        return GET(page.imageUrl!!, imgHeader())
+    }
 
     // Workaround to allow "Open in browser" use the
     private fun searchMangaByIdRequest(id: String): Request {
