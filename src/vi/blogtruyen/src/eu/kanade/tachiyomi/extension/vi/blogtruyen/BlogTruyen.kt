@@ -32,7 +32,7 @@ class BlogTruyen : ParsedHttpSource() {
 
     override val name = "BlogTruyen"
 
-    override val baseUrl = "https://blogtruyen.vn"
+    override val baseUrl = "https://blogtruyenmoi.com"
 
     override val lang = "vi"
 

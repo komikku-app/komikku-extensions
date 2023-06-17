@@ -11,8 +11,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:host="blogtruyen.vn" />
-                <data android:host="m.blogtruyen.vn" />
+                <data android:host="blogtruyenmoi.com" />
+                <data android:host="m.blogtruyenmoi.com" />
                 <data android:scheme="https" />
 
                 <data android:pathPattern="/tac-gia/..*" />
