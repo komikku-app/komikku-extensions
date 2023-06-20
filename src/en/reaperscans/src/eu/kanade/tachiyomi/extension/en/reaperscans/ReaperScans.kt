@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.reaperscans
 
+import android.util.Base64
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -63,11 +64,11 @@ class ReaperScans : ParsedHttpSource() {
 
     override fun popularMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
-            element.select("a.text-white").let {
+            element.select("div > a[href*=/comics/]:nth-child(2)").let {
                 title = it.text()
                 setUrlWithoutDomain(it.attr("href"))
             }
-            thumbnail_url = element.select("img").attr("abs:src")
+            thumbnail_url = element.select("img").first()?.imgAttr()
         }
     }
 
@@ -76,15 +77,15 @@ class ReaperScans : ParsedHttpSource() {
 
     override fun latestUpdatesNextPageSelector(): String = "button[wire:click*=nextPage]"
 
-    override fun latestUpdatesSelector(): String = ".grid > div"
+    override fun latestUpdatesSelector(): String = "div > p > a[href*=/comics/]"
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         return SManga.create().apply {
-            element.select("p > a").let {
+            element.let {
                 title = it.text().trim()
                 setUrlWithoutDomain(it.attr("href"))
             }
-            thumbnail_url = element.select("img").attr("abs:src")
+            thumbnail_url = element.parent()?.parent()?.parent()?.parent()?.select("img")?.first()?.imgAttr()
         }
     }
 
@@ -106,7 +107,7 @@ class ReaperScans : ParsedHttpSource() {
             ?: error("Couldn't find routeName")
 
         //  Javascript: (Math.random() + 1).toString(36).substring(8)
-        val generateId = { -> "1.${Random.nextLong().toString(36)}".substring(10) } // Not exactly the same, but results in a 3-5 character string
+        val generateId = { "1.${Random.nextLong().toString(36)}".substring(10) } // Not exactly the same, but results in a 3-5 character string
         val payload = buildJsonObject {
             put("fingerprint", livewareData.fingerprint)
             put("serverMemo", livewareData.serverMemo)
@@ -144,7 +145,7 @@ class ReaperScans : ParsedHttpSource() {
         return SManga.create().apply {
             setUrlWithoutDomain(element.attr("href"))
             element.select("img").first()?.let {
-                thumbnail_url = it.attr("abs:src")
+                thumbnail_url = it.imgAttr()
             }
             title = element.select("p").first()!!.text()
         }
@@ -166,7 +167,7 @@ class ReaperScans : ParsedHttpSource() {
     // Details
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            thumbnail_url = document.select("div > img").first()!!.attr("abs:src")
+            thumbnail_url = document.select("div > img").first()!!.imgAttr()
             title = document.select("h1").first()!!.text()
 
             status = when (document.select("dt:contains(Release Status)").next().first()!!.text()) {
@@ -178,7 +179,7 @@ class ReaperScans : ParsedHttpSource() {
             }
 
             genre = mutableListOf<String>().apply {
-                when (document.select("dt:contains(Source Language)").next().text()) {
+                when (document.select("dt:contains(Source Language)").next().first()!!.text()) {
                     "Korean" -> "Manhwa"
                     "Chinese" -> "Manhua"
                     "Japanese" -> "Manga"
@@ -276,10 +277,64 @@ class ReaperScans : ParsedHttpSource() {
 
     // Page
     override fun pageListParse(document: Document): List<Page> {
-        document.select("noscript").remove()
-        return document.select("img.max-w-full").mapIndexed { index, element ->
-            Page(index, imageUrl = element.imgAttr())
+        val csrfToken = document.selectFirst("meta[name=csrf-token]")?.attr("content")
+
+        val livewareData = document.selectFirst("div[wire:initial-data*=display-chapter]")
+            ?.attr("wire:initial-data")
+            ?.parseJson<LiveWireDataDto>()
+
+        if (csrfToken == null) error("Couldn't find csrf-token")
+        if (livewareData == null) error("Couldn't find LiveWireData")
+
+        val routeName = livewareData.fingerprint["name"]?.jsonPrimitive?.contentOrNull
+            ?: error("Couldn't find routeName")
+
+        //  Javascript: (Math.random() + 1).toString(36).substring(8)
+        val generateId = { "1.${Random.nextLong().toString(36)}".substring(10) } // Not exactly the same, but results in a 3-5 character string
+        val payload = buildJsonObject {
+            put("fingerprint", livewareData.fingerprint)
+            put("serverMemo", livewareData.serverMemo)
+            putJsonArray("updates") {
+                addJsonObject {
+                    put("type", "callMethod")
+                    putJsonObject("payload") {
+                        put("id", generateId())
+                        put("method", "${"$"}set")
+                        putJsonArray("params") {
+                            add("turnstile")
+                            add(randomString())
+                        }
+                    }
+                }
+            }
+        }.toString().toRequestBody(JSON_MEDIA_TYPE)
+
+        val headers = Headers.Builder()
+            .add("x-csrf-token", csrfToken)
+            .add("x-livewire", "true")
+            .build()
+
+        val liveWireRequest = POST("$baseUrl/livewire/message/$routeName", headers, payload)
+
+        val liveWireResponse = client.newCall(liveWireRequest).execute()
+
+        val html = liveWireResponse.parseJson<LiveWireResponseDto>().effects.html
+        return Jsoup.parse(html, baseUrl).select("img").mapIndexed { idx, element ->
+            Page(idx, imageUrl = element.imgAttr())
         }
+    }
+
+    private fun randomString(): String {
+        val bytes_288 = Random.nextBytes(ByteArray(288))
+        val base64_288 = Base64.encodeToString(bytes_288, Base64.DEFAULT)
+
+        val bytes_16 = Random.nextBytes(ByteArray(16))
+        val base64_16 = Base64.encodeToString(bytes_16, Base64.DEFAULT)
+
+        val bytes_32 = Random.nextBytes(ByteArray(32))
+        val hex32 = bytes_32.joinToString("") { "%02x".format(it) }
+
+        return "0.$base64_288.$base64_16.$hex32"
     }
 
     // Helpers
@@ -326,7 +381,7 @@ class ReaperScans : ParsedHttpSource() {
         }
     }
 
-    fun Element.imgAttr(): String = when {
+    private fun Element.imgAttr(): String = when {
         hasAttr("data-lazy-src") -> attr("abs:data-lazy-src")
         hasAttr("data-src") -> attr("abs:data-src")
         hasAttr("data-cfsrc") -> attr("abs:data-cfsrc")
