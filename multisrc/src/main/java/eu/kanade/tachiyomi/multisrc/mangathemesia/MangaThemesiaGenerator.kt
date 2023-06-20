@@ -50,7 +50,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("KomikSan", "https://komiksan.ml", "id", overrideVersionCode = 1),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 6),
         SingleLang("Komik AV", "https://komikav.com", "id", overrideVersionCode = 1),
-        SingleLang("Komik Cast", "https://komikcast.site", "id", overrideVersionCode = 18),
+        SingleLang("Komik Cast", "https://komikcast.io", "id", overrideVersionCode = 19),
         SingleLang("KomikDewasa", "https://komikdewasa.org", "id", isNsfw = true),
         SingleLang("Komik Station", "https://komikstation.co", "id", overrideVersionCode = 3),
         SingleLang("KomikIndo.co", "https://komikindo.co", "id", className = "KomikindoCo", overrideVersionCode = 3),
