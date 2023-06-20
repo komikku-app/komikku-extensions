@@ -83,12 +83,11 @@ class Happymh : HttpSource(), ConfigurableSource {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val body = FormBody.Builder().addEncoded("searchkey", query).build()
-        val header = headersBuilder().add("referer", "$baseUrl/ssearch").build()
-        return POST("$baseUrl/apis/m/ssearch?pn=$page", header, body)
+        val header = headersBuilder().add("referer", "$baseUrl/sssearch").build()
+        return POST("$baseUrl/apis/m/ssearch", header, body)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        // I do not find a way to go to next page, so I always set hasNextPage to false
         return MangasPage(popularMangaParse(response).mangas, false)
     }
 
