@@ -6,7 +6,7 @@ ext {
     extName = 'Bento Manga'
     pkgNameSuffix = 'fr.japanread'
     extClass = '.BentoManga'
-    extVersionCode = 13
+    extVersionCode = 14
     isNsfw = true
 }
 

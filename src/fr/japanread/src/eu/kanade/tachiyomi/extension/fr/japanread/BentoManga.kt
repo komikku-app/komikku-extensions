@@ -1,9 +1,14 @@
 package eu.kanade.tachiyomi.extension.fr.japanread
 
+import android.app.Application
 import android.net.Uri
+import android.widget.Toast
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -22,11 +27,13 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
-class BentoManga : ParsedHttpSource() {
+class BentoManga : ParsedHttpSource(), ConfigurableSource {
 
     override val name = "Bento Manga"
 
@@ -43,11 +50,31 @@ class BentoManga : ParsedHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .rateLimit(2,1)
+        .rateLimit(2, 1)
         .build()
 
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("Referer", "$baseUrl/")
+    override fun headersBuilder(): Headers.Builder {
+        val builder = super.headersBuilder().apply {
+            set("Referer", "$baseUrl/")
+
+            // Headers for homepage + serie page
+            set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+            set("Accept-Language", "fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3")
+            set("Connection", "keep-alive")
+            set("Sec-Fetch-Dest", "document")
+            set("Sec-Fetch-Mode", "navigate")
+            set("Sec-Fetch-Site", "same-origin")
+            set("Sec-Fetch-User", "?1")
+        }
+
+        val preferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+        val userAgent = preferences.getString(USER_AGENT_PREF, "")!!
+        return if (userAgent.isNotBlank()) {
+            builder.set("User-Agent", userAgent)
+        } else {
+            builder
+        }
+    }
 
     // Generic (used by popular/latest/search)
     private fun mangaListFromElement(element: Element): SManga {
@@ -135,10 +162,10 @@ class BentoManga : ParsedHttpSource() {
 
     private fun apiHeaders(refererURL: String) = headers.newBuilder().apply {
         set("Referer", refererURL)
-        add("x-requested-with", "XMLHttpRequest")
+        set("x-requested-with", "XMLHttpRequest")
         // without this we get 404 but I don't know why, I cannot find any information about this 'a' header.
         // In chrome the value is constantly changing on each request, but giving this fixed value seems to work
-        add("a", "1df19bce590b")
+        set("a", "1df19bce590b")
     }.build()
 
     // Chapters
@@ -191,8 +218,11 @@ class BentoManga : ParsedHttpSource() {
         var moreChapters = true
         var nextPage = 1
         val pagemax = if (!document.select(".paginator button:contains(>>)").isNullOrEmpty()) {
-            document.select(".paginator button:contains(>>)")?.first()?.attr("data-limit")?.toInt()?.plus(1) ?: 1
-        } else { 1 }
+            document.select(".paginator button:contains(>>)")?.first()?.attr("data-limit")?.toInt()?.plus(1)
+                ?: 1
+        } else {
+            1
+        }
         // chapters are paginated
         while (moreChapters && nextPage <= pagemax) {
             document.select(chapterListSelector()).map { chapters.add(chapterFromElement(it)) }
@@ -274,9 +304,16 @@ class BentoManga : ParsedHttpSource() {
     override fun imageUrlParse(document: Document) = ""
 
     override fun imageRequest(page: Page): Request {
-        val newHeaders = headers.newBuilder()
-            .set("Referer", page.url)
-            .build()
+        val newHeaders = headers.newBuilder().apply {
+            set("Referer", page.url)
+            set("Accept", "image/avif,image/webp,*/*")
+            set("Accept-Language", "fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3")
+            set("Connection", "keep-alive")
+            set("Sec-Fetch-Dest", "document")
+            set("Sec-Fetch-Mode", "navigate")
+            set("Sec-Fetch-Site", "same-origin")
+            set("Sec-Fetch-User", "?1")
+        }.build()
 
         return GET(page.imageUrl!!, newHeaders)
     }
@@ -401,5 +438,42 @@ class BentoManga : ParsedHttpSource() {
      */
     private interface UriFilter {
         fun addToUri(uri: Uri.Builder)
+    }
+
+    // From Happymh for the custom User-Agent menu
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        // Maybe add the choice of a random UA ? (Like Mangathemesia)
+
+        EditTextPreference(screen.context).apply {
+            key = USER_AGENT_PREF
+            title = TITLE_RANDOM_UA
+            summary = USER_AGENT_PREF
+            dialogMessage =
+                "\n\nPermet d'indiquer un User-Agent custom\n" +
+                "Après l'ajout + restart de l'application, il faudra charger la page en webview et valider le captcha Cloudflare." +
+                "\n\nValeur par défaut:\n$DEFAULT_UA"
+
+            setDefaultValue(DEFAULT_UA)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    Headers.Builder().add("User-Agent", newValue as String)
+                    Toast.makeText(screen.context, RESTART_APP_STRING, Toast.LENGTH_LONG).show()
+                    summary = newValue
+                    true
+                } catch (e: Throwable) {
+                    Toast.makeText(screen.context, "$ERROR_USER_AGENT_SETUP ${e.message}", Toast.LENGTH_LONG).show()
+                    false
+                }
+            }
+        }.let(screen::addPreference)
+    }
+
+    companion object {
+        private const val USER_AGENT_PREF = "Empty"
+        private const val RESTART_APP_STRING = "Restart Tachiyomi to apply new setting."
+        private const val ERROR_USER_AGENT_SETUP = "Invalid User-Agent :"
+        private const val TITLE_RANDOM_UA = "Set custom User-Agent"
+        private const val DEFAULT_UA = "Mozilla/5.0 (Linux; Android 9) AppleWebKit/537.36 (KHTML, like Gecko) Brave/107.0.0.0 Mobile Safari/537.36"
     }
 }
