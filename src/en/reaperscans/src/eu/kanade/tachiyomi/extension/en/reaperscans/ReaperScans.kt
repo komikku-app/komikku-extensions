@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.en.reaperscans
 
 import android.util.Base64
+import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -18,7 +19,6 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
@@ -290,7 +290,8 @@ class ReaperScans : ParsedHttpSource() {
         val routeName = livewareData.fingerprint["name"]?.jsonPrimitive?.contentOrNull
             ?: error("Couldn't find routeName")
 
-        val tunstileName = livewareData.serverMemo["data"]?.jsonObject?.keys?.firstOrNull { it != "chapter" }
+        val tunstileName = document.selectFirst("script:containsData(captchacallback)")?.html()
+            ?.let { tunstile.find(it)?.groupValues?.get(1) }
             ?: error("Couldn't fine Tunstile Name")
 
         //  Javascript: (Math.random() + 1).toString(36).substring(8)
@@ -322,7 +323,12 @@ class ReaperScans : ParsedHttpSource() {
 
         val liveWireResponse = client.newCall(liveWireRequest).execute()
 
-        val html = liveWireResponse.parseJson<LiveWireResponseDto>().effects.html
+        val html = runCatching { liveWireResponse.parseJson<LiveWireResponseDto>().effects.html }
+            .getOrElse {
+                Log.e(name, it.stackTraceToString())
+                error("Fuck you Reaper Scans")
+            }
+
         return Jsoup.parse(html, baseUrl).select("img").mapIndexed { idx, element ->
             Page(idx, imageUrl = element.imgAttr())
         }
@@ -400,5 +406,6 @@ class ReaperScans : ParsedHttpSource() {
     companion object {
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
         const val PREFIX_ID_SEARCH = "id:"
+        private val tunstile by lazy { Regex("""set\s*\(\s*\"([^"]*)""") }
     }
 }
