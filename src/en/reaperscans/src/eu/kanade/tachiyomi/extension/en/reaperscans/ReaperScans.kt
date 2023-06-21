@@ -18,6 +18,7 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
@@ -289,6 +290,9 @@ class ReaperScans : ParsedHttpSource() {
         val routeName = livewareData.fingerprint["name"]?.jsonPrimitive?.contentOrNull
             ?: error("Couldn't find routeName")
 
+        val tunstileName = livewareData.serverMemo["data"]?.jsonObject?.keys?.firstOrNull { it != "chapter" }
+            ?: error("Couldn't fine Tunstile Name")
+
         //  Javascript: (Math.random() + 1).toString(36).substring(8)
         val generateId = { "1.${Random.nextLong().toString(36)}".substring(10) } // Not exactly the same, but results in a 3-5 character string
         val payload = buildJsonObject {
@@ -301,7 +305,7 @@ class ReaperScans : ParsedHttpSource() {
                         put("id", generateId())
                         put("method", "${"$"}set")
                         putJsonArray("params") {
-                            add("turnstile")
+                            add(tunstileName)
                             add(randomString())
                         }
                     }
