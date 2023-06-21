@@ -19,6 +19,7 @@
 - ManhuaScan https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
 - ManhwaHot https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
 - Neox Scanlator https://github.com/tachiyomiorg/tachiyomi-extensions/pull/12695
+- Reaper Scans (EN) https://github.com/tachiyomiorg/tachiyomi-extensions/pull/16819
 - SuperMangás and SuperHentais https://github.com/tachiyomiorg/tachiyomi-extensions/pull/6348
 - TopToon+ https://github.com/tachiyomiorg/tachiyomi-extensions/pull/10851
 - Tsuki Mangás https://github.com/tachiyomiorg/tachiyomi-extensions/pull/8609
