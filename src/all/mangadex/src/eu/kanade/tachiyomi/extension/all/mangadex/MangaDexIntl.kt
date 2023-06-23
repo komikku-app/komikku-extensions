@@ -268,14 +268,14 @@ class MangaDexIntl(lang: String) {
     }
 
     val altTitlesInDesc: String = when (availableLang) {
-        // TODO add other languages
+        BRAZILIAN_PORTUGUESE, PORTUGUESE -> "Títulos alternativos na descrição"
         else -> "Alternative titles in description"
     }
 
     val altTitlesInDescSummary: String = when (availableLang) {
-        // TODO add other languages
-        else ->
-            "Include a manga's alternative titles at the end of its description"
+        BRAZILIAN_PORTUGUESE, PORTUGUESE ->
+            "Inclui os títulos alternativos das séries no final de cada descrição"
+        else -> "Include a manga's alternative titles at the end of its description"
     }
 
     val tryUsingFirstVolumeCover: String = when (availableLang) {
@@ -1020,8 +1020,8 @@ class MangaDexIntl(lang: String) {
     }
 
     val altTitleText: String = when (availableLang) {
-        // TODO fill in other languages
-        else -> "Alternative Titles:"
+        BRAZILIAN_PORTUGUESE, PORTUGUESE -> "Títulos alternativos:"
+        else -> "Alternative titles:"
     }
 
     companion object {

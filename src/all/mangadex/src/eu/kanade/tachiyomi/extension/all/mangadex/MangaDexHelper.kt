@@ -335,14 +335,18 @@ class MangaDexHelper(lang: String) {
 
         val genreList = MDConstants.tagGroupsOrder.flatMap { genresMap[it].orEmpty() } + nonGenres
 
-        var desc = (attr.description[lang] ?: attr.description["en"] ?: "").removeEntitiesAndMarkdown()
+        var desc = (attr.description[lang] ?: attr.description["en"])?.removeEntitiesAndMarkdown() ?: ""
 
         if (altTitlesInDesc) {
             val romanizedOriginalLang = MDConstants.romanizedLangCodes[attr.originalLanguage] ?: ""
-            val altTitles = attr.altTitles.filter { it.containsKey(lang) || it.containsKey(romanizedOriginalLang) }
+            val altTitles = attr.altTitles
+                .filter { it.containsKey(lang) || it.containsKey(romanizedOriginalLang) }
                 .mapNotNull { it.values.singleOrNull() }
+                .filter(String::isNotEmpty)
+
             if (altTitles.isNotEmpty()) {
-                val altTitlesDesc = intl.altTitleText + altTitles.joinToString("\n", "\n")
+                val altTitlesDesc = altTitles
+                    .joinToString("\n", "${intl.altTitleText}\n") { "• $it" }
                 desc += (if (desc.isNullOrBlank()) "" else "\n\n") + altTitlesDesc.removeEntitiesAndMarkdown()
             }
         }
