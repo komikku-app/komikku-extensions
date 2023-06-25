@@ -12,7 +12,7 @@ import uy.kohesive.injekt.api.get
 import java.io.IOException
 import kotlin.random.Random
 
-private const val DEFAULT_LIST = "https://www.htmanga3.top,https://www.htmanga4.top,https://www.htmanga5.top"
+private const val DEFAULT_LIST = "https://www.htmanga9.top,https://www.htmanga7.top,https://www.htmanga6.top,https://www.htmanga3.top,https://www.htmanga4.top,https://www.htmanga5.top"
 
 fun getPreferencesInternal(
     context: Context,
@@ -72,6 +72,7 @@ class UpdateUrlInterceptor(private val preferences: SharedPreferences) : Interce
         val failedResponse = try {
             val response = chain.proceed(request)
             if (response.isSuccessful) return response
+            response.close()
             Result.success(response)
         } catch (e: Throwable) {
             if (chain.call().isCanceled()) throw e
@@ -79,7 +80,6 @@ class UpdateUrlInterceptor(private val preferences: SharedPreferences) : Interce
         }
 
         if (isUpdated || updateUrl(chain)) {
-            failedResponse.onSuccess(Response::close)
             throw IOException("网址已自动更新，请重启应用")
         }
         return failedResponse.getOrThrow()

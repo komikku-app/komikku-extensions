@@ -93,7 +93,7 @@ private val SITE_ENTRIES_ARRAY get() = arrayOf(
     "jmcomic1.me",
 )
 
-private const val DEFAULT_LIST = "jm-comic2.cc,jm-comic.org,jmcomic2.group"
+private const val DEFAULT_LIST = "jm-comic2.org,jm-comic3.org,jm-comic1.org"
 private const val DEFAULT_LIST_PREF = "defaultBaseUrlList"
 private const val URL_LIST_PREF = "baseUrlList"
 
@@ -129,6 +129,7 @@ class UpdateUrlInterceptor(private val preferences: SharedPreferences) : Interce
         val failedResponse = try {
             val response = chain.proceed(request)
             if (response.isSuccessful) return response
+            response.close()
             Result.success(response)
         } catch (e: Throwable) {
             if (chain.call().isCanceled()) throw e
@@ -136,7 +137,6 @@ class UpdateUrlInterceptor(private val preferences: SharedPreferences) : Interce
         }
 
         if (isUpdated || updateUrl(chain)) {
-            failedResponse.onSuccess(Response::close)
             throw IOException("镜像网址已自动更新，请在插件设置中选择合适的镜像网址并重启应用")
         }
         return failedResponse.getOrThrow()
