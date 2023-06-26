@@ -61,6 +61,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Kuma Scans (Kuma Translation)", "https://kumascans.com", "en", className = "KumaScans", overrideVersionCode = 1),
         SingleLang("Legacy Scans", "https://legacy-scans.com", "fr", pkgName = "flamescansfr"),
         SingleLang("LianScans", "https://www.lianscans.my.id", "id", isNsfw = true),
+        SingleLang("Lunar Scans", "https://lunarscan.org", "en", isNsfw = true),
         SingleLang("Magus Manga", "https://magusmanga.com", "ar"),
         SingleLang("Manga Indo.me", "https://mangaindo.me", "id", className = "MangaIndoMe"),
         SingleLang("Manga Raw.org", "https://mangaraw.org", "ja", className = "MangaRawOrg", overrideVersionCode = 1),
