@@ -63,21 +63,26 @@ class AsuraScansEn : MangaThemesia(
 
     // Temp Url for manga/chapter
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val newManga = manga.permUrlToTemp()
+        val newManga = manga.titleToUrlFrag()
 
         return super.fetchChapterList(newManga)
     }
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        val newManga = manga.permUrlToTemp()
+        val newManga = manga.titleToUrlFrag()
 
         return super.fetchMangaDetails(newManga)
     }
 
     override fun getMangaUrl(manga: SManga): String {
-        val newManga = manga.permUrlToTemp()
+        val dbSlug = manga.url
+            .substringBefore("#")
+            .removeSuffix("/")
+            .substringAfterLast("/")
 
-        return baseUrl + newManga.url
+        val storedSlug = getSlugMap()[dbSlug] ?: dbSlug
+
+        return "$baseUrl$mangaUrlDirectory/$storedSlug/"
     }
 
     // Skip scriptPages
@@ -124,16 +129,10 @@ class AsuraScansEn : MangaThemesia(
         return this
     }
 
-    private fun SManga.permUrlToTemp(): SManga {
+    private fun SManga.titleToUrlFrag(): SManga {
         return try {
-            val dbSlug = this.url
-                .removeSuffix("/")
-                .substringAfterLast("/")
-
-            val storedSlug = getSlugMap()[dbSlug] ?: dbSlug
-
             this.apply {
-                url = "$mangaUrlDirectory/$storedSlug/#${title.toSearchQuery()}"
+                url = "$url#${title.toSearchQuery()}"
             }
         } catch (e: UninitializedPropertyAccessException) {
             // when called from deep link, title is not present
@@ -143,25 +142,30 @@ class AsuraScansEn : MangaThemesia(
 
     private fun urlChangeInterceptor(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        val response = chain.proceed(request)
 
         val frag = request.url.fragment
 
         if (frag.isNullOrEmpty()) {
-            return response
+            return chain.proceed(request)
         }
+
+        val dbSlug = request.url.toString()
+            .substringBefore("#")
+            .removeSuffix("/")
+            .substringAfterLast("/")
+
+        val slugMap = getSlugMap().toMutableMap()
+
+        val storedSlug = slugMap[dbSlug] ?: dbSlug
+
+        val response = chain.proceed(
+            request.newBuilder()
+                .url("$baseUrl$mangaUrlDirectory/$storedSlug/")
+                .build(),
+        )
 
         if (!response.isSuccessful && response.code == 404) {
             response.close()
-
-            val dbSlug = request.url.toString()
-                .substringBefore("#")
-                .removeSuffix("/")
-                .substringAfterLast("/")
-
-            val slugMap = getSlugMap().toMutableMap()
-
-            val storedSlug = slugMap[dbSlug] ?: dbSlug
 
             val newSlug = getNewSlug(storedSlug, frag)
                 ?: throw IOException("Migrate from Asura to Asura")
