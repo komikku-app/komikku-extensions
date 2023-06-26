@@ -20,8 +20,8 @@ import java.util.concurrent.TimeUnit
 class MangaRawClub : ParsedHttpSource() {
 
     override val id = 734865402529567092
-    override val name = "MReader"
-    override val baseUrl = "https://www.mreader.co"
+    override val name = "MangaGeko"
+    override val baseUrl = "https://www.mangageko.com"
     override val lang = "en"
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
