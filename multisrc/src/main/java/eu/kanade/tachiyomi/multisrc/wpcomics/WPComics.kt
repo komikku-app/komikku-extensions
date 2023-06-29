@@ -153,7 +153,7 @@ abstract class WPComics(
 
     private val currentYear by lazy { Calendar.getInstance(Locale.US)[1].toString().takeLast(2) }
 
-    private fun String?.toDate(): Long {
+    protected fun String?.toDate(): Long {
         this ?: return 0
 
         val secondWords = listOf("second", "giây")
