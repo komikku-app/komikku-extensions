@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.multisrc.mdb.MDB
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString

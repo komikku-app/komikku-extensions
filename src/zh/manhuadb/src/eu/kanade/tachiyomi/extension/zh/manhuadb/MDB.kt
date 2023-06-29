@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.multisrc.mdb
+package eu.kanade.tachiyomi.extension.zh.manhuadb
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
