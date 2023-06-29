@@ -3,8 +3,8 @@ package eu.kanade.tachiyomi.extension.en.readcomiconline
 import android.app.Application
 import android.content.SharedPreferences
 import app.cash.quickjs.QuickJs
+import eu.kanade.tachiyomi.lib.synchrony.Deobfuscator
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
@@ -16,8 +16,8 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import okhttp3.CacheControl
-import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -100,19 +100,22 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val form = FormBody.Builder().apply {
-            add("comicName", query)
-            add("page", page.toString())
-
+        val url = "$baseUrl/AdvanceSearch".toHttpUrl().newBuilder().apply {
+            addQueryParameter("comicName", query.trim())
+            addQueryParameter("page", page.toString())
             for (filter in if (filters.isEmpty()) getFilterList() else filters) {
                 when (filter) {
-                    is Status -> add("status", arrayOf("", "Completed", "Ongoing")[filter.state])
-                    is GenreList -> filter.state.forEach { genre -> add("genres", genre.state.toString()) }
+                    is Status -> addQueryParameter("status", arrayOf("", "Completed", "Ongoing")[filter.state])
+                    is GenreList -> {
+                        addQueryParameter("ig", filter.included.joinToString(","))
+                        addQueryParameter("eg", filter.excluded.joinToString(","))
+                    }
                     else -> {}
                 }
             }
-        }
-        return POST("$baseUrl/AdvanceSearch", headers, form.build())
+        }.build()
+
+        return GET(url, headers)
     }
 
     override fun searchMangaSelector() = popularMangaSelector()
@@ -192,8 +195,14 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
     override fun imageUrlParse(document: Document) = ""
 
     private class Status : Filter.TriState("Completed")
-    private class Genre(name: String) : Filter.TriState(name)
-    private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genres", genres)
+    private class Genre(name: String, val gid: String) : Filter.TriState(name)
+    private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genres", genres) {
+        val included: List<String>
+            get() = state.filter { it.isIncluded() }.map { it.gid }
+
+        val excluded: List<String>
+            get() = state.filter { it.isExcluded() }.map { it.gid }
+    }
 
     override fun getFilterList() = FilterList(
         Status(),
@@ -203,54 +212,55 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
     // $("select[name=\"genres\"]").map((i,el) => `Genre("${$(el).next().text().trim()}", ${i})`).get().join(',\n')
     // on https://readcomiconline.li/AdvanceSearch
     private fun getGenreList() = listOf(
-        Genre("Action"),
-        Genre("Adventure"),
-        Genre("Anthology"),
-        Genre("Anthropomorphic"),
-        Genre("Biography"),
-        Genre("Children"),
-        Genre("Comedy"),
-        Genre("Crime"),
-        Genre("Drama"),
-        Genre("Family"),
-        Genre("Fantasy"),
-        Genre("Fighting"),
-        Genre("Graphic Novels"),
-        Genre("Historical"),
-        Genre("Horror"),
-        Genre("Leading Ladies"),
-        Genre("LGBTQ"),
-        Genre("Literature"),
-        Genre("Manga"),
-        Genre("Martial Arts"),
-        Genre("Mature"),
-        Genre("Military"),
-        Genre("Movies & TV"),
-        Genre("Music"),
-        Genre("Mystery"),
-        Genre("Mythology"),
-        Genre("Personal"),
-        Genre("Political"),
-        Genre("Post-Apocalyptic"),
-        Genre("Psychological"),
-        Genre("Pulp"),
-        Genre("Religious"),
-        Genre("Robots"),
-        Genre("Romance"),
-        Genre("School Life"),
-        Genre("Sci-Fi"),
-        Genre("Slice of Life"),
-        Genre("Sport"),
-        Genre("Spy"),
-        Genre("Superhero"),
-        Genre("Supernatural"),
-        Genre("Suspense"),
-        Genre("Thriller"),
-        Genre("Vampires"),
-        Genre("Video Games"),
-        Genre("War"),
-        Genre("Western"),
-        Genre("Zombies"),
+        Genre("Action", "1"),
+        Genre("Adventure", "2"),
+        Genre("Anthology", "38"),
+        Genre("Anthropomorphic", "46"),
+        Genre("Biography", "41"),
+        Genre("Children", "49"),
+        Genre("Comedy", "3"),
+        Genre("Crime", "17"),
+        Genre("Drama", "19"),
+        Genre("Family", "25"),
+        Genre("Fantasy", "20"),
+        Genre("Fighting", "31"),
+        Genre("Graphic Novels", "5"),
+        Genre("Historical", "28"),
+        Genre("Horror", "15"),
+        Genre("Leading Ladies", "35"),
+        Genre("LGBTQ", "51"),
+        Genre("Literature", "44"),
+        Genre("Manga", "40"),
+        Genre("Martial Arts", "4"),
+        Genre("Mature", "8"),
+        Genre("Military", "33"),
+        Genre("Mini-Series", "56"),
+        Genre("Movies & TV", "47"),
+        Genre("Music", "55"),
+        Genre("Mystery", "23"),
+        Genre("Mythology", "21"),
+        Genre("Personal", "48"),
+        Genre("Political", "42"),
+        Genre("Post-Apocalyptic", "43"),
+        Genre("Psychological", "27"),
+        Genre("Pulp", "39"),
+        Genre("Religious", "53"),
+        Genre("Robots", "9"),
+        Genre("Romance", "32"),
+        Genre("School Life", "52"),
+        Genre("Sci-Fi", "16"),
+        Genre("Slice of Life", "50"),
+        Genre("Sport", "54"),
+        Genre("Spy", "30"),
+        Genre("Superhero", "22"),
+        Genre("Supernatural", "24"),
+        Genre("Suspense", "29"),
+        Genre("Thriller", "18"),
+        Genre("Vampires", "34"),
+        Genre("Video Games", "37"),
+        Genre("War", "26"),
+        Genre("Western", "45"),
+        Genre("Zombies", "36"),
     )
     // Preferences Code
 
@@ -287,11 +297,14 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
         val scriptResponse = client.newCall(scriptRequest).execute()
         val scriptBody = scriptResponse.body.string()
 
-        val scriptParts = RGUARD_REGEX.find(scriptBody)?.groupValues?.drop(1)
+        val deobfuscatedBody = Deobfuscator.deobfuscateScript(scriptBody)
+            ?: throw Exception("Unable to de-obfuscate rguard script")
+
+        val beauFunc = RGUARD_REGEX.find(deobfuscatedBody)?.groupValues
             ?: throw Exception("Unable to parse rguard script")
 
         QuickJs.create().use {
-            it.compile(scriptParts.joinToString("") + ATOB_SCRIPT, "?")
+            it.compile(beauFunc.joinToString("") + ATOB_SCRIPT, "?")
         }
     }
 
@@ -314,7 +327,7 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
         private const val QUALITY_PREF = "qualitypref"
 
         private val CHAPTER_IMAGES_REGEX = "lstImages\\.push\\([\"'](.*)[\"']\\)".toRegex()
-        private val RGUARD_REGEX = "(^.+?)var \\w=\\(function\\(\\).+?;(function \\w+.+?\\})if.+?(function beau.+)".toRegex()
+        private val RGUARD_REGEX = Regex("""(function beau[\s\S]*\})""")
 
         /*
          * The MIT License (MIT)

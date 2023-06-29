@@ -1,6 +1,6 @@
 include(":core")
 
-listOf("dataimage", "unpacker", "cryptoaes", "textinterceptor").forEach {
+listOf("dataimage", "unpacker", "cryptoaes", "textinterceptor", "synchrony").forEach {
     include(":lib-$it")
     project(":lib-$it").projectDir = File("lib/$it")
 }
