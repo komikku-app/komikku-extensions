@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.multisrc.mangabz
+package eu.kanade.tachiyomi.extension.zh.mangabz
 
 import android.util.Log
 import eu.kanade.tachiyomi.network.GET
@@ -18,9 +18,9 @@ import org.jsoup.select.Evaluator
 
 abstract class MangabzTheme(
     override val name: String,
-    override val baseUrl: String,
-    override val lang: String = "zh",
 ) : HttpSource() {
+
+    override val lang = "zh"
 
     override val supportsLatest = true
 

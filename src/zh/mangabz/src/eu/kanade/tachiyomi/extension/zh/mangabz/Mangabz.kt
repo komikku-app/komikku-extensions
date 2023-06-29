@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.lib.unpacker.SubstringExtractor
 import eu.kanade.tachiyomi.lib.unpacker.Unpacker
-import eu.kanade.tachiyomi.multisrc.mangabz.MangabzTheme
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -25,7 +24,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class Mangabz : MangabzTheme("Mangabz", ""), ConfigurableSource {
+class Mangabz : MangabzTheme("Mangabz"), ConfigurableSource {
 
     override val baseUrl: String
     override val client: OkHttpClient
