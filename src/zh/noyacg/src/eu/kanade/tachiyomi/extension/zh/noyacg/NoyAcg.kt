@@ -26,7 +26,7 @@ class NoyAcg : HttpSource(), ConfigurableSource {
     override val name get() = "NoyAcg"
     override val lang get() = "zh"
     override val supportsLatest get() = true
-    override val baseUrl get() = "https://app.noy.asia"
+    override val baseUrl get() = "https://noy1.top"
 
     private val imageCdn by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000).imageCdn
