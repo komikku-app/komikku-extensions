@@ -212,7 +212,7 @@ class KomikIndoID : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
         var i = 0
-        document.select("div.imgch img").forEach { element ->
+        document.select("div.img-landmine img").forEach { element ->
             val url = element.attr("onError").substringAfter("src='").substringBefore("';")
             i++
             if (url.isNotEmpty()) {
