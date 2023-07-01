@@ -11,6 +11,7 @@ import org.jsoup.parser.Parser
 
 internal fun String.beautifyDescription(): String {
     return Parser.unescapeEntities(this, false)
+        .substringBefore("---")
         .replace(markdownLinksRegex, "")
         .replace(markdownItalicBoldRegex, "")
         .replace(markdownItalicRegex, "")
@@ -33,15 +34,11 @@ internal fun Int.parseStatus(translationComplete: Boolean): Int {
     }
 }
 
-internal fun parseCover(thumbnailUrl: String?, mdCovers: List<MDcovers>, useScaled: Boolean): String? {
+internal fun parseCover(thumbnailUrl: String?, mdCovers: List<MDcovers>): String {
     val b2key = runCatching { mdCovers.first().b2key }
         .getOrNull() ?: ""
 
-    return if (useScaled) {
-        "$thumbnailUrl#$b2key"
-    } else {
-        thumbnailUrl?.replaceAfterLast("/", b2key)
-    }
+    return "$thumbnailUrl#$b2key"
 }
 
 internal fun thumbnailIntercept(chain: Interceptor.Chain): Response {

@@ -6,7 +6,7 @@ ext {
     extName = 'Comick'
     pkgNameSuffix = 'all.comickfun'
     extClass = '.ComickFunFactory'
-    extVersionCode = 28
+    extVersionCode = 29
     isNsfw = true
 }
 

@@ -13,11 +13,11 @@ data class SearchManga(
     val cover_url: String? = null,
 
 ) {
-    fun toSManga(useScaledCover: Boolean) = SManga.create().apply {
+    fun toSManga() = SManga.create().apply {
         // appennding # at end as part of migration from slug to hid
         url = "/comic/$hid#"
         title = this@SearchManga.title
-        thumbnail_url = parseCover(cover_url, md_covers, useScaledCover)
+        thumbnail_url = parseCover(cover_url, md_covers)
     }
 }
 
@@ -28,21 +28,24 @@ data class Manga(
     val authors: List<Author> = emptyList(),
     val genres: List<Genre> = emptyList(),
 ) {
-    fun toSManga(useScaledCover: Boolean) = SManga.create().apply {
+    fun toSManga() = SManga.create().apply {
         // appennding # at end as part of migration from slug to hid
         url = "/comic/${comic.hid}#"
         title = comic.title
         description = comic.desc.beautifyDescription()
         if (comic.altTitles.isNotEmpty()) {
-            description += comic.altTitles.joinToString(
-                separator = "\n",
-                prefix = "\n\nAlternative Titles:\n",
-            ) {
-                it.title.toString()
+            if (description.isNullOrEmpty()) {
+                description = "Alternative Titles:\n"
+            } else {
+                description += "\n\nAlternative Titles:\n"
             }
+
+            description += comic.altTitles.mapNotNull { title ->
+                title.title?.let { "• $it" }
+            }.joinToString("\n")
         }
         status = comic.status.parseStatus(comic.translation_completed)
-        thumbnail_url = parseCover(comic.cover_url, comic.md_covers, useScaledCover)
+        thumbnail_url = parseCover(comic.cover_url, comic.md_covers)
         artist = artists.joinToString { it.name.trim() }
         author = authors.joinToString { it.name.trim() }
         genre = genres.joinToString { it.name.trim() }

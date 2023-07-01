@@ -171,7 +171,7 @@ private val getCreatedAtList: Array<Pair<String, String>> = arrayOf(
     Pair("1 year", "365"),
 )
 
-internal val getSortsList: Array<Pair<String, String>> = arrayOf(
+private val getSortsList: Array<Pair<String, String>> = arrayOf(
     Pair("Most popular", "follow"),
     Pair("Most follows", "user_follow_count"),
     Pair("Most views", "view"),
