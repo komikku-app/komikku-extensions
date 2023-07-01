@@ -103,6 +103,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Raiki Scan", "https://raikiscan.com", "es"),
         SingleLang("Raven Scans", "https://ravenscans.com", "en", overrideVersionCode = 1),
         SingleLang("Rawkuma", "https://rawkuma.com/", "ja"),
+        SingleLang("ReadGojo", "https://readgojo.com", "en"),
         SingleLang("Readkomik", "https://readkomik.com", "en", className = "ReadKomik", overrideVersionCode = 1),
         SingleLang("Ryukonesia", "https://ryukonesia.net", "id"),
         SingleLang("Sekaikomik", "https://www.sekaikomik.pro", "id", isNsfw = true, overrideVersionCode = 10),
