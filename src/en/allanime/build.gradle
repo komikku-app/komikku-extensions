@@ -6,7 +6,7 @@ ext {
     extName = 'AllAnime'
     pkgNameSuffix = 'en.allanime'
     extClass = '.AllAnime'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 apply from: "$rootDir/common.gradle"

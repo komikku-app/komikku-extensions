@@ -84,10 +84,13 @@ data class ApiMangaDetailsResponse(
                 thumbnail_url = thumbnail?.parseThumbnailUrl()
                 description = this@Manga.description?.parseDescription()
                 if (!altNames.isNullOrEmpty()) {
-                    description += altNames.joinToString(
-                        prefix = "\n\nAlternative Names:\n* ",
-                        separator = "\n* ",
-                    ) { it.trim() }
+                    if (description.isNullOrEmpty()) {
+                        description = "Alternative Titles:\n"
+                    } else {
+                        description += "\n\nAlternative Titles:\n"
+                    }
+
+                    description += altNames.joinToString("\n") { "• ${it.trim()}" }
                 }
                 if (authors?.isNotEmpty() == true) {
                     author = authors.first().trim()

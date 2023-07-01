@@ -8,7 +8,7 @@ import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -20,7 +20,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -50,11 +49,9 @@ class AllAnime : ConfigurableSource, HttpSource() {
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-    private val domain = preferences.domainPref
+    override val baseUrl = "https://allanime.ai"
 
-    override val baseUrl = "https://$domain"
-
-    private val apiUrl = "https://api.$domain/allanimeapi"
+    private val apiUrl = "https://api.allanime.day/api"
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .addInterceptor { chain ->
@@ -75,7 +72,7 @@ class AllAnime : ConfigurableSource, HttpSource() {
                     .build(),
             )
         }
-        .rateLimitHost(apiUrl.toHttpUrl(), 1)
+        .rateLimit(1)
         .build()
 
     override fun headersBuilder() = super.headersBuilder()
@@ -318,15 +315,6 @@ class AllAnime : ConfigurableSource, HttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
-            key = DOMAIN_PREF
-            title = "Preferred domain"
-            entries = arrayOf("allanime.to", "allanime.co")
-            entryValues = arrayOf("allanime.to", "allanime.co")
-            setDefaultValue(DOMAIN_PREF_DEFAULT)
-            summary = "Requires App Restart"
-        }.let { screen.addPreference(it) }
-
-        ListPreference(screen.context).apply {
             key = IMAGE_QUALITY_PREF
             title = "Image Quality"
             entries = arrayOf("Original", "Wp-800", "Wp-480")
@@ -350,9 +338,6 @@ class AllAnime : ConfigurableSource, HttpSource() {
             setDefaultValue(SHOW_ADULT_PREF_DEFAULT)
         }.let { screen.addPreference(it) }
     }
-
-    private val SharedPreferences.domainPref
-        get() = getString(DOMAIN_PREF, DOMAIN_PREF_DEFAULT)!!
 
     private val SharedPreferences.titlePref
         get() = getString(TITLE_PREF, TITLE_PREF_DEFAULT)
@@ -379,8 +364,6 @@ class AllAnime : ConfigurableSource, HttpSource() {
         val titleSpecialCharactersRegex = Regex("[^a-z\\d]+")
         private val imageUrlFromPageRegex = Regex("selectedPicturesServer:\\[\\{.*?url:\"(.*?)\".*?\\}\\]")
 
-        private const val DOMAIN_PREF = "pref_domain"
-        private const val DOMAIN_PREF_DEFAULT = "allanime.to"
         private const val TITLE_PREF = "pref_title"
         private const val TITLE_PREF_DEFAULT = "romaji"
         private const val SHOW_ADULT_PREF = "pref_adult"
