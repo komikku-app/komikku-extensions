@@ -68,7 +68,7 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
     }
 
     private fun chapterListPref() = preferences.getString(SHOW_SPOILER_CHAPTERS, "hide")
-    
+
     override fun headersBuilder() = super.headersBuilder()
         .add("referer", "$baseUrl/")
 
@@ -261,9 +261,8 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
         }
     }
 
-    private val decodingStringsRe: Regex = Regex("""'([\dA-Z]{62})'""", RegexOption.IGNORE_CASE)
-
-    private val sortedLookupString: List<Char> = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray().toList()
+    private val shortDecodingStringsRe: Regex = Regex("""'([\dA-Z]{2})'""", RegexOption.IGNORE_CASE)
+    private val longDecodingStringsRe: Regex = Regex("""'([\dA-Z]{20})'""", RegexOption.IGNORE_CASE)
 
     override fun pageListParse(document: Document): List<Page> {
         /*
@@ -281,16 +280,31 @@ class Japscan : ConfigurableSource, ParsedHttpSource() {
         Log.d("japscan", "ZJS at $zjsurl")
         val zjs = client.newCall(GET(baseUrl + zjsurl, headers)).execute().body.string()
 
-        val stringLookupTables = decodingStringsRe.findAll(zjs).mapNotNull {
-            it.groupValues[1].takeIf {
-                it.toCharArray().sorted() == sortedLookupString
-            }
+        // Japscan split its lookup table into 1 string of 2 chars + 2 * 3 strings of 20 chars
+        // Try to find the 2 set of 3 strings of 20 chars first
+        val rawLongStringLookupTables = longDecodingStringsRe.findAll(zjs).map {
+            it.groupValues[1]
         }.toList()
 
-        if (stringLookupTables.size != 2) {
-            throw Exception("Attendait 2 chaînes de recherche dans ZJS, a trouvé ${stringLookupTables.size}")
+        if (rawLongStringLookupTables.size != 6) {
+            throw Exception("Attendait 6 chaînes de recherche dans ZJS, a trouvé ${rawLongStringLookupTables.size}")
         }
-        Log.d("japscan", "lookup tables: $stringLookupTables")
+
+        // Then try to find the 2 strings of 2 chars (will output 3 values the first is something else)
+        val rawShortStringLookupTables = shortDecodingStringsRe.findAll(zjs).map {
+            it.groupValues[1]
+        }.toList()
+
+        if (rawShortStringLookupTables.size != 3) {
+            throw Exception("Attendait 3 chaînes de recherche dans ZJS, a trouvé ${rawShortStringLookupTables.size}")
+        }
+
+        // Once we found the 8 strings, assuming they are always in the same order
+        // Since Japscan reverse the char order, reverse the strings
+        val stringLookupTables = listOf(
+            rawShortStringLookupTables[1].reversed() + rawLongStringLookupTables[5].reversed() + rawLongStringLookupTables[2].reversed() + rawLongStringLookupTables[0].reversed(),
+            rawShortStringLookupTables[2].reversed() + rawLongStringLookupTables[3].reversed() + rawLongStringLookupTables[4].reversed() + rawLongStringLookupTables[1].reversed(),
+        )
 
         val scrambledData = document.getElementById("data")!!.attr("data-data")
 
