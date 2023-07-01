@@ -2,14 +2,21 @@ package eu.kanade.tachiyomi.extension.en.questionablecontent
 
 import android.app.Application
 import android.content.SharedPreferences
+import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.lib.textinterceptor.TextInterceptor
+import eu.kanade.tachiyomi.lib.textinterceptor.TextInterceptorHelper
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.internal.http.HTTP_UNAUTHORIZED
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -17,21 +24,21 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.Date
 
-class QuestionableContent : ParsedHttpSource() {
+class QuestionableContent : ParsedHttpSource(), ConfigurableSource {
 
     override val name = "Questionable Content"
-
     override val baseUrl = "https://www.questionablecontent.net"
 
     override val lang = "en"
 
     override val supportsLatest = false
+    override val client: OkHttpClient = super.client.newBuilder().addInterceptor(TextInterceptor()).build()
 
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
         val manga = SManga.create().apply {
-            title = "Questionable Content"
-            artist = "Jeph Jacques"
-            author = "Jeph Jacques"
+            title = name
+            artist = AUTHOR
+            author = AUTHOR
             status = SManga.ONGOING
             url = "/archive.php"
             description = "An internet comic strip about romance and robots"
@@ -80,11 +87,35 @@ class QuestionableContent : ParsedHttpSource() {
         return chapter
     }
 
-    override fun pageListParse(document: Document) = document.select("#strip").mapIndexed { i, element -> Page(i, "", baseUrl + element.attr("src").substring(1)) }
+    override fun pageListParse(document: Document): List<Page> {
+        val pages = document.select("#strip").mapIndexed { i, element -> Page(i, "", baseUrl + element.attr("src").substring(1)) }.toMutableList()
+        if (showAuthorsNotesPref()) {
+            val str = document.selectFirst("#newspost")?.html()
+            if (!str.isNullOrEmpty()) {
+                pages.add(Page(pages.size, "", TextInterceptorHelper.createUrl(AUTHOR, str)))
+            }
+        }
+        return pages
+    }
 
     companion object {
         private const val LAST_CHAPTER_URL = "QC_LAST_CHAPTER_URL"
         private const val LAST_CHAPTER_DATE = "QC_LAST_CHAPTER_DATE"
+        private const val SHOW_AUTHORS_NOTES_KEY = "showAuthorsNotes"
+        private const val AUTHOR = "Jeph Jacques"
+    }
+
+    // Author's Notes, Based On Implementation In GrrlPower Extension
+    private fun showAuthorsNotesPref() = preferences.getBoolean(SHOW_AUTHORS_NOTES_KEY, false)
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val authorsNotesPref = SwitchPreferenceCompat(screen.context).apply {
+            key = SHOW_AUTHORS_NOTES_KEY
+            title = "Show author's notes"
+            summary = "Enable to see the author's notes at the end of chapters (if they're there)."
+            setDefaultValue(false)
+
+        }
+        screen.addPreference(authorsNotesPref)
     }
 
     override fun imageUrlParse(document: Document) = throw Exception("Not used")
