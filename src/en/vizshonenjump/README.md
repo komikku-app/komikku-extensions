@@ -16,7 +16,7 @@ over at [Extension FAQ] or [Getting Started].
 
 ### Why are some chapters missing?
 
-VIZ Shonen Jump is a paid subscription-based service and you need an active monthly subscription to
+**VIZ Shonen Jump** and **VIZ Manga** are paid subscription-based services and you need an active monthly subscription to
 be able to read most of the chapters available in their service. These locked chapters will be
 filtered out from the chapter list by default if you're not signed in. To sign in with 
 your existing account, follow the guide available below.
@@ -25,7 +25,7 @@ your existing account, follow the guide available below.
 
 ### Reading subscription-locked chapters
 
-The **VIZ Shonen Jump** sources allows the reading of paid chapters if you have
+The **VIZ** sources allows the reading of paid chapters if you have
 an active paid subscription on their service.
 
 > **Warning**

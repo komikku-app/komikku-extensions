@@ -22,7 +22,7 @@ class VizUrlActivity : Activity() {
                 action = "eu.kanade.tachiyomi.SEARCH"
                 putExtra(
                     "query",
-                    "${VizShonenJump.PREFIX_URL_SEARCH}/${pathSegments[0]}/chapters/$seriesSlug",
+                    "${Viz.PREFIX_URL_SEARCH}/${pathSegments[0]}/chapters/$seriesSlug",
                 )
                 putExtra("filter", packageName)
             }

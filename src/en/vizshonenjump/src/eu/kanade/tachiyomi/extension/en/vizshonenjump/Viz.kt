@@ -28,9 +28,10 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class VizShonenJump : ParsedHttpSource() {
-
-    override val name = "VIZ Shonen Jump"
+open class Viz(
+    final override val name: String,
+    private val servicePath: String,
+) : ParsedHttpSource() {
 
     override val baseUrl = "https://www.viz.com"
 
@@ -48,7 +49,7 @@ class VizShonenJump : ParsedHttpSource() {
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", USER_AGENT)
         .add("Origin", baseUrl)
-        .add("Referer", "$baseUrl/shonenjump")
+        .add("Referer", "$baseUrl/$servicePath")
 
     private val json: Json by injectLazy()
 
@@ -62,7 +63,7 @@ class VizShonenJump : ParsedHttpSource() {
             .build()
 
         return GET(
-            url = "$baseUrl/read/shonenjump/section/free-chapters",
+            url = "$baseUrl/read/$servicePath/section/free-chapters",
             headers = newHeaders,
             cache = CacheControl.FORCE_NETWORK,
         )
@@ -115,9 +116,12 @@ class VizShonenJump : ParsedHttpSource() {
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.startsWith(PREFIX_URL_SEARCH)) {
+            val url = query.substringAfter(PREFIX_URL_SEARCH)
+            val service = url.split("/")[1]
+            if (service != servicePath) return Observable.just(MangasPage(emptyList(), false))
             return fetchMangaDetails(
                 SManga.create().apply {
-                    this.url = query.substringAfter(PREFIX_URL_SEARCH)
+                    this.url = url
                     this.title = ""
                     this.initialized = false
                 },
@@ -224,7 +228,7 @@ class VizShonenJump : ParsedHttpSource() {
     override fun pageListRequest(chapter: SChapter): Request {
         val mangaUrl = chapter.url
             .substringBefore("-chapter")
-            .replace("jump/", "jump/chapters/")
+            .replace("$servicePath/", "$servicePath/chapters/")
 
         val newHeaders = headersBuilder()
             .set("Referer", baseUrl + mangaUrl)

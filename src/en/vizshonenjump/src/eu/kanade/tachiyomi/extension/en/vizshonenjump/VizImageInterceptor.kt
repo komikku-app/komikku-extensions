@@ -57,7 +57,7 @@ class VizImageInterceptor : Interceptor {
             .add("Accept", "*/*")
             .add("Origin", "https://www.viz.com")
             .add("Referer", "https://www.viz.com/")
-            .add("User-Agent", VizShonenJump.USER_AGENT)
+            .add("User-Agent", Viz.USER_AGENT)
             .build()
 
         return GET(url, headers)
