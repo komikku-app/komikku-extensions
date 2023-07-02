@@ -30,7 +30,7 @@ class Aurora : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> = throw Exception("Not used")
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        return Observable.just(fetchChapterListTR(baseUrl + manga.url, mutableListOf()))
+        return Observable.just(fetchChapterListTR(baseUrl + manga.url, mutableListOf()).reversed())
     }
 
     private tailrec fun fetchChapterListTR(
@@ -144,8 +144,8 @@ class Aurora : HttpSource() {
         val chapterArchiveUrl = "$baseUrl/archive/"
 
         val chapterOverviewDoc = client.newCall(GET(chapterArchiveUrl, headers)).execute().asJsoup()
-        val chapterBlockElements = chapterOverviewDoc.select(".wp-block-image")
-        val mangasFromChapters = chapterBlockElements
+        val chapterBlockElements = chapterOverviewDoc.select(".wp-block-image:has(a)")
+        val mangasFromChapters: List<SManga> = chapterBlockElements
             .mapIndexed { chapterIndex, chapter ->
                 val chapterOverviewLink = chapter.selectFirst("a")!!
                 val chapterOverviewUrl = chapterOverviewLink.attr("href")
