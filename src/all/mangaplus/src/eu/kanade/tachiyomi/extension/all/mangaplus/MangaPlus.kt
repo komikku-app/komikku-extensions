@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.lib.i18n.Intl
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -58,14 +57,7 @@ class MangaPlus(
 
     private val json: Json by injectLazy()
 
-    private val intl by lazy {
-        Intl(
-            language = lang,
-            baseLanguage = "en",
-            availableLanguages = setOf("en", "pt-BR"),
-            classLoader = this::class.java.classLoader,
-        )
-    }
+    private val intl by lazy { MangaPlusIntl(langCode) }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -90,7 +82,7 @@ class MangaPlus(
         val result = response.asMangaPlusResponse()
 
         checkNotNull(result.success) {
-            result.error!!.langPopup(langCode)?.body ?: intl["unknown_error"]
+            result.error!!.langPopup(langCode)?.body ?: intl.unknownError
         }
 
         val titleList = result.success.titleRankingView!!.titles
@@ -113,7 +105,7 @@ class MangaPlus(
         val result = response.asMangaPlusResponse()
 
         checkNotNull(result.success) {
-            result.error!!.langPopup(langCode)?.body ?: intl["unknown_error"]
+            result.error!!.langPopup(langCode)?.body ?: intl.unknownError
         }
 
         // Fetch all titles to get newer thumbnail URLs in the interceptor.
@@ -159,7 +151,7 @@ class MangaPlus(
         val result = response.asMangaPlusResponse()
 
         checkNotNull(result.success) {
-            result.error!!.langPopup(langCode)?.body ?: intl["unknown_error"]
+            result.error!!.langPopup(langCode)?.body ?: intl.unknownError
         }
 
         if (result.success.titleDetailView != null) {
@@ -171,7 +163,7 @@ class MangaPlus(
         }
 
         if (result.success.mangaViewer != null) {
-            checkNotNull(result.success.mangaViewer.titleId) { intl["chapter_expired"] }
+            checkNotNull(result.success.mangaViewer.titleId) { intl.chapterExpired }
 
             val titleId = result.success.mangaViewer.titleId
             val cachedTitle = titleCache?.get(titleId)
@@ -181,7 +173,7 @@ class MangaPlus(
                 val titleResult = client.newCall(titleRequest).execute().asMangaPlusResponse()
 
                 checkNotNull(titleResult.success) {
-                    titleResult.error!!.langPopup(langCode)?.body ?: intl["unknown_error"]
+                    titleResult.error!!.langPopup(langCode)?.body ?: intl.unknownError
                 }
 
                 titleResult.success.titleDetailView!!
@@ -230,15 +222,15 @@ class MangaPlus(
             val error = result.error!!.langPopup(langCode)
 
             when {
-                error?.subject == NOT_FOUND_SUBJECT -> intl["title_removed"]
+                error?.subject == NOT_FOUND_SUBJECT -> intl.titleRemoved
                 !error?.body.isNullOrEmpty() -> error!!.body
-                else -> intl["unknown_error"]
+                else -> intl.unknownError
             }
         }
 
         val titleDetails = result.success.titleDetailView!!
             .takeIf { it.title.language == langCode }
-            ?: throw Exception(intl["not_available"])
+            ?: throw Exception(intl.notAvailable)
 
         return titleDetails.toSManga()
     }
@@ -252,9 +244,9 @@ class MangaPlus(
             val error = result.error!!.langPopup(langCode)
 
             when {
-                error?.subject == NOT_FOUND_SUBJECT -> intl["title_removed"]
+                error?.subject == NOT_FOUND_SUBJECT -> intl.titleRemoved
                 !error?.body.isNullOrEmpty() -> error!!.body
-                else -> intl["unknown_error"]
+                else -> intl.unknownError
             }
         }
 
@@ -298,9 +290,9 @@ class MangaPlus(
             val error = result.error!!.langPopup(langCode)
 
             when {
-                error?.subject == NOT_FOUND_SUBJECT -> intl["chapter_expired"]
+                error?.subject == NOT_FOUND_SUBJECT -> intl.chapterExpired
                 !error?.body.isNullOrEmpty() -> error!!.body
-                else -> intl["unknown_error"]
+                else -> intl.unknownError
             }
         }
 
@@ -330,12 +322,8 @@ class MangaPlus(
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualityPref = ListPreference(screen.context).apply {
             key = "${QUALITY_PREF_KEY}_$lang"
-            title = intl["image_quality"]
-            entries = arrayOf(
-                intl["image_quality_low"],
-                intl["image_quality_medium"],
-                intl["image_quality_high"],
-            )
+            title = intl.imageQuality
+            entries = arrayOf(intl.imageQualityLow, intl.imageQualityMedium, intl.imageQualityHigh)
             entryValues = QUALITY_PREF_ENTRY_VALUES
             setDefaultValue(QUALITY_PREF_DEFAULT_VALUE)
             summary = "%s"
@@ -343,8 +331,8 @@ class MangaPlus(
 
         val splitPref = SwitchPreferenceCompat(screen.context).apply {
             key = "${SPLIT_PREF_KEY}_$lang"
-            title = intl["split_double_pages"]
-            summary = intl["split_double_pages_summary"]
+            title = intl.splitDoublePages
+            summary = intl.splitDoublePagesSummary
             setDefaultValue(SPLIT_PREF_DEFAULT_VALUE)
         }
 
