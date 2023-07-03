@@ -32,6 +32,13 @@ configurations {
 
 dependencies {
     compileOnly(libs.bundles.common)
+
+    // Implements all :lib libraries on the multisrc generator
+    // Note that this does not mean that generated sources are going to
+    // implement them too; this is just to be able to compile and generate sources.
+    rootProject.subprojects
+        .filter { it.path.startsWith(":lib") }
+        .forEach(::implementation)
 }
 
 tasks {
