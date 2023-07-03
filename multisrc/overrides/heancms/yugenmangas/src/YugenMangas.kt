@@ -7,9 +7,9 @@ import java.util.TimeZone
 
 class YugenMangas : HeanCms(
     "YugenMangas",
-    "https://yugenmangas.com",
+    "https://yugenmangas.net",
     "es",
-    "https://api.yugenmangas.com",
+    "https://api.yugenmangas.net",
 ) {
 
     // Site changed from Madara to HeanCms.
