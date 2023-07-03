@@ -185,11 +185,14 @@ class BacaKomik : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
         var i = 0
-        document.select("div.imgch-auh img").forEach { element ->
+        val cdnUrl = "https://ttl.bakul.buzz/" // change with correct CDN url
+        document.getElementsByTag("img").forEach { element ->
             val url = element.attr("onError").substringAfter("src='").substringBefore("';")
-            i++
-            if (url.isNotEmpty()) {
-                pages.add(Page(i, "", url))
+            if (url.startsWith(cdnUrl)) {
+                i++
+                if (url.isNotEmpty()) {
+                    pages.add(Page(i, "", url))
+                }
             }
         }
         return pages
