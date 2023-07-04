@@ -25,6 +25,4 @@ class GloriousScan : HeanCms(
     override val dateFormat: SimpleDateFormat = super.dateFormat.apply {
         timeZone = TimeZone.getTimeZone("GMT+02:00")
     }
-
-    override val fetchAllTitles = false
 }

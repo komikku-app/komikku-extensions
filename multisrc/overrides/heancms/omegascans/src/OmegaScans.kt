@@ -14,7 +14,5 @@ class OmegaScans : HeanCms("Omega Scans", "https://omegascans.org", "en") {
     // Site changed from MangaThemesia to HeanCms.
     override val versionId = 2
 
-    override val fetchAllTitles = false
-
     override val coverPath = ""
 }

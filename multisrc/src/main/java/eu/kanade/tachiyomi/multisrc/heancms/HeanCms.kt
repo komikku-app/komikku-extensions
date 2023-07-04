@@ -45,7 +45,7 @@ abstract class HeanCms(
 
     protected val intl by lazy { HeanCmsIntl(lang) }
 
-    protected open val fetchAllTitles: Boolean = true
+    protected open val fetchAllTitles: Boolean = false
 
     protected open val coverPath: String = "cover/"
 
