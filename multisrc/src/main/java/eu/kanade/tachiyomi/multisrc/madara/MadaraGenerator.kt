@@ -10,7 +10,7 @@ class MadaraGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Madara"
 
-    override val baseVersionCode: Int = 29
+    override val baseVersionCode: Int = 30
 
     override val sources = listOf(
         MultiLang("Atlantis Scan", "https://atlantisscan.com", listOf("es", "pt-BR"), isNsfw = true),
