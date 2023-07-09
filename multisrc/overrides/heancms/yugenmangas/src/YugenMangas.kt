@@ -2,8 +2,10 @@ package eu.kanade.tachiyomi.extension.es.yugenmangas
 
 import eu.kanade.tachiyomi.multisrc.heancms.Genre
 import eu.kanade.tachiyomi.multisrc.heancms.HeanCms
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import java.text.SimpleDateFormat
 import java.util.TimeZone
+import java.util.concurrent.TimeUnit
 
 class YugenMangas : HeanCms(
     "YugenMangas",
@@ -14,6 +16,12 @@ class YugenMangas : HeanCms(
 
     // Site changed from Madara to HeanCms.
     override val versionId = 2
+
+    override val client = super.client.newBuilder()
+        .connectTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(90, TimeUnit.SECONDS)
+        .rateLimit(1, 1)
+        .build()
 
     override val coverPath: String = ""
 
