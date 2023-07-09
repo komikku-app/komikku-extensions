@@ -50,7 +50,7 @@ class TheDuckWebcomics : ParsedHttpSource() {
             addQueryParameter("search", query)
             addQueryParameter("page", page.toString())
             filters.forEach { (it as QueryParam).encode(this) }
-            GET(toString(), headers)
+            GET(build(), headers)
         }
 
     override fun searchMangaFromElement(element: Element) =
@@ -85,7 +85,7 @@ class TheDuckWebcomics : ParsedHttpSource() {
         }
 
     override fun pageListParse(document: Document) =
-        listOf(Page(0, "", document.selectFirst(".page-image")!!.attr("src")))
+        listOf(Page(0, "", document.selectFirst(".page-image")!!.absUrl("src")))
 
     override fun mangaDetailsParse(document: Document) =
         throw UnsupportedOperationException("Not used")
