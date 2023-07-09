@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat
 import java.util.ArrayList
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 import java.util.concurrent.TimeUnit.MINUTES
 
 class Manhuaren : HttpSource() {
@@ -35,6 +36,7 @@ class Manhuaren : HttpSource() {
 
     private val c = "4e0a48e1c0b54041bce9c8f0e036124d"
     private val cacheControl: CacheControl by lazy { CacheControl.Builder().maxAge(10, MINUTES).build() }
+    private val userId = (100000000..4294967295).random().toString()
 
     private fun generateGSNHash(url: HttpUrl): String {
         var s = c + "GET"
@@ -55,13 +57,13 @@ class Manhuaren : HttpSource() {
             .setQueryParameter("gft", "json")
             .setQueryParameter("gak", "android_manhuaren2")
             .setQueryParameter("gat", "")
-            .setQueryParameter("gui", "1") // user ID (> 0)
+            .setQueryParameter("gui", userId)
             .setQueryParameter("gts", now) // timestamp yyyy-MM-dd+HH:mm:ss
             .setQueryParameter("gut", "0") // user type
             .setQueryParameter("gem", "1")
             .setQueryParameter("gaui", "1")
             .setQueryParameter("gln", "") // location
-            .setQueryParameter("gcy", "TW") // country
+            .setQueryParameter("gcy", "US") // country
             .setQueryParameter("gle", "zh") // language
             .setQueryParameter("gcl", "dm5") // umeng channel
             .setQueryParameter("gos", "1") // OS (int)
@@ -69,10 +71,10 @@ class Manhuaren : HttpSource() {
             .setQueryParameter("gav", "7.0.1") // app version
             .setQueryParameter("gdi", "358240051111110") // device info
             .setQueryParameter("gfcl", "dm5") // umeng channel config
-            .setQueryParameter("gfut", "1688319526000") // assign user ID config
-            .setQueryParameter("glut", "1688319526000") // update time config
+            .setQueryParameter("gfut", "1688140800000") // first used time
+            .setQueryParameter("glut", "1688140800000") // last used time
             .setQueryParameter("gpt", "com.mhr.mangamini") // package name
-            .setQueryParameter("gciso", "tw") // https://developer.android.com/reference/android/telephony/TelephonyManager#getSimCountryIso()
+            .setQueryParameter("gciso", "us") // https://developer.android.com/reference/android/telephony/TelephonyManager#getSimCountryIso()
             .setQueryParameter("glot", "") // longitude
             .setQueryParameter("glat", "") // latitude
             .setQueryParameter("gflot", "") // first location longitude
@@ -93,8 +95,53 @@ class Manhuaren : HttpSource() {
             .build()
     }
 
-    override fun headersBuilder() = Headers.Builder().apply {
-        add("User-Agent", "okhttp/3.11.0")
+    override fun headersBuilder(): Headers.Builder {
+        val yqciMap = HashMap<String, Any?>().apply {
+            put("at", -1)
+            put("av", "7.0.1") // app version
+            put("ciso", "us") // https://developer.android.com/reference/android/telephony/TelephonyManager#getSimCountryIso()
+            put("cl", "dm5") // umeng channel
+            put("cy", "US") // country
+            put("di", "358240051111110") // device info
+            put("dm", "Android SDK built for x86") // Build.MODEL
+            put("fcl", "dm5") // umeng channel config
+            put("ft", "mhr") // from type
+            put("fut", "1688140800000") // first used time
+            put("installation", "dm5")
+            put("le", "zh") // language
+            put("ln", "") // location
+            put("lut", "1688140800000") // last used time
+            put("nt", 4)
+            put("os", 1) // OS (int)
+            put("ov", "22_5.1.1") // "{Build.VERSION.SDK_INT}_{Build.VERSION.RELEASE}"
+            put("pt", "com.mhr.mangamini") // package name
+            put("rn", "1440x2952") // screen "{width}x{height}"
+            put("st", 0)
+        }
+        val yqppMap = HashMap<String, Any?>().apply {
+            put("ciso", "us") // https://developer.android.com/reference/android/telephony/TelephonyManager#getSimCountryIso()
+            put("laut", "0") // is allow location (0 or 1)
+            put("lot", "") // longitude
+            put("lat", "") // latitude
+            put("cut", "GMT+8") // time zone
+            put("fcc", "") // first country code
+            put("flg", "") // first language
+            put("lcc", "") // country code
+            put("lcn", "") // country name
+            put("flcc", "") // first location country code
+            put("flot", "") // first location longitude
+            put("flat", "") // first location latitude
+            put("ac", "") // area code
+        }
+
+        return Headers.Builder().apply {
+            add("X-Yq-Yqci", JSONObject(yqciMap).toString())
+            add("X-Yq-Key", userId)
+            add("yq_is_anonymous", "1")
+            add("x-request-id", UUID.randomUUID().toString())
+            add("X-Yq-Yqpp", JSONObject(yqppMap).toString())
+            add("User-Agent", "Mozilla/5.0 (Linux; Android 5.1.1; Android SDK built for x86 Build/LMY48X) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/39.0.0.0 Mobile Safari/537.36")
+        }
     }
 
     private fun hashString(type: String, input: String): String {
