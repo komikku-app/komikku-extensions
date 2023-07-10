@@ -1,125 +1,159 @@
 package eu.kanade.tachiyomi.extension.es.manhwasnet
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
-import okhttp3.Response
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.util.Calendar
 
-class ManhwasNet : HttpSource() {
+class ManhwasNet : ParsedHttpSource() {
+
     override val baseUrl: String = "https://manhwas.net"
     override val lang: String = "es"
     override val name: String = "Manhwas.net"
     override val supportsLatest: Boolean = true
 
-    override fun chapterListParse(response: Response): List<SChapter> {
-        val document = response.asJsoup()
-        return document.select(".fa-book.d-inline-flex").map { chapterAnchor ->
-            val chapterUrl = getUrlWithoutDomain(chapterAnchor.attr("href"))
-            val chapterName = chapterUrl.substringAfterLast("-")
-            val chapter = SChapter.create()
-            chapter.chapter_number = chapterName.toFloat()
-            chapter.name = chapterName
-            chapter.url = chapterUrl
-            chapter
+    override val client = network.cloudflareClient.newBuilder()
+        .addInterceptor { chain ->
+            val originalRequest = chain.request()
+            val url = originalRequest.url.toString()
+            val response = chain.proceed(originalRequest)
+            if (response.headers["x-sucuri-cache"].isNullOrEmpty() && url.startsWith(baseUrl) && response.headers["x-sucuri-id"] != null) {
+                throw Exception("Sitio protegido - Abra en WebView para desbloquear.")
+            }
+            return@addInterceptor response
         }
+        .build()
+
+    override fun headersBuilder() = super.headersBuilder()
+        .set("Referer", "$baseUrl/")
+
+    override fun popularMangaRequest(page: Int): Request {
+        val url = "$baseUrl/biblioteca".toHttpUrlOrNull()!!.newBuilder()
+        url.addQueryParameter("page", page.toString())
+        return GET(url.build().toString(), headers)
     }
 
-    override fun imageUrlParse(response: Response): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularMangaSelector() = "ul > li > article.anime"
 
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        val content18 = document.select(".list-unstyled.row")[0]
-        val content15 = document.select(".list-unstyled.row")[1]
-        val manhwas = parseManhwas(content18) + parseManhwas(content15)
-        return MangasPage(manhwas, false)
+    override fun popularMangaNextPageSelector() = "ul.pagination a.page-link[rel=next]"
+
+    override fun popularMangaFromElement(element: Element) = SManga.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        title = element.selectFirst(".title")!!.text()
+        thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/es")
+        return GET("$baseUrl/esp")
     }
 
-    override fun mangaDetailsParse(response: Response): SManga {
-        val document = response.asJsoup()
+    override fun latestUpdatesSelector() = popularMangaSelector()
+
+    override fun latestUpdatesNextPageSelector() = null
+
+    override fun latestUpdatesFromElement(element: Element) = SManga.create().apply {
+        setUrlWithoutDomain(element.select("a").last()!!.attr("abs:href"))
+        title = element.selectFirst(".title")!!.text()
+        thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
+    }
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val url = "$baseUrl/biblioteca".toHttpUrlOrNull()!!.newBuilder()
+        if (query.isNotEmpty()) {
+            url.addQueryParameter("buscar", query)
+        } else {
+            filters.forEach { filter ->
+                when (filter) {
+                    is GenreFilter -> {
+                        url.addQueryParameter("genero", filter.toUriPart())
+                    }
+                    is OrderFilter -> {
+                        url.addQueryParameter("estado", filter.toUriPart())
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+        url.addQueryParameter("page", page.toString())
+        return GET(url.build().toString())
+    }
+
+    override fun searchMangaSelector() = popularMangaSelector()
+
+    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
+
+    override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
+
+    override fun mangaDetailsParse(document: Document): SManga {
         val profileManga = document.selectFirst(".anime-single")!!
-        val manhwa = SManga.create()
-        manhwa.title = profileManga.selectFirst(".title")!!.text()
-        manhwa.thumbnail_url = profileManga.selectFirst("img")!!.attr("src")
-        manhwa.description = profileManga.selectFirst(".sinopsis")!!.text().substringAfter(manhwa.title + " ")
-        val status = profileManga.select(".anime-type-peli.text-white").text()
-        manhwa.status = SManga.ONGOING
-        if (!status.contains("Publicándose")) manhwa.status = SManga.COMPLETED
-
-        return manhwa
+        return SManga.create().apply {
+            title = profileManga.selectFirst(".title")!!.text()
+            thumbnail_url = profileManga.selectFirst("img")!!.attr("abs:src")
+            description = profileManga.selectFirst(".sinopsis")!!.text()
+            status = parseStatus(profileManga.select("span.anime-type-peli").last()!!.text())
+            genre = profileManga.select("p.genres > span").joinToString { it.text() }
+        }
     }
 
-    override fun pageListParse(response: Response): List<Page> {
-        val document = response.asJsoup()
+    override fun chapterListSelector() = "ul.episodes-list > li"
+
+    override fun chapterFromElement(element: Element) = SChapter.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("abs:href"))
+        name = element.selectFirst("a > div > p > span")!!.text()
+        date_upload = parseRelativeDate(element.selectFirst("a > div > span")!!.text())
+    }
+
+    override fun pageListParse(document: Document): List<Page> {
         return document.select("#chapter_imgs img").mapIndexed { i, img ->
             val url = img.attr("abs:src")
             Page(i, imageUrl = url)
         }
     }
 
-    override fun popularMangaParse(response: Response): MangasPage {
-        return parseLibraryMangas(response)
+    override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
+
+    override fun getFilterList() = FilterList(
+        Filter.Header("Los filtros no se pueden combinar:"),
+        Filter.Header("Prioridad:   Texto > Géneros > Estado"),
+        Filter.Separator(),
+        GenreFilter(),
+        OrderFilter(),
+    )
+
+    private fun parseStatus(status: String): Int = when (status) {
+        "Publicándose" -> SManga.ONGOING
+        "Finalizado" -> SManga.COMPLETED
+        "Cancelado" -> SManga.CANCELLED
+        "Pausado" -> SManga.ON_HIATUS
+        else -> SManga.UNKNOWN
     }
 
-    override fun popularMangaRequest(page: Int): Request {
-        val url = "$baseUrl/biblioteca".toHttpUrlOrNull()!!.newBuilder()
-        if (page > 1) {
-            url.addQueryParameter("page", page.toString())
-        }
-        return GET(url.build().toString())
-    }
+    private fun parseRelativeDate(date: String): Long {
+        val number = Regex("""(\d+)""").find(date)?.value?.toIntOrNull() ?: return 0
+        val cal = Calendar.getInstance()
 
-    override fun searchMangaParse(response: Response): MangasPage {
-        return parseLibraryMangas(response)
-    }
-
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/biblioteca".toHttpUrlOrNull()!!.newBuilder()
-        url.addQueryParameter("buscar", query)
-        if (page > 1) {
-            url.addQueryParameter("page", page.toString())
-        }
-        return GET(url.build().toString())
-    }
-
-    private fun parseLibraryMangas(response: Response): MangasPage {
-        val document = response.asJsoup()
-        val content = document.selectFirst(".animes")!!
-        val manhwas = parseManhwas(content)
-        val hasNextPage = document.selectFirst(".pagination .page-link[rel=\"next\"]") != null
-        return MangasPage(manhwas, hasNextPage)
-    }
-
-    private fun parseManhwas(element: Element): List<SManga> {
-        return element.select(".anime").map { anime ->
-            val manhwa = SManga.create()
-            manhwa.title = anime.selectFirst(".title")!!.text().trim()
-            manhwa.thumbnail_url = anime.selectFirst("img")!!.attr("src")
-            manhwa.url = getUrlWithoutDomain(
-                transformUrl(anime.select("a").attr("href")),
-            )
-            manhwa
+        return when {
+            WordSet("segundo").anyWordIn(date) -> cal.apply { add(Calendar.SECOND, -number) }.timeInMillis
+            WordSet("minuto").anyWordIn(date) -> cal.apply { add(Calendar.MINUTE, -number) }.timeInMillis
+            WordSet("hora").anyWordIn(date) -> cal.apply { add(Calendar.HOUR, -number) }.timeInMillis
+            WordSet("día").anyWordIn(date) -> cal.apply { add(Calendar.DAY_OF_MONTH, -number) }.timeInMillis
+            WordSet("semana").anyWordIn(date) -> cal.apply { add(Calendar.DAY_OF_MONTH, -number * 7) }.timeInMillis
+            WordSet("mes").anyWordIn(date) -> cal.apply { add(Calendar.MONTH, -number) }.timeInMillis
+            WordSet("año").anyWordIn(date) -> cal.apply { add(Calendar.YEAR, -number) }.timeInMillis
+            else -> 0
         }
     }
 
-    private fun transformUrl(url: String): String {
-        if (!url.contains("/leer/")) return url
-        val name = url.substringAfter("/leer/").substringBeforeLast("-")
-        return "$baseUrl/manga/$name"
+    class WordSet(private vararg val words: String) {
+        fun anyWordIn(dateString: String): Boolean = words.any { dateString.contains(it, ignoreCase = true) }
     }
-
-    private fun getUrlWithoutDomain(url: String) = url.substringAfter(baseUrl)
 }
