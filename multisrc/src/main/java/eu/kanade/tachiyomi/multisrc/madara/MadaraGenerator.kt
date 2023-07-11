@@ -310,7 +310,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("MiniTwo Scan", "https://minitwoscan.com", "pt-BR"),
         SingleLang("Mirad Scanlator", "https://miradscanlator.site", "pt-BR", overrideVersionCode = 1),
         SingleLang("Mixed Manga", "https://mixedmanga.com", "en", overrideVersionCode = 1),
-        SingleLang("MMScans", "https://mm-scans.org", "en", overrideVersionCode = 5),
+        SingleLang("MMScans", "https://mm-scans.org", "en", overrideVersionCode = 6),
         SingleLang("Momo no Hana Scan", "https://momonohanascan.com", "pt-BR", className = "MomoNoHanaScan", overrideVersionCode = 1),
         SingleLang("MonarcaManga", "https://monarcamanga.com", "es"),
         SingleLang("MoonLovers Scan", "https://moonloversscan.com.br", "pt-BR", isNsfw = true),
