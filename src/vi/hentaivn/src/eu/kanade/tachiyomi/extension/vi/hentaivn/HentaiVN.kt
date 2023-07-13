@@ -27,7 +27,7 @@ import java.util.Locale
 
 class HentaiVN : ParsedHttpSource() {
 
-    override val baseUrl = "https://hentaivn.site"
+    override val baseUrl = "https://hentaivn.autos"
     override val lang = "vi"
     override val name = "HentaiVN"
     override val supportsLatest = true
@@ -284,7 +284,7 @@ class HentaiVN : ParsedHttpSource() {
     )
 
     // jQuery.makeArray($('#container > div > div > div.box-box.textbox > form > ul:nth-child(7) > li').map((i, e) => `Genre("${e.textContent}", "${e.children[0].value}")`)).join(',\n')
-    // https://hentaivn.net/forum/search-plus.php
+    // https://hentaivn.autos/forum/search-plus.php
     private fun getGenreList() = listOf(
         Genre("3D Hentai", "3"),
         Genre("Action", "5"),
@@ -459,7 +459,7 @@ class HentaiVN : ParsedHttpSource() {
     )
 
     // jQuery.makeArray($('#container > div > div > div.box-box.textbox > form > ul:nth-child(8) > li').map((i, e) => `TransGroup("${e.textContent}", "${e.children[0].value}")`)).join(',\n')
-    // https://hentaivn.net/forum/search-plus.php
+    // https://hentaivn.autos/forum/search-plus.php
     private fun getGroupList() = arrayOf(
         TransGroup("Tất cả", "0"),
         TransGroup("Đang cập nhật", "1"),
