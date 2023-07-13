@@ -10,13 +10,14 @@ import eu.kanade.tachiyomi.extension.ru.remanga.dto.BookDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.BranchesDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.ChunksPageDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.ExBookDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.ExLibraryDto
+import eu.kanade.tachiyomi.extension.ru.remanga.dto.ExWrapperDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.LibraryDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.MangaDetDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.MyLibraryDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.PageDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.PageWrapperDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.PagesDto
-import eu.kanade.tachiyomi.extension.ru.remanga.dto.SeriesExWrapperDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.SeriesWrapperDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.TagsDto
 import eu.kanade.tachiyomi.extension.ru.remanga.dto.UserDto
@@ -212,7 +213,14 @@ class Remanga : ConfigurableSource, HttpSource() {
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
     override fun searchMangaParse(response: Response): MangasPage {
-        if (response.request.url.toString().contains("/bookmarks/")) {
+        if (response.request.url.toString().contains(exManga)) {
+            val page = json.decodeFromString<ExWrapperDto<List<ExLibraryDto>>>(response.body.string())
+            val mangas = page.data.map {
+                it.toSManga()
+            }
+
+            return MangasPage(mangas, true)
+        } else if (response.request.url.toString().contains("/bookmarks/")) {
             val page = json.decodeFromString<PageWrapperDto<MyLibraryDto>>(response.body.string())
             val mangas = page.content.map {
                 it.title.toSManga()
@@ -229,6 +237,13 @@ class Remanga : ConfigurableSource, HttpSource() {
             return MangasPage(mangas, page.props.page < page.props.total_pages!!)
         }
     }
+    private fun ExLibraryDto.toSManga(): SManga =
+        SManga.create().apply {
+            // Do not change the title name to ensure work with a multilingual catalog!
+            title = name
+            url = "/api/titles/$dir/"
+            thumbnail_url = baseUrl + img
+        }
 
     private fun LibraryDto.toSManga(): SManga =
         SManga.create().apply {
@@ -305,6 +320,11 @@ class Remanga : ConfigurableSource, HttpSource() {
                 is RequireChapters -> {
                     if (filter.state == 1) {
                         url.setQueryParameter("count_chapters_gte", "0")
+                    }
+                }
+                is RequireEX -> {
+                    if (filter.state == 1) {
+                        return GET("$exManga/manga?take=20&skip=${10 * (page - 1)}&name=$query", exHeaders())
                     }
                 }
                 else -> {}
@@ -461,7 +481,7 @@ class Remanga : ConfigurableSource, HttpSource() {
             else -> {
                 val mangaID = mangaIDs[manga.url.substringAfter("/api/titles/").substringBefore("/").substringBefore("?")]
                 val exChapters = if (preferences.getBoolean(exPAID_PREF, true)) {
-                    json.decodeFromString<SeriesExWrapperDto<List<ExBookDto>>>(client.newCall(GET("$exManga/chapter/history/$mangaID", exHeaders())).execute().body.string()).data
+                    json.decodeFromString<ExWrapperDto<List<ExBookDto>>>(client.newCall(GET("$exManga/chapter/history/$mangaID", exHeaders())).execute().body.string()).data
                 } else {
                     emptyList()
                 }
@@ -570,7 +590,7 @@ class Remanga : ConfigurableSource, HttpSource() {
         val heightEmptyChunks = 10
         if (chapter.scanlator.equals("exmanga")) {
             try {
-                val exPage = json.decodeFromString<SeriesExWrapperDto<List<List<PagesDto>>>>(body)
+                val exPage = json.decodeFromString<ExWrapperDto<List<List<PagesDto>>>>(body)
                 val result = mutableListOf<Page>()
                 exPage.data.forEach {
                     it.filter { page -> page.height > heightEmptyChunks }.forEach { page ->
@@ -688,6 +708,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     private class AgeList(ages: List<CheckFilter>) : Filter.Group<CheckFilter>("Возрастное ограничение", ages)
 
     override fun getFilterList() = FilterList(
+        RequireEX(),
         OrderBy(),
         GenreList(getGenreList()),
         CategoryList(getCategoryList()),
@@ -893,6 +914,11 @@ class Remanga : ConfigurableSource, HttpSource() {
     private class RequireChapters : Filter.Select<String>(
         "Только проекты с главами",
         arrayOf("Да", "Все"),
+    )
+
+    private class RequireEX : Filter.Select<String>(
+        "Использовать поиск",
+        arrayOf("Remanga", "ExManga(без фильтров)"),
     )
     private var isEng: String? = preferences.getString(LANGUAGE_PREF, "eng")
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
