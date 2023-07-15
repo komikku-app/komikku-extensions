@@ -2,13 +2,9 @@ package eu.kanade.tachiyomi.extension.ar.mangastarz
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.source.model.SManga
-import okhttp3.Headers
 import org.jsoup.nodes.Element
 
 class MangaStarz : Madara("Manga Starz", "https://mangastarz.com", "ar") {
-
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("Referer", baseUrl)
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()

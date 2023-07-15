@@ -3,12 +3,10 @@ package eu.kanade.tachiyomi.multisrc.madara
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Base64
-import android.util.Log
-import android.widget.Toast
-import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
-import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
+import eu.kanade.tachiyomi.lib.randomua.RandomUserAgentPreference
+import eu.kanade.tachiyomi.lib.randomua.setRandomUserAgent
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservable
@@ -21,17 +19,13 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.CacheControl
 import okhttp3.FormBody
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -40,7 +34,6 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -58,90 +51,23 @@ abstract class Madara(
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private val randomUAPrefHelper: RandomUserAgentPreference by lazy {
+        RandomUserAgentPreference(preferences)
+    }
+
     override val supportsLatest = true
 
-    // override with true if you want useRandomUserAgentByDefault to be on by default for some source
-    protected open val useRandomUserAgentByDefault: Boolean = false
-
-    /**
-     * override include/exclude user-agent string if needed
-     *   some example:
-     *      listOf("chrome")
-     *      listOf("linux", "windows")
-     *      listOf("108")
-     */
-    protected open val filterIncludeUserAgent: List<String> = listOf()
-    protected open val filterExcludeUserAgent: List<String> = listOf()
-
-    private var userAgent: String? = null
-    private var checkedUa = false
-
-    private val hasUaIntercept by lazy {
-        client.interceptors.toString().contains("uaIntercept")
-    }
-
-    protected val uaIntercept = object : Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response {
-            val useRandomUa = preferences.getBoolean(PREF_KEY_RANDOM_UA, false)
-            val customUa = preferences.getString(PREF_KEY_CUSTOM_UA, "")
-
-            try {
-                if (hasUaIntercept && (useRandomUa || customUa!!.isNotBlank())) {
-                    Log.i("Extension_setting", "$TITLE_RANDOM_UA or $TITLE_CUSTOM_UA option is ENABLED")
-
-                    if (customUa!!.isNotBlank() && useRandomUa.not()) {
-                        userAgent = customUa
-                    }
-
-                    if (userAgent.isNullOrBlank() && !checkedUa) {
-                        val uaResponse = chain.proceed(GET(UA_DB_URL))
-
-                        if (uaResponse.isSuccessful) {
-                            var listUserAgentString =
-                                json.decodeFromString<Map<String, List<String>>>(uaResponse.body.string())["desktop"]
-
-                            if (filterIncludeUserAgent.isNotEmpty()) {
-                                listUserAgentString = listUserAgentString!!.filter {
-                                    filterIncludeUserAgent.any { filter ->
-                                        it.contains(filter, ignoreCase = true)
-                                    }
-                                }
-                            }
-                            if (filterExcludeUserAgent.isNotEmpty()) {
-                                listUserAgentString = listUserAgentString!!.filterNot {
-                                    filterExcludeUserAgent.any { filter ->
-                                        it.contains(filter, ignoreCase = true)
-                                    }
-                                }
-                            }
-                            userAgent = listUserAgentString!!.random()
-                            checkedUa = true
-                        }
-
-                        uaResponse.close()
-                    }
-
-                    if (userAgent.isNullOrBlank().not()) {
-                        val newRequest = chain.request().newBuilder()
-                            .header("User-Agent", userAgent!!.trim())
-                            .build()
-
-                        return chain.proceed(newRequest)
-                    }
-                }
-
-                return chain.proceed(chain.request())
-            } catch (e: Exception) {
-                throw IOException(e.message)
-            }
-        }
-    }
-
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(uaIntercept)
+    override val client = network.cloudflareClient.newBuilder()
+        .setRandomUserAgent(
+            randomUAPrefHelper.getPrefUAType(),
+            randomUAPrefHelper.getPrefCustomUA(),
+        )
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .build()
+
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
 
     protected open val json: Json by injectLazy()
 
@@ -186,9 +112,6 @@ abstract class Madara(
      * changed if needed as some sites modify it to other words.
      */
     protected open val mangaSubString = "manga"
-
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("Referer", "$baseUrl/")
 
     // Popular Manga
 
@@ -1017,57 +940,6 @@ abstract class Madara(
             }
     }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        if (hasUaIntercept) {
-            val prefUserAgent = SwitchPreferenceCompat(screen.context).apply {
-                key = PREF_KEY_RANDOM_UA
-                title = TITLE_RANDOM_UA
-                summary = if (preferences.getBoolean(PREF_KEY_RANDOM_UA, useRandomUserAgentByDefault)) userAgent else ""
-                setDefaultValue(useRandomUserAgentByDefault)
-
-                setOnPreferenceChangeListener { _, newValue ->
-                    val useRandomUa = newValue as Boolean
-                    preferences.edit().putBoolean(PREF_KEY_RANDOM_UA, useRandomUa).apply()
-                    if (!useRandomUa) {
-                        Toast.makeText(screen.context, RESTART_APP_STRING, Toast.LENGTH_LONG).show()
-                    } else {
-                        userAgent = null
-                        if (preferences.getString(PREF_KEY_CUSTOM_UA, "").isNullOrBlank().not()) {
-                            Toast.makeText(screen.context, SUMMARY_CLEANING_CUSTOM_UA, Toast.LENGTH_LONG).show()
-                        }
-                    }
-
-                    preferences.edit().putString(PREF_KEY_CUSTOM_UA, "").apply()
-                    // prefCustomUserAgent.summary = ""
-                    true
-                }
-            }
-            screen.addPreference(prefUserAgent)
-
-            val prefCustomUserAgent = EditTextPreference(screen.context).apply {
-                key = PREF_KEY_CUSTOM_UA
-                title = TITLE_CUSTOM_UA
-                summary = preferences.getString(PREF_KEY_CUSTOM_UA, "")!!.trim()
-                setOnPreferenceChangeListener { _, newValue ->
-                    val customUa = newValue as String
-                    preferences.edit().putString(PREF_KEY_CUSTOM_UA, customUa).apply()
-                    if (customUa.isBlank()) {
-                        Toast.makeText(screen.context, RESTART_APP_STRING, Toast.LENGTH_LONG).show()
-                    } else {
-                        userAgent = null
-                    }
-                    summary = customUa.trim()
-                    prefUserAgent.summary = ""
-                    prefUserAgent.isChecked = false
-                    true
-                }
-            }
-            screen.addPreference(prefCustomUserAgent)
-        } else {
-            Toast.makeText(screen.context, DOESNOT_SUPPORT_STRING, Toast.LENGTH_LONG).show()
-        }
-    }
-
     // https://stackoverflow.com/a/66614516
     private fun String.decodeHex(): ByteArray {
         check(length % 2 == 0) { "Must have an even length" }
@@ -1077,20 +949,12 @@ abstract class Madara(
             .toByteArray()
     }
 
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        randomUAPrefHelper.addPreferenceToScreen(screen)
+    }
+
     companion object {
-        const val TITLE_RANDOM_UA = "Use Random Latest User-Agent"
-        const val PREF_KEY_RANDOM_UA = "pref_key_random_ua"
-
-        const val TITLE_CUSTOM_UA = "Custom User-Agent"
-        const val PREF_KEY_CUSTOM_UA = "pref_key_custom_ua"
-
-        const val SUMMARY_CLEANING_CUSTOM_UA = "$TITLE_CUSTOM_UA cleared."
-
-        const val RESTART_APP_STRING = "Restart Tachiyomi to apply new setting."
-        const val DOESNOT_SUPPORT_STRING = "This extension doesn't support User-Agent options."
         const val URL_SEARCH_PREFIX = "slug:"
-        private const val UA_DB_URL = "https://tachiyomiorg.github.io/user-agents/user-agents.json"
-
         val SALTED = "Salted__".toByteArray(Charsets.UTF_8)
     }
 }

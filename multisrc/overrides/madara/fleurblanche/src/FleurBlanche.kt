@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.pt.fleurblanche
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
-import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -24,8 +23,6 @@ class FleurBlanche : Madara(
         .build()
 
     override val useNewChapterEndpoint = true
-
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
 
     private fun authWarningIntercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())

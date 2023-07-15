@@ -3,13 +3,10 @@ package eu.kanade.tachiyomi.extension.en.shieldmanga
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import okhttp3.OkHttpClient
-import java.util.concurrent.TimeUnit
 
 class ShieldManga : Madara("Shield Manga", "https://shieldmanga.io", "en") {
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
+    override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(1)
         .build()
 

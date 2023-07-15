@@ -14,7 +14,6 @@ import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 class BokugenTranslation : Madara(
     "BokugenTranslation",
@@ -23,8 +22,7 @@ class BokugenTranslation : Madara(
     dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("es")),
 ) {
     private var loadWebView = true
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(uaIntercept)
+    override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor { chain ->
             val request = chain.request()
             val url = request.url.toString()
@@ -56,8 +54,6 @@ class BokugenTranslation : Madara(
             }
             chain.proceed(request)
         }
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
         .rateLimit(1, 1)
         .build()
 

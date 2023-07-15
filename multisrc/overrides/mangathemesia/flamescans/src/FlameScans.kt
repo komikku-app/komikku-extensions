@@ -28,7 +28,6 @@ import uy.kohesive.injekt.api.get
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 open class FlameScans(
     override val baseUrl: String,
@@ -48,9 +47,7 @@ open class FlameScans(
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
+    override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::composedImageIntercept)
         .build()
 

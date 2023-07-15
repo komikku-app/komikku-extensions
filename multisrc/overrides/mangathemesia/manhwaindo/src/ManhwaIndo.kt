@@ -14,7 +14,7 @@ class ManhwaIndo : MangaThemesia(
     SimpleDateFormat("MMMM dd, yyyy", Locale("id")),
 ) {
 
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Referer", baseUrl)
 
     override fun mangaDetailsParse(document: Document) = super.mangaDetailsParse(document).apply {

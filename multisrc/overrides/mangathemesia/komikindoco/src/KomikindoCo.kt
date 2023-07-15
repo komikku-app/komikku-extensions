@@ -5,15 +5,12 @@ import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class KomikindoCo : MangaThemesia("KomikIndo.co", "https://komikindo.co", "id", dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale("id"))) {
     // Formerly "Komikindo.co"
     override val id = 734619124437406170
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
+    override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(4)
         .build()
 

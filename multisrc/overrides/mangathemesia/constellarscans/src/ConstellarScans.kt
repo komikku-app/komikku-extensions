@@ -10,6 +10,7 @@ import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebView
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.lib.dataimage.DataImageInterceptor
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.GET
@@ -148,6 +149,8 @@ class ConstellarScans : MangaThemesia("Constellar Scans", "https://constellarsca
         .header("Sec-Fetch-Mode", "no-cors")
         .header("Sec-Fetch-Site", "same-origin")
         .build()
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) { }
 
     companion object {
         const val UA_DB_URL =

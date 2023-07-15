@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.pt.ichirinnohanayuri
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -29,8 +28,6 @@ class IchirinNoHanaYuri : Madara(
             response
         }
         .build()
-
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
 
     companion object {
         private const val BLOCKING_MESSAGE = "O site está bloqueando o Tachiyomi. " +

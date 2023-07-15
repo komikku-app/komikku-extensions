@@ -17,7 +17,7 @@ class OrigamiOrpheans : MangaThemesia(
     // Scanlator migrated from Madara to WpMangaReader.
     override val versionId = 2
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+    override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
 

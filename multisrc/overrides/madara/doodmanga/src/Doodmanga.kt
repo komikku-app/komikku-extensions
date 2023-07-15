@@ -7,16 +7,12 @@ import okhttp3.OkHttpClient
 import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class Doodmanga : Madara("Doodmanga", "https://www.doodmanga.com", "th", SimpleDateFormat("dd MMMMM yyyy", Locale("th"))) {
     override val filterNonMangaItems = false
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(uaIntercept)
+    override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(ScrambledImageInterceptor)
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
         .build()
 
     override val pageListParseSelector = "div.text-center > p > img, div.text-center > img, div.text-center > script"
