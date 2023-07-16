@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit
 
 class AsuraScansEn : MangaThemesia(
     "Asura Scans",
-    "https://www.asurascans.com",
+    "https://asura.gg",
     "en",
     dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US),
 ) {
