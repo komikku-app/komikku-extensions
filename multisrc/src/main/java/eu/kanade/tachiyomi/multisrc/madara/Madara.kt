@@ -5,7 +5,9 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
-import eu.kanade.tachiyomi.lib.randomua.RandomUserAgentPreference
+import eu.kanade.tachiyomi.lib.randomua.addRandomUAPreferenceToScreen
+import eu.kanade.tachiyomi.lib.randomua.getPrefCustomUA
+import eu.kanade.tachiyomi.lib.randomua.getPrefUAType
 import eu.kanade.tachiyomi.lib.randomua.setRandomUserAgent
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -26,6 +28,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.CacheControl
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -51,20 +54,18 @@ abstract class Madara(
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val randomUAPrefHelper: RandomUserAgentPreference by lazy {
-        RandomUserAgentPreference(preferences)
-    }
-
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient.newBuilder()
-        .setRandomUserAgent(
-            randomUAPrefHelper.getPrefUAType(),
-            randomUAPrefHelper.getPrefCustomUA(),
-        )
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .build()
+    override val client: OkHttpClient by lazy {
+        network.cloudflareClient.newBuilder()
+            .setRandomUserAgent(
+                preferences.getPrefUAType(),
+                preferences.getPrefCustomUA(),
+            )
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
@@ -950,7 +951,7 @@ abstract class Madara(
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        randomUAPrefHelper.addPreferenceToScreen(screen)
+        addRandomUAPreferenceToScreen(screen)
     }
 
     companion object {

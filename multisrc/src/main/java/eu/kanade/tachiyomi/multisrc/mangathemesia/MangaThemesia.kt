@@ -3,7 +3,9 @@ package eu.kanade.tachiyomi.multisrc.mangathemesia
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.randomua.RandomUserAgentPreference
+import eu.kanade.tachiyomi.lib.randomua.addRandomUAPreferenceToScreen
+import eu.kanade.tachiyomi.lib.randomua.getPrefCustomUA
+import eu.kanade.tachiyomi.lib.randomua.getPrefUAType
 import eu.kanade.tachiyomi.lib.randomua.setRandomUserAgent
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -23,6 +25,7 @@ import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -50,22 +53,20 @@ abstract class MangaThemesia(
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val randomUAPrefHelper: RandomUserAgentPreference by lazy {
-        RandomUserAgentPreference(preferences)
-    }
-
     protected open val json: Json by injectLazy()
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient.newBuilder()
-        .setRandomUserAgent(
-            randomUAPrefHelper.getPrefUAType(),
-            randomUAPrefHelper.getPrefCustomUA(),
-        )
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .build()
+    override val client: OkHttpClient by lazy {
+        network.cloudflareClient.newBuilder()
+            .setRandomUserAgent(
+                preferences.getPrefUAType(),
+                preferences.getPrefCustomUA(),
+            )
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
 
     open val projectPageString = "/project"
 
@@ -499,7 +500,7 @@ abstract class MangaThemesia(
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        randomUAPrefHelper.addPreferenceToScreen(screen)
+        addRandomUAPreferenceToScreen(screen)
     }
 
     companion object {
