@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.zh.manhuaren
 
 import android.text.format.DateFormat
+import android.util.Base64
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -12,18 +13,26 @@ import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okio.Buffer
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URLEncoder
+import java.security.KeyFactory
 import java.security.MessageDigest
+import java.security.spec.X509EncodedKeySpec
 import java.text.SimpleDateFormat
-import java.util.ArrayList
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.TimeUnit.MINUTES
+import javax.crypto.Cipher
+import kotlin.random.Random
+import kotlin.random.nextUBytes
 
 class Manhuaren : HttpSource() {
     override val lang = "zh"
@@ -34,45 +43,188 @@ class Manhuaren : HttpSource() {
     private val pageSize = 20
     private val baseHttpUrl = baseUrl.toHttpUrlOrNull()!!
 
-    private val c = "4e0a48e1c0b54041bce9c8f0e036124d"
-    private val cacheControl: CacheControl by lazy { CacheControl.Builder().maxAge(10, MINUTES).build() }
-    private val userId = (100000000..4294967295).random().toString()
+    private val gsnSalt = "4e0a48e1c0b54041bce9c8f0e036124d"
+    private val encodedPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmFCg289dTws27v8GtqIffkP4zgFR+MYIuUIeVO5AGiBV0rfpRh5gg7i8RrT12E9j6XwKoe3xJz1khDnPc65P5f7CJcNJ9A8bj7Al5K4jYGxz+4Q+n0YzSllXPit/Vz/iW5jFdlP6CTIgUVwvIoGEL2sS4cqqqSpCDKHSeiXh9CtMsktc6YyrSN+8mQbBvoSSew18r/vC07iQiaYkClcs7jIPq9tuilL//2uR9kWn5jsp8zHKVjmXuLtHDhM9lObZGCVJwdlN2KDKTh276u/pzQ1s5u8z/ARtK26N8e5w8mNlGcHcHfwyhjfEQurvrnkqYH37+12U3jGk5YNHGyOPcwIDAQAB"
+    private val imei: String by lazy(mode = LazyThreadSafetyMode.SYNCHRONIZED) { generateIMEI() }
+    private val token: String by lazy(mode = LazyThreadSafetyMode.SYNCHRONIZED) { fetchToken() }
+    private var userId = "-1"
+    private var lastUsedTime = ""
 
-    private fun generateGSNHash(url: HttpUrl): String {
-        var s = c + "GET"
-        url.queryParameterNames.toSortedSet().forEach {
-            if (it != "gsn") {
-                s += it
-                s += urlEncode(url.queryParameterValues(it)[0])
-            }
+    private fun randomNumber(length: Int): String {
+        var str = ""
+        for (i in 1..length) {
+            str += (0..9).random().toString()
         }
-        s += c
-        return hashString("MD5", s)
+        return str
     }
 
-    private fun myGet(url: HttpUrl): Request {
+    private fun addLuhnCheckDigit(str: String): String {
+        var sum = 0
+        str.toCharArray().forEachIndexed { i, it ->
+            var v = Character.getNumericValue(it)
+            sum += if (i % 2 == 0) {
+                v
+            } else {
+                v *= 2
+                if (v < 10) {
+                    v
+                } else {
+                    v - 9
+                }
+            }
+        }
+        var checkDigit = sum % 10
+        if (checkDigit != 0) {
+            checkDigit = 10 - checkDigit
+        }
+
+        return "$str$checkDigit"
+    }
+
+    private fun generateIMEI(): String {
+        return addLuhnCheckDigit(randomNumber(14))
+    }
+
+    private fun generateSimSerialNumber(): String {
+        return addLuhnCheckDigit("891253${randomNumber(12)}")
+    }
+
+    private fun fetchToken(): String {
+        val res = client.newCall(getAnonyUser()).execute()
+        val body = JSONObject(res.body.string())
+        val response = body.getJSONObject("response")
+        val tokenResult = response.getJSONObject("tokenResult")
+        val scheme = tokenResult.getString("scheme")
+        val parameter = tokenResult.getString("parameter")
+
+        userId = response.getString("userId")
+        lastUsedTime = generateLastUsedTime()
+        return "$scheme $parameter"
+    }
+
+    private fun generateLastUsedTime(): String {
+        return ((Date().time / 1000).toInt() * 1000).toString()
+    }
+
+    private fun encrypt(message: String): String {
+        val x509EncodedKeySpec = X509EncodedKeySpec(Base64.decode(encodedPublicKey, Base64.DEFAULT))
+        val publicKey = KeyFactory.getInstance("RSA").generatePublic(x509EncodedKeySpec)
+        val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey)
+
+        return Base64.encodeToString(cipher.doFinal(message.toByteArray()), Base64.NO_WRAP)
+    }
+
+    @OptIn(ExperimentalUnsignedTypes::class)
+    private fun getAnonyUser(): Request {
+        val url = baseHttpUrl.newBuilder()
+            .addPathSegments("v1/user/createAnonyUser2")
+            .build()
+
+        val simSerialNumber = generateSimSerialNumber()
+        val mac = Random.nextUBytes(6)
+            .joinToString(":") { it.toString(16).padStart(2, '0') }
+        val androidId = Random.nextUBytes(8)
+            .joinToString("") { it.toString(16).padStart(2, '0') }
+            .replaceFirst("^0+".toRegex(), "")
+            .uppercase()
+
+        val keysMap = ArrayList<HashMap<String, Any?>>().apply {
+            add(
+                HashMap<String, Any?>().apply {
+                    put("key", encrypt(imei))
+                    put("keyType", "0")
+                },
+            )
+            add(
+                HashMap<String, Any?>().apply {
+                    put("key", encrypt("mac: $mac"))
+                    put("keyType", "1")
+                },
+            )
+            add(
+                HashMap<String, Any?>().apply {
+                    put("key", encrypt(androidId)) // https://developer.android.com/reference/android/provider/Settings.Secure#ANDROID_ID
+                    put("keyType", "2")
+                },
+            )
+            add(
+                HashMap<String, Any?>().apply {
+                    put("key", encrypt(simSerialNumber)) // https://developer.android.com/reference/android/telephony/TelephonyManager#getSimSerialNumber()
+                    put("keyType", "3")
+                },
+            )
+            add(
+                HashMap<String, Any?>().apply {
+                    put("key", encrypt(UUID.randomUUID().toString()))
+                    put("keyType", "-1")
+                },
+            )
+        }
+        val bodyMap = HashMap<String, Any?>().apply {
+            put("keys", keysMap)
+        }
+
+        return myPost(
+            url,
+            JSONObject(bodyMap).toString()
+                .replaceFirst("^/+".toRegex(), "")
+                .toRequestBody("application/json".toMediaTypeOrNull()),
+        )
+    }
+
+    private fun addGsnHash(request: Request): Request {
+        val isPost = request.method == "POST"
+
+        val params = request.url.queryParameterNames.toMutableSet()
+        val bodyBuffer = Buffer()
+        if (isPost) {
+            params.add("body")
+            request.body?.writeTo(bodyBuffer)
+        }
+
+        var str = gsnSalt + request.method
+        params.toSortedSet().forEach {
+            if (it != "gsn") {
+                val value = if (isPost && it == "body") bodyBuffer.readUtf8() else request.url.queryParameter(it)
+                str += "$it${urlEncode(value)}"
+            }
+        }
+        str += gsnSalt
+
+        val gsn = hashString("MD5", str)
+        val newUrl = request.url.newBuilder()
+            .addQueryParameter("gsn", gsn)
+            .build()
+
+        return request.newBuilder()
+            .url(newUrl)
+            .build()
+    }
+
+    private fun myRequest(url: HttpUrl, method: String, body: RequestBody?): Request {
         val now = DateFormat.format("yyyy-MM-dd+HH:mm:ss", Date()).toString()
-        val realUrl = url.newBuilder()
+        val newUrl = url.newBuilder()
             .setQueryParameter("gsm", "md5")
             .setQueryParameter("gft", "json")
             .setQueryParameter("gak", "android_manhuaren2")
             .setQueryParameter("gat", "")
             .setQueryParameter("gui", userId)
-            .setQueryParameter("gts", now) // timestamp yyyy-MM-dd+HH:mm:ss
+            .setQueryParameter("gts", now)
             .setQueryParameter("gut", "0") // user type
             .setQueryParameter("gem", "1")
-            .setQueryParameter("gaui", "1")
+            .setQueryParameter("gaui", userId)
             .setQueryParameter("gln", "") // location
             .setQueryParameter("gcy", "US") // country
             .setQueryParameter("gle", "zh") // language
-            .setQueryParameter("gcl", "dm5") // umeng channel
+            .setQueryParameter("gcl", "dm5") // Umeng channel
             .setQueryParameter("gos", "1") // OS (int)
             .setQueryParameter("gov", "22_5.1.1") // "{Build.VERSION.SDK_INT}_{Build.VERSION.RELEASE}"
             .setQueryParameter("gav", "7.0.1") // app version
-            .setQueryParameter("gdi", "358240051111110") // device info
-            .setQueryParameter("gfcl", "dm5") // umeng channel config
-            .setQueryParameter("gfut", "1688140800000") // first used time
-            .setQueryParameter("glut", "1688140800000") // last used time
+            .setQueryParameter("gdi", imei)
+            .setQueryParameter("gfcl", "dm5") // Umeng channel config
+            .setQueryParameter("gfut", lastUsedTime) // first used time
+            .setQueryParameter("glut", lastUsedTime) // last used time
             .setQueryParameter("gpt", "com.mhr.mangamini") // package name
             .setQueryParameter("gciso", "us") // https://developer.android.com/reference/android/telephony/TelephonyManager#getSimCountryIso()
             .setQueryParameter("glot", "") // longitude
@@ -87,11 +239,28 @@ class Manhuaren : HttpSource() {
             .setQueryParameter("glcn", "") // country name
             .setQueryParameter("glcc", "") // country code
             .setQueryParameter("gflcc", "") // first location country code
+            .build()
 
-        return Request.Builder()
-            .url(realUrl.setQueryParameter("gsn", generateGSNHash(realUrl.build())).build())
-            .headers(headers)
-            .cacheControl(cacheControl)
+        return addGsnHash(
+            Request.Builder()
+                .method(method, body)
+                .url(newUrl)
+                .headers(headers)
+                .build(),
+        )
+    }
+
+    private fun myPost(url: HttpUrl, body: RequestBody?): Request {
+        return myRequest(url, "POST", body).newBuilder()
+            .cacheControl(CacheControl.Builder().noCache().noStore().build())
+            .build()
+    }
+
+    private fun myGet(url: HttpUrl): Request {
+        val authorization = token
+        return myRequest(url, "GET", null).newBuilder()
+            .addHeader("Authorization", authorization)
+            .cacheControl(CacheControl.Builder().maxAge(10, MINUTES).build())
             .build()
     }
 
@@ -100,27 +269,27 @@ class Manhuaren : HttpSource() {
             put("at", -1)
             put("av", "7.0.1") // app version
             put("ciso", "us") // https://developer.android.com/reference/android/telephony/TelephonyManager#getSimCountryIso()
-            put("cl", "dm5") // umeng channel
+            put("cl", "dm5") // Umeng channel
             put("cy", "US") // country
-            put("di", "358240051111110") // device info
-            put("dm", "Android SDK built for x86") // Build.MODEL
-            put("fcl", "dm5") // umeng channel config
+            put("di", imei)
+            put("dm", "Pixel 6") // https://developer.android.com/reference/android/os/Build#MODEL
+            put("fcl", "dm5") // Umeng channel config
             put("ft", "mhr") // from type
-            put("fut", "1688140800000") // first used time
+            put("fut", lastUsedTime) // first used time
             put("installation", "dm5")
             put("le", "zh") // language
             put("ln", "") // location
-            put("lut", "1688140800000") // last used time
+            put("lut", lastUsedTime) // last used time
             put("nt", 4)
             put("os", 1) // OS (int)
-            put("ov", "22_5.1.1") // "{Build.VERSION.SDK_INT}_{Build.VERSION.RELEASE}"
+            put("ov", "33_13") // "{Build.VERSION.SDK_INT}_{Build.VERSION.RELEASE}"
             put("pt", "com.mhr.mangamini") // package name
-            put("rn", "1440x2952") // screen "{width}x{height}"
+            put("rn", "1080x2400") // screen "{width}x{height}"
             put("st", 0)
         }
         val yqppMap = HashMap<String, Any?>().apply {
             put("ciso", "us") // https://developer.android.com/reference/android/telephony/TelephonyManager#getSimCountryIso()
-            put("laut", "0") // is allow location (0 or 1)
+            put("laut", "0") // is allow location ("0" or "1")
             put("lot", "") // longitude
             put("lat", "") // latitude
             put("cut", "GMT+8") // time zone
@@ -140,7 +309,7 @@ class Manhuaren : HttpSource() {
             add("yq_is_anonymous", "1")
             add("x-request-id", UUID.randomUUID().toString())
             add("X-Yq-Yqpp", JSONObject(yqppMap).toString())
-            add("User-Agent", "Mozilla/5.0 (Linux; Android 5.1.1; Android SDK built for x86 Build/LMY48X) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/39.0.0.0 Mobile Safari/537.36")
+            add("User-Agent", "Mozilla/5.0 (Linux; Android 13; Pixel 6 Build/TQ2A.230505.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/115.0.5790.21 Mobile Safari/537.36")
         }
     }
 
@@ -161,7 +330,7 @@ class Manhuaren : HttpSource() {
     }
 
     private fun urlEncode(str: String?): String {
-        return URLEncoder.encode(str, "UTF-8")
+        return URLEncoder.encode(str ?: "", "UTF-8")
             .replace("+", "%20")
             .replace("%7E", "~")
             .replace("*", "%2A")
@@ -202,7 +371,7 @@ class Manhuaren : HttpSource() {
             .addQueryParameter("start", (pageSize * (page - 1)).toString())
             .addQueryParameter("limit", pageSize.toString())
             .addQueryParameter("sort", "0")
-            .addPathSegments("/v2/manga/getCategoryMangas")
+            .addPathSegments("v2/manga/getCategoryMangas")
             .build()
         return myGet(url)
     }
@@ -214,7 +383,7 @@ class Manhuaren : HttpSource() {
             .addQueryParameter("start", (pageSize * (page - 1)).toString())
             .addQueryParameter("limit", pageSize.toString())
             .addQueryParameter("sort", "1")
-            .addPathSegments("/v2/manga/getCategoryMangas")
+            .addPathSegments("v2/manga/getCategoryMangas")
             .build()
         return myGet(url)
     }
@@ -233,30 +402,33 @@ class Manhuaren : HttpSource() {
             .addQueryParameter("limit", pageSize.toString())
         if (query != "") {
             url = url.addQueryParameter("keywords", query)
-                .addPathSegments("/v1/search/getSearchManga")
-            return myGet(url.build())
-        }
-        filters.forEach { filter ->
-            when (filter) {
-                is SortFilter -> url = url.setQueryParameter("sort", filter.getId())
-                is CategoryFilter -> {
-                    url = url.setQueryParameter("subCategoryId", filter.getId())
-                        .setQueryParameter("subCategoryType", filter.getType())
+                .addPathSegments("v1/search/getSearchManga")
+        } else {
+            filters.forEach { filter ->
+                when (filter) {
+                    is SortFilter -> {
+                        url = url.setQueryParameter("sort", filter.getId())
+                    }
+                    is CategoryFilter -> {
+                        url = url.setQueryParameter("subCategoryId", filter.getId())
+                            .setQueryParameter("subCategoryType", filter.getType())
+                    }
+                    else -> {}
                 }
-                else -> {}
             }
+            url = url.addPathSegments("v2/manga/getCategoryMangas")
         }
-        url = url.addPathSegments("/v2/manga/getCategoryMangas")
         return myGet(url.build())
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
         val res = response.body.string()
         val obj = JSONObject(res).getJSONObject("response")
-        if (obj.has("result")) {
-            return mangasFromJSONArray(obj.getJSONArray("result"))
-        }
-        return mangasFromJSONArray(obj.getJSONArray("mangas"))
+        return mangasFromJSONArray(
+            obj.getJSONArray(
+                if (obj.has("result")) "result" else "mangas",
+            ),
+        )
     }
 
     override fun mangaDetailsParse(response: Response) = SManga.create().apply {
