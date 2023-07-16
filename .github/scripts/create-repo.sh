@@ -30,7 +30,10 @@ for APK in ${APKS[@]}; do
     LANG=$(echo $APK | grep -Po "tachiyomi-\K[^\.]+")
 
     ICON=$(echo "$BADGING" | grep -Po "application-icon-320.*'\K[^']+")
-    unzip -p $APK $ICON > icon/${FILENAME%.*}.png
+    unzip -p $APK $ICON > icon/${PKGNAME}.png
+
+    # TODO: legacy icons; remove after a while
+    cp icon/${PKGNAME}.png icon/${FILENAME%.*}.png
 
     SOURCE_INFO=$(jq ".[\"$PKGNAME\"]" < ../output.json)
 
