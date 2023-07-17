@@ -10,7 +10,9 @@ import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getNumPages
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTagDescription
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTags
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTime
-import eu.kanade.tachiyomi.lib.randomua.UserAgentType
+import eu.kanade.tachiyomi.lib.randomua.addRandomUAPreferenceToScreen
+import eu.kanade.tachiyomi.lib.randomua.getPrefCustomUA
+import eu.kanade.tachiyomi.lib.randomua.getPrefUAType
 import eu.kanade.tachiyomi.lib.randomua.setRandomUserAgent
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -26,6 +28,7 @@ import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -47,16 +50,19 @@ open class NHentai(
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient.newBuilder()
-        .setRandomUserAgent(
-            userAgentType = UserAgentType.MOBILE,
-            filterInclude = listOf("chrome"),
-        )
-        .rateLimit(4)
-        .build()
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    override val client: OkHttpClient by lazy {
+        network.cloudflareClient.newBuilder()
+            .setRandomUserAgent(
+                userAgentType = preferences.getPrefUAType(),
+                customUA = preferences.getPrefCustomUA(),
+                filterInclude = listOf("chrome"),
+            )
+            .rateLimit(4)
+            .build()
     }
 
     private var displayFullTitle: Boolean = when (preferences.getString(TITLE_PREF, "full")) {
@@ -84,6 +90,8 @@ open class NHentai(
                 true
             }
         }.also(screen::addPreference)
+
+        addRandomUAPreferenceToScreen(screen)
     }
 
     override fun latestUpdatesRequest(page: Int) = GET(if (nhLang.isBlank()) "$baseUrl/?page=$page" else "$baseUrl/language/$nhLang/?page=$page", headers)
