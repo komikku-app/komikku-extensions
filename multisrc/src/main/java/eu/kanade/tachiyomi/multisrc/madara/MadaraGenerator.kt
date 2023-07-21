@@ -407,7 +407,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Tatakae Scan", "https://tatakaescan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Taurus Fansub", "https://taurusfansub.com", "es"),
         SingleLang("Tecno Scan", "https://tecnoscann.com", "es"),
-        SingleLang("TeenManhua", "https://teenmanhua.com", "en"),
+        SingleLang("TeenManhua", "https://teenmanhua.com", "en", overrideVersionCode = 1),
         SingleLang("Temple Scan", "https://templescan.net", "en"),
         SingleLang("The Beginning After The End", "https://www.thebeginningaftertheend.fr", "fr", overrideVersionCode = 1),
         SingleLang("The Guild", "https://theguildscans.com", "en"),

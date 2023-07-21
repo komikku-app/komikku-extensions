@@ -9,4 +9,6 @@ class TeenManhua : Madara(
     "https://teenmanhua.com",
     "en",
     dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US),
-)
+) {
+    override val filterNonMangaItems = false
+}
