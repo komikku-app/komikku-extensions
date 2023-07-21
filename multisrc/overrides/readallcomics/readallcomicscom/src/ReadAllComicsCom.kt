@@ -17,6 +17,8 @@ class ReadAllComicsCom : ReadAllComics("ReadAllComics", "https://readallcomics.c
         }
     }
 
+    override fun pageListSelector() = "body img:not(body div[id=\"logo\"] img)"
+
     companion object {
         private val titleRegex = Regex("""^([a-zA-Z_.\s\-–:]*)""")
     }
