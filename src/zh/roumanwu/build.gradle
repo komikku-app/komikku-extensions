@@ -6,7 +6,7 @@ ext {
     extName = 'Roumanwu'
     pkgNameSuffix = 'zh.roumanwu'
     extClass = '.Roumanwu'
-    extVersionCode = 4
+    extVersionCode = 5
     isNsfw = true
 }
 
