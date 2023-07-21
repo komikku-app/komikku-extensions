@@ -219,7 +219,7 @@ class Manhuaren : HttpSource() {
             .setQueryParameter("gle", "zh") // language
             .setQueryParameter("gcl", "dm5") // Umeng channel
             .setQueryParameter("gos", "1") // OS (int)
-            .setQueryParameter("gov", "22_5.1.1") // "{Build.VERSION.SDK_INT}_{Build.VERSION.RELEASE}"
+            .setQueryParameter("gov", "33_13") // "{Build.VERSION.SDK_INT}_{Build.VERSION.RELEASE}"
             .setQueryParameter("gav", "7.0.1") // app version
             .setQueryParameter("gdi", imei)
             .setQueryParameter("gfcl", "dm5") // Umeng channel config
@@ -272,7 +272,7 @@ class Manhuaren : HttpSource() {
             put("cl", "dm5") // Umeng channel
             put("cy", "US") // country
             put("di", imei)
-            put("dm", "Pixel 6") // https://developer.android.com/reference/android/os/Build#MODEL
+            put("dm", "Pixel 6 Pro") // https://developer.android.com/reference/android/os/Build#MODEL
             put("fcl", "dm5") // Umeng channel config
             put("ft", "mhr") // from type
             put("fut", lastUsedTime) // first used time
@@ -280,11 +280,11 @@ class Manhuaren : HttpSource() {
             put("le", "zh") // language
             put("ln", "") // location
             put("lut", lastUsedTime) // last used time
-            put("nt", 4)
+            put("nt", 3)
             put("os", 1) // OS (int)
             put("ov", "33_13") // "{Build.VERSION.SDK_INT}_{Build.VERSION.RELEASE}"
             put("pt", "com.mhr.mangamini") // package name
-            put("rn", "1080x2400") // screen "{width}x{height}"
+            put("rn", "1400x3120") // screen "{width}x{height}"
             put("st", 0)
         }
         val yqppMap = HashMap<String, Any?>().apply {
@@ -309,7 +309,7 @@ class Manhuaren : HttpSource() {
             add("yq_is_anonymous", "1")
             add("x-request-id", UUID.randomUUID().toString())
             add("X-Yq-Yqpp", JSONObject(yqppMap).toString())
-            add("User-Agent", "Mozilla/5.0 (Linux; Android 13; Pixel 6 Build/TQ2A.230505.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/115.0.5790.21 Mobile Safari/537.36")
+            add("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 13; Pixel 6 Pro Build/TQ3A.230705.001)")
         }
     }
 
