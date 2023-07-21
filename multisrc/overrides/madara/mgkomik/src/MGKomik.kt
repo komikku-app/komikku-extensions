@@ -10,4 +10,6 @@ class MGKomik : Madara("MG Komik", "https://mgkomik.com", "id", SimpleDateFormat
     override val mangaSubString = "komik"
 
     override fun searchMangaNextPageSelector() = "a.page.larger"
+
+    override fun searchPage(page: Int): String = "halaman/$page/"
 }
