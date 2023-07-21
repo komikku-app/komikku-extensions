@@ -14,6 +14,7 @@ class MangaCatalogGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang("Read Attack on Titan Shingeki no Kyojin Manga", "https://ww8.readsnk.com", "en", className = "ReadAttackOnTitanShingekiNoKyojinManga", overrideVersionCode = 4),
         SingleLang("Read Berserk Manga", "https://readberserk.com", "en"),
+        SingleLang("Read Black Clover Manga Online", "https://ww7.readblackclover.com", "en"),
         SingleLang("Read Boku no Hero Academia My Hero Academia Manga", "https://ww6.readmha.com", "en", className = "ReadBokuNoHeroAcademiaMyHeroAcademiaManga", overrideVersionCode = 2),
         SingleLang("Read Chainsaw Man Manga Online", "https://ww1.readchainsawman.com", "en"),
         SingleLang("Read Dr. Stone Manga Online", "https://ww3.readdrstone.com", "en", className = "ReadDrStoneMangaOnline"),
