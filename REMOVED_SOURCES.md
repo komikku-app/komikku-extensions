@@ -38,8 +38,6 @@
 - Knightnoscanlation https://github.com/tachiyomiorg/tachiyomi-extensions/issues/4240
 - KomikTap/KomikTap.in https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6133
 - Luminous Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/9923
-- Mangagecesi https://github.com/tachiyomiorg/tachiyomi-extensions/issues/5367
-- Manganoon https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13866
 - MangaPro https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13989
 - Mangawow https://github.com/tachiyomiorg/tachiyomi-extensions/issues/5367
 - MHScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15319
@@ -50,4 +48,3 @@
 - SetsuScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/11040
 - ShinobiScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14457
 - XXX Yaoi https://github.com/tachiyomiorg/tachiyomi-extensions/issues/9535
-- Yaoi Fan Clube https://github.com/tachiyomiorg/tachiyomi-extensions/issues/9605
