@@ -43,16 +43,12 @@ class Niceoppai : ParsedHttpSource() {
         return GET("$baseUrl/manga_list/all/any/most-popular-monthly/$page", headers)
     }
     override fun popularMangaSelector() = "div.nde"
-    override fun popularMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        manga.title = element.select("div.det a").text()
+    override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
+        title = element.selectFirst("div.det a")!!.text()
         element.select("div.cvr").let {
-            manga.setUrlWithoutDomain(it.select("div.img_wrp a").attr("href"))
-            manga.thumbnail_url = it.select("img").attr("abs:src")
-            manga.initialized = false
+            setUrlWithoutDomain(it.select("a").attr("href"))
+            thumbnail_url = it.select("img").attr("abs:src")
         }
-
-        return manga
     }
     override fun popularMangaNextPageSelector() = "ul.pgg li a"
 
