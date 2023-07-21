@@ -22,7 +22,7 @@ class FMReaderGenerator : ThemeSourceGenerator {
         SingleLang("Say Truyen", "https://saytruyenvip.com", "vi", overrideVersionCode = 3),
         SingleLang("WeLoveManga", "https://weloma.art", "ja", pkgName = "rawlh", overrideVersionCode = 4),
         SingleLang("Manga1000", "https://manga1000.top", "ja"),
-        SingleLang("WeLoveMangaOne", "https://welovemanga.one", "ja"),
+        SingleLang("WeLoveMangaOne", "https://welovemanga.one", "ja", isNsfw = true, overrideVersionCode = 1),
     )
 
     companion object {

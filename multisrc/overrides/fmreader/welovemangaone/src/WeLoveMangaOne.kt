@@ -3,12 +3,28 @@ package eu.kanade.tachiyomi.extension.ja.welovemangaone
 import eu.kanade.tachiyomi.multisrc.fmreader.FMReader
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.Request
 import org.jsoup.nodes.Element
 import java.util.Calendar
 
 class WeLoveMangaOne : FMReader("WeLoveMangaOne", "https://welovemanga.one", "ja") {
     override fun latestUpdatesRequest(page: Int) =
         GET("$baseUrl/manga-list.html?page=$page&sort=last_update")
+
+    override fun chapterListRequest(manga: SManga): Request {
+        val mangaId = MID_URL_REGEX.find(manga.url)
+            ?.groupValues?.get(1)
+            ?: throw Exception("Could not find manga id")
+
+        val xhrUrl = "$baseUrl/app/manga/controllers/cont.Listchapter.php".toHttpUrl().newBuilder()
+            .addQueryParameter("mid", mangaId)
+            .build()
+
+        return GET(xhrUrl, headers)
+    }
 
     override fun chapterFromElement(element: Element, mangaTitle: String): SChapter {
         return SChapter.create().apply {
@@ -40,5 +56,25 @@ class WeLoveMangaOne : FMReader("WeLoveMangaOne", "https://welovemanga.one", "ja
         }
 
         return chapterDate.timeInMillis
+    }
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        val request = super.pageListRequest(chapter)
+        val response = client.newCall(request).execute()
+        val document = response.asJsoup()
+
+        val chapterId = document.selectFirst("#chapter")
+            ?.`val`()
+            ?: throw Exception("Could not find chapter id")
+
+        val xhrUrl = "$baseUrl/app/manga/controllers/cont.listImg.php".toHttpUrl().newBuilder()
+            .addQueryParameter("cid", chapterId)
+            .build()
+
+        return GET(xhrUrl, headers)
+    }
+
+    companion object {
+        private val MID_URL_REGEX = "(\\d+)/".toRegex()
     }
 }
