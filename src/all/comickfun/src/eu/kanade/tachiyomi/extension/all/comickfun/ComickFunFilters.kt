@@ -165,6 +165,8 @@ private val getTypeList: List<CheckBox> = listOf(
 
 private val getCreatedAtList: Array<Pair<String, String>> = arrayOf(
     Pair("", ""),
+    Pair("3 days", "3"),
+    Pair("7 days", "7"),
     Pair("30 days", "30"),
     Pair("3 months", "90"),
     Pair("6 months", "180"),
@@ -177,4 +179,5 @@ private val getSortsList: Array<Pair<String, String>> = arrayOf(
     Pair("Most views", "view"),
     Pair("High rating", "rating"),
     Pair("Last updated", "uploaded"),
+    Pair("Newest", "created_at"),
 )
