@@ -121,7 +121,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Tsundoku Traduções", "https://tsundoku.com.br", "pt-BR", className = "TsundokuTraducoes", overrideVersionCode = 9),
         SingleLang("TukangKomik", "https://tukangkomik.id", "id", overrideVersionCode = 1),
         SingleLang("TurkToon", "https://turktoon.com", "tr"),
-        SingleLang("Uzay Manga", "https://uzaymanga.com", "tr", overrideVersionCode = 4),
+        SingleLang("Uzay Manga", "https://uzaymanga.com", "tr", overrideVersionCode = 5),
         SingleLang("Walpurgi Scan", "https://www.walpurgiscan.com", "it", overrideVersionCode = 6, className = "WalpurgisScan", pkgName = "walpurgisscan"),
         SingleLang("West Manga", "https://westmanga.info", "id", overrideVersionCode = 1),
         SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 10),

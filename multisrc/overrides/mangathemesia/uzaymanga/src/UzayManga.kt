@@ -4,4 +4,7 @@ import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class UzayManga : MangaThemesia("Uzay Manga", "https://uzaymanga.com", "tr", dateFormat = SimpleDateFormat("MMM d, yyyy", Locale("tr")))
+class UzayManga : MangaThemesia("Uzay Manga", "https://uzaymanga.com", "tr", dateFormat = SimpleDateFormat("MMM d, yyyy", Locale("tr"))) {
+    override fun headersBuilder() = super.headersBuilder()
+        .add("referer", "$baseUrl/")
+}
