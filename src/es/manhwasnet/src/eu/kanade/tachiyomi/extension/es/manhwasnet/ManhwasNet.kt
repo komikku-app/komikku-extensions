@@ -147,7 +147,7 @@ class ManhwasNet : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("#chapter_imgs img").mapIndexed { i, img ->
+        return document.select("#chapter_imgs img[src][src!=\"\"]").mapIndexed { i, img ->
             val url = img.attr("abs:src")
             Page(i, imageUrl = url)
         }
