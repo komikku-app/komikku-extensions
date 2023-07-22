@@ -201,7 +201,7 @@ abstract class GroupLe(
 
     private fun chapterListParse(response: Response, manga: SManga): List<SChapter> {
         val document = response.asJsoup()
-        if ((document.select(".expandable.hide-dn").isNotEmpty() || document.select("img.logo").first()?.attr("title")?.contains("Allhentai") == true) && document.select(".user-avatar").isNullOrEmpty()) {
+        if ((document.select(".expandable.hide-dn").isNotEmpty() && document.select(".user-avatar").isNullOrEmpty() && document.toString().contains("current_user_country_code = 'RU'")) || (document.select("img.logo").first()?.attr("title")?.contains("Allhentai") == true && document.select(".user-avatar").isNullOrEmpty())) {
             throw Exception("Для просмотра контента необходима авторизация через WebView\uD83C\uDF0E")
         }
         return document.select(chapterListSelector()).map { chapterFromElement(it, manga) }
