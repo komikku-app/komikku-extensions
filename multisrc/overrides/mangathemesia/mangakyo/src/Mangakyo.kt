@@ -4,7 +4,7 @@ import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import okhttp3.OkHttpClient
 
-class Mangakyo : MangaThemesia("Mangakyo", "https://mangakyo.id", "id") {
+class Mangakyo : MangaThemesia("Mangakyo", "https://mangakyo.org", "id") {
 
     override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(4)
