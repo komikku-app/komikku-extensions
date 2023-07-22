@@ -938,36 +938,32 @@ open class BatoTo(
         private const val MIRROR_PREF_TITLE = "Mirror"
         private val MIRROR_PREF_ENTRIES = arrayOf(
             "bato.to",
-            "batocc.com",
+            "batocomic.com",
+            "batocomic.net",
+            "batocomic.org",
             "batotoo.com",
             "batotwo.com",
             "battwo.com",
             "comiko.net",
+            "comiko.org",
             "mangatoto.com",
             "mangatoto.net",
             "mangatoto.org",
-            "mycordant.co.uk",
+            "readtoto.com",
+            "readtoto.net",
+            "readtoto.org",
             "dto.to",
             "hto.to",
             "mto.to",
             "wto.to",
+            "xbato.com",
+            "xbato.net",
+            "xbato.org",
+            "zbato.com",
+            "zbato.net",
+            "zbato.org",
         )
-        private val MIRROR_PREF_ENTRY_VALUES = arrayOf(
-            "https://bato.to",
-            "https://batocc.com",
-            "https://batotoo.com",
-            "https://batotwo.com",
-            "https://battwo.com",
-            "https://comiko.net",
-            "https://mangatoto.com",
-            "https://mangatoto.net",
-            "https://mangatoto.org",
-            "https://mycordant.co.uk",
-            "https://dto.to",
-            "https://hto.to",
-            "https://mto.to",
-            "https://wto.to",
-        )
+        private val MIRROR_PREF_ENTRY_VALUES = MIRROR_PREF_ENTRIES.map { "https://$it" }.toTypedArray()
         private val MIRROR_PREF_DEFAULT_VALUE = MIRROR_PREF_ENTRY_VALUES[0]
 
         private const val ALT_CHAPTER_LIST_PREF_KEY = "ALT_CHAPTER_LIST"
