@@ -366,7 +366,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("ReadMangaFree", "https://readmangafree.net", "en", isNsfw = true),
         SingleLang("ReadManhua", "https://readmanhua.net", "en", overrideVersionCode = 2),
         SingleLang("Remangas", "https://remangas.net", "pt-BR"),
-        SingleLang("Rh2PlusManga", "https://www.rh2plusmanga.com", "th", overrideVersionCode = 4),
+        SingleLang("Rh2PlusManga", "https://www.rh2plusmanga.com", "th", isNsfw = true, overrideVersionCode = 5),
         SingleLang("Rio2 Manga", "https://rio2manga.com", "en"),
         SingleLang("Romantik Manga", "https://romantikmanga.com", "tr"),
         SingleLang("RWBY Scan", "https://rwbyscan.site", "pt-BR", isNsfw = true, className = "RwbyScan"),
