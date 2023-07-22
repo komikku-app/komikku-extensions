@@ -8,11 +8,13 @@ import eu.kanade.tachiyomi.extension.BuildConfig
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
@@ -22,9 +24,9 @@ class MangaSwat : MangaThemesia(
     "MangaSwat",
     "https://swatmanga.me",
     "ar",
-    dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US),
+    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("ar")),
 ) {
-    private val defaultBaseUrl = "https://swatmanga.me"
+    private val defaultBaseUrl = "https://swatop.club"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
@@ -54,6 +56,13 @@ class MangaSwat : MangaThemesia(
     }
 
     override fun chapterListSelector() = "div.bxcl li, ul div:has(span.lchx)"
+
+    override fun chapterFromElement(element: Element) = SChapter.create().apply {
+        val urlElements = element.select("a")
+        setUrlWithoutDomain(urlElements.attr("href"))
+        name = element.select(".lch a, .chapternum").text().ifBlank { urlElements.last()!!.text() }
+        date_upload = element.selectFirst(".chapter-date")?.text().parseChapterDate()
+    }
 
     @Serializable
     data class TSReader(
