@@ -31,7 +31,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("CosmicScans.id", "https://cosmicscans.id", "id", overrideVersionCode = 1, className = "CosmicScansID"),
         SingleLang("Diskus Scan", "https://diskusscan.com", "pt-BR", overrideVersionCode = 7),
         SingleLang("Dojing.net", "https://dojing.net", "id", isNsfw = true, className = "DojingNet"),
-        SingleLang("DuniaKomik.id", "https://duniakomik.id", "id", className = "DuniaKomikId"),
+        SingleLang("DuniaKomik.id", "https://duniakomik.id", "id", className = "DuniaKomikId", overrideVersionCode = 1),
         SingleLang("ElarcPage", "https://elarcpage.com", "en"),
         SingleLang("Epsilon Scan", "https://epsilonscan.fr", "fr", isNsfw = true),
         SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true),
