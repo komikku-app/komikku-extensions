@@ -30,7 +30,6 @@
 
 - ARES Manga https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15396
 - Astra Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13845
-- Coven Scan https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14499
 - Gourmet Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6192
 - Hikari Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6611
 - Hunter Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/12392
@@ -39,6 +38,7 @@
 - KomikTap/KomikTap.in https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6133
 - Luminous Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/9923
 - MangaPro https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13989
+- MangaSY https://github.com/tachiyomiorg/tachiyomi-extensions/issues/12007
 - Mangawow https://github.com/tachiyomiorg/tachiyomi-extensions/issues/5367
 - MHScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15319
 - NarTag https://github.com/tachiyomiorg/tachiyomi-extensions/issues/8038
