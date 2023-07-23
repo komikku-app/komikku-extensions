@@ -75,6 +75,6 @@ class KissLove : FMReader("KissLove", "https://klz9.com", "ja") {
     }
 
     companion object {
-        private val MID_URL_REGEX = "ybed-([^.]+).html".toRegex()
+        private val MID_URL_REGEX = "-([^.]+).html".toRegex()
     }
 }
