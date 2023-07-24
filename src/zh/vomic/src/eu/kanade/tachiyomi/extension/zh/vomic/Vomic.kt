@@ -2,7 +2,7 @@ package eu.kanade.tachiyomi.extension.zh.vomic
 
 import android.app.Application
 import android.util.Base64
-import androidx.preference.ListPreference
+import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -21,6 +21,7 @@ import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.crypto.Cipher
@@ -35,17 +36,21 @@ class Vomic : HttpSource(), ConfigurableSource {
 
     override val supportsLatest = false
 
-    override val baseUrl: String
+    override val baseUrl = "http://" + Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000).getString(DOMAIN_PREF, DEFAULT_DOMAIN)
 
-    private val apiUrl: String
+    private val apiUrl = baseUrl
 
-    init {
-        val mirrors = MIRRORS
-        val mirrorIndex = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-            .getString(MIRROR_PREF, "0")!!.toInt().coerceAtMost(mirrors.size - 1)
-        baseUrl = "http://" + mirrors[mirrorIndex]
-        apiUrl = "http://" + mirrors[mirrorIndex].replace("www.", "api.")
-    }
+    override val client = network.client.newBuilder().addInterceptor { chain ->
+        try {
+            val response = chain.proceed(chain.request())
+            if (response.isSuccessful) {
+                return@addInterceptor response
+            }
+            response.close()
+        } catch (_: Throwable) {
+        }
+        throw IOException("请在插件设置中修改网址")
+    }.build()
 
     override fun headersBuilder() = Headers.Builder().add("User-Agent", System.getProperty("http.agent")!!)
 
@@ -150,14 +155,11 @@ class Vomic : HttpSource(), ConfigurableSource {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        ListPreference(screen.context).apply {
-            val mirrors = MIRRORS
-            key = MIRROR_PREF
-            title = "镜像网址"
-            summary = "%s\n重启生效"
-            entries = mirrors
-            entryValues = Array(mirrors.size) { it.toString() }
-            setDefaultValue("0")
+        EditTextPreference(screen.context).apply {
+            key = DOMAIN_PREF
+            title = "网址"
+            summary = "不带 http:// 前缀，重启生效\n备选网址：119.23.243.52"
+            setDefaultValue(DEFAULT_DOMAIN)
         }.let(screen::addPreference)
     }
 
@@ -167,8 +169,8 @@ class Vomic : HttpSource(), ConfigurableSource {
         json.decodeFromString<ResponseDto<T>>(body.string()).data
 
     companion object {
-        private const val MIRROR_PREF = "MIRROR"
-        private val MIRRORS get() = arrayOf("www.vomicmh.com", "www.iewoai.com")
+        private const val DOMAIN_PREF = "DOMAIN"
+        private const val DEFAULT_DOMAIN = "www.vomicmh.com"
 
         private val dateFormat by lazy { SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ENGLISH) }
     }
