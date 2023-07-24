@@ -5,7 +5,8 @@ ext {
     extName = 'MangaPoisk'
     pkgNameSuffix = 'ru.mangapoisk'
     extClass = '.MangaPoisk'
-    extVersionCode = 5
+    extVersionCode = 6
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
