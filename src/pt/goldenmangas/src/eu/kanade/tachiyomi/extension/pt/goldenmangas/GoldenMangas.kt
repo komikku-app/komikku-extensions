@@ -163,7 +163,11 @@ class GoldenMangas : ParsedHttpSource() {
             throw Exception(CHAPTER_IS_NOVEL_ERROR)
         }
 
-        return chapterImages!!.select("img[pag]")
+        if (chapterImages == null) {
+            throw Exception(MIGRATE_WARNING)
+        }
+
+        return chapterImages.select("img[pag]")
             .mapIndexed { i, element ->
                 Page(i, document.location(), element.attr("abs:src"))
             }
@@ -181,7 +185,7 @@ class GoldenMangas : ParsedHttpSource() {
     }
 
     private fun String.toDate(): Long {
-        return runCatching { DATE_FORMATTER.parse(trim())?. time }
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
 
@@ -210,7 +214,7 @@ class GoldenMangas : ParsedHttpSource() {
         private const val MIGRATE_WARNING = "Migre o item da Golden Mangás para Golden Mangás para atualizar a URL."
 
         private val DATE_FORMATTER by lazy {
-            SimpleDateFormat("(dd/MM/yyyy)", Locale.ENGLISH)
+            SimpleDateFormat("(dd/MM/yyyy)", Locale("pt", "BR"))
         }
     }
 }
