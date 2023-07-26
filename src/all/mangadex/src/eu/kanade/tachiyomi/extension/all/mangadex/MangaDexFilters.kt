@@ -373,11 +373,11 @@ class MangaDexFilters {
         TagExclusionMode(intl, getTagModes(intl)),
     )
 
-    internal fun addFiltersToUrl(url: HttpUrl.Builder, filters: FilterList, dexLang: String): String {
+    internal fun addFiltersToUrl(url: HttpUrl.Builder, filters: FilterList, dexLang: String): HttpUrl {
         filters.filterIsInstance<UrlQueryFilter>()
             .forEach { filter -> filter.addQueryParameter(url, dexLang) }
 
-        return url.toString()
+        return url.build()
     }
 
     private fun List<Tag>.sortIfTranslated(intl: MangaDexIntl): List<Tag> = apply {

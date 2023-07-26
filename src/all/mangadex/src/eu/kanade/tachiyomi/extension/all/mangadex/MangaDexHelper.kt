@@ -199,20 +199,18 @@ class MangaDexHelper(lang: String) {
      * Check the token map to see if the MD@Home host is still valid.
      */
     fun getValidImageUrlForPage(page: Page, headers: Headers, client: OkHttpClient): Request {
-        val data = page.url.split(",")
+        val (host, tokenRequestUrl, time) = page.url.split(",")
 
         val mdAtHomeServerUrl =
-            when (Date().time - data[2].toLong() > MDConstants.mdAtHomeTokenLifespan) {
-                false -> data[0]
+            when (Date().time - time.toLong() > MDConstants.mdAtHomeTokenLifespan) {
+                false -> host
                 true -> {
-                    val tokenRequestUrl = data[1]
                     val tokenLifespan = Date().time - (tokenTracker[tokenRequestUrl] ?: 0)
-                    val cacheControl =
-                        if (tokenLifespan > MDConstants.mdAtHomeTokenLifespan) {
-                            CacheControl.FORCE_NETWORK
-                        } else {
-                            USE_CACHE
-                        }
+                    val cacheControl = if (tokenLifespan > MDConstants.mdAtHomeTokenLifespan) {
+                        CacheControl.FORCE_NETWORK
+                    } else {
+                        USE_CACHE
+                    }
                     getMdAtHomeUrl(tokenRequestUrl, client, headers, cacheControl)
                 }
             }
@@ -265,22 +263,20 @@ class MangaDexHelper(lang: String) {
         coverFileName: String?,
         coverSuffix: String?,
         lang: String,
-    ): SManga {
-        return SManga.create().apply {
-            url = "/manga/${mangaDataDto.id}"
-            val titleMap = mangaDataDto.attributes!!.title
-            val dirtyTitle =
-                titleMap.values.firstOrNull() // use literally anything from title as first resort
-                    ?: mangaDataDto.attributes.altTitles
-                        .find { (it[lang] ?: it["en"]) !== null }
-                        ?.values?.singleOrNull() // find something else from alt titles
-            title = (dirtyTitle ?: "").removeEntitiesAndMarkdown()
+    ): SManga = SManga.create().apply {
+        url = "/manga/${mangaDataDto.id}"
+        val titleMap = mangaDataDto.attributes!!.title
+        val dirtyTitle =
+            titleMap.values.firstOrNull() // use literally anything from title as first resort
+                ?: mangaDataDto.attributes.altTitles
+                    .find { (it[lang] ?: it["en"]) !== null }
+                    ?.values?.singleOrNull() // find something else from alt titles
+        title = dirtyTitle?.removeEntitiesAndMarkdown().orEmpty()
 
-            coverFileName?.let {
-                thumbnail_url = when (!coverSuffix.isNullOrEmpty()) {
-                    true -> "${MDConstants.cdnUrl}/covers/${mangaDataDto.id}/$coverFileName$coverSuffix"
-                    else -> "${MDConstants.cdnUrl}/covers/${mangaDataDto.id}/$coverFileName"
-                }
+        coverFileName?.let {
+            thumbnail_url = when (!coverSuffix.isNullOrEmpty()) {
+                true -> "${MDConstants.cdnUrl}/covers/${mangaDataDto.id}/$coverFileName$coverSuffix"
+                else -> "${MDConstants.cdnUrl}/covers/${mangaDataDto.id}/$coverFileName"
             }
         }
     }
@@ -335,10 +331,12 @@ class MangaDexHelper(lang: String) {
 
         val genreList = MDConstants.tagGroupsOrder.flatMap { genresMap[it].orEmpty() } + nonGenres
 
-        var desc = (attr.description[lang] ?: attr.description["en"])?.removeEntitiesAndMarkdown() ?: ""
+        var desc = (attr.description[lang] ?: attr.description["en"])
+            ?.removeEntitiesAndMarkdown()
+            .orEmpty()
 
         if (altTitlesInDesc) {
-            val romanizedOriginalLang = MDConstants.romanizedLangCodes[attr.originalLanguage] ?: ""
+            val romanizedOriginalLang = MDConstants.romanizedLangCodes[attr.originalLanguage].orEmpty()
             val altTitles = attr.altTitles
                 .filter { it.containsKey(lang) || it.containsKey(romanizedOriginalLang) }
                 .mapNotNull { it.values.singleOrNull() }
@@ -447,13 +445,9 @@ class MangaDexHelper(lang: String) {
         editText.addTextChangedListener(
             object : TextWatcher {
 
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                    // Do nothing.
-                }
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
 
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    // Do nothing.
-                }
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
 
                 override fun afterTextChanged(editable: Editable?) {
                     requireNotNull(editable)

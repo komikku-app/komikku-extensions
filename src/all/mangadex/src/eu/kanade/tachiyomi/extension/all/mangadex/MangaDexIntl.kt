@@ -18,6 +18,11 @@ class MangaDexIntl(lang: String) {
         else -> "The text contains invalid UUIDs"
     }
 
+    val invalidMangaId: String = when (availableLang) {
+        BRAZILIAN_PORTUGUESE, PORTUGUESE -> "ID do mangá inválido"
+        else -> "Not a valid manga ID"
+    }
+
     val invalidGroupId: String = when (availableLang) {
         BRAZILIAN_PORTUGUESE, PORTUGUESE -> "ID do grupo inválido"
         SPANISH_LATAM, SPANISH -> "ID de grupo inválida"

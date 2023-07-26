@@ -14,10 +14,9 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 
 /**
- * Interceptor to post to md@home for MangaDex Stats
+ * Interceptor to post to MD@Home for MangaDex Stats
  */
 class MdAtHomeReportInterceptor(
     private val client: OkHttpClient,
@@ -26,23 +25,20 @@ class MdAtHomeReportInterceptor(
 
     private val json: Json by injectLazy()
 
-    private val mdAtHomeUrlRegex =
-        Regex("""^https://[\w\d]+\.[\w\d]+\.mangadex(\b-test\b)?\.network.*${'$'}""")
-
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         val response = chain.proceed(chain.request())
         val url = originalRequest.url.toString()
 
-        if (!url.contains(mdAtHomeUrlRegex)) {
+        if (!url.contains(MD_AT_HOME_URL_REGEX)) {
             return response
         }
 
         val result = ImageReportDto(
-            url,
+            url = url,
             success = response.isSuccessful,
             bytes = response.peekBody(Long.MAX_VALUE).bytes().size,
-            cached = response.header("X-Cache", "") == "HIT",
+            cached = response.headers["X-Cache"] == "HIT",
             duration = response.receivedResponseAtMillis - response.sentRequestAtMillis,
         )
 
@@ -57,22 +53,28 @@ class MdAtHomeReportInterceptor(
         // Execute the report endpoint network call asynchronously to avoid blocking
         // the reader from showing the image once it's fully loaded if the report call
         // gets stuck, as it tend to happens sometimes.
-        client.newCall(reportRequest).enqueue(
-            object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    Log.e("MangaDex", "Error trying to POST report to MD@Home: ${e.message}")
-                }
-
-                override fun onResponse(call: Call, response: Response) {
-                    response.close()
-                }
-            },
-        )
+        client.newCall(reportRequest).enqueue(REPORT_CALLBACK)
 
         return response
     }
 
     companion object {
         private val JSON_MEDIA_TYPE = "application/json".toMediaType()
+        private val MD_AT_HOME_URL_REGEX =
+            """^https://[\w\d]+\.[\w\d]+\.mangadex(\b-test\b)?\.network.*${'$'}""".toRegex()
+
+        private val REPORT_CALLBACK = object : Callback {
+            override fun onFailure(call: Call, e: okio.IOException) {
+                Log.e("MangaDex", "Error trying to POST report to MD@Home: ${e.message}")
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (!response.isSuccessful) {
+                    Log.e("MangaDex", "Error trying to POST report to MD@Home: HTTP error ${response.code}")
+                }
+
+                response.close()
+            }
+        }
     }
 }

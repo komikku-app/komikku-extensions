@@ -10,7 +10,11 @@ data class PaginatedResponseDto<T : EntityDto>(
     val limit: Int = 0,
     val offset: Int = 0,
     val total: Int = 0,
-)
+) {
+
+    val hasNextPage: Boolean
+        get() = limit + offset < total
+}
 
 @Serializable
 data class ResponseDto<T : EntityDto>(

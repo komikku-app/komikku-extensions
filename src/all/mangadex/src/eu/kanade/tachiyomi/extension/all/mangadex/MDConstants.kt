@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
+import kotlin.time.Duration.Companion.minutes
 
 object MDConstants {
 
@@ -31,7 +32,7 @@ object MDConstants {
     const val atHomePostUrl = "https://api.mangadex.network/report"
     val whitespaceRegex = "\\s".toRegex()
 
-    const val mdAtHomeTokenLifespan = 5 * 60 * 1000
+    val mdAtHomeTokenLifespan = 5.minutes.inWholeMilliseconds
 
     val dateFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+SSS", Locale.US)
         .apply { timeZone = TimeZone.getTimeZone("UTC") }
@@ -74,6 +75,12 @@ object MDConstants {
     const val contentRatingPrefValErotica = "erotica"
     const val contentRatingPrefValPornographic = "pornographic"
     val contentRatingPrefDefaults = setOf(contentRatingPrefValSafe, contentRatingPrefValSuggestive)
+    val allContentRatings = setOf(
+        contentRatingPrefValSafe,
+        contentRatingPrefValSuggestive,
+        contentRatingPrefValErotica,
+        contentRatingPrefValPornographic,
+    )
 
     fun getContentRatingPrefKey(dexLang: String): String {
         return "${contentRatingPref}_$dexLang"
