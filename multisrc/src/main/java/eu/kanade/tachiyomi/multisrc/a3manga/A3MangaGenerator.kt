@@ -13,7 +13,7 @@ class A3MangaGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("A3 Manga", "https://www.a3mnga.com", "vi"),
-        SingleLang("Team Lanh Lung", "https://teamlanhlung.com", "vi", sourceName = "Team Lạnh Lùng"),
+        SingleLang("Team Lanh Lung", "https://teamlanhlung.vip", "vi", sourceName = "Team Lạnh Lùng", overrideVersionCode = 1),
         SingleLang("Ngon Phong", "https://www.ngonphong.com", "vi", sourceName = "Ngôn Phong", overrideVersionCode = 1),
         SingleLang("O Cu Meo", "https://www.ocumeo.com", "vi", sourceName = "Ổ Cú Mèo"),
     )
