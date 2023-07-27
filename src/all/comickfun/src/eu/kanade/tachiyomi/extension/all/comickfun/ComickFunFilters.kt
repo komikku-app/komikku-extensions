@@ -186,7 +186,7 @@ private val getSortsList: Array<Pair<String, String>> = arrayOf(
 )
 
 private val getStatusList: Array<Pair<String, String>> = arrayOf(
-    Pair("All", ""),
+    Pair("All", "0"),
     Pair("Ongoing", "1"),
     Pair("Completed", "2"),
     Pair("Cancelled", "3"),
