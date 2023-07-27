@@ -111,7 +111,7 @@ class Pixiv(override val lang: String) : HttpSource() {
                 }
             } else if (filters.users.state.isNotBlank()) {
                 searchSequence = makeUserIllustSearchSequence(
-                    nick = query,
+                    nick = filters.users.state,
                     type = filters.type.toSearchParameter(),
                 )
 
