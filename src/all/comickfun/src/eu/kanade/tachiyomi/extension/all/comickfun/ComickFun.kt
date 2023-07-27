@@ -166,6 +166,9 @@ abstract class ComickFun(
                     is SortFilter -> {
                         addQueryParameter("sort", it.getValue())
                     }
+                    is StatusFilter -> {
+                        addQueryParameter("status", it.getValue())
+                    }
                     is CreatedAtFilter -> {
                         if (it.state > 0) {
                             addQueryParameter("time", it.getValue())

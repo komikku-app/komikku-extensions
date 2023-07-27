@@ -5,13 +5,14 @@ import eu.kanade.tachiyomi.source.model.FilterList
 
 fun getFilters(): FilterList {
     return FilterList(
-        Filter.Header(name = "NOTE: Everything below is ignored if using text search"),
-        CompletedFilter("Completed translation"),
+        Filter.Header(name = "The filter is ignored when using text search."),
         GenreFilter("Genre", getGenresList),
         DemographicFilter("Demographic", getDemographicList),
         TypeFilter("Type", getTypeList),
         SortFilter("Sort", getSortsList),
-        CreatedAtFilter("Created At", getCreatedAtList),
+        StatusFilter("Status", getStatusList),
+        CompletedFilter("Completely Scanlated?"),
+        CreatedAtFilter("Created at", getCreatedAtList),
         MinimumFilter("Minimum Chapters"),
         Filter.Header("From Year, ex: 2010"),
         FromYearFilter("From"),
@@ -47,6 +48,9 @@ internal class ToYearFilter(name: String) : Text(name)
 
 internal class SortFilter(name: String, sortList: Array<Pair<String, String>>, state: Int = 0) :
     Select(name, sortList, state)
+
+internal class StatusFilter(name: String, statusList: Array<Pair<String, String>>, state: Int = 0) :
+    Select(name, statusList, state)
 
 /** Generics **/
 internal open class Group(name: String, values: List<Any>) :
@@ -174,10 +178,17 @@ private val getCreatedAtList: Array<Pair<String, String>> = arrayOf(
 )
 
 private val getSortsList: Array<Pair<String, String>> = arrayOf(
-    Pair("Most popular", "follow"),
     Pair("Most follows", "user_follow_count"),
     Pair("Most views", "view"),
     Pair("High rating", "rating"),
     Pair("Last updated", "uploaded"),
     Pair("Newest", "created_at"),
+)
+
+private val getStatusList: Array<Pair<String, String>> = arrayOf(
+    Pair("All", ""),
+    Pair("Ongoing", "1"),
+    Pair("Completed", "2"),
+    Pair("Cancelled", "3"),
+    Pair("Hiatus", "4"),
 )
