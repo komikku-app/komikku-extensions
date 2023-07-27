@@ -5,5 +5,5 @@ import eu.kanade.tachiyomi.source.SourceFactory
 
 class PixivFactory : SourceFactory {
     override fun createSources(): List<Source> =
-        listOf("all", "ja", "en", "ko", "zh").map { lang -> Pixiv(lang) }
+        listOf("ja", "en", "ko", "zh").map { lang -> Pixiv(lang) }
 }
