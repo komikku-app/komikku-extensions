@@ -4,6 +4,7 @@
 
 - ColaManhua (COLA漫画) https://github.com/tachiyomiorg/tachiyomi-extensions/pull/11445
 - Comikey https://github.com/tachiyomiorg/tachiyomi-extensions/pull/11971
+- Constellar Scans https://github.com/tachiyomiorg/tachiyomi-extensions/pull/17277
 - CopyManga (拷贝漫画) https://github.com/tachiyomiorg/tachiyomi-extensions/pull/12376
 - Cứu Truyện https://github.com/tachiyomiorg/tachiyomi-extensions/pull/16654
 - Hentai Kai https://github.com/tachiyomiorg/tachiyomi-extensions/issues/9999
