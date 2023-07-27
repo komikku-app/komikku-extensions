@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.all.pixiv
 
-import android.util.LruCache
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -269,19 +268,19 @@ class Pixiv(override val lang: String) : HttpSource() {
         return Observable.just(MangasPage(mangas, hasNextPage = mangas.isNotEmpty()))
     }
 
-    private val illustsCache = object : LruCache<String, PixivIllust>(25) {
-        override fun create(illustId: String): PixivIllust {
+    private val getIllustCached by lazy {
+        lruCached<String, PixivIllust>(25) { illustId ->
             val call = ApiCall("/touch/ajax/illust/details?illust_id=$illustId")
-            return call.executeApi<PixivIllustDetails>().illust_details!!
+            return@lruCached call.executeApi<PixivIllustDetails>().illust_details!!
         }
     }
 
-    private val seriesIllustsCache = object : LruCache<String, List<PixivIllust>>(25) {
-        override fun create(seriesId: String): List<PixivIllust> {
+    private val getSeriesIllustsCached by lazy {
+        lruCached<String, List<PixivIllust>>(25) { seriesId ->
             val call = ApiCall("/touch/ajax/illust/series_content/$seriesId")
             var lastOrder = 0
 
-            return buildList {
+            return@lruCached buildList {
                 while (true) {
                     call.url.setEncodedQueryParameter("last_order", lastOrder.toString())
 
@@ -300,7 +299,7 @@ class Pixiv(override val lang: String) : HttpSource() {
 
         if (isSeries) {
             val series = ApiCall("/touch/ajax/illust/series/$id").executeApi<PixivSeries>()
-            val illusts = seriesIllustsCache.get(id)
+            val illusts = getSeriesIllustsCached(id)
 
             if (series.id != null && series.userId != null) {
                 manga.setUrlWithoutDomain("/user/${series.userId}/series/${series.id}")
@@ -319,7 +318,7 @@ class Pixiv(override val lang: String) : HttpSource() {
 
             (series.coverImage ?: illusts.firstOrNull()?.url)?.let { manga.thumbnail_url = it }
         } else {
-            val illust = illustsCache.get(id)
+            val illust = getIllustCached(id)
 
             illust.id?.let { manga.setUrlWithoutDomain("/artworks/$it") }
             illust.title?.let { manga.title = it }
@@ -341,8 +340,8 @@ class Pixiv(override val lang: String) : HttpSource() {
         val (id, isSeries) = parseSMangaUrl(manga.url)
 
         val illusts = when (isSeries) {
-            true -> seriesIllustsCache.get(id)
-            false -> listOf(illustsCache.get(id))
+            true -> getSeriesIllustsCached(id)
+            false -> listOf(getIllustCached(id))
         }
 
         val chapters = illusts.mapIndexed { i, illust ->
