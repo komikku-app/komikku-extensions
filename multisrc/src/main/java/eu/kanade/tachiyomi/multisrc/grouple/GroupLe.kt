@@ -156,8 +156,8 @@ abstract class GroupLe(
         ).first()?.text()
         manga.artist = infoElement.select("span.elem_illustrator").first()?.text()
         manga.genre = (
-            "$category, $rawAgeStop, " + infoElement.select("span.elem_genre")
-                .text() + ", " + infoElement.select("span.elem_tag").text()
+            "$category, $rawAgeStop, " + infoElement.select("p:contains(Жанры:) a, p:contains(Теги:) a")
+                .joinToString { it.text() }
             ).split(", ")
             .filter { it.isNotEmpty() }.joinToString { it.trim().lowercase() }
         val altName = if (infoElement.select(".another-names").isNotEmpty()) {
