@@ -21,11 +21,11 @@ class KemonoCreatorDto(
         else -> (updated.double * 1000).toLong()
     }
 
-    fun toSManga(baseUrl: String) = SManga.create().apply {
+    fun toSManga(imgCdnUrl: String) = SManga.create().apply {
         url = "/$service/user/$id" // should be /server/ for Discord but will be filtered anyway
         title = name
         author = service.serviceName()
-        thumbnail_url = "$baseUrl/icons/$service/$id"
+        thumbnail_url = "$imgCdnUrl/icons/$service/$id"
         description = Kemono.PROMPT
         initialized = true
     }
