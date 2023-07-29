@@ -135,13 +135,8 @@ class HentaiVN : ParsedHttpSource() {
     }
 
     // Pages
-    override fun pageListRequest(chapter: SChapter): Request {
-        val mangaId = chapter.url.substringAfterLast("/").substringBefore('-')
-        val mangaEP = chapter.url.substringAfter("-").substringBefore("-")
-        return GET("$baseUrl/list-loadchapter.php?id_episode=$mangaEP&idchapshowz=$mangaId", headers)
-    }
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("img").mapIndexed { i, e ->
+        return document.select("#image > img").mapIndexed { i, e ->
             Page(i, imageUrl = e.attr("abs:src"))
         }
     }
@@ -172,7 +167,7 @@ class HentaiVN : ParsedHttpSource() {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text().trim()
         }
-        manga.thumbnail_url = element.select("div.search-img img, .box-cover a img").attr("abs:src")
+        manga.thumbnail_url = element.select("div.search-img img").attr("abs:src")
         return manga
     }
 
