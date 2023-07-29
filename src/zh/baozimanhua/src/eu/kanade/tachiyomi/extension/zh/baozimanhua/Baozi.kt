@@ -144,7 +144,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             document.select(".comic-contain amp-img").dropWhile { element ->
                 element.selectFirst(pageNumberSelector)!!.text().substringBefore('/').toInt() <= i
             }.mapTo(pageList) { element ->
-                Page(i++, imageUrl = element.attr("src"))
+                Page(i++, imageUrl = element.attr("data-src"))
             }
             url = document.selectFirst(Evaluator.Id("next-chapter"))
                 ?.takeIf {
