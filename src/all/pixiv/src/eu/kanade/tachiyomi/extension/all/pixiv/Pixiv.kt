@@ -348,7 +348,7 @@ class Pixiv(override val lang: String) : HttpSource() {
             SChapter.create().apply {
                 setUrlWithoutDomain("/artworks/${illust.id!!}")
                 name = illust.title ?: "(null)"
-                date_upload = illust.upload_timestamp ?: 0
+                date_upload = (illust.upload_timestamp ?: 0) * 1000
                 chapter_number = i.toFloat()
             }
         }

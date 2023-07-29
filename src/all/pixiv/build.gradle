@@ -6,7 +6,7 @@ ext {
     extName = 'Pixiv'
     pkgNameSuffix = 'all.pixiv'
     extClass = '.PixivFactory'
-    extVersionCode = 5
+    extVersionCode = 6
     isNsfw = true
 }
 
