@@ -36,14 +36,15 @@ data class HeanCmsSearchDto(
         apiUrl: String,
         coverPath: String,
         slugMap: Map<String, HeanCms.HeanCmsTitle>,
+        usePermSlug: Boolean,
     ): SManga = SManga.create().apply {
-        val slugOnly = slug.replace(HeanCms.TIMESTAMP_REGEX, "")
-        val thumbnailFileName = slugMap[slugOnly]?.thumbnailFileName
+        val slug = if (!usePermSlug) slug else slug.replace(HeanCms.TIMESTAMP_REGEX, "")
+        val thumbnailFileName = slugMap[slug]?.thumbnailFileName
 
         title = this@HeanCmsSearchDto.title
         thumbnail_url = thumbnail?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
             ?: thumbnailFileName?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
-        url = "/series/$slugOnly"
+        url = "/series/$slug"
     }
 }
 
@@ -62,8 +63,9 @@ data class HeanCmsSeriesDto(
     val chapters: List<HeanCmsChapterDto>? = emptyList(),
 ) {
 
-    fun toSManga(apiUrl: String, coverPath: String): SManga = SManga.create().apply {
+    fun toSManga(apiUrl: String, coverPath: String, usePermSlug: Boolean): SManga = SManga.create().apply {
         val descriptionBody = this@HeanCmsSeriesDto.description?.let(Jsoup::parseBodyFragment)
+        val slug = if (!usePermSlug) slug else slug.replace(HeanCms.TIMESTAMP_REGEX, "")
 
         title = this@HeanCmsSeriesDto.title
         author = this@HeanCmsSeriesDto.author?.trim()
@@ -77,7 +79,7 @@ data class HeanCmsSeriesDto(
         thumbnail_url = thumbnail.ifEmpty { null }
             ?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
         status = this@HeanCmsSeriesDto.status?.toStatus() ?: SManga.UNKNOWN
-        url = "/series/${slug.replace(HeanCms.TIMESTAMP_REGEX, "")}"
+        url = "/series/$slug"
     }
 }
 

@@ -81,7 +81,7 @@ abstract class HeanCms(
 
         if (json.startsWith("{")) {
             val result = json.parseAs<HeanCmsQuerySearchDto>()
-            val mangaList = result.data.map { it.toSManga(apiUrl, coverPath) }
+            val mangaList = result.data.map { it.toSManga(apiUrl, coverPath, fetchAllTitles) }
 
             fetchAllTitles()
 
@@ -89,7 +89,7 @@ abstract class HeanCms(
         }
 
         val mangaList = json.parseAs<List<HeanCmsSeriesDto>>()
-            .map { it.toSManga(apiUrl, coverPath) }
+            .map { it.toSManga(apiUrl, coverPath, fetchAllTitles) }
 
         fetchAllTitles()
 
@@ -179,14 +179,14 @@ abstract class HeanCms(
             val result = json.parseAs<List<HeanCmsSearchDto>>()
             val mangaList = result
                 .filter { it.type == "Comic" }
-                .map { it.toSManga(apiUrl, coverPath, seriesSlugMap.orEmpty()) }
+                .map { it.toSManga(apiUrl, coverPath, seriesSlugMap.orEmpty(), fetchAllTitles) }
 
             return MangasPage(mangaList, false)
         }
 
         if (json.startsWith("{")) {
             val result = json.parseAs<HeanCmsQuerySearchDto>()
-            val mangaList = result.data.map { it.toSManga(apiUrl, coverPath) }
+            val mangaList = result.data.map { it.toSManga(apiUrl, coverPath, fetchAllTitles) }
 
             fetchAllTitles()
 
@@ -194,7 +194,7 @@ abstract class HeanCms(
         }
 
         val mangaList = json.parseAs<List<HeanCmsSeriesDto>>()
-            .map { it.toSManga(apiUrl, coverPath) }
+            .map { it.toSManga(apiUrl, coverPath, fetchAllTitles) }
 
         fetchAllTitles()
 
@@ -206,7 +206,7 @@ abstract class HeanCms(
             .substringAfterLast("/")
             .replace(TIMESTAMP_REGEX, "")
 
-        val currentSlug = seriesSlugMap?.get(seriesSlug)?.slug ?: seriesSlug
+        val currentSlug = seriesSlugMap?.get(seriesSlug)?.slug ?: manga.url.substringAfterLast("/")
 
         return "$baseUrl/series/$currentSlug"
     }
@@ -219,7 +219,7 @@ abstract class HeanCms(
         fetchAllTitles()
 
         val seriesDetails = seriesSlugMap?.get(seriesSlug)
-        val currentSlug = seriesDetails?.slug ?: seriesSlug
+        val currentSlug = seriesDetails?.slug ?: manga.url.substringAfterLast("/")
         val currentStatus = seriesDetails?.status ?: manga.status
 
         val apiHeaders = headersBuilder()
@@ -231,7 +231,7 @@ abstract class HeanCms(
 
     override fun mangaDetailsParse(response: Response): SManga {
         val result = runCatching { response.parseAs<HeanCmsSeriesDto>() }
-        val seriesDetails = result.getOrNull()?.toSManga(apiUrl, coverPath)
+        val seriesDetails = result.getOrNull()?.toSManga(apiUrl, coverPath, fetchAllTitles)
             ?: throw Exception(intl.urlChangedError(name))
 
         return seriesDetails.apply {
