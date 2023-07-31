@@ -6,7 +6,11 @@ ext {
     extName = 'Japscan'
     pkgNameSuffix = 'fr.japscan'
     extClass = '.Japscan'
-    extVersionCode = 42
+    extVersionCode = 43
+}
+
+dependencies {
+    implementation(project(":lib-synchrony"))
 }
 
 apply from: "$rootDir/common.gradle"
