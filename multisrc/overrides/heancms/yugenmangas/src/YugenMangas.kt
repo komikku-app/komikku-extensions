@@ -1,16 +1,8 @@
 package eu.kanade.tachiyomi.extension.es.yugenmangas
 
-import android.app.Application
-import android.content.SharedPreferences
-import android.widget.Toast
-import androidx.preference.PreferenceScreen
-import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.multisrc.heancms.Genre
 import eu.kanade.tachiyomi.multisrc.heancms.HeanCms
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
-import eu.kanade.tachiyomi.source.ConfigurableSource
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
@@ -21,17 +13,12 @@ class YugenMangas :
         "https://yugenmangas.net",
         "es",
         "https://api.yugenmangas.net",
-    ),
-    ConfigurableSource {
-
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
+    ) {
 
     // Site changed from Madara to HeanCms.
     override val versionId = 2
 
-    override val fetchAllTitles = getFetchAllSeriesPref()
+    override val fetchAllTitlesStrategy = FetchAllStrategy.SEARCH_EACH
 
     override val client = super.client.newBuilder()
         .connectTimeout(60, TimeUnit.SECONDS)
@@ -43,26 +30,6 @@ class YugenMangas :
 
     override val dateFormat: SimpleDateFormat = super.dateFormat.apply {
         timeZone = TimeZone.getTimeZone("UTC")
-    }
-
-    private fun getFetchAllSeriesPref(): Boolean {
-        return preferences.getBoolean(FETCH_ALL_SERIES_PREF, FETCH_ALL_SERIES_DEFAULT_VALUE)
-    }
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val fetchAllSeriesPreference = SwitchPreferenceCompat(screen.context).apply {
-            key = FETCH_ALL_SERIES_PREF
-            title = FETCH_ALL_SERIES_TITLE
-            summary = FETCH_ALL_SERIES_SUMMARY
-            setDefaultValue(FETCH_ALL_SERIES_DEFAULT_VALUE)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                Toast.makeText(screen.context, "Reinicia la app para aplicar los cambios.", Toast.LENGTH_LONG).show()
-                true
-            }
-        }
-
-        screen.addPreference(fetchAllSeriesPreference)
     }
 
     override fun getGenreList(): List<Genre> = listOf(
@@ -115,14 +82,4 @@ class YugenMangas :
         Genre("Yaoi", 43),
         Genre("Yuri", 44),
     )
-
-    companion object {
-        private const val FETCH_ALL_SERIES_PREF = "fetchAllSeriesPref"
-        private const val FETCH_ALL_SERIES_TITLE = "Buscar todas las series"
-        private const val FETCH_ALL_SERIES_SUMMARY = "Busca las URLs actuales de las series. " +
-            "Habilitar esta opción evita la necesidad de migrar, " +
-            "pero puede llevar tiempo dependiendo del número total de series. \n" +
-            "Tendrá que migrar cada vez que cambie esta opción."
-        private const val FETCH_ALL_SERIES_DEFAULT_VALUE = true
-    }
 }

@@ -21,7 +21,7 @@ class ReaperScans : HeanCms(
     // Site changed from Madara to HeanCms.
     override val versionId = 2
 
-    override val fetchAllTitles = true
+    override val fetchAllTitlesStrategy = FetchAllStrategy.SEARCH_ALL
 
     override val coverPath: String = ""
 

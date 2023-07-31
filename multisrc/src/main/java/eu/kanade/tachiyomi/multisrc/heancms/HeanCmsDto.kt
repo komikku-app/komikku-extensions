@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.heancms
 
+import eu.kanade.tachiyomi.multisrc.heancms.HeanCms.FetchAllStrategy
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.SerialName
@@ -36,9 +37,9 @@ data class HeanCmsSearchDto(
         apiUrl: String,
         coverPath: String,
         slugMap: Map<String, HeanCms.HeanCmsTitle>,
-        usePermSlug: Boolean,
+        fetchStrategy: FetchAllStrategy = FetchAllStrategy.NONE,
     ): SManga = SManga.create().apply {
-        val slug = if (!usePermSlug) slug else slug.replace(HeanCms.TIMESTAMP_REGEX, "")
+        val slug = if (fetchStrategy == FetchAllStrategy.NONE) slug else slug.replace(HeanCms.TIMESTAMP_REGEX, "")
         val thumbnailFileName = slugMap[slug]?.thumbnailFileName
 
         title = this@HeanCmsSearchDto.title
@@ -63,9 +64,13 @@ data class HeanCmsSeriesDto(
     val chapters: List<HeanCmsChapterDto>? = emptyList(),
 ) {
 
-    fun toSManga(apiUrl: String, coverPath: String, usePermSlug: Boolean): SManga = SManga.create().apply {
+    fun toSManga(
+        apiUrl: String,
+        coverPath: String,
+        fetchStrategy: FetchAllStrategy = FetchAllStrategy.NONE,
+    ): SManga = SManga.create().apply {
         val descriptionBody = this@HeanCmsSeriesDto.description?.let(Jsoup::parseBodyFragment)
-        val slug = if (!usePermSlug) slug else slug.replace(HeanCms.TIMESTAMP_REGEX, "")
+        val slug = if (fetchStrategy == FetchAllStrategy.NONE) slug else slug.replace(HeanCms.TIMESTAMP_REGEX, "")
 
         title = this@HeanCmsSeriesDto.title
         author = this@HeanCmsSeriesDto.author?.trim()
