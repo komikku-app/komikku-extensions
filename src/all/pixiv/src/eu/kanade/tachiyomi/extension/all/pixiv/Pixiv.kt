@@ -97,37 +97,37 @@ class Pixiv(override val lang: String) : HttpSource() {
             if (query.isNotBlank()) {
                 searchSequence = makeIllustSearchSequence(
                     word = query,
-                    order = filters.order.toSearchParameter(),
-                    mode = filters.rating.toSearchParameter(),
+                    order = filters.order,
+                    mode = filters.rating,
                     sMode = "s_tc",
-                    type = filters.type.toSearchParameter(),
-                    dateBefore = filters.dateBefore.state.ifBlank { null },
-                    dateAfter = filters.dateAfter.state.ifBlank { null },
+                    type = filters.type,
+                    dateBefore = filters.dateBefore.ifBlank { null },
+                    dateAfter = filters.dateAfter.ifBlank { null },
                 )
 
                 predicates = buildList {
-                    filters.tags.toPredicate()?.let(::add)
-                    filters.users.toPredicate()?.let(::add)
+                    filters.makeTagsPredicate()?.let(::add)
+                    filters.makeUsersPredicate()?.let(::add)
                 }
-            } else if (filters.users.state.isNotBlank()) {
+            } else if (filters.users.isNotBlank()) {
                 searchSequence = makeUserIllustSearchSequence(
-                    nick = filters.users.state,
-                    type = filters.type.toSearchParameter(),
+                    nick = filters.users,
+                    type = filters.type,
                 )
 
                 predicates = buildList {
-                    filters.tags.toPredicate()?.let(::add)
-                    filters.rating.toPredicate()?.let(::add)
+                    filters.makeTagsPredicate()?.let(::add)
+                    filters.makeRatingPredicate()?.let(::add)
                 }
             } else {
                 searchSequence = makeIllustSearchSequence(
-                    word = filters.tags.state.ifBlank { "漫画" },
-                    order = filters.order.toSearchParameter(),
-                    mode = filters.rating.toSearchParameter(),
-                    sMode = "s_tag_full",
-                    type = filters.type.toSearchParameter(),
-                    dateBefore = filters.dateBefore.state.ifBlank { null },
-                    dateAfter = filters.dateAfter.state.ifBlank { null },
+                    word = filters.tags.ifBlank { "漫画" },
+                    order = filters.order,
+                    mode = filters.rating,
+                    sMode = filters.searchMode,
+                    type = filters.type,
+                    dateBefore = filters.dateBefore.ifBlank { null },
+                    dateAfter = filters.dateAfter.ifBlank { null },
                 )
 
                 predicates = emptyList()
