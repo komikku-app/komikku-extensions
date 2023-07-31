@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
@@ -27,7 +28,7 @@ class TempleScan : HttpSource() {
 
     override val baseUrl = "https://templescan.net"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val versionId = 2
 
@@ -37,7 +38,7 @@ class TempleScan : HttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val seriesCache: List<Series> by lazy {
+    private val homeDocument: Document by lazy {
         val response = client.newCall(GET(baseUrl, headers)).execute()
 
         if (response.isSuccessful.not()) {
@@ -45,12 +46,15 @@ class TempleScan : HttpSource() {
             throw Exception("Http Error ${response.code}")
         }
 
-        response.asJsoup()
-            .selectFirst("script:containsData(proyectos)")
+        response.use { it.asJsoup() }
+    }
+
+    private val seriesCache: List<Series> by lazy {
+        homeDocument.selectFirst("script:containsData(proyectos)")
             ?.data()
             ?.let { proyectosRegex.find(it)?.groupValues?.get(1) }
             ?.let(json::decodeFromString)
-            ?: throw Exception(SeriesCacheFailureException)
+            ?: throw Exception("Unable to extract series information")
     }
 
     private lateinit var filteredSeriesCache: List<Series>
@@ -78,6 +82,23 @@ class TempleScan : HttpSource() {
 
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
         val mangasPage = seriesCache.toMangasPage(page)
+
+        return Observable.just(mangasPage)
+    }
+
+    override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
+        val slugs = homeDocument.select("section:contains(new release) figure")
+            .mapNotNull { element ->
+                element.selectFirst("a")?.attr("abs:href")
+                    ?.substringAfter("/comic/")
+                    ?.substringBefore("/")
+            }
+
+        val entries = slugs.mapNotNull { slug ->
+            seriesCache.firstOrNull { it.slug == slug }?.toSManga()
+        }
+
+        val mangasPage = MangasPage(entries, false)
 
         return Observable.just(mangasPage)
     }
@@ -117,11 +138,11 @@ class TempleScan : HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val elements = response.asJsoup()
-            .select("div.contenedor-capitulo-miniatura a")
+            .select("div.contenedor-capitulo-miniatura")
 
         return elements.map { element ->
             SChapter.create().apply {
-                setUrlWithoutDomain(element.attr("href"))
+                setUrlWithoutDomain(element.select("a").attr("href"))
                 name = element.select("div[id=name]").text()
                 date_upload = element.select("time").text().let {
                     runCatching { it.parseRelativeDate() }.getOrDefault(0L)
@@ -149,11 +170,7 @@ class TempleScan : HttpSource() {
 
         var parsedDate = 0L
 
-        val relativeDate = try {
-            this.split(" ")[0].trim().toInt()
-        } catch (e: NumberFormatException) {
-            return 0L
-        }
+        val relativeDate = this.split(" ")[0].trim().toInt()
 
         when {
             "second" in this -> {
@@ -182,8 +199,9 @@ class TempleScan : HttpSource() {
     }
 
     companion object {
-        private val proyectosRegex = Regex("""proyectos\s*=\s*([^\;]+)""")
-        private const val SeriesCacheFailureException = "Unable to extract series information"
+        private val proyectosRegex by lazy {
+            Regex("""proyectos\s*=\s*([^;]+)""")
+        }
 
         private const val limit = 20
         const val SEARCH_PREFIX = "slug:"

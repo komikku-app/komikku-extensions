@@ -6,7 +6,7 @@ ext {
     extName = 'Temple Scan'
     pkgNameSuffix = 'en.templescan'
     extClass = '.TempleScan'
-    extVersionCode = 32
+    extVersionCode = 33
 }
 
 apply from: "$rootDir/common.gradle"
