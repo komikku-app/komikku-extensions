@@ -225,11 +225,7 @@ abstract class HeanCms(
 
     override fun mangaDetailsRequest(manga: SManga): Request {
         if (fetchAllTitlesStrategy == FetchAllStrategy.SEARCH_EACH) {
-            val searchQuery = manga.title.trim()
-                .replaceAfterLast(" ", "").trim()
-                .let {
-                    if (it.length > 2) it.dropLast(1).trim() else it
-                }
+            val searchQuery = manga.title
             val searchPayloadObj = HeanCmsSearchPayloadDto(searchQuery)
             val searchPayload = json.encodeToString(searchPayloadObj)
                 .toRequestBody(JSON_MEDIA_TYPE)
@@ -241,7 +237,6 @@ abstract class HeanCms(
 
             val mangaSlug = manga.url
                 .substringAfterLast("/")
-                .replace(TIMESTAMP_REGEX, "")
 
             return POST("$apiUrl/series/search#$mangaSlug", apiHeaders, searchPayload)
         }
@@ -309,8 +304,8 @@ abstract class HeanCms(
         val mangaSlug = searchResult
             .filter { it.type == "Comic" }
             .map { it.slug }
-            .find { it.replace(TIMESTAMP_REGEX, "") == originalSlug }
-            ?: throw Exception(intl.urlChangedError(name))
+            .find { it.startsWith(originalSlug) || originalSlug.startsWith(it) }
+            ?: originalSlug
 
         val apiHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
