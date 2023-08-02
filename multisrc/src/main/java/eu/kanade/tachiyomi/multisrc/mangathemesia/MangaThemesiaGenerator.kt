@@ -44,7 +44,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("KataKomik", "https://katakomik.online", "id"),
         SingleLang("Komik Seru", "https://komikseru.me", "id", isNsfw = true),
         SingleLang("Kanzenin", "https://kanzenin.xyz", "id", isNsfw = true),
-        SingleLang("KomikSan", "https://komiksan.ml", "id", overrideVersionCode = 1),
+        SingleLang("Komiksan", "https://komiksan.link", "id", overrideVersionCode = 2),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 6),
         SingleLang("Komik AV", "https://komikav.com", "id", overrideVersionCode = 1),
         SingleLang("Komik Cast", "https://komikcast.io", "id", overrideVersionCode = 19),
