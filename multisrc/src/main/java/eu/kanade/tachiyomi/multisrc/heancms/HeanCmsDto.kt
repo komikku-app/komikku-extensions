@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.multisrc.heancms
 
-import eu.kanade.tachiyomi.multisrc.heancms.HeanCms.FetchAllStrategy
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.SerialName
@@ -27,7 +26,7 @@ data class HeanCmsQuerySearchMetaDto(
 @Serializable
 data class HeanCmsSearchDto(
     val description: String? = null,
-    @SerialName("series_slug") val slug: String,
+    @SerialName("series_slug") var slug: String,
     @SerialName("series_type") val type: String,
     val title: String,
     val thumbnail: String? = null,
@@ -36,15 +35,9 @@ data class HeanCmsSearchDto(
     fun toSManga(
         apiUrl: String,
         coverPath: String,
-        slugMap: Map<String, HeanCms.HeanCmsTitle>,
-        fetchStrategy: FetchAllStrategy = FetchAllStrategy.NONE,
     ): SManga = SManga.create().apply {
-        val slug = if (fetchStrategy == FetchAllStrategy.NONE) slug else slug.replace(HeanCms.TIMESTAMP_REGEX, "")
-        val thumbnailFileName = slugMap[slug]?.thumbnailFileName
-
         title = this@HeanCmsSearchDto.title
         thumbnail_url = thumbnail?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
-            ?: thumbnailFileName?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
         url = "/series/$slug"
     }
 }
@@ -67,10 +60,8 @@ data class HeanCmsSeriesDto(
     fun toSManga(
         apiUrl: String,
         coverPath: String,
-        fetchStrategy: FetchAllStrategy = FetchAllStrategy.NONE,
     ): SManga = SManga.create().apply {
         val descriptionBody = this@HeanCmsSeriesDto.description?.let(Jsoup::parseBodyFragment)
-        val slug = if (fetchStrategy == FetchAllStrategy.NONE) slug else slug.replace(HeanCms.TIMESTAMP_REGEX, "")
 
         title = this@HeanCmsSeriesDto.title
         author = this@HeanCmsSeriesDto.author?.trim()

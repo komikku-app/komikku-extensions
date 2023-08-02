@@ -9,7 +9,7 @@ class HeanCmsGenerator : ThemeSourceGenerator {
 
     override val themeClass = "HeanCms"
 
-    override val baseVersionCode: Int = 15
+    override val baseVersionCode: Int = 16
 
     override val sources = listOf(
         SingleLang("Glorious Scan", "https://gloriousscan.com", "pt-BR", overrideVersionCode = 17),

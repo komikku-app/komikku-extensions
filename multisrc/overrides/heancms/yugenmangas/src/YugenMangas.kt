@@ -1,16 +1,9 @@
 package eu.kanade.tachiyomi.extension.es.yugenmangas
 
-import android.app.Application
-import android.content.SharedPreferences
-import android.widget.Toast
-import androidx.preference.ListPreference
-import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.multisrc.heancms.Genre
 import eu.kanade.tachiyomi.multisrc.heancms.HeanCms
-import eu.kanade.tachiyomi.network.interceptor.rateLimit
-import eu.kanade.tachiyomi.source.ConfigurableSource
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.text.SimpleDateFormat
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
@@ -21,26 +14,15 @@ class YugenMangas :
         "https://yugenmangas.net",
         "es",
         "https://api.yugenmangas.net",
-    ),
-    ConfigurableSource {
-
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
+    ) {
 
     // Site changed from Madara to HeanCms.
     override val versionId = 2
 
-    override val fetchAllTitlesStrategy = when (getfetchAllStrategyPref()) {
-        "all" -> FetchAllStrategy.SEARCH_ALL
-        "each" -> FetchAllStrategy.SEARCH_EACH
-        else -> FetchAllStrategy.NONE
-    }
-
     override val client = super.client.newBuilder()
         .connectTimeout(60, TimeUnit.SECONDS)
         .readTimeout(90, TimeUnit.SECONDS)
-        .rateLimit(2, 3)
+        .rateLimitHost(apiUrl.toHttpUrl(), 2, 3)
         .build()
 
     override val coverPath: String = ""
@@ -99,42 +81,4 @@ class YugenMangas :
         Genre("Yaoi", 43),
         Genre("Yuri", 44),
     )
-
-    private fun getfetchAllStrategyPref(): String? {
-        return preferences.getString(PREF_FETCH_ALL_STRATEGY_KEY, PREF_FETCH_ALL_STRATEGY_DEFAULT)
-    }
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val fetchAllStrategyPreference = ListPreference(screen.context).apply {
-            key = PREF_FETCH_ALL_STRATEGY_KEY
-            title = PREF_FETCH_ALL_STRATEGY_TITLE
-            summary = PREF_FETCH_ALL_STRATEGY_SUMMARY
-            entries = PREF_FETCH_ALL_STRATEGY_ENTRIES
-            entryValues = PREF_FETCH_ALL_STRATEGY_VALUES
-            setDefaultValue(PREF_FETCH_ALL_STRATEGY_DEFAULT)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                Toast.makeText(screen.context, RESTART_MESSAGE, Toast.LENGTH_LONG).show()
-                true
-            }
-        }
-
-        screen.addPreference(fetchAllStrategyPreference)
-    }
-
-    companion object {
-        const val PREF_FETCH_ALL_STRATEGY_KEY = "prefFetchAllStrategy"
-        const val PREF_FETCH_ALL_STRATEGY_TITLE = "Método de búsqueda"
-        const val PREF_FETCH_ALL_STRATEGY_SUMMARY = "Global: Busca las URLs de todas las series al iniciar la aplicación, lento pero más estable.\n" +
-            "Individual: Busca la URL de la serie al actualizar, rápido pero puede fallar.\n" +
-            "Ninguno: Usa la URL con la que fue agregado, tendrá que migrar si la URL cambia.\n" +
-            "Valor actual: %s"
-
-        val PREF_FETCH_ALL_STRATEGY_ENTRIES = arrayOf("Ninguno", "Individual", "Global")
-        val PREF_FETCH_ALL_STRATEGY_VALUES = arrayOf("off", "each", "all")
-
-        const val PREF_FETCH_ALL_STRATEGY_DEFAULT = "off"
-
-        const val RESTART_MESSAGE = "Reinicie la aplicación para que los cambios surtan efecto."
-    }
 }
