@@ -4,9 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
+import android.util.Base64
+import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -53,7 +57,31 @@ class DragonTea : Madara(
             .firstOrNull() != null
 
         if (!hasSplitImages) {
-            return super.pageListParse(document)
+            return document.select(pageListParseSelector).mapIndexed { index, element ->
+                val imageUrl = element.selectFirst("img")?.let {
+                    val src = when {
+                        it.hasAttr("data-src") -> it.attr("data-src")
+                        it.hasAttr("data-lazy-src") -> it.attr("data-lazy-src")
+                        it.hasAttr("srcset") -> it.attr("srcset").substringBefore(" ")
+                        else -> it.attr("src")
+                    }.trim()
+
+                    if (!src.startsWith("{\"")) {
+                        return@let imageFromElement(it)
+                    }
+
+                    val srcData = json.parseToJsonElement(src).jsonObject
+
+                    val unsaltedCiphertext = Base64.decode(srcData["ct"]!!.jsonPrimitive.content, Base64.DEFAULT)
+                    val salt = srcData["s"]!!.jsonPrimitive.content.decodeHex()
+                    val ciphertext = SALTED + salt + unsaltedCiphertext
+
+                    val plaintext = CryptoAES.decrypt(Base64.encodeToString(ciphertext, Base64.DEFAULT), PASSWORD)
+                    json.parseToJsonElement(plaintext).jsonPrimitive.content
+                }
+
+                Page(index, document.location(), imageUrl)
+            }
         }
 
         return document.select("div.page-break, li.blocks-gallery-item, $begonepeconSelector")
@@ -119,8 +147,19 @@ class DragonTea : Madara(
             .build()
     }
 
+    fun String.decodeHex(): ByteArray {
+        check(length % 2 == 0) { "Must have an even length" }
+
+        return chunked(2)
+            .map { it.toInt(16).toByte() }
+            .toByteArray()
+    }
+
     companion object {
         private const val BEGONEPECON_SUFFIX = "?begonepecon"
         private val PNG_MEDIA_TYPE = "image/png".toMediaType()
+
+        private val SALTED = "Salted__".toByteArray(Charsets.UTF_8)
+        private val PASSWORD = "releasethestormy888"
     }
 }
