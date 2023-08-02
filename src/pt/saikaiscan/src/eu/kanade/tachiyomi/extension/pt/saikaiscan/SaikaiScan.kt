@@ -22,7 +22,7 @@ class SaikaiScan : HttpSource() {
 
     override val name = SOURCE_NAME
 
-    override val baseUrl = "https://saikai.com.br"
+    override val baseUrl = "https://saikaiscans.net"
 
     override val lang = "pt-BR"
 
@@ -51,7 +51,7 @@ class SaikaiScan : HttpSource() {
             .addQueryParameter("page", page.toString())
             .addQueryParameter("per_page", PER_PAGE)
             .addQueryParameter("relationships", "language,type,format")
-            .toString()
+            .build()
 
         return GET(apiEndpointUrl, apiHeaders)
     }
@@ -60,9 +60,8 @@ class SaikaiScan : HttpSource() {
         val result = response.parseAs<SaikaiScanPaginatedStoriesDto>()
 
         val mangaList = result.data!!.map(SaikaiScanStoryDto::toSManga)
-        val hasNextPage = result.meta!!.currentPage < result.meta.lastPage
 
-        return MangasPage(mangaList, hasNextPage)
+        return MangasPage(mangaList, result.hasNextPage)
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
@@ -75,7 +74,7 @@ class SaikaiScan : HttpSource() {
             .addQueryParameter("page", page.toString())
             .addQueryParameter("per_page", PER_PAGE)
             .addQueryParameter("relationships", "language,type,format,latestReleases.separator")
-            .toString()
+            .build()
 
         return GET(apiEndpointUrl, apiHeaders)
     }
@@ -99,7 +98,7 @@ class SaikaiScan : HttpSource() {
         filters.filterIsInstance<UrlQueryFilter>()
             .forEach { it.addQueryParameter(apiEndpointUrl) }
 
-        return GET(apiEndpointUrl.toString(), apiHeaders)
+        return GET(apiEndpointUrl.build(), apiHeaders)
     }
 
     override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
@@ -118,7 +117,7 @@ class SaikaiScan : HttpSource() {
             .addQueryParameter("slug", storySlug)
             .addQueryParameter("per_page", "1")
             .addQueryParameter("relationships", "language,type,format,artists,status")
-            .toString()
+            .build()
 
         return GET(apiEndpointUrl, apiHeaders)
     }
@@ -141,7 +140,7 @@ class SaikaiScan : HttpSource() {
             .addQueryParameter("slug", storySlug)
             .addQueryParameter("per_page", "1")
             .addQueryParameter("relationships", "releases")
-            .toString()
+            .build()
 
         return GET(apiEndpointUrl, apiHeaders)
     }
@@ -169,7 +168,7 @@ class SaikaiScan : HttpSource() {
 
         val apiEndpointUrl = "$API_URL/api/releases/$releaseId".toHttpUrl().newBuilder()
             .addQueryParameter("relationships", "releaseImages")
-            .toString()
+            .build()
 
         return GET(apiEndpointUrl, apiHeaders)
     }
@@ -177,7 +176,7 @@ class SaikaiScan : HttpSource() {
     override fun pageListParse(response: Response): List<Page> {
         val result = response.parseAs<SaikaiScanReleaseResultDto>()
 
-        return result.data!!.releaseImages.mapIndexed { i, obj ->
+        return result.data?.releaseImages.orEmpty().mapIndexed { i, obj ->
             Page(i, "", "$IMAGE_SERVER_URL/${obj.image}")
         }
     }
@@ -295,7 +294,7 @@ class SaikaiScan : HttpSource() {
         private const val COMIC_FORMAT_ID = "2"
         private const val PER_PAGE = "12"
 
-        private const val API_URL = "https://api.saikai.com.br"
-        const val IMAGE_SERVER_URL = "https://s3-alpha.saikai.com.br"
+        private const val API_URL = "https://api.saikaiscans.net"
+        const val IMAGE_SERVER_URL = "https://s3-alpha.saikaiscans.net"
     }
 }

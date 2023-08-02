@@ -12,7 +12,11 @@ import java.util.Locale
 data class SaikaiScanResultDto<T>(
     val data: T? = null,
     val meta: SaikaiScanMetaDto? = null,
-)
+) {
+
+    val hasNextPage: Boolean
+        get() = meta !== null && meta.currentPage < meta.lastPage
+}
 
 typealias SaikaiScanPaginatedStoriesDto = SaikaiScanResultDto<List<SaikaiScanStoryDto>>
 typealias SaikaiScanReleaseResultDto = SaikaiScanResultDto<SaikaiScanReleaseDto>
