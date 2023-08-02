@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.mangadex
 
+import eu.kanade.tachiyomi.lib.i18n.Intl
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -50,8 +51,8 @@ object MDConstants {
         return "${coverQualityPref}_$dexLang"
     }
 
-    fun getCoverQualityPreferenceEntries(intl: MangaDexIntl) =
-        arrayOf(intl.coverQualityOriginal, intl.coverQualityMedium, intl.coverQualityLow)
+    fun getCoverQualityPreferenceEntries(intl: Intl) =
+        arrayOf(intl["cover_quality_original"], intl["cover_quality_medium"], intl["cover_quality_low"])
 
     fun getCoverQualityPreferenceEntryValues() = arrayOf("", ".512.jpg", ".256.jpg")
 

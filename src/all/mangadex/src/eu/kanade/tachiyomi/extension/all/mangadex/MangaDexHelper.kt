@@ -29,6 +29,7 @@ import eu.kanade.tachiyomi.extension.all.mangadex.dto.TagDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.UnknownEntity
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.UserAttributes
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.UserDto
+import eu.kanade.tachiyomi.lib.i18n.Intl
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -85,7 +86,19 @@ class MangaDexHelper(lang: String) {
         }
     }
 
-    val intl = MangaDexIntl(lang)
+    val intl = Intl(
+        language = lang,
+        baseLanguage = MangaDexIntl.ENGLISH,
+        availableLanguages = MangaDexIntl.AVAILABLE_LANGS,
+        classLoader = this::class.java.classLoader!!,
+        createMessageFileName = { lang ->
+            when (lang) {
+                MangaDexIntl.SPANISH_LATAM -> Intl.createDefaultMessageFileName(MangaDexIntl.SPANISH)
+                MangaDexIntl.PORTUGUESE -> Intl.createDefaultMessageFileName(MangaDexIntl.BRAZILIAN_PORTUGUESE)
+                else -> Intl.createDefaultMessageFileName(lang)
+            }
+        },
+    )
 
     /**
      * Gets the UUID from the url
@@ -298,10 +311,11 @@ class MangaDexHelper(lang: String) {
         val dexLocale = Locale.forLanguageTag(lang)
 
         val nonGenres = listOfNotNull(
-            attr.publicationDemographic?.let { intl.publicationDemographic(it) },
+            attr.publicationDemographic
+                ?.let { intl["publication_demographic_${it.name.lowercase()}"] },
             attr.contentRating
                 .takeIf { it != ContentRatingDto.SAFE }
-                ?.let { intl.contentRatingGenre(it) },
+                ?.let { intl["content_rating_genre"].format(intl["content_rating_${it.name.lowercase()}"]) },
             attr.originalLanguage
                 ?.let { Locale.forLanguageTag(it) }
                 ?.getDisplayName(dexLocale)
@@ -344,7 +358,7 @@ class MangaDexHelper(lang: String) {
 
             if (altTitles.isNotEmpty()) {
                 val altTitlesDesc = altTitles
-                    .joinToString("\n", "${intl.altTitleText}\n") { "• $it" }
+                    .joinToString("\n", "${intl["alternative_titles"]}\n") { "• $it" }
                 desc += (if (desc.isNullOrBlank()) "" else "\n\n") + altTitlesDesc.removeEntitiesAndMarkdown()
             }
         }
@@ -376,9 +390,9 @@ class MangaDexHelper(lang: String) {
                 val users = chapterDataDto.relationships
                     .filterIsInstance<UserDto>()
                     .mapNotNull { it.attributes?.username }
-                if (users.isNotEmpty()) intl.uploadedBy(users) else ""
+                if (users.isNotEmpty()) intl["uploaded_by"].format(users.joinToString(" & ")) else ""
             }
-            .ifEmpty { intl.noGroup } // "No Group" as final resort
+            .ifEmpty { intl["no_group"] } // "No Group" as final resort
 
         val chapterName = mutableListOf<String>()
         // Build chapter name
@@ -459,7 +473,7 @@ class MangaDexHelper(lang: String) {
                         .map(String::trim)
                         .all(::isUuid)
 
-                    editText.error = if (!isValid) intl.invalidUuids else null
+                    editText.error = if (!isValid) intl["invalid_uuids"] else null
                     editText.rootView.findViewById<Button>(android.R.id.button1)
                         ?.isEnabled = editText.error == null
                 }

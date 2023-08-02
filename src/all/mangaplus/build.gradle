@@ -6,7 +6,11 @@ ext {
     extName = 'MANGA Plus by SHUEISHA'
     pkgNameSuffix = 'all.mangaplus'
     extClass = '.MangaPlusFactory'
-    extVersionCode = 43
+    extVersionCode = 44
+}
+
+dependencies {
+    implementation(project(":lib-i18n"))
 }
 
 apply from: "$rootDir/common.gradle"

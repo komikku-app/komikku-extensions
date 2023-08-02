@@ -6,8 +6,12 @@ ext {
     extName = 'MangaDex'
     pkgNameSuffix = 'all.mangadex'
     extClass = '.MangaDexFactory'
-    extVersionCode = 184
+    extVersionCode = 185
     isNsfw = true
+}
+
+dependencies {
+    implementation(project(":lib-i18n"))
 }
 
 apply from: "$rootDir/common.gradle"

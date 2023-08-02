@@ -257,6 +257,16 @@ dependencies {
 }
 ```
 
+#### i18n library
+
+[`lib-i18n`](https://github.com/tachiyomiorg/tachiyomi-extensions/tree/master/lib/i18n) is a library for handling internationalization in the sources. It allows loading `.properties` files with messages located under the `assets/i18n` folder of each extension, that can be used to translate strings under the source.
+
+```gradle
+dependencies {
+    implementation(project(':lib-i18n'))
+}
+```
+
 #### Additional dependencies
 
 If you find yourself needing additional functionality, you can add more dependencies to your `build.gradle` file.
