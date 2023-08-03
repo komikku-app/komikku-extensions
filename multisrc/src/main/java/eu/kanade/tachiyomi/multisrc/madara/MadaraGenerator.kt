@@ -83,7 +83,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("DokkoManga", "https://dokkomanga.com", "es", overrideVersionCode = 1),
         SingleLang("Doodmanga", "https://www.doodmanga.com", "th"),
         SingleLang("DoujinHentai", "https://doujinhentai.net", "es", isNsfw = true, overrideVersionCode = 1),
-        SingleLang("DragonTea", "https://dragontea.ink", "en", overrideVersionCode = 1),
+        SingleLang("DragonTea", "https://dragontea.ink", "en", overrideVersionCode = 2),
         SingleLang("DragonTranslation.net", "https://dragontranslation.net", "es", isNsfw = true, className = "DragonTranslationNet"),
         SingleLang("Drake Scans", "https://drakescans.com", "en", overrideVersionCode = 3),
         SingleLang("Dream Manga", "https://www.swarmmanga.com", "en", overrideVersionCode = 3),
