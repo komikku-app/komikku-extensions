@@ -133,41 +133,31 @@ abstract class ComickFun(
                         }
                     }
                     is GenreFilter -> {
-                        it.state.filter { (it as TriState).isIncluded() }.forEach {
-                            addQueryParameter(
-                                "genres",
-                                (it as TriState).value,
-                            )
+                        it.state.filter { it.isIncluded() }.forEach {
+                            addQueryParameter("genres", it.value)
                         }
 
-                        it.state.filter { (it as TriState).isExcluded() }.forEach {
-                            addQueryParameter(
-                                "excludes",
-                                (it as TriState).value,
-                            )
+                        it.state.filter { it.isExcluded() }.forEach {
+                            addQueryParameter("excludes", it.value)
                         }
                     }
                     is DemographicFilter -> {
-                        it.state.filter { (it as CheckBox).state }.forEach {
-                            addQueryParameter(
-                                "demographic",
-                                (it as CheckBox).value,
-                            )
+                        it.state.filter { it.isIncluded() }.forEach {
+                            addQueryParameter("demographic", it.value)
                         }
                     }
                     is TypeFilter -> {
-                        it.state.filter { (it as CheckBox).state }.forEach {
-                            addQueryParameter(
-                                "country",
-                                (it as CheckBox).value,
-                            )
+                        it.state.filter { it.state }.forEach {
+                            addQueryParameter("country", it.value)
                         }
                     }
                     is SortFilter -> {
                         addQueryParameter("sort", it.getValue())
                     }
                     is StatusFilter -> {
-                        addQueryParameter("status", it.getValue())
+                        if (it.state > 0) {
+                            addQueryParameter("status", it.getValue())
+                        }
                     }
                     is CreatedAtFilter -> {
                         if (it.state > 0) {

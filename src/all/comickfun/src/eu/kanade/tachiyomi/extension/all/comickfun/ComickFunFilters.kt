@@ -20,154 +20,151 @@ fun getFilters(): FilterList {
         ToYearFilter("To"),
         Filter.Header("Separate tags with commas"),
         TagFilter("Tags"),
-
     )
 }
 
 /** Filters **/
-internal class GenreFilter(name: String, genreList: List<TriState>) : Group(name, genreList)
+internal class GenreFilter(name: String, genreList: List<Pair<String, String>>) :
+    Filter.Group<TriFilter>(name, genreList.map { TriFilter(it.first, it.second) })
 
-internal class TagFilter(name: String) : Text(name)
+internal class TagFilter(name: String) : TextFilter(name)
 
-internal class DemographicFilter(name: String, demographicList: List<CheckBox>) :
-    Group(name, demographicList)
+internal class DemographicFilter(name: String, demographicList: List<Pair<String, String>>) :
+    Filter.Group<TriFilter>(name, demographicList.map { TriFilter(it.first, it.second) })
 
-internal class TypeFilter(name: String, typeList: List<CheckBox>) :
-    Group(name, typeList)
+internal class TypeFilter(name: String, typeList: List<Pair<String, String>>) :
+    Filter.Group<CheckBoxFilter>(name, typeList.map { CheckBoxFilter(it.first, it.second) })
 
-internal class CompletedFilter(name: String) : CheckBox(name)
+internal class CompletedFilter(name: String) : CheckBoxFilter(name)
 
-internal class CreatedAtFilter(name: String, createdAtList: Array<Pair<String, String>>) :
-    Select(name, createdAtList)
+internal class CreatedAtFilter(name: String, createdAtList: List<Pair<String, String>>) :
+    SelectFilter(name, createdAtList)
 
-internal class MinimumFilter(name: String) : Text(name)
+internal class MinimumFilter(name: String) : TextFilter(name)
 
-internal class FromYearFilter(name: String) : Text(name)
+internal class FromYearFilter(name: String) : TextFilter(name)
 
-internal class ToYearFilter(name: String) : Text(name)
+internal class ToYearFilter(name: String) : TextFilter(name)
 
-internal class SortFilter(name: String, sortList: Array<Pair<String, String>>, state: Int = 0) :
-    Select(name, sortList, state)
+internal class SortFilter(name: String, sortList: List<Pair<String, String>>, state: Int = 0) :
+    SelectFilter(name, sortList, state)
 
-internal class StatusFilter(name: String, statusList: Array<Pair<String, String>>, state: Int = 0) :
-    Select(name, statusList, state)
+internal class StatusFilter(name: String, statusList: List<Pair<String, String>>, state: Int = 0) :
+    SelectFilter(name, statusList, state)
 
 /** Generics **/
-internal open class Group(name: String, values: List<Any>) :
-    Filter.Group<Any>(name, values)
+internal open class TriFilter(name: String, val value: String) : Filter.TriState(name)
 
-internal open class TriState(name: String, val value: String) : Filter.TriState(name)
+internal open class TextFilter(name: String) : Filter.Text(name)
 
-internal open class Text(name: String) : Filter.Text(name)
+internal open class CheckBoxFilter(name: String, val value: String = "") : Filter.CheckBox(name)
 
-internal open class CheckBox(name: String, val value: String = "") : Filter.CheckBox(name)
-
-internal open class Select(name: String, private val vals: Array<Pair<String, String>>, state: Int = 0) :
+internal open class SelectFilter(name: String, private val vals: List<Pair<String, String>>, state: Int = 0) :
     Filter.Select<String>(name, vals.map { it.first }.toTypedArray(), state) {
     fun getValue() = vals[state].second
 }
 
 /** Filters Data **/
-private val getGenresList: List<TriState> = listOf(
-    TriState("4-Koma", "4-koma"),
-    TriState("Action", "action"),
-    TriState("Adaptation", "adaptation"),
-    TriState("Adult", "adult"),
-    TriState("Adventure", "adventure"),
-    TriState("Aliens", "aliens"),
-    TriState("Animals", "animals"),
-    TriState("Anthology", "anthology"),
-    TriState("Award Winning", "award-winning"),
-    TriState("Comedy", "comedy"),
-    TriState("Cooking", "cooking"),
-    TriState("Crime", "crime"),
-    TriState("Crossdressing", "crossdressing"),
-    TriState("Delinquents", "delinquents"),
-    TriState("Demons", "demons"),
-    TriState("Doujinshi", "doujinshi"),
-    TriState("Drama", "drama"),
-    TriState("Ecchi", "ecchi"),
-    TriState("Fan Colored", "fan-colored"),
-    TriState("Fantasy", "fantasy"),
-    TriState("Full Color", "full-color"),
-    TriState("Gender Bender", "gender-bender"),
-    TriState("Genderswap", "genderswap"),
-    TriState("Ghosts", "ghosts"),
-    TriState("Gore", "gore"),
-    TriState("Gyaru", "gyaru"),
-    TriState("Harem", "harem"),
-    TriState("Historical", "historical"),
-    TriState("Horror", "horror"),
-    TriState("Incest", "incest"),
-    TriState("Isekai", "isekai"),
-    TriState("Loli", "loli"),
-    TriState("Long Strip", "long-strip"),
-    TriState("Mafia", "mafia"),
-    TriState("Magic", "magic"),
-    TriState("Magical Girls", "magical-girls"),
-    TriState("Martial Arts", "martial-arts"),
-    TriState("Mature", "mature"),
-    TriState("Mecha", "mecha"),
-    TriState("Medical", "medical"),
-    TriState("Military", "military"),
-    TriState("Monster Girls", "monster-girls"),
-    TriState("Monsters", "monsters"),
-    TriState("Music", "music"),
-    TriState("Mystery", "mystery"),
-    TriState("Ninja", "ninja"),
-    TriState("Office Workers", "office-workers"),
-    TriState("Official Colored", "official-colored"),
-    TriState("Oneshot", "oneshot"),
-    TriState("Philosophical", "philosophical"),
-    TriState("Police", "police"),
-    TriState("Post-Apocalyptic", "post-apocalyptic"),
-    TriState("Psychological", "psychological"),
-    TriState("Reincarnation", "reincarnation"),
-    TriState("Reverse Harem", "reverse-harem"),
-    TriState("Romance", "romance"),
-    TriState("Samurai", "samurai"),
-    TriState("School Life", "school-life"),
-    TriState("Sci-Fi", "sci-fi"),
-    TriState("Sexual Violence", "sexual-violence"),
-    TriState("Shota", "shota"),
-    TriState("Shoujo Ai", "shoujo-ai"),
-    TriState("Shounen Ai", "shounen-ai"),
-    TriState("Slice of Life", "slice-of-life"),
-    TriState("Smut", "smut"),
-    TriState("Sports", "sports"),
-    TriState("Superhero", "superhero"),
-    TriState("Supernatural", "supernatural"),
-    TriState("Survival", "survival"),
-    TriState("Thriller", "thriller"),
-    TriState("Time Travel", "time-travel"),
-    TriState("Traditional Games", "traditional-games"),
-    TriState("Tragedy", "tragedy"),
-    TriState("User Created", "user-created"),
-    TriState("Vampires", "vampires"),
-    TriState("Video Games", "video-games"),
-    TriState("Villainess", "villainess"),
-    TriState("Virtual Reality", "virtual-reality"),
-    TriState("Web Comic", "web-comic"),
-    TriState("Wuxia", "wuxia"),
-    TriState("Yaoi", "yaoi"),
-    TriState("Yuri", "yuri"),
-    TriState("Zombies", "zombies"),
+private val getGenresList: List<Pair<String, String>> = listOf(
+    Pair("4-Koma", "4-koma"),
+    Pair("Action", "action"),
+    Pair("Adaptation", "adaptation"),
+    Pair("Adult", "adult"),
+    Pair("Adventure", "adventure"),
+    Pair("Aliens", "aliens"),
+    Pair("Animals", "animals"),
+    Pair("Anthology", "anthology"),
+    Pair("Award Winning", "award-winning"),
+    Pair("Comedy", "comedy"),
+    Pair("Cooking", "cooking"),
+    Pair("Crime", "crime"),
+    Pair("Crossdressing", "crossdressing"),
+    Pair("Delinquents", "delinquents"),
+    Pair("Demons", "demons"),
+    Pair("Doujinshi", "doujinshi"),
+    Pair("Drama", "drama"),
+    Pair("Ecchi", "ecchi"),
+    Pair("Fan Colored", "fan-colored"),
+    Pair("Fantasy", "fantasy"),
+    Pair("Full Color", "full-color"),
+    Pair("Gender Bender", "gender-bender"),
+    Pair("Genderswap", "genderswap"),
+    Pair("Ghosts", "ghosts"),
+    Pair("Gore", "gore"),
+    Pair("Gyaru", "gyaru"),
+    Pair("Harem", "harem"),
+    Pair("Historical", "historical"),
+    Pair("Horror", "horror"),
+    Pair("Incest", "incest"),
+    Pair("Isekai", "isekai"),
+    Pair("Loli", "loli"),
+    Pair("Long Strip", "long-strip"),
+    Pair("Mafia", "mafia"),
+    Pair("Magic", "magic"),
+    Pair("Magical Girls", "magical-girls"),
+    Pair("Martial Arts", "martial-arts"),
+    Pair("Mature", "mature"),
+    Pair("Mecha", "mecha"),
+    Pair("Medical", "medical"),
+    Pair("Military", "military"),
+    Pair("Monster Girls", "monster-girls"),
+    Pair("Monsters", "monsters"),
+    Pair("Music", "music"),
+    Pair("Mystery", "mystery"),
+    Pair("Ninja", "ninja"),
+    Pair("Office Workers", "office-workers"),
+    Pair("Official Colored", "official-colored"),
+    Pair("Oneshot", "oneshot"),
+    Pair("Philosophical", "philosophical"),
+    Pair("Police", "police"),
+    Pair("Post-Apocalyptic", "post-apocalyptic"),
+    Pair("Psychological", "psychological"),
+    Pair("Reincarnation", "reincarnation"),
+    Pair("Reverse Harem", "reverse-harem"),
+    Pair("Romance", "romance"),
+    Pair("Samurai", "samurai"),
+    Pair("School Life", "school-life"),
+    Pair("Sci-Fi", "sci-fi"),
+    Pair("Sexual Violence", "sexual-violence"),
+    Pair("Shota", "shota"),
+    Pair("Shoujo Ai", "shoujo-ai"),
+    Pair("Shounen Ai", "shounen-ai"),
+    Pair("Slice of Life", "slice-of-life"),
+    Pair("Smut", "smut"),
+    Pair("Sports", "sports"),
+    Pair("Superhero", "superhero"),
+    Pair("Supernatural", "supernatural"),
+    Pair("Survival", "survival"),
+    Pair("Thriller", "thriller"),
+    Pair("Time Travel", "time-travel"),
+    Pair("Traditional Games", "traditional-games"),
+    Pair("Tragedy", "tragedy"),
+    Pair("User Created", "user-created"),
+    Pair("Vampires", "vampires"),
+    Pair("Video Games", "video-games"),
+    Pair("Villainess", "villainess"),
+    Pair("Virtual Reality", "virtual-reality"),
+    Pair("Web Comic", "web-comic"),
+    Pair("Wuxia", "wuxia"),
+    Pair("Yaoi", "yaoi"),
+    Pair("Yuri", "yuri"),
+    Pair("Zombies", "zombies"),
 )
 
-private val getDemographicList: List<CheckBox> = listOf(
-    CheckBox("Shounen", "1"),
-    CheckBox("Shoujo", "2"),
-    CheckBox("Seinen", "3"),
-    CheckBox("Josei", "4"),
+private val getDemographicList: List<Pair<String, String>> = listOf(
+    Pair("Shounen", "1"),
+    Pair("Shoujo", "2"),
+    Pair("Seinen", "3"),
+    Pair("Josei", "4"),
 )
 
-private val getTypeList: List<CheckBox> = listOf(
-    CheckBox("Manga", "jp"),
-    CheckBox("Manhwa", "kr"),
-    CheckBox("Manhua", "cn"),
+private val getTypeList: List<Pair<String, String>> = listOf(
+    Pair("Manga", "jp"),
+    Pair("Manhwa", "kr"),
+    Pair("Manhua", "cn"),
 )
 
-private val getCreatedAtList: Array<Pair<String, String>> = arrayOf(
+private val getCreatedAtList: List<Pair<String, String>> = listOf(
     Pair("", ""),
     Pair("3 days", "3"),
     Pair("7 days", "7"),
@@ -177,7 +174,8 @@ private val getCreatedAtList: Array<Pair<String, String>> = arrayOf(
     Pair("1 year", "365"),
 )
 
-private val getSortsList: Array<Pair<String, String>> = arrayOf(
+private val getSortsList: List<Pair<String, String>> = listOf(
+    Pair("Most popular", "follow"),
     Pair("Most follows", "user_follow_count"),
     Pair("Most views", "view"),
     Pair("High rating", "rating"),
@@ -185,7 +183,7 @@ private val getSortsList: Array<Pair<String, String>> = arrayOf(
     Pair("Newest", "created_at"),
 )
 
-private val getStatusList: Array<Pair<String, String>> = arrayOf(
+private val getStatusList: List<Pair<String, String>> = listOf(
     Pair("All", "0"),
     Pair("Ongoing", "1"),
     Pair("Completed", "2"),
