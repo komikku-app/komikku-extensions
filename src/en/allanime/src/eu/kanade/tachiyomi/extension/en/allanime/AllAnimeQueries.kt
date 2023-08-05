@@ -1,11 +1,8 @@
 package eu.kanade.tachiyomi.extension.en.allanime
 
-import eu.kanade.tachiyomi.extension.en.allanime.AllAnime.Companion.whitespace
-
 private fun buildQuery(queryAction: () -> String): String {
     return queryAction()
         .trimIndent()
-        .replace(whitespace, " ")
         .replace("%", "$")
 }
 
@@ -33,7 +30,6 @@ val POPULAR_QUERY: String = buildQuery {
                         name
                         thumbnail
                         englishName
-                        nativeName
                     }
                 }
             }
@@ -62,7 +58,6 @@ val SEARCH_QUERY: String = buildQuery {
                     name
                     thumbnail
                     englishName
-                    nativeName
                 }
             }
         }
@@ -83,23 +78,12 @@ val DETAILS_QUERY: String = buildQuery {
                 status
                 altNames
                 englishName
-                nativeName
             }
         }
     """
 }
 
 val CHAPTERS_QUERY: String = buildQuery {
-    """
-        query (%id: String!) {
-            manga(_id: %id) {
-                availableChaptersDetail
-            }
-        }
-    """
-}
-
-val CHAPTERS_DETAILS_QUERY: String = buildQuery {
     """
         query (%id: String!, %chapterNumStart: Float!, %chapterNumEnd: Float!) {
             episodeInfos(

@@ -13,15 +13,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:host="allanime.to"/>
-                <data android:host="allanime.co"/>
-
-                <data
-                    android:pathPattern="/manga/..*"
-                    android:scheme="https" />
-                <data
-                    android:pathPattern="/read/..*"
-                    android:scheme="https" />
+                <data android:host="allanime.ai"/>
+                <data android:scheme="https"/>
+                <data android:pathPattern="/manga/..*"/>
+                <data android:pathPattern="/read/..*"/>
             </intent-filter>
         </activity>
     </application>

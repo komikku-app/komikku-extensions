@@ -3,91 +3,30 @@ package eu.kanade.tachiyomi.extension.en.allanime
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 
+abstract class SelectFilter(name: String, private val options: List<Pair<String, String>>) :
+    Filter.Select<String>(name, options.map { it.first }.toTypedArray()) {
+    fun getValue() = options[state].second.takeUnless { it.isEmpty() }
+}
+
+internal class SortFilter(name: String, sorts: List<Pair<String, String>>) : SelectFilter(name, sorts)
+
+internal class CountryFilter(name: String, countries: List<Pair<String, String>>) : SelectFilter(name, countries)
+
 internal class Genre(name: String) : Filter.TriState(name)
 
-internal class CountryFilter(name: String, private val countries: List<Pair<String, String>>) :
-    Filter.Select<String>(name, countries.map { it.first }.toTypedArray()) {
-    fun getValue() = countries[state].second
+internal class GenreFilter(title: String, genres: List<String>) :
+    Filter.Group<Genre>(title, genres.map(::Genre)) {
+    val included: List<String>?
+        get() = state.filter { it.isIncluded() }.map { it.name }.takeUnless { it.isEmpty() }
+
+    val excluded: List<String>?
+        get() = state.filter { it.isExcluded() }.map { it.name }.takeUnless { it.isEmpty() }
 }
 
-internal class GenreFilter(title: String, genres: List<Genre>) :
-    Filter.Group<Genre>(title, genres) {
-    val included: List<String>
-        get() = state.filter { it.isIncluded() }.map { it.name }
-
-    val excluded: List<String>
-        get() = state.filter { it.isExcluded() }.map { it.name }
-}
-
-private val genreList: List<Genre> = listOf(
-    Genre("4 Koma"),
-    Genre("Action"),
-    Genre("Adult"),
-    Genre("Adventure"),
-    Genre("Cars"),
-    Genre("Comedy"),
-    Genre("Cooking"),
-    Genre("Crossdressing"),
-    Genre("Dementia"),
-    Genre("Demons"),
-    Genre("Doujinshi"),
-    Genre("Drama"),
-    Genre("Ecchi"),
-    Genre("Fantasy"),
-    Genre("Game"),
-    Genre("Gender Bender"),
-    Genre("Gyaru"),
-    Genre("Harem"),
-    Genre("Historical"),
-    Genre("Horror"),
-    Genre("Isekai"),
-    Genre("Josei"),
-    Genre("Kids"),
-    Genre("Loli"),
-    Genre("Magic"),
-    Genre("Manhua"),
-    Genre("Manhwa"),
-    Genre("Martial Arts"),
-    Genre("Mature"),
-    Genre("Mecha"),
-    Genre("Medical"),
-    Genre("Military"),
-    Genre("Monster Girls"),
-    Genre("Music"),
-    Genre("Mystery"),
-    Genre("One Shot"),
-    Genre("Parody"),
-    Genre("Police"),
-    Genre("Post Apocalyptic"),
-    Genre("Psychological"),
-    Genre("Reincarnation"),
-    Genre("Reverse Harem"),
-    Genre("Romance"),
-    Genre("Samurai"),
-    Genre("School"),
-    Genre("Sci-Fi"),
-    Genre("Seinen"),
-    Genre("Shota"),
-    Genre("Shoujo"),
-    Genre("Shoujo Ai"),
-    Genre("Shounen"),
-    Genre("Shounen Ai"),
-    Genre("Slice of Life"),
-    Genre("Smut"),
-    Genre("Space"),
-    Genre("Sports"),
-    Genre("Super Power"),
-    Genre("Supernatural"),
-    Genre("Suspense"),
-    Genre("Thriller"),
-    Genre("Tragedy"),
-    Genre("Unknown"),
-    Genre("Vampire"),
-    Genre("Webtoons"),
-    Genre("Yaoi"),
-    Genre("Youkai"),
-    Genre("Yuri"),
-    Genre("Zombies"),
+private val sortList = listOf(
+    Pair("Update", ""),
+    Pair("Name Ascending", "Name_ASC"),
+    Pair("Name Descending", "Name_DESC"),
 )
 
 private val countryList: List<Pair<String, String>> = listOf(
@@ -97,7 +36,79 @@ private val countryList: List<Pair<String, String>> = listOf(
     Pair("Korea", "KR"),
 )
 
+private val genreList: List<String> = listOf(
+    "4 Koma",
+    "Action",
+    "Adult",
+    "Adventure",
+    "Cars",
+    "Comedy",
+    "Cooking",
+    "Crossdressing",
+    "Dementia",
+    "Demons",
+    "Doujinshi",
+    "Drama",
+    "Ecchi",
+    "Fantasy",
+    "Game",
+    "Gender Bender",
+    "Gyaru",
+    "Harem",
+    "Historical",
+    "Horror",
+    "Isekai",
+    "Josei",
+    "Kids",
+    "Loli",
+    "Magic",
+    "Manhua",
+    "Manhwa",
+    "Martial Arts",
+    "Mature",
+    "Mecha",
+    "Medical",
+    "Military",
+    "Monster Girls",
+    "Music",
+    "Mystery",
+    "One Shot",
+    "Parody",
+    "Police",
+    "Post Apocalyptic",
+    "Psychological",
+    "Reincarnation",
+    "Reverse Harem",
+    "Romance",
+    "Samurai",
+    "School",
+    "Sci-Fi",
+    "Seinen",
+    "Shota",
+    "Shoujo",
+    "Shoujo Ai",
+    "Shounen",
+    "Shounen Ai",
+    "Slice of Life",
+    "Smut",
+    "Space",
+    "Sports",
+    "Super Power",
+    "Supernatural",
+    "Suspense",
+    "Thriller",
+    "Tragedy",
+    "Unknown",
+    "Vampire",
+    "Webtoons",
+    "Yaoi",
+    "Youkai",
+    "Yuri",
+    "Zombies",
+)
+
 fun getFilters() = FilterList(
+    SortFilter("Sort", sortList),
     CountryFilter("Countries", countryList),
     GenreFilter("Genres", genreList),
 )
