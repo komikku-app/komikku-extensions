@@ -45,14 +45,18 @@ class MangaDexFilters {
         }
     }
 
-    private class OriginalLanguage(name: String, val isoCode: String) : Filter.CheckBox(name)
+    private class OriginalLanguage(
+        name: String,
+        val isoCode: String,
+        state: Boolean = false,
+    ) : Filter.CheckBox(name, state)
     private class OriginalLanguageList(intl: Intl, originalLanguage: List<OriginalLanguage>) :
         Filter.Group<OriginalLanguage>(intl["original_language"], originalLanguage),
         UrlQueryFilter {
 
         override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
-            state.forEach { lang ->
-                if (lang.state) {
+            state.filter(OriginalLanguage::state)
+                .forEach { lang ->
                     // dex has zh and zh-hk for chinese manhua
                     if (lang.isoCode == MDConstants.originalLanguagePrefValChinese) {
                         url.addQueryParameter(
@@ -63,7 +67,6 @@ class MangaDexFilters {
 
                     url.addQueryParameter("originalLanguage[]", lang.isoCode)
                 }
-            }
         }
     }
 
@@ -78,12 +81,30 @@ class MangaDexFilters {
         )!!
 
         return listOf(
-            OriginalLanguage(intl["original_language_filter_japanese"], MDConstants.originalLanguagePrefValJapanese)
-                .apply { state = MDConstants.originalLanguagePrefValJapanese in originalLanguages },
-            OriginalLanguage(intl["original_language_filter_chinese"], MDConstants.originalLanguagePrefValChinese)
-                .apply { state = MDConstants.originalLanguagePrefValChinese in originalLanguages },
-            OriginalLanguage(intl["original_language_filter_korean"], MDConstants.originalLanguagePrefValKorean)
-                .apply { state = MDConstants.originalLanguagePrefValKorean in originalLanguages },
+            OriginalLanguage(
+                name = intl.format(
+                    "original_language_filter_japanese",
+                    intl.languageDisplayName(MangaDexIntl.JAPANESE),
+                ),
+                isoCode = MDConstants.originalLanguagePrefValJapanese,
+                state = MDConstants.originalLanguagePrefValJapanese in originalLanguages,
+            ),
+            OriginalLanguage(
+                name = intl.format(
+                    "original_language_filter_chinese",
+                    intl.languageDisplayName(MangaDexIntl.CHINESE),
+                ),
+                isoCode = MDConstants.originalLanguagePrefValChinese,
+                state = MDConstants.originalLanguagePrefValChinese in originalLanguages,
+            ),
+            OriginalLanguage(
+                name = intl.format(
+                    "original_language_filter_korean",
+                    intl.languageDisplayName(MangaDexIntl.KOREAN),
+                ),
+                isoCode = MDConstants.originalLanguagePrefValKorean,
+                state = MDConstants.originalLanguagePrefValKorean in originalLanguages,
+            ),
         )
     }
 
@@ -93,11 +114,8 @@ class MangaDexFilters {
         UrlQueryFilter {
 
         override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
-            state.forEach { rating ->
-                if (rating.state) {
-                    url.addQueryParameter("contentRating[]", rating.value)
-                }
-            }
+            state.filter(ContentRating::state)
+                .forEach { url.addQueryParameter("contentRating[]", it.value) }
         }
     }
 
@@ -133,11 +151,8 @@ class MangaDexFilters {
         UrlQueryFilter {
 
         override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
-            state.forEach { demographic ->
-                if (demographic.state) {
-                    url.addQueryParameter("publicationDemographic[]", demographic.value)
-                }
-            }
+            state.filter(Demographic::state)
+                .forEach { url.addQueryParameter("publicationDemographic[]", it.value) }
         }
     }
 
@@ -155,11 +170,8 @@ class MangaDexFilters {
         UrlQueryFilter {
 
         override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
-            state.forEach { status ->
-                if (status.state) {
-                    url.addQueryParameter("status[]", status.value)
-                }
-            }
+            state.filter(Status::state)
+                .forEach { url.addQueryParameter("status[]", it.value) }
         }
     }
 
@@ -196,10 +208,7 @@ class MangaDexFilters {
         override fun addQueryParameter(url: HttpUrl.Builder, dexLang: String) {
             if (state != null) {
                 val query = sortables[state!!.index].value
-                val value = when (state!!.ascending) {
-                    true -> "asc"
-                    false -> "desc"
-                }
+                val value = if (state!!.ascending) "asc" else "desc"
 
                 url.addQueryParameter("order[$query]", value)
             }

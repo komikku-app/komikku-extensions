@@ -315,7 +315,7 @@ class MangaDexHelper(lang: String) {
                 ?.let { intl["publication_demographic_${it.name.lowercase()}"] },
             attr.contentRating
                 .takeIf { it != ContentRatingDto.SAFE }
-                ?.let { intl["content_rating_genre"].format(intl["content_rating_${it.name.lowercase()}"]) },
+                ?.let { intl.format("content_rating_genre", intl["content_rating_${it.name.lowercase()}"]) },
             attr.originalLanguage
                 ?.let { Locale.forLanguageTag(it) }
                 ?.getDisplayName(dexLocale)
@@ -390,7 +390,7 @@ class MangaDexHelper(lang: String) {
                 val users = chapterDataDto.relationships
                     .filterIsInstance<UserDto>()
                     .mapNotNull { it.attributes?.username }
-                if (users.isNotEmpty()) intl["uploaded_by"].format(users.joinToString(" & ")) else ""
+                if (users.isNotEmpty()) intl.format("uploaded_by", users.joinToString(" & ")) else ""
             }
             .ifEmpty { intl["no_group"] } // "No Group" as final resort
 

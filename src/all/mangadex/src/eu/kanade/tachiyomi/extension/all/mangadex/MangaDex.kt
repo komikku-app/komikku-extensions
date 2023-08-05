@@ -213,7 +213,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             .asObservable()
             .map { response ->
                 if (response.isSuccessful.not()) {
-                    throw Exception(helper.intl["unable_to_process_chapter_request"].format(response.code))
+                    throw Exception(helper.intl.format("unable_to_process_chapter_request", response.code))
                 }
 
                 response.parseAs<ChapterDto>().data!!.relationships
@@ -760,8 +760,8 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     override fun getFilterList(): FilterList =
         helper.mdFilters.getMDFilterList(preferences, dexLang, helper.intl)
 
-    private fun HttpUrl.Builder.addQueryParameter(name: String, value: Set<String>?): HttpUrl.Builder {
-        return apply { value?.forEach { addQueryParameter(name, it) } }
+    private fun HttpUrl.Builder.addQueryParameter(name: String, value: Set<String>?) = apply {
+        value?.forEach { addQueryParameter(name, it) }
     }
 
     private inline fun <reified T> Response.parseAs(): T = use {

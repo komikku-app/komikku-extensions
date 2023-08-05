@@ -53,6 +53,12 @@ class Intl(
         else -> "[$key]"
     }
 
+    /**
+     * Uses the string as a format string and returns a string obtained by
+     * substituting the specified arguments, using the instance locale.
+     */
+    fun format(key: String, vararg args: Any?) = get(key).format(locale, *args)
+
     fun languageDisplayName(localeCode: String): String =
         Locale.forLanguageTag(localeCode)
             .getDisplayName(locale)

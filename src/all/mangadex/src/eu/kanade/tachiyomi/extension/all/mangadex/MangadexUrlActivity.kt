@@ -22,17 +22,17 @@ class MangadexUrlActivity : Activity() {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
-            val titleid = pathSegments[1]
+            val titleId = pathSegments[1]
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"
                 with(pathSegments[0]) {
                     when {
-                        equals("chapter") -> putExtra("query", "${MDConstants.prefixChSearch}$titleid")
-                        equals("group") -> putExtra("query", "${MDConstants.prefixGrpSearch}$titleid")
-                        equals("user") -> putExtra("query", "${MDConstants.prefixUsrSearch}$titleid")
-                        equals("author") -> putExtra("query", "${MDConstants.prefixAuthSearch}$titleid")
-                        equals("list") -> putExtra("query", "${MDConstants.prefixListSearch}$titleid")
-                        else -> putExtra("query", "${MDConstants.prefixIdSearch}$titleid")
+                        equals("chapter") -> putExtra("query", MDConstants.prefixChSearch + titleId)
+                        equals("group") -> putExtra("query", MDConstants.prefixGrpSearch + titleId)
+                        equals("user") -> putExtra("query", MDConstants.prefixUsrSearch + titleId)
+                        equals("author") -> putExtra("query", MDConstants.prefixAuthSearch + titleId)
+                        equals("list") -> putExtra("query", MDConstants.prefixListSearch + titleId)
+                        else -> putExtra("query", MDConstants.prefixIdSearch + titleId)
                     }
                 }
                 putExtra("filter", packageName)
@@ -44,7 +44,7 @@ class MangadexUrlActivity : Activity() {
                 Log.e("MangadexUrlActivity", e.toString())
             }
         } else {
-            Log.e("MangadexUrlActivity", "could not parse uri from intent $intent")
+            Log.e("MangadexUrlActivity", "Could not parse URI from intent $intent")
         }
 
         finish()
