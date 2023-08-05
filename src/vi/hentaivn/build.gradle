@@ -5,8 +5,12 @@ ext {
     extName = 'HentaiVN'
     pkgNameSuffix = 'vi.hentaivn'
     extClass = '.HentaiVN'
-    extVersionCode = 28
+    extVersionCode = 29
     isNsfw = true
+}
+
+dependencies {
+    implementation(project(":lib-randomua"))
 }
 
 apply from: "$rootDir/common.gradle"
