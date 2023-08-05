@@ -25,7 +25,7 @@ class FuryoSquad : ParsedHttpSource() {
 
     override val name = "FuryoSquad"
 
-    override val baseUrl = "https://www.furyosquad.com/"
+    override val baseUrl = "https://www.furyosociety.com/"
 
     override val lang = "fr"
 
