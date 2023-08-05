@@ -6,7 +6,7 @@ import java.util.Locale
 
 class AiYuManga : Madara(
     "AiYuManga",
-    "https://aiyumangascanlation.com",
+    "https://aiyumanga.com",
     "es",
     SimpleDateFormat("MM/dd/yyyy", Locale("es")),
 ) {
