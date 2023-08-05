@@ -9,7 +9,7 @@ import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-class Qinqin : SinMH("亲亲漫画", "https://www.acgqd.com") {
+class Qinqin : SinMH("亲亲漫画", "https://www.acgud.com") {
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/list/post/?page=$page", headers)
 
@@ -17,7 +17,7 @@ class Qinqin : SinMH("亲亲漫画", "https://www.acgqd.com") {
 
     override fun Elements.sectionsDescending() = this
 
-    // https://www.acgqd.com/js/jmzz20191018.js
+    // https://www.acgud.com/js/jmzz20191018.js
     override fun parsePageImages(chapterImages: String): List<String> {
         val key = SecretKeySpec("cxNB23W8xzKJV26O".toByteArray(), "AES")
         val iv = IvParameterSpec("opb4x7z21vg1f3gI".toByteArray())
