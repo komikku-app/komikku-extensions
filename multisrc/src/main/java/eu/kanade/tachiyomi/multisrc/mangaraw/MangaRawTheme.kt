@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Evaluator
@@ -23,7 +24,11 @@ abstract class MangaRawTheme(
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
         setUrlWithoutDomain(element.selectFirst(Evaluator.Tag("a"))!!.attr("href"))
-        title = element.selectFirst(Evaluator.Tag("h3"))!!.text().sanitizeTitle()
+
+        // Title could be missing. Uses URL as a last effort, ex: okaeri-alice-raw
+        title = element.selectFirst(Evaluator.Tag("h3"))?.text()?.sanitizeTitle()
+            ?: (baseUrl + url).toHttpUrl().pathSegments.first()
+
         thumbnail_url = element.selectFirst(Evaluator.Tag("img"))?.absUrl("data-src")
     }
 
