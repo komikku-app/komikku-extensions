@@ -11,9 +11,6 @@ class BakaMangaGenerator : ThemeSourceGenerator {
     override val baseVersionCode = 1
 
     override val sources = listOf(
-        SingleLang("ManhuaManga.net", "https://manhuamanga.net", "en", className = "ManhuaMangaNet", overrideVersionCode = 2),
-        SingleLang("ManhwaManga.net", "https://manhwamanga.net", "en", isNsfw = true, className = "ManhwaMangaNet", overrideVersionCode = 7),
-        SingleLang("MWManhwa", "https://mwmanhwa.net", "all", isNsfw = true),
         SingleLang("Manhwa XXL", "https://manhwaxxl.com", "en", isNsfw = true),
     )
 
