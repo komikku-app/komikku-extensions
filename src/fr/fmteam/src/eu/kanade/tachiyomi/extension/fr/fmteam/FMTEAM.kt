@@ -6,114 +6,124 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
-import java.text.ParseException
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
-class FMTEAM : ParsedHttpSource() {
+class FMTEAM : HttpSource() {
     override val name = "FMTEAM"
     override val baseUrl = "https://fmteam.fr"
     override val lang = "fr"
     override val supportsLatest = true
+    override val versionId = 2
 
-
+    private val json: Json by injectLazy()
 
     companion object {
-        private val dateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.FRENCH)
-        private val allPagesRegex = "\"url\":\"(.*?)\"".toRegex()
-        private val authorRegex = "Author: *(.*) Synopsis".toRegex()
-        private val descriptionRegex = "Synopsis: *(.*)".toRegex()
-    }
-
-    // All manga
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/directory/")
-    override fun popularMangaSelector() = "#content .panel .list.series .group"
-    override fun popularMangaNextPageSelector(): String? = null
-    override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.selectFirst(".title a")!!.text().trim()
-        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-        thumbnail_url = element.select(".preview").attr("src")
-    }
-
-    // Latest
-    override fun latestUpdatesRequest(page: Int) = GET(baseUrl)
-    override fun latestUpdatesSelector() = ".panel .list .group"
-    override fun latestUpdatesNextPageSelector() = ".prevnext .next .gbutton.fright:last-child a"
-    override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.selectFirst(".title a")!!.text().trim()
-        setUrlWithoutDomain(element.select(".title a").attr("href"))
-    }
-    override fun latestUpdatesParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        val mangas = document.select(latestUpdatesSelector()).map { element ->
-            latestUpdatesFromElement(element)
-        }.distinctBy { it.title }
-        return MangasPage(mangas, false)
-    }
-
-    // Search
-    override fun searchMangaParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        var mangas = document.select(popularMangaSelector()).map { popularMangaFromElement(it) }
-        val query = response.request.headers["query"]
-        if (query != null) {
-            mangas = mangas.filter { it.title.contains(query, true) }
-        }
-        return MangasPage(mangas, false)
-    }
-    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
-    override fun searchMangaNextPageSelector(): String? = null
-    override fun searchMangaSelector(): String = popularMangaSelector()
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val headers = headersBuilder()
-            .add("query", query)
-            .build()
-        return GET("$baseUrl/directory/", headers)
-    }
-
-    // Manga details
-    override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        thumbnail_url = document.select(".comic.info .thumbnail img").attr("src")
-        val authorSynopsis = document.select(".large.comic .info").text().trim()
-        if (authorSynopsis.contains("Author")) {
-            author = authorRegex.find(authorSynopsis)!!.groups[1]!!.value.trim()
-        }
-        description = descriptionRegex.find(authorSynopsis)!!.groups[1]!!.value.trim()
-    }
-
-    // Chapter list
-    override fun chapterListSelector() = ".list .group .element"
-    override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        setUrlWithoutDomain(element.select(".title a").attr("href"))
-        name = element.select(".title a").attr("title").trim()
-        val date = element.select(".meta_r").text().trim().split(", ")[1]
-        date_upload = if (date === "Aujourd'hui") {
-            dateFormat.format(Date()).toLong()
-        } else {
-            try {
-                dateFormat.parse(date)!!.time
-            } catch (e: ParseException) {
-                0L
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
             }
         }
     }
 
-    // Pages
-    override fun pageListParse(document: Document): List<Page> {
-        val pages = mutableListOf<Page>()
-        val script = document.selectFirst("script:containsData(pages =)")!!.data()
-        val allPages = allPagesRegex.findAll(script)
-        allPages.asIterable().mapIndexed { i, it ->
-            pages.add(Page(i, "", it.groupValues[1].replace("\\/", "/")))
-        }
-        return pages
+    // All manga
+    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/api/comics")
+
+    override fun popularMangaParse(response: Response): MangasPage {
+        val results = json.decodeFromString<FmteamComicListPage>(response.body.string())
+
+        return MangasPage(results.comics.sortedByDescending { it.views }.map(::fmTeamComicToSManga), false)
     }
-    override fun imageUrlParse(document: Document): String = throw Exception("Not used")
+
+    // Latest
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/api/comics")
+
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val results = json.decodeFromString<FmteamComicListPage>(response.body.string())
+
+        return MangasPage(results.comics.sortedByDescending { parseDate(it.last_chapter.published_on) }.map(::fmTeamComicToSManga), false)
+    }
+
+    // Search
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = GET("$baseUrl/api/search/$query")
+
+    override fun searchMangaParse(response: Response): MangasPage {
+        val results = json.decodeFromString<FmteamComicListPage>(response.body.string())
+
+        return MangasPage(results.comics.map(::fmTeamComicToSManga), false)
+    }
+
+    // Manga details
+    override fun mangaDetailsRequest(manga: SManga): Request = GET("$baseUrl/api${manga.url}")
+
+    override fun mangaDetailsParse(response: Response): SManga {
+        val results = json.decodeFromString<FmteamComicDetailPage>(response.body.string())
+
+        return fmTeamComicToSManga(results.comic)
+    }
+
+    override fun getMangaUrl(manga: SManga): String {
+        return "$baseUrl${manga.url}"
+    }
+
+    // Chapter list
+    override fun chapterListRequest(manga: SManga): Request = GET("$baseUrl/api${manga.url}")
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val results = json.decodeFromString<FmteamComicDetailPage>(response.body.string())
+
+        return results.comic.chapters?.map(::fmTeamChapterToSChapter) ?: emptyList()
+    }
+
+    override fun getChapterUrl(chapter: SChapter): String {
+        return "$baseUrl${chapter.url}"
+    }
+
+    // Pages
+    override fun pageListRequest(chapter: SChapter): Request = GET("$baseUrl/api${chapter.url}")
+
+    override fun pageListParse(response: Response): List<Page> {
+        val results = json.decodeFromString<FmteamChapterDetailPage>(response.body.string())
+
+        return results.chapter.pages.orEmpty()
+            .mapIndexed { i, page -> Page(i, "${results.chapter.url}#${i + 1}", page) }
+    }
+
+    override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used.")
+
+    // Utils
+    private fun fmTeamComicToSManga(comic: FmteamComic): SManga = SManga.create().apply {
+        url = comic.url
+        title = comic.title
+        artist = comic.artist
+        author = comic.author
+        description = comic.description
+        genre = comic.genres.joinToString { it.name }
+        status = when (comic.status) {
+            "En cours" -> SManga.ONGOING
+            "Termin\u00e9" -> SManga.COMPLETED
+            else -> SManga.UNKNOWN
+        }
+        thumbnail_url = comic.thumbnail
+        initialized = true
+    }
+
+    private fun fmTeamChapterToSChapter(chapter: FmteamChapter): SChapter = SChapter.create().apply {
+        url = chapter.url
+        name = chapter.full_title
+        date_upload = parseDate(chapter.published_on)
+        scanlator = chapter.teams.filterNotNull().joinToString { it.name }
+    }
+
+    private fun parseDate(dateStr: String): Long {
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
+            .getOrNull() ?: 0L
+    }
 }
