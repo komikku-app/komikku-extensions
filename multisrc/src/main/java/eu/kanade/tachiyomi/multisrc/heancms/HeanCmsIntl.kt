@@ -16,6 +16,12 @@ class HeanCmsIntl(lang: String) {
         else -> "Status"
     }
 
+    val statusAll: String = when (availableLang) {
+        BRAZILIAN_PORTUGUESE -> "Todos"
+        SPANISH -> "Todos"
+        else -> "All"
+    }
+
     val statusOngoing: String = when (availableLang) {
         BRAZILIAN_PORTUGUESE -> "Em andamento"
         SPANISH -> "En curso"

@@ -267,6 +267,7 @@ abstract class HeanCms(
     }
 
     protected open fun getStatusList(): List<Status> = listOf(
+        Status(intl.statusAll, "All"),
         Status(intl.statusOngoing, "Ongoing"),
         Status(intl.statusOnHiatus, "Hiatus"),
         Status(intl.statusDropped, "Dropped"),
@@ -294,13 +295,13 @@ abstract class HeanCms(
         return FilterList(filters)
     }
 
-    private inline fun <reified T> Response.parseAs(): T = use {
+    protected inline fun <reified T> Response.parseAs(): T = use {
         it.body.string().parseAs()
     }
 
-    private inline fun <reified T> String.parseAs(): T = json.decodeFromString(this)
+    protected inline fun <reified T> String.parseAs(): T = json.decodeFromString(this)
 
-    private inline fun <reified R> List<*>.firstInstanceOrNull(): R? =
+    protected inline fun <reified R> List<*>.firstInstanceOrNull(): R? =
         filterIsInstance<R>().firstOrNull()
 
     companion object {

@@ -55,6 +55,7 @@ data class HeanCmsSeriesDto(
     val title: String,
     val tags: List<HeanCmsTagDto>? = emptyList(),
     val chapters: List<HeanCmsChapterDto>? = emptyList(),
+    val seasons: List<HeanCmsSeasonsDto>? = emptyList(),
 ) {
 
     fun toSManga(
@@ -78,6 +79,12 @@ data class HeanCmsSeriesDto(
         url = "/series/$slug"
     }
 }
+
+@Serializable
+data class HeanCmsSeasonsDto(
+    val index: Int,
+    val chapters: List<HeanCmsChapterDto>? = emptyList(),
+)
 
 @Serializable
 data class HeanCmsTagDto(val name: String)
