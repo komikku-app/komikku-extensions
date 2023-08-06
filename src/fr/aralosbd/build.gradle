@@ -6,7 +6,7 @@ ext {
     extName = 'AralosBD'
     pkgNameSuffix = 'fr.aralosbd'
     extClass = '.AralosBD'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 apply from: "$rootDir/common.gradle"

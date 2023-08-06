@@ -41,7 +41,7 @@ class AralosBD : HttpSource() {
     override val name = "AralosBD"
     override val baseUrl = "https://aralosbd.fr"
     override val lang = "fr"
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     private val json: Json by injectLazy()
 
