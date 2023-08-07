@@ -18,8 +18,8 @@ import java.util.Locale
 
 class OlympusScanlation : HttpSource() {
 
-    override val baseUrl: String = "https://olympusscans.com"
-    private val apiBaseUrl: String = "https://dashboard.olympusscans.com"
+    override val baseUrl: String = "https://olympusv2.gg"
+    private val apiBaseUrl: String = "https://dashboard.olympusv2.gg"
     override val lang: String = "es"
     override val name: String = "Olympus Scanlation"
     override val versionId = 2
