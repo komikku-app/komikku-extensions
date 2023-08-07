@@ -135,16 +135,14 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
     }
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = Observable.fromCallable {
-        val pageNumberSelector = Evaluator.Class("comic-text__amp")
-        val pageList = ArrayList<Page>(0)
+        val pathToUrl = LinkedHashMap<String, String>()
         var url = baseUrl + chapter.url
-        var i = 0
         while (true) {
             val document = client.newCall(GET(url, headers)).execute().asJsoup()
-            document.select(".comic-contain amp-img").dropWhile { element ->
-                element.selectFirst(pageNumberSelector)!!.text().substringBefore('/').toInt() <= i
-            }.mapTo(pageList) { element ->
-                Page(i++, imageUrl = element.attr("data-src"))
+            for (element in document.select(".comic-contain amp-img")) {
+                val imageUrl = element.attr("data-src")
+                val path = imageUrl.substring(imageUrl.indexOf('/', startIndex = 8)) // Skip "https://"
+                pathToUrl[path] = imageUrl
             }
             url = document.selectFirst(Evaluator.Id("next-chapter"))
                 ?.takeIf {
@@ -154,7 +152,12 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
                 ?.attr("href")
                 ?: break
         }
-        pageList
+        pathToUrl.values.mapIndexed { index, imageUrl -> Page(index, imageUrl = imageUrl) }
+    }
+
+    override fun imageRequest(page: Page): Request {
+        val url = page.imageUrl!!.replace(".baozicdn.com", ".baozimh.com")
+        return GET(url, headers)
     }
 
     override fun pageListParse(document: Document) = throw UnsupportedOperationException("Not used.")
@@ -189,7 +192,6 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         // impossible to search a manga and use the filters
         return if (query.isNotEmpty()) {
-            val baseUrl = baseUrl.replace("webmota.com", "baozimh.com")
             val url = baseUrl.toHttpUrl().newBuilder()
                 .addEncodedPathSegment("search")
                 .addQueryParameter("q", query)
@@ -227,8 +229,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             entries = MIRRORS
             entryValues = MIRRORS
             summary = "已选择：%s\n" +
-                "重启生效，切换简繁体后需要迁移才能刷新漫画标题。\n" +
-                "搜索漫画时自动使用 baozimh.com 域名以避免出错。"
+                "重启生效，切换简繁体后需要迁移才能刷新漫画标题。"
             setDefaultValue(MIRRORS[0])
         }.let { screen.addPreference(it) }
 
@@ -251,8 +252,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             summary = "已选择：%s\n" +
                 "部分作品的章节顺序错误，最新章节总是显示为一个旧章节，导致检查更新时新章节被错标为已读。" +
                 "开启后，将会正确判断新章节和已读情况，但是错误的章节顺序不会改变。" +
-                "如果作品有章节标号重复，开启或关闭后第一次刷新会导致它们的阅读状态同步。" +
-                "开启或关闭强力模式后第一次刷新会将所有未标号的章节标记为未读。"
+                "警告：修改此设置后第一次刷新可能会导致已读状态出现错乱，请谨慎使用。"
             entries = arrayOf("关闭", "开启 (对有标号的章节有效)", "强力模式 (对所有章节有效)")
             entryValues = arrayOf(CHAPTER_ORDER_DISABLED, CHAPTER_ORDER_ENABLED, CHAPTER_ORDER_AGGRESSIVE)
             setDefaultValue(CHAPTER_ORDER_DISABLED)
@@ -270,6 +270,12 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             "tw.webmota.com",
             "www.baozimh.com",
             "www.webmota.com",
+            "cn.kukuc.co",
+            "tw.kukuc.co",
+            "www.kukuc.co",
+            "cn.czmanga.com",
+            "tw.czmanga.com",
+            "www.czmanga.com",
         )
 
         private const val DEFAULT_LEVEL = BaoziBanner.NORMAL.toString()
