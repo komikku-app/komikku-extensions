@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.pt.ninjascan
+package eu.kanade.tachiyomi.extension.pt.wickedwitchscan
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -7,16 +7,14 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class NinjaScan : Madara(
-    "Ninja Scan",
-    "https://ninjascan.site",
+class WickedWitchScan : Madara(
+    "Wicked Witch Scan",
+    "https://wickedwitchscan.com",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR")),
+    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
-
-    override val useNewChapterEndpoint = true
 }
