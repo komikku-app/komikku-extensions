@@ -37,7 +37,15 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-    override val baseUrl = "https://${preferences.getString(MIRROR_PREF, MIRRORS[0])}"
+    private val domain: String = run {
+        val mirrors = MIRRORS
+        val domain = preferences.getString(MIRROR_PREF, null) ?: return@run mirrors[0]
+        if (domain in mirrors) return@run domain
+        preferences.edit().remove(MIRROR_PREF).apply()
+        mirrors[0]
+    }
+
+    override val baseUrl = "https://$domain"
 
     override val lang = "zh"
 
@@ -51,10 +59,11 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
         .rateLimit(2)
         .addInterceptor(bannerInterceptor)
         .addNetworkInterceptor(MissingImageInterceptor)
+        .addNetworkInterceptor(RedirectDomainInterceptor(domain))
         .build()
 
     override fun headersBuilder() = super.headersBuilder()
-        .add("Referer", "$baseUrl/")
+        .add("Referer", "https://$domain/")
 
     override fun chapterListSelector() = throw UnsupportedOperationException("Not used.")
 
@@ -136,21 +145,23 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = Observable.fromCallable {
         val pathToUrl = LinkedHashMap<String, String>()
-        var url = baseUrl + chapter.url
+        var request = GET(baseUrl + chapter.url, headers).newBuilder()
+            .tag(RedirectDomainInterceptor.Tag::class, RedirectDomainInterceptor.Tag()).build()
         while (true) {
-            val document = client.newCall(GET(url, headers)).execute().asJsoup()
+            val document = client.newCall(request).execute().asJsoup()
             for (element in document.select(".comic-contain amp-img")) {
                 val imageUrl = element.attr("data-src")
                 val path = imageUrl.substring(imageUrl.indexOf('/', startIndex = 8)) // Skip "https://"
                 pathToUrl[path] = imageUrl
             }
-            url = document.selectFirst(Evaluator.Id("next-chapter"))
+            val url = document.selectFirst(Evaluator.Id("next-chapter"))
                 ?.takeIf {
                     val text = it.text()
                     text == "下一页" || text == "下一頁"
                 }
                 ?.attr("href")
                 ?: break
+            request = GET(url, headers)
         }
         pathToUrl.values.mapIndexed { index, imageUrl -> Page(index, imageUrl = imageUrl) }
     }
@@ -192,6 +203,7 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         // impossible to search a manga and use the filters
         return if (query.isNotEmpty()) {
+            val baseUrl = baseUrl.replace(".dinnerku.com", ".baozimh.com")
             val url = baseUrl.toHttpUrl().newBuilder()
                 .addEncodedPathSegment("search")
                 .addQueryParameter("q", query)
@@ -224,13 +236,15 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
+            val mirrors = MIRRORS
+
             key = MIRROR_PREF
             title = "使用镜像网址"
-            entries = MIRRORS
-            entryValues = MIRRORS
+            entries = mirrors
+            entryValues = mirrors
             summary = "已选择：%s\n" +
                 "重启生效，切换简繁体后需要迁移才能刷新漫画标题。"
-            setDefaultValue(MIRRORS[0])
+            setDefaultValue(mirrors[0])
         }.let { screen.addPreference(it) }
 
         ListPreference(screen.context).apply {
@@ -263,12 +277,12 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
         const val ID_SEARCH_PREFIX = "id:"
 
         private const val MIRROR_PREF = "MIRROR"
-        private val MIRRORS = arrayOf(
+        private val MIRRORS get() = arrayOf(
             "cn.baozimh.com",
-            "cn.webmota.com",
             "tw.baozimh.com",
-            "tw.webmota.com",
             "www.baozimh.com",
+            "cn.webmota.com",
+            "tw.webmota.com",
             "www.webmota.com",
             "cn.kukuc.co",
             "tw.kukuc.co",
@@ -276,6 +290,9 @@ class Baozi : ParsedHttpSource(), ConfigurableSource {
             "cn.czmanga.com",
             "tw.czmanga.com",
             "www.czmanga.com",
+            "cn.dinnerku.com",
+            "tw.dinnerku.com",
+            "www.dinnerku.com",
         )
 
         private const val DEFAULT_LEVEL = BaoziBanner.NORMAL.toString()
