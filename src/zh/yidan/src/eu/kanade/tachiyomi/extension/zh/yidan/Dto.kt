@@ -15,7 +15,7 @@ class MangaDto(
     private val coverPic: String?,
     private val id: Int,
 ) {
-    fun toSManga() = SManga.create().apply {
+    fun toSManga(baseUrl: String) = SManga.create().apply {
         url = id.toString()
         title = this@MangaDto.title
         author = this@MangaDto.author
@@ -29,7 +29,7 @@ class MangaDto(
             "5" in mhcate.split(",") -> SManga.COMPLETED
             else -> SManga.ONGOING
         }
-        thumbnail_url = coverPic
+        thumbnail_url = if (coverPic?.startsWith("http") == true) coverPic else baseUrl + coverPic
         initialized = true
     }
 }
