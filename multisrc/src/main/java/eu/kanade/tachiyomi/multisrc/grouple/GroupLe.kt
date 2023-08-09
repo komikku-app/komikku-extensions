@@ -179,6 +179,7 @@ abstract class GroupLe(
                     "продолжается" -> SManga.ONGOING
                     "начат" -> SManga.ONGOING
                     "переведено" -> SManga.COMPLETED
+                    "завершён" -> SManga.COMPLETED
                     "приостановлен" -> SManga.ON_HIATUS
                     else -> SManga.UNKNOWN
                 }
