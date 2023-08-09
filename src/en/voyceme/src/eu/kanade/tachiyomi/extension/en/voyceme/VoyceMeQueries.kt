@@ -113,3 +113,16 @@ val CHAPTERS_QUERY: String = buildQuery {
         }
     """.trimIndent()
 }
+
+val PAGES_QUERY: String = buildQuery {
+    """
+        query(%chapterId: Int!) {
+            voyce_chapter_images(
+                where: { chapter_id: { _eq: %chapterId } },
+                order_by: { sort_order: asc }
+            ) {
+                image
+            }
+        }
+    """.trimIndent()
+}
