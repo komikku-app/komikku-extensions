@@ -337,7 +337,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Oh No Manga", "https://ohnomanga.com", "en", isNsfw = true),
         SingleLang("Painful Nightz Scan", "https://painfulnightz.com", "en", overrideVersionCode = 1),
         SingleLang("Pantheon Scan", "https://pantheon-scan.com", "fr", overrideVersionCode = 1),
-        SingleLang("Peach Scan", "https://www.peachscan.com", "pt-BR", isNsfw = true),
         SingleLang("Petrotechsociety", "https://www.petrotechsociety.org", "en", isNsfw = true),
         SingleLang("Pian Manga", "https://pianmanga.me", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Pink Sea Unicorn", "https://psunicorn.com", "pt-BR", isNsfw = true),
