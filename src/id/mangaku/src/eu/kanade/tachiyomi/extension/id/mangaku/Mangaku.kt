@@ -28,7 +28,7 @@ class Mangaku : ParsedHttpSource() {
 
     override val name = "Mangaku"
 
-    override val baseUrl = "https://mangaku.vip"
+    override val baseUrl = "https://mangaku.fun"
 
     override val lang = "id"
 
