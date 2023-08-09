@@ -46,10 +46,11 @@ class Mangago : ParsedHttpSource() {
         .addInterceptor { chain ->
             val response = chain.proceed(chain.request())
 
-            val key =
-                response.request.url.queryParameter("desckey") ?: return@addInterceptor response
-            val cols = response.request.url.queryParameter("cols")?.toIntOrNull()
-                ?: return@addInterceptor response
+            val fragment = response.request.url.fragment ?: return@addInterceptor response
+
+            // desckey=...&cols=...
+            val key = fragment.substringAfter("desckey=").substringBefore("&")
+            val cols = fragment.substringAfter("&cols=").toIntOrNull() ?: return@addInterceptor response
 
             val image = unscrambleImage(response.body.byteStream(), key, cols)
             val body = image.toResponseBody("image/jpeg".toMediaTypeOrNull())
@@ -172,13 +173,14 @@ class Mangago : ParsedHttpSource() {
     override fun chapterListSelector() = "table#chapter_table > tbody > tr, table.uk-table > tbody > tr"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        val link = element.getElementsByTag("a")
+        val link = element.select("a.chico")
 
         setUrlWithoutDomain(link.attr("href"))
         name = link.text().trim()
         date_upload = runCatching {
             dateFormat.parse(element.select("td:last-child").text().trim())?.time
         }.getOrNull() ?: 0L
+        scanlator = element.selectFirst("td.no a, td.uk-table-shrink a")?.text()?.trim()
     }
 
     override fun pageListParse(document: Document): List<Page> {
@@ -231,7 +233,7 @@ class Mangago : ParsedHttpSource() {
             .split(",")
             .mapIndexed { idx, it ->
                 val url = if (it.contains("cspiclink")) {
-                    "$it?desckey=${getDescramblingKey(deobfChapterJs, it)}&cols=$cols"
+                    "$it#desckey=${getDescramblingKey(deobfChapterJs, it)}&cols=$cols"
                 } else {
                     it
                 }
