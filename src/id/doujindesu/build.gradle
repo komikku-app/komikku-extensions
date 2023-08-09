@@ -5,7 +5,7 @@ ext {
     extName = 'DoujinDesu'
     pkgNameSuffix = 'id.doujindesu'
     extClass = '.DoujinDesu'
-    extVersionCode = 4
+    extVersionCode = 5
     isNsfw = true
 }
 

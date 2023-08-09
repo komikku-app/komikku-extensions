@@ -1,7 +1,14 @@
 package eu.kanade.tachiyomi.extension.id.doujindesu
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -16,18 +23,24 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class DoujinDesu : ParsedHttpSource() {
+class DoujinDesu : ParsedHttpSource(), ConfigurableSource {
     // Information : DoujinDesu use EastManga WordPress Theme
     override val name = "Doujindesu"
-    override val baseUrl = "https://doujindesu.xxx"
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
     override val lang = "id"
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
 
     // Private stuff
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     private val DATE_FORMAT by lazy {
         SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("id"))
@@ -258,7 +271,7 @@ class DoujinDesu : ParsedHttpSource() {
         return manga
     }
 
-    private fun imageFromElement(element: Element): String? {
+    private fun imageFromElement(element: Element): String {
         return when {
             element.hasAttr("data-src") -> element.attr("abs:data-src")
             element.hasAttr("data-lazy-src") -> element.attr("abs:data-lazy-src")
@@ -421,5 +434,28 @@ class DoujinDesu : ParsedHttpSource() {
             .asJsoup().select("img").mapIndexed { i, element ->
                 Page(i, "", element.attr("src"))
             }
+    }
+
+    companion object {
+        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
+        private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
+        private const val PREF_DOMAIN_DEFAULT = "https://doujindesu.tv"
+        private const val PREF_DOMAIN_SUMMARY = "Override default domain with a different one"
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        EditTextPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            dialogTitle = PREF_DOMAIN_TITLE
+            summary = PREF_DOMAIN_SUMMARY
+            dialogMessage = "Default: $PREF_DOMAIN_DEFAULT"
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                Toast.makeText(screen.context, "Restart App to apply new setting.", Toast.LENGTH_LONG).show()
+                true
+            }
+        }.also(screen::addPreference)
     }
 }
