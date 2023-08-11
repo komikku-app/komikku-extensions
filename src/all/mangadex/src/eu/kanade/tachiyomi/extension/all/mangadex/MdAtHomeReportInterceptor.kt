@@ -2,12 +2,14 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 
 import android.util.Log
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ImageReportDto
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -55,7 +57,15 @@ class MdAtHomeReportInterceptor(
         // gets stuck, as it tend to happens sometimes.
         client.newCall(reportRequest).enqueue(REPORT_CALLBACK)
 
-        return response
+        return if (!response.isSuccessful) {
+            Log.e("MangaDex", "Error connecting to MD@Home node, fallback to uploads server")
+            val fallbackUrl = MDConstants.cdnUrl.toHttpUrl().newBuilder()
+                .addPathSegments(originalRequest.url.pathSegments.joinToString("/"))
+                .build()
+            client.newCall(GET(fallbackUrl, headers)).execute()
+        } else {
+            response
+        }
     }
 
     companion object {

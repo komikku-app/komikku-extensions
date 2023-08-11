@@ -202,7 +202,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                         ),
                     )
                     .asObservableSuccess()
-                    .map { searchMangaListParse(it, page) }
+                    .map { searchMangaListParse(it, page, filters) }
 
             else -> super.fetchSearchManga(page, query.trim(), filters)
         }
@@ -289,7 +289,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         return GET("${MDConstants.apiListUrl}/$list", headers, CacheControl.FORCE_NETWORK)
     }
 
-    private fun searchMangaListParse(response: Response, page: Int): MangasPage {
+    private fun searchMangaListParse(response: Response, page: Int, filters: FilterList): MangasPage {
         val listDto = response.parseAs<ListDto>()
         val listDtoFiltered = listDto.data!!.relationships.filterIsInstance<MangaDataDto>()
         val amount = listDtoFiltered.count()
@@ -300,7 +300,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
         val minIndex = (page - 1) * MDConstants.mangaLimit
 
-        val url = MDConstants.apiMangaUrl.toHttpUrl().newBuilder()
+        val tempUrl = MDConstants.apiMangaUrl.toHttpUrl().newBuilder()
             .addQueryParameter("limit", MDConstants.mangaLimit.toString())
             .addQueryParameter("offset", "0")
             .addQueryParameter("includes[]", MDConstants.coverArt)
@@ -310,13 +310,20 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             .map(MangaDataDto::id)
             .toSet()
 
-        url.addQueryParameter("ids[]", ids)
+        tempUrl.addQueryParameter("ids[]", ids)
 
-        val mangaRequest = GET(url.build(), headers, CacheControl.FORCE_NETWORK)
+        val finalUrl = helper.mdFilters.addFiltersToUrl(
+            url = tempUrl,
+            filters = filters.ifEmpty { getFilterList() },
+            dexLang = dexLang,
+        )
+
+        val mangaRequest = GET(finalUrl, headers, CacheControl.FORCE_NETWORK)
         val mangaResponse = client.newCall(mangaRequest).execute()
         val mangaList = searchMangaListParse(mangaResponse)
 
-        val hasNextPage = amount.toFloat() / MDConstants.mangaLimit - (page.toFloat() - 1) > 1
+        val hasNextPage = amount.toFloat() / MDConstants.mangaLimit - (page.toFloat() - 1) > 1 &&
+            ids.size == MDConstants.mangaLimit
 
         return MangasPage(mangaList, hasNextPage)
     }
@@ -370,11 +377,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     // Manga Details section
 
     override fun getMangaUrl(manga: SManga): String {
-        // TODO: Remove once redirect for /manga is fixed.
-        val title = manga.title
-        val url = baseUrl + manga.url.replaceFirst("manga", "title")
-
-        return "$url/" + helper.titleToSlug(title)
+        return baseUrl + manga.url + "/" + helper.titleToSlug(manga.title)
     }
 
     /**
@@ -496,10 +499,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
      */
     private fun paginatedChapterListRequest(mangaId: String, offset: Int): Request {
         val url = helper.getChapterEndpoint(mangaId, offset, dexLang).toHttpUrl().newBuilder()
-            .addQueryParameter("contentRating[]", "safe")
-            .addQueryParameter("contentRating[]", "suggestive")
-            .addQueryParameter("contentRating[]", "erotica")
-            .addQueryParameter("contentRating[]", "pornographic")
+            .addQueryParameter("contentRating[]", MDConstants.allContentRatings)
             .addQueryParameter("excludedGroups[]", preferences.blockedGroups)
             .addQueryParameter("excludedUploaders[]", preferences.blockedUploaders)
             .build()
