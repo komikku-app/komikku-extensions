@@ -121,7 +121,7 @@ open class NovelCool(
         return when (preference.useAppApi) {
             true -> client.newCall(commonApiRequest("$apiUrl/book/search/", page, query))
                 .asObservableSuccess()
-                .map(::popularMangaParse)
+                .map(::commonApiResponseParse)
             else -> super.fetchSearchManga(page, query, filters)
         }
     }
