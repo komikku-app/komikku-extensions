@@ -70,13 +70,13 @@ data class YomuMangasChaptersDto(val chapters: List<YomuMangasChapterDto> = empt
 @Serializable
 data class YomuMangasChapterDto(
     val id: Int,
-    val chapter: Int,
+    val chapter: Float,
     @SerialName("uploaded_at") val uploadedAt: String,
     val images: List<YomuMangasImageDto>? = emptyList(),
 ) {
 
     fun toSChapter(series: YomuMangasSeriesDto): SChapter = SChapter.create().apply {
-        name = "Capítulo $chapter"
+        name = "Capítulo ${chapter.toString().removeSuffix(".0")}"
         date_upload = runCatching { DATE_FORMATTER.parse(uploadedAt)?.time }
             .getOrNull() ?: 0L
         url = "/manga/${series.id}/${series.slug}/chapter/$id#$chapter"
