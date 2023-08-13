@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 class YugenMangas :
     HeanCms(
         "YugenMangas",
-        "https://yugenmangas.net",
+        "https://yugenmangas.lat",
         "es",
         "https://api.yugenmangas.net",
     ) {
