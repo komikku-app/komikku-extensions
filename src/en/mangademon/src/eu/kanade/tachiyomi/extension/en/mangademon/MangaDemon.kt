@@ -1,13 +1,13 @@
 package eu.kanade.tachiyomi.extension.en.mangademon
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import okhttp3.Headers
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import org.jsoup.nodes.Document
@@ -22,8 +22,12 @@ class MangaDemon : ParsedHttpSource() {
     override val name = "Manga Demon"
     override val baseUrl = "https://mangademon.org"
 
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("referrer", "origin")
+    override val client = network.cloudflareClient.newBuilder()
+        .rateLimit(2)
+        .build()
+
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", baseUrl)
 
     // latest
     override fun latestUpdatesRequest(page: Int): Request {
@@ -36,7 +40,7 @@ class MangaDemon : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         return SManga.create().apply {
-            element.select("a").apply() {
+            element.select("a").apply {
                 title = attr("title").dropLast(4)
                 url = attr("href")
             }
@@ -60,7 +64,7 @@ class MangaDemon : ParsedHttpSource() {
         val url = "$baseUrl/search.php".toHttpUrl().newBuilder()
             .addQueryParameter("manga", query)
             .build()
-        return POST("$url", headers)
+        return GET(url, headers)
     }
 
     override fun searchMangaSelector() = "a.boxsizing"
@@ -122,11 +126,43 @@ class MangaDemon : ParsedHttpSource() {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
         }
+
+        private val loadMoreEndpointRegex by lazy { Regex("""GET[^/]+([^=]+)""") }
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("img.imgholder")
-            .mapIndexed { i, el -> Page(i, "", el.attr("src")) }
+        val baseImgs = document.select("img.imgholder")
+            .map { it.attr("abs:src") }
+            .toMutableList()
+
+        baseImgs.addAll(loadMoreImages(document))
+
+        return baseImgs.mapIndexed { i, img -> Page(i, "", img) }
+    }
+
+    private fun loadMoreImages(document: Document): List<String> {
+        val buttonHtml = document.selectFirst("button:contains(load full chapter)")
+            ?.attr("onclick")?.replace("\"", "\'")
+            ?: return emptyList()
+
+        val id = buttonHtml.substringAfter("\'").substringBefore("\'").trim()
+        val funcName = buttonHtml.substringBefore("(").trim()
+
+        val endpoint = document.selectFirst("script:containsData($funcName)")
+            ?.data()
+            ?.let { loadMoreEndpointRegex.find(it)?.groupValues?.get(1) }
+            ?: return emptyList()
+
+        val response = client.newCall(GET("$baseUrl$endpoint=$id", headers)).execute()
+
+        if (!response.isSuccessful) {
+            response.close()
+            return emptyList()
+        }
+
+        return response.use { it.asJsoup() }
+            .select("img")
+            .map { it.attr("abs:src") }
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")

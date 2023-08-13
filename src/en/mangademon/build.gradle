@@ -5,7 +5,7 @@ ext {
     extName = 'Manga Demon'
     pkgNameSuffix = 'en.mangademon'
     extClass = '.MangaDemon'
-    extVersionCode = 1
+    extVersionCode = 2
 }
 
 apply from: "$rootDir/common.gradle"
