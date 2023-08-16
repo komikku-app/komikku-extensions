@@ -1,16 +1,14 @@
 package eu.kanade.tachiyomi.extension.ar.mangaailand
 
 import eu.kanade.tachiyomi.multisrc.zeistmanga.Genre
-import eu.kanade.tachiyomi.multisrc.zeistmanga.Language
 import eu.kanade.tachiyomi.multisrc.zeistmanga.ZeistManga
 
 class MangaAiLand : ZeistManga("Manga Ai Land", "https://manga-ai-land.blogspot.com", "ar") {
 
     override val hasFilters = true
+    override val hasLanguageFilter = false
 
-    override fun getLanguageList(): List<Language> = listOf(
-        Language(intl.all, ""),
-    )
+    override val chapterCategory = "فصل"
 
     override fun getGenreList(): List<Genre> = listOf(
         Genre("تراجيدي", "تراجيدي"),
