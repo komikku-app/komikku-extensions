@@ -9,6 +9,8 @@ android {
         minSdk = AndroidConfig.minSdk
     }
 
+    namespace = "eu.kanade.tachiyomi.extension"
+
     sourceSets {
         named("main") {
             manifest.srcFile("AndroidManifest.xml")

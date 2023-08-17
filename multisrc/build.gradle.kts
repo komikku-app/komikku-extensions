@@ -12,6 +12,8 @@ android {
         targetSdk = AndroidConfig.targetSdk
     }
 
+    namespace = "eu.kanade.tachiyomi.lib.themesources"
+
     kotlinOptions {
         freeCompilerArgs += "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
     }

@@ -5,12 +5,13 @@ plugins {
 
 android {
     compileSdk = AndroidConfig.compileSdk
-    namespace = "eu.kanade.tachiyomi.lib.synchrony"
 
     defaultConfig {
         minSdk = AndroidConfig.minSdk
         targetSdk = AndroidConfig.targetSdk
     }
+
+    namespace = "eu.kanade.tachiyomi.lib.synchrony"
 }
 
 repositories {

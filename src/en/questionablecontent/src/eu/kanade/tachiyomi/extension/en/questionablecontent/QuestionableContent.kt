@@ -16,7 +16,6 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.http.HTTP_UNAUTHORIZED
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -113,7 +112,6 @@ class QuestionableContent : ParsedHttpSource(), ConfigurableSource {
             title = "Show author's notes"
             summary = "Enable to see the author's notes at the end of chapters (if they're there)."
             setDefaultValue(false)
-
         }
         screen.addPreference(authorsNotesPref)
     }

@@ -10,6 +10,8 @@ android {
         minSdk = AndroidConfig.minSdk
         targetSdk = AndroidConfig.targetSdk
     }
+
+    namespace = "eu.kanade.tachiyomi.lib.dataimage"
 }
 
 repositories {

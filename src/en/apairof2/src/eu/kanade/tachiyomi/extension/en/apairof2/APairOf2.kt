@@ -142,7 +142,7 @@ class APairOf2 : ParsedHttpSource() {
         return document.select(".swiper-slide img").mapIndexed { index, img ->
             Page(
                 index = index,
-                imageUrl = img.imgAttr()
+                imageUrl = img.imgAttr(),
             )
         }
     }

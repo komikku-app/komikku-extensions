@@ -22,7 +22,7 @@ class MangaPill : ParsedHttpSource() {
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
     override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
-    
+
     override fun popularMangaRequest(page: Int): Request = latestUpdatesRequest(page)
 
     override fun latestUpdatesRequest(page: Int): Request {
