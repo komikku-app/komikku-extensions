@@ -150,7 +150,7 @@ abstract class GroupLe(
             else -> rawAgeValue
         }
         val manga = SManga.create()
-        manga.title = document.select("h1.names .name").text()
+        manga.title = document.select(".names > .name").text()
         manga.author = infoElement.select("span.elem_author").first()?.text() ?: infoElement.select(
             "span.elem_screenwriter",
         ).first()?.text()
