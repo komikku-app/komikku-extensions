@@ -141,7 +141,7 @@ class MangaDemon : ParsedHttpSource() {
     }
 
     private fun loadMoreImages(document: Document): List<String> {
-        val buttonHtml = document.selectFirst("button:contains(load full chapter)")
+        val buttonHtml = document.selectFirst("img.imgholder ~ button")
             ?.attr("onclick")?.replace("\"", "\'")
             ?: return emptyList()
 
