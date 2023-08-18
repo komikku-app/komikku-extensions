@@ -1,3 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- intents won't work because the host URL is technically blank -->
-<manifest package="eu.kanade.tachiyomi.extension"/>
+<manifest />

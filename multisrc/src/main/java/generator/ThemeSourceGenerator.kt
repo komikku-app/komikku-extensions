@@ -108,7 +108,7 @@ interface ThemeSourceGenerator {
                     """
                     |<?xml version="1.0" encoding="utf-8"?>
                     |<!-- THIS FILE IS AUTO-GENERATED; DO NOT EDIT -->
-                    |<manifest package="eu.kanade.tachiyomi.extension" />
+                    |<manifest />
                     """.trimMargin(),
                 )
             }
