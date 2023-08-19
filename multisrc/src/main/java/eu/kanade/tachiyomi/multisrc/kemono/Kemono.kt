@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.multisrc.kemono
 import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -185,6 +186,18 @@ open class Kemono(
         return post[0].images.mapIndexed { i, path -> Page(i, imageUrl = baseUrl + path) }
     }
 
+    override fun imageRequest(page: Page): Request {
+        val imageUrl = page.imageUrl!!
+        if (!preferences.getBoolean(USE_LOW_RES_IMG, false)) return GET(imageUrl, headers)
+        val index = imageUrl.indexOf('/', startIndex = 8) // https://
+        val url = buildString {
+            append(imageUrl, 0, index)
+            append("/thumbnail")
+            append(imageUrl, index, imageUrl.length)
+        }
+        return GET(url, headers)
+    }
+
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
 
     private inline fun <reified T> Response.parseAs(): T = use {
@@ -211,6 +224,13 @@ open class Kemono(
             entryValues = mirrorUrls
             setDefaultValue(defaultUrl)
         }.let(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = USE_LOW_RES_IMG
+            title = "Use low resolution images"
+            summary = "Reduce load time significantly. When turning off, clear chapter cache to remove cached low resolution images."
+            setDefaultValue(false)
+        }.let(screen::addPreference)
     }
 
     companion object {
@@ -225,5 +245,6 @@ open class Kemono(
         private fun List<SManga>.filterUnsupported() = filterNot { it.author == "Discord" }
 
         private const val BASE_URL_PREF = "BASE_URL"
+        private const val USE_LOW_RES_IMG = "USE_LOW_RES_IMG"
     }
 }
