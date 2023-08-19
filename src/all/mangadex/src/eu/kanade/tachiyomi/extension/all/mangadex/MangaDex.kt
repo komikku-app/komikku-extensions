@@ -96,10 +96,11 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         val firstVolumeCovers = fetchFirstVolumeCovers(mangaListDto.data).orEmpty()
 
         val mangaList = mangaListDto.data.map { mangaDataDto ->
-            val fileName = firstVolumeCovers[mangaDataDto.id] ?: mangaDataDto.relationships
-                .filterIsInstance<CoverArtDto>()
-                .firstOrNull()
-                ?.attributes?.fileName
+            val fileName = firstVolumeCovers.getOrElse(mangaDataDto.id) {
+                mangaDataDto.relationships
+                    .firstInstanceOrNull<CoverArtDto>()
+                    ?.attributes?.fileName
+            }
             helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
         }
 
@@ -159,10 +160,11 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         val coverSuffix = preferences.coverQuality
 
         val mangaList = mangaIds.mapNotNull { mangaDtoMap[it] }.map { mangaDataDto ->
-            val fileName = firstVolumeCovers[mangaDataDto.id] ?: mangaDataDto.relationships
-                .filterIsInstance<CoverArtDto>()
-                .firstOrNull()
-                ?.attributes?.fileName
+            val fileName = firstVolumeCovers.getOrElse(mangaDataDto.id) {
+                mangaDataDto.relationships
+                    .firstInstanceOrNull<CoverArtDto>()
+                    ?.attributes?.fileName
+            }
             helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
         }
 
@@ -217,8 +219,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
                 }
 
                 response.parseAs<ChapterDto>().data!!.relationships
-                    .filterIsInstance<MangaDataDto>()
-                    .firstOrNull()!!.id
+                    .firstInstanceOrNull<MangaDataDto>()!!.id
             }
     }
 
@@ -342,10 +343,11 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         val coverSuffix = preferences.coverQuality
 
         val mangaList = mangaListDto.data.map { mangaDataDto ->
-            val fileName = firstVolumeCovers[mangaDataDto.id] ?: mangaDataDto.relationships
-                .filterIsInstance<CoverArtDto>()
-                .firstOrNull()
-                ?.attributes?.fileName
+            val fileName = firstVolumeCovers.getOrElse(mangaDataDto.id) {
+                mangaDataDto.relationships
+                    .firstInstanceOrNull<CoverArtDto>()
+                    ?.attributes?.fileName
+            }
             helper.createBasicManga(mangaDataDto, fileName, coverSuffix, dexLang)
         }
 
@@ -448,9 +450,9 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             return null
         }
 
-        val mangaMap = mangaList.associate { it.id to it.attributes!! }
-            .filterValues { !it.originalLanguage.isNullOrEmpty() }
-        val locales = mangaList.mapNotNull { it.attributes!!.originalLanguage }.distinct()
+        val safeMangaList = mangaList.filterNot { it.attributes?.originalLanguage.isNullOrEmpty() }
+        val mangaMap = safeMangaList.associate { it.id to it.attributes!! }
+        val locales = safeMangaList.mapNotNull { it.attributes!!.originalLanguage }.distinct()
         val limit = (mangaMap.size * locales.size).coerceAtMost(100)
 
         val apiUrl = "${MDConstants.apiUrl}/cover".toHttpUrl().newBuilder()
@@ -468,10 +470,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         val covers = result.getOrNull() ?: return null
 
         return covers
-            .groupBy {
-                it.relationships.filterIsInstance<MangaDataDto>()
-                    .firstOrNull()!!.id
-            }
+            .groupBy { it.relationships.firstInstanceOrNull<MangaDataDto>()!!.id }
             .mapValues {
                 it.value.find { c -> c.attributes?.locale == mangaMap[it.key]?.originalLanguage }
             }
@@ -512,7 +511,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             return emptyList()
         }
 
-        var chapterListResponse = response.parseAs<ChapterListDto>()
+        val chapterListResponse = response.parseAs<ChapterListDto>()
 
         val chapterListResults = chapterListResponse.data.toMutableList()
 
@@ -767,6 +766,9 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
     private inline fun <reified T> Response.parseAs(): T = use {
         helper.json.decodeFromString(body.string())
     }
+
+    private inline fun <reified T> List<*>.firstInstanceOrNull(): T? =
+        firstOrNull { it is T } as? T?
 
     private val SharedPreferences.contentRating
         get() = getStringSet(

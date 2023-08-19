@@ -48,7 +48,6 @@ class MangaDexFactory : SourceFactory {
         MangaDexRomanian(),
         MangaDexRussian(),
         MangaDexSerbian(),
-        MangaDexSerboCroatian(),
         MangaDexSlovak(),
         MangaDexSpanishLatinAmerica(),
         MangaDexSpanishSpain(),
@@ -105,7 +104,6 @@ class MangaDexPortuguesePortugal : MangaDex("pt")
 class MangaDexRomanian : MangaDex("ro")
 class MangaDexRussian : MangaDex("ru")
 class MangaDexSerbian : MangaDex("sr")
-class MangaDexSerboCroatian : MangaDex("sh")
 class MangaDexSlovak : MangaDex("sk")
 class MangaDexSpanishLatinAmerica : MangaDex("es-419", "es-la")
 class MangaDexSpanishSpain : MangaDex("es")

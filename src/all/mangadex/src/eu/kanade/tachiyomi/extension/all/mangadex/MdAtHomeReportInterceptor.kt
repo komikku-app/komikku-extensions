@@ -57,15 +57,17 @@ class MdAtHomeReportInterceptor(
         // gets stuck, as it tend to happens sometimes.
         client.newCall(reportRequest).enqueue(REPORT_CALLBACK)
 
-        return if (!response.isSuccessful) {
-            Log.e("MangaDex", "Error connecting to MD@Home node, fallback to uploads server")
-            val fallbackUrl = MDConstants.cdnUrl.toHttpUrl().newBuilder()
-                .addPathSegments(originalRequest.url.pathSegments.joinToString("/"))
-                .build()
-            client.newCall(GET(fallbackUrl, headers)).execute()
-        } else {
-            response
+        if (response.isSuccessful) {
+            return response
         }
+
+        Log.e("MangaDex", "Error connecting to MD@Home node, fallback to uploads server")
+
+        val fallbackUrl = MDConstants.cdnUrl.toHttpUrl().newBuilder()
+            .addPathSegments(originalRequest.url.pathSegments.joinToString("/"))
+            .build()
+
+        return client.newCall(GET(fallbackUrl, headers)).execute()
     }
 
     companion object {

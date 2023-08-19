@@ -359,18 +359,18 @@ class MangaDexHelper(lang: String) {
             if (altTitles.isNotEmpty()) {
                 val altTitlesDesc = altTitles
                     .joinToString("\n", "${intl["alternative_titles"]}\n") { "• $it" }
-                desc += (if (desc.isNullOrBlank()) "" else "\n\n") + altTitlesDesc.removeEntitiesAndMarkdown()
+                desc += (if (desc.isBlank()) "" else "\n\n") + altTitlesDesc.removeEntitiesAndMarkdown()
             }
         }
 
         return createBasicManga(mangaDataDto, coverFileName, coverSuffix, lang).apply {
             description = desc
-            author = authors.joinToString(", ")
-            artist = artists.joinToString(", ")
+            author = authors.joinToString()
+            artist = artists.joinToString()
             status = getPublicationStatus(attr, chapters)
             genre = genreList
                 .filter(String::isNotEmpty)
-                .joinToString(", ")
+                .joinToString()
         }
     }
 
