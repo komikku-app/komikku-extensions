@@ -35,10 +35,15 @@ data class HeanCmsSearchDto(
     fun toSManga(
         apiUrl: String,
         coverPath: String,
+        slugMap: Map<String, HeanCms.HeanCmsTitle>,
+        fetchAllTiles: Boolean,
     ): SManga = SManga.create().apply {
+        val slugOnly = slug.toPermSlugIfNeeded(fetchAllTiles)
+        val thumbnailFileName = slugMap[slugOnly]?.thumbnailFileName
         title = this@HeanCmsSearchDto.title
         thumbnail_url = thumbnail?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
-        url = "/series/$slug"
+            ?: thumbnailFileName?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
+        url = "/series/$slugOnly"
     }
 }
 
@@ -61,8 +66,10 @@ data class HeanCmsSeriesDto(
     fun toSManga(
         apiUrl: String,
         coverPath: String,
+        fetchAllTiles: Boolean,
     ): SManga = SManga.create().apply {
         val descriptionBody = this@HeanCmsSeriesDto.description?.let(Jsoup::parseBodyFragment)
+        val slugOnly = slug.toPermSlugIfNeeded(fetchAllTiles)
 
         title = this@HeanCmsSeriesDto.title
         author = this@HeanCmsSeriesDto.author?.trim()
@@ -76,7 +83,7 @@ data class HeanCmsSeriesDto(
         thumbnail_url = thumbnail.ifEmpty { null }
             ?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
         status = this@HeanCmsSeriesDto.status?.toStatus() ?: SManga.UNKNOWN
-        url = "/series/$slug"
+        url = "/series/$slugOnly"
     }
 }
 
@@ -98,7 +105,6 @@ data class HeanCmsChapterDto(
     @SerialName("created_at") val createdAt: String,
     val price: Int? = null,
 ) {
-
     fun toSChapter(seriesSlug: String, dateFormat: SimpleDateFormat): SChapter = SChapter.create().apply {
         name = this@HeanCmsChapterDto.name.trim()
         date_upload = runCatching { dateFormat.parse(createdAt)?.time }
@@ -132,6 +138,14 @@ data class HeanCmsSearchPayloadDto(val term: String)
 
 private fun String.toAbsoluteThumbnailUrl(apiUrl: String, coverPath: String): String {
     return if (startsWith("https://")) this else "$apiUrl/$coverPath$this"
+}
+
+private fun String.toPermSlugIfNeeded(fetchAllTitles: Boolean): String {
+    return if (fetchAllTitles) {
+        this.replace(HeanCms.TIMESTAMP_REGEX, "")
+    } else {
+        this
+    }
 }
 
 fun String.toStatus(): Int = when (this) {
