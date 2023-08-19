@@ -20,6 +20,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         MultiLang("Miau Scan", "https://miauscans.com", listOf("es", "pt-BR"), overrideVersionCode = 1),
         SingleLang("Animated Glitched Scans", "https://anigliscans.com", "en"),
         SingleLang("Arena Scans", "https://arenascans.net", "en", overrideVersionCode = 1),
+        SingleLang("Arkham Scan", "https://arkhamscan.com", "pt-BR"),
         SingleLang("Azure Scans", "https://azuremanga.com", "en", overrideVersionCode = 1),
         SingleLang("Babel Wuxia", "https://babelwuxia.com", "en", overrideVersionCode = 1),
         SingleLang("Banana-Scan", "https://banana-scan.com", "fr", className = "BananaScan", isNsfw = true),
