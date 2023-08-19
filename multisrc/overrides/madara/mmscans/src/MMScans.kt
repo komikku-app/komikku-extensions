@@ -44,7 +44,6 @@ class MMScans : Madara("MMScans", "https://mm-scans.org", "en") {
         val xhrHeaders = headersBuilder()
             .add("Content-Length", form.contentLength().toString())
             .add("Content-Type", form.contentType().toString())
-            .add("Referer", "$baseUrl/")
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
