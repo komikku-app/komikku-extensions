@@ -52,6 +52,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Atikrost", "https://atikrost.com", "tr", overrideVersionCode = 1),
         SingleLang("AZManhwa", "https://azmanhwa.net", "en"),
         SingleLang("Azora", "https://azoranov.com", "ar", overrideVersionCode = 6),
+        SingleLang("Babel Wuxia", "https://read.babelwuxia.com", "en"),
         SingleLang("Bakaman", "https://bakaman.net", "th", overrideVersionCode = 1),
         SingleLang("Banana Cítrica", "https://bananacitrica.com", "pt-BR", isNsfw = true, pkgName = "bananamecanica", className = "BananaCitrica", overrideVersionCode = 4),
         SingleLang("Banana Manga", "https://bananamanga.net", "en", isNsfw = true),
