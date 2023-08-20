@@ -97,7 +97,7 @@ data class ChapterList(
 @Serializable
 data class Chapter(
     val hid: String,
-    val lang: String,
+    val lang: String = "",
     val title: String = "",
     @SerialName("created_at") val createdAt: String = "",
     val chap: String = "",
