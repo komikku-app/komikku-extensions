@@ -130,7 +130,7 @@ data class Url(val url: String) {
             }
         }
 
-        private const val cdnUrl = "https://edge.timmm111.online/"
+        private const val cdnUrl = "https://edge.anime-st.top/"
         private val urlRegex = Regex("^https?://.*")
     }
 }
