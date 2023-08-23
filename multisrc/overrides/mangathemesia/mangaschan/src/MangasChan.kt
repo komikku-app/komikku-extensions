@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 class MangasChan : MangaThemesia(
     "Mangás Chan",
-    "https://mangaschan.com",
+    "https://mangaschan.net",
     "pt-BR",
     dateFormat = SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
@@ -20,7 +20,7 @@ class MangasChan : MangaThemesia(
 
     override val altNamePrefix = "Nomes alternativos: "
 
-    override val seriesArtistSelector = ".infotable tr:contains(Artista) td:last-child"
-    override val seriesAuthorSelector = ".infotable tr:contains(Autor) td:last-child"
-    override val seriesTypeSelector = ".infotable tr:contains(Tipo) td:last-child"
+    override val seriesArtistSelector = ".tsinfo .imptdt:contains(Artista) > i"
+    override val seriesAuthorSelector = ".tsinfo .imptdt:contains(Autor) > i"
+    override val seriesTypeSelector = ".tsinfo .imptdt:contains(Tipo) > a"
 }
