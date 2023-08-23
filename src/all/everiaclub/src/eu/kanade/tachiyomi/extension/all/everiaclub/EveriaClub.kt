@@ -41,7 +41,7 @@ class EveriaClub() : ParsedHttpSource() {
         return GET("$baseUrl/page/$page/")
     }
 
-    override fun latestUpdatesSelector() = ".posts-wrapper > article"
+    override fun latestUpdatesSelector() = "#blog-entries > article"
 
     // Popular
     override fun popularMangaFromElement(element: Element): SManga {
