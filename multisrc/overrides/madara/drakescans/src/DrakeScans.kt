@@ -8,7 +8,7 @@ class DrakeScans : Madara(
     "Drake Scans",
     "https://drakescans.com",
     "en",
-    SimpleDateFormat("MM/dd/yyyy", Locale.US),
+    SimpleDateFormat("dd/MM/yyyy", Locale.US),
 ) {
 
     override val mangaDetailsSelectorTag = ""
