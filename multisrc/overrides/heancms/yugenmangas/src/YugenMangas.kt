@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 class YugenMangas :
     HeanCms(
         "YugenMangas",
-        "https://yugenmangas.lat",
+        "https://yugenmangas.net",
         "es",
         "https://api.yugenmangas.net",
     ) {
@@ -19,7 +19,7 @@ class YugenMangas :
     // Site changed from Madara to HeanCms.
     override val versionId = 2
 
-    override val fetchAllTitles = true
+    override val slugStrategy = SlugStrategy.ID
     override val useNewQueryEndpoint = true
 
     override val client = super.client.newBuilder()

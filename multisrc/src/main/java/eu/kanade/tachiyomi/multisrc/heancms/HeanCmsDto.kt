@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.heancms
 
+import eu.kanade.tachiyomi.multisrc.heancms.HeanCms.SlugStrategy
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.SerialName
@@ -36,9 +37,9 @@ data class HeanCmsSearchDto(
         apiUrl: String,
         coverPath: String,
         slugMap: Map<String, HeanCms.HeanCmsTitle>,
-        fetchAllTiles: Boolean,
+        slugStrategy: SlugStrategy,
     ): SManga = SManga.create().apply {
-        val slugOnly = slug.toPermSlugIfNeeded(fetchAllTiles)
+        val slugOnly = slug.toPermSlugIfNeeded(slugStrategy)
         val thumbnailFileName = slugMap[slugOnly]?.thumbnailFileName
         title = this@HeanCmsSearchDto.title
         thumbnail_url = thumbnail?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
@@ -66,10 +67,10 @@ data class HeanCmsSeriesDto(
     fun toSManga(
         apiUrl: String,
         coverPath: String,
-        fetchAllTiles: Boolean,
+        slugStrategy: SlugStrategy,
     ): SManga = SManga.create().apply {
         val descriptionBody = this@HeanCmsSeriesDto.description?.let(Jsoup::parseBodyFragment)
-        val slugOnly = slug.toPermSlugIfNeeded(fetchAllTiles)
+        val slugOnly = slug.toPermSlugIfNeeded(slugStrategy)
 
         title = this@HeanCmsSeriesDto.title
         author = this@HeanCmsSeriesDto.author?.trim()
@@ -83,7 +84,11 @@ data class HeanCmsSeriesDto(
         thumbnail_url = thumbnail.ifEmpty { null }
             ?.toAbsoluteThumbnailUrl(apiUrl, coverPath)
         status = this@HeanCmsSeriesDto.status?.toStatus() ?: SManga.UNKNOWN
-        url = "/series/$slugOnly"
+        url = if (slugStrategy != SlugStrategy.NONE) {
+            "/series/$slugOnly#$id"
+        } else {
+            "/series/$slug"
+        }
     }
 }
 
@@ -105,11 +110,16 @@ data class HeanCmsChapterDto(
     @SerialName("created_at") val createdAt: String,
     val price: Int? = null,
 ) {
-    fun toSChapter(seriesSlug: String, dateFormat: SimpleDateFormat): SChapter = SChapter.create().apply {
+    fun toSChapter(
+        seriesSlug: String,
+        dateFormat: SimpleDateFormat,
+        slugStrategy: SlugStrategy,
+    ): SChapter = SChapter.create().apply {
+        val seriesSlugOnly = seriesSlug.toPermSlugIfNeeded(slugStrategy)
         name = this@HeanCmsChapterDto.name.trim()
         date_upload = runCatching { dateFormat.parse(createdAt)?.time }
             .getOrNull() ?: 0L
-        url = "/series/$seriesSlug/$slug#$id"
+        url = "/series/$seriesSlugOnly/$slug#$id"
     }
 }
 
@@ -140,8 +150,8 @@ private fun String.toAbsoluteThumbnailUrl(apiUrl: String, coverPath: String): St
     return if (startsWith("https://")) this else "$apiUrl/$coverPath$this"
 }
 
-private fun String.toPermSlugIfNeeded(fetchAllTitles: Boolean): String {
-    return if (fetchAllTitles) {
+private fun String.toPermSlugIfNeeded(slugStrategy: SlugStrategy): String {
+    return if (slugStrategy != SlugStrategy.NONE) {
         this.replace(HeanCms.TIMESTAMP_REGEX, "")
     } else {
         this

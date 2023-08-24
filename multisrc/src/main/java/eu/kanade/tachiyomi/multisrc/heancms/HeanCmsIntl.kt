@@ -88,6 +88,12 @@ class HeanCmsIntl(lang: String) {
                 "to $sourceName to update the URL."
     }
 
+    val idNotFoundError: String = when (availableLang) {
+        BRAZILIAN_PORTUGUESE -> "Falha ao obter o ID do slug: "
+        SPANISH -> "No se pudo encontrar el ID para: "
+        else -> "Failed to get the ID for slug: "
+    }
+
     companion object {
         const val BRAZILIAN_PORTUGUESE = "pt-BR"
         const val ENGLISH = "en"
