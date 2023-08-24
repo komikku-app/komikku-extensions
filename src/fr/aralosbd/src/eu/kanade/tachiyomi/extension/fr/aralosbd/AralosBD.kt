@@ -26,6 +26,7 @@ class AralosBD : HttpSource() {
         val BOLD_REGEX = "\\*+\\s*([^\\*]*)\\s*\\*+".toRegex()
         val ITALIC_REGEX = "_+\\s*([^_]*)\\s*_+".toRegex()
         val ICON_REGEX = ":+[a-zA-Z]+:".toRegex()
+        val PAGE_REGEX = "page:([0-9]+)".toRegex()
     }
 
     private fun cleanString(string: String): String {
@@ -41,33 +42,65 @@ class AralosBD : HttpSource() {
     override val name = "AralosBD"
     override val baseUrl = "https://aralosbd.fr"
     override val lang = "fr"
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private val json: Json by injectLazy()
 
     override fun popularMangaRequest(page: Int): Request {
-        // This is the search query used for the 'recommandations' in the front page
-        return GET("$baseUrl/manga/search?s=sort:allviews;limit:16;-id:3", headers)
+        // Let's use a request that just query everything by page, sorted by total views (title + chapters)
+        return GET("$baseUrl/manga/search?s=sort:allviews;limit:24;-id:3;page:${page - 1};order:desc", headers)
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
         val searchResult = json.decodeFromString<AralosBDSearchResult>(response.body.string())
 
-        return MangasPage(searchResult.mangas.map(::searchMangaToSManga), false)
+        var hasNextPage = false
+        val pageMatch = PAGE_REGEX.find(response.request.url.toString())
+        if (pageMatch != null && pageMatch.groupValues.count() > 1) {
+            val currentPage = pageMatch.groupValues[1].toInt()
+            hasNextPage = currentPage < searchResult.page_count - 1
+        }
+
+        return MangasPage(searchResult.mangas.map(::searchMangaToSManga), hasNextPage)
     }
 
-    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException("Not used.")
-    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException("Not used.")
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val searchResult = json.decodeFromString<AralosBDSearchResult>(response.body.string())
+
+        var hasNextPage = false
+        val pageMatch = PAGE_REGEX.find(response.request.url.toString())
+        if (pageMatch != null && pageMatch.groupValues.count() > 1) {
+            val currentPage = pageMatch.groupValues[1].toInt()
+            hasNextPage = currentPage < searchResult.page_count - 1
+        }
+
+        return MangasPage(searchResult.mangas.map(::searchMangaToSManga), hasNextPage)
+    }
+
+    override fun latestUpdatesRequest(page: Int): Request {
+        // That's almost exactly the same stuff that the popular request, simply ordered differently
+        // A new title will always have a greater ID, so we can sort by ID. Using year would not be
+        // accurate because it's the release year
+        // It would be better to sort by last updated, but this is not yet in the API
+        return GET("$baseUrl/manga/search?s=sort:id;limit:24;-id:3;page:${page - 1};order:desc", headers)
+    }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         // For a basic search, we call the appropriate endpoint
-        return GET("$baseUrl/manga/search?s=text:$query", headers)
+        return GET("$baseUrl/manga/search?s=page:${page - 1};sort:id;order:desc;text:$query", headers)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
         val searchResult = json.decodeFromString<AralosBDSearchResult>(response.body.string())
 
-        return MangasPage(searchResult.mangas.map(::searchMangaToSManga), false)
+        var hasNextPage = false
+        val pageMatch = PAGE_REGEX.find(response.request.url.toString())
+        if (pageMatch != null && pageMatch.groupValues.count() > 1) {
+            val currentPage = pageMatch.groupValues[1].toInt()
+            hasNextPage = currentPage < searchResult.page_count - 1
+        }
+
+        return MangasPage(searchResult.mangas.map(::searchMangaToSManga), hasNextPage)
     }
 
     override fun mangaDetailsRequest(manga: SManga): Request {
@@ -167,6 +200,8 @@ data class AralosBDSearchManga(
 @Serializable
 data class AralosBDSearchResult(
     val error: Int = 0,
+    val result_count: Int = 0,
+    val page_count: Int = 0,
     val mangas: List<AralosBDSearchManga> = emptyList(),
 )
 
