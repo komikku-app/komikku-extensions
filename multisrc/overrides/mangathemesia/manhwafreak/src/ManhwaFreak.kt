@@ -8,7 +8,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Request
 import org.jsoup.nodes.Element
 
-class ManhwaFreak : MangaThemesia("Manhwa Freak", "https://manhwafreak.com", "en") {
+class ManhwaFreak : MangaThemesia("Manhwa Freak", "https://manhwa-freak.com", "en") {
 
     // they called the theme "mangareaderfix"
 
