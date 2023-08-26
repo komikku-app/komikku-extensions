@@ -393,6 +393,11 @@ abstract class HeanCms(
     override fun chapterListParse(response: Response): List<SChapter> {
         val result = response.parseAs<HeanCmsSeriesDto>()
 
+        if (slugStrategy == SlugStrategy.ID) {
+            preferences.slugMap = preferences.slugMap.toMutableMap()
+                .also { it[result.slug.toPermSlugIfNeeded()] = result.slug }
+        }
+
         val currentTimestamp = System.currentTimeMillis()
 
         if (useNewQueryEndpoint) {

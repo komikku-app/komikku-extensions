@@ -15,7 +15,7 @@ class HeanCmsGenerator : ThemeSourceGenerator {
         SingleLang("Glorious Scan", "https://gloriousscan.com", "pt-BR", overrideVersionCode = 17),
         SingleLang("Omega Scans", "https://omegascans.org", "en", isNsfw = true, overrideVersionCode = 17),
         SingleLang("Reaper Scans", "https://reaperscans.net", "pt-BR", overrideVersionCode = 36),
-        SingleLang("YugenMangas", "https://yugenmangas.net", "es", isNsfw = true, overrideVersionCode = 7),
+        SingleLang("YugenMangas", "https://yugenmangas.net", "es", isNsfw = true, overrideVersionCode = 8),
     )
 
     companion object {
