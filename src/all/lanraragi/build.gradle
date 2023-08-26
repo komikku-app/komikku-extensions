@@ -6,11 +6,7 @@ ext {
     extName = 'LANraragi'
     pkgNameSuffix = 'all.lanraragi'
     extClass = '.LANraragiFactory'
-    extVersionCode = 13
-}
-
-dependencies {
-    compileOnly libs.bundles.reactivex
+    extVersionCode = 14
 }
 
 apply from: "$rootDir/common.gradle"

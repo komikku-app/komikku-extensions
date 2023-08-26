@@ -6,11 +6,7 @@ ext {
     extName = 'Komga'
     pkgNameSuffix = 'all.komga'
     extClass = '.KomgaFactory'
-    extVersionCode = 47
-}
-
-dependencies {
-    compileOnly libs.bundles.reactivex
+    extVersionCode = 48
 }
 
 apply from: "$rootDir/common.gradle"

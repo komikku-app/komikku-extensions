@@ -6,12 +6,7 @@ ext {
     extName = 'Suwayomi'
     pkgNameSuffix = 'all.tachidesk'
     extClass = '.Tachidesk'
-    extVersionCode = 10
-}
-
-dependencies {
-    implementation 'io.reactivex:rxandroid:1.2.1'
-    implementation 'io.reactivex:rxjava:1.3.8'
+    extVersionCode = 11
 }
 
 apply from: "$rootDir/common.gradle"
