@@ -9,10 +9,10 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class Hiperdex : Madara("Hiperdex", "https://1sthiperdex.com", "en") {
+class Hiperdex : Madara("Hiperdex", "https://hiperdex.com", "en") {
     override val useNewChapterEndpoint: Boolean = true
 
-    private val defaultBaseUrl = "https://1sthiperdex.com"
+    private val defaultBaseUrl = "https://hiperdex.com"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
