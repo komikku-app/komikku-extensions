@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.pt.cerisescans
+package eu.kanade.tachiyomi.extension.pt.ghostscan
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -7,11 +7,11 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class CeriseScans : Madara(
-    "Cerise Scans",
-    "https://cerisescans.com",
+class GhostScan : Madara(
+    "Ghost Scan",
+    "https://ghostscan.com.br",
     "pt-BR",
-    SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")),
+    SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
