@@ -24,11 +24,11 @@ import java.util.Locale
 
 class MangaSwat : MangaThemesia(
     "MangaSwat",
-    "https://swatmanga.me",
+    "https://stmgs.com",
     "ar",
     dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("ar")),
 ) {
-    private val defaultBaseUrl = "https://swatop.club"
+    private val defaultBaseUrl = "https://stmgs.com"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
