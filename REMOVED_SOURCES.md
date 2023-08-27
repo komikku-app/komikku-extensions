@@ -50,6 +50,7 @@ Here is a list of known sources that were removed.
 - MangaSY https://github.com/tachiyomiorg/tachiyomi-extensions/issues/12007
 - Mangawow https://github.com/tachiyomiorg/tachiyomi-extensions/issues/5367
 - MHScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15319
+- Mono Manga https://github.com/tachiyomiorg/tachiyomi-extensions/issues/17634
 - NarTag https://github.com/tachiyomiorg/tachiyomi-extensions/issues/8038
 - Plot-twistnf-scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/4242
 - Realm Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15586
