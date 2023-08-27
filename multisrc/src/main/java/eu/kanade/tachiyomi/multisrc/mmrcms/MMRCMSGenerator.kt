@@ -25,7 +25,7 @@ class MMRCMSGenerator : ThemeSourceGenerator {
         SingleLang("AnimaRegia", "https://animaregia.net", "pt-BR", overrideVersionCode = 4),
         SingleLang("MangaID", "https://mangaid.click", "id", overrideVersionCode = 1),
         SingleLang("Jpmangas", "https://jpmangas.xyz", "fr", overrideVersionCode = 2),
-        SingleLang("Manga-FR", "https://manga-fr.me", "fr", className = "MangaFR"),
+        SingleLang("Manga-FR", "https://manga-fr.me", "fr", className = "MangaFR", overrideVersionCode = 1),
         SingleLang("Manga-Scan", "https://manga-scan.co", "fr", className = "MangaScan"),
         SingleLang("Ama Scans", "https://amascan.com", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         // NOTE: THIS SOURCE CONTAINS A CUSTOM LANGUAGE SYSTEM (which will be ignored)!
