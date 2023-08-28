@@ -27,10 +27,10 @@ class CeriseScan : Madara(
     override val useNewChapterEndpoint = true
 
     override fun mangaDetailsRequest(manga: SManga): Request {
-        return GET(baseUrl + manga.url.removePrefix("/home1"), headers)
+        return GET(baseUrl + manga.url.replace("/home1", ""), headers)
     }
 
     override fun chapterListRequest(manga: SManga): Request {
-        return GET(baseUrl + manga.url.removePrefix("/home1"), headers)
+        return GET(baseUrl + manga.url.replace("/home1", ""), headers)
     }
 }
