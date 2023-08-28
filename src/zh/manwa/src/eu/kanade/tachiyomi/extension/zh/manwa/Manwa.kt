@@ -27,6 +27,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -61,12 +62,12 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
             originalResponse
         }
     }
+
     override val client: OkHttpClient = network.client.newBuilder()
         .addNetworkInterceptor(rewriteOctetStream)
         .build()
 
     // Popular
-
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/rank", headers)
     override fun popularMangaNextPageSelector(): String? = null
     override fun popularMangaSelector(): String = "#rankList_2 > a"
@@ -77,7 +78,6 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
     }
 
     // Latest
-
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/getUpdate?page=${page * 15 - 15}&date=", headers)
     override fun latestUpdatesParse(response: Response): MangasPage {
         // Get image host
@@ -142,14 +142,18 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
         return super.chapterListParse(response).reversed()
     }
 
-    // Pages
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
+        client.newCall(GET("$baseUrl/static/images/pv.gif")).execute()
+        return super.fetchPageList(chapter)
+    }
 
+    // Pages
     override fun pageListRequest(chapter: SChapter): Request {
         return GET("$baseUrl${chapter.url}?img_host=${preferences.getString(IMAGE_HOST_KEY, IMAGE_HOST_ENTRY_VALUES[0])}", headers)
     }
 
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        document.select("#cp_img > img[data-r-src]").forEachIndexed { index, it ->
+        document.select("#cp_img > .img-content > img[data-r-src]").forEachIndexed { index, it ->
             add(Page(index, "", it.attr("data-r-src")))
         }
     }

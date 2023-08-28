@@ -5,7 +5,7 @@ ext {
     extName = 'Manwa'
     pkgNameSuffix = 'zh.manwa'
     extClass = '.Manwa'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = true
 }
 
