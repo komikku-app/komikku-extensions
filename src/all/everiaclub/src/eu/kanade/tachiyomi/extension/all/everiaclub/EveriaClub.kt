@@ -81,7 +81,7 @@ class EveriaClub() : ParsedHttpSource() {
         manga.title = document.select(".entry-title").text()
         manga.description = document.select(".entry-title").text()
         val genres = mutableListOf<String>()
-        document.select(".nv-tags-list > a").forEach {
+        document.select(".post-tags > a").forEach {
             genres.add(it.text())
         }
         manga.genre = genres.joinToString(", ")
@@ -104,7 +104,7 @@ class EveriaClub() : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
         document.select("noscript").remove()
-        document.select("article img").forEachIndexed { i, it ->
+        document.select(".entry-content img").forEachIndexed { i, it ->
             val itUrl = it.imgSrc
             pages.add(Page(i, itUrl, itUrl))
         }

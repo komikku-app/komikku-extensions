@@ -5,7 +5,7 @@ ext {
     extName = 'Everia.club'
     pkgNameSuffix = 'all.everiaclub'
     extClass = '.EveriaClub'
-    extVersionCode = 7
+    extVersionCode = 8
     isNsfw = true
 }
 
