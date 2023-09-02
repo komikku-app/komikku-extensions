@@ -413,7 +413,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("RagnarokScan", "https://ragnarokscan.com", "es", overrideVersionCode = 1),
         SingleLang("Raijin Scans", "https://raijinscans.fr", "fr"),
         SingleLang("Rainbow Fairy Scan", "https://rainbowfairyscan.com", "pt-BR"),
-        SingleLang("Random Scan", "https://randomscans.com", "pt-BR", overrideVersionCode = 5),
+        SingleLang("Random Scan", "https://randomscanlators.net", "pt-BR", overrideVersionCode = 6),
         SingleLang("RawDEX", "https://rawdex.net", "ko", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ReadAdult", "https://readadult.net", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ReaderGen", "https://fr.readergen.fr", "fr"),
