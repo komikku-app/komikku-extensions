@@ -20,7 +20,7 @@ import eu.kanade.tachiyomi.extension.all.komga.dto.PageWrapperDto
 import eu.kanade.tachiyomi.extension.all.komga.dto.ReadListDto
 import eu.kanade.tachiyomi.extension.all.komga.dto.SeriesDto
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.UnmeteredSource
 import eu.kanade.tachiyomi.source.model.Filter
@@ -39,7 +39,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import rx.Single
 import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
@@ -180,10 +179,10 @@ open class Komga(private val suffix: String = "") : ConfigurableSource, Unmetere
     override fun searchMangaParse(response: Response): MangasPage =
         processSeriesPage(response)
 
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+    override suspend fun getMangaDetails(manga: SManga): SManga {
         return client.newCall(GET(manga.url, headers))
-            .asObservableSuccess()
-            .map { response ->
+            .await()
+            .let { response ->
                 mangaDetailsParse(response).apply { initialized = true }
             }
     }
