@@ -89,6 +89,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Mihentai", "https://mihentai.com", "all", isNsfw = true, overrideVersionCode = 2),
         SingleLang("MirrorDesu", "https://mirrordesu.me", "id", isNsfw = true),
         SingleLang("Mode Scanlator", "https://modescanlator.com", "pt-BR", overrideVersionCode = 8),
+        SingleLang("Moon Daisy Scans", "https://moondaisyscans.com", "tr", isNsfw = true),
         SingleLang("Mundo Mangá-Kun", "https://mundomangakun.com.br", "pt-BR", className = "MundoMangaKun", isNsfw = true),
         SingleLang("Nekomik", "https://nekomik.com", "id"),
         SingleLang("Ngomik", "https://ngomik.net", "id", overrideVersionCode = 2),
