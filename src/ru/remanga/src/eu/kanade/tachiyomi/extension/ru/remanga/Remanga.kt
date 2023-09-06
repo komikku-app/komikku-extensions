@@ -487,7 +487,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                 }
                 val selectedBranch = branch.maxByOrNull { selector(it) }!!
                 val tempChaptersList = mutableListOf<SChapter>()
-                (1..(selectedBranch.count_chapters / 100 + 1)).map {
+                (1..(selectedBranch.count_chapters / 300 + 1)).map {
                     val response = chapterListRequest(selectedBranch.id, it)
                     chapterListParse(response, manga, exChapters)
                 }.let { tempChaptersList.addAll(it.flatten()) }
@@ -501,7 +501,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                                 ).content.firstOrNull()?.chapter?.toFloatOrNull() ?: -2F
                             )
                         ) {
-                            (1..(selectedBranch2.count_chapters / 100 + 1)).map {
+                            (1..(selectedBranch2.count_chapters / 300 + 1)).map {
                                 val response = chapterListRequest(selectedBranch2.id, it)
                                 chapterListParse(response, manga, exChapters)
                             }.let { tempChaptersList.addAll(0, it.flatten()) }
@@ -518,7 +518,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     private fun chapterListRequest(branch: Long, page: Number): Response =
         client.newCall(
             GET(
-                "$baseUrl/api/titles/chapters/?branch_id=$branch&page=$page&count=100",
+                "$baseUrl/api/titles/chapters/?branch_id=$branch&page=$page&count=300",
                 headers,
             ),
         ).execute().run {
