@@ -73,7 +73,7 @@ class KomikCast : MangaThemesia(
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         val urlElements = element.select("a")
         setUrlWithoutDomain(urlElements.attr("href"))
-        name = element.select(".lch a, .chapternum").text().ifBlank { urlElements.first()!!.text() }
+        name = element.select(".chapter-link-item").text()
         date_upload = parseChapterDate2(element.select(".chapter-link-time").text())
     }
 
