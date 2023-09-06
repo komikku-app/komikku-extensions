@@ -85,7 +85,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("ManhwaList", "https://manhwalist.xyz", "id", overrideVersionCode = 3),
         SingleLang("Manhwax", "https://manhwax.com", "en", isNsfw = true),
         SingleLang("Mareceh", "https://mareceh.com", "id", isNsfw = true, pkgName = "mangceh", overrideVersionCode = 10),
-        SingleLang("MasterKomik", "https://masterkomik.com", "id", overrideVersionCode = 1),
+        SingleLang("Tenshi.id", "https://tenshi.id", "id", className = "TenshiId", pkgName = "masterkomik", overrideVersionCode = 2),
         SingleLang("MELOKOMIK", "https://melokomik.xyz", "id"),
         SingleLang("Mihentai", "https://mihentai.com", "all", isNsfw = true, overrideVersionCode = 2),
         SingleLang("MirrorDesu", "https://mirrordesu.me", "id", isNsfw = true),
