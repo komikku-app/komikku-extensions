@@ -1,21 +1,24 @@
-package eu.kanade.tachiyomi.extension.all.leviatanscans
+package eu.kanade.tachiyomi.extension.en.leviatanscans
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
+import java.util.Locale
 
-abstract class LeviatanScans(
-    baseUrl: String,
-    lang: String,
-    dateFormat: SimpleDateFormat,
-) : Madara(
+class LeviatanScans : Madara(
     "Leviatan Scans",
-    baseUrl,
-    lang,
-    dateFormat,
+    "https://lscomic.com",
+    "en",
+    dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.US),
 ) {
+
+    override val id = 4055499394183150749
+
+    override val mangaDetailsSelectorDescription = "div.manga-summary"
+    override val mangaDetailsSelectorAuthor = "div.manga-authors"
+
     override val useNewChapterEndpoint: Boolean = true
 
     override fun chapterListSelector() = "li.wp-manga-chapter:not(.premium-block)"
