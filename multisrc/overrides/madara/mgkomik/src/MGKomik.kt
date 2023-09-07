@@ -4,7 +4,7 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class MGKomik : Madara("MG Komik", "https://mgkomik.com", "id", SimpleDateFormat("dd MMM yy", Locale.US)) {
+class MGKomik : Madara("MG Komik", "https://mgkomik.id", "id", SimpleDateFormat("dd MMM yy", Locale.US)) {
 
     override val chapterUrlSuffix = ""
     override val mangaSubString = "komik"
