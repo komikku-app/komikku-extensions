@@ -6,7 +6,13 @@ import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class TenshiId : MangaThemesia("Tenshi.id", "https://tenshi.id", "id", dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("id", "ID"))) {
+class TenshiId : MangaThemesia(
+    "Tenshi.id",
+    "https://tenshi.id",
+    "id",
+    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("id", "ID")),
+    mangaUrlDirectory = "/komik",
+) {
 
     // MasterKomik changed to Tenshi.id
     override val id: Long = 3146720114171452298
