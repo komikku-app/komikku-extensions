@@ -27,6 +27,7 @@ Here is a list of known sources that were removed.
 - MangaYabu! https://github.com/tachiyomiorg/tachiyomi-extensions/pull/9336
 - ManhuaScan https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
 - ManhwaHot https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7129
+- Mode Scanlator https://github.com/tachiyomiorg/tachiyomi-extensions/pull/17865
 - Neox Scanlator https://github.com/tachiyomiorg/tachiyomi-extensions/pull/12695
 - Reaper Scans (EN) https://github.com/tachiyomiorg/tachiyomi-extensions/pull/16819
 - SuperMangás and SuperHentais https://github.com/tachiyomiorg/tachiyomi-extensions/pull/6348
