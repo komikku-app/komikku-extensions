@@ -5,7 +5,7 @@ ext {
     extName = 'Bakai'
     pkgNameSuffix = 'pt.bakai'
     extClass = '.Bakai'
-    extVersionCode = 3
+    extVersionCode = 4
     isNsfw = true
 }
 

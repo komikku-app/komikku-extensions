@@ -44,7 +44,7 @@ class Bakai : ParsedHttpSource() {
     override fun popularMangaNextPageSelector(): String = latestUpdatesNextPageSelector()
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val path = if (page > 1) "home/page/$page/" else ""
+        val path = if (page > 1) "home2/page/$page/" else ""
         return GET("$baseUrl/$path", headers)
     }
 
@@ -60,7 +60,7 @@ class Bakai : ParsedHttpSource() {
         "#elCmsPageWrap ul.ipsPagination li.ipsPagination_next:not(.ipsPagination_inactive)"
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search/".toHttpUrl().newBuilder()
+        val url = "$baseUrl/search2/".toHttpUrl().newBuilder()
             .addQueryParameter("q", query)
             .addQueryParameter("type", "cms_records1")
             .addQueryParameter("search_in", "titles")
