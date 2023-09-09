@@ -6,7 +6,7 @@ ext {
     extName = 'Komga'
     pkgNameSuffix = 'all.komga'
     extClass = '.KomgaFactory'
-    extVersionCode = 49
+    extVersionCode = 50
 }
 
 apply from: "$rootDir/common.gradle"

@@ -4,8 +4,8 @@ import android.app.Application
 import android.os.Build
 import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -84,10 +84,10 @@ open class Cubari(override val lang: String) : HttpSource() {
         return parseMangaList(result, SortType.PINNED)
     }
 
-    override suspend fun getMangaDetails(manga: SManga): SManga {
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         return client.newCall(chapterListRequest(manga))
-            .await()
-            .let { response -> mangaDetailsParse(response, manga) }
+            .asObservableSuccess()
+            .map { response -> mangaDetailsParse(response, manga) }
     }
 
     // Called when the series is loaded, or when opening in browser
@@ -104,10 +104,10 @@ open class Cubari(override val lang: String) : HttpSource() {
         return parseManga(result, manga)
     }
 
-    override suspend fun getChapterList(manga: SManga): List<SChapter> {
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         return client.newCall(chapterListRequest(manga))
-            .await()
-            .let { response -> chapterListParse(response, manga) }
+            .asObservable()
+            .map { response -> chapterListParse(response, manga) }
     }
 
     // Gets the chapter list based on the series being viewed
@@ -129,19 +129,19 @@ open class Cubari(override val lang: String) : HttpSource() {
         return parseChapterList(res, manga)
     }
 
-    override suspend fun getPageList(chapter: SChapter): List<Page> {
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
         return when {
             chapter.url.contains("/chapter/") -> {
                 client.newCall(pageListRequest(chapter))
-                    .await()
-                    .let { response ->
+                    .asObservableSuccess()
+                    .map { response ->
                         directPageListParse(response)
                     }
             }
             else -> {
                 client.newCall(pageListRequest(chapter))
-                    .await()
-                    .let { response ->
+                    .asObservableSuccess()
+                    .map { response ->
                         seriesJsonPageListParse(response, chapter)
                     }
             }
