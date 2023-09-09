@@ -43,13 +43,14 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class Manhuagui : ConfigurableSource, ParsedHttpSource() {
+class Manhuagui(
+    override val name: String = "漫画柜",
+    override val lang: String = "zh",
+) : ConfigurableSource, ParsedHttpSource() {
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
-
-    override val name = "漫画柜"
 
     private val baseHost = if (preferences.getBoolean(USE_MIRROR_URL_PREF, false)) {
         "mhgui.com"
@@ -63,7 +64,6 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
         } else {
             "https://www.$baseHost"
         }
-    override val lang = "zh"
     override val supportsLatest = true
 
     private val imageServer = arrayOf("https://i.hamreus.com", "https://cf.hamreus.com")
