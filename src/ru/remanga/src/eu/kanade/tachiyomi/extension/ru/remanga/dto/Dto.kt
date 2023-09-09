@@ -49,7 +49,7 @@ data class MangaDetDto(
     val rus_name: String,
     val another_name: String,
     val dir: String,
-    val description: String,
+    val description: String?,
     val issue_year: Int?,
     val img: ImgDto,
     val type: TagsDto,

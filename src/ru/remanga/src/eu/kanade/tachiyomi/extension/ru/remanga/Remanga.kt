@@ -390,7 +390,11 @@ class Remanga : ConfigurableSource, HttpSource() {
                 altName = "Альтернативные названия:\n" + another_name + "\n\n"
             }
             val mediaNameLanguage = if (isEng.equals("rus")) en_name else rus_name
-            this.description = mediaNameLanguage + "\n" + ratingStar + " " + ratingValue + " (голосов: " + count_rating + ")\n" + altName + Jsoup.parse(o.description.replace("<p>", "").replace("</p>", "REPLACbR")).text().replace("REPLACbR", "\n")
+            this.description = "$mediaNameLanguage\n$ratingStar $ratingValue (голосов: $count_rating)\n$altName" +
+                o.description?.let { Jsoup.parseBodyFragment(it) }
+                    ?.select("p")
+                    ?.joinToString("\n") { it.text() }
+                    .orEmpty()
             genre = (parseType(type) + ", " + parseAge(age_limit) + ", " + (genres + categories).joinToString { it.name }).split(", ").filter { it.isNotEmpty() }.joinToString { it.trim() }
             status = parseStatus(o.status.id)
         }
