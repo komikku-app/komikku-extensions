@@ -75,7 +75,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("MangaWT", "https://mangawt.com", "tr", overrideVersionCode = 5),
         SingleLang("Mangayaro", "https://mangayaro.net", "id"),
         SingleLang("Manhwa Lover", "https://manhwalover.com", "en", isNsfw = true, overrideVersionCode = 1),
-        SingleLang("MangaSwat", "https://stmgs.com", "ar", overrideVersionCode = 12),
+        SingleLang("MangaSwat", "https://swatmanga.co", "ar", overrideVersionCode = 13),
         SingleLang("MangKomik", "https://mangkomik.net", "id", overrideVersionCode = 1),
         SingleLang("Mangás Chan", "https://mangaschan.net", "pt-BR", className = "MangasChan", overrideVersionCode = 1),
         SingleLang("Manhwa Freak", "https://manhwa-freak.com", "en", overrideVersionCode = 2),
