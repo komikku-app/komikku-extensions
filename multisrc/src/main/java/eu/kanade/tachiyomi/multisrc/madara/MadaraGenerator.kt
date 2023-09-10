@@ -176,6 +176,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Jimanga", "https://jimanga.com", "en", isNsfw = false),
         SingleLang("Kami Sama Explorer", "https://leitor.kamisama.com.br", "pt-BR", overrideVersionCode = 2),
         SingleLang("Karatcam Scans", "https://karatcam-scans.fr", "fr", isNsfw = true),
+        SingleLang("Kataitake", "https://www.kataitake.fr", "fr", isNsfw = true),
         SingleLang("KawaScans", "https://kawascans.com", "en", overrideVersionCode = 1),
         SingleLang("Kiara", "https://kiara.cool", "en"),
         SingleLang("Kings-Manga", "https://www.kings-manga.co", "th", isNsfw = false, className = "KingsManga"),
