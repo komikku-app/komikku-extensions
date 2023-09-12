@@ -12,7 +12,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:host="999hentai.to"/>
+                <data android:host="999hentai.net"/>
                 <data android:scheme="https"/>
                 <data android:pathPattern="/hchapter/..*"/>
             </intent-filter>
