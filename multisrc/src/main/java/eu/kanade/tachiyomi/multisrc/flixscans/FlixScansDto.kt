@@ -1,9 +1,10 @@
-package eu.kanade.tachiyomi.extension.en.flixscans
+package eu.kanade.tachiyomi.multisrc.flixscans
 
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.jsoup.Jsoup
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -34,10 +35,10 @@ data class BrowseSeries(
     val prefix: Int,
     val thumbnail: String?,
 ) {
-    fun toSManga() = SManga.create().apply {
+    fun toSManga(cdnUrl: String) = SManga.create().apply {
         title = this@BrowseSeries.title
         url = "/series/$prefix-$id-$slug"
-        thumbnail_url = thumbnail?.let { FlixScans.cdnUrl + it }
+        thumbnail_url = thumbnail?.let { cdnUrl + it }
     }
 }
 
@@ -74,15 +75,15 @@ data class Series(
     val artists: List<GenreHolder>? = emptyList(),
     val genres: List<GenreHolder>? = emptyList(),
 ) {
-    fun toSManga() = SManga.create().apply {
+    fun toSManga(cdnUrl: String) = SManga.create().apply {
         title = this@Series.title
         url = "/series/$prefix-$id-$slug"
-        thumbnail_url = FlixScans.cdnUrl + thumbnail
+        thumbnail_url = cdnUrl + thumbnail
         author = authors?.joinToString { it.name.trim() }
         artist = artists?.joinToString { it.name.trim() }
         genre = (otherGenres + genres?.map { it.name.trim() }.orEmpty())
             .distinct().joinToString { it.trim() }
-        description = story
+        description = story?.let { Jsoup.parse(it).text() }
         if (otherNames?.isNotEmpty() == true) {
             if (description.isNullOrEmpty()) {
                 description = "Alternative Names:\n"

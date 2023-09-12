@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.en.flixscans
+package eu.kanade.tachiyomi.multisrc.flixscans
 
 import eu.kanade.tachiyomi.source.model.Filter
 

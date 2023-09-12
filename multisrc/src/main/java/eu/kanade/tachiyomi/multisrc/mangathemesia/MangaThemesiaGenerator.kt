@@ -141,7 +141,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Zahard", "https://zahard.xyz", "en"),
         SingleLang("สดใสเมะ", "https://www.xn--l3c0azab5a2gta.com", "th", isNsfw = true, className = "Sodsaime", overrideVersionCode = 1),
         SingleLang("أريا مانجا", "https://www.areascans.net", "ar", className = "AreaManga"),
-        SingleLang("جالاكسي مانجا", "https://galaxymanga.org", "ar", className = "GalaxyManga"),
         SingleLang("فيكس مانجا", "https://vexmanga.net", "ar", className = "VexManga"),
     )
 

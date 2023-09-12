@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.en.flixscans
+package eu.kanade.tachiyomi.multisrc.flixscans
 
 import android.util.Log
 import eu.kanade.tachiyomi.network.GET
@@ -26,19 +26,17 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 
-class FlixScans : HttpSource() {
-
-    override val name = "Flix Scans"
-
-    override val lang = "en"
-
-    override val baseUrl = "https://flixscans.net"
-
-    private val apiUrl = "https://api.flixscans.net/api/v1"
+abstract class FlixScans(
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String,
+    protected val apiUrl: String = baseUrl.replace("://", "://api.").plus("/api/v1"),
+    protected val cdnUrl: String = baseUrl.replace("://", "://api.").plus("/storage/"),
+) : HttpSource() {
 
     override val supportsLatest = true
 
-    private val json: Json by injectLazy()
+    protected open val json: Json by injectLazy()
 
     override val client = network.cloudflareClient.newBuilder()
         .rateLimit(2)
@@ -67,7 +65,7 @@ class FlixScans : HttpSource() {
 
         val entries = (result.hot + result.topAll + result.topMonth + result.topWeek)
             .distinctBy { it.id }
-            .map(BrowseSeries::toSManga)
+            .map { it.toSManga(cdnUrl) }
 
         return MangasPage(entries, false)
     }
@@ -87,7 +85,7 @@ class FlixScans : HttpSource() {
         val currentPage = response.request.url.queryParameter("page")
             ?.toIntOrNull() ?: 1
 
-        val entries = result.data.map(BrowseSeries::toSManga)
+        val entries = result.data.map { it.toSManga(cdnUrl) }
         val hasNextPage = result.meta.lastPage > currentPage
 
         return MangasPage(entries, hasNextPage)
@@ -239,7 +237,7 @@ class FlixScans : HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val result = response.parseAs<SeriesResponse>()
 
-        return result.serie.toSManga()
+        return result.serie.toSManga(cdnUrl)
     }
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
@@ -312,6 +310,5 @@ class FlixScans : HttpSource() {
 
     companion object {
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
-        const val cdnUrl = "https://media.flixscans.net/"
     }
 }
