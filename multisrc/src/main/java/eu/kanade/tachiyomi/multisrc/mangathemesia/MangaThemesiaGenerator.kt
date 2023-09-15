@@ -16,7 +16,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         MultiLang("Asura Scans", "https://asuracomics.com", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 26),
         MultiLang("Flame Scans", "https://flamescans.org", listOf("en"), className = "FlameScansFactory", pkgName = "flamescans", overrideVersionCode = 4),
-        MultiLang("Komik Lab", "https://komiklab.com", listOf("en", "id"), className = "KomikLabFactory", pkgName = "komiklab", overrideVersionCode = 2),
         MultiLang("Miau Scan", "https://miauscans.com", listOf("es", "pt-BR"), overrideVersionCode = 1),
         SingleLang("Animated Glitched Scans", "https://anigliscans.com", "en"),
         SingleLang("Arena Scans", "https://arenascans.net", "en", overrideVersionCode = 1),
@@ -53,6 +52,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("KomikDewasa", "https://komikdewasa.org", "id", isNsfw = true),
         SingleLang("Komik Station", "https://komikstation.co", "id", overrideVersionCode = 3),
         SingleLang("KomikIndo.co", "https://komikindo.co", "id", className = "KomikindoCo", overrideVersionCode = 3),
+        SingleLang("Komik Lab", "https://komiklab.com", "en", overrideVersionCode = 3),
         SingleLang("KomikMama", "https://komikmama.co", "id", overrideVersionCode = 1),
         SingleLang("KomikManhwa", "https://komikmanhwa.me", "id", isNsfw = true),
         SingleLang("KumaPoi", "https://kumapoi.club", "id", isNsfw = true, overrideVersionCode = 2),
