@@ -397,6 +397,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Pink Sea Unicorn", "https://psunicorn.com", "pt-BR", isNsfw = true),
         SingleLang("Pirulito Rosa", "https://pirulitorosa.site", "pt-BR", isNsfw = true),
         SingleLang("Platinum Crown", "https://platinumscans.com", "en", overrideVersionCode = 1),
+        SingleLang("PMScans", "https://rackusreads.com", "en"),
         SingleLang("Pojok Manga", "https://pojokmanga.net", "id", overrideVersionCode = 4),
         SingleLang("PoManga", "https://pomanga.com", "en"),
         SingleLang("Pony Manga", "https://ponymanga.com", "en", isNsfw = true),
