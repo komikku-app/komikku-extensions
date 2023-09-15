@@ -146,7 +146,7 @@ abstract class LibGroup(
         popularMangaParse(response)
 
     // Popular
-    override fun popularMangaRequest(page: Int) = GET("$baseUrl/?section=home-updates", headers)
+    override fun popularMangaRequest(page: Int) = GET(baseUrl, headers)
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
         if (csrfToken.isEmpty()) {
             return client.newCall(popularMangaRequest(page))
