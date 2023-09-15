@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.zh.manhuaren
 
 import android.text.format.DateFormat
 import android.util.Base64
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -103,7 +104,7 @@ class Manhuaren : HttpSource() {
     }
 
     private fun generateLastUsedTime(): String {
-        return ((Date().time / 1000).toInt() * 1000).toString()
+        return ((Date().time / 1000) * 1000).toString()
     }
 
     private fun encrypt(message: String): String {
@@ -132,26 +133,8 @@ class Manhuaren : HttpSource() {
         val keysMap = ArrayList<HashMap<String, Any?>>().apply {
             add(
                 HashMap<String, Any?>().apply {
-                    put("key", encrypt(imei))
-                    put("keyType", "0")
-                },
-            )
-            add(
-                HashMap<String, Any?>().apply {
-                    put("key", encrypt("mac: $mac"))
-                    put("keyType", "1")
-                },
-            )
-            add(
-                HashMap<String, Any?>().apply {
                     put("key", encrypt(androidId)) // https://developer.android.com/reference/android/provider/Settings.Secure#ANDROID_ID
                     put("keyType", "2")
-                },
-            )
-            add(
-                HashMap<String, Any?>().apply {
-                    put("key", encrypt(simSerialNumber)) // https://developer.android.com/reference/android/telephony/TelephonyManager#getSimSerialNumber()
-                    put("keyType", "3")
                 },
             )
             add(
@@ -530,6 +513,14 @@ class Manhuaren : HttpSource() {
     }
 
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("This method should not be called!")
+
+    override fun imageRequest(page: Page): Request {
+        val newHeaders = headersBuilder()
+            .set("Referer", "http://www.dm5.com/dm5api/")
+            .build()
+
+        return GET(page.imageUrl!!, newHeaders)
+    }
 
     override fun getFilterList() = FilterList(
         SortFilter(
