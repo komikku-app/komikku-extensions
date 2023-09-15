@@ -18,6 +18,10 @@
                     android:host="desu.me"
                     android:pathPattern="/manga/..*"
                     android:scheme="https" />
+                <data
+                    android:host="desu.win"
+                    android:pathPattern="/manga/..*"
+                    android:scheme="https" />
             </intent-filter>
         </activity>
     </application>

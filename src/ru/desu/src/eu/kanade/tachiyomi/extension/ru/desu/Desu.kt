@@ -40,7 +40,7 @@ class Desu : ConfigurableSource, HttpSource() {
 
     override val id: Long = 6684416167758830305
 
-    override val baseUrl = "https://desu.me"
+    override val baseUrl = "https://desu.win"
 
     override val lang = "ru"
 
