@@ -1,7 +1,20 @@
 package eu.kanade.tachiyomi.extension.pt.goldenmangas
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.lib.randomua.PREF_KEY_CUSTOM_UA
+import eu.kanade.tachiyomi.lib.randomua.PREF_KEY_RANDOM_UA
+import eu.kanade.tachiyomi.lib.randomua.RANDOM_UA_ENTRIES
+import eu.kanade.tachiyomi.lib.randomua.getPrefCustomUA
+import eu.kanade.tachiyomi.lib.randomua.getPrefUAType
+import eu.kanade.tachiyomi.lib.randomua.setRandomUserAgent
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -14,11 +27,13 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class GoldenMangas : ParsedHttpSource() {
+class GoldenMangas : ParsedHttpSource(), ConfigurableSource {
 
     // Hardcode the id because the language wasn't specific.
     override val id: Long = 6858719406079923084
@@ -31,10 +46,18 @@ class GoldenMangas : ParsedHttpSource() {
 
     override val supportsLatest = true
 
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(1, TimeUnit.MINUTES)
         .readTimeout(1, TimeUnit.MINUTES)
         .writeTimeout(1, TimeUnit.MINUTES)
+        .setRandomUserAgent(
+            userAgentType = preferences.getPrefUAType(),
+            customUA = preferences.getPrefCustomUA(),
+        )
         .rateLimit(1, 3, TimeUnit.SECONDS)
         .build()
 
@@ -184,6 +207,42 @@ class GoldenMangas : ParsedHttpSource() {
         return GET(page.imageUrl!!, newHeaders)
     }
 
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val uaPreferece = ListPreference(screen.context).apply {
+            key = PREF_KEY_RANDOM_UA
+            title = "User Agent aleatório"
+            summary = "%s"
+            entries = arrayOf("Desativado", "Desktop", "Celular")
+            entryValues = RANDOM_UA_ENTRIES
+            setDefaultValue("off")
+
+            setOnPreferenceChangeListener { _, _ ->
+                Toast.makeText(screen.context, RESTART_APP_MESSAGE, Toast.LENGTH_SHORT).show()
+                true
+            }
+        }
+
+        val customUaPreference = EditTextPreference(screen.context).apply {
+            key = PREF_KEY_CUSTOM_UA
+            title = "User Agent personalizado"
+            summary = "Deixe em branco para usar o User Agent padrão do aplicativo. " +
+                "Ignorado se User Agent aleatório está ativado."
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    Headers.Builder().add("User-Agent", newValue as String).build()
+                    Toast.makeText(screen.context, RESTART_APP_MESSAGE, Toast.LENGTH_SHORT).show()
+                    true
+                } catch (e: IllegalArgumentException) {
+                    Toast.makeText(screen.context, "User Agent inválido: ${e.message}", Toast.LENGTH_LONG).show()
+                    false
+                }
+            }
+        }
+
+        screen.addPreference(uaPreferece)
+        screen.addPreference(customUaPreference)
+    }
+
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
@@ -216,5 +275,7 @@ class GoldenMangas : ParsedHttpSource() {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("(dd/MM/yyyy)", Locale("pt", "BR"))
         }
+
+        private const val RESTART_APP_MESSAGE = "Reinicie o aplicativo para aplicar as alterações."
     }
 }
