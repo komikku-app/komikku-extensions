@@ -20,7 +20,7 @@ import java.util.Calendar
 
 class KomikCast : MangaThemesia(
     "Komik Cast",
-    baseUrl = "https://komikcast.io",
+    baseUrl = "https://komikcast.vip",
     "id",
     mangaUrlDirectory = "/daftar-komik",
 ) {
