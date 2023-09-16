@@ -13,7 +13,7 @@ class FlixScansGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("Flix Scans", "https://flixscans.net", "en", className = "FlixScansNet", pkgName = "flixscans"),
-        SingleLang("جالاكسي مانجا", "https://flixscans.com", "ar", className = "GalaxyManga", overrideVersionCode = 25),
+        SingleLang("جالاكسي مانجا", "https://flixscans.com", "ar", className = "GalaxyManga", overrideVersionCode = 26),
         SingleLang("مانجا نون", "https://manjanoon.com", "ar", className = "MangaNoon"),
     )
 
