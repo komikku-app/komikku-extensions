@@ -155,7 +155,7 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
     // Popular
 
     override fun popularMangaRequest(page: Int): Request =
-        GET("$baseUrl/comics?b=POPULAR&g=0&f=NONE&pageNumber=$page&pageSize=20&")
+        GET("$baseUrl/comics?b=POPULAR&g=0&f=NONE&pageNumber=$page&pageSize=20&", headers)
 
     override fun popularMangaNextPageSelector() = "div[data-has-next=true]"
     override fun popularMangaSelector() = "li.js-list-item"
@@ -199,7 +199,7 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
     // Latest
 
     override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/comics?b=FRESH&g=0&f=NONE&pageNumber=$page&pageSize=20&")
+        GET("$baseUrl/comics?b=FRESH&g=0&f=NONE&pageNumber=$page&pageSize=20&", headers)
 
     override fun latestUpdatesNextPageSelector(): String = popularMangaNextPageSelector()
     override fun latestUpdatesSelector(): String = popularMangaSelector()
@@ -244,7 +244,7 @@ class Tapastic : ConfigurableSource, ParsedHttpSource() {
         }
         // Append page number
         url.addQueryParameter("pageNumber", page.toString())
-        return GET(url.toString())
+        return GET(url.toString(), headers)
     }
 
     override fun searchMangaNextPageSelector() =
