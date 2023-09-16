@@ -36,7 +36,7 @@ class Xinmeitulu : ParsedHttpSource() {
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/page/$page")
     override fun popularMangaNextPageSelector() = ".next"
-    override fun popularMangaSelector() = ".container > .row > div"
+    override fun popularMangaSelector() = ".container > .row > div:has(figure)"
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
         setUrlWithoutDomain(element.select("figure > a").attr("abs:href"))
         title = element.select("figcaption").text()
