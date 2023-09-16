@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.zh.manwa
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
+import androidx.preference.CheckBoxPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
@@ -19,6 +20,8 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Cookie
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -67,6 +70,8 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
         .addNetworkInterceptor(rewriteOctetStream)
         .build()
 
+    private val baseHttpUrl = baseUrl.toHttpUrlOrNull()
+
     // Popular
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/rank", headers)
     override fun popularMangaNextPageSelector(): String? = null
@@ -99,6 +104,7 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
         val totalPage = jsonObject["total"]!!.jsonPrimitive.int
         return MangasPage(mangas, totalPage > currentPage + 15)
     }
+
     override fun latestUpdatesNextPageSelector() = throw Exception("Not used")
     override fun latestUpdatesSelector() = throw Exception("Not used")
     override fun latestUpdatesFromElement(element: Element) = throw Exception("Not used")
@@ -138,6 +144,7 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
         url = element.attr("href")
         name = element.text()
     }
+
     override fun chapterListParse(response: Response): List<SChapter> {
         return super.chapterListParse(response).reversed()
     }
@@ -153,7 +160,20 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
     }
 
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        document.select("#cp_img > .img-content > img[data-r-src]").forEachIndexed { index, it ->
+        val cssQuery = "#cp_img > div.img-content > img[data-r-src]"
+        val elements = document.select(cssQuery)
+        if (elements.size == 3) {
+            val darkReader = document.selectFirst("#cp_img p")
+            if (darkReader != null) {
+                if (preferences.getBoolean(AUTO_CLEAR_COOKIE_KEY, false)) {
+                    clearCookies()
+                }
+
+                throw Exception(darkReader.text())
+            }
+        }
+
+        elements.forEachIndexed { index, it ->
             add(Page(index, "", it.attr("data-r-src")))
         }
     }
@@ -168,11 +188,32 @@ class Manwa : ParsedHttpSource(), ConfigurableSource {
             entryValues = IMAGE_HOST_ENTRY_VALUES
             setDefaultValue(IMAGE_HOST_ENTRY_VALUES[0])
         }.let { screen.addPreference(it) }
+
+        CheckBoxPreference(screen.context).apply {
+            key = AUTO_CLEAR_COOKIE_KEY
+            title = "自动删除 Cookie"
+
+            setDefaultValue(false)
+        }.let { screen.addPreference(it) }
+    }
+
+    private fun clearCookies() {
+        if (baseHttpUrl == null) {
+            return
+        }
+        val cookies = client.cookieJar.loadForRequest(baseHttpUrl)
+        val obsoletedCookies = cookies.map {
+            val cookie = Cookie.parse(baseHttpUrl, "${it.name}=; Max-Age=-1")!!
+            cookie
+        }
+        client.cookieJar.saveFromResponse(baseHttpUrl, obsoletedCookies)
     }
 
     companion object {
         private const val IMAGE_HOST_KEY = "IMG_HOST"
         private val IMAGE_HOST_ENTRIES = arrayOf("图源1", "图源2", "图源3")
         private val IMAGE_HOST_ENTRY_VALUES = arrayOf("1", "2", "3")
+
+        private const val AUTO_CLEAR_COOKIE_KEY = "CLEAR_COOKIE"
     }
 }
