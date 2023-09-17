@@ -250,13 +250,7 @@ class Remanga : ConfigurableSource, HttpSource() {
             // Do not change the title name to ensure work with a multilingual catalog!
             title = if (isEng.equals("rus")) rus_name else en_name
             url = "/api/titles/$dir/"
-            thumbnail_url = if (img.high?.isNotEmpty() == true) {
-                baseUrl + img.high
-            } else if (img.mid?.isNotEmpty() == true) {
-                baseUrl + img.mid
-            } else {
-                baseUrl + img.low
-            }
+            thumbnail_url = baseUrl + img.mid
         }
 
     private val simpleDateFormat by lazy { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US) }
@@ -446,7 +440,7 @@ class Remanga : ConfigurableSource, HttpSource() {
     }
 
     private fun filterPaid(tempChaptersList: MutableList<SChapter>): MutableList<SChapter> {
-        val lastEx = tempChaptersList.find { it.scanlator.equals("exmanga") }
+        val lastEx = tempChaptersList.find { it.scanlator.equals("exmanga") or it.url.contains("#is_bought") }
         return if (!preferences.getBoolean(PAID_PREF, false)) {
             tempChaptersList.filter {
                 !it.name.contains("\uD83D\uDCB2") || if (lastEx != null) {
@@ -559,9 +553,7 @@ class Remanga : ConfigurableSource, HttpSource() {
                     }
 
                     if (chapter.is_paid and (chapter.is_bought == true)) {
-                        if (exChID == null) {
-                            url = "$url#is_bought"
-                        }
+                        url = "$url#is_bought"
                     }
                 } else {
                     exChID = null
