@@ -40,7 +40,7 @@ class GoldenMangas : ParsedHttpSource(), ConfigurableSource {
 
     override val name = "Golden Mangás"
 
-    override val baseUrl = "https://goldenmanga.top"
+    override val baseUrl = "https://www.goldenmangas.top"
 
     override val lang = "pt-BR"
 
