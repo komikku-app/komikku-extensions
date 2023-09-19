@@ -35,8 +35,9 @@ class MundoWebtoon : ParsedHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(ObsoleteExtensionInterceptor())
         .addInterceptor(::sanitizeHtmlIntercept)
-        .rateLimit(1, 2, TimeUnit.SECONDS)
+        .rateLimit(1, 3, TimeUnit.SECONDS)
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()

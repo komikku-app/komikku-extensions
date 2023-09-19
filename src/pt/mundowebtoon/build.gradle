@@ -1,11 +1,12 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Mundo Webtoon'
     pkgNameSuffix = 'pt.mundowebtoon'
     extClass = '.MundoWebtoon'
-    extVersionCode = 7
+    extVersionCode = 8
     isNsfw = true
 }
 
