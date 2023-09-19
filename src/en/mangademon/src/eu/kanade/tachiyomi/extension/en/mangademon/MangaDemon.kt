@@ -11,11 +11,14 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -28,7 +31,56 @@ class MangaDemon : ParsedHttpSource() {
 
     override val client = network.cloudflareClient.newBuilder()
         .rateLimit(1)
+        .addInterceptor(::dynamicUrlInterceptor)
         .build()
+
+    private var dynamicUrlSuffix: String? = null
+
+    private fun dynamicUrlInterceptor(chain: Interceptor.Chain): Response {
+        val request = chain.request()
+
+        // Check if request requires an up-to-date suffix
+        if (request.url.pathSegments[0] == "manga" && dynamicUrlSuffix != null) {
+            val newPath = request.url
+                .encodedPath
+                .replaceAfterLast("-", dynamicUrlSuffix!!)
+
+            val newUrl = request.url.newBuilder()
+                .encodedPath(newPath)
+                .build()
+
+            val newRequest = request.newBuilder()
+                .url(newUrl)
+                .build()
+
+            return chain.proceed(newRequest)
+        }
+
+        val response = chain.proceed(request)
+        if (dynamicUrlSuffix != null) {
+            return response
+        }
+
+        // Don't have suffix, get it from the page
+        val document = Jsoup.parse(
+            response.peekBody(Long.MAX_VALUE).string(),
+            request.url.toString(),
+        )
+
+        val links = document.select("a[href^='/manga/']")
+
+        // Get the most popular suffix after last `-`
+        val suffix = links.map { it.attr("href").substringAfterLast("-") }
+            .groupBy { it }
+            .maxByOrNull { it.value.size }
+            ?.key
+
+        if (suffix != null) {
+            dynamicUrlSuffix = suffix
+        }
+
+        return response
+    }
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", baseUrl)
@@ -45,7 +97,8 @@ class MangaDemon : ParsedHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = SManga.create().apply {
         element.select("a").apply {
             title = attr("title")
-            setUrlWithoutDomain(attr("href"))
+            val url = URLEncoder.encode(attr("href"), "UTF-8")
+            setUrlWithoutDomain(url)
         }
         thumbnail_url = element.select("img").attr("abs:src")
     }
@@ -111,7 +164,8 @@ class MangaDemon : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element) = SManga.create().apply {
         title = element.text()
-        setUrlWithoutDomain(element.attr("href"))
+        val url = URLEncoder.encode(element.attr("href"), "UTF-8")
+        setUrlWithoutDomain(url)
         val urlSorter = title.replace(":", "%20")
         thumbnail_url = ("https://readermc.org/images/thumbnails/$urlSorter.webp")
     }
@@ -145,7 +199,8 @@ class MangaDemon : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
             element.select("a").let { urlElement ->
-                setUrlWithoutDomain(urlElement.attr("href"))
+                val url = URLEncoder.encode(urlElement.attr("href"), "UTF-8")
+                setUrlWithoutDomain(url)
                 name = element.select("strong.chapter-title").text()
             }
             val date = element.select("time.chapter-update").text()
