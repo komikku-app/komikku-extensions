@@ -26,7 +26,7 @@ jobs:
       CI_MODULE_GEN: true
     steps:
       - name: Clone repo
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
+        uses: actions/checkout@v4
 
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v1
@@ -76,7 +76,7 @@ jobs:
       matrix: ${{ fromJSON(needs.prepare.outputs.multisrcMatrix) }}
     steps:
       - name: Checkout master branch
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
+        uses: actions/checkout@v4
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -125,7 +125,7 @@ jobs:
       matrix: ${{ fromJSON(needs.prepare.outputs.individualMatrix) }}
     steps:
       - name: Checkout master branch
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
+        uses: actions/checkout@v4
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -179,7 +179,7 @@ jobs:
           distribution: adopt
 
       - name: Checkout master branch
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
+        uses: actions/checkout@v4
         with:
           ref: master
           path: master
@@ -194,7 +194,7 @@ jobs:
           ./.github/scripts/create-repo.sh
 
       - name: Checkout repo branch
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
+        uses: actions/checkout@v4
         with:
           ref: repo
           path: repo
