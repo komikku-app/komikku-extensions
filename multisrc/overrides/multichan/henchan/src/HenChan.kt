@@ -28,9 +28,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableSource {
+class HenChan : MultiChan("HenChan", "https://xxxxx.hentaichan.live", "ru"), ConfigurableSource {
 
-    override val id: Long = 5504588601186153612
+    override val id = 5504588601186153612
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -39,6 +39,8 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
     private val domain = preferences.getString(DOMAIN_TITLE, DOMAIN_DEFAULT)!!
 
     override val baseUrl = domain
+
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/manga/newest?offset=${20 * (page - 1)}")
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = if (query.isNotEmpty()) {
@@ -55,6 +57,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
                                 genres += (if (f.isExcluded()) "-" else "") + f.id + '+'
                             }
                     }
+
                     else -> return@forEach
                 }
             }
@@ -65,6 +68,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
                         is OrderBy -> {
                             order = filter.toUriPartWithGenres()
                         }
+
                         else -> return@forEach
                     }
                 }
@@ -75,6 +79,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
                         is OrderBy -> {
                             order = filter.toUriPartWithoutGenres()
                         }
+
                         else -> return@forEach
                     }
                 }
@@ -304,10 +309,12 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         Genre("rpg"),
         Genre("scat"),
         Genre("shemale"),
+        Genre("shimaidon"),
         Genre("shooter"),
         Genre("simulation"),
         Genre("skinsuit"),
         Genre("tomboy"),
+        Genre("tomgirl"),
         Genre("x-ray"),
         Genre("алкоголь"),
         Genre("анал"),
@@ -346,7 +353,6 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         Genre("гг_парень"),
         Genre("гипноз"),
         Genre("глубокий_минет"),
-        Genre("горничные"),
         Genre("горячий_источник"),
         Genre("грудастая_лоли"),
         Genre("групповой_секс"),
@@ -386,6 +392,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         Genre("мать"),
         Genre("мейдочки"),
         Genre("мерзкий_дядька"),
+        Genre("минет"),
         Genre("много_девушек"),
         Genre("молоко"),
         Genre("монашки"),
@@ -400,8 +407,10 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         Genre("новелла"),
         Genre("обмен_партнерами"),
         Genre("обмен_телами"),
+        Genre("обычный_секс"),
         Genre("огромная_грудь"),
         Genre("огромный_член"),
+        Genre("оплодотворение"),
         Genre("остановка_времени"),
         Genre("парень_пассив"),
         Genre("переодевание"),
@@ -411,6 +420,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         Genre("подглядывание"),
         Genre("подчинение"),
         Genre("похищение"),
+        Genre("презерватив"),
         Genre("принуждение"),
         Genre("прозрачная_одежда"),
         Genre("проникновение_в_матку"),
@@ -432,12 +442,14 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         Genre("толстушки"),
         Genre("трап"),
         Genre("тётя"),
+        Genre("умеренная_жестокость"),
         Genre("учитель_и_ученик"),
         Genre("ушастые"),
         Genre("фантазии"),
         Genre("фантастика"),
         Genre("фемдом"),
         Genre("фестиваль"),
+        Genre("фетиш"),
         Genre("фистинг"),
         Genre("фурри"),
         Genre("футанари"),
@@ -452,6 +464,7 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
         Genre("школьники"),
         Genre("школьницы"),
         Genre("школьный_купальник"),
+        Genre("щекотка"),
         Genre("эксгибиционизм"),
         Genre("эльфы"),
         Genre("эччи"),
@@ -470,8 +483,13 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
             dialogTitle = DOMAIN_TITLE
             setOnPreferenceChangeListener { _, newValue ->
                 try {
-                    val res = preferences.edit().putString(DOMAIN_TITLE, newValue as String).commit()
-                    Toast.makeText(screen.context, "Для смены домена необходимо перезапустить приложение с полной остановкой.", Toast.LENGTH_LONG).show()
+                    val res =
+                        preferences.edit().putString(DOMAIN_TITLE, newValue as String).commit()
+                    Toast.makeText(
+                        screen.context,
+                        "Для смены домена необходимо перезапустить приложение с полной остановкой.",
+                        Toast.LENGTH_LONG,
+                    ).show()
                     res
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -483,6 +501,6 @@ class HenChan : MultiChan("HenChan", "http://y.hchan.live", "ru"), ConfigurableS
 
     companion object {
         private const val DOMAIN_TITLE = "Домен"
-        private const val DOMAIN_DEFAULT = "http://y.hchan.live"
+        private const val DOMAIN_DEFAULT = "https://xxxxx.hentaichan.live"
     }
 }

@@ -13,7 +13,7 @@ class ChanGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("MangaChan", "https://manga-chan.me", "ru", overrideVersionCode = 14),
-        SingleLang("HenChan", "http://y.hchan.live", "ru", isNsfw = true, overrideVersionCode = 37),
+        SingleLang("HenChan", "https://xxxxx.hentaichan.live", "ru", isNsfw = true, overrideVersionCode = 38),
         SingleLang("YaoiChan", "https://yaoi-chan.me", "ru", isNsfw = true, overrideVersionCode = 4),
     )
 
