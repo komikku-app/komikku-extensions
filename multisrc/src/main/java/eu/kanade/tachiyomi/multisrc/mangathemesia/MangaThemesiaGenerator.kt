@@ -17,7 +17,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         MultiLang("Asura Scans", "https://asuracomics.com", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 26),
         MultiLang("Flame Scans", "https://flamescans.org", listOf("en"), className = "FlameScansFactory", pkgName = "flamescans", overrideVersionCode = 4),
         MultiLang("Miau Scan", "https://miauscans.com", listOf("es", "pt-BR"), overrideVersionCode = 1),
-        SingleLang("Animated Glitched Scans", "https://anigliscans.com", "en"),
+        SingleLang("Animated Glitched Scans", "https://anigliscans.xyz", "en", overrideVersionCode = 1),
         SingleLang("Arena Scans", "https://arenascans.net", "en", overrideVersionCode = 1),
         SingleLang("Arkham Scan", "https://arkhamscan.com", "pt-BR"),
         SingleLang("Arven Scans", "https://arvenscans.com", "en"),
