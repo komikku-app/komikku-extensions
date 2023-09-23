@@ -1,8 +1,13 @@
 package eu.kanade.tachiyomi.extension.all.comickfun
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -16,6 +21,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -24,7 +31,7 @@ import kotlin.math.min
 abstract class ComickFun(
     override val lang: String,
     private val comickFunLang: String,
-) : HttpSource() {
+) : ConfigurableSource, HttpSource() {
 
     override val name = "Comick"
 
@@ -42,6 +49,33 @@ abstract class ComickFun(
     }
 
     private lateinit var searchResponse: List<SearchManga>
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        EditTextPreference(screen.context).apply {
+            key = IGNORED_GROUPS_PREF
+            title = "Ignored Groups"
+            summary = "Chapters from these groups won't be shown. Comma-separated list of group names"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit()
+                    .putString(IGNORED_GROUPS_PREF, newValue.toString())
+                    .commit()
+            }
+        }.also(screen::addPreference)
+    }
+
+    private val SharedPreferences.ignoredGroups
+        get() = getString(IGNORED_GROUPS_PREF, "")
+            ?.split(",")
+            ?.map(String::trim)
+            ?.filter(String::isNotEmpty)
+            ?.sorted()
+            .orEmpty()
+            .toSet()
 
     override fun headersBuilder() = Headers.Builder().apply {
         add("Referer", "$baseUrl/")
@@ -262,7 +296,9 @@ abstract class ComickFun(
             page += 1
         }
 
-        return chapterListResponse.chapters.map { it.toSChapter(mangaUrl) }
+        return chapterListResponse.chapters
+            .filter { it.groups.intersect(preferences.ignoredGroups).isEmpty() }
+            .map { it.toSChapter(mangaUrl) }
     }
 
     override fun getChapterUrl(chapter: SChapter): String {
@@ -294,6 +330,7 @@ abstract class ComickFun(
 
     companion object {
         const val SLUG_SEARCH_PREFIX = "id:"
+        private const val IGNORED_GROUPS_PREF = "IgnoredGroups"
         private const val limit = 20
         val dateFormat by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH).apply {
