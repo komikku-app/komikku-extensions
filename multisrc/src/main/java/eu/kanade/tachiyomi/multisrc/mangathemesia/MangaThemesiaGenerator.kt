@@ -27,7 +27,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Boosei", "https://boosei.net", "id", overrideVersionCode = 2),
         SingleLang("Cartel de Manhwas", "https://carteldemanhwas.com", "es", overrideVersionCode = 5),
         SingleLang("Cosmic Scans", "https://cosmicscans.com", "en", overrideVersionCode = 1),
-        SingleLang("CosmicScans.id", "https://cosmicscans.id", "id", overrideVersionCode = 1, className = "CosmicScansID"),
+        SingleLang("CosmicScans.id", "https://cosmicscans.id", "id", overrideVersionCode = 2, className = "CosmicScansID"),
         SingleLang("Diskus Scan", "https://diskusscan.com", "pt-BR", overrideVersionCode = 7),
         SingleLang("Dojing.net", "https://dojing.net", "id", isNsfw = true, className = "DojingNet"),
         SingleLang("DuniaKomik.id", "https://duniakomik.org", "id", className = "DuniaKomikId", overrideVersionCode = 2),
