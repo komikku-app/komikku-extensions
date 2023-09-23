@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.pixiv
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 internal data class PixivApiResponse<T>(
@@ -60,9 +61,14 @@ internal data class PixivAuthorDetails(
 )
 
 @Serializable
+internal data class PixivSeriesDetails(
+    val series: PixivSeries?,
+)
+
+@Serializable
 internal data class PixivSeries(
     val caption: String? = null,
-    val coverImage: String? = null,
+    val coverImage: JsonPrimitive? = null,
     val id: String? = null,
     val title: String? = null,
     val userId: String? = null,

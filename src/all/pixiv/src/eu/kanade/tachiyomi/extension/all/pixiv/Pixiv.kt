@@ -298,7 +298,9 @@ class Pixiv(override val lang: String) : HttpSource() {
         val (id, isSeries) = parseSMangaUrl(manga.url)
 
         if (isSeries) {
-            val series = ApiCall("/touch/ajax/illust/series/$id").executeApi<PixivSeries>()
+            val series = ApiCall("/touch/ajax/illust/series/$id")
+                .executeApi<PixivSeriesDetails>().series!!
+
             val illusts = getSeriesIllustsCached(id)
 
             if (series.id != null && series.userId != null) {
@@ -316,7 +318,8 @@ class Pixiv(override val lang: String) : HttpSource() {
             val tags = illusts.flatMap { it.tags ?: emptyList() }.toSet()
             if (tags.isNotEmpty()) manga.genre = tags.joinToString()
 
-            (series.coverImage ?: illusts.firstOrNull()?.url)?.let { manga.thumbnail_url = it }
+            val coverImage = series.coverImage?.let { if (it.isString) it.content else null }
+            (coverImage ?: illusts.firstOrNull()?.url)?.let { manga.thumbnail_url = it }
         } else {
             val illust = getIllustCached(id)
 
@@ -349,7 +352,7 @@ class Pixiv(override val lang: String) : HttpSource() {
                 setUrlWithoutDomain("/artworks/${illust.id!!}")
                 name = illust.title ?: "(null)"
                 date_upload = (illust.upload_timestamp ?: 0) * 1000
-                chapter_number = i.toFloat()
+                chapter_number = (illusts.size - i).toFloat()
             }
         }
 
