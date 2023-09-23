@@ -12,7 +12,7 @@ import okhttp3.Request
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class HentaiLib : LibGroup("HentaiLib", "https://v1.hentailib.org", "ru") {
+class HentaiLib : LibGroup("HentaiLib", "https://hentailib.me", "ru") {
 
     override val id: Long = 6425650164840473547
 
@@ -235,14 +235,9 @@ class HentaiLib : LibGroup("HentaiLib", "https://v1.hentailib.org", "ru") {
             this.setDefaultValue(DOMAIN_DEFAULT)
             dialogTitle = DOMAIN_TITLE
             setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val res = preferences.edit().putString(DOMAIN_TITLE, newValue as String).commit()
-                    Toast.makeText(screen.context, "Для смены домена необходимо перезапустить приложение с полной остановкой.", Toast.LENGTH_LONG).show()
-                    res
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
+                val warning = "Для смены домена необходимо перезапустить приложение с полной остановкой."
+                Toast.makeText(screen.context, warning, Toast.LENGTH_LONG).show()
+                true
             }
         }.let(screen::addPreference)
     }
@@ -251,6 +246,6 @@ class HentaiLib : LibGroup("HentaiLib", "https://v1.hentailib.org", "ru") {
         const val PREFIX_SLUG_SEARCH = "slug:"
 
         private const val DOMAIN_TITLE = "Домен"
-        private const val DOMAIN_DEFAULT = "https://v1.hentailib.org"
+        private const val DOMAIN_DEFAULT = "https://hentailib.me"
     }
 }

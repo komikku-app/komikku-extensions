@@ -45,6 +45,7 @@ import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 
@@ -77,6 +78,9 @@ abstract class LibGroup(
     }
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimit(3)
+        .connectTimeout(5, TimeUnit.MINUTES)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
         .addNetworkInterceptor { imageContentTypeIntercept(it) }
         .addInterceptor { chain ->
             val response = chain.proceed(chain.request())
@@ -461,15 +465,9 @@ abstract class LibGroup(
 
         val chapInfoJson = json.decodeFromString<JsonObject>(chapInfo)
         val servers = chapInfoJson["servers"]!!.jsonObject.toMap()
-        val defaultServer: String = chapInfoJson["img"]!!.jsonObject["server"]!!.jsonPrimitive.content
-        val autoServer = setOf("secondary", "fourth", defaultServer, "compress")
         val imgUrl: String = chapInfoJson["img"]!!.jsonObject["url"]!!.jsonPrimitive.content
 
-        val serverToUse = when (this.server) {
-            null -> autoServer
-            "auto" -> autoServer
-            else -> listOf(this.server)
-        }
+        val serverToUse = listOf(isServer, "secondary", "fourth", "main", "compress").distinct()
 
         // Get pages
         val pagesArr = document
@@ -487,7 +485,7 @@ abstract class LibGroup(
             val keys = servers.keys.filter { serverToUse.indexOf(it) >= 0 }.sortedBy { serverToUse.indexOf(it) }
             val serversUrls = keys.map {
                 servers[it]?.jsonPrimitive?.contentOrNull + imgUrl + page.jsonObject["u"]!!.jsonPrimitive.content
-            }.joinToString(separator = ",,") { it }
+            }.distinct().joinToString(separator = ",,") { it }
             pages.add(Page(page.jsonObject["p"]!!.jsonPrimitive.int, serversUrls))
         }
 
@@ -495,7 +493,7 @@ abstract class LibGroup(
     }
 
     private fun checkImage(url: String): Boolean {
-        val response = client.newCall(Request.Builder().url(url).headers(imgHeader()).build()).execute()
+        val response = client.newCall(GET(url, imgHeader())).execute()
         return response.isSuccessful && (response.header("content-length", "0")?.toInt()!! > 600)
     }
 
@@ -505,9 +503,6 @@ abstract class LibGroup(
         }
 
         val urls = page.url.split(",,")
-        if (urls.size == 1) {
-            return Observable.just(urls[0])
-        }
 
         return Observable.from(urls).filter { checkImage(it) }.first()
     }
@@ -726,7 +721,6 @@ abstract class LibGroup(
     companion object {
         const val PREFIX_SLUG_SEARCH = "slug:"
         private const val SERVER_PREF = "MangaLibImageServer"
-        private const val SERVER_PREF_Title = "Сервер изображений"
 
         private const val SORTING_PREF = "MangaLibSorting"
         private const val SORTING_PREF_Title = "Способ выбора переводчиков"
@@ -743,19 +737,21 @@ abstract class LibGroup(
         private val simpleDateFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.US) }
     }
 
-    private var server: String? = preferences.getString(SERVER_PREF, null)
+    private var isServer: String? = preferences.getString(SERVER_PREF, "fourth")
     private var isEng: String? = preferences.getString(LANGUAGE_PREF, "eng")
     private var groupTranslates: String = preferences.getString(TRANSLATORS_TITLE, TRANSLATORS_DEFAULT)!!
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val serverPref = ListPreference(screen.context).apply {
             key = SERVER_PREF
-            title = SERVER_PREF_Title
-            entries = arrayOf("Основной", "Второй (тестовый)", "Третий (эконом трафика)", "Авто")
-            entryValues = arrayOf("secondary", "fourth", "compress", "auto")
-            summary = "%s"
-            setDefaultValue("auto")
+            title = "Сервер изображений"
+            entries = arrayOf("Первый", "Второй", "Сжатия")
+            entryValues = arrayOf("secondary", "fourth", "compress")
+            summary = "%s \n\nВыбор приоритетного сервера изображений. \n" +
+                "По умолчанию «Второй». \n\n" +
+                "ⓘВыбор другого помогает при долгой автоматической смене/загрузке изображений текущего."
+            setDefaultValue("fourth")
             setOnPreferenceChangeListener { _, newValue ->
-                server = newValue.toString()
+                isServer = newValue.toString()
                 true
             }
         }
