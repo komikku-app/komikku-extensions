@@ -186,7 +186,7 @@ abstract class SinMH(
 
     protected open val imageHost: String by lazy {
         client.newCall(GET("$baseUrl/js/config.js", headers)).execute().let {
-            Regex("""resHost:.+?"domain":\["(.+?)"""").find(it.body.string())!!
+            Regex("""resHost:.+?"?domain"?:\["(.+?)"""").find(it.body.string())!!
                 .groupValues[1].substringAfter(':').run { "https:$this" }
         }
     }

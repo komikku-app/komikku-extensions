@@ -6,7 +6,7 @@ import generator.ThemeSourceGenerator
 class SinMHGenerator : ThemeSourceGenerator {
     override val themeClass = "SinMH"
     override val themePkg = "sinmh"
-    override val baseVersionCode = 9
+    override val baseVersionCode = 10
     override val sources = listOf(
         SingleLang(
             name = "Gufeng Manhua",
