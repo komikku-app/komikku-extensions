@@ -50,7 +50,7 @@ class YugenMangas : ParsedHttpSource() {
 
     override fun popularMangaRequest(page: Int): Request = GET(baseUrl, headers)
 
-    override fun popularMangaSelector(): String = "div.container-popular div.swiper-wrapper a"
+    override fun popularMangaSelector(): String = "div.popular div.swiper-wrapper a"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.selectFirst("h1")!!.text()
@@ -121,7 +121,7 @@ class YugenMangas : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("div.chapter-content img.chapter-image")
+        return document.select("div.chapter-images > img[src]")
             .mapIndexed { index, element ->
                 Page(index, document.location(), element.absUrl("src"))
             }
