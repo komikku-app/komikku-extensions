@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.all.webtoons
 
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
+import eu.kanade.tachiyomi.source.model.SManga
 import java.text.SimpleDateFormat
 import java.util.GregorianCalendar
 import java.util.Locale
@@ -49,7 +50,15 @@ class WebtoonsES : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "es")
         return GregorianCalendar(year.toInt(), monthIndex, day.toInt()).time.time
     }
 }
-class WebtoonsFR : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "fr", dateFormat = SimpleDateFormat("d MMM yyyy", Locale.FRENCH))
+
+class WebtoonsFR : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "fr", dateFormat = SimpleDateFormat("d MMM yyyy", Locale.FRENCH)) {
+    override fun String.toStatus(): Int = when {
+        contains("NOUVEAU") -> SManga.ONGOING
+        contains("TERMINÉ") -> SManga.COMPLETED
+        else -> SManga.UNKNOWN
+    }
+}
+
 class WebtoonsZH : WebtoonsSrc("Webtoons.com", "https://www.webtoons.com", "zh-Hant", "zh-hant", "zh_TW", SimpleDateFormat("yyyy/MM/dd", Locale.TRADITIONAL_CHINESE)) {
     // Due to lang code getting more specific
     override val id: Long = 2959982438613576472

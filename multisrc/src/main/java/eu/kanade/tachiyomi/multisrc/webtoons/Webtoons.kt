@@ -196,7 +196,8 @@ open class Webtoons(
     open fun parseDetailsThumbnail(document: Document): String? {
         val picElement = document.select("#content > div.cont_box > div.detail_body")
         val discoverPic = document.select("#content > div.cont_box > div.detail_header > span.thmb")
-        return discoverPic.select("img").not("[alt='Representative image']").first()?.attr("src") ?: picElement.attr("style").substringAfter("url(")?.substringBeforeLast(")")
+        return picElement.attr("style").substringAfter("url(").substringBeforeLast(")")
+            .ifBlank { discoverPic.select("img").not("[alt='Representative image']").first()?.attr("src") }
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
@@ -206,7 +207,9 @@ open class Webtoons(
         val manga = SManga.create()
         manga.title = document.selectFirst("h1.subj, h3.subj")!!.text()
         manga.author = detailElement.select(".author:nth-of-type(1)").first()?.ownText()
-        manga.artist = detailElement.select(".author:nth-of-type(2)").first()?.ownText() ?: manga.author
+            ?: detailElement.select(".author_area").first()?.ownText()
+        manga.artist = detailElement.select(".author:nth-of-type(2)").first()?.ownText()
+            ?: detailElement.select(".author_area").first()?.ownText() ?: manga.author
         manga.genre = detailElement.select(".genre").joinToString(", ") { it.text() }
         manga.description = infoElement.select("p.summary").text()
         manga.status = infoElement.select("p.day_info").firstOrNull()?.text().orEmpty().toStatus()
@@ -214,7 +217,7 @@ open class Webtoons(
         return manga
     }
 
-    private fun String.toStatus(): Int = when {
+    open fun String.toStatus(): Int = when {
         contains("UP") -> SManga.ONGOING
         contains("COMPLETED") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
