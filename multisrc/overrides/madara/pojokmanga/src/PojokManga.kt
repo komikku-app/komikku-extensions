@@ -2,16 +2,25 @@ package eu.kanade.tachiyomi.extension.id.pojokmanga
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class PojokManga : Madara("Pojok Manga", "https://pojokmanga.net", "id", SimpleDateFormat("MMM dd, yyyy", Locale.US)) {
 
+    override val client: OkHttpClient = super.client.newBuilder()
+        .rateLimit(20, 4, TimeUnit.SECONDS)
+        .build()
+
     override val useNewChapterEndpoint = true
+
+    override val mangaSubString = "komik"
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var url = "$baseUrl/${searchPage(page)}".toHttpUrlOrNull()!!.newBuilder()
@@ -71,6 +80,8 @@ class PojokManga : Madara("Pojok Manga", "https://pojokmanga.net", "id", SimpleD
     }
 
     override fun searchMangaSelector() = "div.c-tabs-item__content, div.page-item-detail"
+
+    override val mangaDetailsSelectorTag = "#toNotBeUsed"
 
     protected class ProjectFilter : UriPartFilter(
         "Filter Project",
