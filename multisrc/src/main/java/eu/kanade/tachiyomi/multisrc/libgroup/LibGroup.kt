@@ -312,7 +312,7 @@ abstract class LibGroup(
         }
         val redirect = document.html()
         if (redirect.contains("paper empty section")) {
-            return emptyList()
+            throw Exception("Лицензировано - Нет глав")
         }
         val dataStr = document
             .toString()

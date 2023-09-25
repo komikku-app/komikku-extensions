@@ -9,7 +9,7 @@ class LibGenerator : ThemeSourceGenerator {
 
     override val themeClass = "LibGroup"
 
-    override val baseVersionCode: Int = 24
+    override val baseVersionCode: Int = 25
 
     override val sources = listOf(
         SingleLang("MangaLib", "https://mangalib.me", "ru", overrideVersionCode = 74),
