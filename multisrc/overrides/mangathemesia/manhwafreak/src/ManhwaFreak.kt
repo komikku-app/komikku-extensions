@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Request
 import org.jsoup.nodes.Element
+import java.util.Calendar
 
 class ManhwaFreak : MangaThemesia("Manhwa Freak", "https://manhwa-freak.com", "en") {
 
@@ -51,9 +52,34 @@ class ManhwaFreak : MangaThemesia("Manhwa Freak", "https://manhwa-freak.com", "e
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         val urlElements = element.select("a")
         setUrlWithoutDomain(urlElements.attr("href"))
-        name = element.select(".chapter-info p:nth-child(1)").text().ifBlank { urlElements.first()!!.text() }
-        date_upload = element.selectFirst(".chapter-info p:nth-child(2)")?.text().parseChapterDate()
+        val chapterElements = element.select(".chapter-info")
+        name = chapterElements.select("p:nth-child(1)").text().ifBlank { urlElements.first()!!.text() }
+        date_upload = getChapterDate(chapterElements.first())
     }
 
     override fun getFilterList() = FilterList()
+
+    private fun getChapterDate(element: Element?): Long {
+        element ?: return 0
+        val chapterDate = element.select("p:nth-child(2)").text()
+
+        return when {
+            element.select("p.new").isNotEmpty() -> getToday()
+            chapterDate.contains(Regex("day(s)* ago$")) -> {
+                val number = Regex("""(\d+)""").find(chapterDate)?.value?.toIntOrNull() ?: return 0
+                Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, -number) }.timeInMillis
+            }
+
+            else -> chapterDate.parseChapterDate()
+        }
+    }
+
+    private fun getToday(): Long {
+        return Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
 }

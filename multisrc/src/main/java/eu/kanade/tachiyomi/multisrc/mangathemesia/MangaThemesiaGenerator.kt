@@ -14,7 +14,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 26
 
     override val sources = listOf(
-        MultiLang("Asura Scans", "https://asuracomics.gg", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 27),
+        MultiLang("Asura Scans", "https://asuracomics.gg", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 28),
         MultiLang("Flame Scans", "https://flamescans.org", listOf("en"), className = "FlameScansFactory", pkgName = "flamescans", overrideVersionCode = 4),
         MultiLang("Miau Scan", "https://miauscans.com", listOf("es", "pt-BR"), overrideVersionCode = 1),
         SingleLang("Animated Glitched Scans", "https://anigliscans.xyz", "en", overrideVersionCode = 1),
@@ -82,7 +82,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("MangaSwat", "https://swatmanga.co", "ar", overrideVersionCode = 13),
         SingleLang("MangKomik", "https://mangkomik.net", "id", overrideVersionCode = 1),
         SingleLang("Mangás Chan", "https://mangaschan.net", "pt-BR", className = "MangasChan", overrideVersionCode = 1),
-        SingleLang("Manhwa Freak", "https://manhwa-freak.com", "en", overrideVersionCode = 2),
+        SingleLang("Manhwa Freak", "https://manhwa-freak.com", "en", overrideVersionCode = 3),
         SingleLang("ManhwaFreak", "https://manhwafreak.fr", "fr", className = "ManhwaFreakFR"),
         SingleLang("ManhwaDesu", "https://manhwadesu.one", "id", isNsfw = true, overrideVersionCode = 4),
         SingleLang("ManhwaIndo", "https://manhwaindo.id", "id", isNsfw = true, overrideVersionCode = 3),

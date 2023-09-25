@@ -35,7 +35,6 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.IllegalArgumentException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -215,6 +214,7 @@ abstract class MangaThemesia(
         listOf("ongoing", "publishing").any { this.contains(it, ignoreCase = true) } -> SManga.ONGOING
         this.contains("hiatus", ignoreCase = true) -> SManga.ON_HIATUS
         this.contains("completed", ignoreCase = true) -> SManga.COMPLETED
+        listOf("dropped", "cancelled").any { this.contains(it, ignoreCase = true) } -> SManga.CANCELLED
         else -> SManga.UNKNOWN
     }
 
