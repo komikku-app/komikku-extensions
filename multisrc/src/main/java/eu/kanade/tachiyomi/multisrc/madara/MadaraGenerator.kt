@@ -79,7 +79,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Cookie Kiara", "https://18.kiara.cool", "en", isNsfw = true),
         SingleLang("CopyPasteScan", "https://copypastescan.xyz", "es", overrideVersionCode = 1),
         SingleLang("DapRob", "https://daprob.com", "es"),
-        SingleLang("Dark Scans", "https://darkscans.com", "en"),
+        SingleLang("Dark Scans", "https://darkscans.com", "en", overrideVersionCode = 1),
         SingleLang("Decadence Scans", "https://reader.decadencescans.com", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Dessert Scan", "https://cabaredowatame.site", "pt-BR", isNsfw = true),
         SingleLang("DiamondFansub", "https://diamondfansub.com", "tr", overrideVersionCode = 1),
