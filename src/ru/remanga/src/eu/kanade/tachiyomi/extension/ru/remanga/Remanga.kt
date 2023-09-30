@@ -381,13 +381,13 @@ class Remanga : ConfigurableSource, HttpSource() {
             thumbnail_url = baseUrl + img.high
             var altName = ""
             if (another_name.isNotEmpty()) {
-                altName = "Альтернативные названия:\n" + another_name + "\n\n"
+                altName = "Альтернативные названия:\n" + another_name + "\n"
             }
             val mediaNameLanguage = if (isEng.equals("rus")) en_name else rus_name
             this.description = "$mediaNameLanguage\n$ratingStar $ratingValue (голосов: $count_rating)\n$altName" +
-                o.description?.let { Jsoup.parseBodyFragment(it) }
-                    ?.select("p")
-                    ?.joinToString("\n") { it.text() }
+                o.description?.let { Jsoup.parse(it) }
+                    ?.select("body:not(:has(p)),p,br")
+                    ?.prepend("\\n")?.text()?.replace("\\n", "\n")?.replace("\n ", "\n")
                     .orEmpty()
             genre = (parseType(type) + ", " + parseAge(age_limit) + ", " + (genres + categories).joinToString { it.name }).split(", ").filter { it.isNotEmpty() }.joinToString { it.trim() }
             status = parseStatus(o.status.id)
