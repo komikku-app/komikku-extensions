@@ -23,16 +23,14 @@ import java.util.Locale
 class MangaPoisk : ParsedHttpSource() {
     override val name = "MangaPoisk"
 
-    override val baseUrl = "https://mangapoisk.net"
+    override val baseUrl = "https://mangapoisk.me"
 
     override val lang = "ru"
 
     override val supportsLatest = true
 
-    private val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.3987.163 Safari/537.36"
-
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", userAgent)
+        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 Edg/100.0.1185.50")
         .add("Referer", baseUrl)
 
     override fun popularMangaRequest(page: Int): Request =
@@ -71,23 +69,9 @@ class MangaPoisk : ParsedHttpSource() {
         return GET(url, headers)
     }
 
-    override fun popularMangaSelector() = "article.card"
+    override fun searchMangaSelector(): String = "article.card"
 
-    override fun latestUpdatesSelector() = popularMangaSelector()
-
-    override fun searchMangaParse(response: Response): MangasPage {
-        return popularMangaParse(response)
-    }
-
-    private fun getImage(first: Element): String? {
-        val image = first.attr("data-src")
-        if (image.isNotEmpty()) {
-            return image
-        }
-        return first.attr("src")
-    }
-
-    override fun popularMangaFromElement(element: Element): SManga {
+    override fun searchMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
             thumbnail_url = getImage(element.select("a > img").first()!!)
 
@@ -99,30 +83,64 @@ class MangaPoisk : ParsedHttpSource() {
         }
     }
 
-    override fun latestUpdatesFromElement(element: Element): SManga =
-        popularMangaFromElement(element)
+    override fun searchMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+        val mangas = if (document.location().contains("search?q")) {
+            document.select(searchMangaSelector()).map { element ->
+                searchMangaFromElement(element)
+            }
+        } else {
+            document.select(popularMangaSelector()).map { element ->
+                popularMangaFromElement(element)
+            }
+        }
 
-    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
+        return MangasPage(mangas, mangas.isNotEmpty())
+    }
 
-    override fun popularMangaNextPageSelector() = "a.page-link[rel=next]"
+    override fun popularMangaNextPageSelector(): Nothing? = null
 
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
-    override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("article div.card-body").first()!!
-        val manga = SManga.create()
-        val entitle = infoElement.select(".post-name-en")
-        manga.title = if (entitle.isNullOrEmpty()) { infoElement.select(".post-name").text() } else entitle.text().replaceRange(0, 2, "")
-        manga.genre = infoElement.select(".post-info > span:eq(10) > a").joinToString { it.text() }
-        manga.description = infoElement.select(".post-info > div .manga-description.entry").text()
-        manga.status = if (document.select(".order-2 h3").text() == "Главы удалены по требованию правообладателя.") {
-            SManga.LICENSED
-        } else {
-            parseStatus(infoElement.select(".post-info > span:eq(7)").text())
+    override fun popularMangaSelector() = ".manga-card"
+
+    override fun popularMangaParse(response: Response) = searchMangaParse(response)
+    override fun popularMangaFromElement(element: Element): SManga {
+        return SManga.create().apply {
+            thumbnail_url = getImage(element.select("a > img").first()!!)
+
+            setUrlWithoutDomain(element.select("a").first()!!.attr("href"))
+
+            element.select("a").first()!!.let {
+                title = it.attr("title").split("/").first()
+            }
         }
-        manga.thumbnail_url = infoElement.select("img.img-fluid").first()!!.attr("src")
+    }
+
+    override fun latestUpdatesSelector() = popularMangaSelector()
+
+    override fun latestUpdatesParse(response: Response) = searchMangaParse(response)
+    override fun latestUpdatesFromElement(element: Element): SManga =
+        popularMangaFromElement(element)
+
+    private fun getImage(first: Element): String? {
+        val image = first.attr("data-src")
+        if (image.isNotEmpty()) {
+            return image
+        }
+        return first.attr("src")
+    }
+
+    override fun mangaDetailsParse(document: Document): SManga {
+        val infoElement = document.select("div.card").first()!!
+        val manga = SManga.create()
+        manga.title = infoElement.select(".text-base span").first()!!.text()
+        manga.genre = infoElement.select("span:contains(Жанр:) a").joinToString { it.text() }
+        manga.description = infoElement.select(".manga-description").text()
+        manga.status = parseStatus(infoElement.select("span:contains(Статус:)").text())
+        manga.thumbnail_url = infoElement.select("img.w-full").first()!!.attr("src")
         return manga
     }
 
@@ -186,7 +204,7 @@ class MangaPoisk : ParsedHttpSource() {
         return chapter
     }
     override fun pageListParse(document: Document): List<Page> {
-        return document.select(".img-fluid.page-image").mapIndexed { index, element ->
+        return document.select(".page-image").mapIndexed { index, element ->
             Page(index, "", getImage(element))
         }
     }
@@ -259,8 +277,6 @@ class MangaPoisk : ParsedHttpSource() {
     )
 
     override fun imageUrlParse(document: Document) = throw Exception("Not Used")
-
-    override fun searchMangaSelector(): String = throw Exception("Not Used")
 
     override fun chapterFromElement(element: Element): SChapter = throw Exception("Not Used")
 }
