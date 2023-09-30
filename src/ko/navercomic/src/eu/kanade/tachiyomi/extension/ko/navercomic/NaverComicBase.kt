@@ -108,16 +108,18 @@ abstract class NaverComicBase(protected val mType: String) : ParsedHttpSource() 
 
     override fun mangaDetailsParse(response: Response): SManga {
         val manga = json.decodeFromString<Manga>(response.body.string())
-        val authors = manga.author.run {
-            setOf(writers, painters, originAuthors).flatten().map { it.name }
-        }.joinToString()
+        val authors = manga.communityArtists.joinToString { it.name }
 
         return SManga.create().apply {
             title = manga.titleName
             author = authors
             description = manga.synopsis
             thumbnail_url = manga.thumbnailUrl
-            status = if (manga.finished) SManga.COMPLETED else SManga.ONGOING
+            status = when {
+                manga.rest -> SManga.ON_HIATUS
+                manga.finished -> SManga.COMPLETED
+                else -> SManga.ONGOING
+            }
         }
     }
 
@@ -215,7 +217,8 @@ data class Manga(
     val titleName: String,
     val titleId: Int,
     val finished: Boolean,
-    val author: AuthorList,
+    val rest: Boolean,
+    val communityArtists: List<Author>,
     val synopsis: String,
 )
 
@@ -229,14 +232,7 @@ data class MangaChallenge(
 )
 
 @Serializable
-data class AuthorList(
-    val writers: List<Author>,
-    val painters: List<Author>,
-    val originAuthors: List<Author>,
-)
-
-@Serializable
 data class Author(
-    val id: Int,
+    val artistId: Int,
     val name: String,
 )
