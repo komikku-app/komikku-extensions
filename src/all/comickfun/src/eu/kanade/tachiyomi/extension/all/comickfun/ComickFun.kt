@@ -58,7 +58,8 @@ abstract class ComickFun(
         EditTextPreference(screen.context).apply {
             key = IGNORED_GROUPS_PREF
             title = "Ignored Groups"
-            summary = "Chapters from these groups won't be shown. Comma-separated list of group names"
+            summary =
+                "Chapters from these groups won't be shown.\nComma-separated list of group names (case-insensitive)"
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit()
@@ -70,6 +71,7 @@ abstract class ComickFun(
 
     private val SharedPreferences.ignoredGroups
         get() = getString(IGNORED_GROUPS_PREF, "")
+            ?.lowercase()
             ?.split(",")
             ?.map(String::trim)
             ?.filter(String::isNotEmpty)
@@ -110,7 +112,11 @@ abstract class ComickFun(
     override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
 
     /** Manga Search **/
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+    override fun fetchSearchManga(
+        page: Int,
+        query: String,
+        filters: FilterList,
+    ): Observable<MangasPage> {
         return if (query.startsWith(SLUG_SEARCH_PREFIX)) {
             // url deep link
             val slugOrHid = query.substringAfter(SLUG_SEARCH_PREFIX)
@@ -166,6 +172,7 @@ abstract class ComickFun(
                             addQueryParameter("completed", "true")
                         }
                     }
+
                     is GenreFilter -> {
                         it.state.filter { it.isIncluded() }.forEach {
                             addQueryParameter("genres", it.value)
@@ -175,44 +182,53 @@ abstract class ComickFun(
                             addQueryParameter("excludes", it.value)
                         }
                     }
+
                     is DemographicFilter -> {
                         it.state.filter { it.isIncluded() }.forEach {
                             addQueryParameter("demographic", it.value)
                         }
                     }
+
                     is TypeFilter -> {
                         it.state.filter { it.state }.forEach {
                             addQueryParameter("country", it.value)
                         }
                     }
+
                     is SortFilter -> {
                         addQueryParameter("sort", it.getValue())
                     }
+
                     is StatusFilter -> {
                         if (it.state > 0) {
                             addQueryParameter("status", it.getValue())
                         }
                     }
+
                     is CreatedAtFilter -> {
                         if (it.state > 0) {
                             addQueryParameter("time", it.getValue())
                         }
                     }
+
                     is MinimumFilter -> {
                         if (it.state.isNotEmpty()) {
                             addQueryParameter("minimum", it.state)
                         }
                     }
+
                     is FromYearFilter -> {
                         if (it.state.isNotEmpty()) {
                             addQueryParameter("from", it.state)
                         }
                     }
+
                     is ToYearFilter -> {
                         if (it.state.isNotEmpty()) {
                             addQueryParameter("to", it.state)
                         }
                     }
+
                     is TagFilter -> {
                         if (it.state.isNotEmpty()) {
                             it.state.split(",").forEach {
@@ -220,6 +236,7 @@ abstract class ComickFun(
                             }
                         }
                     }
+
                     else -> {}
                 }
             }
@@ -297,7 +314,9 @@ abstract class ComickFun(
         }
 
         return chapterListResponse.chapters
-            .filter { it.groups.intersect(preferences.ignoredGroups).isEmpty() }
+            .filter {
+                it.groups.map { g -> g.lowercase() }.intersect(preferences.ignoredGroups).isEmpty()
+            }
             .map { it.toSChapter(mangaUrl) }
     }
 
@@ -337,8 +356,8 @@ abstract class ComickFun(
                 timeZone = TimeZone.getTimeZone("UTC")
             }
         }
-        val markdownLinksRegex = "\\[([^]]+)\\]\\(([^)]+)\\)".toRegex()
-        val markdownItalicBoldRegex = "\\*+\\s*([^\\*]*)\\s*\\*+".toRegex()
+        val markdownLinksRegex = "\\[([^]]+)]\\(([^)]+)\\)".toRegex()
+        val markdownItalicBoldRegex = "\\*+\\s*([^*]*)\\s*\\*+".toRegex()
         val markdownItalicRegex = "_+\\s*([^_]*)\\s*_+".toRegex()
     }
 }
