@@ -43,6 +43,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Hanuman Scan", "https://hanumanscan.com", "en"),
         SingleLang("Heroxia", "https://heroxia.com", "id", isNsfw = true),
         SingleLang("Imagine Scan", "https://imaginescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("InariManga", "https://inarimanga.com", "es", overrideVersionCode = 7),
         SingleLang("Infernal Void Scans", "https://void-scans.com", "en", overrideVersionCode = 5),
         SingleLang("KataKomik", "https://katakomik.online", "id"),
         SingleLang("Komik Seru", "https://komikseru.me", "id", isNsfw = true),
