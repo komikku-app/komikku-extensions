@@ -93,18 +93,18 @@ class MangaClub : ParsedHttpSource() {
 
     /** Details **/
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val licensedStatus = document.select("div.fullstory").text().contains("Данное произведение лицензировано на территории РФ. Главы удалены.")
         thumbnail_url = document.select("div.image img").attr("abs:src")
         title = document.select("div.info strong").text().replace("\\'", "'").substringBefore("/").trim()
         author = document.select("div.info a[href*=author]").joinToString(", ") { it.text().trim() }
         artist = author
-        status = when (document.select("div.info a[href*=status_translation]").text().trim()) {
-            "Продолжается" -> if (licensedStatus) SManga.LICENSED else SManga.ONGOING
-            "Завершен" -> if (licensedStatus) SManga.LICENSED else SManga.COMPLETED
-            "Заморожено/Заброшено" -> if (licensedStatus) SManga.LICENSED else SManga.ON_HIATUS
+        status = if (document.select("div.fullstory").text().contains("Данное произведение лицензировано на территории РФ. Главы удалены.")) SManga.LICENSED else when (document.select("div.info a[href*=status_translation]").text().trim()) {
+            "Продолжается" -> SManga.ONGOING
+            "Завершен" -> SManga.COMPLETED
+            "Заморожено/Заброшено" -> SManga.ON_HIATUS
             else -> SManga.UNKNOWN
         }
-        description = "Читайте описание через WebView"
+
+        description = document.select(".description").first()!!.text()
         genre = document.select("div.info a[href*=tags]").joinToString(", ") {
             it.text().replaceFirstChar { it.uppercase() }.trim()
         }
@@ -123,8 +123,8 @@ class MangaClub : ParsedHttpSource() {
 
     /** Pages **/
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        document.select("div.manga-lines-page a").forEach {
-            add(Page(it.attr("data-p").toInt(), "", "${baseUrl.replace("//", "//img.")}/${it.attr("data-i")}"))
+        document.select(".manga-lines-page a").forEach {
+            add(Page(it.attr("data-p").toInt(), "", it.attr("data-i")))
         }
     }
     override fun imageUrlParse(document: Document): String = ""
