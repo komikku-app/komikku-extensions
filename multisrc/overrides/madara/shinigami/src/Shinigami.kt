@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.jsoup.nodes.Element
 
-class Shinigami : Madara("Shinigami", "https://shinigami.ae", "id") {
+class Shinigami : Madara("Shinigami", "https://shinigami.sh", "id") {
     // moved from Reaper Scans (id) to Shinigami (id)
     override val id = 3411809758861089969
 
