@@ -14,7 +14,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 26
 
     override val sources = listOf(
-        MultiLang("Asura Scans", "https://asuracomics.gg", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 28),
+        MultiLang("Asura Scans", "https://asuratoon.com", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 29),
         MultiLang("Flame Scans", "https://flamescans.org", listOf("en"), className = "FlameScansFactory", pkgName = "flamescans", overrideVersionCode = 4),
         MultiLang("Miau Scan", "https://miauscans.com", listOf("es", "pt-BR"), overrideVersionCode = 1),
         SingleLang("Animated Glitched Scans", "https://anigliscans.xyz", "en", overrideVersionCode = 1),

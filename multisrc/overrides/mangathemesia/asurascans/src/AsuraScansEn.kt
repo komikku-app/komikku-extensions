@@ -29,15 +29,22 @@ import java.util.concurrent.TimeUnit
 
 class AsuraScansEn : MangaThemesia(
     "Asura Scans",
-    "https://asuracomics.gg",
+    "https://asuratoon.com",
     "en",
     dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US),
 ) {
 
-    private val preferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    override val baseUrl by lazy {
+        preferences.baseUrlHost.let { "https://$it" }
+    }
 
     override val client: OkHttpClient = super.client.newBuilder()
         .addInterceptor(::urlChangeInterceptor)
+        .addInterceptor(::domainChangeIntercept)
         .rateLimit(1, 3, TimeUnit.SECONDS)
         .build()
 
@@ -96,7 +103,7 @@ class AsuraScansEn : MangaThemesia(
             .removeSuffix("/")
             .substringAfterLast("/")
 
-        val storedSlug = getSlugMap()[dbSlug] ?: dbSlug
+        val storedSlug = preferences.slugMap[dbSlug] ?: dbSlug
 
         return "$baseUrl$mangaUrlDirectory/$storedSlug/"
     }
@@ -127,7 +134,7 @@ class AsuraScansEn : MangaThemesia(
     private fun SManga.tempUrlToPermIfNeeded(): SManga {
         if (!preferences.permaUrlPref) return this
 
-        val slugMap = getSlugMap().toMutableMap()
+        val slugMap = preferences.slugMap
 
         val sMangaTitleFirstWord = this.title.split(" ")[0]
         if (!this.url.contains("/$sMangaTitleFirstWord", ignoreCase = true)) {
@@ -141,7 +148,7 @@ class AsuraScansEn : MangaThemesia(
 
             this.url = "$mangaUrlDirectory/$permaSlug/"
         }
-        putSlugMap(slugMap)
+        preferences.slugMap = slugMap
         return this
     }
 
@@ -170,7 +177,7 @@ class AsuraScansEn : MangaThemesia(
             .removeSuffix("/")
             .substringAfterLast("/")
 
-        val slugMap = getSlugMap().toMutableMap()
+        val slugMap = preferences.slugMap
 
         val storedSlug = slugMap[dbSlug] ?: dbSlug
 
@@ -187,7 +194,7 @@ class AsuraScansEn : MangaThemesia(
                 ?: throw IOException("Migrate from Asura to Asura")
 
             slugMap[dbSlug] = newSlug
-            putSlugMap(slugMap)
+            preferences.slugMap = slugMap
 
             return chain.proceed(
                 request.newBuilder()
@@ -199,9 +206,11 @@ class AsuraScansEn : MangaThemesia(
         return response
     }
 
-    private fun getNewSlug(existingSlug: String, search: String): String? {
+    private fun getNewSlug(existingSlug: String, frag: String): String? {
         val permaSlug = existingSlug
             .replaceFirst(TEMP_TO_PERM_REGEX, "")
+
+        val search = frag.substringBefore("#")
 
         val mangas = client.newCall(searchMangaRequest(1, search, FilterList()))
             .execute()
@@ -217,27 +226,53 @@ class AsuraScansEn : MangaThemesia(
             ?.substringAfterLast("/")
     }
 
-    private fun putSlugMap(slugMap: MutableMap<String, String>) {
-        val serialized = json.encodeToString(slugMap)
-
-        preferences.edit().putString(PREF_URL_MAP, serialized).commit()
-    }
-
-    private fun getSlugMap(): Map<String, String> {
-        val serialized = preferences.getString(PREF_URL_MAP, null) ?: return emptyMap()
-
-        return try {
-            json.decodeFromString(serialized)
-        } catch (e: Exception) {
-            emptyMap()
-        }
-    }
-
     private fun String.toSearchQuery(): String {
         return this.trim()
             .lowercase()
             .replace(titleSpecialCharactersRegex, "+")
             .replace(trailingPlusRegex, "")
+    }
+
+    private var lastDomain = ""
+
+    private fun domainChangeIntercept(chain: Interceptor.Chain): Response {
+        val request = chain.request()
+
+        if (request.url.host !in listOf(preferences.baseUrlHost, lastDomain)) {
+            return chain.proceed(request)
+        }
+
+        if (lastDomain.isNotEmpty()) {
+            val newUrl = request.url.newBuilder()
+                .host(preferences.baseUrlHost)
+                .build()
+
+            return chain.proceed(
+                request.newBuilder()
+                    .url(newUrl)
+                    .build(),
+            )
+        }
+
+        val response = chain.proceed(request)
+
+        if (request.url.host == response.request.url.host) return response
+
+        response.close()
+
+        preferences.baseUrlHost = response.request.url.host
+
+        lastDomain = request.url.host
+
+        val newUrl = request.url.newBuilder()
+            .host(response.request.url.host)
+            .build()
+
+        return chain.proceed(
+            request.newBuilder()
+                .url(newUrl)
+                .build(),
+        )
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -254,11 +289,34 @@ class AsuraScansEn : MangaThemesia(
     private val SharedPreferences.permaUrlPref
         get() = getBoolean(PREF_PERM_MANGA_URL_KEY_PREFIX + lang, true)
 
+    private var SharedPreferences.slugMap: MutableMap<String, String>
+        get() {
+            val serialized = getString(PREF_URL_MAP, null) ?: return mutableMapOf()
+
+            return try {
+                json.decodeFromString(serialized)
+            } catch (e: Exception) {
+                mutableMapOf()
+            }
+        }
+        set(slugMap) {
+            val serialized = json.encodeToString(slugMap)
+            edit().putString(PREF_URL_MAP, serialized).commit()
+        }
+
+    private var SharedPreferences.baseUrlHost
+        get() = getString(BASE_URL_PREF, defaultBaseUrlHost) ?: defaultBaseUrlHost
+        set(newHost) {
+            edit().putString(BASE_URL_PREF, newHost).commit()
+        }
+
     companion object {
         private const val PREF_PERM_MANGA_URL_KEY_PREFIX = "pref_permanent_manga_url_2_"
         private const val PREF_PERM_MANGA_URL_TITLE = "Permanent Manga URL"
         private const val PREF_PERM_MANGA_URL_SUMMARY = "Turns all manga urls into permanent ones."
         private const val PREF_URL_MAP = "pref_url_map"
+        private const val BASE_URL_PREF = "pref_base_url_host"
+        private const val defaultBaseUrlHost = "asuratoon.com"
         private val TEMP_TO_PERM_REGEX = Regex("""^\d+-""")
         private val titleSpecialCharactersRegex = Regex("""[^a-z0-9]+""")
         private val trailingPlusRegex = Regex("""\++$""")
