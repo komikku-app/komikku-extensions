@@ -422,7 +422,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("ROG Mangás", "https://rogmangas.com", "pt-BR", pkgName = "mangasoverall", className = "RogMangas", overrideVersionCode = 1),
         SingleLang("Romantik Manga", "https://romantikmanga.com", "tr"),
         SingleLang("Rüya Manga", "https://www.ruyamanga.com", "tr", className = "RuyaManga", overrideVersionCode = 1),
-        SingleLang("S2Manga", "https://s2manga.com", "en", overrideVersionCode = 1),
+        SingleLang("S2Manga", "https://www.s2manga.com", "en", overrideVersionCode = 2),
         SingleLang("Sagrado Império da Britannia", "https://imperiodabritannia.com", "pt-BR", className = "ImperioDaBritannia"),
         SingleLang("SamuraiScan", "https://samuraiscan.org", "es", overrideVersionCode = 2),
         SingleLang("Sawamics", "https://sawamics.com", "en"),
