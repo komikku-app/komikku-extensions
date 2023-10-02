@@ -134,7 +134,7 @@ class MangaPoisk : ParsedHttpSource() {
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div.card").first()!!
+        val infoElement = document.select("div.card:has(header)").first()!!
         val manga = SManga.create()
         manga.title = infoElement.select(".text-base span").first()!!.text()
         manga.genre = infoElement.select("span:contains(Жанр:) a").joinToString { it.text() }
@@ -204,6 +204,9 @@ class MangaPoisk : ParsedHttpSource() {
         return chapter
     }
     override fun pageListParse(document: Document): List<Page> {
+        if (document.toString().contains("text-error-500-400-token")) {
+            throw Exception("Лицензировано - Глава удалена по требованию правообладателя.")
+        }
         return document.select(".page-image").mapIndexed { index, element ->
             Page(index, "", getImage(element))
         }
