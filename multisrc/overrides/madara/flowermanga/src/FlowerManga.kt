@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.pt.prismascans
+package eu.kanade.tachiyomi.extension.pt.flowermanga
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -7,16 +7,14 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class PrismaScans : Madara(
-    "Prisma Scans",
-    "https://prismacomics.com",
+class FlowerManga : Madara(
+    "Flower Manga",
+    "https://flowermanga.com",
     "pt-BR",
-    SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
+    SimpleDateFormat("dd MMMMM yyyy", Locale("pt", "BR")),
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(1, 2, TimeUnit.SECONDS)
         .build()
-
-    override val useNewChapterEndpoint = true
 }

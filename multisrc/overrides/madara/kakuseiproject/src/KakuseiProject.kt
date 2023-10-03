@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.pt.prismascans
+package eu.kanade.tachiyomi.extension.pt.kakuseiproject
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -7,9 +7,9 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-class PrismaScans : Madara(
-    "Prisma Scans",
-    "https://prismacomics.com",
+class KakuseiProject : Madara(
+    "Kakusei Project",
+    "https://kakuseiproject.com.br",
     "pt-BR",
     SimpleDateFormat("MMMMM dd, yyyy", Locale("pt", "BR")),
 ) {
