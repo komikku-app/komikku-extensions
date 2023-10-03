@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
@@ -17,13 +18,10 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.util.Calendar
+import java.util.Locale
 
-class KomikCast : MangaThemesia(
-    "Komik Cast",
-    baseUrl = "https://komikcast.vip",
-    "id",
-    mangaUrlDirectory = "/daftar-komik",
-) {
+class KomikCast : MangaThemesia("Komik Cast", "https://komikcast.vip", "id", "/daftar-komik") {
+
     // Formerly "Komik Cast (WP Manga Stream)"
     override val id = 972717448578983812
 
@@ -67,6 +65,37 @@ class KomikCast : MangaThemesia(
     override val seriesGenreSelector = ".komik_info-content-genre a"
     override val seriesThumbnailSelector = ".komik_info-content-thumbnail img"
     override val seriesStatusSelector = ".komik_info-content-info:contains(Status)"
+
+    override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        document.selectFirst(seriesDetailsSelector)?.let { seriesDetails ->
+            title = seriesDetails.selectFirst(seriesTitleSelector)?.text()
+                ?.replace("bahasa indonesia", "", ignoreCase = true)?.trim().orEmpty()
+            artist = seriesDetails.selectFirst(seriesArtistSelector)?.ownText().removeEmptyPlaceholder()
+            author = seriesDetails.selectFirst(seriesAuthorSelector)?.ownText().removeEmptyPlaceholder()
+            description = seriesDetails.select(seriesDescriptionSelector).joinToString("\n") { it.text() }.trim()
+            // Add alternative name to manga description
+            val altName = seriesDetails.selectFirst(seriesAltNameSelector)?.ownText().takeIf { it.isNullOrBlank().not() }
+            altName?.let {
+                description = "$description\n\n$altNamePrefix$altName".trim()
+            }
+            val genres = seriesDetails.select(seriesGenreSelector).map { it.text() }.toMutableList()
+            // Add series type (manga/manhwa/manhua/other) to genre
+            seriesDetails.selectFirst(seriesTypeSelector)?.ownText().takeIf { it.isNullOrBlank().not() }?.let { genres.add(it) }
+            genre = genres.map { genre ->
+                genre.lowercase(Locale.forLanguageTag(lang)).replaceFirstChar { char ->
+                    if (char.isLowerCase()) {
+                        char.titlecase(Locale.forLanguageTag(lang))
+                    } else {
+                        char.toString()
+                    }
+                }
+            }
+                .joinToString { it.trim() }
+
+            status = seriesDetails.selectFirst(seriesStatusSelector)?.text().parseStatus()
+            thumbnail_url = seriesDetails.select(seriesThumbnailSelector).imgAttr()
+        }
+    }
 
     override fun chapterListSelector() = "div.komik_info-chapters li"
 
@@ -215,17 +244,11 @@ class KomikCast : MangaThemesia(
             OrderByFilter(),
             Filter.Header("Genre exclusion is not available for all sources"),
             GenreListFilter(getGenreList()),
+            Filter.Separator(),
+            Filter.Header("NOTE: Can't be used with other filter!"),
+            Filter.Header("$name Project List page"),
+            ProjectFilter(),
         )
-        if (hasProjectPage) {
-            filters.addAll(
-                mutableListOf<Filter<*>>(
-                    Filter.Separator(),
-                    Filter.Header("NOTE: Can't be used with other filter!"),
-                    Filter.Header("$name Project List page"),
-                    ProjectFilter(),
-                ),
-            )
-        }
         return FilterList(filters)
     }
 }

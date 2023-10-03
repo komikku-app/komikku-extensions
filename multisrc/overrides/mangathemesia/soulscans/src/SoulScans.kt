@@ -38,8 +38,4 @@ class SoulScans : MangaThemesia("Soul Scans", "https://soulscans.my.id", "id") {
             seriesDetails.select(seriesThumbnailSelector).firstOrNull()?.let { thumbnail_url = it.imgAttr() }
         }
     }
-
-    private fun String?.removeEmptyPlaceholder(): String? {
-        return if (this.isNullOrBlank() || this == "-" || this == "N/A") null else this
-    }
 }

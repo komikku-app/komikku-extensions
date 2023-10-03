@@ -205,7 +205,7 @@ abstract class MangaThemesia(
         }
     }
 
-    private fun String?.removeEmptyPlaceholder(): String? {
+    protected fun String?.removeEmptyPlaceholder(): String? {
         return if (this.isNullOrBlank() || this == "-" || this == "N/A") null else this
     }
 
