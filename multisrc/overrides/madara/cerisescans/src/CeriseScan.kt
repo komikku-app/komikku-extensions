@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.pt.cerisescans
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -12,7 +13,7 @@ import java.util.concurrent.TimeUnit
 
 class CeriseScan : Madara(
     "Cerise Scan",
-    "https://cerisescan.com/home1",
+    "https://cerisescan.com",
     "pt-BR",
     SimpleDateFormat("dd 'de' MMMMM 'de' yyyy", Locale("pt", "BR")),
 ) {
@@ -32,5 +33,13 @@ class CeriseScan : Madara(
 
     override fun chapterListRequest(manga: SManga): Request {
         return GET(baseUrl + manga.url.replace("/home1", ""), headers)
+    }
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        if (chapter.url.startsWith("http")) {
+            return GET(chapter.url.replace("/home1", ""), headers)
+        }
+
+        return GET(baseUrl + chapter.url.replace("/home1", ""), headers)
     }
 }
