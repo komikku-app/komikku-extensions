@@ -150,6 +150,10 @@ class MangaPoisk : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+        val document = client.newCall(GET("$baseUrl${manga.url}?tab=chapters", headers)).execute().asJsoup()
+        if (document.select(".text-md:contains(Главы удалены по требованию правообладателя)").isNotEmpty()) {
+            return Observable.error(Exception("Лицензировано - Нет глав"))
+        }
         val pageItems = client.newCall(chapterListRequest(manga)).execute().asJsoup().select("li.page-item")
         val pages = mutableListOf(1)
         if (pageItems.lastIndex > 1) {
