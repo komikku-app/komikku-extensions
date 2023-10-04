@@ -180,6 +180,7 @@ data class Label(val label: LabelCode? = LabelCode.WEEKLY_SHOUNEN_JUMP) {
             LabelCode.WEEKLY_SHOUNEN_JUMP -> "Weekly Shounen Jump"
             LabelCode.JUMP_SQUARE -> "Jump SQ."
             LabelCode.V_JUMP -> "V Jump"
+            LabelCode.SHOUNEN_JUMP_GIGA -> "Shounen Jump GIGA"
             LabelCode.WEEKLY_YOUNG_JUMP -> "Weekly Young Jump"
             LabelCode.TONARI_NO_YOUNG_JUMP -> "Tonari no Young Jump"
             LabelCode.SHOUNEN_JUMP_PLUS -> "Shounen Jump+"
@@ -199,6 +200,9 @@ enum class LabelCode {
 
     @SerialName("VJ")
     V_JUMP,
+
+    @SerialName("GIGA")
+    SHOUNEN_JUMP_GIGA,
 
     @SerialName("YJ")
     WEEKLY_YOUNG_JUMP,
