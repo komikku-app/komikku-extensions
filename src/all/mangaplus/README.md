@@ -9,10 +9,10 @@ Table of Content
 
 ### Why chapters are missing in some titles?
 
-MANGA Plus does not host all chapters due to their licensing politics. The website
+MANGA Plus does not host all chapters for free due to their licensing politics. The website
 is designed to let the users read the weekly/monthly official simulreleases. If you want
-to read old chapters of a series that does not have the complete list, you need to find
-another sources.
+to read old chapters of a series that does not have the complete list, you need subscribe
+to one of their paid plans and read directly in their app instead.
 
 ### Why disabling split pages setting does not work?
 

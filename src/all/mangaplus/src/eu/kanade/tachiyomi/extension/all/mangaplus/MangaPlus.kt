@@ -186,7 +186,7 @@ class MangaPlus(
 
                 titleResult.success.titleDetailView!!
                     .takeIf { it.title.language == langCode }
-                    ?.toSManga()
+                    ?.toSManga(intl)
             }
 
             return MangasPage(listOfNotNull(title), hasNextPage = false)
@@ -220,7 +220,7 @@ class MangaPlus(
             .set("Referer", "$baseUrl/titles/$titleId")
             .build()
 
-        return GET("$API_URL/title_detail?title_id=$titleId&format=json", newHeaders)
+        return GET("$API_URL/title_detailV3?title_id=$titleId&format=json", newHeaders)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
@@ -240,7 +240,7 @@ class MangaPlus(
             .takeIf { it.title.language == langCode }
             ?: throw Exception(intl["not_available"])
 
-        return titleDetails.toSManga()
+        return titleDetails.toSManga(intl)
     }
 
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga.url)
@@ -260,11 +260,10 @@ class MangaPlus(
 
         val titleDetailView = result.success.titleDetailView!!
 
-        val chapters = titleDetailView.firstChapterList + titleDetailView.lastChapterList
-
-        return chapters.reversed()
+        return titleDetailView.chapterList
             .filterNot(Chapter::isExpired)
             .map(Chapter::toSChapter)
+            .reversed()
     }
 
     // Remove the '#' and map to the new url format used in website.
