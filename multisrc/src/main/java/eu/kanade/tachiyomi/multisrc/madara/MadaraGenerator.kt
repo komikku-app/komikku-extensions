@@ -519,7 +519,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("شبكة كونان العربية", "https://manga.detectiveconanar.com", "ar", className = "DetectiveConanAr", overrideVersionCode = 2),
         SingleLang("عرب تونز", "https://arabtoons.net", "ar", isNsfw = true, className = "ArabToons"),
         SingleLang("مانجا العاشق", "https://3asq.org", "ar", className = "Manga3asq", overrideVersionCode = 2),
-        SingleLang("مانجا ليك", "https://mangalek.com", "ar", className = "Mangalek", overrideVersionCode = 2),
+        SingleLang("مانجا ليك", "https://manga-lek.net", "ar", className = "Mangalek", overrideVersionCode = 3),
         SingleLang("مانجا ليكس", "https://mangaleks.com", "ar", className = "MangaLeks"),
         SingleLang("مانجا لينك", "https://mangalink.io", "ar", className = "MangaLinkio", overrideVersionCode = 3),
         SingleLang("كوميك العرب", "https://comicarab.com", "ar", isNsfw = true, className = "ComicArab"),
