@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -30,6 +31,10 @@ class NineAnime : ParsedHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .followRedirects(true)
         .build()
+
+    companion object {
+        private const val PAGES_URL = "https://www.glanceoflife.com"
+    }
 
     // not necessary for normal usage but added in an attempt to fix usage with VPN (see #3476)
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
@@ -118,6 +123,10 @@ class NineAnime : ParsedHttpSource() {
         return GET(baseUrl + "${manga.url}?waring=1", headers)
     }
 
+    override fun getChapterUrl(chapter: SChapter): String {
+        return baseUrl + chapter.url
+    }
+
     override fun chapterListSelector() = "ul.detail-chlist li"
 
     override fun chapterFromElement(element: Element): SChapter {
@@ -151,12 +160,21 @@ class NineAnime : ParsedHttpSource() {
     // Pages
 
     override fun pageListRequest(chapter: SChapter): Request {
+        val id: String = chapter.url.substring(chapter.url.lastIndexOf("/", chapter.url.length - 2))
+
         val pageListHeaders = headersBuilder().add("Referer", "$baseUrl/manga/").build()
-        return GET(baseUrl + chapter.url, pageListHeaders)
+        return GET("$PAGES_URL/c/nineanime$id", pageListHeaders)
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.select("script:containsData(all_imgs_url)").firstOrNull()?.data()
+        val pageListHeaders = headersBuilder().add("Referer", "$baseUrl/manga/").build()
+
+        val scripturl = document.select("script").firstOrNull()?.data()
+
+        val link = scripturl?.split("\"")?.get(1)
+        val pages = client.newCall(GET(PAGES_URL + link, pageListHeaders)).execute().asJsoup()
+
+        val script = pages.select("script:containsData(all_imgs_url)").firstOrNull()?.data()
             ?: throw Exception("all_imgsurl not found")
         return Regex(""""(http.*)",""").findAll(script).mapIndexed { i, mr ->
             Page(i, "", mr.groupValues[1])
