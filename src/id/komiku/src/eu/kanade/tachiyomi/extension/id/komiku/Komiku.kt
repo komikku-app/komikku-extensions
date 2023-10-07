@@ -67,9 +67,9 @@ class Komiku : ParsedHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request {
         return if (page == 1) {
-            GET("$baseUrl/pustaka/?orderby=modified", headers)
+            GET("$baseUrlData/cari/?post_type=manga&s=&orderby=modified", headers)
         } else {
-            GET("$baseUrl/pustaka/page/$page/?orderby=modified", headers)
+            GET("$baseUrlData/cari/page/$page/?post_type=manga&s=&orderby=modified", headers)
         }
     }
 
@@ -253,7 +253,7 @@ class Komiku : ParsedHttpSource() {
 
         // add series type(manga/manhwa/manhua/other) thinggy to genre
         val seriesTypeSelector = "table.inftable tr:contains(Jenis) a, table.inftable tr:has(a[href*=category\\/]) a, a[href*=category\\/]"
-        document.select(seriesTypeSelector).firstOrNull()?.ownText()?.let {
+        document.select(seriesTypeSelector).firstOrNull()?.text()?.let {
             if (it.isEmpty().not() && genre!!.contains(it, true).not()) {
                 genre += if (genre!!.isEmpty()) it else ", $it"
             }
