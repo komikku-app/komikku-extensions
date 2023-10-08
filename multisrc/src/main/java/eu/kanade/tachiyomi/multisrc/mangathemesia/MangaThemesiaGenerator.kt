@@ -94,6 +94,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Mareceh", "https://mareceh.com", "id", isNsfw = true, pkgName = "mangceh", overrideVersionCode = 10),
         SingleLang("MELOKOMIK", "https://melokomik.xyz", "id"),
         SingleLang("Mihentai", "https://mihentai.com", "all", isNsfw = true, overrideVersionCode = 2),
+        SingleLang("Mirai Scans", "https://miraiscans.com", "id"),
         SingleLang("MirrorDesu", "https://mirrordesu.me", "id", isNsfw = true),
         SingleLang("Moon Daisy Scans", "https://moondaisyscans.com", "tr", isNsfw = true),
         SingleLang("Mundo Mangá-Kun", "https://mundomangakun.com.br", "pt-BR", className = "MundoMangaKun", isNsfw = true),
