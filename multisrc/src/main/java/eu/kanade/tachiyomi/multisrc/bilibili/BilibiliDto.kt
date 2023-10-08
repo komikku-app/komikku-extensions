@@ -34,10 +34,7 @@ data class BilibiliComicDto(
         get() = paidChaptersCount > 0
 
     val paidChaptersCount: Int
-        get() = episodeList.filter { episode -> episode.payMode == 1 && episode.payGold > 0 }.size
-
-    fun genres(paidLabel: String, emoji: String): List<String> =
-        (if (hasPaidChapters) listOf("$emoji $paidLabel") else emptyList()) + styles
+        get() = episodeList.filter { it.isPaid }.size
 }
 
 @Serializable
@@ -50,7 +47,9 @@ data class BilibiliEpisodeDto(
     @SerialName("pub_time") val publicationTime: String,
     @SerialName("short_title") val shortTitle: String,
     val title: String,
-)
+) {
+    val isPaid = payMode == 1 && payGold > 0
+}
 
 @Serializable
 data class BilibiliReader(

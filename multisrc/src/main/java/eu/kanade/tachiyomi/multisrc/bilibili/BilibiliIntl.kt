@@ -54,9 +54,8 @@ class BilibiliIntl(private val lang: String) {
                 "actualice la lista de capítulos para leerlos."
         else ->
             "${Bilibili.EMOJI_WARNING} WARNING: This series has ${chapterCount.localized} paid " +
-                "chapters that were filtered out from the chapter list. If you have already " +
-                "unlocked and have any in your account, sign in through WebView and refresh " +
-                "the chapter list to read them."
+                "chapters. If you have any unlocked in your account then sign in through WebView " +
+                "to be able to read them."
     }
 
     val imageQualityPrefTitle: String = when (lang) {
@@ -85,6 +84,7 @@ class BilibiliIntl(private val lang: String) {
         else -> "Interest"
     }
 
+    @Suppress("UNUSED") // In BilibiliManga
     val sortPopular: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE -> "人气推荐"
         INDONESIAN -> "Populer"
@@ -101,11 +101,13 @@ class BilibiliIntl(private val lang: String) {
         else -> "Updated"
     }
 
+    @Suppress("UNUSED") // In BilibiliManga
     val sortAdded: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE -> "上架时间"
         else -> "Added"
     }
 
+    @Suppress("UNUSED") // In BilibiliManga
     val sortFollowers: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE -> "追漫人数"
         else -> "Followers count"
@@ -135,6 +137,7 @@ class BilibiliIntl(private val lang: String) {
         else -> "Completed"
     }
 
+    @Suppress("UNUSED") // In BilibiliManga
     val priceAll: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE -> "全部"
         INDONESIAN -> "Semua"
@@ -142,6 +145,7 @@ class BilibiliIntl(private val lang: String) {
         else -> "All"
     }
 
+    @Suppress("UNUSED") // In BilibiliManga
     val priceFree: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE -> "免费"
         INDONESIAN -> "Bebas"
@@ -149,6 +153,7 @@ class BilibiliIntl(private val lang: String) {
         else -> "Free"
     }
 
+    @Suppress("UNUSED") // In BilibiliManga
     val pricePaid: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE -> "付费"
         INDONESIAN -> "Dibayar"
@@ -156,17 +161,20 @@ class BilibiliIntl(private val lang: String) {
         else -> "Paid"
     }
 
+    @Suppress("UNUSED") // In BilibiliManga
     val priceWaitForFree: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE -> "等就免费"
         else -> "Wait for free"
     }
 
+    @Suppress("UNUSED") // In BilibiliComics
     val failedToRefreshToken: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE -> "无法刷新令牌。请打开 WebView 修正错误。"
         SPANISH -> "Error al actualizar el token. Abra el WebView para solucionar este error."
         else -> "Failed to refresh the token. Open the WebView to fix this error."
     }
 
+    @Suppress("UNUSED") // In BilibiliComics
     val failedToGetCredential: String = when (lang) {
         CHINESE, SIMPLIFIED_CHINESE -> "无法获取阅读章节所需的凭证。"
         SPANISH -> "Erro al obtener la credencial para leer el capítulo."
@@ -177,12 +185,6 @@ class BilibiliIntl(private val lang: String) {
         CHINESE, SIMPLIFIED_CHINESE -> "信息"
         SPANISH -> "Información"
         else -> "Information"
-    }
-
-    val totalChapterCount: String = when (lang) {
-        CHINESE, SIMPLIFIED_CHINESE -> "章节总数"
-        SPANISH -> "Número total de capítulos"
-        else -> "Total chapter count"
     }
 
     private val updatesDaily: String = when (lang) {
@@ -208,17 +210,17 @@ class BilibiliIntl(private val lang: String) {
         return updatesEvery(days)
     }
 
-    fun localize(value: Int) = value.localized
-
     private val Int.localized: String
         get() = numberFormat.format(this)
 
     companion object {
         const val CHINESE = "zh"
-        const val ENGLISH = "en"
         const val INDONESIAN = "id"
         const val SIMPLIFIED_CHINESE = "zh-Hans"
         const val SPANISH = "es"
         const val FRENCH = "fr"
+
+        @Suppress("UNUSED") // In BilibiliComics
+        const val ENGLISH = "en"
     }
 }

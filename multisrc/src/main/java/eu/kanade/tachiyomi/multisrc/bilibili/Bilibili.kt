@@ -204,7 +204,7 @@ abstract class Bilibili(
 
         title = comic.title
         author = comic.authorName.joinToString()
-        genre = comic.genres(intl.pricePaid, EMOJI_LOCKED).joinToString()
+        genre = comic.styles.joinToString()
         status = when {
             comic.isFinish == 1 -> SManga.COMPLETED
             comic.isOnHiatus -> SManga.ON_HIATUS
@@ -215,11 +215,10 @@ abstract class Bilibili(
                 append("${intl.hasPaidChaptersWarning(comic.paidChaptersCount)}\n\n")
             }
 
-            append("${comic.classicLines}\n\n")
-            append("${intl.informationTitle}:")
-            append("\n• ${intl.totalChapterCount}: ${intl.localize(comic.episodeList.size)}")
+            append(comic.classicLines)
 
             if (comic.updateWeekdays.isNotEmpty() && status == SManga.ONGOING) {
+                append("\n\n${intl.informationTitle}:")
                 append("\n• ${intl.getUpdateDays(comic.updateWeekdays)}")
             }
         }
@@ -237,13 +236,21 @@ abstract class Bilibili(
             return emptyList()
         }
 
-        return result.data!!.episodeList
-            .filter { episode -> episode.payMode == 0 && episode.payGold == 0 }
-            .map { ep -> chapterFromObject(ep, result.data.id) }
+        return result.data!!.episodeList.map { ep -> chapterFromObject(ep, result.data.id) }
     }
 
-    protected open fun chapterFromObject(episode: BilibiliEpisodeDto, comicId: Int): SChapter = SChapter.create().apply {
-        name = episode.shortTitle.plus(if (episode.title.isNotBlank()) " - ${episode.title}" else "")
+    protected open fun chapterFromObject(episode: BilibiliEpisodeDto, comicId: Int, isUnlocked: Boolean = false): SChapter = SChapter.create().apply {
+        name = buildString {
+            if (episode.isPaid && !isUnlocked) {
+                append("$EMOJI_LOCKED ")
+            }
+
+            append(episode.shortTitle)
+
+            if (episode.title.isNotBlank()) {
+                append(" - ${episode.title}")
+            }
+        }
         date_upload = episode.publicationTime.toDate()
         url = "/mc$comicId/${episode.id}"
     }
