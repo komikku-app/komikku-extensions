@@ -19,7 +19,7 @@ import java.util.Locale
 
 class BacaKomik : ParsedHttpSource() {
     override val name = "BacaKomik"
-    override val baseUrl = "https://bacakomik.co"
+    override val baseUrl = "https://bacakomik.me"
     override val lang = "id"
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
