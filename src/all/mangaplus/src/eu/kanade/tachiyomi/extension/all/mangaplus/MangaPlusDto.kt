@@ -187,40 +187,44 @@ data class Label(val label: LabelCode? = LabelCode.WEEKLY_SHOUNEN_JUMP) {
             LabelCode.WEEKLY_YOUNG_JUMP -> "Weekly Young Jump"
             LabelCode.TONARI_NO_YOUNG_JUMP -> "Tonari no Young Jump"
             LabelCode.SHOUNEN_JUMP_PLUS -> "Shounen Jump+"
-            LabelCode.REVIVAL -> "Revival"
             LabelCode.MANGA_PLUS_CREATORS -> "MANGA Plus Creators"
+            LabelCode.SAIKYOU_JUMP -> "Saikyou Jump"
             else -> null
         }
 }
 
 @Serializable
 enum class LabelCode {
-    @SerialName("WJ")
-    WEEKLY_SHOUNEN_JUMP,
-
-    @SerialName("SQ")
-    JUMP_SQUARE,
-
-    @SerialName("VJ")
-    V_JUMP,
+    @SerialName("CREATORS")
+    MANGA_PLUS_CREATORS,
 
     @SerialName("GIGA")
     SHOUNEN_JUMP_GIGA,
 
-    @SerialName("YJ")
-    WEEKLY_YOUNG_JUMP,
+    @SerialName("J_PLUS")
+    SHOUNEN_JUMP_PLUS,
+
+    OTHERS,
+
+    REVIVAL,
+
+    @SerialName("SKJ")
+    SAIKYOU_JUMP,
+
+    @SerialName("SQ")
+    JUMP_SQUARE,
 
     @SerialName("TYJ")
     TONARI_NO_YOUNG_JUMP,
 
-    @SerialName("J_PLUS")
-    SHOUNEN_JUMP_PLUS,
+    @SerialName("VJ")
+    V_JUMP,
 
-    @SerialName("CREATORS")
-    MANGA_PLUS_CREATORS,
+    @SerialName("YJ")
+    WEEKLY_YOUNG_JUMP,
 
-    REVIVAL,
-    OTHERS,
+    @SerialName("WSJ")
+    WEEKLY_SHOUNEN_JUMP,
 }
 
 @Serializable
