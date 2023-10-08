@@ -70,6 +70,9 @@ data class TitleDetailView(
 ) {
 
     val chapterList: List<Chapter> by lazy {
+        // Doesn't include `midChapterList` by design as their site API returns it
+        // just for visual representation to redirect users to their app. The extension
+        // intends to allow users to read only what they can already read in their site.
         chapterListGroup.flatMap { it.firstChapterList + it.lastChapterList }
     }
 
@@ -212,10 +215,12 @@ enum class LabelCode {
 
     @SerialName("J_PLUS")
     SHOUNEN_JUMP_PLUS,
-    REVIVAL,
 
     @SerialName("CREATORS")
     MANGA_PLUS_CREATORS,
+
+    REVIVAL,
+    OTHERS,
 }
 
 @Serializable
