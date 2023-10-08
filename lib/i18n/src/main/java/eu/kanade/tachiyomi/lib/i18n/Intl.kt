@@ -1,10 +1,8 @@
 package eu.kanade.tachiyomi.lib.i18n
 
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.io.InputStreamReader
 import java.text.Collator
-import java.text.MessageFormat
 import java.util.Locale
 import java.util.PropertyResourceBundle
 
@@ -23,9 +21,9 @@ import java.util.PropertyResourceBundle
  * on how to do so.
  */
 class Intl(
-    private val language: String,
+    language: String,
+    availableLanguages: Set<String>,
     private val baseLanguage: String,
-    private val availableLanguages: Set<String>,
     private val classLoader: ClassLoader,
     private val createMessageFileName: (String) -> String = { createDefaultMessageFileName(it) }
 ) {
@@ -50,6 +48,7 @@ class Intl(
      * in the current language, the English value will be returned. If the [key]
      * is also not present in English, the [key] surrounded by brackets will be returned.
      */
+    @Suppress("InvalidBundleOrProperty")
     operator fun get(@PropertyKey(resourceBundle = "i18n.messages") key: String): String = when {
         bundle.containsKey(key) -> bundle.getString(key)
         baseBundle.containsKey(key) -> baseBundle.getString(key)
@@ -60,6 +59,7 @@ class Intl(
      * Uses the string as a format string and returns a string obtained by
      * substituting the specified arguments, using the instance locale.
      */
+    @Suppress("InvalidBundleOrProperty")
     fun format(@PropertyKey(resourceBundle = "i18n.messages") key: String, vararg args: Any?) =
         get(key).format(locale, *args)
 

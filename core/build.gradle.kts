@@ -11,6 +11,7 @@ android {
 
     namespace = "eu.kanade.tachiyomi.extension"
 
+    @Suppress("UnstableApiUsage")
     sourceSets {
         named("main") {
             manifest.srcFile("AndroidManifest.xml")

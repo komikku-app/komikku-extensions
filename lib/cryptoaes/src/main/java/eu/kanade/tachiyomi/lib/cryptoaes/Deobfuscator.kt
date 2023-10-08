@@ -9,8 +9,8 @@ package eu.kanade.tachiyomi.lib.cryptoaes
 object Deobfuscator {
     fun deobfuscateJsPassword(inputString: String): String {
         var idx = 0
-        val brackets = listOf<Char>('[', '(')
-        var evaluatedString = StringBuilder()
+        val brackets = listOf('[', '(')
+        val evaluatedString = StringBuilder()
         while (idx < inputString.length) {
             val chr = inputString[idx]
             if (chr !in brackets) {
@@ -60,9 +60,9 @@ object Deobfuscator {
            therefore '!+[]' count equals the digit
            if count equals 0, check for '+[]' just to be sure
          */
-        val digit = "\\!\\+\\[\\]".toRegex().findAll(inputSubString).count() // matches '!+[]'
+        val digit = "!\\+\\[]".toRegex().findAll(inputSubString).count() // matches '!+[]'
         if (digit == 0) {
-            if ("\\+\\[\\]".toRegex().findAll(inputSubString).count() == 1) { // matches '+[]'
+            if ("\\+\\[]".toRegex().findAll(inputSubString).count() == 1) { // matches '+[]'
                 return '0'
             }
         } else if (digit in 1..9) {

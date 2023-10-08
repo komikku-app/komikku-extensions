@@ -9,7 +9,6 @@ android {
 
     defaultConfig {
         minSdk = AndroidConfig.minSdk
-        targetSdk = AndroidConfig.targetSdk
     }
 
     namespace = "eu.kanade.tachiyomi.lib.randomua"
