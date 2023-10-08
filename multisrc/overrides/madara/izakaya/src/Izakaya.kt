@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.text.SimpleDateFormat
@@ -18,10 +19,22 @@ class Izakaya : Madara(
 ) {
 
     override val client: OkHttpClient = super.client.newBuilder()
-        .rateLimit(1, 2, TimeUnit.SECONDS)
+        .rateLimit(1, 3, TimeUnit.SECONDS)
         .build()
 
     override val useNewChapterEndpoint = true
+
+    override val chapterUrlSuffix = ""
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        val fixedUrl = chapter.url.substringBeforeLast("?style=")
+
+        if (fixedUrl.startsWith("http")) {
+            return GET(fixedUrl, headers)
+        }
+
+        return GET(baseUrl + fixedUrl, headers)
+    }
 
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()

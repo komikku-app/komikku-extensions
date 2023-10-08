@@ -167,7 +167,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("IsekaiScan.top (unoriginal)", "https://isekaiscan.top", "en", pkgName = "isekaiscantop", className = "IsekaiScanTop", overrideVersionCode = 1),
         SingleLang("IsekaiScanManga (unoriginal)", "https://isekaiscanmanga.com", "en", className = "IsekaiScanManga", overrideVersionCode = 1),
         SingleLang("Its Your Right Manhua", "https://itsyourightmanhua.com", "en", className = "ItsYourRightManhua", overrideVersionCode = 2),
-        SingleLang("Izakaya", "https://leitorizakaya.net", "pt-BR", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("Izakaya", "https://leitorizakaya.net", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Jiangzaitoon", "https://jiangzaitoon.co", "tr", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Jimanga", "https://jimanga.com", "en", isNsfw = false),
         SingleLang("Kakusei Project", "https://kakuseiproject.com.br", "pt-BR"),

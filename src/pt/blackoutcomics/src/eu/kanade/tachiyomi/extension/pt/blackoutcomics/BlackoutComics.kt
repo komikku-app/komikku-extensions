@@ -28,10 +28,12 @@ class BlackoutComics : ParsedHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .rateLimit(1, 2, TimeUnit.SECONDS)
+        .rateLimit(1, 3, TimeUnit.SECONDS)
         .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .add("Accept", ACCEPT)
+        .add("Accept-Language", ACCEPT_LANGUAGE)
         .add("Referer", "$baseUrl/")
 
     override fun popularMangaRequest(page: Int): Request = GET(baseUrl, headers)
@@ -90,12 +92,24 @@ class BlackoutComics : ParsedHttpSource() {
         thumbnail_url = infoElement.selectFirst("img")!!.absUrl("src")
     }
 
-    override fun chapterListSelector() = "section.relese h5"
+    override fun chapterListSelector() = "section.relese h5:not(:has(img.vip))"
 
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
         name = element.selectFirst("a")!!.ownText()
         date_upload = element.select("span:last-of-type").text().toDate()
         url = element.selectFirst("a")!!.attr("href")
+    }
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        val newHeaders = headersBuilder()
+            .set("Referer", baseUrl + chapter.url.substringBeforeLast("/ler"))
+            .add("Sec-Fetch-Dest", "document")
+            .add("Sec-Fetch-Mode", "navigate")
+            .add("Sec-Fetch-Site", "same-origin")
+            .add("Sec-Fetch-User", "?1")
+            .build()
+
+        return GET(baseUrl + chapter.url, newHeaders)
     }
 
     override fun pageListParse(document: Document): List<Page> {
@@ -110,6 +124,7 @@ class BlackoutComics : ParsedHttpSource() {
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()
             .set("Referer", page.url)
+            .set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
             .build()
 
         return GET(page.imageUrl!!, newHeaders)
@@ -129,6 +144,9 @@ class BlackoutComics : ParsedHttpSource() {
     }
 
     companion object {
+        private const val ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+        private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3"
+
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
         }
