@@ -132,13 +132,18 @@ class KomikIndoID : ParsedHttpSource() {
         val artistCleaner = document.select(".infox .spe b:contains(Ilustrator)").text()
         manga.artist = document.select(".infox .spe span:contains(Ilustrator)").text().substringAfter(artistCleaner)
         val genres = mutableListOf<String>()
-        infoElement.select(".infox > .genre-info > a").forEach { element ->
+        infoElement.select(".infox .genre-info a, .infox .spe span:contains(Grafis:) a, .infox .spe span:contains(Tema:) a, .infox .spe span:contains(Konten:) a, .infox .spe span:contains(Jenis Komik:) a").forEach { element ->
             val genre = element.text()
             genres.add(genre)
         }
         manga.genre = genres.joinToString(", ")
-        manga.status = parseStatus(infoElement.select(".infox > .spe > span:nth-child(1)").text())
+        manga.status = parseStatus(infoElement.select(".infox > .spe > span:nth-child(2)").text())
         manga.description = descElement.select("p").text().substringAfter("bercerita tentang ")
+        // Add alternative name to manga description
+        val altName = document.selectFirst(".infox > .spe > span:nth-child(1)")?.text().takeIf { it.isNullOrBlank().not() }
+        altName?.let {
+            manga.description = manga.description + "\n\n$altName"
+        }
         manga.thumbnail_url = document.select(".thumb > img:nth-child(1)").attr("src").substringBeforeLast("?")
         return manga
     }
