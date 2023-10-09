@@ -8,7 +8,7 @@ import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class MangaFR : MMRCMS("Manga-FR", "https://manga-fr.me", "fr") {
+class MangaFR : MMRCMS("Manga-FR", "https://manga-fr.cc", "fr") {
     override fun mangaDetailsParse(response: Response): SManga {
         return super.mangaDetailsParse(response).apply {
             title = title.replace("Chapitres ", "")
