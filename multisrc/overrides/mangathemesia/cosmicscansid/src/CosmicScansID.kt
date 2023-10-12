@@ -19,6 +19,8 @@ class CosmicScansID : MangaThemesia("CosmicScans.id", "https://cosmicscans.id", 
     override val hasProjectPage = true
     override val projectPageString = "/semua-komik"
 
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl" + if (page > 1) "/page/$page" else "", headers)
+
     // search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = baseUrl.toHttpUrl().newBuilder()
@@ -38,6 +40,8 @@ class CosmicScansID : MangaThemesia("CosmicScans.id", "https://cosmicscans.id", 
         }
         return GET(url.toString())
     }
+
+    override fun searchMangaSelector() = ".bixbox:not(.hothome):has(.hpage) .utao .uta .imgu, .bixbox:not(.hothome) .listupd .bs .bsx"
 
     override fun getFilterList(): FilterList {
         val filters = mutableListOf<Filter<*>>(
