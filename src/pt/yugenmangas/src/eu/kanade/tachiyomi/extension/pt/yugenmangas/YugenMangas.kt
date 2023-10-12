@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -33,7 +34,7 @@ class YugenMangas : ParsedHttpSource() {
 
     override val name = "Yugen Mangás"
 
-    override val baseUrl = "https://yugenmangas.net.br"
+    override val baseUrl = "https://yugenmangas.org"
 
     override val lang = "pt-BR"
 
@@ -83,7 +84,7 @@ class YugenMangas : ParsedHttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val result = json.decodeFromString<List<SearchResultDto>>(response.body.string())
+        val result = response.parseAs<List<SearchResultDto>>()
         val matches = result.map {
             SManga.create().apply {
                 title = it.name
@@ -120,12 +121,28 @@ class YugenMangas : ParsedHttpSource() {
         url = element.attr("href")
     }
 
-    override fun pageListParse(document: Document): List<Page> {
-        return document.select("div.chapter-images > img[src]")
-            .mapIndexed { index, element ->
-                Page(index, document.location(), element.absUrl("src"))
-            }
+    override fun getChapterUrl(chapter: SChapter) = baseUrl + chapter.url
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        val paths = chapter.url.removePrefix("/").split("/")
+
+        val newHeaders = headersBuilder()
+            .set("Referer", getChapterUrl(chapter))
+            .build()
+
+        return GET("$baseUrl/api/serie/${paths[1]}/chapter/${paths[2]}/images", newHeaders)
     }
+
+    override fun pageListParse(response: Response): List<Page> {
+        val result = response.parseAs<ReaderDto>()
+        val chapterUrl = response.request.headers["Referer"].orEmpty()
+
+        return result.images.orEmpty().mapIndexed { index, image ->
+            Page(index, chapterUrl, "$CDN_BASE_URL/${image.removePrefix("/")}")
+        }
+    }
+
+    override fun pageListParse(document: Document) = throw UnsupportedOperationException("Not used")
 
     override fun imageUrlParse(document: Document) = ""
 
@@ -140,6 +157,11 @@ class YugenMangas : ParsedHttpSource() {
     @Serializable
     private data class SearchResultDto(val name: String, val slug: String)
 
+    @Serializable
+    private data class ReaderDto(
+        @SerialName("chapter_images") val images: List<String>? = emptyList(),
+    )
+
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
@@ -151,7 +173,13 @@ class YugenMangas : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
 
+    private inline fun <reified T> Response.parseAs(): T = use {
+        json.decodeFromString(it.body.string())
+    }
+
     companion object {
+        private const val CDN_BASE_URL = "https://media.yugenmangas.org"
+
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("dd.MM.yyyy", Locale("pt", "BR"))
         }
