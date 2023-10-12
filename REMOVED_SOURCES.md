@@ -11,6 +11,7 @@ Here is a list of known sources that were removed.
 ### Too difficult to maintain
 
 - Bakai https://github.com/tachiyomiorg/tachiyomi-extensions/pull/17890
+- Blackout Comics and Izakaya https://github.com/tachiyomiorg/tachiyomi-extensions/pull/18500
 - ColaManhua (COLA漫画) https://github.com/tachiyomiorg/tachiyomi-extensions/pull/11445
 - Comikey https://github.com/tachiyomiorg/tachiyomi-extensions/pull/11971
 - Constellar Scans https://github.com/tachiyomiorg/tachiyomi-extensions/pull/17277
