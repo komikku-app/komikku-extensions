@@ -321,7 +321,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("ManhuaChill", "https://manhuachill.com", "en"),
         SingleLang("ManhuaDex", "https://manhuadex.com", "en", isNsfw = false),
         SingleLang("ManhuaFast.net (unoriginal)", "https://manhuafast.net", "en", isNsfw = false, className = "ManhuaFastNet"),
-        SingleLang("ManhuaFast", "https://manhuafast.com", "en", overrideVersionCode = 2),
+        SingleLang("ManhuaFast", "https://manhuafast.com", "en", overrideVersionCode = 3),
         SingleLang("Manhuaga", "https://manhuaga.com", "en", overrideVersionCode = 2),
         SingleLang("ManhuaHot", "https://manhuahot.com", "en"),
         SingleLang("ManhuaManhwa.online", "https://manhuamanhwa.online", "en", isNsfw = false, className = "ManhuaManhwaOnline"),
