@@ -105,6 +105,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Noromax", "https://noromax.my.id", "id"),
         SingleLang("OPSCANS", "https://opscans.com", "all"),
         SingleLang("Origami Orpheans", "https://origami-orpheans.com.br", "pt-BR", overrideVersionCode = 9),
+        SingleLang("Otsugami", "https://otsugami.id", "id"),
         SingleLang("Ozul Scans", "https://ozulscans.xyz", "ar", overrideVersionCode = 1),
         SingleLang("Phantom Scans", "https://phantomscans.com", "en", overrideVersionCode = 1),
         SingleLang("PhenixScans", "https://phenixscans.fr", "fr", className = "PhenixScans", overrideVersionCode = 1),
