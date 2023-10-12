@@ -207,7 +207,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Manga Crab", "https://manga-crab.com", "es", overrideVersionCode = 6),
         SingleLang("Manga District", "https://mangadistrict.com", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Manga Diyari", "https://manga-diyari.com", "tr", overrideVersionCode = 2),
-        SingleLang("Manga Fenix", "https://manga-fenix.com", "es", overrideVersionCode = 2),
+        SingleLang("Manga Fenix", "https://manhua-fenix.com", "es", overrideVersionCode = 3),
         SingleLang("Manga Galaxy", "https://mangagalaxy.me", "en", overrideVersionCode = 1),
         SingleLang("Manga Hentai", "https://mangahentai.me", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("Manga Keyfi", "https://mangakeyfi.net", "tr"),
