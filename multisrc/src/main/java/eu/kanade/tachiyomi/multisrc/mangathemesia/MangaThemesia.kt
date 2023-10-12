@@ -35,6 +35,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.lang.IllegalArgumentException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -214,7 +215,6 @@ abstract class MangaThemesia(
         listOf("ongoing", "publishing").any { this.contains(it, ignoreCase = true) } -> SManga.ONGOING
         this.contains("hiatus", ignoreCase = true) -> SManga.ON_HIATUS
         this.contains("completed", ignoreCase = true) -> SManga.COMPLETED
-        listOf("dropped", "cancelled").any { this.contains(it, ignoreCase = true) } -> SManga.CANCELLED
         else -> SManga.UNKNOWN
     }
 
@@ -263,9 +263,10 @@ abstract class MangaThemesia(
     open val pageSelector = "div#readerarea img"
 
     override fun pageListParse(document: Document): List<Page> {
+        val chapterUrl = document.location()
         val htmlPages = document.select(pageSelector)
             .filterNot { it.imgAttr().isEmpty() }
-            .mapIndexed { i, img -> Page(i, "", img.imgAttr()) }
+            .mapIndexed { i, img -> Page(i, chapterUrl, img.imgAttr()) }
 
         countViews(document)
 
@@ -280,10 +281,18 @@ abstract class MangaThemesia(
             emptyList()
         }
         val scriptPages = imageList.mapIndexed { i, jsonEl ->
-            Page(i, "", jsonEl.jsonPrimitive.content)
+            Page(i, chapterUrl, jsonEl.jsonPrimitive.content)
         }
 
         return scriptPages
+    }
+
+    override fun imageRequest(page: Page): Request {
+        val newHeaders = headersBuilder()
+            .set("Referer", page.url)
+            .build()
+
+        return GET(page.imageUrl!!, newHeaders)
     }
 
     /**
