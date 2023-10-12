@@ -22,6 +22,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
+import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -67,6 +68,9 @@ abstract class MangaThemesia(
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
     }
+
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .set("Referer", "$baseUrl/")
 
     open val projectPageString = "/project"
 
@@ -141,7 +145,7 @@ abstract class MangaThemesia(
             }
         }
         url.addPathSegment("")
-        return GET(url.toString())
+        return GET(url.build(), headers)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
@@ -215,6 +219,7 @@ abstract class MangaThemesia(
         listOf("ongoing", "publishing").any { this.contains(it, ignoreCase = true) } -> SManga.ONGOING
         this.contains("hiatus", ignoreCase = true) -> SManga.ON_HIATUS
         this.contains("completed", ignoreCase = true) -> SManga.COMPLETED
+        listOf("dropped", "cancelled").any { this.contains(it, ignoreCase = true) } -> SManga.CANCELLED
         else -> SManga.UNKNOWN
     }
 
@@ -289,6 +294,7 @@ abstract class MangaThemesia(
 
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()
+            .set("Accept", "image/avif,image/webp,image/png,image/jpeg,*/*")
             .set("Referer", page.url)
             .build()
 
