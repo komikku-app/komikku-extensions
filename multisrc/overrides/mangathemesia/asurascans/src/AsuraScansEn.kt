@@ -112,7 +112,7 @@ class AsuraScansEn : MangaThemesia(
     override fun pageListParse(document: Document): List<Page> {
         return document.select(pageSelector)
             .filterNot { it.attr("src").isNullOrEmpty() }
-            .mapIndexed { i, img -> Page(i, "", img.attr("abs:src")) }
+            .mapIndexed { i, img -> Page(i, document.location(), img.attr("abs:src")) }
     }
 
     override fun Element.imgAttr(): String = when {

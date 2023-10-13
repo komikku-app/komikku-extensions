@@ -76,7 +76,7 @@ open class FlameScans(
                     val imageUrls = el.select("img")
                         .joinToString("|") { it.attr("abs:src") }
 
-                    Page(i, "", imageUrls + COMPOSED_SUFFIX)
+                    Page(i, document.location(), imageUrls + COMPOSED_SUFFIX)
                 }
             }
     }

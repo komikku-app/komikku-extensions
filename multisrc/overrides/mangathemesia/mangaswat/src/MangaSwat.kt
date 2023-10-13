@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
@@ -24,7 +23,7 @@ import java.util.Locale
 
 class MangaSwat : MangaThemesia(
     "MangaSwat",
-    "https://stmgs.com",
+    "https://goldragon.me",
     "ar",
     dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("ar")),
 ) {
@@ -39,9 +38,6 @@ class MangaSwat : MangaThemesia(
     override val client: OkHttpClient = super.client.newBuilder()
         .rateLimit(1)
         .build()
-
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
-        .add("Referer", "$baseUrl/")
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val request = super.searchMangaRequest(page, query, filters)
@@ -71,7 +67,7 @@ class MangaSwat : MangaThemesia(
         val jsonString = scriptContent.substringAfter("ts_reader.run(").substringBefore(");")
         val tsReader = json.decodeFromString<TSReader>(jsonString)
         val imageUrls = tsReader.sources.firstOrNull()?.images ?: return emptyList()
-        return imageUrls.mapIndexed { index, imageUrl -> Page(index, imageUrl = imageUrl) }
+        return imageUrls.mapIndexed { index, imageUrl -> Page(index, document.location(), imageUrl) }
     }
 
     override fun chapterListSelector() = "div.bxcl li, ul div:has(span.lchx)"

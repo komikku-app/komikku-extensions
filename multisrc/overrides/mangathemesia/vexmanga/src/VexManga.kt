@@ -66,7 +66,7 @@ class VexManga : MangaThemesia(
             emptyList()
         }
         val scriptPages = imageList.mapIndexed { i, jsonEl ->
-            Page(i, "", jsonEl.jsonPrimitive.content)
+            Page(i, document.location(), jsonEl.jsonPrimitive.content)
         }
 
         return scriptPages

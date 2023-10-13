@@ -34,7 +34,7 @@ class SkyMangas : MangaThemesia(
             }
 
             return imageList.mapIndexed { i, jsonEl ->
-                Page(i, "", jsonEl.jsonPrimitive.content)
+                Page(i, document.location(), jsonEl.jsonPrimitive.content)
             }
         }
 

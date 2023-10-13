@@ -32,7 +32,6 @@ class KomikCast : MangaThemesia("Komik Cast", "https://komikcast.vip", "id", "/d
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
         .add("Accept-language", "en-US,en;q=0.9,id;q=0.8")
-        .add("Referer", baseUrl)
 
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()
@@ -159,7 +158,7 @@ class KomikCast : MangaThemesia("Komik Cast", "https://komikcast.vip", "id", "/d
         }
 
         return doc.select(cssQuery)
-            .mapIndexed { i, img -> Page(i, "", img.imgAttr()) }
+            .mapIndexed { i, img -> Page(i, document.location(), img.imgAttr()) }
     }
 
     override val hasProjectPage: Boolean = true

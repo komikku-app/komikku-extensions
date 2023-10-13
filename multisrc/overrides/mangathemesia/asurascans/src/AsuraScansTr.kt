@@ -50,7 +50,7 @@ class AsuraScansTr : MangaThemesia(
         val jsonString = scriptContent.substringAfter("ts_reader.run(").substringBefore(");")
         val tsReader = json.decodeFromString<TSReader>(jsonString)
         val imageUrls = tsReader.sources.firstOrNull()?.images ?: return emptyList()
-        return imageUrls.mapIndexed { index, imageUrl -> Page(index, imageUrl = imageUrl) }
+        return imageUrls.mapIndexed { index, imageUrl -> Page(index, document.location(), imageUrl) }
     }
 
     @Serializable

@@ -33,7 +33,7 @@ class Nekomik : MangaThemesia("Nekomik", "https://nekomik.me", "id") {
 
         val tsReader = json.decodeFromString<TSReader>(data)
         val imageUrls = tsReader.sources.firstOrNull()?.images ?: return emptyList()
-        return imageUrls.mapIndexed { index, imageUrl -> Page(index, imageUrl = imageUrl) }
+        return imageUrls.mapIndexed { index, imageUrl -> Page(index, document.location(), imageUrl) }
     }
 
     @Serializable

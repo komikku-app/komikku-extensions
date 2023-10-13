@@ -22,7 +22,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
-import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -69,7 +68,7 @@ abstract class MangaThemesia(
             .build()
     }
 
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+    override fun headersBuilder() = super.headersBuilder()
         .set("Referer", "$baseUrl/")
 
     open val projectPageString = "/project"

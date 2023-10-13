@@ -21,9 +21,6 @@ class LunarScans : MangaThemesia(
         .rateLimit(1)
         .build()
 
-    override fun headersBuilder() = super.headersBuilder()
-        .add("Referer", "$baseUrl/")
-
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         return if (query.isEmpty()) {
             super.searchMangaRequest(page, query, filters)
@@ -61,7 +58,7 @@ class LunarScans : MangaThemesia(
         val jsonString = scriptContent.substringAfter("ts_reader.run(").substringBefore(");")
         val tsReader = json.decodeFromString<TSReader>(jsonString)
         val imageUrls = tsReader.sources.firstOrNull()?.images ?: return emptyList()
-        return imageUrls.mapIndexed { index, imageUrl -> Page(index, imageUrl = imageUrl) }
+        return imageUrls.mapIndexed { index, imageUrl -> Page(index, document.location(), imageUrl) }
     }
 
     @Serializable
