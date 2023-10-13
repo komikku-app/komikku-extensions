@@ -21,6 +21,7 @@ class ZeistMangaGenerator : ThemeSourceGenerator {
         SingleLang("Muslos No Sekai", "https://muslosnosekai.blogspot.com", "es"),
         SingleLang("ShiyuraSub", "https://shiyurasub.blogspot.com", "id"),
         SingleLang("Tooncubus", "https://www.tooncubus.top", "id", isNsfw = true),
+        SingleLang("SobatManKu", "https://www.sobatmanku19.site", "id"),
     )
 
     companion object {

@@ -59,8 +59,8 @@ abstract class ZeistManga(
         return MangasPage(mangalist, false)
     }
 
-    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException("Not used.")
-    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException("Not used.")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException("Not used.")
+    override fun latestUpdatesParse(response: Response): MangasPage = throw UnsupportedOperationException("Not used.")
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val startIndex = maxMangaResults * (page - 1) + 1
