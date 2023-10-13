@@ -51,6 +51,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Bakaman", "https://bakaman.net", "th", overrideVersionCode = 1),
         SingleLang("Banana Cítrica", "https://bananacitrica.com", "pt-BR", isNsfw = true, pkgName = "bananamecanica", className = "BananaCitrica", overrideVersionCode = 4),
         SingleLang("Banana Manga", "https://bananamanga.net", "en", isNsfw = true),
+        SingleLang("BarManga", "https://barmanga.com", "es"),
         SingleLang("BestManga", "https://bestmanga.club", "ru", overrideVersionCode = 1),
         SingleLang("BestManhua", "https://bestmanhua.com", "en", overrideVersionCode = 2),
         SingleLang("BirdToon", "https://birdtoon.net", "id", isNsfw = true),
