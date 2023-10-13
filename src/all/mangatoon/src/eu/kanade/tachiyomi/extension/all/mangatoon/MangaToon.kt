@@ -13,6 +13,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -59,8 +60,8 @@ open class MangaToon(
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("div.content-title").text().trim()
-        thumbnail_url = element.select("img").attr("abs:src").toNormalPosterUrl()
-        url = element.selectFirst("a")!!.attr("href")
+        thumbnail_url = element.select("img").imgAttr().toNormalPosterUrl()
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
     }
 
     override fun popularMangaNextPageSelector() = "span.next"
@@ -83,12 +84,12 @@ open class MangaToon(
         return GET(searchUrl, headers)
     }
 
-    override fun searchMangaSelector() = "div.comics-result div.recommend-item"
+    override fun searchMangaSelector() = "div.comics-result div.recommend-item:has(a[abs:href^=$baseUrl])"
 
     override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         title = element.select("div.recommend-comics-title").text().trim()
-        thumbnail_url = element.select("img").attr("abs:src").toNormalPosterUrl()
-        url = element.selectFirst("a")!!.attr("href")
+        thumbnail_url = element.select("img").imgAttr().toNormalPosterUrl()
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
     }
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
@@ -104,8 +105,10 @@ open class MangaToon(
             .sorted()
             .joinToString { it.trim() }
         status = document.select("div.detail-status").text().trim().toStatus()
-        thumbnail_url = document.select("div.detail-img img.ori-image").attr("abs:src")
-            .toNormalPosterUrl()
+        val thumbnail = document.select("div.detail-img img").imgAttr().toNormalPosterUrl()
+        if (!thumbnail.contains("cartoon-big-images")) {
+            thumbnail_url = thumbnail
+        }
     }
 
     override fun chapterListRequest(manga: SManga): Request {
@@ -142,12 +145,12 @@ open class MangaToon(
         chapter_number = element.select("div.episode-number").text().trim()
             .toFloatOrNull() ?: -1f
         date_upload = element.select("div.episode-date span.open-date").text().toDate()
-        url = element.attr("href")
+        setUrlWithoutDomain(element.attr("href"))
     }
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select("div.pictures div img:first-child")
-            .mapIndexed { i, element -> Page(i, "", element.attr("abs:src")) }
+            .mapIndexed { i, element -> Page(i, "", element.imgAttr()) }
             .takeIf { it.isNotEmpty() } ?: throw Exception(lockedError)
     }
 
@@ -157,6 +160,13 @@ open class MangaToon(
         return runCatching { DATE_FORMAT.parse(this)?.time }
             .getOrNull() ?: 0L
     }
+
+    protected open fun Element.imgAttr(): String = when {
+        hasAttr("data-src") -> attr("abs:data-src")
+        else -> attr("abs:src")
+    }
+
+    protected open fun Elements.imgAttr(): String = this.first()!!.imgAttr()
 
     private fun String.toNormalPosterUrl(): String = replace(POSTER_SUFFIX, "$1")
 
