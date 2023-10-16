@@ -31,7 +31,7 @@ class SushiScan : MangaThemesia("Sushi-Scan", "https://sushiscan.net", "fr", man
         val jsonString = scriptContent.substringAfter("ts_reader.run(").substringBefore(");")
         val tsReader = json.decodeFromString<TSReader>(jsonString)
         val imageUrls = tsReader.sources.firstOrNull()?.images ?: return emptyList()
-        return imageUrls.mapIndexed { index, imageUrl -> Page(index, document.location(), imageUrl) }
+        return imageUrls.mapIndexed { index, imageUrl -> Page(index, document.location(), imageUrl.replace("http://", "https://")) }
     }
 
     @Serializable
