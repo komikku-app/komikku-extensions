@@ -43,6 +43,7 @@ Here is a list of known sources that were removed.
 
 - ARES Manga https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15396
 - Astra Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13845
+- Dat-Gar Scan https://github.com/tachiyomiorg/tachiyomi-extensions/issues/18441
 - Gourmet Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6192
 - Hikari Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/6611
 - Hunter Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/12392
