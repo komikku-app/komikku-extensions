@@ -112,6 +112,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Pi Scans", "https://piscans.in", "id", overrideVersionCode = 1),
         SingleLang("PotatoManga", "https://potatomanga.xyz", "ar"),
         SingleLang("Raiki Scan", "https://raikiscan.com", "es"),
+        SingleLang("Raiscans", "https://www.raiscans.com", "en"),
         SingleLang("Raven Scans", "https://ravenscans.com", "en", overrideVersionCode = 1),
         SingleLang("Rawkuma", "https://rawkuma.com/", "ja"),
         SingleLang("ReadGojo", "https://readgojo.com", "en"),
