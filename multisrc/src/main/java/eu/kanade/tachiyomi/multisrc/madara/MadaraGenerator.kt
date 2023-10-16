@@ -379,7 +379,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Niji Translations", "https://niji-translations.com", "ar", overrideVersionCode = 1),
         SingleLang("Nitro Scans", "https://nitroscans.com", "en"),
         SingleLang("No Index Scan", "https://noindexscan.com", "pt-BR", isNsfw = true),
-        SingleLang("Noblesse Translations", "https://www.noblessetranslations.com", "es"),
+        SingleLang("Noblesse Translations", "https://noblessetranslations.com", "es", overrideVersionCode = 1),
         SingleLang("Nocturne Summer", "https://nocsummer.com.br", "pt-BR", isNsfw = true),
         SingleLang("NovelCrow", "https://novelcrow.com", "en", isNsfw = true),
         SingleLang("NovelMic", "https://novelmic.com", "en", overrideVersionCode = 1),
