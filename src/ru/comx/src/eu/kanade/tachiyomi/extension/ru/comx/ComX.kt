@@ -130,7 +130,8 @@ class ComX : ParsedHttpSource() {
         manga.thumbnail_url = baseUrl + element.select("img").first()!!.attr("data-src")
         element.select(".readed__title a").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.text().split(" / ").first()
+            //  Russian's titles prevails. +Site bad search English titles.
+            manga.title = it.text().replace(" / ", " | ").split(" | ").last().trim()
         }
         return manga
     }
@@ -156,7 +157,8 @@ class ComX : ParsedHttpSource() {
         manga.thumbnail_url = baseUrl + element.select("img").first()!!.attr("src").replace("mini/mini", "mini/mid")
         element.select("a.latest__title").first()!!.let {
             manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.text().split(" / ").first()
+            //  Russian's titles prevails. +Site bad search English titles.
+            manga.title = it.text().replace(" / ", " | ").split(" | ").last().trim()
         }
         return manga
     }
@@ -257,17 +259,23 @@ class ComX : ParsedHttpSource() {
         }
         val rawAgeStop = if (document.toString().contains("ВНИМАНИЕ! 18+")) "18+" else ""
         val manga = SManga.create()
-        manga.title = infoElement.select(".page__title-original").text().replace(" / ", " | ").split(" | ").first()
+        manga.title = infoElement.select(".page__header h1").text().trim()
         manga.author = infoElement.select(".page__list li:contains(Издатель)").text()
         manga.genre = category + ", " + rawAgeStop + ", " + infoElement.select(".page__tags a").joinToString { it.text() }
         manga.status = parseStatus(infoElement.select(".page__list li:contains(Статус)").text())
 
-        manga.description = infoElement.select(".page__header h1").text().replace(" / ", " | ").split(" | ").first() + "\n" +
+        manga.description = infoElement.select(".page__title-original").text().trim() + "\n" +
             if (document.select(".page__list li:contains(Тип выпуска)").text().contains("!!! События в комиксах - ХРОНОЛОГИЯ !!!")) { "Cобытие в комиксах - ХРОНОЛОГИЯ\n" } else { "" } +
             ratingStar + " " + ratingValue + " (голосов: " + ratingVotes + ")\n" +
-            Jsoup.parse(infoElement.select(".page__text ").first()!!.html().replace("<br>", "REPLACbR")).text().replace("REPLACbR", "\n")
+            infoElement.select(".page__text ").first()?.html()?.let { Jsoup.parse(it) }
+                ?.select("body:not(:has(p)),p,br")
+                ?.prepend("\\n")?.text()?.replace("\\n", "\n")?.replace("\n ", "\n")
+                .orEmpty()
 
-        val src = infoElement.select(".img-wide img").attr("data-src")
+        val src = infoElement.select(".img-wide img").let {
+            it.attr("data-src").ifEmpty { it.attr("src") }
+        }
+
         if (src.contains("://")) {
             manga.thumbnail_url = src
         } else {
