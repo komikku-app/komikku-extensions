@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.extension.en.aquamanga
 import android.util.Base64
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import okhttp3.Headers
-import java.nio.charset.Charset
+import kotlin.random.Random
 
 class AquaManga : Madara("Aqua Manga", "https://aquamanga.com", "en") {
 
@@ -15,7 +15,7 @@ class AquaManga : Madara("Aqua Manga", "https://aquamanga.com", "en") {
         .add("Sec-Fetch-Mode", "navigate")
         .add("Sec-Fetch-Site", "same-origin")
         .add("Upgrade-Insecure-Requests", "1")
-        .add("X-Requested-With", u)
+        .add("X-Requested-With", randomValue)
 
     private val littleBitCursedEncodedValue = "ICAgSUFBZ0FFa0FRd0JCQUdjQVNRQkRBRUVBWndCUkFGVUFUZ0JDQUZFQVZRQnNBRUlBVVFCWEFHUUFRZ0JSQURBQVJnQkNBRk1BVlFCR0FFSUFXZ0F3QUVZQVJBQlJBRlVBUmdCVUFGVUFWUUJLQUVVQVVRQlZBRllBUmdCUkFGWUFjQUF6QUZFQWF3QndBRUlBVWdCVkFERUFRZ0JWQUZZQVJnQkRBR0lBYXdCR0FFWUFZUUF3QUVZQVVnQmtBREFBU2dCREFGRUFWUUJrQUdvQVVRQldBRTRBVWdCUkFHc0FVZ0JDQUZJQVZRQnNBRUlBVlFBeUFHUUFRd0JWQUdzQVJnQkhBRllBVlFCR0FGTUFXZ0F3QUVvQU1RQlJBRlVBV2dCR0FGRUFWZ0JhQUZJQVVRQnJBRGtBUWdCU0FGVUFiQUJ" +
         "DQUZZQVZnQkdBRU1BVmdBd0FFWUFSZ0JPQUVVQVJnQldBRm9BTUFCS0FGTUFVUUJWQUdRQWVnQlJBRllBVmdCdUFGRUFhd0JPQUVJQVVnQnJBR3dBUWdCV0FHd0FSZ0JEQUZZQU1BQkdBRVlBVXdCVkFFWUFWd0JrQURBQVNnQXhBRkVBVlFCa0FGSUFVUUJXQUVZQU13QlJBR3dBVWdCQ0FGSUFNd0JPQUVJQVZRQnRBR1FBUXdCU0FEQUFSZ0JIQUZVQVZRQkdBRmNBVlFCVkFFb0FTQUJSQUZVQVdnQktBRkVBVmdCYUFGSUFVUUJzQUZvQVFnQlNBRmNBT1FCQ0FGb0FSZ0JHQUVNQVZRQnJBRVlBUndCV0FGVUFSZ0JYQUZvQU1BQktBRFVBVVFCVkFGb0FSZ0JSQUZZQVdnQnVBRkVBYXdCa0FFSUFVZ0JGQURFQVFnQldBRllB" +
@@ -26,17 +26,23 @@ class AquaManga : Madara("Aqua Manga", "https://aquamanga.com", "en") {
         "QlJBRllBVmdCdUFGRUFXQUJzQUVJQVVnQlVBRklBUWdCVkFGY0FaQUJEQUZZQVJRQkdBRWNBVmdCVkFFWUFVd0JhQURBQVNnQkVBRkVBVlFCYUFIWUFVUUJWQURFQVFnQlJBR3NBWkFCQ0FGSUFWZ0JHQUVJQVZnQldBRVlBUXdCV0FHc0FSZ0JHQUZjQVZRQkdBRlFBV2dBd0FFb0FVd0JSQUZVQVdnQldBRkVBVmdCS0FHNEFVUUJ1QUZZQVFnQlNBR3NBVmdCQ0FGWUFiQUJHQUVNQVVnQnJBRVlBUlFCaEFEQUFSZ0JXQUZFQVZRQktBRlVBVVFCVkFGWUFSZ0JSQUZZQWNBQXpBRkVBYXdCd0FFSUFVZ0JWQURFQVFnQlZBRllBUmdCREFHSUFhd0JHQUVZQVlRQXdBRVlBVWdCa0FEQUFTZ0JEQUZFQVZRQmtBR29BVVFCV0FF" +
         "NEFVZ0JSQUdzQVNnQkNBRklBUkFCQ0FFSUFWUUJHQUVZQVFnQmFBREFBUmdCRUFGRUFWUUJHQUVvQVVRQlZBRVlBYmdCUkFGVUFUZ0JDQUZFQVZRQnNBRUlBVVFCWEFHTUFad0JKQUVNQVFRQm5BRWtBUXdCQkFEMEFJQUFnQUNBQUlBQT0gICA="
 
-    private fun decoder(input: String, outputType: Charset): String {
-        return Base64.decode(input, Base64.DEFAULT).toString(outputType).trim()
+    private fun getRandomSubstring(input: String, length: Int): String {
+        val startIndex = (0 until input.length - length + 1).random()
+        return input.substring(startIndex, startIndex + length)
     }
 
-    private val U = decoder(littleBitCursedEncodedValue, Charsets.UTF_8)
-    private val I = decoder(U, Charsets.UTF_16LE)
-    private val b = decoder(I, Charsets.UTF_8)
-    private val i = decoder(b, Charsets.UTF_16BE)
-    private val і = decoder(i, Charsets.UTF_8)
-    private val m = decoder(і, Charsets.UTF_16LE)
-    private val u = decoder(m, Charsets.UTF_8)
+    private val randomLength = Random.Default.nextInt(13, 21)
+
+    private val decodedString = Base64.decode(littleBitCursedEncodedValue, Base64.DEFAULT).toString(Charsets.UTF_8).trim()
+
+    private val randomStringValue = getRandomSubstring(decodedString, randomLength)
+
+    private val chromiumBrowserValue = "org.chromium.chrome"
+
+    private val randomValue = when {
+        Random.nextInt(1, 11) == 1 -> chromiumBrowserValue // 10% chance
+        else -> randomStringValue // 90% chance
+    }
 
     override val chapterUrlSuffix = ""
 }
