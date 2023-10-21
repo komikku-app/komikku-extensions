@@ -240,7 +240,7 @@ open class LANraragi(private val suffix: String = "") : ConfigurableSource, Unme
 
     override fun headersBuilder() = Headers.Builder().apply {
         if (apiKey.isNotEmpty()) {
-            val apiKey64 = Base64.encodeToString(apiKey.toByteArray(), Base64.DEFAULT).trim()
+            val apiKey64 = Base64.encodeToString(apiKey.toByteArray(), Base64.NO_WRAP)
             add("Authorization", "Bearer $apiKey64")
         }
     }

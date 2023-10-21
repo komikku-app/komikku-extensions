@@ -6,7 +6,7 @@ ext {
     extName = 'LANraragi'
     pkgNameSuffix = 'all.lanraragi'
     extClass = '.LANraragiFactory'
-    extVersionCode = 14
+    extVersionCode = 15
 }
 
 apply from: "$rootDir/common.gradle"
