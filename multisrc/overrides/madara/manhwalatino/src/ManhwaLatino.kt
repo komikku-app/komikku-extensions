@@ -18,6 +18,7 @@ class ManhwaLatino : Madara(
 
     override val mangaDetailsSelectorStatus = "div.post-content_item:contains(Estado del comic) > div.summary-content"
     override val mangaDetailsSelectorDescription = "div.post-content_item:contains(Resumen) > h3 > div.summary-container"
+    override val pageListParseSelector = "div.page-break img.wp-manga-chapter-img"
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
