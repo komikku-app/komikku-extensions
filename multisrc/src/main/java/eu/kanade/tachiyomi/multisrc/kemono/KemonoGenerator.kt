@@ -9,7 +9,7 @@ class KemonoGenerator : ThemeSourceGenerator {
 
     override val themePkg = "kemono"
 
-    override val baseVersionCode = 7
+    override val baseVersionCode = 8
 
     override val sources = listOf(
         SingleLang("Kemono", "https://kemono.party", "all", isNsfw = true),

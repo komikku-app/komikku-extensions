@@ -97,7 +97,7 @@ class KemonoAttachmentDto(val name: String, val path: String) {
 }
 
 private fun getApiDateFormat() =
-    SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH)
+    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
 
 private fun getChapterNameDateFormat() =
     SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss", Locale.ENGLISH)
