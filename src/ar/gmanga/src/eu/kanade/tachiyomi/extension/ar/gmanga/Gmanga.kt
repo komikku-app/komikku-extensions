@@ -248,6 +248,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
 
         val hasWebP = releaseData["webp_pages"]!!.jsonArray.size > 0
         return releaseData[if (hasWebP) "webp_pages" else "pages"]!!.jsonArray.map { it.jsonPrimitive.content }
+            .sortedWith(pageSort)
             .mapIndexed { index, pageUri ->
                 Page(
                     index,
@@ -256,6 +257,12 @@ class Gmanga : ConfigurableSource, HttpSource() {
                 )
             }
     }
+
+    private val pageSort =
+        compareBy<String>({ parseNumber(0, it) ?: Double.MAX_VALUE }, { parseNumber(1, it) }, { parseNumber(2, it) })
+
+    private fun parseNumber(index: Int, string: String): Double? =
+        Regex("\\d+").findAll(string).map { it.value }.toList().getOrNull(index)?.toDoubleOrNull()
 
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
 
