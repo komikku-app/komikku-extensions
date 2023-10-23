@@ -36,6 +36,8 @@ class MdAtHomeReportInterceptor(
             return response
         }
 
+        Log.e("MangaDex", "Connecting to MD@Home node at $url")
+
         val result = ImageReportDto(
             url = url,
             success = response.isSuccessful,
@@ -60,6 +62,8 @@ class MdAtHomeReportInterceptor(
         if (response.isSuccessful) {
             return response
         }
+
+        response.close()
 
         Log.e("MangaDex", "Error connecting to MD@Home node, fallback to uploads server")
 

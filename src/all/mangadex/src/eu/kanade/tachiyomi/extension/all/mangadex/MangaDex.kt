@@ -2,11 +2,14 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.os.Build
+import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AggregateDto
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AggregateVolume
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AtHomeDto
@@ -56,13 +59,23 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
     private val helper = MangaDexHelper(lang)
 
-    final override fun headersBuilder() = Headers.Builder()
-        .add("Referer", "$baseUrl/")
-        .add("User-Agent", "Tachiyomi " + System.getProperty("http.agent"))
+    final override fun headersBuilder(): Headers.Builder {
+        val extraHeader = "Android/${Build.VERSION.RELEASE} " +
+            "Tachiyomi/${AppInfo.getVersionName()} " +
+            "MangaDex/1.4.190"
+
+        val builder = super.headersBuilder().apply {
+            set("Referer", "$baseUrl/")
+            set("Extra", extraHeader)
+        }
+
+        return builder
+    }
 
     override val client = network.client.newBuilder()
         .rateLimit(3)
         .addInterceptor(MdAtHomeReportInterceptor(network.client, headers))
+        .addInterceptor(MdUserAgentInterceptor(preferences, dexLang))
         .build()
 
     init {
@@ -745,6 +758,30 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
             }
         }
 
+        val userAgentPref = EditTextPreference(screen.context).apply {
+            key = MDConstants.getCustomUserAgentPrefKey(dexLang)
+            title = helper.intl["set_custom_useragent"]
+            summary = helper.intl["set_custom_useragent_summary"]
+            dialogMessage = helper.intl.format(
+                "set_custom_useragent_dialog",
+                MDConstants.defaultUserAgent,
+            )
+
+            setDefaultValue(MDConstants.defaultUserAgent)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    Headers.Builder().add("User-Agent", newValue as String)
+                    summary = newValue
+                    true
+                } catch (e: Throwable) {
+                    val errorMessage = helper.intl.format("set_custom_useragent_error_invalid", e.message)
+                    Toast.makeText(screen.context, errorMessage, Toast.LENGTH_LONG).show()
+                    false
+                }
+            }
+        }
+
         screen.addPreference(coverQualityPref)
         screen.addPreference(tryUsingFirstVolumeCoverPref)
         screen.addPreference(dataSaverPref)
@@ -754,6 +791,7 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
         screen.addPreference(originalLanguagePref)
         screen.addPreference(blockedGroupsPref)
         screen.addPreference(blockedUploaderPref)
+        screen.addPreference(userAgentPref)
     }
 
     override fun getFilterList(): FilterList =
@@ -827,6 +865,12 @@ abstract class MangaDex(final override val lang: String, private val dexLang: St
 
     private val SharedPreferences.altTitlesInDesc
         get() = getBoolean(MDConstants.getAltTitlesInDescPrefKey(dexLang), false)
+
+    private val SharedPreferences.customUserAgent
+        get() = getString(
+            MDConstants.getCustomUserAgentPrefKey(dexLang),
+            MDConstants.defaultUserAgent,
+        )
 
     /**
      * Previous versions of the extension allowed invalid UUID values to be stored in the
