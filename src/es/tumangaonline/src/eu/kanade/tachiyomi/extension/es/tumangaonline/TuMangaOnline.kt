@@ -39,7 +39,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
 
     override val name = "TuMangaOnline"
 
-    override val baseUrl = "https://lectortmo.com"
+    override val baseUrl = "https://visortmo.com"
 
     override val lang = "es"
 

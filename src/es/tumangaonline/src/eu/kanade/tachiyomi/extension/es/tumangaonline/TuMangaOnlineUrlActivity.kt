@@ -8,7 +8,7 @@ import android.util.Log
 import kotlin.system.exitProcess
 
 /**
- * Springboard that accepts https://lectortmo.com/library/:type/:id/:slug intents and redirects them to
+ * Springboard that accepts https://visortmo.com/library/:type/:id/:slug intents and redirects them to
  * the main Tachiyomi process.
  */
 class TuMangaOnlineUrlActivity : Activity() {

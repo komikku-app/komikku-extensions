@@ -14,7 +14,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="lectortmo.com"
+                    android:host="visortmo.com"
                     android:pathPattern="/library/..*/..*/..*"
                     android:scheme="https" />
             </intent-filter>
