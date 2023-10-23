@@ -34,6 +34,7 @@ import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
 class Tachidesk : ConfigurableSource, UnmeteredSource, HttpSource() {
@@ -51,6 +52,7 @@ class Tachidesk : ConfigurableSource, UnmeteredSource, HttpSource() {
     override val client: OkHttpClient =
         network.client.newBuilder()
             .dns(Dns.SYSTEM) // don't use DNS over HTTPS as it breaks IP addressing
+            .callTimeout(2, TimeUnit.MINUTES)
             .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder().apply {
