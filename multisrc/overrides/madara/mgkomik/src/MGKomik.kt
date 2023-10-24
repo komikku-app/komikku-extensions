@@ -7,6 +7,7 @@ import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 class MGKomik : Madara("MG Komik", "https://mgkomik.id", "id", SimpleDateFormat("dd MMM yy", Locale.US)) {
 
@@ -24,13 +25,18 @@ class MGKomik : Madara("MG Komik", "https://mgkomik.id", "id", SimpleDateFormat(
         .add("Sec-Fetch-Mode", "navigate")
         .add("Sec-Fetch-Site", "same-origin")
         .add("Upgrade-Insecure-Requests", "1")
-        .add("X-Requested-With", someBrowserName.random())
+        .add("X-Requested-With", randomString)
 
-    private val someBrowserName = arrayOf(
-        "org.mozilla.firefox",
-        "com.apple.safari",
-        "org.chromium.chrome",
-    )
+    private fun generateRandomString(length: Int): String {
+        val charset = "HALOGaES.BCDFHIJKMNPQRTUVWXYZ.bcdefghijklmnopqrstuvwxyz0123456789"
+        return (1..length)
+            .map { charset.random() }
+            .joinToString("")
+    }
+
+    private val randomLength = Random.Default.nextInt(13, 21)
+
+    private val randomString = generateRandomString(randomLength)
 
     override val mangaSubString = "komik"
 
