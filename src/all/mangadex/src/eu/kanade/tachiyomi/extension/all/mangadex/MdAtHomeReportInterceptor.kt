@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 
 import android.util.Log
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.ImageReportDto
-import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -68,10 +67,15 @@ class MdAtHomeReportInterceptor(
         Log.e("MangaDex", "Error connecting to MD@Home node, fallback to uploads server")
 
         val fallbackUrl = MDConstants.cdnUrl.toHttpUrl().newBuilder()
-            .addPathSegments(originalRequest.url.pathSegments.joinToString("/"))
+            .addPathSegments(originalRequest.url.pathSegments.dropWhile{ it != "data" && it != "data-saver" }.joinToString("/"))
             .build()
 
-        return client.newCall(GET(fallbackUrl, headers)).execute()
+        val fallbackRequest = originalRequest.newBuilder()
+            .url(fallbackUrl)
+            .headers(headers)
+            .build()
+
+        return chain.proceed(fallbackRequest)
     }
 
     companion object {
