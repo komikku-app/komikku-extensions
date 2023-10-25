@@ -130,7 +130,7 @@ class YugenMangas : ParsedHttpSource() {
             .set("Referer", getChapterUrl(chapter))
             .build()
 
-        return GET("$baseUrl/api/serie/${paths[1]}/chapter/${paths[2]}/images", newHeaders)
+        return GET("$baseUrl/api/serie/${paths[1]}/chapter/${paths[2]}/images/imgs", newHeaders)
     }
 
     override fun pageListParse(response: Response): List<Page> {
