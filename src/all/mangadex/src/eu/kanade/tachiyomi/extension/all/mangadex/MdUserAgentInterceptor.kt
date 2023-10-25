@@ -19,29 +19,22 @@ class MdUserAgentInterceptor(
             MDConstants.defaultUserAgent,
         )
 
-    private fun getUserAgent(): String? {
-        return preferences.customUserAgent
-    }
-
     override fun intercept(chain: Interceptor.Chain): Response {
-        try {
-            val originalRequest = chain.request()
+        val originalRequest = chain.request()
 
-            val newUserAgent = getUserAgent() ?: return chain.proceed(originalRequest)
+        val newUserAgent = preferences.customUserAgent
+            ?: return chain.proceed(originalRequest)
 
-            val originalHeaders = originalRequest.headers
+        val originalHeaders = originalRequest.headers
 
-            val modifiedHeaders = originalHeaders.newBuilder()
-                .set("User-Agent", newUserAgent)
-                .build()
+        val modifiedHeaders = originalHeaders.newBuilder()
+            .set("User-Agent", newUserAgent)
+            .build()
 
-            return chain.proceed(
-                originalRequest.newBuilder()
-                    .headers(modifiedHeaders)
-                    .build(),
-            )
-        } catch (e: Exception) {
-            throw IOException("MdUserAgentInterceptor failed with error: ${e.message}")
-        }
+        val modifiedRequest = originalRequest.newBuilder()
+            .headers(modifiedHeaders)
+            .build()
+
+        return chain.proceed(modifiedRequest)
     }
 }
