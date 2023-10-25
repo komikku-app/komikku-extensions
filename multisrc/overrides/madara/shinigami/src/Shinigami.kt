@@ -19,15 +19,11 @@ class Shinigami : Madara("Shinigami", "https://shinigami.sh", "id") {
         .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
-        .add("Referer", "$baseUrl/")
         .add("Sec-Fetch-Dest", "document")
         .add("Sec-Fetch-Mode", "navigate")
         .add("Sec-Fetch-Site", "same-origin")
         .add("Upgrade-Insecure-Requests", "1")
-        .add("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$randomVersionNumber.0.0.0 Mobile Safari/537.3")
         .add("X-Requested-With", randomString)
-
-    private val randomVersionNumber = Random.Default.nextInt(112, 118)
 
     private fun generateRandomString(length: Int): String {
         val charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.abcdefghijklmnopqrstuvwxyz.0123456789"
