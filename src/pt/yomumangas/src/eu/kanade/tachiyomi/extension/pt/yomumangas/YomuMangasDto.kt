@@ -32,7 +32,7 @@ data class YomuMangasSeriesDto(
     val id: Int,
     val slug: String,
     val title: String,
-    val cover: String,
+    val cover: String? = null,
     val status: String,
     val authors: List<String>? = emptyList(),
     val artists: List<String>? = emptyList(),
@@ -56,7 +56,7 @@ data class YomuMangasSeriesDto(
             "TRANSLATING" -> SManga.PUBLISHING_FINISHED
             else -> SManga.UNKNOWN
         }
-        thumbnail_url = "${YomuMangas.CDN_URL}/$cover"
+        thumbnail_url = cover?.let { "${YomuMangas.CDN_URL}/$it" }
         url = "/manga/$id/$slug"
     }
 }
@@ -84,7 +84,7 @@ data class YomuMangasChapterDto(
 
     companion object {
         private val DATE_FORMATTER by lazy {
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", Locale.US)
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
         }
     }
 }
