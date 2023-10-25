@@ -63,7 +63,7 @@ body:
       description: |
         You can find your Tachiyomi version in **More → About**.
       placeholder: |
-        Example: "0.14.6"
+        Example: "0.14.7"
     validations:
       required: true
 
@@ -95,7 +95,7 @@ body:
           required: true
         - label: I have written a short but informative title.
           required: true
-        - label: I have updated the app to version **[0.14.6](https://github.com/tachiyomiorg/tachiyomi/releases/latest)**.
+        - label: I have updated the app to version **[0.14.7](https://github.com/tachiyomiorg/tachiyomi/releases/latest)**.
           required: true
         - label: I have updated all installed extensions.
           required: true
