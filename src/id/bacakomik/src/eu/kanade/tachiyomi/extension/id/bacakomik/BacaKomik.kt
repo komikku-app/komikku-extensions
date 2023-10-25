@@ -1,13 +1,13 @@
 package eu.kanade.tachiyomi.extension.id.bacakomik
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -22,13 +22,16 @@ class BacaKomik : ParsedHttpSource() {
     override val baseUrl = "https://bacakomik.me"
     override val lang = "id"
     override val supportsLatest = true
-    override val client: OkHttpClient = network.cloudflareClient
     private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
 
     // similar/modified theme of "https://komikindo.id"
 
     // Formerly "Bacakomik" -> now "BacaKomik"
     override val id = 4383360263234319058
+
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .rateLimit(20, 5)
+        .build()
 
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/daftar-manga/page/$page/?order=popular", headers)
@@ -51,11 +54,10 @@ class BacaKomik : ParsedHttpSource() {
 
     override fun searchMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
+        manga.setUrlWithoutDomain(element.select("div.animposx > a").first()!!.attr("href"))
+        manga.title = element.select(".animposx .tt h4").text()
         manga.thumbnail_url = element.select("div.limit img").attr("src")
-        element.select("div.animposx > a").first()!!.let {
-            manga.setUrlWithoutDomain(it.attr("href"))
-            manga.title = it.attr("title")
-        }
+
         return manga
     }
 
@@ -100,18 +102,19 @@ class BacaKomik : ParsedHttpSource() {
         val infoElement = document.select("div.infoanime").first()!!
         val descElement = document.select("div.desc > .entry-content.entry-content-single").first()!!
         val manga = SManga.create()
+        manga.title = document.select("#breadcrumbs li:last-child span").text()
         // need authorCleaner to take "pengarang:" string to remove it from author
         val authorCleaner = document.select(".infox .spe b:contains(Pengarang)").text()
         manga.author = document.select(".infox .spe span:contains(Pengarang)").text().substringAfter(authorCleaner)
         manga.artist = manga.author
         val genres = mutableListOf<String>()
-        infoElement.select(".infox > .genre-info > a").forEach { element ->
+        infoElement.select(".infox > .genre-info > a, .infox .spe span:contains(Jenis Komik) a").forEach { element ->
             val genre = element.text()
             genres.add(genre)
         }
         manga.genre = genres.joinToString(", ")
         manga.status = parseStatus(infoElement.select(".infox > .spe > span:nth-child(1)").text())
-        manga.description = descElement.select("p").text()
+        manga.description = descElement.select("p").text().substringAfter("bercerita tentang ")
         manga.thumbnail_url = document.select(".thumb > img:nth-child(1)").attr("src")
         return manga
     }
@@ -185,35 +188,25 @@ class BacaKomik : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
         var i = 0
-        val cdnUrl = "https://ttl.bakul.buzz/" // change with correct CDN url
-        document.getElementsByTag("img").forEach { element ->
+        document.select("div:has(>img[alt*=\"Chapter\"]) img").forEach { element ->
             val url = element.attr("onError").substringAfter("src='").substringBefore("';")
-            if (url.startsWith(cdnUrl)) {
-                i++
-                if (url.isNotEmpty()) {
-                    pages.add(Page(i, "", url))
-                }
+            i++
+            if (url.isNotEmpty()) {
+                pages.add(Page(i, "", url))
             }
         }
         return pages
     }
 
-    override fun imageUrlParse(document: Document) = ""
+    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not Used")
 
     override fun imageRequest(page: Page): Request {
-        return if (page.imageUrl!!.contains("i2.wp.com")) {
-            val headers = Headers.Builder()
-            headers.apply {
-                add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3")
-            }
-            GET(page.imageUrl!!, headers.build())
-        } else {
-            val imgHeader = Headers.Builder().apply {
-                add("User-Agent", "Mozilla/5.0 (Linux; U; Android 4.1.1; en-gb; Build/KLP) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Safari/534.30")
-                add("Referer", baseUrl)
-            }.build()
-            GET(page.imageUrl!!, imgHeader)
-        }
+        val newHeaders = headersBuilder()
+            .set("Accept", "image/avif,image/webp,image/png,image/jpeg,*/*")
+            .set("Referer", page.url)
+            .build()
+
+        return GET(page.imageUrl!!, newHeaders)
     }
 
     private class AuthorFilter : Filter.Text("Author")
