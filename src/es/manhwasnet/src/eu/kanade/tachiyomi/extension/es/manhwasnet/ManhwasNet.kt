@@ -84,7 +84,7 @@ class ManhwasNet : ParsedHttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/esp", headers)
+        return GET(baseUrl, headers)
     }
 
     override fun latestUpdatesSelector() = popularMangaSelector()
