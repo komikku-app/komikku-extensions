@@ -27,7 +27,7 @@ class MangaSwat : MangaThemesia(
     "ar",
     dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("ar")),
 ) {
-    private val defaultBaseUrl = "https://swatmanga.co"
+    private val defaultBaseUrl = "https://goldragon.me"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
