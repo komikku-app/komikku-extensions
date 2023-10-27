@@ -99,7 +99,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Mirai Scans", "https://miraiscans.com", "id"),
         SingleLang("MirrorDesu", "https://mirrordesu.me", "id", isNsfw = true),
         SingleLang("Moon Daisy Scans", "https://moondaisyscans.com", "tr", isNsfw = true),
-        SingleLang("Mundo Mangá-Kun", "https://mundomangakun.com.br", "pt-BR", className = "MundoMangaKun", isNsfw = true),
         SingleLang("Nekomik", "https://nekomik.me", "id", overrideVersionCode = 2),
         SingleLang("Ngomik", "https://ngomik.net", "id", overrideVersionCode = 2),
         SingleLang("NIGHT SCANS", "https://nightscans.net", "en", isNsfw = true, className = "NightScans", overrideVersionCode = 3),
