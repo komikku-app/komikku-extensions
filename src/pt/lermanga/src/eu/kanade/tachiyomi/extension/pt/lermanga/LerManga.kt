@@ -101,11 +101,21 @@ class LerManga : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.selectFirst("h1.heading-header + script[src^=data]")!!
-            .attr("src")
-            .substringAfter("base64,")
-            .let { Base64.decode(it, Base64.DEFAULT).toString(charset("UTF-8")) }
-            .substringAfter("var imagens_cap=")
+        val pagesScript = document.selectFirst("h1.heading-header + script")
+            ?: return emptyList()
+
+        val pagesJson = when {
+            pagesScript.hasAttr("src") -> {
+                pagesScript.attr("src")
+                    .substringAfter("base64,")
+                    .let { Base64.decode(it, Base64.DEFAULT).toString(Charsets.UTF_8) }
+            }
+            else -> pagesScript.data()
+        }
+
+        return pagesJson
+            .replace(PAGES_VARIABLE_REGEX, "")
+            .substringBeforeLast(";")
             .let { json.decodeFromString<List<String>>(it) }
             .mapIndexed { index, imageUrl ->
                 Page(index, document.location(), imageUrl)
@@ -133,6 +143,7 @@ class LerManga : ParsedHttpSource() {
     }
 
     companion object {
+        private val PAGES_VARIABLE_REGEX = "var imagens_cap\\s*=\\s*".toRegex()
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("dd-MM-yyyy", Locale("pt", "BR"))
         }
