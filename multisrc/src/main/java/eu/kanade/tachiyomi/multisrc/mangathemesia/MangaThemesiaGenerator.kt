@@ -40,6 +40,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true),
         SingleLang("Freak Scans", "https://freakscans.com", "en"),
         SingleLang("Gecenin Lordu", "https://geceninlordu.com", "tr", overrideVersionCode = 1),
+        SingleLang("Glory Scans", "https://gloryscans.fr", "fr"),
         SingleLang("GoGoManga", "https://gogomanga.fun", "en", overrideVersionCode = 1),
         SingleLang("Gremory Mangas", "https://gremorymangas.com", "es"),
         SingleLang("Hanuman Scan", "https://hanumanscan.com", "en"),
