@@ -139,7 +139,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Tarot Scans", "https://www.tarotscans.com", "tr"),
         SingleLang("Tecno Scan", "https://tecnoscann.com", "es", isNsfw = true, overrideVersionCode = 6),
         SingleLang("TenkaiScan", "https://tenkaiscan.net", "es", isNsfw = true),
-        SingleLang("Tenshi.id", "https://tenshi.id", "id", className = "TenshiId", pkgName = "masterkomik", overrideVersionCode = 3),
+        SingleLang("Tenshi.id", "https://tenshi.id", "id", className = "TenshiId", pkgName = "masterkomik", overrideVersionCode = 4),
         SingleLang("The Apollo Team", "https://theapollo.team", "en"),
         SingleLang("Tsundoku Traduções", "https://tsundoku.com.br", "pt-BR", className = "TsundokuTraducoes", overrideVersionCode = 9),
         SingleLang("TukangKomik", "https://tukangkomik.id", "id", overrideVersionCode = 1),
