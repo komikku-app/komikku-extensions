@@ -194,6 +194,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("LHTranslation", "https://lhtranslation.net", "en", overrideVersionCode = 1),
         SingleLang("Lily Manga", "https://lilymanga.net", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("Limbo Scan", "https://limboscan.com.br", "pt-BR", isNsfw = true),
+        SingleLang("Link Start Scan", "https://www.linkstartscan.xyz", "pt-BR", isNsfw = true),
         SingleLang("Lolicon", "https://lolicon.mobi", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Lord Manga", "https://lordmanga.com", "en"),
         SingleLang("Leviatan Scans", "https://lscomic.com", "en", overrideVersionCode = 15),
