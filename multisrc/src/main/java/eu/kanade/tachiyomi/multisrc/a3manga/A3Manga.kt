@@ -147,7 +147,7 @@ open class A3Manga(
         }.getOrNull() ?: 0
     }
 
-    override fun pageListParse(document: Document): List<Page> {
+    protected fun decodeImgList(document: Document): String {
         val htmlContentScript = document.selectFirst("script:containsData(htmlContent)")?.html()
             ?.substringAfter("var htmlContent=\"")
             ?.substringBefore("\";")
@@ -174,6 +174,12 @@ open class A3Manga(
         cipher.init(Cipher.DECRYPT_MODE, keyS, IvParameterSpec(iv))
 
         val imgListHtml = cipher.doFinal(ciphertext).toString(Charsets.UTF_8)
+
+        return imgListHtml
+    }
+
+    override fun pageListParse(document: Document): List<Page> {
+        val imgListHtml = decodeImgList(document)
 
         return Jsoup.parseBodyFragment(imgListHtml).select("img").mapIndexed { idx, it ->
             Page(idx, imageUrl = it.attr("abs:src"))
