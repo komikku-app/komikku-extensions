@@ -15,7 +15,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         MultiLang("Asura Scans", "https://asuratoon.com", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 31),
-        MultiLang("Flame Scans", "https://flamescans.org", listOf("en"), className = "FlameScansFactory", pkgName = "flamescans", overrideVersionCode = 5),
         MultiLang("Miau Scan", "https://miauscans.com", listOf("es", "pt-BR"), overrideVersionCode = 1),
         SingleLang("AiYuManga", "https://aiyumanhua.com", "es", overrideVersionCode = 8),
         SingleLang("Alceascan", "https://alceascan.my.id", "id"),
@@ -37,6 +36,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("EnryuManga", "https://enryumanga.com", "en"),
         SingleLang("Epsilon Scan", "https://epsilonscan.fr", "fr", isNsfw = true),
         SingleLang("Fairy Manga", "https://fairymanga.com", "en", className = "QueenScans", overrideVersionCode = 1),
+        SingleLang("Flame Comics", "https://flamecomics.com", "en"),
         SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true),
         SingleLang("Freak Scans", "https://freakscans.com", "en"),
         SingleLang("Gecenin Lordu", "https://geceninlordu.com", "tr", overrideVersionCode = 1),

@@ -1,7 +1,6 @@
-package eu.kanade.tachiyomi.extension.all.flamescans
+package eu.kanade.tachiyomi.extension.en.flamecomics
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -9,7 +8,7 @@ import android.graphics.Rect
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
-import eu.kanade.tachiyomi.source.ConfigurableSource
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -17,7 +16,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -26,28 +24,23 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.ByteArrayOutputStream
-import java.text.SimpleDateFormat
-import java.util.Locale
 
-open class FlameScans(
-    override val baseUrl: String,
-    override val lang: String,
-    mangaUrlDirectory: String,
-    dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US),
-) : MangaThemesia(
-    "Flame Scans",
-    baseUrl,
-    lang,
-    mangaUrlDirectory = mangaUrlDirectory,
-    dateFormat = dateFormat,
-),
-    ConfigurableSource {
+class FlameComics : MangaThemesia(
+    "Flame Comics",
+    "https://flamecomics.com",
+    "en",
+    mangaUrlDirectory = "/series",
+) {
 
-    private val preferences: SharedPreferences by lazy {
+    // Flame Scans -> Flame Comics
+    override val id = 6350607071566689772
+
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override val client: OkHttpClient = super.client.newBuilder()
+    override val client = super.client.newBuilder()
+        .rateLimit(2, 7)
         .addInterceptor(::composedImageIntercept)
         .build()
 
