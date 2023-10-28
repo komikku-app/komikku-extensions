@@ -166,6 +166,7 @@ class ComicFury(
     }
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val req: HttpUrl.Builder = "$baseUrl/search.php".toHttpUrl().newBuilder()
+        req.addQueryParameter("query", query)
         req.addQueryParameter("page", page.toString())
         req.addQueryParameter("language", siteLang)
         filters.forEach {
