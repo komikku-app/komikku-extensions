@@ -65,7 +65,6 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Komiku.com", "https://komiku.com", "id", className = "KomikuCom"),
         SingleLang("Kuma Scans (Kuma Translation)", "https://kumascans.com", "en", className = "KumaScans", overrideVersionCode = 1),
         SingleLang("Legacy Scans", "https://legacy-scans.com", "fr", pkgName = "flamescansfr"),
-        SingleLang("Legion Scan", "https://legionscans.com", "es", overrideVersionCode = 6),
         SingleLang("Lelmanga", "https://www.lelmanga.com", "fr"),
         SingleLang("LianScans", "https://www.lianscans.my.id", "id", isNsfw = true),
         SingleLang("Lunar Scans", "https://lunarscan.org", "en", isNsfw = true, overrideVersionCode = 1),
