@@ -61,6 +61,13 @@ jobs:
                 "ignoreCase": true,
                 "labels": ["Cloudflare protected"],
                 "message": "Refer to the **Solving Cloudflare issues** section at https://tachiyomi.org/docs/guides/troubleshooting/#cloudflare. If it doesn't work, migrate to other sources or wait until they lower their protection."
+              },
+              {
+                "type": "both",
+                "regex": ".*(slime\\s*read).*",
+                "ignoreCase": true,
+                "labels": ["invalid"],
+                "message": "{match} will not be added as they're just mirroring content from MangaDex and have relations to the MangaLivre team. Use the MangaDex extension directly instead."
               }
             ]
           auto-close-ignore-label: do-not-autoclose
