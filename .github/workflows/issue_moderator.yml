@@ -67,7 +67,7 @@ jobs:
                 "regex": ".*(slime\\s*read).*",
                 "ignoreCase": true,
                 "labels": ["invalid"],
-                "message": "{match} will not be added as they're just mirroring content from MangaDex and have relations to the MangaLivre team. Use the MangaDex extension directly instead."
+                "message": "{match} will not be added as they have relations to the Mangá Livre team. Read [this](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
               }
             ]
           auto-close-ignore-label: do-not-autoclose
