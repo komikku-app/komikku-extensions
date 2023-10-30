@@ -15,15 +15,13 @@ class MGKomik : Madara("MG Komik", "https://mgkomik.id", "id", SimpleDateFormat(
         .rateLimit(20, 5, TimeUnit.SECONDS)
         .build()
 
-    override val chapterUrlSuffix = ""
-
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
         .add("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
-        .add("Referer", "$baseUrl/")
         .add("Sec-Fetch-Dest", "document")
         .add("Sec-Fetch-Mode", "navigate")
         .add("Sec-Fetch-Site", "same-origin")
+        .add("Sec-Fetch-User", "?1")
         .add("Upgrade-Insecure-Requests", "1")
         .add("X-Requested-With", randomString)
 
@@ -34,6 +32,8 @@ class MGKomik : Madara("MG Komik", "https://mgkomik.id", "id", SimpleDateFormat(
             .joinToString("")
     }
 
+    override fun searchPage(page: Int): String = if (page > 1) "page/$page/" else ""
+
     private val randomLength = Random.Default.nextInt(13, 21)
 
     private val randomString = generateRandomString(randomLength)
@@ -41,4 +41,6 @@ class MGKomik : Madara("MG Komik", "https://mgkomik.id", "id", SimpleDateFormat(
     override val mangaSubString = "komik"
 
     override fun searchMangaNextPageSelector() = "a.page.larger"
+
+    override val chapterUrlSuffix = ""
 }
