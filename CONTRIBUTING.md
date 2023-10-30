@@ -176,6 +176,13 @@ Each extension should reside in `src/<lang>/<mysourcename>`. Use `all` as `<lang
 
 The `<lang>` used in the folder inside `src` should be the major `language` part. For example, if you will be creating a `pt-BR` source, use `<lang>` here as `pt` only. Inside the source class, use the full locale string instead.
 
+### Loading a subset of Gradle modules
+
+By default, all individual and generated multisrc extensions are loaded for local development. 
+This may be inconvenient if you only need to work on one extension at a time.
+
+To adjust which modules are loaded, make adjustments to the `settings.gradle.kts` file as needed.
+
 #### Extension file structure
 
 The simplest extension structure looks like this:
