@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -59,7 +60,7 @@ abstract class ComickFun(
             key = IGNORED_GROUPS_PREF
             title = "Ignored Groups"
             summary =
-                "Chapters from these groups won't be shown.\nComma-separated list of group names (case-insensitive)"
+                "Chapters from these groups won't be shown.\nOne group name per line (case-insensitive)"
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit()
@@ -67,17 +68,32 @@ abstract class ComickFun(
                     .commit()
             }
         }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = INCLUDE_MU_TAGS_PREF
+            title = "Include Tags"
+            summaryOn = "More specific, but might contain spoilers!"
+            summaryOff = "Only the broader genres"
+            setDefaultValue(true)
+        }.also(screen::addPreference)
     }
 
     private val SharedPreferences.ignoredGroups
         get() = getString(IGNORED_GROUPS_PREF, "")
             ?.lowercase()
-            ?.split(",")
+            ?.split("\n")
             ?.map(String::trim)
             ?.filter(String::isNotEmpty)
             ?.sorted()
             .orEmpty()
             .toSet()
+
+    private val SharedPreferences.includeMuTags
+        get() = getBoolean(INCLUDE_MU_TAGS_PREF, true)
+
+    init {
+        preferences.newLineIgnoredGroups()
+    }
 
     override fun headersBuilder() = Headers.Builder().apply {
         add("Referer", "$baseUrl/")
@@ -263,7 +279,7 @@ abstract class ComickFun(
 
     override fun mangaDetailsParse(response: Response): SManga {
         val mangaData = response.parseAs<Manga>()
-        return mangaData.toSManga()
+        return mangaData.toSManga(includeMuTags = preferences.includeMuTags)
     }
 
     override fun getMangaUrl(manga: SManga): String {
@@ -347,9 +363,28 @@ abstract class ComickFun(
 
     override fun getFilterList() = getFilters()
 
+    private fun SharedPreferences.newLineIgnoredGroups() {
+        if (getBoolean(MIGRATED_IGNORED_GROUPS, false)) return
+        val ignoredGroups = getString(IGNORED_GROUPS_PREF, "").orEmpty()
+
+        edit()
+            .putString(
+                IGNORED_GROUPS_PREF,
+                ignoredGroups
+                    .split(",")
+                    .map(String::trim)
+                    .filter(String::isNotEmpty)
+                    .joinToString("\n"),
+            )
+            .putBoolean(MIGRATED_IGNORED_GROUPS, true)
+            .apply()
+    }
+
     companion object {
         const val SLUG_SEARCH_PREFIX = "id:"
         private const val IGNORED_GROUPS_PREF = "IgnoredGroups"
+        private const val INCLUDE_MU_TAGS_PREF = "IncludeMangaUpdatesTags"
+        private const val MIGRATED_IGNORED_GROUPS = "MigratedIgnoredGroups"
         private const val limit = 20
         val dateFormat by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH).apply {
