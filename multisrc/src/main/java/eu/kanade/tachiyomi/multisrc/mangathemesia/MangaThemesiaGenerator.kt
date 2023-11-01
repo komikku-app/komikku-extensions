@@ -145,7 +145,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("TurkToon", "https://turktoon.com", "tr"),
         SingleLang("Uzay Manga", "https://uzaymanga.com", "tr", overrideVersionCode = 6),
         SingleLang("Walpurgi Scan", "https://www.walpurgiscan.it", "it", overrideVersionCode = 7, className = "WalpurgisScan", pkgName = "walpurgisscan"),
-        SingleLang("West Manga", "https://westmanga.info", "id", overrideVersionCode = 1),
+        SingleLang("West Manga", "https://westmanga.org", "id", overrideVersionCode = 2),
         SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 11),
         SingleLang("xCaliBR Scans", "https://xcalibrscans.com", "en", overrideVersionCode = 5),
         SingleLang("YumeKomik", "https://yumekomik.com", "id", isNsfw = true, className = "YumeKomik", pkgName = "inazumanga", overrideVersionCode = 6),
