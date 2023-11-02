@@ -44,7 +44,7 @@ class MangaRawClub : ParsedHttpSource() {
         return GET("$baseUrl/jumbo/manga/?results=$page", headers)
     }
 
-    override fun searchMangaSelector() = "ul.novel-list > li.novel-item"
+    override fun searchMangaSelector() = "ul.novel-list.chapters > li.novel-item"
     override fun popularMangaSelector() = searchMangaSelector()
     override fun latestUpdatesSelector() = searchMangaSelector()
 
