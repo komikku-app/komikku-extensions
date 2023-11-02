@@ -317,6 +317,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Mangaxico", "https://mangaxico.com", "es", isNsfw = true),
         SingleLang("MangaXP", "https://mangaxp.com", "en", overrideVersionCode = 1),
         SingleLang("MangaYami", "https://www.mangayami.club", "en", overrideVersionCode = 2),
+        SingleLang("Manhastro", "https://manhastro.com", "pt-BR"),
         SingleLang("Manhatic", "https://manhatic.com", "ar", isNsfw = true),
         SingleLang("Manhua ES", "https://manhuaes.com", "en", overrideVersionCode = 6),
         SingleLang("Manhua Kiss", "https://manhuakiss.com", "en", isNsfw = true, overrideVersionCode = 1),
