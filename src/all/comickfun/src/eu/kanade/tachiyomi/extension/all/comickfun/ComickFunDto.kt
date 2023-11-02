@@ -56,7 +56,7 @@ data class Manga(
             addAll(comic.mdGenres.mapNotNull { it.name })
             if (includeMuTags) {
                 comic.muGenres.categories.forEach { category ->
-                    category.category?.title?.let { add(Name(it)) }
+                    category?.category?.title?.let { add(Name(it)) }
                 }
             }
         }
@@ -78,7 +78,7 @@ data class Comic(
     @SerialName("md_covers") val mdCovers: List<MDcovers> = emptyList(),
     @SerialName("cover_url") val cover: String? = null,
     @SerialName("md_comic_md_genres") val mdGenres: List<MdGenres>,
-    @SerialName("mu_comics") val muGenres: MuComicCategories,
+    @SerialName("mu_comics") val muGenres: MuComicCategories = MuComicCategories(emptyList()),
 ) {
     val origination = when (country) {
         "jp" -> Name("Manga")
@@ -95,7 +95,7 @@ data class MdGenres(
 
 @Serializable
 data class MuComicCategories(
-    @SerialName("mu_comic_categories") val categories: List<MuCategories> = emptyList(),
+    @SerialName("mu_comic_categories") val categories: List<MuCategories?> = emptyList(),
 )
 
 @Serializable

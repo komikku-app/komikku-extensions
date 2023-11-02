@@ -74,11 +74,17 @@ abstract class ComickFun(
             title = "Include Tags"
             summaryOn = "More specific, but might contain spoilers!"
             summaryOff = "Only the broader genres"
-            setDefaultValue(true)
+            setDefaultValue(INCLUDE_MU_TAGS_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit()
+                    .putBoolean(INCLUDE_MU_TAGS_PREF, newValue as Boolean)
+                    .commit()
+            }
         }.also(screen::addPreference)
     }
 
-    private val SharedPreferences.ignoredGroups
+    private val SharedPreferences.ignoredGroups: Set<String>
         get() = getString(IGNORED_GROUPS_PREF, "")
             ?.lowercase()
             ?.split("\n")
@@ -88,8 +94,8 @@ abstract class ComickFun(
             .orEmpty()
             .toSet()
 
-    private val SharedPreferences.includeMuTags
-        get() = getBoolean(INCLUDE_MU_TAGS_PREF, true)
+    private val SharedPreferences.includeMuTags: Boolean
+        get() = getBoolean(INCLUDE_MU_TAGS_PREF, INCLUDE_MU_TAGS_DEFAULT)
 
     init {
         preferences.newLineIgnoredGroups()
@@ -384,6 +390,7 @@ abstract class ComickFun(
         const val SLUG_SEARCH_PREFIX = "id:"
         private const val IGNORED_GROUPS_PREF = "IgnoredGroups"
         private const val INCLUDE_MU_TAGS_PREF = "IncludeMangaUpdatesTags"
+        private const val INCLUDE_MU_TAGS_DEFAULT = false
         private const val MIGRATED_IGNORED_GROUPS = "MigratedIgnoredGroups"
         private const val limit = 20
         val dateFormat by lazy {
