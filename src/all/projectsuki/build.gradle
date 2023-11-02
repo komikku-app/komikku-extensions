@@ -1,0 +1,15 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Project Suki'
+    pkgNameSuffix = 'all.projectsuki'
+    extClass = '.ProjectSuki'
+    extVersionCode = 1
+}
+
+dependencies {
+    implementation(project(":lib-randomua"))
+}
+
+apply from: "$rootDir/common.gradle"
