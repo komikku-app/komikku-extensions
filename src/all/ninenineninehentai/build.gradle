@@ -6,7 +6,7 @@ ext {
     extName = '999Hentai'
     pkgNameSuffix = 'all.ninenineninehentai'
     extClass = '.NineNineNineHentaiFactory'
-    extVersionCode = 3
+    extVersionCode = 4
     isNsfw = true
 }
 
