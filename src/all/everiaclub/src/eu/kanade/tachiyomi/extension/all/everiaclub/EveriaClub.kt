@@ -73,7 +73,7 @@ class EveriaClub() : ParsedHttpSource() {
         }
     }
 
-    override fun searchMangaSelector() = latestUpdatesSelector()
+    override fun searchMangaSelector() = "#content > article"
 
     // Details
     override fun mangaDetailsParse(document: Document): SManga {
