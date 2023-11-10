@@ -63,6 +63,8 @@ abstract class HeanCms(
 
     protected open val coverPath: String = "cover/"
 
+    protected open val mangaSubDirectory: String = "series"
+
     protected open val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", Locale.US)
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
@@ -116,7 +118,7 @@ abstract class HeanCms(
                     preferences.slugMap = preferences.slugMap.toMutableMap()
                         .also { map -> map[it.slug.toPermSlugIfNeeded()] = it.slug }
                 }
-                it.toSManga(apiUrl, coverPath, slugStrategy)
+                it.toSManga(apiUrl, coverPath, mangaSubDirectory, slugStrategy)
             }
 
             fetchAllTitles()
@@ -130,7 +132,7 @@ abstract class HeanCms(
                     preferences.slugMap = preferences.slugMap.toMutableMap()
                         .also { map -> map[it.slug.toPermSlugIfNeeded()] = it.slug }
                 }
-                it.toSManga(apiUrl, coverPath, slugStrategy)
+                it.toSManga(apiUrl, coverPath, mangaSubDirectory, slugStrategy)
             }
 
         fetchAllTitles()
@@ -186,9 +188,9 @@ abstract class HeanCms(
         val manga = SManga.create().apply {
             url = if (slugStrategy != SlugStrategy.NONE) {
                 val mangaId = getIdBySlug(slug)
-                "/series/${slug.toPermSlugIfNeeded()}#$mangaId"
+                "/$mangaSubDirectory/${slug.toPermSlugIfNeeded()}#$mangaId"
             } else {
-                "/series/$slug"
+                "/$mangaSubDirectory/$slug"
             }
         }
 
@@ -285,7 +287,7 @@ abstract class HeanCms(
                 .filter { it.type == "Comic" }
                 .map {
                     it.slug = it.slug.toPermSlugIfNeeded()
-                    it.toSManga(apiUrl, coverPath, seriesSlugMap.orEmpty(), slugStrategy)
+                    it.toSManga(apiUrl, coverPath, mangaSubDirectory, seriesSlugMap.orEmpty(), slugStrategy)
                 }
 
             return MangasPage(mangaList, false)
@@ -298,7 +300,7 @@ abstract class HeanCms(
                     preferences.slugMap = preferences.slugMap.toMutableMap()
                         .also { map -> map[it.slug.toPermSlugIfNeeded()] = it.slug }
                 }
-                it.toSManga(apiUrl, coverPath, slugStrategy)
+                it.toSManga(apiUrl, coverPath, mangaSubDirectory, slugStrategy)
             }
 
             fetchAllTitles()
@@ -312,7 +314,7 @@ abstract class HeanCms(
                     preferences.slugMap = preferences.slugMap.toMutableMap()
                         .also { map -> map[it.slug.toPermSlugIfNeeded()] = it.slug }
                 }
-                it.toSManga(apiUrl, coverPath, slugStrategy)
+                it.toSManga(apiUrl, coverPath, mangaSubDirectory, slugStrategy)
             }
 
         fetchAllTitles()
@@ -332,7 +334,7 @@ abstract class HeanCms(
             seriesSlug
         }
 
-        return "$baseUrl/series/$currentSlug"
+        return "$baseUrl/$mangaSubDirectory/$currentSlug"
     }
 
     override fun mangaDetailsRequest(manga: SManga): Request {
@@ -380,7 +382,7 @@ abstract class HeanCms(
                 .also { it[seriesResult.slug.toPermSlugIfNeeded()] = seriesResult.slug }
         }
 
-        val seriesDetails = seriesResult.toSManga(apiUrl, coverPath, slugStrategy)
+        val seriesDetails = seriesResult.toSManga(apiUrl, coverPath, mangaSubDirectory, slugStrategy)
 
         return seriesDetails.apply {
             status = status.takeUnless { it == SManga.UNKNOWN }
@@ -404,13 +406,13 @@ abstract class HeanCms(
             return result.seasons.orEmpty()
                 .flatMap { it.chapters.orEmpty() }
                 .filterNot { it.price == 1 }
-                .map { it.toSChapter(result.slug, dateFormat, slugStrategy) }
+                .map { it.toSChapter(result.slug, mangaSubDirectory, dateFormat, slugStrategy) }
                 .filter { it.date_upload <= currentTimestamp }
         }
 
         return result.chapters.orEmpty()
             .filterNot { it.price == 1 }
-            .map { it.toSChapter(result.slug, dateFormat, slugStrategy) }
+            .map { it.toSChapter(result.slug, mangaSubDirectory, dateFormat, slugStrategy) }
             .filter { it.date_upload <= currentTimestamp }
             .reversed()
     }
@@ -419,7 +421,7 @@ abstract class HeanCms(
         if (slugStrategy == SlugStrategy.NONE) return baseUrl + chapter.url
 
         val seriesSlug = chapter.url
-            .substringAfter("/series/")
+            .substringAfter("/$mangaSubDirectory/")
             .substringBefore("/")
             .toPermSlugIfNeeded()
 
@@ -432,7 +434,7 @@ abstract class HeanCms(
     override fun pageListRequest(chapter: SChapter): Request {
         if (useNewQueryEndpoint) {
             if (slugStrategy != SlugStrategy.NONE) {
-                val seriesPermSlug = chapter.url.substringAfter("/series/").substringBefore("/")
+                val seriesPermSlug = chapter.url.substringAfter("/$mangaSubDirectory/").substringBefore("/")
                 val seriesSlug = preferences.slugMap[seriesPermSlug] ?: seriesPermSlug
                 val chapterUrl = chapter.url.replaceFirst(seriesPermSlug, seriesSlug)
                 return GET(baseUrl + chapterUrl, headers)
