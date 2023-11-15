@@ -6,7 +6,7 @@ ext {
     extName = 'Nekopost'
     pkgNameSuffix = 'th.nekopost'
     extClass = '.Nekopost'
-    extVersionCode = 9
+    extVersionCode = 10
     isNsfw = true
 }
 
