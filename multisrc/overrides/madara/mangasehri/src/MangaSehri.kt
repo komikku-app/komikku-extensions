@@ -6,9 +6,11 @@ import java.util.Locale
 
 class MangaSehri : Madara(
     "Manga Şehri",
-    "https://mangasehri.com",
+    "https://manga-sehri.com",
     "tr",
     SimpleDateFormat("dd/MM/yyy", Locale("tr")),
 ) {
-    override val useNewChapterEndpoint = true
+    override val useNewChapterEndpoint = false
+
+    override fun searchPage(page: Int): String = if (page == 1) "" else "page/$page/"
 }

@@ -11,15 +11,26 @@ import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class EmpireWebtoon : Madara("Empire Webtoon", "https://webtoonempire.com", "ar", SimpleDateFormat("yyyy MMMMM dd", Locale("ar"))) {
+class EmpireWebtoon : Madara(
+    "Empire Webtoon",
+    "https://webtoonsempireron.com",
+    "ar",
+    SimpleDateFormat("d MMMM، yyyy", Locale("ar")),
+) {
 
-    private val defaultBaseUrl = "https://webtoonempire.com"
+    private val defaultBaseUrl = "https://webtoonsempireron.com"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
+
+    override val mangaSubString = "webtoon"
+
+    override val useNewChapterEndpoint = false
+
+    override fun searchPage(page: Int): String = if (page == 1) "" else "page/$page/"
 
     companion object {
         private const val RESTART_TACHIYOMI = "Restart Tachiyomi to apply new setting."

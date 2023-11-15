@@ -23,7 +23,7 @@ class MeituaTop : HttpSource() {
     override val lang = "all"
     override val supportsLatest = false
 
-    override val baseUrl = "https://meitu1.one"
+    override val baseUrl = "https://meitu1.xyz"
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/arttype/0b-$page.html", headers)
 
@@ -75,7 +75,7 @@ class MeituaTop : HttpSource() {
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         val chapter = SChapter.create().apply {
             url = manga.url
-            name = manga.title
+            name = "Gallery"
             date_upload = dateFormat.parse(manga.description!!)!!.time
             chapter_number = -2f
         }

@@ -6,9 +6,13 @@ import java.util.Locale
 
 class MangaSpark : Madara(
     "MangaSpark",
-    "https://mangaspark.com",
+    "https://mangaspark.org",
     "ar",
-    dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT),
+    dateFormat = SimpleDateFormat("d MMMM، yyyy", Locale("ar")),
 ) {
     override val chapterUrlSuffix = ""
+
+    override val useNewChapterEndpoint = false
+
+    override fun searchPage(page: Int): String = if (page == 1) "" else "page/$page/"
 }
