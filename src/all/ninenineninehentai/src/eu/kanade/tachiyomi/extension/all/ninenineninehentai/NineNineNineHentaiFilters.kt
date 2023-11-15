@@ -31,7 +31,6 @@ class SortFilter : SelectFilter(
     arrayOf(
         Pair("Update", ""),
         Pair("Popular", "Popular"),
-        Pair("Top", "Top"),
         Pair("Name Ascending", "Name_ASC"),
         Pair("Name Descending", "Name_DESC"),
     ),
@@ -45,6 +44,7 @@ class FormatFilter : SelectFilter(
         Pair("Doujinshi", "doujinshi"),
         Pair("ArtistCG", "artistcg"),
         Pair("GameCG", "gamecg"),
+        Pair("ImageSet", "imageset"),
     ),
 )
 

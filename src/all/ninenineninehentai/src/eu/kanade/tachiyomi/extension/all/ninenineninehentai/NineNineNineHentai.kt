@@ -5,7 +5,9 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.extension.all.ninenineninehentai.Url.Companion.toAbsUrl
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -16,10 +18,11 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -39,15 +42,32 @@ open class NineNineNineHentai(
 
     override val name = "999Hentai"
 
-    override val baseUrl = "https://999hentai.to"
+    override val baseUrl = "https://999hentai.net"
 
-    private val apiUrl = "https://hapi.allanime.day/api"
+    private val apiUrl = "https://api.999hentai.net/api"
 
     override val supportsLatest = true
 
     private val json: Json by injectLazy()
 
     override val client = network.cloudflareClient.newBuilder()
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val url = request.url
+
+            if (url.host != "127.0.0.1") {
+                return@addInterceptor chain.proceed(request)
+            }
+
+            val newRequest = request.newBuilder()
+                .url(
+                    url.newBuilder()
+                        .host(preference.cdnUrl)
+                        .build(),
+                ).build()
+
+            return@addInterceptor chain.proceed(newRequest)
+        }
         .rateLimit(1)
         .build()
 
@@ -55,35 +75,21 @@ open class NineNineNineHentai(
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    override fun headersBuilder() = super.headersBuilder()
+        .set("Referer", "$baseUrl/")
+
     override fun popularMangaRequest(page: Int): Request {
         val payload = GraphQL(
             PopularVariables(size, page, 1, siteLang),
             POPULAR_QUERY,
-        )
+        ).toJsonRequestBody()
 
-        val requestBody = payload.toJsonRequestBody()
-
-        val apiHeaders = headersBuilder().buildApiHeaders(requestBody)
-
-        return POST(apiUrl, apiHeaders, requestBody)
+        return POST(apiUrl, headers, payload)
     }
 
-    override fun popularMangaParse(response: Response): MangasPage {
-        val res = response.parseAs<ApiPopularResponse>()
-        val mangas = res.data.popular.edges
-        val dateMap = preference.dateMap
-        val entries = mangas.map { manga ->
-            manga.uploadDate?.let { dateMap[manga.id] = it }
-            manga.toSManga()
-        }
-        preference.dateMap = dateMap
-        val hasNextPage = mangas.size == size
-
-        return MangasPage(entries, hasNextPage)
-    }
+    override fun popularMangaParse(response: Response) = browseMangaParse<PopularResponse>(response)
 
     override fun latestUpdatesRequest(page: Int) = searchMangaRequest(page, "", FilterList())
-
     override fun latestUpdatesParse(response: Response) = searchMangaParse(response)
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
@@ -114,42 +120,21 @@ open class NineNineNineHentai(
                 ),
             ),
             SEARCH_QUERY,
-        )
+        ).toJsonRequestBody()
 
-        val requestBody = payload.toJsonRequestBody()
-
-        val apiHeaders = headersBuilder().buildApiHeaders(requestBody)
-
-        return POST(apiUrl, apiHeaders, requestBody)
+        return POST(apiUrl, headers, payload)
     }
 
-    override fun searchMangaParse(response: Response): MangasPage {
-        val res = response.parseAs<ApiSearchResponse>()
-        val mangas = res.data.search.edges
-        val dateMap = preference.dateMap
-        val entries = mangas.map { manga ->
-            manga.uploadDate?.let { dateMap[manga.id] = it }
-            manga.toSManga()
-        }
-        preference.dateMap = dateMap
-        val hasNextPage = mangas.size == size
-
-        return MangasPage(entries, hasNextPage)
-    }
-
+    override fun searchMangaParse(response: Response) = browseMangaParse<SearchResponse>(response)
     override fun getFilterList() = getFilters()
 
     private fun mangaFromIDRequest(id: String): Request {
         val payload = GraphQL(
             IdVariables(id),
             DETAILS_QUERY,
-        )
+        ).toJsonRequestBody()
 
-        val requestBody = payload.toJsonRequestBody()
-
-        val apiHeaders = headersBuilder().buildApiHeaders(requestBody)
-
-        return POST(apiUrl, apiHeaders, requestBody)
+        return POST(apiUrl, headers, payload)
     }
 
     private fun searchMangaFromIDParse(response: Response): MangasPage {
@@ -161,7 +146,7 @@ open class NineNineNineHentai(
                 preference.dateMap = preference.dateMap.also { dateMap ->
                     manga.uploadDate?.let { dateMap[manga.id] = it }
                 }
-                manga.toSManga()
+                manga.toSManga(preference.shortTitle)
             }
 
         return MangasPage(listOfNotNull(manga), false)
@@ -179,7 +164,7 @@ open class NineNineNineHentai(
             manga.uploadDate?.let { dateMap[manga.id] = it }
         }
 
-        return manga.toSManga()
+        return manga.toSManga(preference.shortTitle)
     }
 
     override fun getMangaUrl(manga: SManga) = "$baseUrl/hchapter/${manga.url}"
@@ -209,13 +194,9 @@ open class NineNineNineHentai(
         val payload = GraphQL(
             IdVariables(chapter.url),
             PAGES_QUERY,
-        )
+        ).toJsonRequestBody()
 
-        val requestBody = payload.toJsonRequestBody()
-
-        val apiHeaders = headersBuilder().buildApiHeaders(requestBody)
-
-        return POST(apiUrl, apiHeaders, requestBody)
+        return POST(apiUrl, headers, payload)
     }
 
     override fun pageListParse(response: Response): List<Page> {
@@ -224,7 +205,8 @@ open class NineNineNineHentai(
         val pages = res.data.chapter.pages?.firstOrNull()
             ?: return emptyList()
 
-        val cdn = pages.urlPart.toAbsUrl()
+        val cdnUrl = "https://${getUpdatedCdn(res.data.chapter.id)}/"
+        val cdn = pages.urlPart.toAbsUrl(cdnUrl)
 
         val selectedImages = when (preference.getString(PREF_IMG_QUALITY_KEY, "original")) {
             "medium" -> pages.qualityMedium?.mapIndexed { i, it ->
@@ -236,6 +218,21 @@ open class NineNineNineHentai(
         return selectedImages.mapIndexed { index, image ->
             Page(index, "", "$cdn/${image.url}")
         }
+    }
+
+    private fun getUpdatedCdn(chapterId: String): String {
+        val url = "$baseUrl/hchapter/$chapterId"
+        val document = client.newCall(GET(url, headers))
+            .execute().use { it.asJsoup() }
+
+        val cdnHost = document.selectFirst("meta[property=og:image]")
+            ?.attr("content")
+            ?.toHttpUrlOrNull()
+            ?.host
+
+        return cdnHost?.also {
+            preference.cdnUrl = it
+        } ?: preference.cdnUrl
     }
 
     private inline fun <reified T> String.parseAs(): T =
@@ -251,15 +248,25 @@ open class NineNineNineHentai(
         json.encodeToString(this)
             .toRequestBody(JSON_MEDIA_TYPE)
 
-    private fun Headers.Builder.buildApiHeaders(requestBody: RequestBody) = this
-        .add("Content-Length", requestBody.contentLength().toString())
-        .add("Content-Type", requestBody.contentType().toString())
-        .build()
-
     private fun String?.parseDate(): Long {
         return runCatching {
             dateFormat.parse(this!!.trim())!!.time
         }.getOrDefault(0L)
+    }
+
+    private inline fun <reified T : BrowseResponse> browseMangaParse(response: Response): MangasPage {
+        val res = response.parseAs<Data<T>>()
+        val mangas = res.data.chapters.edges
+        val dateMap = preference.dateMap
+        val useShortTitle = preference.shortTitle
+        val entries = mangas.map { manga ->
+            manga.uploadDate?.let { dateMap[manga.id] = it }
+            manga.toSManga(useShortTitle)
+        }
+        preference.dateMap = dateMap
+        val hasNextPage = mangas.size == size
+
+        return MangasPage(entries, hasNextPage)
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -270,6 +277,14 @@ open class NineNineNineHentai(
             entryValues = arrayOf("original", "medium")
             setDefaultValue("original")
             summary = "%s"
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_SHORT_TITLE
+            title = "Display Short Titles"
+            summaryOff = "Showing Long Titles"
+            summaryOn = "Showing short Titles"
+            setDefaultValue(false)
         }.also(screen::addPreference)
     }
 
@@ -287,6 +302,16 @@ open class NineNineNineHentai(
                 .commit()
         }
 
+    private var SharedPreferences.cdnUrl: String
+        get() = getString(PREF_CDN_URL, DEFAULT_CDN) ?: DEFAULT_CDN
+
+        @SuppressLint("ApplySharedPref")
+        set(cdnUrl) {
+            edit().putString(PREF_CDN_URL, cdnUrl).commit()
+        }
+
+    private val SharedPreferences.shortTitle get() = getBoolean(PREF_SHORT_TITLE, false)
+
     override fun chapterListParse(response: Response) = throw UnsupportedOperationException("Not Used")
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not Used")
 
@@ -300,6 +325,10 @@ open class NineNineNineHentai(
         }
 
         private const val PREF_DATE_MAP_KEY = "pref_date_map"
+        private const val PREF_CDN_URL = "pref_cdn_url"
         private const val PREF_IMG_QUALITY_KEY = "pref_image_quality"
+        private const val PREF_SHORT_TITLE = "pref_short_title"
+
+        private const val DEFAULT_CDN = "edge.fast4speed.rsvp"
     }
 }

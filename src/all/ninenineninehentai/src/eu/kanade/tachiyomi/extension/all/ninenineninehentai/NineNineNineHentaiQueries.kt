@@ -25,6 +25,7 @@ val POPULAR_QUERY: String = buildQuery {
                     name
                     uploadDate
                     format
+                    description
                     language
                     pages
                     firstPics
@@ -52,6 +53,7 @@ val SEARCH_QUERY: String = buildQuery {
                     name
                     uploadDate
                     format
+                    description
                     language
                     pages
                     firstPics
@@ -74,6 +76,7 @@ val DETAILS_QUERY: String = buildQuery {
                 name
                 uploadDate
                 format
+                description
                 language
                 pages
                 firstPics
@@ -91,6 +94,7 @@ val PAGES_QUERY: String = buildQuery {
             queryChapter(
                 chapterId: %id
             ) {
+                _id
                 pictureUrls {
 				    picCdn
 				    pics
