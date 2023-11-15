@@ -9,7 +9,7 @@ class SenkuroGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Senkuro"
 
-    override val baseVersionCode = 1
+    override val baseVersionCode = 2
 
     override val sources = listOf(
         SingleLang("Senkuro", "https://senkuro.com", "ru", overrideVersionCode = 0),

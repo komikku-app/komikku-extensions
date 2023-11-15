@@ -99,7 +99,7 @@ data class MangaTachiyomiChaptersDto(
             val teamIds: List<String>,
             val number: String,
             val volume: String,
-            val updatedAt: String,
+            val createdAt: String,
         )
 
         @Serializable

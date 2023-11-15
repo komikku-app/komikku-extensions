@@ -158,7 +158,7 @@ val CHAPTERS_QUERY: String = buildQuery {
                     teamIds
                     number
                     volume
-                    updatedAt
+                    createdAt
                 }
                 teams {
                     id
