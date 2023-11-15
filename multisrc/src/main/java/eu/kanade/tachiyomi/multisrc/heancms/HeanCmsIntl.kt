@@ -64,10 +64,10 @@ class HeanCmsIntl(lang: String) {
         else -> "Latest"
     }
 
-    val sortByRecentlyAdded: String = when (availableLang) {
+    val sortByCreatedAt: String = when (availableLang) {
         BRAZILIAN_PORTUGUESE -> "Data de criação"
-        SPANISH -> "Añadido recientemente"
-        else -> "Recently added"
+        SPANISH -> "Fecha de creación"
+        else -> "Created at"
     }
 
     val filterWarning: String = when (availableLang) {

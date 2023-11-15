@@ -12,4 +12,6 @@ class PerfScan : HeanCms("Perf Scan", "https://perf-scan.fr", "fr") {
 
     override val coverPath: String = ""
     override val useNewQueryEndpoint = true
+
+    override val slugStrategy = SlugStrategy.ID
 }

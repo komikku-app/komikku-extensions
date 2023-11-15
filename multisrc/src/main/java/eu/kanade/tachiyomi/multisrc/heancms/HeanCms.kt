@@ -405,13 +405,13 @@ abstract class HeanCms(
         if (useNewQueryEndpoint) {
             return result.seasons.orEmpty()
                 .flatMap { it.chapters.orEmpty() }
-                .filterNot { it.price == 1 }
+                .filter { it.price == 0 }
                 .map { it.toSChapter(result.slug, mangaSubDirectory, dateFormat, slugStrategy) }
                 .filter { it.date_upload <= currentTimestamp }
         }
 
         return result.chapters.orEmpty()
-            .filterNot { it.price == 1 }
+            .filter { it.price == 0 }
             .map { it.toSChapter(result.slug, mangaSubDirectory, dateFormat, slugStrategy) }
             .filter { it.date_upload <= currentTimestamp }
             .reversed()
@@ -603,7 +603,7 @@ abstract class HeanCms(
         SortProperty(intl.sortByTitle, "title"),
         SortProperty(intl.sortByViews, "total_views"),
         SortProperty(intl.sortByLatest, "latest"),
-        SortProperty(intl.sortByRecentlyAdded, "recently_added"),
+        SortProperty(intl.sortByCreatedAt, "created_at"),
     )
 
     protected open fun getGenreList(): List<Genre> = emptyList()
