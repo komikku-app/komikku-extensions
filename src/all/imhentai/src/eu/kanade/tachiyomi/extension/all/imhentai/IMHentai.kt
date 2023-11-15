@@ -31,6 +31,13 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
 
     override val client: OkHttpClient = network.cloudflareClient
         .newBuilder()
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val headers = request.headers.newBuilder()
+                .removeAll("Accept-Encoding")
+                .build()
+            chain.proceed(request.newBuilder().headers(headers).build())
+        }
         .addInterceptor(
             fun(chain): Response {
                 val response = chain.proceed(chain.request())
