@@ -7,12 +7,14 @@ import eu.kanade.tachiyomi.multisrc.zeistmanga.ZeistManga
 import eu.kanade.tachiyomi.multisrc.zeistmanga.ZeistMangaDto
 import eu.kanade.tachiyomi.multisrc.zeistmanga.ZeistMangaIntl
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import uy.kohesive.injekt.injectLazy
@@ -29,6 +31,27 @@ class KomikRealm : ZeistManga(
     override val hasLanguageFilter = false
 
     override val chapterCategory = ""
+
+    override fun popularMangaRequest(page: Int): Request {
+        val url = apiUrl("Project")
+            .addQueryParameter("orderby", "updated")
+            .addQueryParameter("max-results", "12")
+            .build()
+
+        return GET(url, headers)
+    }
+
+    override fun popularMangaParse(response: Response): MangasPage {
+        val jsonString = response.body.string()
+        val result = json.decodeFromString<ZeistMangaDto>(jsonString)
+
+        val mangas = result.feed?.entry.orEmpty()
+            .filter { it.category.orEmpty().any { category -> category.term == "Series" } }
+            .filter { !it.category.orEmpty().any { category -> category.term == "Anime" } }
+            .map { it.toSManga(baseUrl) }
+
+        return MangasPage(mangas, false)
+    }
 
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
@@ -52,12 +75,6 @@ class KomikRealm : ZeistManga(
                 }
             }
         }
-    }
-
-    private fun parseStatus(element: String): Int = when (element.lowercase()) {
-        "ongoing" -> SManga.ONGOING
-        "completed" -> SManga.COMPLETED
-        else -> SManga.UNKNOWN
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {

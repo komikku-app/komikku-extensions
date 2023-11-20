@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -24,13 +25,34 @@ abstract class ZeistManga(
     override val lang: String,
 ) : HttpSource() {
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private val json: Json by injectLazy()
 
     private val intl by lazy { ZeistMangaIntl(lang) }
 
-    override fun popularMangaRequest(page: Int): Request {
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
+
+    override fun popularMangaRequest(page: Int): Request = GET(baseUrl, headers)
+
+    protected open val popularMangaSelector = "div.PopularPosts div.grid > figure"
+    protected open val popularMangaSelectorTitle = "figcaption > a"
+    protected open val popularMangaSelectorUrl = "figcaption > a"
+
+    override fun popularMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+        val mangas = document.select(popularMangaSelector).map { element ->
+            SManga.create().apply {
+                thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
+                title = element.selectFirst(popularMangaSelectorTitle)!!.text()
+                setUrlWithoutDomain(element.selectFirst(popularMangaSelectorUrl)!!.attr("href"))
+            }
+        }
+        return MangasPage(mangas, false)
+    }
+
+    override fun latestUpdatesRequest(page: Int): Request {
         val startIndex = maxMangaResults * (page - 1) + 1
         val url = apiUrl()
             .addQueryParameter("orderby", "published")
@@ -41,7 +63,7 @@ abstract class ZeistManga(
         return GET(url, headers)
     }
 
-    override fun popularMangaParse(response: Response): MangasPage {
+    override fun latestUpdatesParse(response: Response): MangasPage {
         val jsonString = response.body.string()
         val result = json.decodeFromString<ZeistMangaDto>(jsonString)
 
@@ -59,9 +81,6 @@ abstract class ZeistManga(
         return MangasPage(mangalist, false)
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException("Not used.")
-    override fun latestUpdatesParse(response: Response): MangasPage = throw UnsupportedOperationException("Not used.")
-
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val startIndex = maxMangaResults * (page - 1) + 1
         val url = apiUrl()
@@ -70,7 +89,8 @@ abstract class ZeistManga(
 
         if (query.isNotBlank()) {
             url.addQueryParameter("q", query)
-            return GET(url.build(), headers)
+            val searchUrl = url.build().toString().replaceLast("q=", "q=label:$mangaCategory+")
+            return GET(searchUrl, headers)
         }
 
         filters.forEach { filter ->
@@ -103,20 +123,65 @@ abstract class ZeistManga(
         return GET(url.build(), headers)
     }
 
-    override fun searchMangaParse(response: Response) = popularMangaParse(response)
+    override fun searchMangaParse(response: Response) = latestUpdatesParse(response)
+
+    protected open val statusSelectorList = listOf(
+        "Status",
+        "Estado",
+    )
+
+    protected open val authorSelectorList = listOf(
+        "Author",
+        "Autor",
+        "الكاتب",
+        "Yazar",
+    )
+
+    protected open val artisSelectorList = listOf(
+        "Artist",
+        "Artista",
+        "الرسام",
+        "Çizer",
+    )
+
+    protected open val mangaDetailsSelector = ".grid.gtc-235fr"
+    protected open val mangaDetailsSelectorDescription = "#synopsis"
+    protected open val mangaDetailsSelectorGenres = "div.mt-15 > a[rel=tag]"
+    protected open val mangaDetailsSelectorInfo = ".y6x11p"
+    protected open val mangaDetailsSelectorInfoTitle = "strong"
+    protected open val mangaDetailsSelectorInfoDescription = "span.dt"
 
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
-        val profileManga = document.selectFirst(".grid.gtc-235fr")!!
+        val profileManga = document.selectFirst(mangaDetailsSelector)!!
         return SManga.create().apply {
             thumbnail_url = profileManga.selectFirst("img")!!.attr("abs:src")
-            description = profileManga.select("#synopsis").text()
-            genre = profileManga.select("div.mt-15 > a[rel=tag]")
+            description = profileManga.select(mangaDetailsSelectorDescription).text()
+            genre = profileManga.select(mangaDetailsSelectorGenres)
                 .joinToString { it.text() }
+
+            val infoElement = profileManga.select(mangaDetailsSelectorInfo)
+            infoElement.forEach { element ->
+                val infoText = element.ownText().trim().ifEmpty { element.selectFirst(mangaDetailsSelectorInfoTitle)?.text()?.trim() ?: "" }
+                val descText = element.select(mangaDetailsSelectorInfoDescription).text().trim()
+                when {
+                    statusSelectorList.any { infoText.contains(it) } -> {
+                        status = parseStatus(descText)
+                    }
+
+                    authorSelectorList.any { infoText.contains(it) } -> {
+                        author = descText
+                    }
+
+                    artisSelectorList.any { infoText.contains(it) } -> {
+                        artist = descText
+                    }
+                }
+            }
         }
     }
 
-    protected open val chapterCategory = "Chapter"
+    protected open val chapterCategory: String = "Chapter"
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
@@ -197,7 +262,7 @@ abstract class ZeistManga(
         return url.toString()
     }
 
-    open val pageListSelector = "div.check-box div.separator"
+    protected open val pageListSelector = "div.check-box div.separator"
 
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
@@ -209,7 +274,9 @@ abstract class ZeistManga(
 
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used.")
 
-    open fun apiUrl(feed: String = "Series"): HttpUrl.Builder {
+    protected open val mangaCategory: String = "Series"
+
+    open fun apiUrl(feed: String = mangaCategory): HttpUrl.Builder {
         return "$baseUrl/feeds/posts/default/-/".toHttpUrl().newBuilder()
             .addPathSegment(feed)
             .addQueryParameter("alt", "json")
@@ -228,6 +295,9 @@ abstract class ZeistManga(
         if (!hasFilters) {
             return FilterList(emptyList())
         }
+
+        filterList.add(Filter.Header(intl.filterWarning))
+        filterList.add(Filter.Separator())
 
         if (hasStatusFilter) filterList.add(StatusList(intl.statusFilterTitle, getStatusList()))
         if (hasTypeFilter) filterList.add(TypeList(intl.typeFilterTitle, getTypeList()))
@@ -305,6 +375,48 @@ abstract class ZeistManga(
         Language("Indonesian", "Indonesian"),
         Language("English", "English"),
     )
+
+    protected open val statusOnGoingList = listOf(
+        "ongoing",
+        "en curso",
+        "ativo",
+        "lançando",
+        "مستمر",
+    )
+
+    protected open val statusCompletedList = listOf(
+        "completed",
+        "completo",
+    )
+
+    protected open val statusHiatusList = listOf(
+        "hiatus",
+    )
+
+    protected open val statusCancelledList = listOf(
+        "cancelled",
+        "dropped",
+        "dropado",
+        "abandonado",
+        "cancelado",
+    )
+
+    protected open fun parseStatus(element: String): Int = when (element.lowercase().trim()) {
+        in statusOnGoingList -> SManga.ONGOING
+        in statusCompletedList -> SManga.COMPLETED
+        in statusHiatusList -> SManga.ON_HIATUS
+        in statusCancelledList -> SManga.CANCELLED
+        else -> SManga.UNKNOWN
+    }
+
+    private fun String.replaceLast(oldValue: String, newValue: String): String {
+        val lastIndexOf = lastIndexOf(oldValue)
+        return if (lastIndexOf == -1) {
+            this
+        } else {
+            substring(0, lastIndexOf) + newValue + substring(lastIndexOf + oldValue.length)
+        }
+    }
 
     companion object {
         private const val maxMangaResults = 20
