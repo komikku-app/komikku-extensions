@@ -7,14 +7,14 @@ import java.util.Locale
 
 class BeastScans : MangaThemesia(
     "Beast Scans",
-    "https://beast-scans.com",
+    "https://beastscans.net",
     "ar",
     dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("ar")),
 ) {
     override val seriesArtistSelector =
-        ".tsinfo .imptdt:contains(الرسام) i, ${super.seriesArtistSelector}"
+        ".infox .fmed:contains(الرسام) span, ${super.seriesArtistSelector}"
     override val seriesAuthorSelector =
-        ".tsinfo .imptdt:contains(المؤلف) i, ${super.seriesAuthorSelector}"
+        ".infox .fmed:contains(المؤلف) span, ${super.seriesAuthorSelector}"
     override val seriesStatusSelector =
         ".tsinfo .imptdt:contains(الحالة) i, ${super.seriesStatusSelector}"
     override val seriesTypeSelector =
@@ -22,9 +22,10 @@ class BeastScans : MangaThemesia(
 
     override fun String?.parseStatus() = when {
         this == null -> SManga.UNKNOWN
-        this.contains("مستمر", ignoreCase = true) -> SManga.ONGOING
-        this.contains("مكتمل", ignoreCase = true) -> SManga.COMPLETED
-        this.contains("متوقف", ignoreCase = true) -> SManga.ON_HIATUS
+        listOf("مستمر", "ongoing", "publishing").any { this.contains(it, ignoreCase = true) } -> SManga.ONGOING
+        listOf("متوقف", "hiatus").any { this.contains(it, ignoreCase = true) } -> SManga.ON_HIATUS
+        listOf("مكتمل", "completed").any { this.contains(it, ignoreCase = true) } -> SManga.COMPLETED
+        listOf("dropped", "cancelled").any { this.contains(it, ignoreCase = true) } -> SManga.CANCELLED
         else -> SManga.UNKNOWN
     }
 }

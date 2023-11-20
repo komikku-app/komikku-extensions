@@ -50,7 +50,7 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(komiktap|gourmet\\s*scans|mangawow|hikari\\s*scans|knightnoscanlations|mangasy|nartag|xxx\\s*yaoi|luminous|hunters\\s*scan|reset(?:\\s*|-)scan|astra\\s*scans|manga(?:-|\\s*)pro|shinobiscans|plot ?twist ?no ?fansub(?: ?scans?)?|plot-twistnf-scans(?:\\.com)?|mhscans|aresmanga|realm ?scans?|mono ?manga|dat(?:\\s*|-)?gar\\s*scan|remangas).*",
+                "regex": ".*(komiktap|gourmet\\s*scans|mangawow|hikari\\s*scans|knightnoscanlations|mangasy|nartag|xxx\\s*yaoi|luminous|hunters\\s*scan|reset(?:\\s*|-)scan|astra\\s*scans|manga(?:-|\\s*)pro|shinobiscans|plot ?twist ?no ?fansub(?: ?scans?)?|plot-twistnf-scans(?:\\.com)?|mhscans|aresmanga|realm ?scans?|mono ?manga|dat(?:\\s*|-)?gar\\s*scan|remangas|moon ?daisy(?: scans?)?).*",
                 "ignoreCase": true,
                 "labels": ["invalid"],
                 "message": "{match} will not be added back as the scanlator team has requested it to be removed. Read [this](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."

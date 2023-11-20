@@ -13,7 +13,7 @@ import java.util.Calendar
 
 class VexManga : MangaThemesia(
     "فيكس مانجا",
-    "https://vexmanga.net",
+    "https://vexmanga.com",
     "ar",
 ) {
     override fun searchMangaSelector() = ".listupd .latest-series, ${super.searchMangaSelector()}"
