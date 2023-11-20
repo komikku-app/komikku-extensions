@@ -33,8 +33,6 @@ class LikeManga : ParsedHttpSource() {
 
     override val baseUrl = "https://likemanga.io"
 
-    private val imgCdnUrl = "https://like1.likemanga.io"
-
     override val supportsLatest = true
 
     override val client = network.cloudflareClient.newBuilder()
@@ -258,6 +256,9 @@ class LikeManga : ParsedHttpSource() {
         val element = document.selectFirst("div.reading input#next_img_token")
 
         if (element != null) {
+            val imgCdnUrl = document.selectFirst("div.reading #currentlink")?.attr("value")
+                ?: throw Exception("Could not find image CDN URL")
+
             val token = element.attr("value").split(".")[1]
             val jsonData = json.parseToJsonElement(String(Base64.decode(token, Base64.DEFAULT))).jsonObject
             val encodedImgArray = jsonData["data"]!!.jsonPrimitive.content
