@@ -50,18 +50,28 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             .add("Referer", "$baseUrl/")
     }
 
-    private val imageCDNUrl = "https://img1.japanreader.com"
+    private val imageCDNUrls = arrayOf(
+        "https://japanreader.com",
+        "https://img1.japanreader.com",
+    )
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    private fun OkHttpClient.Builder.rateLimitImageCDNs(hosts: Array<String>, permits: Int, period: Long): OkHttpClient.Builder {
+        hosts.forEach { host ->
+            rateLimitHost(host.toHttpUrlOrNull()!!, permits, period)
+        }
+        return this
     }
 
     private var loadWebView = true
     override val client: OkHttpClient = network.client.newBuilder()
         .addInterceptor { chain ->
             val request = chain.request()
-            val url = request.url.toString()
-            if (url.startsWith(imageCDNUrl) && loadWebView) {
+            val url = request.url
+            if (url.host.contains("japanreader.com") && loadWebView) {
                 val handler = Handler(Looper.getMainLooper())
                 val latch = CountDownLatch(1)
                 var webView: WebView? = null
@@ -84,7 +94,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
                     val headers = mutableMapOf<String, String>()
                     headers["Referer"] = baseUrl
 
-                    webview.loadUrl(url, headers)
+                    webview.loadUrl(url.toString(), headers)
                 }
 
                 latch.await()
@@ -98,8 +108,8 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             preferences.getString(WEB_RATELIMIT_PREF, WEB_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
             60,
         )
-        .rateLimitHost(
-            imageCDNUrl.toHttpUrlOrNull()!!,
+        .rateLimitImageCDNs(
+            imageCDNUrls,
             preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
             60,
         )

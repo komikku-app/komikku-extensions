@@ -51,13 +51,24 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
     }
 
     private val imageCDNUrls = arrayOf(
-        "https://img1.followmanga.com", "https://img1.biggestchef.com",
-        "https://img1.indalchef.com", "https://img1.recipesandcook.com",
-        "https://img1.cyclingte.com", "https://img1.japanreader.com",
+        "https://img1.followmanga.com",
+        "https://img1.biggestchef.com",
+        "https://img1.indalchef.com",
+        "https://img1.recipesandcook.com",
+        "https://img1.cyclingte.com",
+        "https://img1.japanreader.com",
+        "https://japanreader.com",
     )
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    private fun OkHttpClient.Builder.rateLimitImageCDNs(hosts: Array<String>, permits: Int, period: Long): OkHttpClient.Builder {
+        hosts.forEach { host ->
+            rateLimitHost(host.toHttpUrlOrNull()!!, permits, period)
+        }
+        return this
     }
 
     private var loadWebView = true
@@ -67,40 +78,15 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
             preferences.getString(WEB_RATELIMIT_PREF, WEB_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
             60,
         )
-        .rateLimitHost(
-            imageCDNUrls[0].toHttpUrlOrNull()!!,
-            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
-            60,
-        )
-        .rateLimitHost(
-            imageCDNUrls[1].toHttpUrlOrNull()!!,
-            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
-            60,
-        )
-        .rateLimitHost(
-            imageCDNUrls[2].toHttpUrlOrNull()!!,
-            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
-            60,
-        )
-        .rateLimitHost(
-            imageCDNUrls[3].toHttpUrlOrNull()!!,
-            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
-            60,
-        )
-        .rateLimitHost(
-            imageCDNUrls[4].toHttpUrlOrNull()!!,
-            preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
-            60,
-        )
-        .rateLimitHost(
-            imageCDNUrls[5].toHttpUrlOrNull()!!,
+        .rateLimitImageCDNs(
+            imageCDNUrls,
             preferences.getString(IMAGE_CDN_RATELIMIT_PREF, IMAGE_CDN_RATELIMIT_PREF_DEFAULT_VALUE)!!.toInt(),
             60,
         )
         .addInterceptor { chain ->
             val request = chain.request()
-            val url = request.url.toString()
-            if (url.startsWith("https://img1.japanreader.com") && loadWebView) {
+            val url = request.url
+            if (url.host.contains("japanreader.com") && loadWebView) {
                 val handler = Handler(Looper.getMainLooper())
                 val latch = CountDownLatch(1)
                 var webView: WebView? = null
@@ -121,7 +107,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
                     val headers = mutableMapOf<String, String>()
                     headers["Referer"] = baseUrl
 
-                    webview.loadUrl(url, headers)
+                    webview.loadUrl(url.toString(), headers)
                 }
 
                 latch.await()
