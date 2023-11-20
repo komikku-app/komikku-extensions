@@ -4,8 +4,7 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 
 class ManyToonMe : Madara("ManyToon.me", "https://manytoon.me", "en") {
 
-    override val useNewChapterEndpoint: Boolean = true
+    override val mangaSubString = "comic"
 
-    // The website does not flag the content.
-    override val filterNonMangaItems = false
+    override val useNewChapterEndpoint: Boolean = true
 }
