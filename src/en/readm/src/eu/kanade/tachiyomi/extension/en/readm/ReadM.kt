@@ -43,7 +43,7 @@ class ReadM : ParsedHttpSource() {
     override fun popularMangaNextPageSelector(): String = "div.pagination a:contains(»)"
     override fun popularMangaSelector(): String = "div#discover-response li"
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        thumbnail_url = element.select("img").attr("abs:src")
+        thumbnail_url = element.selectFirst("img")!!.imgAttr()
         element.select("div.subject-title a").first()!!.apply {
             title = this.text().trim()
             url = this.attr("href")
@@ -53,10 +53,10 @@ class ReadM : ParsedHttpSource() {
     // Latest
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/latest-releases/$page", headers)
-    override fun latestUpdatesNextPageSelector(): String? = popularMangaNextPageSelector()
+    override fun latestUpdatesNextPageSelector(): String = popularMangaNextPageSelector()
     override fun latestUpdatesSelector(): String = "ul.latest-updates > li"
     override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
-        thumbnail_url = element.select("img").attr("abs:data-src")
+        thumbnail_url = element.selectFirst("img")!!.imgAttr()
         element.select("h2 a").first()!!.apply {
             title = this.text().trim()
             url = this.attr("href")
@@ -93,7 +93,7 @@ class ReadM : ParsedHttpSource() {
     // Details
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        thumbnail_url = document.select("img.series-profile-thumb").attr("abs:src")
+        thumbnail_url = document.selectFirst("img.series-profile-thumb")!!.imgAttr()
         title = document.select("h1.page-title").text().trim()
         author = document.select("span#first_episode a").text().trim()
         artist = document.select("span#last_episode a").text().trim()
@@ -156,6 +156,13 @@ class ReadM : ParsedHttpSource() {
 
     override fun imageUrlParse(document: Document): String = throw Exception("Not Used")
     override fun pageListParse(document: Document): List<Page> = document.select("div.ch-images img").mapIndexed { index, element ->
-        Page(index, "", element.attr("abs:src"))
+        Page(index, "", element.imgAttr())
+    }
+
+    private fun Element.imgAttr(): String {
+        return when {
+            this.hasAttr("data-src") -> this.attr("abs:data-src")
+            else -> this.attr("abs:src")
+        }
     }
 }

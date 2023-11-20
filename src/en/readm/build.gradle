@@ -6,7 +6,7 @@ ext {
     extName = 'ReadM'
     pkgNameSuffix = 'en.readm'
     extClass = '.ReadM'
-    extVersionCode = 6
+    extVersionCode = 7
 }
 
 apply from: "$rootDir/common.gradle"
