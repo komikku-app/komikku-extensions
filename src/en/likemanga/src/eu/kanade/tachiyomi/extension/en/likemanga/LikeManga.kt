@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.likemanga
 
+import android.util.Base64
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
@@ -11,6 +12,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -30,6 +32,8 @@ class LikeManga : ParsedHttpSource() {
     override val lang = "en"
 
     override val baseUrl = "https://likemanga.io"
+
+    private val imgCdnUrl = "https://like1.likemanga.io"
 
     override val supportsLatest = true
 
@@ -251,9 +255,21 @@ class LikeManga : ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select(".reading-detail img:not(noscript img)").mapIndexed { i, img ->
-            Page(i, "", img.imgAttr())
+        val element = document.selectFirst("div.reading input#next_img_token")
+
+        if (element != null) {
+            val token = element.attr("value").split(".")[1]
+            val jsonData = json.parseToJsonElement(String(Base64.decode(token, Base64.DEFAULT))).jsonObject
+            val encodedImgArray = jsonData["data"]!!.jsonPrimitive.content
+            val imgArray = String(Base64.decode(encodedImgArray, Base64.DEFAULT))
+
+            return json.parseToJsonElement(imgArray).jsonArray.mapIndexed { i, img ->
+                Page(i, "", "$imgCdnUrl/${img.jsonPrimitive.content}")
+            }
         }
+
+        return document.select("div.reading-detail.box_doc img:not(noscript img)")
+            .mapIndexed { i, img -> Page(i, "", img.imgAttr()) }
     }
 
     private fun Element.imgAttr(): String? {
