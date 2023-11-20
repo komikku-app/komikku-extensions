@@ -2,8 +2,11 @@ package eu.kanade.tachiyomi.multisrc.heancms
 
 import android.app.Application
 import android.content.SharedPreferences
+import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -25,6 +28,7 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -33,10 +37,26 @@ abstract class HeanCms(
     override val baseUrl: String,
     override val lang: String,
     protected val apiUrl: String = baseUrl.replace("://", "://api."),
-) : HttpSource() {
+) : ConfigurableSource, HttpSource() {
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        SwitchPreferenceCompat(screen.context).apply {
+            key = SHOW_PAID_CHAPTERS_PREF
+            title = intl.prefShowPaidChapterTitle
+            summaryOn = intl.prefShowPaidChapterSummaryOn
+            summaryOff = intl.prefShowPaidChapterSummaryOff
+            setDefaultValue(SHOW_PAID_CHAPTERS_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit()
+                    .putBoolean(SHOW_PAID_CHAPTERS_PREF, newValue as Boolean)
+                    .commit()
+            }
+        }.also(screen::addPreference)
     }
 
     override val supportsLatest = true
@@ -402,16 +422,18 @@ abstract class HeanCms(
 
         val currentTimestamp = System.currentTimeMillis()
 
+        val showPaidChapters = preferences.showPaidChapters
+
         if (useNewQueryEndpoint) {
             return result.seasons.orEmpty()
                 .flatMap { it.chapters.orEmpty() }
-                .filter { it.price == 0 }
+                .filter { it.price == 0 || showPaidChapters }
                 .map { it.toSChapter(result.slug, mangaSubDirectory, dateFormat, slugStrategy) }
                 .filter { it.date_upload <= currentTimestamp }
         }
 
         return result.chapters.orEmpty()
-            .filter { it.price == 0 }
+            .filter { it.price == 0 || showPaidChapters }
             .map { it.toSChapter(result.slug, mangaSubDirectory, dateFormat, slugStrategy) }
             .filter { it.date_upload <= currentTimestamp }
             .reversed()
@@ -442,7 +464,7 @@ abstract class HeanCms(
             return GET(baseUrl + chapter.url, headers)
         }
 
-        val chapterId = chapter.url.substringAfterLast("#")
+        val chapterId = chapter.url.substringAfterLast("#").substringBefore("-paid")
 
         val apiHeaders = headersBuilder()
             .add("Accept", ACCEPT_JSON)
@@ -453,9 +475,15 @@ abstract class HeanCms(
 
     override fun pageListParse(response: Response): List<Page> {
         if (useNewQueryEndpoint) {
+            val paidChapter = response.request.url.fragment?.contains("-paid")
+
             val document = response.asJsoup()
 
             val images = document.selectFirst("div.min-h-screen > div.container > p.items-center")
+
+            if (images == null && paidChapter == true) {
+                throw IOException(intl.paidChapterError)
+            }
 
             return images?.select("img").orEmpty().mapIndexed { i, img ->
                 val imageUrl = if (img.hasClass("lazy")) img.absUrl("data-src") else img.absUrl("src")
@@ -463,15 +491,21 @@ abstract class HeanCms(
             }
         }
 
-        return response.parseAs<HeanCmsReaderDto>().content?.images.orEmpty()
-            .filterNot { imageUrl ->
-                // Their image server returns HTTP 403 for hidden files that starts
-                // with a dot in the file name. To avoid download errors, these are removed.
-                imageUrl
-                    .removeSuffix("/")
-                    .substringAfterLast("/")
-                    .startsWith(".")
-            }
+        val images = response.parseAs<HeanCmsReaderDto>().content?.images.orEmpty()
+        val paidChapter = response.request.url.fragment?.contains("-paid")
+
+        if (images.isEmpty() && paidChapter == true) {
+            throw IOException(intl.paidChapterError)
+        }
+
+        return images.filterNot { imageUrl ->
+            // Their image server returns HTTP 403 for hidden files that starts
+            // with a dot in the file name. To avoid download errors, these are removed.
+            imageUrl
+                .removeSuffix("/")
+                .substringAfterLast("/")
+                .startsWith(".")
+        }
             .mapIndexed { i, url ->
                 Page(i, imageUrl = if (url.startsWith("http")) url else "$apiUrl/$url")
             }
@@ -639,8 +673,11 @@ abstract class HeanCms(
         set(newSlugMap) {
             edit()
                 .putString(PREF_URL_MAP_SLUG, json.encodeToString(newSlugMap))
-                .commit()
+                .apply()
         }
+
+    private val SharedPreferences.showPaidChapters: Boolean
+        get() = getBoolean(SHOW_PAID_CHAPTERS_PREF, SHOW_PAID_CHAPTERS_DEFAULT)
 
     companion object {
         private const val ACCEPT_IMAGE = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
@@ -655,5 +692,8 @@ abstract class HeanCms(
         const val SEARCH_PREFIX = "slug:"
 
         private const val PREF_URL_MAP_SLUG = "pref_url_map"
+
+        private const val SHOW_PAID_CHAPTERS_PREF = "pref_show_paid_chap"
+        private const val SHOW_PAID_CHAPTERS_DEFAULT = false
     }
 }

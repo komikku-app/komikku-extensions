@@ -120,9 +120,17 @@ data class HeanCmsChapterDto(
     ): SChapter = SChapter.create().apply {
         val seriesSlugOnly = seriesSlug.toPermSlugIfNeeded(slugStrategy)
         name = this@HeanCmsChapterDto.name.trim()
+
+        if (price != 0) {
+            name += " \uD83D\uDD12"
+        }
+
         date_upload = runCatching { dateFormat.parse(createdAt)?.time }
             .getOrNull() ?: 0L
-        url = "/$mangaSubDirectory/$seriesSlugOnly/$slug#$id"
+
+        val paidStatus = if (price != 0 && price != null) "-paid" else ""
+
+        url = "/$mangaSubDirectory/$seriesSlugOnly/$slug#$id$paidStatus"
     }
 }
 

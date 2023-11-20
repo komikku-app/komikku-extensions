@@ -76,6 +76,26 @@ class HeanCmsIntl(lang: String) {
         else -> "Filters will be ignored if the search is not empty."
     }
 
+    val prefShowPaidChapterTitle: String = when (availableLang) {
+        SPANISH -> "Mostrar capítulos de pago"
+        else -> "Display paid chapters"
+    }
+
+    val prefShowPaidChapterSummaryOn: String = when (availableLang) {
+        SPANISH -> "Se mostrarán capítulos de pago. Deberá iniciar sesión"
+        else -> "Paid chapters will appear. A login might be needed!"
+    }
+
+    val prefShowPaidChapterSummaryOff: String = when (availableLang) {
+        SPANISH -> "Solo se mostrarán los capítulos gratuitos"
+        else -> "Only free chapters will be displayed."
+    }
+
+    val paidChapterError: String = when (availableLang) {
+        SPANISH -> "Capítulo no disponible. Debe iniciar sesión en Webview y tener el capítulo comprado."
+        else -> "Paid chapter unavailable.\nA login/purchase might be needed (using webview)."
+    }
+
     fun urlChangedError(sourceName: String): String = when (availableLang) {
         BRAZILIAN_PORTUGUESE ->
             "A URL da série mudou. Migre de $sourceName " +
