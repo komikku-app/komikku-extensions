@@ -82,6 +82,20 @@ abstract class ComickFun(
                     .commit()
             }
         }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = FIRST_COVER_PREF
+            title = "Update Covers"
+            summaryOff = "Prefer first cover"
+            summaryOn = "Keep cover updated"
+            setDefaultValue(FIRST_COVER_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit()
+                    .putBoolean(FIRST_COVER_PREF, newValue as Boolean)
+                    .commit()
+            }
+        }.also(screen::addPreference)
     }
 
     private val SharedPreferences.ignoredGroups: Set<String>
@@ -96,6 +110,9 @@ abstract class ComickFun(
 
     private val SharedPreferences.includeMuTags: Boolean
         get() = getBoolean(INCLUDE_MU_TAGS_PREF, INCLUDE_MU_TAGS_DEFAULT)
+
+    private val SharedPreferences.updateCover: Boolean
+        get() = getBoolean(FIRST_COVER_PREF, FIRST_COVER_DEFAULT)
 
     init {
         preferences.newLineIgnoredGroups()
@@ -283,8 +300,37 @@ abstract class ComickFun(
         return GET("$apiUrl$mangaUrl?tachiyomi=true", headers)
     }
 
-    override fun mangaDetailsParse(response: Response): SManga {
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        return client.newCall(mangaDetailsRequest(manga))
+            .asObservableSuccess()
+            .map { response ->
+                mangaDetailsParse(response, manga).apply { initialized = true }
+            }
+    }
+
+    override fun mangaDetailsParse(response: Response): SManga =
+        mangaDetailsParse(response, SManga.create())
+
+    private fun mangaDetailsParse(response: Response, manga: SManga): SManga {
         val mangaData = response.parseAs<Manga>()
+        if (!preferences.updateCover && manga.thumbnail_url != mangaData.comic.cover) {
+            if (manga.thumbnail_url.toString().endsWith("#")) {
+                return mangaData.toSManga(
+                    includeMuTags = preferences.includeMuTags,
+                    covers = listOf(
+                        MDcovers(
+                            b2key = manga.thumbnail_url?.removeSuffix("#")
+                                ?.substringAfterLast("/"),
+                        ),
+                    ),
+                )
+            }
+            val coversUrl =
+                "$apiUrl/comic/${mangaData.comic.slug ?: mangaData.comic.hid}/covers?tachiyomi=true"
+            val covers = client.newCall(GET(coversUrl)).execute()
+                .parseAs<Covers>().md_covers.reversed()
+            return mangaData.toSManga(includeMuTags = preferences.includeMuTags, covers = covers)
+        }
         return mangaData.toSManga(includeMuTags = preferences.includeMuTags)
     }
 
@@ -392,6 +438,8 @@ abstract class ComickFun(
         private const val INCLUDE_MU_TAGS_PREF = "IncludeMangaUpdatesTags"
         private const val INCLUDE_MU_TAGS_DEFAULT = false
         private const val MIGRATED_IGNORED_GROUPS = "MigratedIgnoredGroups"
+        private const val FIRST_COVER_PREF = "DefaultCover"
+        private const val FIRST_COVER_DEFAULT = true
         private const val limit = 20
         val dateFormat by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH).apply {

@@ -38,7 +38,7 @@ internal fun parseCover(thumbnailUrl: String?, mdCovers: List<MDcovers>): String
     val b2key = mdCovers.firstOrNull()?.b2key
         ?: return thumbnailUrl
 
-    return thumbnailUrl?.let { "$it#$b2key" }
+    return thumbnailUrl?.replaceAfterLast("/", "$b2key#")
 }
 
 internal fun thumbnailIntercept(chain: Interceptor.Chain): Response {
