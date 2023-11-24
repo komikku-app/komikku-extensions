@@ -23,8 +23,8 @@ class OlympusScanlation : HttpSource() {
 
     override val versionId = 2
 
-    override val baseUrl: String = "https://olympusv2.gg"
-    private val apiBaseUrl: String = "https://dashboard.olympusv2.gg"
+    override val baseUrl: String = "https://olympusvisor.com"
+    private val apiBaseUrl: String = "https://dashboard.olympusvisor.com"
 
     override val lang: String = "es"
     override val name: String = "Olympus Scanlation"
