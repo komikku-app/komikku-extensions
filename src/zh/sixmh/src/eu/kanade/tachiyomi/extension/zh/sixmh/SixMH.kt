@@ -182,6 +182,7 @@ class SixMH : HttpSource(), ConfigurableSource {
     override fun pageListParse(response: Response): List<Page> {
         val result = Unpacker.unpack(response.body.string(), "[", "]")
             .ifEmpty { return emptyList() }
+            .replace("\\u0026", "&")
             .replace("\\", "")
             .removeSurrounding("\"").split("\",\"")
         return result.mapIndexed { i, url -> Page(i, imageUrl = url) }
@@ -213,7 +214,7 @@ class SixMH : HttpSource(), ConfigurableSource {
         const val MIRROR_PREF = "MIRROR"
 
         /** Note: mirror index affects [chapterListParse] */
-        val MIRRORS get() = arrayOf("6mh67.com", "qiximh3.com")
+        val MIRRORS get() = arrayOf("sixmanhua.com", "qiximh3.com")
         val MIRROR_NAMES get() = arrayOf("6漫画", "七夕漫画")
 
         private val dateFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH) }
