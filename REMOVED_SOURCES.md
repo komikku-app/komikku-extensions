@@ -10,6 +10,7 @@ Here is a list of known sources that were removed.
 
 ### Too difficult to maintain
 
+- Anchira https://github.com/tachiyomiorg/tachiyomi-extensions/pull/19149
 - Bakai https://github.com/tachiyomiorg/tachiyomi-extensions/pull/17890
 - Blackout Comics and Izakaya https://github.com/tachiyomiorg/tachiyomi-extensions/pull/18500
 - ColaManhua (COLA漫画) https://github.com/tachiyomiorg/tachiyomi-extensions/pull/11445
