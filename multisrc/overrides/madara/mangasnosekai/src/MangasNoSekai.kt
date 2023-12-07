@@ -1,10 +1,13 @@
 package eu.kanade.tachiyomi.extension.es.mangasnosekai
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.Request
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -19,6 +22,22 @@ class MangasNoSekai : Madara(
         .build()
 
     override val useNewChapterEndpoint = true
+
+    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/${searchPage(page)}?s=&post_type=wp-manga&m_orderby=views", headers)
+
+    override fun popularMangaSelector() = searchMangaSelector()
+
+    override fun popularMangaFromElement(element: Element) = searchMangaFromElement(element)
+
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/${searchPage(page)}?s=&post_type=wp-manga&m_orderby=latest", headers)
+
+    override fun latestUpdatesSelector() = searchMangaSelector()
+
+    override fun latestUpdatesFromElement(element: Element) = searchMangaFromElement(element)
+
+    override fun searchPage(page: Int): String {
+        return if (page > 1) "page/$page/" else ""
+    }
 
     override fun searchMangaNextPageSelector() = "nav.navigation a.next"
 
