@@ -13,7 +13,6 @@ data class SearchManga(
     val title: String,
     @SerialName("md_covers") val mdCovers: List<MDcovers> = emptyList(),
     @SerialName("cover_url") val cover: String? = null,
-
 ) {
     fun toSManga() = SManga.create().apply {
         // appending # at end as part of migration from slug to hid
@@ -31,23 +30,25 @@ data class Manga(
     val genres: List<Name> = emptyList(),
     val demographic: String? = null,
 ) {
-    fun toSManga(includeMuTags: Boolean = false, covers: List<MDcovers>? = null) =
+    fun toSManga(
+        includeMuTags: Boolean = false,
+        scorePosition: String = "",
+        covers: List<MDcovers>? = null,
+    ) =
         SManga.create().apply {
             // appennding # at end as part of migration from slug to hid
             url = "/comic/${comic.hid}#"
             title = comic.title
             description = buildString {
-                if (!comic.score.isNullOrEmpty()) {
-                    val stars = comic.score.toBigDecimal().div(BigDecimal(2))
-                        .setScale(0, RoundingMode.HALF_UP).toInt()
-                    append("★".repeat(stars))
-                    if (stars < 5) append("☆".repeat(5 - stars))
-                    append(" ${comic.score} ")
-                }
+                if (scorePosition == "top") append(comic.fancyScore)
                 val desc = comic.desc?.beautifyDescription()
                 if (!desc.isNullOrEmpty()) {
                     if (this.isNotEmpty()) append("\n\n")
                     append(desc)
+                }
+                if (scorePosition == "middle") {
+                    if (this.isNotEmpty()) append("\n\n")
+                    append(comic.fancyScore)
                 }
                 if (comic.altTitles.isNotEmpty()) {
                     if (this.isNotEmpty()) append("\n\n")
@@ -57,6 +58,10 @@ data class Manga(
                             title.title?.let { "• $it" }
                         }.joinToString("\n"),
                     )
+                }
+                if (scorePosition == "bottom") {
+                    if (this.isNotEmpty()) append("\n\n")
+                    append(comic.fancyScore)
                 }
             }
 
@@ -106,6 +111,17 @@ data class Comic(
         "cn" -> Name("Manhua")
         else -> null
     }
+    val fancyScore: String = if (score.isNullOrEmpty()) {
+        ""
+    } else {
+        val stars = score.toBigDecimal().div(BigDecimal(2))
+            .setScale(0, RoundingMode.HALF_UP).toInt()
+        buildString {
+            append("★".repeat(stars))
+            if (stars < 5) append("☆".repeat(5 - stars))
+            append(" $score")
+        }
+    }
 }
 
 @Serializable
@@ -131,6 +147,7 @@ data class Covers(
 @Serializable
 data class MDcovers(
     val b2key: String?,
+    val vol: String? = null,
 )
 
 @Serializable

@@ -14,7 +14,9 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="https" />
+                <data android:host="comick.ink" />
                 <data android:host="comick.app" />
+                <data android:host="comick.fun" />
                 <data android:pathPattern="/comic/.*/..*" />
                 <data android:pathPattern="/comic/..*" />
             </intent-filter>

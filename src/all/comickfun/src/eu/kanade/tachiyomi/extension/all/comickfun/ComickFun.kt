@@ -3,8 +3,10 @@ package eu.kanade.tachiyomi.extension.all.comickfun
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.lib.i18n.Intl
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -36,7 +38,7 @@ abstract class ComickFun(
 
     override val name = "Comick"
 
-    override val baseUrl = "https://comick.app"
+    override val baseUrl = "https://comick.ink"
 
     private val apiUrl = "https://api.comick.fun"
 
@@ -51,6 +53,15 @@ abstract class ComickFun(
 
     private lateinit var searchResponse: List<SearchManga>
 
+    private val intl by lazy {
+        Intl(
+            language = lang,
+            baseLanguage = "en",
+            availableLanguages = setOf("en", "pt-BR"),
+            classLoader = this::class.java.classLoader!!,
+        )
+    }
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -58,9 +69,8 @@ abstract class ComickFun(
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         EditTextPreference(screen.context).apply {
             key = IGNORED_GROUPS_PREF
-            title = "Ignored Groups"
-            summary =
-                "Chapters from these groups won't be shown.\nOne group name per line (case-insensitive)"
+            title = intl["ignored_groups_title"]
+            summary = intl["ignored_groups_summary"]
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit()
@@ -71,9 +81,9 @@ abstract class ComickFun(
 
         SwitchPreferenceCompat(screen.context).apply {
             key = INCLUDE_MU_TAGS_PREF
-            title = "Include Tags"
-            summaryOn = "More specific, but might contain spoilers!"
-            summaryOff = "Only the broader genres"
+            title = intl["include_tags_title"]
+            summaryOn = intl["include_tags_on"]
+            summaryOff = intl["include_tags_off"]
             setDefaultValue(INCLUDE_MU_TAGS_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -85,14 +95,38 @@ abstract class ComickFun(
 
         SwitchPreferenceCompat(screen.context).apply {
             key = FIRST_COVER_PREF
-            title = "Update Covers"
-            summaryOff = "Prefer first cover"
-            summaryOn = "Keep cover updated"
+            title = intl["update_cover_title"]
+            summaryOff = intl["update_cover_off"]
+            summaryOn = intl["update_cover_on"]
             setDefaultValue(FIRST_COVER_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit()
                     .putBoolean(FIRST_COVER_PREF, newValue as Boolean)
+                    .commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = SCORE_POSITION_PREF
+            title = intl["score_position_title"]
+            summary = "%s"
+            entries = arrayOf(
+                intl["score_position_top"],
+                intl["score_position_middle"],
+                intl["score_position_bottom"],
+                intl["score_position_none"],
+            )
+            entryValues = arrayOf(SCORE_POSITION_DEFAULT, "middle", "bottom", "none")
+            setDefaultValue(SCORE_POSITION_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+
+                preferences.edit()
+                    .putString(SCORE_POSITION_PREF, entry)
                     .commit()
             }
         }.also(screen::addPreference)
@@ -113,6 +147,9 @@ abstract class ComickFun(
 
     private val SharedPreferences.updateCover: Boolean
         get() = getBoolean(FIRST_COVER_PREF, FIRST_COVER_DEFAULT)
+
+    private val SharedPreferences.scorePosition: String
+        get() = getString(SCORE_POSITION_PREF, SCORE_POSITION_DEFAULT) ?: SCORE_POSITION_DEFAULT
 
     init {
         preferences.newLineIgnoredGroups()
@@ -314,13 +351,15 @@ abstract class ComickFun(
     private fun mangaDetailsParse(response: Response, manga: SManga): SManga {
         val mangaData = response.parseAs<Manga>()
         if (!preferences.updateCover && manga.thumbnail_url != mangaData.comic.cover) {
-            if (manga.thumbnail_url.toString().endsWith("#")) {
+            if (manga.thumbnail_url.toString().endsWith("#1")) {
                 return mangaData.toSManga(
                     includeMuTags = preferences.includeMuTags,
+                    scorePosition = preferences.scorePosition,
                     covers = listOf(
                         MDcovers(
-                            b2key = manga.thumbnail_url?.removeSuffix("#")
+                            b2key = manga.thumbnail_url?.substringBeforeLast("#")
                                 ?.substringAfterLast("/"),
+                            vol = "1",
                         ),
                     ),
                 )
@@ -329,7 +368,10 @@ abstract class ComickFun(
                 "$apiUrl/comic/${mangaData.comic.slug ?: mangaData.comic.hid}/covers?tachiyomi=true"
             val covers = client.newCall(GET(coversUrl)).execute()
                 .parseAs<Covers>().md_covers.reversed()
-            return mangaData.toSManga(includeMuTags = preferences.includeMuTags, covers = covers)
+            return mangaData.toSManga(
+                includeMuTags = preferences.includeMuTags,
+                covers = if (covers.any { it.vol == "1" }) covers.filter { it.vol == "1" } else covers,
+            )
         }
         return mangaData.toSManga(includeMuTags = preferences.includeMuTags)
     }
@@ -440,6 +482,8 @@ abstract class ComickFun(
         private const val MIGRATED_IGNORED_GROUPS = "MigratedIgnoredGroups"
         private const val FIRST_COVER_PREF = "DefaultCover"
         private const val FIRST_COVER_DEFAULT = true
+        private const val SCORE_POSITION_PREF = "ScorePosition"
+        private const val SCORE_POSITION_DEFAULT = "top"
         private const val limit = 20
         val dateFormat by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH).apply {

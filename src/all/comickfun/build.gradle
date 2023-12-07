@@ -6,8 +6,12 @@ ext {
     extName = 'Comick'
     pkgNameSuffix = 'all.comickfun'
     extClass = '.ComickFunFactory'
-    extVersionCode = 39
+    extVersionCode = 40
     isNsfw = true
+}
+
+dependencies {
+    implementation(project(":lib-i18n"))
 }
 
 apply from: "$rootDir/common.gradle"

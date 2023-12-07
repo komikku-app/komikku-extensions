@@ -37,8 +37,9 @@ internal fun Int?.parseStatus(translationComplete: Boolean?): Int {
 internal fun parseCover(thumbnailUrl: String?, mdCovers: List<MDcovers>): String? {
     val b2key = mdCovers.firstOrNull()?.b2key
         ?: return thumbnailUrl
+    val vol = mdCovers.firstOrNull()?.vol.orEmpty()
 
-    return thumbnailUrl?.replaceAfterLast("/", "$b2key#")
+    return thumbnailUrl?.replaceAfterLast("/", "$b2key#$vol")
 }
 
 internal fun thumbnailIntercept(chain: Interceptor.Chain): Response {
