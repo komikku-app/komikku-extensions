@@ -10,7 +10,7 @@ class MadaraGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Madara"
 
-    override val baseVersionCode: Int = 31
+    override val baseVersionCode: Int = 32
 
     override val sources = listOf(
         MultiLang("Atlantis Scan", "https://atlantisscan.com", listOf("es", "pt-BR"), isNsfw = true),
@@ -454,6 +454,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Taurus Fansub", "https://taurusmanga.com", "es", overrideVersionCode = 1),
         SingleLang("TeenManhua", "https://teenmanhua.com", "en", overrideVersionCode = 1),
         SingleLang("The Beginning After The End", "https://www.thebeginningaftertheend.fr", "fr", overrideVersionCode = 1),
+        SingleLang("The Blank Scanlation", "https://theblank.net", "en", className = "TheBlank", isNsfw = true),
         SingleLang("The Guild", "https://theguildscans.com", "en"),
         SingleLang("Time Naight", "https://timenaight.com", "tr"),
         SingleLang("Todaymic", "https://todaymic.com", "en", overrideVersionCode = 1),
