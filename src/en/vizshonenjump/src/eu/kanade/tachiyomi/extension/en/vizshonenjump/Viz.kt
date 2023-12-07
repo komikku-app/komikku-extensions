@@ -40,6 +40,7 @@ open class Viz(
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.client.newBuilder()
+        .addInterceptor(::headersIntercept)
         .addInterceptor(::authCheckIntercept)
         .addInterceptor(::authChapterCheckIntercept)
         .addInterceptor(VizImageInterceptor())
@@ -291,6 +292,14 @@ open class Viz(
             ?.attr("logged_in")?.toBoolean() ?: false
 
         loginCheckResponse.close()
+    }
+
+    private fun headersIntercept(chain: Interceptor.Chain): Response {
+        val request = chain.request()
+        val headers = request.headers.newBuilder()
+            .removeAll("Accept-Encoding")
+            .build()
+        return chain.proceed(request.newBuilder().headers(headers).build())
     }
 
     private fun authCheckIntercept(chain: Interceptor.Chain): Response {

@@ -6,7 +6,7 @@ ext {
     extName = 'VIZ'
     pkgNameSuffix = 'en.vizshonenjump'
     extClass = '.VizFactory'
-    extVersionCode = 19
+    extVersionCode = 20
 }
 
 dependencies {
