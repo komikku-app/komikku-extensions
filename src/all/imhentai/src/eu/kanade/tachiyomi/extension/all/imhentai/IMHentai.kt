@@ -110,33 +110,41 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
     private fun toBinary(boolean: Boolean) = if (boolean) "1" else "0"
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/search".toHttpUrlOrNull()!!.newBuilder()
-            .addQueryParameter("key", query)
-            .addQueryParameter("page", page.toString())
-            .addQueryParameter(getLanguageURIByName(imhLang).uri, toBinary(true)) // main language always enabled
+        if (filters.any { it is LanguageFilters && it.state.any { it.name == LANGUAGE_SPEECHLESS && it.state } }) { // edge case for language = speechless
+            val url = "$baseUrl/language/speechless/".toHttpUrlOrNull()!!.newBuilder()
 
-        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-            when (filter) {
-                is LanguageFilters -> {
-                    filter.state.forEach {
-                        url.addQueryParameter(it.uri, toBinary(it.state))
-                    }
-                }
-                is CategoryFilters -> {
-                    filter.state.forEach {
-                        url.addQueryParameter(it.uri, toBinary(it.state))
-                    }
-                }
-                is SortOrderFilter -> {
-                    getSortOrderURIs().forEachIndexed { index, pair ->
-                        url.addQueryParameter(pair.second, toBinary(filter.state == index))
-                    }
-                }
-                else -> {}
+            if ((if (filters.isEmpty()) getFilterList() else filters).filterIsInstance<SortOrderFilter>()[0].state == 0) {
+                url.addPathSegment("popular")
             }
-        }
+            return GET(url.toString())
+        } else {
+            val url = "$baseUrl/search".toHttpUrlOrNull()!!.newBuilder()
+                .addQueryParameter("key", query)
+                .addQueryParameter("page", page.toString())
+                .addQueryParameter(getLanguageURIByName(imhLang).uri, toBinary(true)) // main language always enabled
 
-        return GET(url.toString())
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is LanguageFilters -> {
+                        filter.state.forEach {
+                            url.addQueryParameter(it.uri, toBinary(it.state))
+                        }
+                    }
+                    is CategoryFilters -> {
+                        filter.state.forEach {
+                            url.addQueryParameter(it.uri, toBinary(it.state))
+                        }
+                    }
+                    is SortOrderFilter -> {
+                        getSortOrderURIs().forEachIndexed { index, pair ->
+                            url.addQueryParameter(pair.second, toBinary(filter.state == index))
+                        }
+                    }
+                    else -> {}
+                }
+            }
+            return GET(url.toString())
+        }
     }
 
     override fun searchMangaSelector(): String = popularMangaSelector()
@@ -264,6 +272,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
         SortOrderFilter(getSortOrderURIs(), sortOrderState),
         CategoryFilters(getCategoryURIs()),
         LanguageFilters(getLanguageURIs().filter { it.name != imhLang }), // exclude main lang
+        Filter.Header("Speechless language: ignores all filters except \"Popular\" and \"Latest\" in Sorting Filter"),
     )
 
     private fun getCategoryURIs() = listOf(
@@ -291,6 +300,7 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
         LanguageFilter(LANGUAGE_KOREAN, "kr"),
         LanguageFilter(LANGUAGE_GERMAN, "de"),
         LanguageFilter(LANGUAGE_RUSSIAN, "ru"),
+        LanguageFilter(LANGUAGE_SPEECHLESS, ""),
     )
 
     private fun getLanguageURIByName(name: String): LanguageFilter {
@@ -312,5 +322,6 @@ class IMHentai(override val lang: String, private val imhLang: String) : ParsedH
         const val LANGUAGE_KOREAN = "Korean"
         const val LANGUAGE_GERMAN = "German"
         const val LANGUAGE_RUSSIAN = "Russian"
+        const val LANGUAGE_SPEECHLESS = "Speechless"
     }
 }
