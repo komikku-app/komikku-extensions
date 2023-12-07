@@ -88,14 +88,14 @@ abstract class MangaCatalog(
 
     override fun chapterListSelector(): String = "div.w-full > div.bg-bg-secondary > div.grid"
     override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        val name1 = element.select(".col-span-3 > a").text()
+        val name1 = element.select(".col-span-4 > a").text()
         val name2 = element.select(".text-xs:not(a)").text()
         if (name2 == "") {
             name = name1
         } else {
             name = "$name1 - $name2"
         }
-        url = element.select(".col-span-3 > a").attr("abs:href")
+        url = element.select(".col-span-4 > a").attr("abs:href")
         date_upload = System.currentTimeMillis()
     }
 

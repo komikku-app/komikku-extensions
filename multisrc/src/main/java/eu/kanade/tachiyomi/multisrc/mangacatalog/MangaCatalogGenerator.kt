@@ -9,7 +9,7 @@ class MangaCatalogGenerator : ThemeSourceGenerator {
 
     override val themeClass = "MangaCatalog"
 
-    override val baseVersionCode: Int = 3
+    override val baseVersionCode: Int = 4
 
     override val sources = listOf(
         SingleLang("Read Attack on Titan Shingeki no Kyojin Manga", "https://ww8.readsnk.com", "en", className = "ReadAttackOnTitanShingekiNoKyojinManga", overrideVersionCode = 4),
