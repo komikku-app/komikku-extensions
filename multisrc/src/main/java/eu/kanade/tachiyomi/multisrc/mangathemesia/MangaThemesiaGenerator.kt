@@ -36,6 +36,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Elarc Reader", "https://elarcreader.com", "en", className = "ElarcPage", overrideVersionCode = 1),
         SingleLang("EnryuManga", "https://enryumanga.com", "en"),
         SingleLang("Epsilon Scan", "https://epsilonscan.fr", "fr", isNsfw = true),
+        SingleLang("Evil production", "https://evil-manga.eu", "cs", isNsfw = true),
         SingleLang("Fairy Manga", "https://fairymanga.com", "en", className = "QueenScans", overrideVersionCode = 1),
         SingleLang("Flame Comics", "https://flamecomics.com", "en"),
         SingleLang("Franxx Mangás", "https://franxxmangas.net", "pt-BR", className = "FranxxMangas", isNsfw = true),
