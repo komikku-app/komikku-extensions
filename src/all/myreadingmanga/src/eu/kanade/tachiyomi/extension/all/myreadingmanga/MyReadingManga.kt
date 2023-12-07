@@ -106,7 +106,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
         return manga
     }
 
-    private val extensionRegex = Regex("""\.(jpg|png|jpeg)""")
+    private val extensionRegex = Regex("""\.(jpg|png|jpeg|webp)""")
 
     private fun getImage(element: Element): String {
         return when {
@@ -217,7 +217,7 @@ open class MyReadingManga(override val lang: String, private val siteLang: Strin
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
-        return (document.select("div > img") + document.select("div.separator img[data-src]"))
+        return (document.select("div img") + document.select("div.separator img[data-src]"))
             .map { getImage(it) }
             .distinct()
             .mapIndexed { i, url -> Page(i, "", url) }
