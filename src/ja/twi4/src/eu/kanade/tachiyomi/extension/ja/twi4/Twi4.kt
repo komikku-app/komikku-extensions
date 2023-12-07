@@ -27,7 +27,8 @@ class Twi4 : HttpSource() {
     override val name: String = "Twi4"
     override val supportsLatest: Boolean = false
     private val application: Application by injectLazy()
-    private val validPageTest: Regex = Regex("/comics/twi4/\\w+/works/\\d{4}\\.[0-9a-f]{32}\\.jpg")
+    private val validPageTest: Regex =
+        Regex("/comics/twi4/\\w+/works/\\d{4}\\.[0-9a-zA-Z]{32}\\.jpg")
 
     companion object Constants {
         const val SEARCH_PREFIX_SLUG = "SLUG:"
@@ -40,47 +41,48 @@ class Twi4 : HttpSource() {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36",
     ).build()
 
-    // Popular manga == All manga in the site
-    override fun fetchPopularManga(page: Int): Observable<MangasPage> {
-        return client.newCall(popularMangaRequest(page))
-            .asObservableSuccess()
-            .map { response ->
-                parsePopularMangaRequest(response, page < 2)
-            }
-    }
-
-    private fun parsePopularMangaRequest(response: Response, hasNextPage: Boolean): MangasPage {
+    // Both latest and popular only lists 4 manga in total
+    // As the full catalog is consists of less than 50 manga, it is not worth implementing
+    // We'll just list all manga in the catalog instead
+    override fun popularMangaParse(response: Response): MangasPage {
         val doc = Jsoup.parse(response.body.string())
         val ret = mutableListOf<SManga>()
-        // One of the manga is a link to Twi4's zadankai, which is a platform for anyone to post oneshot 4-koma with judges to comment
-        // It has a completely different page layout and it is pretty much its own "manga site".
-        // Therefore, for simplicity sake. This extension (or at least this source) will not include that as a "Manga"
-        val mangas = doc.select("section:not(.zadankai):not([id])")
-        for (manga in mangas) {
-            ret.add(
-                SManga.create().apply {
-                    thumbnail_url =
-                        getUrlDomain() + manga.select("header > div.figgroup > figure > a > img")
-                            .attr("src")
-                    setUrlWithoutDomain(
-                        getUrlDomain() + manga.select("header > div.hgroup > h3 > a").attr("href"),
-                    )
-                    title = manga.select("header > div.hgroup > h3 > a > strong").text()
-                },
-            )
+        // Manga that are recently updated don't show up on the full catalog
+        // So we'll need to parse the recent updates section as well
+        val listings = arrayOf(
+            "#lineup_recent > div> section",
+            "#lineup > div > section:not(.zadankai):not([id])",
+        )
+        for (listing in listings) {
+            val mangas = doc.select(listing)
+            for (manga in mangas) {
+                ret.add(
+                    SManga.create().apply {
+                        thumbnail_url =
+                            getUrlDomain() + manga.select("div.figgroup > figure > a > img")
+                                .attr("src")
+                        setUrlWithoutDomain(
+                            getUrlDomain() + manga.select("div.hgroup > h3 > a").attr("href"),
+                        )
+                        title = manga.select("div.hgroup > h3 > a").text()
+                        author = manga.select("div.hgroup > p").text()
+                        status =
+                            if (manga.select("ul:first-child > li:last-child > em.is-completed")
+                                    .isEmpty()
+                            ) {
+                                SManga.ONGOING
+                            } else {
+                                SManga.COMPLETED
+                            }
+                    },
+                )
+            }
         }
-        return MangasPage(ret, hasNextPage)
+        return MangasPage(ret, false)
     }
 
-    // We have to fetch all manga from two different pages
-    // One from the homepage (which contains all ongoing manga), one from the completed manga page
-    // The menu at the top relies on JS which JSoup doesn't load
     override fun popularMangaRequest(page: Int): Request {
-        return if (page == 1) {
-            GET(baseUrl, getChromeHeaders())
-        } else {
-            GET(baseUrl + "completed.html", getChromeHeaders())
-        }
+        return GET(baseUrl, getChromeHeaders())
     }
 
     override fun mangaDetailsRequest(manga: SManga): Request =
@@ -125,7 +127,7 @@ class Twi4 : HttpSource() {
                     }
                 }
             }
-            status = SManga.UNKNOWN
+            // While the status can be obtained at the home page, there is no such info at the details page
         }
     }
 
@@ -203,16 +205,14 @@ class Twi4 : HttpSource() {
                 .let { re.replace(it, "\"$1\":") }
             indexResponse.close()
             val indexElement = index.let { Json.parseToJsonElement(it) }
-            var suffix: String? = null
-            if (indexElement != null) {
-                // Each entry in the Items array corresponds to 1 chapter/page
-                suffix = indexElement.jsonObject["Items"]?.jsonArray?.get(chapterNum - 1)?.jsonObject?.get("Suffix")?.jsonPrimitive?.content
-            }
+            val suffix =
+                indexElement.jsonObject["Items"]?.jsonArray?.get(chapterNum - 1)?.jsonObject?.get("Suffix")?.jsonPrimitive?.content
             // Twi4's image links are a bit of a mess
             // Because in very rare cases, the image filename *doesn't* come with a suffix
             // So only attach the suffix if there is one
             if (suffix != null) {
-                imageUrl = getUrlDomain() + page.select("div > div > p > img").attr("src").dropLast(4) + suffix + ".jpg"
+                imageUrl = getUrlDomain() + page.select("div > div > p > img").attr("src")
+                    .dropLast(4) + suffix + ".jpg"
             }
         }
         ret.add(
@@ -239,7 +239,7 @@ class Twi4 : HttpSource() {
 
             // There will still be some urls that would accidentally activate the intent (like the news page),
             // but there's no way to avoid it.
-            if (slug.endsWith("html") || slug.startsWith("zadankai")) {
+            if (slug.endsWith("html") || slug.startsWith("zadankai") || slug.startsWith("others")) {
                 return Observable.just(MangasPage(listOf(), false))
             }
             return client.newCall(GET(baseUrl + slug))
@@ -266,9 +266,6 @@ class Twi4 : HttpSource() {
         throw UnsupportedOperationException("Not used")
 
     override fun latestUpdatesRequest(page: Int): Request =
-        throw UnsupportedOperationException("Not used")
-
-    override fun popularMangaParse(response: Response): MangasPage =
         throw UnsupportedOperationException("Not used")
 
     override fun imageUrlParse(response: Response): String =
