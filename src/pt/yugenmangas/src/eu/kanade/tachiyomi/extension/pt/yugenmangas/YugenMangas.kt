@@ -1,40 +1,34 @@
 package eu.kanade.tachiyomi.extension.pt.yugenmangas
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
+import okio.Buffer
 import uy.kohesive.injekt.injectLazy
-import java.text.SimpleDateFormat
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-/**
- * Changed the name from "YugenMangas" to "Yugen Mangás" when
- * the source was updated to handle their CMS changes, so no
- * `versionId` change is needed as the ID should be different to
- * force users to migrate.
- */
-class YugenMangas : ParsedHttpSource() {
+class YugenMangas : HttpSource() {
 
     override val name = "Yugen Mangás"
 
-    override val baseUrl = "https://yugenmangas.org"
+    override val baseUrl = "https://yugenmangas.net.br"
 
     override val lang = "pt-BR"
 
@@ -49,76 +43,73 @@ class YugenMangas : ParsedHttpSource() {
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", "$baseUrl/")
 
-    override fun popularMangaRequest(page: Int): Request = GET(baseUrl, headers)
+    val apiHeaders by lazy { apiHeadersBuilder().build() }
 
-    override fun popularMangaSelector(): String = "div.popular div.swiper-wrapper a"
+    private fun apiHeadersBuilder(): Headers.Builder = headersBuilder()
+        .add("Accept", "application/json, text/plain, */*")
+        .add("Origin", baseUrl)
+        .add("Sec-Fetch-Dest", "empty")
+        .add("Sec-Fetch-Mode", "cors")
+        .add("Sec-Fetch-Site", "same-site")
 
-    override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.selectFirst("h1")!!.text()
-        thumbnail_url = element.selectFirst("img")!!.absUrl("src")
-        url = element.attr("href")
+    override fun popularMangaRequest(page: Int): Request {
+        return GET("$API_BASE_URL/random_top_series/", apiHeaders)
     }
 
-    override fun popularMangaNextPageSelector(): String? = null
+    override fun popularMangaParse(response: Response): MangasPage {
+        val result = response.parseAs<List<YugenMangaDto>>()
+        val mangaList = result.map { it.toSManga(baseUrl) }
+
+        return MangasPage(mangaList, hasNextPage = false)
+    }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/updates/?page=$page", headers)
+        return GET("$API_BASE_URL/latest_updates/", apiHeaders)
     }
 
-    override fun latestUpdatesSelector() = "div.container-update-series div.card-series-updates"
-
-    override fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
-        title = element.selectFirst("a.title-serie h1")!!.text()
-        thumbnail_url = element.selectFirst("img")!!.absUrl("src")
-        url = element.selectFirst("a")!!.attr("href")
-    }
-
-    override fun latestUpdatesNextPageSelector() = "div.pagination a:contains(Próxima)"
+    override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/api/series/list".toHttpUrl().newBuilder()
+        val apiUrl = "$API_BASE_URL/series/list".toHttpUrl().newBuilder()
             .addQueryParameter("query", query)
             .build()
 
-        return GET(url, headers)
+        return GET(apiUrl, apiHeaders)
     }
 
-    override fun searchMangaParse(response: Response): MangasPage {
-        val result = response.parseAs<List<SearchResultDto>>()
-        val matches = result.map {
-            SManga.create().apply {
-                title = it.name
-                url = "/series/${it.slug}"
-            }
-        }
+    override fun searchMangaParse(response: Response) = popularMangaParse(response)
 
-        return MangasPage(matches, hasNextPage = false)
+    override fun mangaDetailsRequest(manga: SManga): Request {
+        val slug = manga.url.removePrefix("/series/")
+
+        return POST("$API_BASE_URL/serie_details/$slug", apiHeaders)
     }
 
-    override fun searchMangaSelector() = throw UnsupportedOperationException("Not used")
+    override fun getMangaUrl(manga: SManga) = baseUrl + manga.url
 
-    override fun searchMangaFromElement(element: Element) = throw UnsupportedOperationException("Not used")
-
-    override fun searchMangaNextPageSelector() = throw UnsupportedOperationException("Not used")
-
-    override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        val infoElement = document.selectFirst("div.main div.resume > div.sinopse")!!
-
-        title = infoElement.selectFirst("div.title-name h1")!!.text()
-        author = infoElement.selectFirst("div.author")!!.text()
-        genre = infoElement.select("div.genero span").joinToString { it.text() }
-        status = infoElement.selectFirst("div.lancamento p")!!.text().toStatus()
-        description = infoElement.select("div.sinopse > p").text()
-        thumbnail_url = document.selectFirst("div.content div.side div.top-side img")!!.absUrl("src")
+    override fun mangaDetailsParse(response: Response): SManga {
+        return response.parseAs<YugenMangaDto>().toSManga(baseUrl)
     }
 
-    override fun chapterListSelector() = "#listadecapitulos div.chapter a"
+    override fun chapterListRequest(manga: SManga): Request {
+        val slug = manga.url.removePrefix("/series/")
+        val body = YugenGetChaptersBySeriesDto(slug)
+        val payload = json.encodeToString(body).toRequestBody(JSON_MEDIA_TYPE)
 
-    override fun chapterFromElement(element: Element): SChapter = SChapter.create().apply {
-        name = element.selectFirst("span.chapter-title")!!.text()
-        scanlator = element.selectFirst("div.end-chapter span")?.text()
-        date_upload = element.selectFirst("span.chapter-lancado")!!.text().toDate()
-        url = element.attr("href")
+        val newHeaders = apiHeadersBuilder()
+            .set("Content-Length", payload.contentLength().toString())
+            .set("Content-Type", payload.contentType().toString())
+            .build()
+
+        return POST("$API_BASE_URL/get_chapters_by_serie/", newHeaders, payload)
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val (seriesSlug) = response.request.body!!.parseAs<YugenGetChaptersBySeriesDto>()
+
+        return response.parseAs<YugenChapterListDto>().chapters
+            .map { it.toSChapter(seriesSlug) }
+            .sortedByDescending(SChapter::chapter_number)
     }
 
     override fun getChapterUrl(chapter: SChapter) = baseUrl + chapter.url
@@ -126,25 +117,23 @@ class YugenMangas : ParsedHttpSource() {
     override fun pageListRequest(chapter: SChapter): Request {
         val paths = chapter.url.removePrefix("/").split("/")
 
-        val newHeaders = headersBuilder()
+        val newHeaders = apiHeadersBuilder()
             .set("Referer", getChapterUrl(chapter))
             .build()
 
-        return GET("$baseUrl/api/serie/${paths[1]}/chapter/${paths[2]}/images/imgs", newHeaders)
+        return POST("$API_BASE_URL/serie/${paths[1]}/chapter/${paths[2]}/images/imgs/", newHeaders)
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val result = response.parseAs<ReaderDto>()
+        val result = response.parseAs<YugenReaderDto>()
         val chapterUrl = response.request.headers["Referer"].orEmpty()
 
         return result.images.orEmpty().mapIndexed { index, image ->
-            Page(index, chapterUrl, "$CDN_BASE_URL/${image.removePrefix("/")}")
+            Page(index, chapterUrl, "$baseUrl/${image.removePrefix("/")}")
         }
     }
 
-    override fun pageListParse(document: Document) = throw UnsupportedOperationException("Not used")
-
-    override fun imageUrlParse(document: Document) = ""
+    override fun imageUrlParse(response: Response) = ""
 
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()
@@ -154,34 +143,17 @@ class YugenMangas : ParsedHttpSource() {
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    @Serializable
-    private data class SearchResultDto(val name: String, val slug: String)
-
-    @Serializable
-    private data class ReaderDto(
-        @SerialName("chapter_images") val images: List<String>? = emptyList(),
-    )
-
-    private fun String.toDate(): Long {
-        return runCatching { DATE_FORMATTER.parse(trim())?.time }
-            .getOrNull() ?: 0L
-    }
-
-    private fun String.toStatus() = when (this) {
-        "ongoing" -> SManga.ONGOING
-        "completed", "finished" -> SManga.COMPLETED
-        else -> SManga.UNKNOWN
-    }
-
     private inline fun <reified T> Response.parseAs(): T = use {
         json.decodeFromString(it.body.string())
     }
 
-    companion object {
-        private const val CDN_BASE_URL = "https://media.yugenmangas.org"
+    private inline fun <reified T> RequestBody.parseAs(): T {
+        val jsonString = Buffer().also { writeTo(it) }.readUtf8()
+        return json.decodeFromString(jsonString)
+    }
 
-        private val DATE_FORMATTER by lazy {
-            SimpleDateFormat("dd.MM.yyyy", Locale("pt", "BR"))
-        }
+    companion object {
+        private const val API_BASE_URL = "https://api.yugenmangas.net.br/api"
+        private val JSON_MEDIA_TYPE = "application/json".toMediaType()
     }
 }

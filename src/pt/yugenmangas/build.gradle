@@ -6,7 +6,7 @@ ext {
     extName = 'Yugen Mangás'
     pkgNameSuffix = 'pt.yugenmangas'
     extClass = '.YugenMangas'
-    extVersionCode = 37
+    extVersionCode = 38
 }
 
 apply from: "$rootDir/common.gradle"
