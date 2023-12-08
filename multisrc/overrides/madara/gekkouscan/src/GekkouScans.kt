@@ -3,15 +3,12 @@ package eu.kanade.tachiyomi.extension.pt.gekkouscan
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import okhttp3.OkHttpClient
-import java.text.SimpleDateFormat
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class GekkouScans : Madara(
     "Gekkou Scans",
-    "https://gekkou.com.br",
+    "https://gekkouscans.top",
     "pt-BR",
-    SimpleDateFormat("dd 'de' MMMMM 'de' YYYY", Locale("pt", "BR")),
 ) {
 
     // Theme changed from MMRCMS to Madara, again.
