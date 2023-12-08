@@ -4,6 +4,7 @@ import android.util.Base64
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
@@ -11,12 +12,13 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
+import java.lang.UnsupportedOperationException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -68,19 +70,27 @@ class LerManga : ParsedHttpSource() {
     override fun latestUpdatesNextPageSelector(): String? = null
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val path = if (page > 1) "page/$page/" else ""
-        val url = "$baseUrl/$path".toHttpUrl().newBuilder()
-            .addQueryParameter("s", query)
-            .build()
+        if (!query.startsWith(PREFIX_SLUG_SEARCH)) {
+            throw Exception(ERROR_NO_SEARCH_AVAILABLE)
+        }
 
-        return GET(url, headers)
+        val slug = query.removePrefix(PREFIX_SLUG_SEARCH)
+        val tempManga = SManga.create().apply { url = "/mangas/$slug" }
+
+        return mangaDetailsRequest(tempManga)
     }
 
-    override fun searchMangaSelector() = popularMangaSelector()
+    override fun searchMangaParse(response: Response): MangasPage {
+        val manga = mangaDetailsParse(response)
 
-    override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
+        return MangasPage(listOf(manga), hasNextPage = false)
+    }
 
-    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
+    override fun searchMangaSelector() = throw UnsupportedOperationException("Not used")
+
+    override fun searchMangaFromElement(element: Element) = throw UnsupportedOperationException("Not used")
+
+    override fun searchMangaNextPageSelector() = throw UnsupportedOperationException("Not used")
 
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
         val infoElement = document.selectFirst("div.capitulo_recente")!!
@@ -90,6 +100,7 @@ class LerManga : ParsedHttpSource() {
             .joinToString { it.text() }
         description = infoElement.selectFirst("div.boxAnimeSobreLast p:last-child")!!.ownText()
         thumbnail_url = infoElement.selectFirst("div.capaMangaInfo img")!!.absUrl("src")
+        setUrlWithoutDomain(document.location())
     }
 
     override fun chapterListSelector() = "div.manga-chapters div.single-chapter"
@@ -147,5 +158,8 @@ class LerManga : ParsedHttpSource() {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("dd-MM-yyyy", Locale("pt", "BR"))
         }
+
+        const val PREFIX_SLUG_SEARCH = "slug:"
+        private const val ERROR_NO_SEARCH_AVAILABLE = "O site não possui busca própria."
     }
 }
