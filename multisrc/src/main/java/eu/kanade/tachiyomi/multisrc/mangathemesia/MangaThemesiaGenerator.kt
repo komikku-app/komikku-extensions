@@ -107,7 +107,7 @@ class MangaThemesiaGenerator : ThemeSourceGenerator {
         SingleLang("Nonbiri", "https://nonbiri.space", "id"),
         SingleLang("Noromax", "https://noromax.my.id", "id"),
         SingleLang("OPSCANS", "https://opscans.com", "all"),
-        SingleLang("Origami Orpheans", "https://origami-orpheans.com.br", "pt-BR", overrideVersionCode = 9),
+        SingleLang("Origami Orpheans", "https://origami-orpheans.com", "pt-BR", overrideVersionCode = 10),
         SingleLang("Otsugami", "https://otsugami.id", "id"),
         SingleLang("Ozul Scans", "https://kingofmanga.com", "ar", overrideVersionCode = 2),
         SingleLang("Phantom Scans", "https://phantomscans.com", "en", overrideVersionCode = 1),
