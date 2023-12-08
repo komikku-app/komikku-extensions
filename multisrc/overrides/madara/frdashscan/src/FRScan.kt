@@ -14,4 +14,6 @@ class FRScan : Madara("FR-Scan", "https://fr-scan.com", "fr", dateFormat = Simpl
         .build()
 
     override val useNewChapterEndpoint = true
+
+    override val chapterUrlSuffix = ""
 }
