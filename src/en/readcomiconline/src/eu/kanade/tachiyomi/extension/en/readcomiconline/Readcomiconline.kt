@@ -175,7 +175,7 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
-        val qualitySuffix = if (qualitypref() != "lq") "&quality=${qualitypref()}" else ""
+        val qualitySuffix = if ((qualitypref() != "lq" && serverpref() != "s2") || (qualitypref() == "lq" && serverpref() == "s2")) "&s=${serverpref()}&quality=${qualitypref()}" else "&s=${serverpref()}"
         return GET(baseUrl + chapter.url + qualitySuffix, headers)
     }
 
@@ -280,9 +280,26 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
             }
         }
         screen.addPreference(qualitypref)
+        val serverpref = androidx.preference.ListPreference(screen.context).apply {
+            key = SERVER_PREF_TITLE
+            title = SERVER_PREF_TITLE
+            entries = arrayOf("Server 1", "Server 2")
+            entryValues = arrayOf("", "s2")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(SERVER_PREF, entry).commit()
+            }
+        }
+        screen.addPreference(serverpref)
     }
 
     private fun qualitypref() = preferences.getString(QUALITY_PREF, "hq")
+
+    private fun serverpref() = preferences.getString(SERVER_PREF, "")
 
     private var rguardUrl: String? = null
 
@@ -325,6 +342,8 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
     companion object {
         private const val QUALITY_PREF_Title = "Image Quality Selector"
         private const val QUALITY_PREF = "qualitypref"
+        private const val SERVER_PREF_TITLE = "Server Preference"
+        private const val SERVER_PREF = "serverpref"
 
         private val CHAPTER_IMAGES_REGEX = "lstImages\\.push\\([\"'](.*)[\"']\\)".toRegex()
         private val RGUARD_REGEX = Regex("""(function beau[\s\S]*\})""")
