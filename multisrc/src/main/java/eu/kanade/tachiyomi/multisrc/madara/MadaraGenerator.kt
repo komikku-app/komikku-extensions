@@ -124,7 +124,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Grabber Zone", "https://grabber.zone", "all"),
         SingleLang("GuncelManga", "https://guncelmanga.com", "tr", overrideVersionCode = 1),
         SingleLang("Hades no Fansub Hentai", "https://h.mangareaderpro.com", "es", isNsfw = true),
-        SingleLang("Hades no Fansub", "https://mangareaderpro.com", "es", overrideVersionCode = 1),
+        SingleLang("Hades no Fansub", "https://hadesnofansub.com", "es", isNsfw = true, overrideVersionCode = 2, className = "HadesNoFansub"),
         SingleLang("Harimanga", "https://harimanga.com", "en", overrideVersionCode = 3),
         SingleLang("Hattori Manga", "https://hattorimanga.com", "tr", isNsfw = true),
         SingleLang("Hayalistic", "https://hayalistic.com", "tr"),
