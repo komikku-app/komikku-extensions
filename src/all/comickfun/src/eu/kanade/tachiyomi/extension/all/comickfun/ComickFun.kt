@@ -38,7 +38,7 @@ abstract class ComickFun(
 
     override val name = "Comick"
 
-    override val baseUrl = "https://comick.ink"
+    override val baseUrl = "https://comick.cc"
 
     private val apiUrl = "https://api.comick.fun"
 
