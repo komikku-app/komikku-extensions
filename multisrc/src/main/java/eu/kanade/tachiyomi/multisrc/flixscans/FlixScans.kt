@@ -3,9 +3,7 @@ package eu.kanade.tachiyomi.multisrc.flixscans
 import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
-import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -40,11 +38,6 @@ abstract class FlixScans(
 
     override val client = network.cloudflareClient.newBuilder()
         .rateLimit(2)
-        .build()
-
-    // only returns 15 chapters each request, so using higher rate limit
-    private val chapterClient = network.cloudflareClient.newBuilder()
-        .rateLimitHost(apiUrl.toHttpUrl(), 1, 2)
         .build()
 
     override fun headersBuilder() = super.headersBuilder()
@@ -240,49 +233,16 @@ abstract class FlixScans(
         return result.serie.toSManga(cdnUrl)
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        return chapterClient.newCall(chapterListRequest(manga))
-            .asObservableSuccess()
-            .map(::chapterListParse)
-    }
-
     override fun chapterListRequest(manga: SManga): Request {
         val id = manga.url.split("-")[1]
 
-        return paginatedChapterListRequest(id)
-    }
-
-    private fun paginatedChapterListRequest(seriesID: String, page: Int = 1): Request {
-        return GET("$apiUrl/webtoon/chapters/$seriesID-asc?page=$page", headers)
+        return GET("$apiUrl/webtoon/chapters/$id-desc", headers)
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val result = response.parseAs<ApiResponse<Chapter>>()
+        val chapters = response.parseAs<List<Chapter>>()
 
-        val id = response.request.url.toString()
-            .substringAfterLast("/")
-            .substringBefore("-")
-
-        val chapters = result.data.toMutableList()
-
-        var page = 1
-
-        while (page < result.meta.lastPage) {
-            page++
-
-            val newResponse = chapterClient.newCall(paginatedChapterListRequest(id, page)).execute()
-
-            if (!newResponse.isSuccessful) {
-                newResponse.close()
-                continue
-            }
-
-            val newResult = newResponse.parseAs<ApiResponse<Chapter>>()
-
-            chapters.addAll(newResult.data)
-        }
-
-        return chapters.map(Chapter::toSChapter).reversed()
+        return chapters.map(Chapter::toSChapter)
     }
 
     override fun pageListRequest(chapter: SChapter): Request {
