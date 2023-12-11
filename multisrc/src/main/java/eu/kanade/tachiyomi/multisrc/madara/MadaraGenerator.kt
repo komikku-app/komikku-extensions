@@ -13,7 +13,6 @@ class MadaraGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 32
 
     override val sources = listOf(
-        MultiLang("Atlantis Scan", "https://atlantisscan.com", listOf("es", "pt-BR"), isNsfw = true),
         MultiLang("MangaForFree.net", "https://mangaforfree.net", listOf("en", "ko", "all"), isNsfw = true, className = "MangaForFreeFactory", pkgName = "mangaforfree", overrideVersionCode = 1),
         MultiLang("Manhwa18.cc", "https://manhwa18.cc", listOf("en", "ko", "all"), isNsfw = true, className = "Manhwa18CcFactory", pkgName = "manhwa18cc", overrideVersionCode = 4),
         MultiLang("Reaper Scans", "https://reaperscans.com", listOf("fr", "tr"), className = "ReaperScansFactory", pkgName = "reaperscans", overrideVersionCode = 12),
@@ -46,6 +45,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Astral-Manga", "https://astral-manga.fr", "fr", className = "AstralManga"),
         SingleLang("Astrum Scans", "https://astrumscans.xyz", "pt-BR", isNsfw = true),
         SingleLang("Asura Scans.us (unoriginal)", "https://asurascans.us", "en", isNsfw = false, className = "AsuraScansUs"),
+        SingleLang("Atlantis Scan", "https://scansatlanticos.com", "es", isNsfw = true),
         SingleLang("AZManhwa", "https://azmanhwa.net", "en"),
         SingleLang("Azora", "https://azoranov.com", "ar", overrideVersionCode = 6),
         SingleLang("Babel Wuxia", "https://babelwuxia.com", "en", overrideVersionCode = 1),
