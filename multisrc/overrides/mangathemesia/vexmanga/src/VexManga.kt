@@ -16,7 +16,7 @@ class VexManga : MangaThemesia(
     "https://vexmanga.com",
     "ar",
 ) {
-    override fun searchMangaSelector() = ".listupd .latest-series, ${super.searchMangaSelector()}"
+    override fun searchMangaSelector() = ".listarchives .latest-recom, .listupd .latest-series, ${super.searchMangaSelector()}"
     override val sendViewCount = false
     override fun chapterListSelector() = ".ulChapterList > a, ${super.chapterListSelector()}"
 
