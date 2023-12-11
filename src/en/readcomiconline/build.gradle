@@ -5,7 +5,7 @@ ext {
     extName = 'ReadComicOnline'
     pkgNameSuffix = 'en.readcomiconline'
     extClass = '.Readcomiconline'
-    extVersionCode = 16
+    extVersionCode = 17
 }
 
 dependencies {
