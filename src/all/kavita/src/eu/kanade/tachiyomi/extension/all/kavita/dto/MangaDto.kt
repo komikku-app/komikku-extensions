@@ -45,7 +45,7 @@ data class SeriesDto(
     val pages: Int,
     val coverImageLocked: Boolean = true,
     val pagesRead: Int,
-    val userRating: Int,
+    val userRating: Float,
     val userReview: String? = "",
     val format: Int,
     val created: String? = "",
