@@ -19,6 +19,8 @@ class CubariUrlActivity : Activity() {
                 when {
                     equals("m.imgur.com") || equals("imgur.com") -> fromSource("imgur", pathSegments)
                     equals("m.reddit.com") || equals("reddit.com") || equals("www.reddit.com") -> fromSource("reddit", pathSegments)
+                    equals("imgchest.com") -> fromSource("imgchest", pathSegments)
+                    equals("catbox.moe") || equals("www.catbox.moe") -> fromSource("catbox", pathSegments)
                     else -> fromCubari(pathSegments)
                 }
             }

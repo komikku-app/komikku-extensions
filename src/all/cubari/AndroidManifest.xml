@@ -69,6 +69,32 @@
                     android:pathPattern="/gallery/..*"
                     android:scheme="https" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:host="*.imgchest.com" />
+                <data android:host="imgchest.com" />
+
+                <data
+                    android:pathPattern="/p/..*"
+                    android:scheme="https" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:host="*.catbox.moe" />
+                <data android:host="catbox.moe" />
+
+                <data
+                    android:pathPattern="/c/..*"
+                    android:scheme="https" />
+            </intent-filter>
         </activity>
     </application>
 </manifest>
