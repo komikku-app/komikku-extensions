@@ -5,8 +5,12 @@ ext {
     extName = 'DoujinDesu'
     pkgNameSuffix = 'id.doujindesu'
     extClass = '.DoujinDesu'
-    extVersionCode = 5
+    extVersionCode = 6
     isNsfw = true
+}
+
+dependencies {
+    implementation(project(":lib-randomua"))
 }
 
 apply from: "$rootDir/common.gradle"

@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.lib.randomua.addRandomUAPreferenceToScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -281,7 +282,7 @@ class DoujinDesu : ParsedHttpSource(), ConfigurableSource {
     }
 
     private fun getNumberFromString(epsStr: String?): Float {
-        return epsStr?.filter { it.isDigit() }?.toFloatOrNull() ?: -1f
+        return epsStr?.substringBefore(" ")?.toFloatOrNull() ?: -1f
     }
 
     private fun reconstructDate(dateStr: String): Long {
@@ -398,9 +399,10 @@ class DoujinDesu : ParsedHttpSource(), ConfigurableSource {
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        chapter.chapter_number = getNumberFromString(element.selectFirst("div.epsright chapter")?.text())
+        val eps = element.selectFirst("div.epsright chapter")?.text()
+        chapter.chapter_number = getNumberFromString(eps)
         chapter.date_upload = reconstructDate(element.select("div.epsleft > span.date").text())
-        chapter.name = element.select("div.epsleft span.lchx a").text()
+        chapter.name = "Chapter $eps"
         chapter.setUrlWithoutDomain(element.select("div.epsleft > span.lchx > a").attr("href"))
 
         return chapter
@@ -409,6 +411,7 @@ class DoujinDesu : ParsedHttpSource(), ConfigurableSource {
     override fun headersBuilder(): Headers.Builder =
         super.headersBuilder()
             .add("Referer", "$baseUrl/")
+            .add("X-Requested-With", "XMLHttpRequest")
 
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()
@@ -457,5 +460,6 @@ class DoujinDesu : ParsedHttpSource(), ConfigurableSource {
                 true
             }
         }.also(screen::addPreference)
+        addRandomUAPreferenceToScreen(screen)
     }
 }
