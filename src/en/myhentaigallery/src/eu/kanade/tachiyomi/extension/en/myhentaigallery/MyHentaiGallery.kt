@@ -141,7 +141,7 @@ class MyHentaiGallery : ParsedHttpSource() {
     // Pages
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("div.comic-thumb img").mapIndexed { i, img ->
+        return document.select("div.comic-thumb img[src]").mapIndexed { i, img ->
             Page(i, "", img.attr("abs:src").replace("/thumbnail/", "/original/"))
         }
     }

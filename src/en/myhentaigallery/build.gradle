@@ -5,7 +5,7 @@ ext {
     extName = 'MyHentaiGallery'
     pkgNameSuffix = 'en.myhentaigallery'
     extClass = '.MyHentaiGallery'
-    extVersionCode = 4
+    extVersionCode = 5
     isNsfw = true
 }
 
