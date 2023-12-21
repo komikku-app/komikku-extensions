@@ -410,7 +410,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("RawDEX", "https://rawdex.net", "ko", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ReadAdult", "https://readadult.net", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ReaderGen", "https://fr.readergen.fr", "fr"),
-        SingleLang("Readers Point", "https://readers-point.space", "en"),
         SingleLang("ReadFreeComics", "https://readfreecomics.com", "en"),
         SingleLang("ReadMangaFree", "https://readmangafree.net", "en", isNsfw = true),
         SingleLang("ReadManhua", "https://readmanhua.net", "en", overrideVersionCode = 2),
