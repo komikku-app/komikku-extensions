@@ -1,11 +1,14 @@
 package eu.kanade.tachiyomi.extension.en.manga1s
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
@@ -21,11 +24,13 @@ class manga1s : ParsedHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .rateLimit(2)
+        .build()
 
     // Popular
     override fun popularMangaRequest(page: Int): Request =
-        GET("$baseUrl/top-search", headers)
+        GET("$baseUrl/top-search/$page", headers)
 
     override fun popularMangaSelector() =
         ".novel-wrap"
@@ -34,7 +39,7 @@ class manga1s : ParsedHttpSource() {
         SManga.create().apply {
             setUrlWithoutDomain(element.select("h2 > a").attr("href"))
             title = element.select("h2 > a").text()
-            thumbnail_url = element.select("img").attr("data-src")
+            thumbnail_url = element.select("img").attr("abs:data-src")
         }
 
     override fun popularMangaNextPageSelector() =
@@ -42,7 +47,7 @@ class manga1s : ParsedHttpSource() {
 
     // Latest
     override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/last-update", headers)
+        GET("$baseUrl/last-update/$page", headers)
 
     override fun latestUpdatesSelector() =
         popularMangaSelector()
@@ -54,8 +59,22 @@ class manga1s : ParsedHttpSource() {
         popularMangaNextPageSelector()
 
     // Search
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request =
-        GET("$baseUrl/search?q=$query", headers)
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val genre = filters.filterIsInstance<GenreFilter>().first().selected
+
+        val url = baseUrl.toHttpUrl().newBuilder().apply {
+            if (genre.isNotEmpty()) {
+                addPathSegment("genre")
+                addPathSegment(genre)
+            } else {
+                addPathSegment("search")
+                addQueryParameter("q", query)
+            }
+            addQueryParameter("p", page.toString())
+        }.build()
+
+        return GET(url, headers)
+    }
 
     override fun searchMangaSelector() =
         popularMangaSelector()
@@ -65,6 +84,81 @@ class manga1s : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector() =
         popularMangaNextPageSelector()
+
+    // Genres
+    abstract class SelectFilter(
+        name: String,
+        private val options: List<Pair<String, String>>,
+    ) : Filter.Select<String>(
+        name,
+        options.map { it.first }.toTypedArray(),
+    ) {
+        val selected get() = options[state].second
+    }
+
+    class GenreFilter : SelectFilter("Genre", genres) {
+        companion object {
+            private val genres = listOf(
+                Pair("<select>", ""),
+                Pair("Romance", "romance"),
+                Pair("Comedy", "comedy"),
+                Pair("Fantasy", "fantasy"),
+                Pair("Drama", "drama"),
+                Pair("Action", "action"),
+                Pair("Adventure", "adventure"),
+                Pair("Slice of Life", "slice-of-life"),
+                Pair("Shounen", "shounen"),
+                Pair("Supernatural", "supernatural"),
+                Pair("Seinen", "seinen"),
+                Pair("School Life", "school-life"),
+                Pair("Shoujo", "shoujo"),
+                Pair("Historical", "historical"),
+                Pair("Ecchi", "ecchi"),
+                Pair("Webtoon", "webtoon"),
+                Pair("Harem", "harem"),
+                Pair("Mystery", "mystery"),
+                Pair("Martial Arts", "martial-arts"),
+                Pair("Psychological", "psychological"),
+                Pair("Yaoi", "yaoi"),
+                Pair("Horror", "horror"),
+                Pair("Manhwa", "manhwa"),
+                Pair("Full Color", "full-color"),
+                Pair("Josei", "josei"),
+                Pair("Oneshot", "oneshot"),
+                Pair("Mature", "mature"),
+                Pair("Magic", "magic"),
+                Pair("Isekai", "isekai"),
+                Pair("Adult", "adult"),
+                Pair("Yuri", "yuri"),
+                Pair("Tragedy", "tragedy"),
+                Pair("Sports", "sports"),
+                Pair("Shoujo ai", "shoujo-ai"),
+                Pair("Shounen ai", "shounen-ai"),
+                Pair("Smut", "smut"),
+                Pair("Sci-Fi", "sci-fi"),
+                Pair("Doujinshi", "doujinshi"),
+                Pair("Gender Bender", "gender-bender"),
+                Pair("Demons", "demons"),
+                Pair("Adaptation", "adaptation"),
+                Pair("Reincarnation", "reincarnation"),
+                Pair("Manhua", "manhua"),
+                Pair("Thriller", "thriller"),
+                Pair("Mecha", "mecha"),
+                Pair("Game", "game"),
+                Pair("Super Power", "super-power"),
+                Pair("Military", "military"),
+                Pair("Music", "music"),
+                Pair("Monsters", "monsters"),
+                Pair("Office Workers", "office-workers"),
+            )
+        }
+    }
+
+    override fun getFilterList() = FilterList(
+        Filter.Header("Filters ignore text search"),
+        Filter.Separator(),
+        GenreFilter(),
+    )
 
     // Details
     override fun mangaDetailsParse(document: Document) =
@@ -82,7 +176,7 @@ class manga1s : ParsedHttpSource() {
                     "Completed" -> SManga.COMPLETED
                     else -> SManga.UNKNOWN
                 }
-            thumbnail_url = document.select(".novel-thumbnail > img").attr("data-src")
+            thumbnail_url = document.select(".novel-thumbnail > img").attr("abs:data-src")
         }
 
     // Chapters
@@ -99,8 +193,8 @@ class manga1s : ParsedHttpSource() {
 
     // Pages
     override fun pageListParse(document: Document): List<Page> =
-        document.select(".chapter-images > img").mapIndexed { index, element ->
-            Page(index, "", element.attr("data-src"))
+        document.select(".chapter-detail > img[data-src]").mapIndexed { index, element ->
+            Page(index, "", element.attr("abs:data-src"))
         }
 
     override fun imageUrlParse(document: Document) =
