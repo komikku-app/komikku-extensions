@@ -62,7 +62,7 @@ data class SeriesMetadataDto(
     val genres: List<Genres> = emptyList(),
     val seriesId: Int,
     val ageRating: Int,
-
+    val publicationStatus: Int,
 )
 
 @Serializable

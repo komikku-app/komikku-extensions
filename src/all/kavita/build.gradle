@@ -6,11 +6,12 @@ ext {
     extName = 'Kavita'
     pkgNameSuffix = 'all.kavita'
     extClass = '.KavitaFactory'
-    extVersionCode = 11
+    extVersionCode = 12
 }
 
 dependencies {
     implementation 'info.debatty:java-string-similarity:2.0.0'
+    implementation(project(':lib-i18n'))
 }
 
 apply from: "$rootDir/common.gradle"

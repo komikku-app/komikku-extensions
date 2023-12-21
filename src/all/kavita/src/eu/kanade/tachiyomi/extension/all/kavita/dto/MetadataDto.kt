@@ -60,15 +60,25 @@ data class MetadataPayload(
     var sorting_asc: Boolean = true,
     var readStatus: ArrayList<String> = arrayListOf<String>(),
     val readStatusList: List<String> = listOf("notRead", "inProgress", "read"),
-    var genres: ArrayList<Int> = arrayListOf<Int>(),
-    var tags: ArrayList<Int> = arrayListOf<Int>(),
-    var ageRating: ArrayList<Int> = arrayListOf<Int>(),
+    // _i = included, _e = excluded
+    var genres_i: ArrayList<Int> = arrayListOf<Int>(),
+    var genres_e: ArrayList<Int> = arrayListOf<Int>(),
+    var tags_i: ArrayList<Int> = arrayListOf<Int>(),
+    var tags_e: ArrayList<Int> = arrayListOf<Int>(),
+    var ageRating_i: ArrayList<Int> = arrayListOf<Int>(),
+    var ageRating_e: ArrayList<Int> = arrayListOf<Int>(),
+
     var formats: ArrayList<Int> = arrayListOf<Int>(),
-    var collections: ArrayList<Int> = arrayListOf<Int>(),
+    var collections_i: ArrayList<Int> = arrayListOf<Int>(),
+    var collections_e: ArrayList<Int> = arrayListOf<Int>(),
     var userRating: Int = 0,
     var people: ArrayList<Int> = arrayListOf<Int>(),
-    var language: ArrayList<String> = arrayListOf<String>(),
-    var libraries: ArrayList<Int> = arrayListOf<Int>(),
+    // _i = included, _e = excluded
+    var language_i: ArrayList<String> = arrayListOf<String>(),
+    var language_e: ArrayList<String> = arrayListOf<String>(),
+
+    var libraries_i: ArrayList<Int> = arrayListOf<Int>(),
+    var libraries_e: ArrayList<Int> = arrayListOf<Int>(),
     var pubStatus: ArrayList<Int> = arrayListOf<Int>(),
     var seriesNameQuery: String = "",
     var releaseYearRangeMin: Int = 0,
@@ -84,4 +94,11 @@ data class MetadataPayload(
     var peoplePublisher: ArrayList<Int> = arrayListOf<Int>(),
     var peopleCharacter: ArrayList<Int> = arrayListOf<Int>(),
     var peopleTranslator: ArrayList<Int> = arrayListOf<Int>(),
+)
+
+@Serializable
+data class SmartFilter(
+    val id: Int,
+    val name: String,
+    val filter: String,
 )

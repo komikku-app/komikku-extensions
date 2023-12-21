@@ -77,4 +77,5 @@ object KavitaConstants {
     )
 
     const val customSourceNamePref = "customSourceName"
+    const val noSmartFilterSelected = "No smart filter loaded"
 }
