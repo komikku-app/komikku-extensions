@@ -132,6 +132,7 @@ class Readcomiconline : ConfigurableSource, ParsedHttpSource() {
                     }
                 }
                 addPathSegment((if (filters.isEmpty()) getFilterList() else filters).filterIsInstance<SortFilter>().first().selected.toString())
+                addQueryParameter("page", page.toString())
             }.build()
             return GET(url, headers)
         } else {
