@@ -3,8 +3,8 @@ package eu.kanade.tachiyomi.extension.en.elarcpage
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 
 class ElarcPage : MangaThemesia(
-    "Elarc Reader",
-    "https://elarcreader.com",
+    "Elarc Toon",
+    "https://elarctoon.com",
     "en",
     "/series",
 ) {

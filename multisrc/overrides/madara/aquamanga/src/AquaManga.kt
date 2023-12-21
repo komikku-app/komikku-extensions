@@ -5,7 +5,10 @@ import eu.kanade.tachiyomi.multisrc.madara.Madara
 import okhttp3.Headers
 import kotlin.random.Random
 
-class AquaManga : Madara("Aqua Manga", "https://aquamanga.com", "en") {
+class AquaManga : Madara("Aqua Manga", "https://aquamanga.org", "en") {
+    override val useNewChapterEndpoint = false
+
+    override fun searchPage(page: Int): String = if (page == 1) "" else "page/$page/"
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
