@@ -43,7 +43,7 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|colamanhua|mangadig|hitomi\\.la|copymanga|neox|1manga\\.co|mangafox\\.fun|mangahere\\.onl|mangakakalot\\.fun|manganel(?!o)|mangaonline\\.fun|mangatoday|manga\\.town|onemanga\\.info|koushoku|ksk\\.moe|comikey|leercapitulo|c[uứ]u\\s*truy[eệ]n|day\\s*comics?|reaper\\s*scans|constellar\\s*scans|mode\\s*scanlator|bakai|japscan|izakaya|blackout\\s*comics|anchira).*",
+                "regex": ".*(hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|colamanhua|mangadig|hitomi\\.la|copymanga|neox|nexo|1manga\\.co|mangafox\\.fun|mangahere\\.onl|mangakakalot\\.fun|manganel(?!o)|mangaonline\\.fun|mangatoday|manga\\.town|onemanga\\.info|koushoku|ksk\\.moe|comikey|leercapitulo|c[uứ]u\\s*truy[eệ]n|day\\s*comics?|reaper\\s*scans|constellar\\s*scans|mode\\s*scanlator|bakai|japscan|izakaya|blackout\\s*comics|anchira).*",
                 "ignoreCase": true,
                 "labels": ["invalid"],
                 "message": "{match} will not be added back as it is too difficult to maintain. Read [this](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
