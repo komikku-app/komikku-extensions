@@ -1,15 +1,10 @@
 package eu.kanade.tachiyomi.extension.all.projectsuki
 
-import android.app.Application
-import android.content.SharedPreferences
-import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.randomua.addRandomUAPreferenceToScreen
 import eu.kanade.tachiyomi.lib.randomua.getPrefCustomUA
 import eu.kanade.tachiyomi.lib.randomua.getPrefUAType
 import eu.kanade.tachiyomi.lib.randomua.setRandomUserAgent
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -22,241 +17,441 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Element
+import org.jsoup.nodes.Document
 import rx.Observable
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
+import java.net.URI
 import java.util.Locale
+import java.util.concurrent.TimeUnit
+import kotlin.math.floor
+import kotlin.math.log10
+import kotlin.math.pow
 
+/**
+ * [Project Suki](https://projectsuki.com)
+ * [Tachiyomi](https://github.com/tachiyomiorg/tachiyomi)
+ * [extension](https://github.com/tachiyomiorg/tachiyomi-extensions)
+ *
+ * Most of the code should be documented, `@author` KDoc tags are mostly to know
+ * who to bother *when necessary*.
+ * If you contributed to this extension, be sure to add yourself in an `@author` tag!
+ *
+ * If you want to understand how this extension works,
+ * I recommend first looking at [ProjectSuki], then [DataExtractor],
+ * then the rest of the project.
+ */
+internal inline val EXTENSION_INFO: Nothing get() = error("EXTENSION_INFO")
+
+internal const val SHORT_FORM_ID: String = """ps"""
+
+internal val homepageUrl: HttpUrl = "https://projectsuki.com".toHttpUrl()
+internal val homepageUri: URI = homepageUrl.toUri()
+
+/** PATTERN: `https://projectsuki.com/book/<bookid>`  */
+internal val bookUrlPattern = PathPattern(
+    """book""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<bookid>.+)""".toRegex(RegexOption.IGNORE_CASE),
+)
+
+/** PATTERN: `https://projectsuki.com/browse/<pagenum>` */
+@Suppress("unused")
+internal val browsePattern = PathPattern(
+    """browse""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<pagenum>\d+)""".toRegex(RegexOption.IGNORE_CASE),
+)
+
+/**
+ * PATTERN: `https://projectsuki.com/read/<bookid>/<chapterid>/<startpage>`
+ *
+ * `<startpage>` is actually a filter of sorts that will remove pages &lt; `<startpage>`'s value.
+ */
+internal val chapterUrlPattern = PathPattern(
+    """read""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<bookid>.+)""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<chapterid>.+)""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<startpage>.+)""".toRegex(RegexOption.IGNORE_CASE),
+)
+
+/**
+ * PATTERNS:
+ *  - `https://projectsuki.com/images/gallery/<bookid>/thumb`
+ *  - `https://projectsuki.com/images/gallery/<bookid>/thumb.<thumbextension>`
+ *  - `https://projectsuki.com/images/gallery/<bookid>/<thumbwidth>-thumb`
+ *  - `https://projectsuki.com/images/gallery/<bookid>/<thumbwidth>-thumb.<thumbextension>`
+ */
+internal val thumbnailUrlPattern = PathPattern(
+    """images""".toRegex(RegexOption.IGNORE_CASE),
+    """gallery""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<bookid>.+)""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<thumbwidth>\d+-)?thumb(?:\.(?<thumbextension>.+))?""".toRegex(RegexOption.IGNORE_CASE),
+)
+
+/** PATTERN: `https://projectsuki.com/images/gallery/<bookid>/<uuid>/<pagenum>` */
+internal val pageUrlPattern = PathPattern(
+    """images""".toRegex(RegexOption.IGNORE_CASE),
+    """gallery""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<bookid>.+)""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<uuid>.+)""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<pagenum>.+)""".toRegex(RegexOption.IGNORE_CASE),
+)
+
+/** PATTERN: `https://projectsuki.com/genre/<genre>` */
+internal val genreSearchUrlPattern = PathPattern(
+    """genre""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<genre>.+)""".toRegex(RegexOption.IGNORE_CASE),
+)
+
+/** PATTERN: `https://projectsuki.com/group/<groupid>` */
+@Suppress("unused")
+internal val groupUrlPattern = PathPattern(
+    """group""".toRegex(RegexOption.IGNORE_CASE),
+    """(?<groupid>.+)""".toRegex(RegexOption.IGNORE_CASE),
+)
+
+/**
+ * Used on the website when there's an image loading error, could be used in extension.
+ */
+@Suppress("unused")
+internal val emptyImageUrl: HttpUrl = homepageUrl.newBuilder()
+    .addPathSegment("images")
+    .addPathSegment("gallery")
+    .addPathSegment("empty.jpg")
+    .build()
+
+/**
+ * Removes the [URL's](https://en.wikipedia.org/wiki/URL) host and scheme/protocol,
+ * leaving only the path, query and fragment, *without leading `/`*
+ *
+ * @see URI.relativize
+ */
+internal val HttpUrl.rawRelative: String?
+    get() {
+        val uri = toUri()
+        val relative = homepageUri.relativize(uri)
+        return when {
+            uri === relative -> null
+            else -> relative.toASCIIString()
+        }
+    }
+
+internal val reportPrefix: String
+    get() = """Error! Report on GitHub (tachiyomiorg/tachiyomi-extensions)"""
+
+/** Just throw an [error], which will get caught by Tachiyomi: the message will be exposed as a [toast][android.widget.Toast]. */
+internal inline fun reportErrorToUser(message: () -> String): Nothing {
+    error("""$reportPrefix: ${message()}""")
+}
+
+/** Used when chapters don't have a [Language][DataExtractor.ChaptersTableColumnDataType.Language] column (if that ever happens). */
+internal const val UNKNOWN_LANGUAGE: String = "unknown"
+
+/**
+ * Actual Tachiyomi extension, ties everything together.
+ *
+ * Most of the work happens in [DataExtractor], [ProjectSukiAPI], [ProjectSukiFilters] and [ProjectSukiPreferences].
+ *
+ * @author Federico d'Alonzo &lt;me@npgx.dev&gt;
+ */
 @Suppress("unused")
 class ProjectSuki : HttpSource(), ConfigurableSource {
+
     override val name: String = "Project Suki"
-    override val baseUrl: String = "https://projectsuki.com"
-    override val lang: String = "en"
+    override val baseUrl: String = homepageUri.toASCIIString()
+    override val lang: String = "all"
+    override val id: Long = 8965918600406781666L
 
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    /** Handles extension preferences found in Extensions &gt; Project Suki &gt; Gear icon */
+    private val preferences = ProjectSukiPreferences(id)
+
+    /** See [Kotlinx-Serialization](https://github.com/Kotlin/kotlinx.serialization). */
+    private val json: Json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = true
+        encodeDefaults = true
     }
-
-    private fun String.processLangPref(): List<String> = split(",").map { it.trim().lowercase(Locale.US) }
-
-    private val SharedPreferences.whitelistedLanguages: List<String>
-        get() = getString(PS.PREFERENCE_WHITELIST_LANGUAGES, "")!!
-            .processLangPref()
-
-    private val SharedPreferences.blacklistedLanguages: List<String>
-        get() = getString(PS.PREFERENCE_BLACKLIST_LANGUAGES, "")!!
-            .processLangPref()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        addRandomUAPreferenceToScreen(screen)
+        with(preferences) { screen.configure() }
+    }
 
-        screen.addPreference(
-            EditTextPreference(screen.context).apply {
-                key = PS.PREFERENCE_WHITELIST_LANGUAGES
-                title = PS.PREFERENCE_WHITELIST_LANGUAGES_TITLE
-                summary = PS.PREFERENCE_WHITELIST_LANGUAGES_SUMMARY
-            },
+    /**
+     * [OkHttp's](https://square.github.io/okhttp/) [OkHttpClient] that handles network requests and responses.
+     *
+     * Thanks to Tachiyomi's [NetworkHelper](https://github.com/tachiyomiorg/tachiyomi/blob/58daedc89ee18d04e7af5bab12629680dba4096c/core/src/main/java/eu/kanade/tachiyomi/network/NetworkHelper.kt#L21C12-L21C12)
+     * (this is a permalink, check for updated version),
+     * most client options are already set as they should be, including the [Cache][okhttp3.Cache].
+     */
+    override val client: OkHttpClient = network.client.newBuilder()
+        .setRandomUserAgent(
+            userAgentType = preferences.shared.getPrefUAType(),
+            customUA = preferences.shared.getPrefCustomUA(),
         )
+        .rateLimit(2, 1, TimeUnit.SECONDS)
+        .build()
 
-        screen.addPreference(
-            EditTextPreference(screen.context).apply {
-                key = PS.PREFERENCE_BLACKLIST_LANGUAGES
-                title = PS.PREFERENCE_BLACKLIST_LANGUAGES_TITLE
-                summary = PS.PREFERENCE_BLACKLIST_LANGUAGES_SUMMARY
-            },
+    /**
+     * Specify what request will be sent to the server.
+     *
+     * This specific method returns a [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
+     * request to be sent to [https://projectsuki.com/browse](https://projectsuki.com/browse).
+     *
+     * Using the default [HttpSource]'s [Headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
+     */
+    override fun popularMangaRequest(page: Int) = GET(
+        homepageUrl.newBuilder()
+            .addPathSegment("browse")
+            .addPathSegment((page - 1).toString()) // starts at 0
+            .build(),
+        headers,
+    )
+
+    /** Whether or not this extension supports the "Latest" tab. */
+    override val supportsLatest: Boolean get() = true
+
+    /** Same concept as [popularMangaRequest], but is sent to [https://projectsuki.com/](https://projectsuki.com/). */
+    override fun latestUpdatesRequest(page: Int) = GET(homepageUrl, headers)
+
+    /**
+     * Utility to find and apply a filter specified by [T],
+     * see [reified](https://kotlinlang.org/docs/inline-functions.html#reified-type-parameters)
+     * if you're not familiar with the concept.
+     */
+    private inline fun <reified T> HttpUrl.Builder.applyPSFilter(
+        from: FilterList,
+    ): HttpUrl.Builder where T : Filter<*>, T : ProjectSukiFilters.ProjectSukiFilter = apply {
+        from.firstNotNullOfOrNull { it as? T }?.run { applyFilter() }
+    }
+
+    /**
+     * Same concept as [popularMangaRequest], but is sent to [https://projectsuki.com/search](https://projectsuki.com/search).
+     * This is the [Full-Site][ProjectSukiFilters.SearchMode.FULL_SITE] variant of search, it *will* return results that have no chapters.
+     */
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        return GET(
+            homepageUrl.newBuilder()
+                .addPathSegment("search")
+                .addQueryParameter("page", (page - 1).toString())
+                .addQueryParameter("q", query)
+                .applyPSFilter<ProjectSukiFilters.Origin>(from = filters)
+                .applyPSFilter<ProjectSukiFilters.Status>(from = filters)
+                .applyPSFilter<ProjectSukiFilters.Author>(from = filters)
+                .applyPSFilter<ProjectSukiFilters.Artist>(from = filters)
+                .build(),
+            headers,
         )
     }
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .setRandomUserAgent(
-            userAgentType = preferences.getPrefUAType(),
-            customUA = preferences.getPrefCustomUA(),
-            filterInclude = listOf("chrome"),
-        )
-        .rateLimit(4)
-        .build()
-
-    override fun popularMangaRequest(page: Int) = GET(baseUrl, headers)
-
-    // differentiating between popular and latest manga in the main page is
-    // *theoretically possible* but a pain, as such, this is fine "for now"
+    /**
+     * Handles the server's [Response] that was returned from [popularMangaRequest]'s [Request].
+     *
+     * Because we asked the server for a webpage, it will return, in the [Request's body][okhttp3.RequestBody],
+     * the [html](https://developer.mozilla.org/en-US/docs/Web/HTML) that makes up that page,
+     * including any [css](https://developer.mozilla.org/en-US/docs/Web/CSS) and
+     * [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript) in `<script>` tags.
+     *
+     * NOTE: [Jsoup](https://jsoup.org/) is not a browser, but an HTML parser and manipulator,
+     * as such no JavaScript will actually run.
+     * The html that you can see from a browser's [dev-tools](https://github.com/firefox-devtools)
+     * could be very different from the initial state of the web-page's HTML,
+     * especially for pages that use [hydration-heavy](https://en.wikipedia.org/wiki/Hydration_(web_development))
+     * [JavaScript frameworks](https://developer.mozilla.org/en-US/docs/Learn/Tools_and_testing/Client-side_JavaScript_frameworks).
+     *
+     * To see the initial contents of a response, you can use an API tool like [REQBIN](https://reqbin.com/).
+     *
+     * [SManga]'s url should be in relative form, see [this SO answer](https://stackoverflow.com/a/21828923)
+     * for a comprehensive difference between relative and absolute URLs.
+     *
+     * [SManga]'s thumbnail_url should instead be in absolute form. If possible [it should be set](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/CONTRIBUTING.md#popular-manga)
+     * at this point to avoid additional server requests. But if that is not possible, [fetchMangaDetails] will be called to fill in the details.
+     */
     override fun popularMangaParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        val allBooks = document.getAllBooks()
+        val document: Document = response.asJsoup()
+
+        val extractor = DataExtractor(document)
+        val books: Set<DataExtractor.PSBook> = extractor.books
+
+        val mangas: List<SManga> = books.map { book ->
+            SManga.create().apply {
+                this.url = book.bookUrl.rawRelative ?: reportErrorToUser { "Could not relativize ${book.bookUrl}" }
+                this.title = book.rawTitle
+                this.thumbnail_url = book.thumbnail.toUri().toASCIIString()
+            }
+        }
+
         return MangasPage(
-            mangas = allBooks.mapNotNull mangas@{ (_, psbook) ->
-                val (img, _, titleText, _, url) = psbook
+            mangas = mangas,
+            hasNextPage = mangas.size >= 30, // observed max number of results in search,
+        )
+    }
 
-                val relativeUrl = url.rawRelative ?: return@mangas null
+    /**
+     * Very similar to [popularMangaParse].
+     *
+     * Due to Project Suki's [home page](https://projectsuki.com) design,
+     * differentiating between actually-latest chapters, "Trending" and "New additions",
+     * is theoretically possible, but would be fragile and possibly error-prone.
+     *
+     * So we just grab everything in the homepage.
+     * [DataExtractor.books] automatically de-duplicates based on [BookID].
+     */
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val document: Document = response.asJsoup()
 
+        val extractor = DataExtractor(document)
+        val books: Set<DataExtractor.PSBook> = extractor.books
+
+        return MangasPage(
+            mangas = books.map { book ->
                 SManga.create().apply {
-                    this.url = relativeUrl
-                    this.title = titleText
-                    this.thumbnail_url = img.imgNormalizedURL()?.rawAbsolute
+                    this.url = book.bookUrl.rawRelative ?: reportErrorToUser { "Could not relativize ${book.bookUrl}" }
+                    this.title = book.rawTitle
+                    this.thumbnail_url = book.thumbnail.toUri().toASCIIString()
                 }
             },
             hasNextPage = false,
         )
     }
 
-    override val supportsLatest: Boolean = false
-    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
-    override fun latestUpdatesParse(response: Response): MangasPage = throw UnsupportedOperationException()
-
+    /**
+     * Function that is responsible for providing Tachiyomi with an [Observable](https://reactivex.io/documentation/observable.html)
+     * that will return a single [MangasPage] (Tachiyomi uses [Observable.single] behind the scenes).
+     *
+     * Note that you shouldn't use [Observable.never] to convey "there are no mangas",
+     * but [Observable.just(MangasPage(emptyList(), false))][Observable.just].
+     * Otherwise Tachiyomi will just wait for the Observable forever (or until a timeout).
+     *
+     * Most of the times you won't need to override this function: [searchMangaRequest] and [searchMangaParse] will suffice.
+     * But if you need to replace the default search behaviour (e.g. because of an [Url Activity][ProjectSukiSearchUrlActivity]),
+     * you might need to override this function.
+     */
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        return when {
-            /*query.startsWith(PS.SEARCH_INTENT_PREFIX) -> {
-                val id = query.substringAfter(PS.SEARCH_INTENT_PREFIX)
-                client.newCall(getMangaByIdAsSearchResult(id))
-                    .asObservableSuccess()
-                    .map { response -> searchMangaParse(response) }
-            }*/
+        val searchMode: ProjectSukiFilters.SearchMode = filters.filterIsInstance<ProjectSukiFilters.SearchModeFilter>()
+            .singleOrNull()
+            ?.state
+            ?.let { ProjectSukiFilters.SearchMode[it] } ?: ProjectSukiFilters.SearchMode.SMART
 
-            else -> Observable.defer {
-                try {
-                    client.newCall(searchMangaRequest(page, query, filters))
-                        .asObservableSuccess()
-                } catch (e: NoClassDefFoundError) {
-                    throw RuntimeException(e)
+        return when {
+            // sent by the url activity, might also be because the user entered a query via $ps:
+            // but that won't really happen unless the user wants to do that
+            query.startsWith(INTENT_QUERY_PREFIX) -> {
+                val urlQuery = query.removePrefix(INTENT_QUERY_PREFIX)
+                if (urlQuery.isBlank()) error("Empty search query!")
+
+                val rawUrl = """${homepageUri.toASCIIString()}/search?$urlQuery"""
+                val url = rawUrl.toHttpUrlOrNull() ?: reportErrorToUser {
+                    "Invalid search url: $rawUrl"
                 }
-            }.map { response -> searchMangaParse(response) }
+
+                client.newCall(GET(url, headers))
+                    .asObservableSuccess()
+                    .map { response -> searchMangaParse(response, false) }
+            }
+
+            // use result from https://projectsuki.com/api/book/search
+            searchMode == ProjectSukiFilters.SearchMode.SMART || searchMode == ProjectSukiFilters.SearchMode.SIMPLE -> {
+                val simpleMode = searchMode == ProjectSukiFilters.SearchMode.SIMPLE
+
+                client.newCall(ProjectSukiAPI.bookSearchRequest(json, headers))
+                    .asObservableSuccess()
+                    .map { response -> ProjectSukiAPI.parseBookSearchResponse(json, response) }
+                    .map { data -> data.toMangasPage(query, simpleMode) }
+            }
+
+            // use https://projectsuki.com/search
+            else -> client.newCall(searchMangaRequest(page, query, filters))
+                .asObservableSuccess()
+                .map { response -> searchMangaParse(response) }
         }
     }
 
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        return GET(
-            baseUrl.toHttpUrl().newBuilder().apply {
-                addPathSegment("search")
-                addQueryParameter("page", (page - 1).toString())
-                addQueryParameter("q", query)
-
-                filters.applyFilter<PSFilters.Origin>(this)
-                filters.applyFilter<PSFilters.Status>(this)
-                filters.applyFilter<PSFilters.Author>(this)
-                filters.applyFilter<PSFilters.Artist>(this)
-            }.build(),
-            headers,
-        )
+    private fun filterList(vararg sequences: Sequence<Filter<*>>): FilterList {
+        return FilterList(sequences.asSequence().flatten().toList())
     }
 
-    private inline fun <reified T> FilterList.applyFilter(to: HttpUrl.Builder) where T : Filter<*>, T : PSFilters.AutoFilter {
-        firstNotNullOfOrNull { it as? T }?.applyTo(to)
-    }
-
-    override fun getFilterList() = FilterList(
-        Filter.Header("Filters only take effect when searching for something!"),
-        PSFilters.Origin(),
-        PSFilters.Status(),
-        PSFilters.Author.ownHeader,
-        PSFilters.Author(),
-        PSFilters.Artist.ownHeader,
-        PSFilters.Artist(),
+    /**
+     * Should return a fresh [FilterList] containing fresh (new) instances
+     * of all the filters you want to be available.
+     * Otherwise things like the reset button won't work.
+     */
+    override fun getFilterList(): FilterList = filterList(
+        ProjectSukiFilters.headersSequence(preferences),
+        ProjectSukiFilters.filtersSequence(preferences),
+        ProjectSukiFilters.footersSequence(preferences),
     )
 
-    override fun searchMangaParse(response: Response): MangasPage {
+    /**
+     * Very similar to [popularMangaParse].
+     *
+     * Unfortunately, because projectsuki has a "Next" button even when the next page is empty,
+     * it's useless to depend on that, so we just use a simple heuristic to determine
+     * if the page contained in the [Response] is the last one.
+     *
+     * The heuristic *will* fail if the last page has 30 or more entries.
+     */
+    override fun searchMangaParse(response: Response): MangasPage = searchMangaParse(response, null)
+
+    /** [searchMangaParse] extended with [overrideHasNextPage]. */
+    private fun searchMangaParse(response: Response, overrideHasNextPage: Boolean? = null): MangasPage {
         val document = response.asJsoup()
-        val allBooks = document.getAllBooks()
 
-        val mangas = allBooks.mapNotNull mangas@{ (_, psbook) ->
-            val (img, _, titleText, _, url) = psbook
+        val extractor = DataExtractor(document)
+        val books: Set<DataExtractor.PSBook> = extractor.books
 
-            val relativeUrl = url.rawRelative ?: return@mangas null
-
+        val mangas = books.map { book ->
             SManga.create().apply {
-                this.url = relativeUrl
-                this.title = titleText
-                this.thumbnail_url = img.imgNormalizedURL()?.rawAbsolute
+                this.url = book.bookUrl.rawRelative ?: reportErrorToUser { "Could not relativize ${book.bookUrl}" }
+                this.title = book.rawTitle
+                this.thumbnail_url = book.thumbnail.toUri().toASCIIString()
             }
         }
 
         return MangasPage(
             mangas = mangas,
-            hasNextPage = mangas.size >= 30, // observed max number of results in search
+            hasNextPage = overrideHasNextPage ?: (mangas.size >= 30),
         )
     }
 
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(mangaDetailsRequest(manga))
-            .asObservableSuccess()
-            .map { response ->
-                mangaDetailsParse(response, incomplete = manga).apply { initialized = true }
-            }
-    }
+    /**
+     * Handles the [Response] given by [mangaDetailsRequest]'s [Request].
+     * [HttpSource]'s inheritors will have a default [mangaDetailsRequest] that asks for:
+     * ```
+     * GET(baseUrl + manga.url, headers)
+     * ```
+     * You can override [mangaDetailsRequest] if this is not the case for you.
+     *
+     * Fills out all [SManga]'s fields:
+     *  - url (relative)
+     *  - title
+     *  - artist
+     *  - author
+     *  - description
+     *  - genre (comma-separated list of genres)
+     *  - status (one of the constants in [SManga.Companion])
+     *  - thumbnail_url (absolute)
+     *  - update_strategy (enum [UpdateStrategy])
+     *
+     * Note that you should use [SManga.create] instead of implementing your own version of [SManga].
+     */
+    override fun mangaDetailsParse(response: Response): SManga {
+        val document: Document = response.asJsoup()
+        val extractor = DataExtractor(document)
 
-    private val displayNoneMatcher = """display: ?none;""".toRegex()
-    private val emptyImageURLAbsolute = """https://projectsuki.com/images/gallery/empty.jpg""".toNormalURL()!!.rawAbsolute
-    private val emptyImageURLRelative = """https://projectsuki.com/images/gallery/empty.jpg""".toNormalURL()!!.rawRelative!!
-    override fun mangaDetailsParse(response: Response): SManga = throw UnsupportedOperationException("not used")
-    private fun mangaDetailsParse(response: Response, incomplete: SManga): SManga {
-        val document = response.asJsoup()
-        val allLinks = document.getAllUrlElements("a", "href") { it.isPSUrl() }
-
-        val thumb: Element? = document.select("img").firstOrNull { img ->
-            img.attr("onerror").let {
-                it.contains(emptyImageURLAbsolute) ||
-                    it.contains(emptyImageURLRelative)
-            }
-        }
-
-        val authors: Map<Element, NormalizedURL> = allLinks.filter { (_, url) ->
-            url.queryParameterNames.contains("author")
-        }
-
-        val artists: Map<Element, NormalizedURL> = allLinks.filter { (_, url) ->
-            url.queryParameterNames.contains("artist")
-        }
-
-        val statuses: Map<Element, NormalizedURL> = allLinks.filter { (_, url) ->
-            url.queryParameterNames.contains("status")
-        }
-
-        val origins: Map<Element, NormalizedURL> = allLinks.filter { (_, url) ->
-            url.queryParameterNames.contains("origin")
-        }
-
-        val genres: Map<Element, NormalizedURL> = allLinks.filter { (_, url) ->
-            url.pathStartsWith(listOf("genre"))
-        }
-
-        val description = document.select("#descriptionCollapse").joinToString("\n-----\n", postfix = "\n") { it.wholeText() }
-
-        val alerts = document.select(".alert, .alert-info")
-            .filter(
-                predicate = {
-                    it.parents().none { parent ->
-                        parent.attr("style")
-                            .contains(displayNoneMatcher)
-                    }
-                },
-            )
-
-        val userRating = document.select("#ratings")
-            .firstOrNull()
-            ?.children()
-            ?.count { it.hasClass("text-warning") }
-            ?.takeIf { it > 0 }
+        val data: DataExtractor.PSBookDetails = extractor.bookDetails
 
         return SManga.create().apply {
-            url = incomplete.url
-            title = incomplete.title
-            thumbnail_url = thumb?.imgNormalizedURL()?.rawAbsolute ?: incomplete.thumbnail_url
+            url = data.book.bookUrl.rawRelative ?: reportErrorToUser { "Could not relativize ${data.book.bookUrl}" }
+            title = data.book.rawTitle
+            thumbnail_url = data.book.thumbnail.toUri().toASCIIString()
 
-            author = authors.keys.joinToString(", ") { it.text() }
-            artist = artists.keys.joinToString(", ") { it.text() }
-            status = when (statuses.keys.joinToString("") { it.text().trim() }.lowercase(Locale.US)) {
+            author = data.detailsTable[DataExtractor.BookDetail.AUTHOR]
+            artist = data.detailsTable[DataExtractor.BookDetail.ARTIST]
+            status = when (data.detailsTable[DataExtractor.BookDetail.STATUS]?.trim()?.lowercase(Locale.US)) {
                 "ongoing" -> SManga.ONGOING
                 "completed" -> SManga.PUBLISHING_FINISHED
                 "hiatus" -> SManga.ON_HIATUS
@@ -264,180 +459,133 @@ class ProjectSuki : HttpSource(), ConfigurableSource {
                 else -> SManga.UNKNOWN
             }
 
-            this.description = buildString {
-                if (alerts.isNotEmpty()) {
+            description = buildString {
+                if (data.alertData.isNotEmpty()) {
                     appendLine("Alerts have been found, refreshing the manga later might help in removing them.")
                     appendLine()
 
-                    alerts.forEach { alert ->
-                        var appendedSomething = false
-                        alert.select("h4").singleOrNull()?.let {
-                            appendLine(it.text())
-                            appendedSomething = true
-                        }
-                        alert.select("p").singleOrNull()?.let {
-                            appendLine(it.text())
-                            appendedSomething = true
-                        }
-                        if (!appendedSomething) {
-                            appendLine(alert.text())
-                        }
+                    data.alertData.forEach {
+                        appendLine(it)
+                        appendLine()
                     }
 
                     appendLine()
+                }
+
+                appendLine(data.description)
+                appendLine()
+
+                data.detailsTable.forEach { (detail, value) ->
+                    append(detail.display)
+                    append("  ")
+                    append(value.trim())
+
                     appendLine()
                 }
-
-                appendLine(description)
-
-                fun appendToDescription(by: String, data: String?) {
-                    if (data != null) append(by).appendLine(data)
-                }
-
-                appendToDescription("User Rating: ", """${userRating ?: "?"}/5""")
-                appendToDescription("Authors: ", author)
-                appendToDescription("Artists: ", artist)
-                appendToDescription("Status: ", statuses.keys.joinToString(", ") { it.text() })
-                appendToDescription("Origin: ", origins.keys.joinToString(", ") { it.text() })
-                appendToDescription("Genres: ", genres.keys.joinToString(", ") { it.text() })
             }
 
-            this.update_strategy = if (status != SManga.CANCELLED) UpdateStrategy.ALWAYS_UPDATE else UpdateStrategy.ONLY_FETCH_ONCE
-            this.genre = buildList {
-                addAll(genres.keys.map { it.text() })
-                origins.values.forEach { url ->
-                    when (url.queryParameter("origin")) {
-                        "kr" -> add("Manhwa")
-                        "cn" -> add("Manhua")
-                        "jp" -> add("Manga")
-                    }
-                }
-            }.joinToString(", ")
+            update_strategy = when (status) {
+                SManga.CANCELLED, SManga.PUBLISHING_FINISHED -> UpdateStrategy.ONLY_FETCH_ONCE
+                else -> UpdateStrategy.ALWAYS_UPDATE
+            }
+
+            genre = data.detailsTable[DataExtractor.BookDetail.GENRE]!!
         }
     }
 
-    private val chapterHeaderMatcher = """chapters?""".toRegex()
-    private val groupHeaderMatcher = """groups?""".toRegex()
-    private val dateHeaderMatcher = """added|date""".toRegex()
-    private val languageHeaderMatcher = """language""".toRegex()
-    private val chapterNumberMatcher = """[Cc][Hh][Aa][Pp][Tt][Ee][Rr]\s*(\d+)(?:\s*[.,-]\s*(\d+))?""".toRegex()
-    private val looseNumberMatcher = """(\d+)(?:\s*[.,-]\s*(\d+))?""".toRegex()
+    /**
+     * Handles the [Response] given by [chapterListRequest]'s [Request].
+     * [HttpSource]'s inheritors will have a default [chapterListRequest] that asks for:
+     * ```
+     * GET(baseUrl + manga.url, headers)
+     * ```
+     * You can override [chapterListRequest] if this is not the case for you.
+     *
+     * Note that you should use [SChapter.create] instead of implementing your own version of [SChapter].
+     *
+     * The chapters list appears in the app from top to bottom (with the default source sort),
+     * be careful of the direction in which you sort it!
+     */
     override fun chapterListParse(response: Response): List<SChapter> {
-        val document = response.asJsoup()
-        val chaptersTable = document.select("table").firstOrNull { it.containsReadLinks() } ?: return emptyList()
+        val document: Document = response.asJsoup()
+        val extractor = DataExtractor(document)
+        val bookChapters: Map<ScanGroup, List<DataExtractor.BookChapter>> = extractor.bookChapters
 
-        val thead: Element = chaptersTable.select("thead").firstOrNull() ?: return emptyList()
-        val tbody: Element = chaptersTable.select("tbody").firstOrNull() ?: return emptyList()
+        val blLangs: Set<String> = preferences.blacklistedLanguages()
+        val wlLangs: Set<String> = preferences.whitelistedLanguages()
 
-        val columnTypes = thead.select("tr").firstOrNull()?.children()?.select("td") ?: return emptyList()
-        val textTypes = columnTypes.map { it.text().lowercase(Locale.US) }
-        val normalSize = textTypes.size
-
-        val chaptersIndex: Int = textTypes.indexOfFirst { it.matches(chapterHeaderMatcher) }.takeIf { it >= 0 } ?: return emptyList()
-        val dateIndex: Int = textTypes.indexOfFirst { it.matches(dateHeaderMatcher) }.takeIf { it >= 0 } ?: return emptyList()
-        val groupIndex: Int? = textTypes.indexOfFirst { it.matches(groupHeaderMatcher) }.takeIf { it >= 0 }
-        val languageIndex: Int? = textTypes.indexOfFirst { it.matches(languageHeaderMatcher) }.takeIf { it >= 0 }
-
-        val dataRows = tbody.children().select("tr")
-
-        val blLangs = preferences.blacklistedLanguages
-        val wlLangs = preferences.whitelistedLanguages
-
-        return dataRows.mapNotNull chapters@{ tr ->
-            val rowData = tr.children().select("td")
-
-            if (rowData.size != normalSize) {
-                return@chapters null
-            }
-
-            val chapter: Element = rowData[chaptersIndex]
-            val date: Element = rowData[dateIndex]
-            val group: Element? = groupIndex?.let(rowData::get)
-            val language: Element? = languageIndex?.let(rowData::get)
-
-            language?.text()?.lowercase(Locale.US)?.let { lang ->
-                if (lang in blLangs && lang !in wlLangs) return@chapters null
-            }
-
-            val chapterLink = chapter.select("a").first()!!.attrNormalizedUrl("href")!!
-
-            val relativeURL = chapterLink.rawRelative ?: return@chapters null
-
-            SChapter.create().apply {
-                chapter_number = chapter.text()
-                    .let { (chapterNumberMatcher.find(it) ?: looseNumberMatcher.find(it)) }
-                    ?.let { result ->
-                        val integral = result.groupValues[1]
-                        val fractional = result.groupValues.getOrNull(2)
-
-                        """${integral}$fractional""".toFloat()
-                    } ?: -1f
-
-                url = relativeURL
-                scanlator = group?.text() ?: "<UNKNOWN>"
-                name = chapter.text()
-                date_upload = date.text().parseDate()
-            }
-        }.toList()
-    }
-
-    override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used")
-
-    private val callpageUrl = """https://projectsuki.com/callpage"""
-    private val jsonMediaType = "application/json;charset=UTF-8".toMediaType()
-    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
-        // chapter.url is /read/<bookid>/<chapterid>/...
-        val url = chapter.url.toNormalURL() ?: return Observable.just(emptyList())
-
-        val bookid = url.pathSegments[1] // <bookid>
-        val chapterid = url.pathSegments[2] // <chapterid>
-
-        val callpageHeaders = headersBuilder()
-            .add("X-Requested-With", "XMLHttpRequest")
-            .add("Content-Type", "application/json;charset=UTF-8")
-            .build()
-
-        val callpageBody = Json.encodeToString(
-            mapOf(
-                "bookid" to bookid,
-                "chapterid" to chapterid,
-                "first" to "true",
-            ),
-        ).toRequestBody(jsonMediaType)
-
-        return client.newCall(
-            POST(callpageUrl, callpageHeaders, callpageBody),
-        ).asObservableSuccess()
-            .map { response ->
-                callpageParse(chapter, response)
-            }
-    }
-
-    @Suppress("UNUSED_PARAMETER")
-    private fun callpageParse(chapter: SChapter, response: Response): List<Page> {
-        // response contains the html src with images
-        val src = Json.parseToJsonElement(response.body.string()).jsonObject["src"]?.jsonPrimitive?.content ?: return emptyList()
-        val images = Jsoup.parseBodyFragment(src).select("img")
-        // images urls are /images/gallery/<bookid>/<uuid>/<pagenum>? (empty query for some reason)
-        val urls = images.mapNotNull { it.attrNormalizedUrl("src") }
-        if (urls.isEmpty()) return emptyList()
-
-        val anUrl = urls.random()
-        val pageNums = urls.mapTo(ArrayList()) { it.pathSegments[4] }
-        pageNums += "001"
-
-        fun makeURL(pageNum: String) = anUrl.newBuilder()
-            .setPathSegment(anUrl.pathSegments.lastIndex, pageNum)
-            .build()
-
-        return pageNums.distinct().sortedBy { it.toInt() }.mapIndexed { index, number ->
-            Page(
-                index,
-                "",
-                makeURL(number).rawAbsolute,
+        return bookChapters.asSequence()
+            .flatMap { (_, chapters) -> chapters }
+            .filter { it.chapterLanguage !in blLangs }
+            .filter { wlLangs.isEmpty() || it.chapterLanguage == UNKNOWN_LANGUAGE || it.chapterLanguage in wlLangs }
+            .toList()
+            .sortedWith(
+                compareByDescending<DataExtractor.BookChapter> { chapter -> chapter.chapterNumber }
+                    .thenBy { chapter -> chapter.chapterGroup }
+                    .thenBy { chapter -> chapter.chapterLanguage },
             )
-        }.distinctBy { it.imageUrl }
+            .map { bookChapter ->
+                SChapter.create().apply {
+                    url = bookChapter.chapterUrl.rawRelative ?: reportErrorToUser { "Could not relativize ${bookChapter.chapterUrl}" }
+                    name = bookChapter.chapterTitle
+                    date_upload = bookChapter.chapterDateAdded?.time ?: 0L
+                    scanlator = """${bookChapter.chapterGroup} | ${bookChapter.chapterLanguage.replaceFirstChar(Char::uppercaseChar)}"""
+                    chapter_number = bookChapter.chapterNumber!!.let { (main, sub) ->
+                        // no fractional part, log(0) is -Inf (technically undefined)
+                        if (sub == 0u) return@let main.toFloat()
+
+                        val subD = sub.toDouble()
+                        // 1 + floor(log10(subD)) finds the number of digits (in base 10) "subD" has
+                        // see https://www.wolframalpha.com/input?i=LogLinearPlot+y%3D1+%2B+floor%28log10%28x%29%29%2C+where+x%3D1+to+10%5E9
+                        val digits: Double = 1.0 + floor(log10(subD))
+                        val fractional: Double = subD / 10.0.pow(digits)
+                        // this basically creates a float that has "main" as integral part and "sub" as fractional part
+                        // see https://www.wolframalpha.com/input?i=LogLinearPlot+y%3Dx+%2F+10%5E%281+%2B+floor%28log10%28x%29%29%29%2C+where+x%3D0+to+10%5E9
+                        // the lines look curved because it's a logarithmic plot in the x-axis, but they're straight in a linear plot
+                        (main.toDouble() + fractional).toFloat()
+                    }
+                }
+            }
     }
 
-    override fun pageListParse(response: Response): List<Page> = throw UnsupportedOperationException("not used")
+    /**
+     * Usually using [pageListRequest] and [pageListParse] should be enough,
+     * but in this case we override the method to directly ask the server for the chapter pages (images).
+     *
+     * When constructing a [Page] there are 4 properties you need to consider:
+     *  - [index][Page.index] -> **ignored**: the list of pages should be returned already sorted!
+     *  - [url][Page.url] -> by default used by [imageUrlRequest] to create a `GET(page.url, headers)` [Request].
+     *  Of which the [Response] will be given to [imageUrlParse], responsible for retrieving the value of [Page.imageUrl].
+     *  This property should be left blank if [Page.imageUrl] can already be extracted at this stage.
+     *  - [imageUrl][Page.imageUrl] -> by default used by [imageRequest] to create a `GET(page.imageUrl, headers)` [Request].
+     *  - [uri][Page.uri] -> **DEPRECATED**: do not use
+     */
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
+        val pathMatch: PathMatchResult = """${homepageUri.toASCIIString()}/${chapter.url}""".toHttpUrl().matchAgainst(chapterUrlPattern)
+        if (!pathMatch.doesMatch) {
+            reportErrorToUser {
+                "chapter url ${chapter.url} does not match expected pattern"
+            }
+        }
+
+        return client.newCall(ProjectSukiAPI.chapterPagesRequest(json, headers, pathMatch["bookid"]!!.value, pathMatch["chapterid"]!!.value))
+            .asObservableSuccess()
+            .map { ProjectSukiAPI.parseChapterPagesResponse(json, it) }
+    }
+
+    /**
+     * Not used in this extension, as [Page.imageUrl] is set directly.
+     */
+    override fun imageUrlParse(response: Response): String = reportErrorToUser {
+        // give a hint on who called this method
+        "invalid ${Thread.currentThread().stackTrace.take(3)}"
+    }
+
+    /**
+     * Not used in this extension, as we override [fetchPageList] to modify the default behaviour.
+     */
+    override fun pageListParse(response: Response): List<Page> = reportErrorToUser {
+        // give a hint on who called this method
+        "invalid ${Thread.currentThread().stackTrace.take(3)}"
+    }
 }

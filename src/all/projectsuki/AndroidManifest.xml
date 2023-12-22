@@ -2,33 +2,32 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
+        <!-- The Activity that will handle intents with URLs pertaining to ProjectSuki -->
         <activity
-                android:name=".all.projectsuki.ProjectSukiUrlActivity"
+                android:name=".all.projectsuki.ProjectSukiSearchUrlActivity"
                 android:excludeFromRecents="true"
                 android:exported="true"
                 android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
+                <!-- see ACTION_DEFAULT/ACTION_VIEW -->
                 <action android:name="android.intent.action.VIEW" />
 
+                <!-- see CATEGORY_DEFAULT -->
                 <category android:name="android.intent.category.DEFAULT" />
+                <!-- see CATEGORY_BROWSABLE -->
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data
-                        android:host="projectsuki.com"
-                        android:pathPattern="/book/..*"
-                        android:scheme="https" />
-            </intent-filter>
+                <!-- see https://developer.android.com/guide/topics/manifest/data-element -->
+                <!-- we're not that strict -->
+                <data android:scheme="http" />
+                <data android:scheme="https" />
 
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
+                <!-- We only care about http(s) urls from projectsuki.com -->
+                <data android:host="projectsuki.com" />
 
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                        android:host="projectsuki.com"
-                        android:pathPattern="/read/..*"
-                        android:scheme="https" />
+                <!-- Difference between ".*" and "..*" -->
+                <!-- https://stackoverflow.com/a/43396490 -->
+                <data android:pathPattern="/search.*" />
             </intent-filter>
         </activity>
     </application>
