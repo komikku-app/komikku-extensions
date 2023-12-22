@@ -495,7 +495,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("YANP Fansub", "https://yanpfansub.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Yaoi Comics", "https://ycscan.com", "pt-BR", isNsfw = true),
         SingleLang("Yaoi Hentai", "https://yaoihentai.me", "en", isNsfw = true),
-        SingleLang("Yaoi Toshokan", "https://yaoitoshokan.net", "pt-BR", isNsfw = true, overrideVersionCode = 4),
         SingleLang("Yaoi.mobi", "https://yaoi.mobi", "en", isNsfw = true, className = "YaoiManga", pkgName = "yaoimanga", overrideVersionCode = 4),
         SingleLang("YaoiScan", "https://yaoiscan.com", "en", isNsfw = true),
         SingleLang("YaoiToon", "https://yaoitoon.com", "en", isNsfw = true),
