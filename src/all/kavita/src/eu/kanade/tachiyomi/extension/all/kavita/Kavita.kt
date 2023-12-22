@@ -125,12 +125,17 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
                 // Get Http code
                 val field = throwable.javaClass.getDeclaredField("code")
                 field.isAccessible = true // Make the field accessible
-                var code = field.get(throwable) // Get the value of the code property
-                Log.e(LOG_TAG, "Error fetching manga: ${throwable.message}", throwable)
-                if (code as Int !in intArrayOf(401, 201, 500)) {
-                    code = 500
+                try {
+                    var code = field.get(throwable) // Get the value of the code property
+                    Log.e(LOG_TAG, "Error fetching manga: ${throwable.message}", throwable)
+                    if (code as Int !in intArrayOf(401, 201, 500)) {
+                        code = 500
+                    }
+                    return@onErrorResumeNext Observable.error(IOException("Http Error: $code\n ${helper.intl["http_errors_$code"]}\n${helper.intl["check_version"]}"))
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, e.toString(), e)
+                    return@onErrorResumeNext Observable.error(e)
                 }
-                return@onErrorResumeNext Observable.error(IOException("Http Error: $code\n ${helper.intl["http_errors_$code"]}\n${helper.intl["check_version"]}"))
             }
             .map { response ->
                 popularMangaParse(response)
@@ -188,10 +193,15 @@ class Kavita(private val suffix: String = "") : ConfigurableSource, UnmeteredSou
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val newFilter = MetadataPayload() // need to reset it or will double
         val smartFilterFilter = filters.find { it is SmartFiltersFilter }
-
         // If a SmartFilter selected, apply its filter and return that
-        if (smartFilterFilter?.state != 0) {
-            val index = smartFilterFilter?.state as Int - 1
+        if (smartFilterFilter?.state != 0 && smartFilterFilter != null) {
+            val index = try {
+                smartFilterFilter?.state as Int - 1
+            } catch (e: Exception) {
+                Log.e(LOG_TAG, e.toString(), e)
+                0
+            }
+
             val filter: SmartFilter = smartFilters[index]
             val payload = buildJsonObject {
                 put("EncodedFilter", filter.filter)

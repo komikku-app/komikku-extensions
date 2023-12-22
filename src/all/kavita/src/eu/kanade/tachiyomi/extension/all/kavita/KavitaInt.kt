@@ -11,7 +11,7 @@ object KavitaInt {
         SPANISH,
         SPANISH_LATAM,
         NORWEGIAN,
-        FRENCH
+        FRENCH,
     )
     const val KAVITA_NAME = "Kavita"
 }
