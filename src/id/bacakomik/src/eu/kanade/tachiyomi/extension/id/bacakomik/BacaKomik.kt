@@ -189,7 +189,10 @@ class BacaKomik : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
         var i = 0
-        document.select("div:has(>img[alt*=\"Chapter\"]) img").forEach { element ->
+        document.select("div:has(>img[alt*=\"Chapter\"]) img").filter { element ->
+            val parent = element.parent()
+            parent != null && parent.tagName() != "noscript"
+        }.forEach { element ->
             val url = element.attr("onError").substringAfter("src='").substringBefore("';")
             i++
             if (url.isNotEmpty()) {
