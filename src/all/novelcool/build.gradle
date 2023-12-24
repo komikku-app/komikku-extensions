@@ -6,7 +6,7 @@ ext {
     extName = 'NovelCool'
     pkgNameSuffix = 'all.novelcool'
     extClass = '.NovelCoolFactory'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = true
 }
 

@@ -313,11 +313,21 @@ open class NovelCool(
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.select("script:containsData(all_imgs_url)").html()
+        var doc = document
+        val serverUrl = doc.selectFirst("section.section div.post-content-body > a")?.attr("href")
+
+        if (serverUrl != null) {
+            val serverHeaders = headers.newBuilder()
+                .set("Referer", doc.baseUri())
+                .build()
+            doc = pageClient.newCall(GET(serverUrl, serverHeaders)).execute().asJsoup()
+        }
+
+        val script = doc.select("script:containsData(all_imgs_url)").html()
 
         val images = imgRegex.find(script)?.groupValues?.get(1)
             ?.let { json.decodeFromString<List<String>>("[$it]") }
-            ?: return singlePageParse(document)
+            ?: return singlePageParse(doc)
 
         return images.mapIndexed { idx, img ->
             Page(idx, "", img)
@@ -356,7 +366,10 @@ open class NovelCool(
 
     private fun jsRedirect(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        val response = chain.proceed(request)
+        val headers = request.headers.newBuilder()
+            .removeAll("Accept-Encoding")
+            .build()
+        val response = chain.proceed(request.newBuilder().headers(headers).build())
 
         val document = Jsoup.parse(response.peekBody(Long.MAX_VALUE).string())
         val jsRedirect = document.selectFirst("script:containsData(window.location.href)")?.html()
