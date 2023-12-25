@@ -516,12 +516,14 @@ abstract class Madara(
                 manga.thumbnail_url = imageFromElement(it)
             }
             select(mangaDetailsSelectorStatus).last()?.let {
-                manga.status = when (it.text()) {
-                    in completedStatusList -> SManga.COMPLETED
-                    in ongoingStatusList -> SManga.ONGOING
-                    in hiatusStatusList -> SManga.ON_HIATUS
-                    in canceledStatusList -> SManga.CANCELLED
-                    else -> SManga.UNKNOWN
+                manga.status = with(it.text()) {
+                    when {
+                        containsIn(completedStatusList) -> SManga.COMPLETED
+                        containsIn(ongoingStatusList) -> SManga.ONGOING
+                        containsIn(hiatusStatusList) -> SManga.ON_HIATUS
+                        containsIn(canceledStatusList) -> SManga.CANCELLED
+                        else -> SManga.UNKNOWN
+                    }
                 }
             }
             val genres = select(mangaDetailsSelectorGenre)
@@ -603,6 +605,10 @@ abstract class Madara(
 
     fun String.notUpdating(): Boolean {
         return this.contains(updatingRegex).not()
+    }
+
+    fun String.containsIn(array: Array<String>): Boolean {
+        return this.lowercase() in array.map { it.lowercase() }
     }
 
     protected open fun imageFromElement(element: Element): String? {
