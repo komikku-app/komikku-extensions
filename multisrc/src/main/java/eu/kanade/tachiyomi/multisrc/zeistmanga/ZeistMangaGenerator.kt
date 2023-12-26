@@ -19,6 +19,7 @@ class ZeistMangaGenerator : ThemeSourceGenerator {
         SingleLang("Hijala", "https://hijala.blogspot.com", "ar"),
         SingleLang("KLManhua", "https://klmanhua.blogspot.com", "id", isNsfw = true),
         SingleLang("KomikRealm", "https://www.komikrealm.my.id", "id"),
+        SingleLang("Ler 999", "https://ler999.blogspot.com", "pt-BR"),
         SingleLang("Loner Translations", "https://loner-tl.blogspot.com", "ar"),
         SingleLang("Manga Ai Land", "https://manga-ai-land.blogspot.com", "ar"),
         SingleLang("Manga Soul", "https://www.manga-soul.com", "ar", isNsfw = true),
