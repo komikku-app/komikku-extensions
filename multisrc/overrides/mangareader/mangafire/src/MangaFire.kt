@@ -7,7 +7,6 @@ import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -164,7 +163,11 @@ open class MangaFire(
     )
 
     override fun updateChapterList(manga: SManga, chapters: List<SChapter>) {
-        val document = client.newCall(mangaDetailsRequest(manga)).execute().asJsoup()
+        val request = chapterListRequest(manga.url, chapterType)
+        val response = client.newCall(request).execute()
+        val result = json.decodeFromString<ResponseDto<String>>(response.body.string()).result
+        val document = Jsoup.parse(result)
+
         val elements = document.selectFirst(".scroll-sm")!!.children()
         val chapterCount = chapters.size
         if (elements.size != chapterCount) throw Exception("Chapter count doesn't match. Try updating again.")
