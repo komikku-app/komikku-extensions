@@ -22,7 +22,7 @@ class ZeistMangaGenerator : ThemeSourceGenerator {
         SingleLang("Loner Translations", "https://loner-tl.blogspot.com", "ar"),
         SingleLang("Manga Ai Land", "https://manga-ai-land.blogspot.com", "ar"),
         SingleLang("Manga Soul", "https://www.manga-soul.com", "ar", isNsfw = true),
-        SingleLang("MikoRoku", "https://www.mikoroku.web.id", "id", isNsfw = true),
+        SingleLang("MikoRoku", "https://www.mikoroku.web.id", "id", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Mikrokosmos Fansub", "https://mikrokosmosfb.blogspot.com", "tr", isNsfw = true),
         SingleLang("ShiyuraSub", "https://shiyurasub.blogspot.com", "id"),
         SingleLang("SobatManKu", "https://www.sobatmanku19.site", "id"),
