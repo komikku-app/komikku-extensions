@@ -6,12 +6,8 @@ ext {
     extName = 'Picacomic'
     pkgNameSuffix = 'zh.picacomic'
     extClass = '.Picacomic'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = true
-}
-
-dependencies {
-    implementation 'com.auth0.android:jwtdecode:2.0.0'
 }
 
 apply from: "$rootDir/common.gradle"

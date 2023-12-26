@@ -2,10 +2,10 @@ package eu.kanade.tachiyomi.extension.zh.picacomic
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Base64
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import com.auth0.android.jwt.JWT
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -26,17 +26,21 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import org.json.JSONObject
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+import kotlin.math.floor
 
 class Picacomic : HttpSource(), ConfigurableSource {
     override val lang = "zh"
     override val supportsLatest = true
     override val name = "哔咔漫画"
     override val baseUrl = "https://picaapi.picacomic.com"
+    private val leeway: Long = 10
 
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -67,7 +71,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
 
     private val token: String by lazy {
         var t: String = preferences.getString("TOKEN", "")!!
-        if (t.isEmpty() || JWT(t).isExpired(10)) {
+        if (t.isEmpty() || isExpired(t)) {
             val username = preferences.getString("USERNAME", "")!!
             val password = preferences.getString("PASSWORD", "")!!
             if (username.isEmpty() || password.isEmpty()) {
@@ -78,6 +82,39 @@ class Picacomic : HttpSource(), ConfigurableSource {
             preferences.edit().putString("TOKEN", t).apply()
         }
         t
+    }
+
+    private fun isExpired(token: String): Boolean {
+        var parts: Array<String?> =
+            token.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+
+        if (parts.size == 2 && token.endsWith(".")) {
+            parts = arrayOf(parts[0], parts[1], "")
+        }
+        if (parts.size != 3) {
+            throw Exception(
+                String.format(
+                    "token should have 3 parts, but now there's %s.",
+                    parts.size,
+                ),
+            )
+        }
+
+        val payload = parts[1]?.let { JSONObject(String(Base64.decode(it, Base64.DEFAULT))) }
+
+        val exp = payload?.getLong("exp")?.let {
+            Date(it * 1000)
+        }
+        val iat = payload?.getLong("iat")?.let {
+            Date(it * 1000)
+        }
+
+        val todayTime = (floor((Date().time / 1000).toDouble()) * 1000).toLong() // truncate millis
+        val futureToday = Date(todayTime + leeway * 1000)
+        val pastToday = Date(todayTime - leeway * 1000)
+        val expValid = exp == null || !pastToday.after(exp)
+        val iatValid = iat == null || !futureToday.before(iat)
+        return !expValid || !iatValid
     }
 
     private fun picaHeaders(url: String, method: String = "GET"): Headers {
@@ -193,7 +230,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
     }
 
     private fun hitBlocklist(comic: PicaSearchComic): Boolean {
-        return (comic.tags ?: emptyList<String>() + comic.categories)
+        return ((comic.tags ?: (emptyList<String>() + comic.categories)))
             .map(String::trim)
             .any { it in blocklist }
     }
@@ -235,7 +272,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
             author = comic.author
             description = comic.description
             artist = comic.artist
-            genre = (comic.tags ?: emptyList<String>() + comic.categories)
+            genre = ((comic.tags ?: (emptyList<String>() + comic.categories)))
                 .map(String::trim)
                 .distinct()
                 .joinToString(", ")
