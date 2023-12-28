@@ -159,7 +159,7 @@ class Mangainua : ParsedHttpSource() {
             .addEncoded("news_id", metaElement.attr("data-news_id"))
             .addEncoded("news_category", metaElement.attr("data-news_category"))
             .addEncoded("this_link", metaElement.attr("data-this_link"))
-            .addEncoded("user_hash", userHash)
+            .addEncoded("user_hashs", userHash)
             .build()
         val request = POST("$baseUrl/engine/ajax/controller.php?mod=load_chapters", headers, body)
         val chaptersHtml = client.newCall(request).execute().body.string()
