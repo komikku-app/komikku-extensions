@@ -128,6 +128,27 @@ class CloudRecess : ParsedHttpSource() {
     // ============================== Chapters ==============================
     override fun chapterListSelector() = "div#chapters-list > a[href]"
 
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val originalUrl = response.request.url.toString()
+
+        val chapterList = buildList {
+            var page = 1
+            do {
+                val doc = when {
+                    isEmpty() -> response // First page
+                    else -> {
+                        page++
+                        client.newCall(GET("$originalUrl?page=$page", headers)).execute()
+                    }
+                }.use { it.asJsoup() }
+
+                addAll(doc.select(chapterListSelector()).map(::chapterFromElement))
+            } while (doc.selectFirst(latestUpdatesNextPageSelector()) != null)
+        }
+
+        return chapterList
+    }
+
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         name = element.selectFirst("span")?.ownText() ?: "Chapter"
