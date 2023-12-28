@@ -1,15 +1,25 @@
 package eu.kanade.tachiyomi.extension.uk.honeymanga.dtos
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class HoneyMangaDto(
     val id: String,
     val posterId: String,
     val title: String,
+)
+
+@Serializable
+data class CompleteHoneyMangaDto(
+    val id: String,
+    val posterId: String,
+    val title: String,
     val description: String?,
     val type: String,
+    val authors: List<String>? = null,
+    val artists: List<String>? = null,
+    val genresAndTags: List<String>? = null,
+    val titleStatus: String? = null,
 )
 
 @Serializable
@@ -20,7 +30,12 @@ data class HoneyMangaResponseDto(
 @Serializable
 data class HoneyMangaChapterPagesDto(
     val id: String,
-    val resourceIds: JsonObject,
+    val resourceIds: Map<String, String>,
+)
+
+@Serializable
+data class HoneyMangaChapterResponseDto(
+    val data: List<HoneyMangaChapterDto>,
 )
 
 @Serializable
