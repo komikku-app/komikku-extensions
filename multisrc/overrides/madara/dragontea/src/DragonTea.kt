@@ -43,7 +43,7 @@ class DragonTea : Madara(
         val elements = document.select(".reading-content .page-break img")
         val pageCount = elements.size
 
-        val idKey = "8" + ((dataId + 1306) * 3 - pageCount).toString()
+        val idKey = "11" + ((dataId + 1307) * 3 - pageCount).toString()
         elements.forEach {
             val decryptedId = decryptAesJson(it.attr("id"), idKey).jsonPrimitive.content
             it.attr("id", decryptedId)
@@ -52,11 +52,11 @@ class DragonTea : Madara(
         val orderedElements = elements.sortedBy {
             pageIndexRegex.find(it.attr("id"))?.groupValues?.get(1)?.toInt() ?: 0
         }
-        val dtaKey = "13" + orderedElements.joinToString("") { it.attr("id").takeLast(1) } + (((dataId + 88) * 2) - pageCount - 4).toString()
 
+        val dtaKey = "15" + orderedElements.joinToString("") { it.attr("id").takeLast(1) } + (((dataId + 88) * 2) - pageCount - 5).toString()
         val srcKey = (dataId + 20).toString() + orderedElements.joinToString("") {
             decryptAesJson(it.attr("dta"), dtaKey).jsonPrimitive.content.takeLast(2)
-        } + (pageCount * 2).toString()
+        } + (pageCount * 4).toString()
 
         return orderedElements.mapIndexed { i, element ->
             val src = decryptAesJson(element.attr("data-src"), srcKey).jsonPrimitive.content
