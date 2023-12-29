@@ -7,11 +7,12 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.json.JSONArray
-import org.json.JSONObject
 import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -24,7 +25,7 @@ class SolarAndSundry : HttpSource() {
 
     override val name = "Solar and Sundry"
 
-    override val baseUrl = "https://solar-and-sundry-worker.giraugh.workers.dev"
+    override val baseUrl = "https://sas-api.fly.dev"
 
     override val lang = "en"
 
@@ -32,15 +33,25 @@ class SolarAndSundry : HttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    @Serializable
+    private data class SasPage(
+        val page_number: Int,
+        val chapter_number: Int,
+        val image_url: String,
+        val thumbnail_url: String,
+        val name: String,
+        val published_at: String,
+    )
+
     private fun createManga(): SManga {
         return SManga.create().apply {
             title = "Solar and Sundry"
-            url = "/chapter"
+            url = "/page"
             author = "Ewan Breakey"
             artist = author
             status = SManga.ONGOING
-            description = "a sci-fi webcomic about creating an ecosystem where there shouldn't be one"
-            thumbnail_url = "https://imagedelivery.net/zthi1l8fKrUGB5ig08mq-Q/4b15df30-85c7-429e-d062-bf1d19f0fd00/public"
+            description = "a sci-fi horror webcomic about life blooming against all odds"
+            thumbnail_url = "https://imagedelivery.net/zthi1l8fKrUGB5ig08mq-Q/de292ba7-f164-4f43-ec17-1876a7a44600/public"
         }
     }
 
@@ -98,20 +109,13 @@ class SolarAndSundry : HttpSource() {
     // Chapters
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val chapters = JSONArray(response.body.string())
-        val pages = ArrayList<JSONObject>()
-        for (i in 0 until chapters.length()) {
-            val chapterPages = chapters.getJSONObject(i).getJSONArray("pages")
-            for (j in 0 until chapterPages.length()) {
-                pages.add(chapterPages.getJSONObject(j))
-            }
-        }
+        val pages = Json.decodeFromString<List<SasPage>>(response.body.string())
         return pages.map { page ->
             SChapter.create().apply {
-                name = page.getString("name")
-                setUrlWithoutDomain(baseUrl + "/page/" + page.getInt("page_number"))
-                chapter_number = page.getInt("page_number").toFloat()
-                date_upload = parseDate(page.getString("published_at"))
+                name = page.name
+                setUrlWithoutDomain(baseUrl + "/page/" + page.page_number)
+                chapter_number = page.page_number.toFloat()
+                date_upload = parseDate(page.published_at)
             }
         }.reversed()
     }
@@ -123,9 +127,9 @@ class SolarAndSundry : HttpSource() {
     // Pages
 
     override fun pageListParse(response: Response): List<Page> {
-        val page = JSONObject(response.body.string())
+        val page = Json.decodeFromString<SasPage>(response.body.string())
 
-        return listOf(Page(0, "", page.getString("image_url")))
+        return listOf(Page(0, "", page.image_url))
     }
 
     override fun imageRequest(page: Page) = GET(page.imageUrl!!, imgHeaders)
