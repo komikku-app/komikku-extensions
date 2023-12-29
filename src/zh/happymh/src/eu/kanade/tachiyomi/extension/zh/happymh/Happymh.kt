@@ -4,6 +4,9 @@ import android.app.Application
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.extension.zh.happymh.dto.ChapterListDto
+import eu.kanade.tachiyomi.extension.zh.happymh.dto.PageListResponseDto
+import eu.kanade.tachiyomi.extension.zh.happymh.dto.PopularResponseDto
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -14,12 +17,9 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.boolean
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.decodeFromStream
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -37,9 +37,12 @@ class Happymh : HttpSource(), ConfigurableSource {
     override val client: OkHttpClient = network.cloudflareClient
     private val json: Json by injectLazy()
 
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
     override fun headersBuilder(): Headers.Builder {
         val builder = super.headersBuilder()
-        val preferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
         val userAgent = preferences.getString(USER_AGENT_PREF, "")!!
         return if (userAgent.isNotBlank()) {
             builder.set("User-Agent", userAgent)
@@ -57,17 +60,18 @@ class Happymh : HttpSource(), ConfigurableSource {
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        val data = json.parseToJsonElement(response.body.string()).jsonObject["data"]!!.jsonObject
-        val items = data["items"]!!.jsonArray.map {
+        val data = response.parseAs<PopularResponseDto>().data
+
+        val items = data.items.map {
             SManga.create().apply {
-                val obj = it.jsonObject
-                title = obj["name"]!!.jsonPrimitive.content
-                url = "/manga/${obj["manga_code"]!!.jsonPrimitive.content}"
-                thumbnail_url = obj["cover"]!!.jsonPrimitive.content
+                title = it.name
+                url = it.url
+                thumbnail_url = it.cover
             }
         }
-        val isEnd = data["isEnd"]!!.jsonPrimitive.boolean
-        return MangasPage(items, !isEnd)
+        val hasNextPage = data.isEnd.not()
+
+        return MangasPage(items, hasNextPage)
     }
 
     // Latest
@@ -108,12 +112,12 @@ class Happymh : HttpSource(), ConfigurableSource {
     override fun chapterListParse(response: Response): List<SChapter> {
         val comicId = response.request.url.pathSegments.last()
         val document = response.asJsoup()
-        val script = document.selectFirst("mip-data > script:containsData(chapterList)")!!.html()
-        return json.parseToJsonElement(script).jsonObject["chapterList"]!!.jsonArray.map {
+        val script = document.selectFirst("mip-data > script:containsData(chapterList)")!!.data()
+        return json.decodeFromString<ChapterListDto>(script).chapterList.map {
             SChapter.create().apply {
-                val chapterId = it.jsonObject["id"]!!.jsonPrimitive.content
-                url = "/v2.0/apis/manga/read?code=$comicId&cid=$chapterId"
-                name = it.jsonObject["chapterName"]!!.jsonPrimitive.content
+                val chapterId = it.id
+                url = "/v2.0/apis/manga/read?code=$comicId&cid=$chapterId&v=v2.13"
+                name = it.chapterName
             }
         }
     }
@@ -121,18 +125,21 @@ class Happymh : HttpSource(), ConfigurableSource {
     // Pages
 
     override fun pageListRequest(chapter: SChapter): Request {
+        val url = baseUrl + chapter.url
         // Some chapters return 403 without this header
-        val header = headersBuilder().add("X-Requested-With", "XMLHttpRequest").build()
-        return GET(baseUrl + chapter.url, header)
+        val header = headersBuilder()
+            .add("X-Requested-With", "XMLHttpRequest")
+            .set("Referer", url)
+            .build()
+        return GET(url, header)
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        return json.parseToJsonElement(response.body.string())
-            .jsonObject["data"]!!.jsonObject["scans"]!!.jsonArray
+        return response.parseAs<PageListResponseDto>().data.scans
             // If n == 1, the image is from next chapter
-            .filter { it.jsonObject["n"]!!.jsonPrimitive.int == 0 }
+            .filter { it.n == 0 }
             .mapIndexed { index, it ->
-                Page(index, "", it.jsonObject["url"]!!.jsonPrimitive.content)
+                Page(index, "", it.url)
             }
     }
 
@@ -156,6 +163,10 @@ class Happymh : HttpSource(), ConfigurableSource {
                 }
             }
         }.let(screen::addPreference)
+    }
+
+    private inline fun <reified T> Response.parseAs(): T = use {
+        json.decodeFromStream(it.body.byteStream())
     }
 
     companion object {
