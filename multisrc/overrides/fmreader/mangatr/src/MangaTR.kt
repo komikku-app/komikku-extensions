@@ -10,92 +10,95 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.FormBody
-import okhttp3.Headers
-import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 
 class MangaTR : FMReader("Manga-TR", "https://manga-tr.com", "tr") {
-    override fun headersBuilder() = Headers.Builder().apply {
-        add("User-Agent", "Mozilla/5.0 (Windows NT 6.3; WOW64)")
-    }
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Accept-Language", "en-US,en;q=0.5")
+
     override fun popularMangaNextPageSelector() = "div.btn-group:not(div.btn-block) button.btn-info"
 
+    // =============================== Search ===============================
     // TODO: genre search possible but a bit of a pain
     override fun getFilterList() = FilterList()
 
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = GET("$baseUrl/arama.html?icerik=$query", headers)
-    override fun searchMangaParse(response: Response): MangasPage {
-        val mangas = mutableListOf<SManga>()
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) =
+        GET("$baseUrl/arama.html?icerik=$query", headers)
 
-        response.asJsoup().select("div.row a[data-toggle]")
+    override fun searchMangaParse(response: Response): MangasPage {
+        val mangas = response.use { it.asJsoup() }
+            .select("div.row a[data-toggle]")
             .filterNot { it.siblingElements().text().contains("Novel") }
-            .map { mangas.add(searchMangaFromElement(it)) }
+            .map(::searchMangaFromElement)
 
         return MangasPage(mangas, false)
     }
 
-    override fun searchMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
-
-        manga.setUrlWithoutDomain(element.attr("abs:href"))
-        manga.title = element.text()
-
-        return manga
+    override fun searchMangaFromElement(element: Element) = SManga.create().apply {
+        setUrlWithoutDomain(element.absUrl("href"))
+        title = element.text()
     }
 
-    override fun mangaDetailsParse(document: Document): SManga {
-        val manga = SManga.create()
-        val infoElement: Element = document.select("div#tab1").first()!!
-
-        manga.author = infoElement.select("table + table tr + tr td a").first()?.text()
-        manga.artist = infoElement.select("table + table tr + tr td + td a").first()?.text()
-        manga.genre = infoElement.select("div#tab1 table + table tr + tr td + td + td").text()
-        manga.description = infoElement.select("div.well").text().trim()
-        manga.thumbnail_url = document.select("img.thumbnail").attr("abs:src")
-        manga.status = document.select("table.table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(2) td").let {
-            val translationStatus = it[it.size - 2].text()
-            parseStatus(translationStatus)
+    // =========================== Manga Details ============================
+    override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        val infoElement = document.selectFirst("div#tab1")!!
+        infoElement.selectFirst("table + table tr + tr")?.run {
+            author = selectFirst("td:nth-child(1) a")?.text()
+            artist = selectFirst("td:nth-child(2) a")?.text()
+            genre = selectFirst("td:nth-child(3)")?.text()
         }
-        return manga
+        description = infoElement.selectFirst("div.well")?.ownText()?.trim()
+        thumbnail_url = document.selectFirst("img.thumbnail")?.absUrl("src")
+
+        status = infoElement.selectFirst("tr:contains(Çeviri Durumu) + tr > td:nth-child(2)")
+            .let { parseStatus(it?.text()) }
     }
 
+    // ============================== Chapters ==============================
     override fun chapterListSelector() = "tr.table-bordered"
+
     override val chapterUrlSelector = "td[align=left] > a"
+
     override val chapterTimeSelector = "td[align=right]"
-    private val chapterListHeaders = headers.newBuilder().add("X-Requested-With", "XMLHttpRequest").build()
+
+    private val chapterListHeaders by lazy {
+        headersBuilder().add("X-Requested-With", "XMLHttpRequest").build()
+    }
+
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        val requestUrl = "$baseUrl/cek/fetch_pages_manga.php?manga_cek=${manga.url.substringAfter("manga-").substringBefore(".")}"
+        val id = manga.url.substringAfter("manga-").substringBefore(".")
+        val requestUrl = "$baseUrl/cek/fetch_pages_manga.php?manga_cek=$id"
         return client.newCall(GET(requestUrl, chapterListHeaders))
             .asObservableSuccess()
-            .map { response ->
-                chapterListParse(response, requestUrl)
-            }
+            .map(::chapterListParse)
     }
 
-    private fun chapterListParse(response: Response, requestUrl: String): List<SChapter> {
-        val chapters = mutableListOf<SChapter>()
-        var document = response.asJsoup()
-        var moreChapters = true
-        var nextPage = 2
-
+    override fun chapterListParse(response: Response): List<SChapter> {
         // chapters are paginated
-        while (moreChapters) {
-            document.select(chapterListSelector()).map { chapters.add(chapterFromElement(it)) }
-            if (document.select("a[data-page=$nextPage]").isNotEmpty()) {
-                val body = FormBody.Builder()
-                    .add("page", nextPage.toString())
-                    .build()
-                document = client.newCall(POST(requestUrl, chapterListHeaders, body)).execute().asJsoup()
-                nextPage++
-            } else {
-                moreChapters = false
-            }
+        val chapters = buildList {
+            val requestUrl = response.request.url.toString()
+            var nextPage = 2
+            do {
+                val doc = when {
+                    isEmpty() -> response
+                    else -> {
+                        val body = FormBody.Builder()
+                            .add("page", nextPage.toString())
+                            .build()
+                        nextPage++
+                        client.newCall(POST(requestUrl, chapterListHeaders, body)).execute()
+                    }
+                }.use { it.asJsoup() }
+
+                addAll(doc.select(chapterListSelector()).map(::chapterFromElement))
+            } while (doc.selectFirst("a[data-page=$nextPage]") != null)
         }
         return chapters
     }
 
-    override fun pageListRequest(chapter: SChapter): Request = GET("$baseUrl/${chapter.url.substringAfter("cek/")}", headers)
+    override fun pageListRequest(chapter: SChapter) =
+        GET("$baseUrl/${chapter.url.substringAfter("cek/")}", headers)
 }

@@ -16,7 +16,7 @@ class FMReaderGenerator : ThemeSourceGenerator {
         MultiLang("Manhwa18.net", "https://manhwa18.net", listOf("en", "ko"), className = "Manhwa18NetFactory", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Epik Manga", "https://www.epikmanga.com", "tr"),
         SingleLang("KissLove", "https://klz9.com", "ja", isNsfw = true, overrideVersionCode = 4),
-        SingleLang("Manga-TR", "https://manga-tr.com", "tr", className = "MangaTR", overrideVersionCode = 1),
+        SingleLang("Manga-TR", "https://manga-tr.com", "tr", className = "MangaTR", overrideVersionCode = 2),
         SingleLang("ManhuaRock", "https://manhuarock.net", "vi", overrideVersionCode = 1),
         SingleLang("Manhwa18", "https://manhwa18.com", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Say Truyen", "https://saytruyenvip.com", "vi", overrideVersionCode = 3),
