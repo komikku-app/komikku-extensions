@@ -42,19 +42,16 @@ class HentaiVN : ParsedHttpSource(), ConfigurableSource {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override val name = "HentaiVN"
-
     private val defaultBaseUrl = "https://hentaivn.tv"
-    override val baseUrl = preferences.getString(PREF_KEY_BASE_URL, defaultBaseUrl)!!
+    override val baseUrl by lazy { preferences.getString(PREF_KEY_BASE_URL, defaultBaseUrl)!! }
 
-    private val domain = baseUrl.toHttpUrl().host
-    private val searchUrl = "$baseUrl/forum/search-plus.php"
-    private val searchByAuthorUrl = "$baseUrl/tim-kiem-tac-gia.html"
-    private val searchAllURL = "$baseUrl/tim-kiem-truyen.html"
-
+    override val name = "HentaiVN"
     override val lang = "vi"
-
     override val supportsLatest = true
+
+    private val searchUrl by lazy { "$baseUrl/forum/search-plus.php" }
+    private val searchByAuthorUrl by lazy { "$baseUrl/tim-kiem-tac-gia.html" }
+    private val searchAllURL by lazy { "$baseUrl/tim-kiem-truyen.html" }
 
     override val client: OkHttpClient by lazy {
         val baseClient = if (preferences.getBoolean(PREF_KEY_ENABLE_CLOUDFLARE_BYPASS, true)) {
@@ -63,6 +60,7 @@ class HentaiVN : ParsedHttpSource(), ConfigurableSource {
             network.client
         }
 
+        val domain = baseUrl.toHttpUrl().host
         baseClient.newBuilder()
             .addNetworkInterceptor(CookieInterceptor(domain, "view1", "1"))
             .addNetworkInterceptor(CookieInterceptor(domain, "view4", "1"))
