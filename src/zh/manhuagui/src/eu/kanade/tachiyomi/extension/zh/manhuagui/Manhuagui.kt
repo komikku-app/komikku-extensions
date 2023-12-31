@@ -312,23 +312,34 @@ class Manhuagui(
                 error("您需要打开R18作品显示开关并重启软件才能阅读此作品")
             }
         }
-        val chapterList = document.select("ul > li > a.status0")
         val latestChapterHref = document.select("div.book-detail > ul.detail-list > li.status > span > a.blue").first()?.attr("href")
         val chNumRegex = Regex("""\d+""")
-        chapterList.forEach {
-            val currentChapter = SChapter.create()
-            currentChapter.url = it.attr("href")
-            currentChapter.name = it?.attr("title")?.trim() ?: it.select("span").first()!!.ownText()
-            currentChapter.chapter_number = chNumRegex.find(currentChapter.name)?.value?.toFloatOrNull() ?: -1F
 
-            // Manhuagui only provide upload date for latest chapter
-            if (currentChapter.url == latestChapterHref) {
-                currentChapter.date_upload = parseDate(document.select("div.book-detail > ul.detail-list > li.status > span > span.red").last()!!)
+        val sectionList = document.select("[id^=chapter-list-]")
+        sectionList.forEach { section ->
+            val pageList = section.select("ul")
+            pageList.reverse()
+            pageList.forEach { page ->
+                val pageChapters = mutableListOf<SChapter>()
+                val chapterList = page.select("li > a.status0")
+                chapterList.forEach {
+                    val currentChapter = SChapter.create()
+                    currentChapter.url = it.attr("href")
+                    currentChapter.name = it?.attr("title")?.trim() ?: it.select("span").first()!!.ownText()
+                    currentChapter.chapter_number = chNumRegex.find(currentChapter.name)?.value?.toFloatOrNull() ?: -1F
+
+                    // Manhuagui only provide upload date for latest chapter
+                    if (currentChapter.url == latestChapterHref) {
+                        currentChapter.date_upload = parseDate(document.select("div.book-detail > ul.detail-list > li.status > span > span.red").last()!!)
+                    }
+                    pageChapters.add(currentChapter)
+                }
+
+                chapters.addAll(pageChapters)
             }
-            chapters.add(currentChapter)
         }
 
-        return chapters.sortedByDescending { it.chapter_number }
+        return chapters
     }
 
     private fun parseDate(element: Element): Long = SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).parse(element.text())?.time ?: 0
