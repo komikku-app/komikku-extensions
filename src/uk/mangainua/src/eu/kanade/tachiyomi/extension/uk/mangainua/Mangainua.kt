@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.uk.mangainua
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
@@ -9,11 +10,9 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.FormBody
-import okhttp3.Headers
-import okhttp3.OkHttpClient
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
@@ -29,44 +28,42 @@ class Mangainua : ParsedHttpSource() {
     override val lang = "uk"
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client by lazy {
+        network.cloudflareClient.newBuilder()
+            .rateLimitHost(baseUrl.toHttpUrl(), 5)
+            .build()
+    }
 
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+    override fun headersBuilder() = super.headersBuilder()
         .add("Referer", baseUrl)
 
-    // Popular
-    override fun popularMangaRequest(page: Int): Request {
-        return GET(baseUrl)
-    }
-    override fun popularMangaSelector() = "div.owl-carousel div.card--big"
-    override fun popularMangaFromElement(element: Element): SManga {
-        return SManga.create().apply {
-            element.selectFirst("h3.card__title a")!!.let {
-                setUrlWithoutDomain(it.attr("href"))
-                title = it.text()
-            }
-            thumbnail_url = element.selectFirst("img")?.absUrl("src")
-        }
-    }
-    override fun popularMangaNextPageSelector() = "not used"
+    // ============================== Popular ===============================
+    override fun popularMangaRequest(page: Int) = GET(baseUrl)
 
-    // Latest (using for search)
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/page/$page/")
-    }
-    override fun latestUpdatesSelector() = "main.main article.item"
-    override fun latestUpdatesFromElement(element: Element): SManga {
-        return SManga.create().apply {
-            element.selectFirst("h3.card__title a")!!.let {
-                setUrlWithoutDomain(it.attr("href"))
-                title = it.text()
-            }
-            thumbnail_url = element.selectFirst("div.card--big img")?.absUrl("data-src")
+    override fun popularMangaSelector() = "div.owl-carousel div.card--big"
+
+    override fun popularMangaFromElement(element: Element) = SManga.create().apply {
+        element.selectFirst("h3.card__title a")!!.run {
+            setUrlWithoutDomain(attr("href"))
+            title = text()
+        }
+        thumbnail_url = element.selectFirst("img")?.run {
+            absUrl("data-src").ifEmpty { absUrl("src") }
         }
     }
+
+    override fun popularMangaNextPageSelector() = null
+
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/$page/")
+
+    override fun latestUpdatesSelector() = "main.main article.item"
+
+    override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
+
     override fun latestUpdatesNextPageSelector() = "a:contains(Наступна)"
 
-    // Search
+    // =============================== Search ===============================
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         return if (query.length > 2) {
             POST(
@@ -85,41 +82,43 @@ class Mangainua : ParsedHttpSource() {
     }
 
     override fun searchMangaSelector() = latestUpdatesSelector()
-    override fun searchMangaFromElement(element: Element): SManga {
-        return SManga.create().apply {
-            element.selectFirst("h3.card__title a")!!.let {
-                setUrlWithoutDomain(it.attr("href"))
-                title = it.text()
-            }
-            thumbnail_url = element.selectFirst("div.card--big img")?.absUrl("src")
-        }
-    }
+
+    override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
+
     override fun searchMangaNextPageSelector() = latestUpdatesNextPageSelector()
 
-    // Manga Details
-    override fun mangaDetailsParse(document: Document): SManga {
-        return SManga.create().apply {
-            title = document.selectFirst("span.UAname")!!.text()
-            description = document.selectFirst("div.item__full-description")!!.text()
-            thumbnail_url = document.selectFirst("div.item__full-sidebar--poster img")!!.absUrl("src")
-            status = when (document.selectFirst("div.item__full-sideba--header:has(div:containsOwn(Статус перекладу:))")?.selectFirst("span.item__full-sidebar--description")?.text()) {
-                "Триває" -> SManga.ONGOING
-                "Покинуто" -> SManga.CANCELLED
-                "Закінчений" -> SManga.COMPLETED
-                else -> SManga.UNKNOWN
-            }
-            val type = when (document.selectFirst("div.item__full-sideba--header:has(div:containsOwn(Тип:))")?.selectFirst("span.item__full-sidebar--description")!!.text()) {
+    // =========================== Manga Details ============================
+    override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        title = document.selectFirst("span.UAname")!!.text()
+        description = document.selectFirst("div.item__full-description")!!.text()
+        thumbnail_url = document.selectFirst("div.item__full-sidebar--poster img")?.absUrl("src")
+        status = when (document.getInfoElement("Статус перекладу:")?.text()?.trim()) {
+            "Триває" -> SManga.ONGOING
+            "Покинуто" -> SManga.CANCELLED
+            "Закінчений" -> SManga.COMPLETED
+            else -> SManga.UNKNOWN
+        }
+
+        genre = buildList {
+            // genres
+            addAll(document.getInfoElement("Жанри:")?.select("a")?.eachText().orEmpty())
+
+            // additional
+            val type = when (document.getInfoElement("Тип:")?.text()) {
                 "ВЕБМАНХВА" -> "Manhwa"
                 "МАНХВА" -> "Manhwa"
                 "МАНЬХВА" -> "Manhua"
                 "ВЕБМАНЬХВА" -> "Manhua"
                 else -> "Manga"
             }
-            genre = document.selectFirst("div.item__full-sideba--header:has(div:containsOwn(Жанри:))")?.selectFirst("span.item__full-sidebar--description")!!.select("a").joinToString { it.text() } + ", " + type
-        }
+            add(type)
+        }.joinToString()
     }
 
-    // Chapters
+    private fun Document.getInfoElement(text: String): Element? =
+        selectFirst("div.item__full-sideba--header:has(div:containsOwn($text)) span.item__full-sidebar--description")
+
+    // ============================== Chapters ==============================
     override fun chapterListSelector() = throw UnsupportedOperationException()
 
     override fun chapterFromElement(element: Element): SChapter {
@@ -128,76 +127,100 @@ class Mangainua : ParsedHttpSource() {
 
     private fun parseChapterElements(elements: Elements): List<SChapter> {
         var previousChapterName: String? = null
-        var previousChapterNumber: Float = 0.0f
-        val dateFormat = DATE_FORMATTER
+        var previousChapterNumber: Float = 0F
         return elements.map { element ->
             SChapter.create().apply {
                 val urlElement = element.selectFirst("a")!!
                 setUrlWithoutDomain(urlElement.attr("href"))
-                val chapterName = urlElement.text().substringAfter("НОВЕ").trim()
-                val chapterNumber = urlElement.text().substringAfter("Розділ").substringBefore("-").trim()
+                val chapterName = urlElement.ownText().trim()
+                val chapterNumber = element.attr("manga-chappter")
+                    .ifEmpty { chapterName.substringAfter("Розділ").substringBefore("-").trim() }
+                    .toFloatOrNull() ?: 1F
+
                 if (chapterName.contains("Альтернативний переклад")) {
-                    name = previousChapterName.toString().substringBefore("-").trim()
+                    // Alternative translation of the previous chapter
+                    name = previousChapterName.orEmpty().substringBefore("-").trim()
                     scanlator = urlElement.text().substringAfter("від:").trim()
                     chapter_number = previousChapterNumber
                 } else {
+                    // Normal chapter
                     name = chapterName
+                    chapter_number = chapterNumber
+                    scanlator = element.attr("translate").takeUnless(String::isBlank)
+
                     previousChapterName = chapterName
-                    chapter_number = chapterNumber.toFloat()
-                    previousChapterNumber = chapterNumber.toFloat()
+                    previousChapterNumber = chapterNumber
                 }
-                date_upload = dateFormat.parse(element.child(0).ownText())?.time!!
+                date_upload = element.child(0).ownText().toDate()
             }
         }
     }
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
         val userHash = document.parseUserHash()
+        val endpoint = "engine/ajax/controller.php?mod=load_chapters"
+        val userHashQuery = document.parseUserHashQuery(endpoint)
         val metaElement = document.selectFirst(Evaluator.Id("linkstocomics"))!!
         val body = FormBody.Builder()
             .addEncoded("action", "show")
             .addEncoded("news_id", metaElement.attr("data-news_id"))
             .addEncoded("news_category", metaElement.attr("data-news_category"))
             .addEncoded("this_link", metaElement.attr("data-this_link"))
-            .addEncoded("user_hashs", userHash)
+            .addEncoded(userHashQuery, userHash)
             .build()
-        val request = POST("$baseUrl/engine/ajax/controller.php?mod=load_chapters", headers, body)
-        val chaptersHtml = client.newCall(request).execute().body.string()
-        val chaptersDocument = Jsoup.parseBodyFragment(chaptersHtml)
-        return parseChapterElements(chaptersDocument.body().children()).asReversed()
+        val request = POST("$baseUrl/$endpoint", headers, body)
+
+        val chaptersDoc = client.newCall(request).execute().use { it.asJsoup() }
+        return parseChapterElements(chaptersDoc.body().children()).asReversed()
     }
 
-    // Pages
+    // =============================== Pages ================================
     override fun pageListParse(document: Document): List<Page> {
         val userHash = document.parseUserHash()
+        val endpoint = "engine/ajax/controller.php?mod=load_chapters_image"
+        val userHashQuery = document.parseUserHashQuery(endpoint)
         val newsId = document.selectFirst(Evaluator.Id("comics"))!!.attr("data-news_id")
-        val url = "$baseUrl/engine/ajax/controller.php?mod=load_chapters_image&news_id=$newsId&action=show&user_hash=$userHash"
-        val pagesHtml = client.newCall(GET(url, headers)).execute().body.string()
-        val pagesDocument = Jsoup.parseBodyFragment(pagesHtml)
-        return pagesDocument.getElementsByTag("img").mapIndexed { index, img ->
+        val url = "$baseUrl/$endpoint&news_id=$newsId&action=show&$userHashQuery=$userHash"
+        val pagesDoc = client.newCall(GET(url, headers)).execute()
+            .use { it.asJsoup() }
+        return pagesDoc.getElementsByTag("img").mapIndexed { index, img ->
             Page(index, imageUrl = img.attr("data-src"))
         }
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
 
+    // ============================= Utilities ==============================
     companion object {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH)
         }
 
+        private fun String.toDate(): Long {
+            return runCatching { DATE_FORMATTER.parse(trim())?.time }
+                .getOrNull() ?: 0L
+        }
+
+        private const val SITE_LOGIN_HASH = "site_login_hash"
+
         private fun Document.parseUserHash(): String {
-            val start = "site_login_hash = '"
-            for (element in body().children()) {
-                if (element.tagName() != "script") continue
-                val data = element.data()
-                val leftIndex = data.indexOf(start)
-                if (leftIndex == -1) continue
-                val startIndex = leftIndex + start.length
-                val endIndex = data.indexOf('\'', startIndex)
-                return data.substring(startIndex, endIndex)
+            val script = selectFirst("script:containsData($SITE_LOGIN_HASH = )")?.data().orEmpty()
+            val hash = script.substringAfter("$SITE_LOGIN_HASH = '").substringBefore("'")
+            return hash.ifEmpty { throw Exception("Couldn't find user hash") }
+        }
+
+        private fun Document.parseUserHashQuery(endpoint: String): String {
+            val script = selectFirst("script:containsData($endpoint)")?.data()
+            val queries = script?.run {
+                substringAfter(endpoint).substringAfter('{').substringBefore('}')
             }
-            throw Exception("Couldn't find user hash")
+            val query = queries.orEmpty()
+                .substringBefore(SITE_LOGIN_HASH, "")
+                .substringBeforeLast(':')
+                .trimEnd()
+                .substringAfterLast(' ')
+
+            return query.ifEmpty { throw Exception("Couldn't find user hash query!") }
         }
     }
 }
