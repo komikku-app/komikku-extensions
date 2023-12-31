@@ -1,10 +1,12 @@
-package eu.kanade.tachiyomi.extension.all.projectsuki
+package eu.kanade.tachiyomi.extension.all.projectsuki.activities
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import eu.kanade.tachiyomi.extension.all.projectsuki.EXTENSION_INFO
+import eu.kanade.tachiyomi.extension.all.projectsuki.SHORT_FORM_ID
 import kotlin.system.exitProcess
 
 /**
@@ -13,10 +15,7 @@ import kotlin.system.exitProcess
 @Suppress("unused")
 private inline val INFO: Nothing get() = error("INFO")
 
-/**
- * `$ps:`
- */
-internal const val INTENT_QUERY_PREFIX: String = """${'$'}$SHORT_FORM_ID:"""
+internal const val INTENT_SEARCH_QUERY_PREFIX: String = """${'$'}$SHORT_FORM_ID-search:"""
 
 /**
  * See [handleIntentAction](https://github.com/tachiyomiorg/tachiyomi/blob/0f9895eec8f5808210f291d1e0ef5cc9f73ccb44/app/src/main/java/eu/kanade/tachiyomi/ui/main/MainActivity.kt#L401)
@@ -32,6 +31,12 @@ internal const val INTENT_QUERY_PREFIX: String = """${'$'}$SHORT_FORM_ID:"""
  * adb shell am start -d "https://projectsuki.com/search?q=omniscient" -a android.intent.action.VIEW
  * ```
  *
+ * If multiple devices are present, [see this answer](https://stackoverflow.com/a/14655015)
+ *
+ * Note that Tachiyomi extension's UrlActivities [do not have access to the Kotlin environment](https://github.com/tachiyomiorg/tachiyomi-extensions/pull/19323#issuecomment-1858932113)
+ * (specifically Intrinsics).
+ * To avoid using Java, multiple classes have been provided for different URLs.
+ *
  * @author Federico d'Alonzo &lt;me@npgx.dev&gt;
  */
 class ProjectSukiSearchUrlActivity : Activity() {
@@ -39,7 +44,8 @@ class ProjectSukiSearchUrlActivity : Activity() {
         super.onCreate(savedInstanceState)
 
         if (intent?.data?.pathSegments?.size != 1) {
-            Log.e("PSUrlActivity", "could not handle URI ${intent?.data} from intent $intent")
+            // Project Suki Url Activity Search
+            Log.e("PSUASearch", "could not handle URI ${intent?.data} from intent $intent")
         }
 
         val intent = Intent().apply {
@@ -48,7 +54,7 @@ class ProjectSukiSearchUrlActivity : Activity() {
             // "filter" for our own extension instead of doing a global search
             putExtra("filter", packageName)
             // value that will be passed onto the "query" parameter in fetchSearchManga
-            putExtra("query", "${INTENT_QUERY_PREFIX}${intent?.data?.query}")
+            putExtra("query", "$INTENT_SEARCH_QUERY_PREFIX${intent?.data?.query}")
         }
 
         try {
@@ -56,7 +62,8 @@ class ProjectSukiSearchUrlActivity : Activity() {
             startActivity(intent)
         } catch (e: ActivityNotFoundException) {
             // tachiyomi isn't installed (?)
-            Log.e("PSUrlActivity", e.toString())
+            // Project Suki Url Activity Search
+            Log.e("PSUASearch", e.toString())
         }
 
         // we're done

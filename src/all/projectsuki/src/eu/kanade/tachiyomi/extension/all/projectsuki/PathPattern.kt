@@ -22,9 +22,7 @@ data class PathPattern(val paths: List<Regex?>) {
 
     init {
         if (paths.isEmpty()) {
-            reportErrorToUser {
-                "Invalid PathPattern, cannot be empty!"
-            }
+            reportErrorToUser { "Invalid PathPattern, cannot be empty!" }
         }
     }
 }
@@ -51,9 +49,7 @@ data class PathMatchResult(val doesMatch: Boolean, val matchResults: List<MatchR
 
     init {
         if (matchResults?.isEmpty() == true) {
-            reportErrorToUser {
-                "Invalid PathMatchResult, matchResults must either be null or not empty!"
-            }
+            reportErrorToUser { "Invalid PathMatchResult, matchResults must either be null or not empty!" }
         }
     }
 }

@@ -1,3 +1,12 @@
+## Version 1.4.3
+
+- entries incorrectly listed as PUBLISHING_FINISHED now are correctly listed as COMPLETED
+- fixes a rare bug that would throw a NoSuchElementException when the status or origin fields
+  weren't found in the details table.
+- separate Smart and Simple search in code to make it easier to debug and extend it in the future
+- add activities to handle /book and /read URLs (search/ was already present)
+- handle /book and /read urls as search query
+
 ## Version 1.4.2
 
 - Improved search feature

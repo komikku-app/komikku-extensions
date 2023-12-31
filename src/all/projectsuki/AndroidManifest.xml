@@ -2,9 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
-        <!-- The Activity that will handle intents with URLs pertaining to ProjectSuki -->
+        <!-- The Activities that will handle intents with URLs pertaining to ProjectSuki -->
+        <!-- this one handles projectsuki.com/search URLs -->
         <activity
-                android:name=".all.projectsuki.ProjectSukiSearchUrlActivity"
+                android:name=".all.projectsuki.activities.ProjectSukiSearchUrlActivity"
                 android:excludeFromRecents="true"
                 android:exported="true"
                 android:theme="@android:style/Theme.NoDisplay">
@@ -28,6 +29,42 @@
                 <!-- Difference between ".*" and "..*" -->
                 <!-- https://stackoverflow.com/a/43396490 -->
                 <data android:pathPattern="/search.*" />
+            </intent-filter>
+        </activity>
+
+        <activity
+                android:name=".all.projectsuki.activities.ProjectSukiBookUrlActivity"
+                android:excludeFromRecents="true"
+                android:exported="true"
+                android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="projectsuki.com" />
+                <data android:pathPattern="/book/.*" />
+            </intent-filter>
+        </activity>
+
+        <activity
+                android:name=".all.projectsuki.activities.ProjectSukiReadUrlActivity"
+                android:excludeFromRecents="true"
+                android:exported="true"
+                android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="projectsuki.com" />
+                <data android:pathPattern="/read/.*" />
             </intent-filter>
         </activity>
     </application>

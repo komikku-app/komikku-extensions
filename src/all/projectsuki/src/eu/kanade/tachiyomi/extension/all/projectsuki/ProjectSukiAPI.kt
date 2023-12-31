@@ -1,14 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.projectsuki
 
-import android.icu.text.BreakIterator
-import android.icu.text.Collator
-import android.icu.text.RuleBasedCollator
-import android.icu.text.StringSearch
-import android.os.Build
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -26,7 +20,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import java.text.StringCharacterIterator
 
 /**
  *  @see EXTENSION_INFO Found in ProjectSuki.kt
@@ -95,9 +88,7 @@ object ProjectSukiAPI {
     ) {
         init {
             if (first != "true" && first != "false") {
-                reportErrorToUser {
-                    "PagesRequestData, first was \"$first\""
-                }
+                reportErrorToUser { "PagesRequestData, first was \"$first\"" }
             }
         }
     }
@@ -136,9 +127,7 @@ object ProjectSukiAPI {
             ?.tryAs<JsonObject>()
             ?.get("src")
             ?.tryAs<JsonPrimitive>()
-            ?.content ?: reportErrorToUser {
-            "chapter pages aren't in the expected format!"
-        }
+            ?.content ?: reportErrorToUser { "chapter pages aren't in the expected format!" }
 
         // we can handle relative urls by specifying manually the location of the "document"
         val srcFragment: Element = Jsoup.parseBodyFragment(rawSrc, homepageUri.toASCIIString())
@@ -150,9 +139,7 @@ object ProjectSukiAPI {
             .filterValues { it.doesMatch } // make sure they are the urls we expect
 
         if (urls.isEmpty()) {
-            reportErrorToUser {
-                "chapter pages URLs aren't in the expected format!"
-            }
+            reportErrorToUser { "chapter pages URLs aren't in the expected format!" }
         }
 
         return urls.entries
@@ -197,18 +184,14 @@ object ProjectSukiAPI {
             .getOrNull()
             ?.tryAs<JsonObject>()
             ?.get("data")
-            ?.tryAs<JsonObject>() ?: reportErrorToUser {
-            "books data isn't in the expected format!"
-        }
+            ?.tryAs<JsonObject>() ?: reportErrorToUser { "books data isn't in the expected format!" }
 
         val refined: Map<BookID, BookTitle> = buildMap {
             data.forEach { (id: BookID, valueObj: JsonElement) ->
                 val title: BookTitle = valueObj.tryAs<JsonObject>()
                     ?.get("value")
                     ?.tryAs<JsonPrimitive>()
-                    ?.content ?: reportErrorToUser {
-                    "books data isn't in the expected format!"
-                }
+                    ?.content ?: reportErrorToUser { "books data isn't in the expected format!" }
 
                 this[id] = title
             }
@@ -226,128 +209,32 @@ private val alphaNumericRegex = """\p{Alnum}+""".toRegex(RegexOption.IGNORE_CASE
  * If Even a single "word" from [searchQuery] matches, then the manga will be included,
  * but sorting is done based on the amount of matches.
  */
-internal fun Map<BookID, BookTitle>.toMangasPage(searchQuery: String, useSimpleMode: Boolean): MangasPage {
-    data class Match(val bookID: BookID, val title: BookTitle, val count: Int) {
-        val bookUrl: HttpUrl = homepageUrl.newBuilder()
-            .addPathSegment("book")
-            .addPathSegment(bookID)
-            .build()
-    }
+internal fun Map<BookID, BookTitle>.simpleSearchMangasPage(searchQuery: String): MangasPage {
+    data class Match(val bookID: BookID, val title: BookTitle, val count: Int)
 
-    when {
-        useSimpleMode -> {
-            // simple search, possibly faster
-            val words: Set<String> = alphaNumericRegex.findAll(searchQuery).mapTo(HashSet()) { it.value }
+    val words: Set<String> = alphaNumericRegex.findAll(searchQuery).mapTo(HashSet()) { it.value }
 
-            val matches: Map<BookID, Match> = mapValues { (bookID, bookTitle) ->
-                val matchesCount: Int = words.sumOf { word ->
-                    var count = 0
-                    var idx = 0
+    val matches: Map<BookID, Match> = mapValues { (bookID, bookTitle) ->
+        val matchesCount: Int = words.sumOf { word ->
+            var count = 0
+            var idx = 0
 
-                    while (true) {
-                        val found = bookTitle.indexOf(word, idx, ignoreCase = true)
-                        if (found < 0) break
+            while (true) {
+                val found = bookTitle.indexOf(word, idx, ignoreCase = true)
+                if (found < 0) break
 
-                        idx = found + 1
-                        count++
-                    }
-
-                    count
-                }
-
-                Match(bookID, bookTitle, matchesCount)
-            }.filterValues { it.count > 0 }
-
-            return MangasPage(
-                mangas = matches.entries
-                    .sortedWith(compareBy({ -it.value.count }, { it.value.title }))
-                    .map { (bookID, match: Match) ->
-                        SManga.create().apply {
-                            title = match.title
-                            url = match.bookUrl.rawRelative ?: reportErrorToUser { "Could not relativize ${match.bookUrl}" }
-                            thumbnail_url = bookThumbnailUrl(bookID, "").toUri().toASCIIString()
-                        }
-                    },
-                hasNextPage = false,
-            )
-        }
-
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.N -> {
-            // use ICU, better
-
-            val searchWords: Set<String> = BreakIterator.getWordInstance().run {
-                text = StringCharacterIterator(searchQuery)
-
-                var left = first()
-                var right = next()
-
-                buildSet {
-                    while (right != BreakIterator.DONE) {
-                        if (ruleStatus != BreakIterator.WORD_NONE) {
-                            add(searchQuery.substring(left, right))
-                        }
-                        left = right
-                        right = next()
-                    }
-                }
+                idx = found + 1
+                count++
             }
 
-            val stringSearch = StringSearch(
-                /* pattern = */ "dummy",
-                /* target = */ StringCharacterIterator("dummy"),
-                /* collator = */
-                (Collator.getInstance() as RuleBasedCollator).apply {
-                    isCaseLevel = true
-                    strength = Collator.PRIMARY
-                    decomposition = Collator.CANONICAL_DECOMPOSITION
-                },
-            )
-
-            val matches: Map<BookID, Match> = mapValues { (bookID, bookTitle) ->
-                stringSearch.target = StringCharacterIterator(bookTitle)
-
-                val matchesCount: Int = searchWords.sumOf { word ->
-                    val search: StringSearch = stringSearch.apply {
-                        this.pattern = word
-                    }
-
-                    var count = 0
-                    var idx = search.first()
-                    while (idx != StringSearch.DONE) {
-                        count++
-                        idx = search.next()
-                    }
-
-                    count
-                }
-
-                Match(bookID, bookTitle, matchesCount)
-            }.filterValues { it.count > 0 }
-
-            return MangasPage(
-                mangas = matches.entries
-                    .sortedWith(compareBy({ -it.value.count }, { it.value.title }))
-                    .map { (bookID, match: Match) ->
-                        SManga.create().apply {
-                            title = match.title
-                            url = match.bookUrl.rawRelative ?: reportErrorToUser { "Could not relativize ${match.bookUrl}" }
-                            thumbnail_url = bookThumbnailUrl(bookID, "").toUri().toASCIIString()
-                        }
-                    },
-                hasNextPage = false,
-            )
+            count
         }
 
-        else -> error(
-            buildString {
-                append("Please enable ")
-                append(ProjectSukiFilters.SearchMode.SIMPLE)
-                append(" Search Mode: ")
-                append(ProjectSukiFilters.SearchMode.SMART)
-                append(" search requires Android API version >= 24, but ")
-                append(Build.VERSION.SDK_INT)
-                append(" was found!")
-            },
-        )
-    }
+        Match(bookID, bookTitle, matchesCount)
+    }.filterValues { it.count > 0 }
+
+    return matches.entries
+        .sortedWith(compareBy({ -it.value.count }, { it.value.title }))
+        .associate { (bookID, match) -> bookID to match.title }
+        .toMangasPage()
 }

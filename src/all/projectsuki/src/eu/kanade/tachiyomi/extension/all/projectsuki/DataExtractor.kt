@@ -9,9 +9,9 @@ import org.jsoup.select.Elements
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.EnumMap
 import java.util.Locale
 import java.util.TimeZone
+import kotlin.properties.PropertyDelegateProvider
 
 /**
  *  @see EXTENSION_INFO Found in ProjectSuki.kt
@@ -22,6 +22,34 @@ private inline val INFO: Nothing get() = error("INFO")
 internal typealias BookID = String
 internal typealias ChapterID = String
 internal typealias ScanGroup = String
+
+/**
+ * Creates a [delegate provider](https://kotlinlang.org/docs/delegated-properties.html#providing-a-delegate)
+ * that will return a [Lazy] where the [initializer] is wrapped by a try/catch block that will catch all exceptions
+ * that aren't a [ProjectSukiException] and constructing a [reportErrorToUser] with a locationHint.
+ */
+internal fun <R> unexpectedErrorCatchingLazy(mode: LazyThreadSafetyMode = LazyThreadSafetyMode.SYNCHRONIZED, initializer: () -> R): PropertyDelegateProvider<Any?, Lazy<R>> {
+    return PropertyDelegateProvider { thisRef, property ->
+        lazy(mode) {
+            try {
+                initializer()
+            } catch (exception: Exception) {
+                if (exception !is ProjectSukiException) {
+                    val locationHint = buildString {
+                        when (thisRef) {
+                            null -> append("<root>")
+                            else -> append(thisRef::class.simpleName)
+                        }
+                        append('.')
+                        append(property.name)
+                    }
+                    reportErrorToUser(locationHint) { """Unexpected ${exception::class.simpleName}: ${exception.message ?: "<no message>"}""" }
+                }
+                throw exception
+            }
+        }
+    }
+}
 
 /**
  * Gets the thumbnail image for a particular [bookID], [extension] if needed and [size].
@@ -45,14 +73,14 @@ internal fun bookThumbnailUrl(bookID: BookID, extension: String, size: UInt? = n
 }
 
 /**
- * Finds the closest common parent between 2 or more [elements].
+ * Finds the nearest common parent between 2 or more [elements] (will return null if [elements].size < 2).
  *
  * If all [elements] are the same element, it will return the element itself.
  *
- * Returns null if the [elements] are not in the same [Document].
+ * Returns null if the [elements] are not in the same hierarchy (no common parent, e.g. not in the same [Document]).
  */
-internal fun commonParent(vararg elements: Element): Element? {
-    require(elements.size > 1) { "elements must have more than 1 element" }
+internal fun nearestCommonParent(elements: Collection<Element>): Element? {
+    if (elements.size < 2) return null
 
     val parents: List<Iterator<Element>> = elements.map { it.parents().reversed().iterator() }
     var lastCommon: Element? = null
@@ -81,14 +109,10 @@ internal fun commonParent(vararg elements: Element): Element? {
 internal data class SwitchingPoint(val left: Int, val right: Int, val leftState: Boolean, val rightState: Boolean) {
     init {
         if (left + 1 != right) {
-            reportErrorToUser {
-                "invalid SwitchingPoint: ($left, $right)"
-            }
+            reportErrorToUser { "invalid SwitchingPoint: ($left, $right)" }
         }
         if (leftState == rightState) {
-            reportErrorToUser {
-                "invalid SwitchingPoint: ($leftState, $rightState)"
-            }
+            reportErrorToUser { "invalid SwitchingPoint: ($leftState, $rightState)" }
         }
     }
 }
@@ -133,7 +157,7 @@ class DataExtractor(val extractionElement: Element) {
 
     private val url: HttpUrl = extractionElement.ownerDocument()?.location()?.toHttpUrlOrNull() ?: reportErrorToUser {
         buildString {
-            append("DataExtractor class requires a \"from\" element ")
+            append("DataExtractor class requires an \"extractionElement\" element ")
             append("that possesses an owner document with a valid absolute location(), but ")
             append(extractionElement.ownerDocument()?.location())
             append(" was found!")
@@ -151,7 +175,7 @@ class DataExtractor(val extractionElement: Element) {
      * JSoup's [Element.attr] methods supports the special `abs:<attribute>` syntax when working with relative URLs.
      * It is simply a shortcut to [Element.absUrl], which uses [Document.baseUri].
      */
-    val allHrefAnchors: Map<Element, HttpUrl> by lazy {
+    val allHrefAnchors: Map<Element, HttpUrl> by unexpectedErrorCatchingLazy {
         buildMap {
             extractionElement.select("a[href]").forEach { a ->
                 val href = a.attr("abs:href")
@@ -168,7 +192,7 @@ class DataExtractor(val extractionElement: Element) {
      *
      * Meaning this property contains only elements that redirect to a Project Suki URL.
      */
-    val psHrefAnchors: Map<Element, HttpUrl> by lazy {
+    val psHrefAnchors: Map<Element, HttpUrl> by unexpectedErrorCatchingLazy {
         allHrefAnchors.filterValues { url ->
             url.host.endsWith(homepageUrl.host)
         }
@@ -195,7 +219,7 @@ class DataExtractor(val extractionElement: Element) {
      * This has the disadvantage of making distinguishing between the different elements in a single page a nightmare,
      * but luckly we don't need to do that for the purposes of a Tachiyomi extension.
      */
-    val books: Set<PSBook> by lazy {
+    val books: Set<PSBook> by unexpectedErrorCatchingLazy {
         buildSet {
             data class BookUrlContainerElement(val container: Element, val href: HttpUrl, val matchResult: PathMatchResult)
 
@@ -220,7 +244,7 @@ class DataExtractor(val extractionElement: Element) {
                         .filter { it.parents().none { p -> p.tag().normalName() == "small" } }
                         .map { it.ownText() }
                         .filter { !it.equals("show more", ignoreCase = true) }
-                        .firstOrNull() ?: reportErrorToUser { "Could not determine title for $bookID" }
+                        .firstOrNull() ?: reportErrorToUser("DataExtractor.books") { "Could not determine title for $bookID" }
 
                     add(
                         PSBook(
@@ -237,10 +261,10 @@ class DataExtractor(val extractionElement: Element) {
         }
     }
 
-    /** Utility class that extends [PSBook], by providing a [detailsTable], [alertData] and [description]. */
+    /** Utility class that extends [PSBook], by providing a [details], [alertData] and [description]. */
     data class PSBookDetails(
         val book: PSBook,
-        val detailsTable: EnumMap<BookDetail, String>,
+        val details: Map<BookDetail, BookDetail.ProcessedData>,
         val alertData: List<String>,
         val description: String,
     ) {
@@ -254,37 +278,122 @@ class DataExtractor(val extractionElement: Element) {
      * The process for extracting the details is described in the KDoc for [bookDetails].
      */
     @Suppress("RegExpUnnecessaryNonCapturingGroup")
-    enum class BookDetail(val display: String, val regex: Regex, val elementProcessor: (Element) -> String = { it.text() }) {
-        ALT_TITLE("Alt titles:", """(?:alternative|alt\.?) titles?:?""".toRegex(RegexOption.IGNORE_CASE)),
-        AUTHOR("Authors:", """authors?:?""".toRegex(RegexOption.IGNORE_CASE)),
-        ARTIST("Artists:", """artists?:?""".toRegex(RegexOption.IGNORE_CASE)),
-        STATUS("Status:", """status:?""".toRegex(RegexOption.IGNORE_CASE)),
-        ORIGIN("Origin:", """origin:?""".toRegex(RegexOption.IGNORE_CASE)),
-        RELEASE_YEAR("Release year:", """release(?: year):?""".toRegex(RegexOption.IGNORE_CASE)),
-        USER_RATING(
-            "User rating:",
-            """user ratings?:?""".toRegex(RegexOption.IGNORE_CASE),
-            elementProcessor = { ratings ->
+    sealed class BookDetail {
+
+        open fun tryFind(extractor: DataExtractor): Collection<Element> = emptyList()
+
+        abstract val regex: Regex
+        fun process(element: Element): ProcessedData = ProcessedData(label(element), detailsData(element))
+        abstract fun label(element: Element?): String
+        abstract fun detailsData(element: Element): String
+
+        data class ProcessedData(val label: String, val detailData: String)
+
+        object AltTitle : BookDetail() {
+            override val regex: Regex = """(?:alternative|alt\.?) titles?:?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "Alt titles:"
+            override fun detailsData(element: Element): String = element.text()
+        }
+
+        object Author : BookDetail() {
+            override fun tryFind(extractor: DataExtractor): Collection<Element> = extractor.psHrefAnchors.filter { (_, url) ->
+                url.queryParameterNames.contains("author")
+            }.keys
+
+            override val regex: Regex = """authors?:?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "Authors:"
+            override fun detailsData(element: Element): String = element.text()
+        }
+
+        object Artist : BookDetail() {
+            override fun tryFind(extractor: DataExtractor): Collection<Element> = extractor.psHrefAnchors.filter { (_, url) ->
+                url.queryParameterNames.contains("artist")
+            }.keys
+
+            override val regex: Regex = """artists?:?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "Artists:"
+            override fun detailsData(element: Element): String = element.text()
+        }
+
+        object Status : BookDetail() {
+            override fun tryFind(extractor: DataExtractor): Collection<Element> = extractor.psHrefAnchors.filter { (_, url) ->
+                url.queryParameterNames.contains("status")
+            }.keys
+
+            override val regex: Regex = """status:?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "Status:"
+            override fun detailsData(element: Element): String = element.text()
+        }
+
+        object Origin : BookDetail() {
+            override fun tryFind(extractor: DataExtractor): Collection<Element> = extractor.psHrefAnchors.filter { (_, url) ->
+                url.queryParameterNames.contains("origin")
+            }.keys
+
+            override val regex: Regex = """origin:?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "Origin:"
+            override fun detailsData(element: Element): String = element.text()
+
+            internal val koreaRegex: Regex = """kr|korea\s*(?:\(south\))?""".toRegex(RegexOption.IGNORE_CASE)
+            internal val chinaRegex: Regex = """kr|korea\s*(?:\(south\))?""".toRegex(RegexOption.IGNORE_CASE)
+            internal val japanRegex: Regex = """kr|korea\s*(?:\(south\))?""".toRegex(RegexOption.IGNORE_CASE)
+        }
+
+        object ReleaseYear : BookDetail() {
+            override val regex: Regex = """release(?: year):?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "Release year:"
+            override fun detailsData(element: Element): String = element.text()
+        }
+
+        object UserRating : BookDetail() {
+            override fun tryFind(extractor: DataExtractor): Collection<Element> = extractor.extractionElement.select("#ratings")
+
+            override val regex: Regex = """user ratings?:?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "User rating:"
+            override fun detailsData(element: Element): String {
                 val rates = when {
-                    ratings.id() != "ratings" -> 0
-                    else -> ratings.children().count { it.hasClass("text-warning") }
+                    element.id() != "ratings" -> 0
+                    else -> element.children().count { it.hasClass("text-warning") }
                 }
 
-                when (rates) {
+                return when (rates) {
                     in 1..5 -> "$rates/5"
                     else -> "?/5"
                 }
-            },
-        ),
-        VIEWS("Views:", """views?:?""".toRegex(RegexOption.IGNORE_CASE)),
-        OFFICIAL("Official:", """official:?""".toRegex(RegexOption.IGNORE_CASE)),
-        PURCHASE("Purchase:", """purchase:?""".toRegex(RegexOption.IGNORE_CASE)),
-        GENRE("Genres:", """genre(?:\(s\))?:?""".toRegex(RegexOption.IGNORE_CASE)),
-        ;
+            }
+        }
+
+        object Views : BookDetail() {
+            override val regex: Regex = """views?:?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "Views:"
+            override fun detailsData(element: Element): String = element.text()
+        }
+
+        object Official : BookDetail() {
+            override val regex: Regex = """official:?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "Official:"
+            override fun detailsData(element: Element): String = element.text()
+        }
+
+        object Purchase : BookDetail() {
+            override val regex: Regex = """purchase:?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "Purchase:"
+            override fun detailsData(element: Element): String = element.text()
+        }
+
+        object Genre : BookDetail() {
+            override fun tryFind(extractor: DataExtractor): Collection<Element> = extractor.psHrefAnchors.filter { (_, url) ->
+                url.matchAgainst(genreSearchUrlPattern).doesMatch
+            }.keys
+
+            override val regex: Regex = """genre(?:\(s\))?:?""".toRegex(RegexOption.IGNORE_CASE)
+            override fun label(element: Element?) = "Genres:"
+            override fun detailsData(element: Element): String = element.text()
+        }
 
         companion object {
-            private val values = values().toList()
-            fun from(type: String): BookDetail? = values.firstOrNull { it.regex.matches(type) }
+            val all: List<BookDetail> = listOf(AltTitle, Author, Artist, Status, Origin, ReleaseYear, UserRating, Views, Official, Purchase, Genre)
+            fun from(type: String): BookDetail? = all.firstOrNull { it.regex.matches(type) }
         }
     }
 
@@ -296,15 +405,15 @@ class DataExtractor(val extractionElement: Element) {
      * found in the book main page, using generalized heuristics:
      *
      * First the algorithm looks for known entries in the "table" by looking for
-     * the [Status][BookDetail.STATUS] and [Origin][BookDetail.ORIGIN] fields.
+     * the [Status][BookDetail.Status] and [Origin][BookDetail.Origin] fields.
      * This is possible because these elements redirect to the [search](https://projectsuki.com/search)
      * page with "status" and "origin" queries.
      *
-     * The [commonParent] between the two elements is found and the table is subsequently analyzed.
-     * If this method fails, at least the [Author][BookDetail.AUTHOR], [Artist][BookDetail.ARTIST] and [Genre][BookDetail.GENRE]
+     * The [nearestCommonParent] between the two elements is found and the table is subsequently analyzed.
+     * If this method fails, at least the [Author][BookDetail.Author], [Artist][BookDetail.Artist] and [Genre][BookDetail.Genre]
      * details are found via URLs.
      *
-     * An extra [Genre][BookDetail.GENRE] is added when possible:
+     * An extra [Genre][BookDetail.Genre] is added when possible:
      *  - Origin: "kr" -> Genre: "Manhwa"
      *  - Origin: "cn" -> Genre: "Manhua"
      *  - Origin: "jp" -> Genre: "Manga"
@@ -313,36 +422,24 @@ class DataExtractor(val extractionElement: Element) {
      *
      * The description is expanded with all this information too.
      */
-    val bookDetails: PSBookDetails by lazy {
+    val bookDetails: PSBookDetails by unexpectedErrorCatchingLazy {
         val match = url.matchAgainst(bookUrlPattern)
         if (!match.doesMatch) reportErrorToUser { "cannot extract book details: $url" }
         val bookID = match["bookid"]!!.value
 
-        val authors: Map<Element, HttpUrl> = psHrefAnchors.filter { (_, url) ->
-            url.queryParameterNames.contains("author")
+        fun tryFindDetailsTable(): Element? {
+            val found: Map<BookDetail, Collection<Element>> = BookDetail.all
+                .associateWith { it.tryFind(extractor = this) }
+                .filterValues { it.isNotEmpty() }
+
+            return nearestCommonParent(found.values.flatMapTo(LinkedHashSet()) { it })
         }
 
-        val artists: Map<Element, HttpUrl> = psHrefAnchors.filter { (_, url) ->
-            url.queryParameterNames.contains("artist")
-        }
+        val detailsTable: Element? = tryFindDetailsTable()
+        val rows: List<Element> = detailsTable?.children()?.toList() ?: emptyList()
+        val details: MutableMap<BookDetail, BookDetail.ProcessedData> = LinkedHashMap()
 
-        val status: Map.Entry<Element, HttpUrl> = psHrefAnchors.entries.single { (_, url) ->
-            url.queryParameterNames.contains("status")
-        }
-
-        val origin: Map.Entry<Element, HttpUrl> = psHrefAnchors.entries.single { (_, url) ->
-            url.queryParameterNames.contains("origin")
-        }
-
-        val genres: Map<Element, HttpUrl> = psHrefAnchors.filter { (_, url) ->
-            url.matchAgainst(genreSearchUrlPattern).doesMatch
-        }
-
-        val details = EnumMap<BookDetail, String>(BookDetail::class.java)
-        val tableParent: Element? = commonParent(status.key, origin.key)
-        val rows: List<Element>? = tableParent?.children()?.toList()
-
-        for (row in (rows ?: emptyList())) {
+        for (row in rows) {
             val cols = row.children()
             val typeElement = cols.getOrNull(0) ?: continue
             val valueElement = cols.getOrNull(1) ?: continue
@@ -350,30 +447,37 @@ class DataExtractor(val extractionElement: Element) {
             val typeText = typeElement.text()
             val detail = BookDetail.from(typeText) ?: continue
 
-            details[detail] = detail.elementProcessor(valueElement)
+            details[detail] = detail.process(valueElement)
         }
 
-        details.getOrPut(BookDetail.AUTHOR) { authors.keys.joinToString(", ") { it.text() } }
-        details.getOrPut(BookDetail.ARTIST) { artists.keys.joinToString(", ") { it.text() } }
-        details.getOrPut(BookDetail.STATUS) { status.key.text() }
-        details.getOrPut(BookDetail.ORIGIN) { origin.key.text() }
+        run {
+            val originGenre: String? = details[BookDetail.Origin]?.detailData?.let { originData ->
+                when {
+                    originData.matches(BookDetail.Origin.koreaRegex) -> "Manhwa"
+                    originData.matches(BookDetail.Origin.chinaRegex) -> "Manhua"
+                    originData.matches(BookDetail.Origin.japanRegex) -> "Manga"
+                    else -> null
+                }
+            }
 
-        details.getOrPut(BookDetail.GENRE) { genres.keys.joinToString(", ") { it.text() } }
-
-        when (origin.value.queryParameter("origin")) {
-            "kr" -> "Manhwa"
-            "cn" -> "Manhua"
-            "jp" -> "Manga"
-            else -> null
-        }?.let { originGenre ->
-            details[BookDetail.GENRE] = """${details[BookDetail.GENRE]}, $originGenre"""
+            if (originGenre != null) {
+                details[BookDetail.Genre] = when (details.containsKey(BookDetail.Genre)) {
+                    true -> {
+                        val (label, data) = details[BookDetail.Genre]!!
+                        BookDetail.ProcessedData(label, if (data.isBlank()) originGenre else """$data, $originGenre""")
+                    }
+                    false -> {
+                        BookDetail.ProcessedData(BookDetail.Genre.label(null), originGenre)
+                    }
+                }
+            }
         }
 
         val title: Element? = extractionElement.selectFirst("h2[itemprop=title]") ?: extractionElement.selectFirst("h2") ?: run {
             // the common table is inside of a "row" wrapper that is the neighbour of the h2 containing the title
             // if we sort of generalize this, the title should be the first
             // text-node-bearing child of the table's grandparent
-            tableParent?.parent()?.parent()?.children()?.firstOrNull { it.textNodes().isNotEmpty() }
+            detailsTable?.parent()?.parent()?.children()?.firstOrNull { it.textNodes().isNotEmpty() }
         }
 
         val alerts: List<String> = extractionElement.select(".alert, .alert-info")
@@ -415,11 +519,11 @@ class DataExtractor(val extractionElement: Element) {
         PSBookDetails(
             book = PSBook(
                 bookThumbnailUrl(bookID, extension),
-                title?.text() ?: reportErrorToUser { "could not determine book title from details for $bookID" },
+                title?.text() ?: reportErrorToUser("DataExtractor.bookDetails") { "could not determine title for $bookID" },
                 url,
                 bookID,
             ),
-            detailsTable = details,
+            details = details,
             alertData = alerts,
             description = description,
         )
@@ -463,8 +567,8 @@ class DataExtractor(val extractionElement: Element) {
         }
 
         companion object {
-            val all: Set<ChaptersTableColumnDataType> by lazy { setOf(Chapter, Group, Added, Language, Views) }
-            val required: Set<ChaptersTableColumnDataType> by lazy { all.filterTo(LinkedHashSet()) { it.required } }
+            val all: Set<ChaptersTableColumnDataType> by unexpectedErrorCatchingLazy { setOf(Chapter, Group, Added, Language, Views) }
+            val required: Set<ChaptersTableColumnDataType> by unexpectedErrorCatchingLazy { all.filterTo(LinkedHashSet()) { it.required } }
 
             /**
              * Takes the list of [headers] and returns a map that
@@ -517,7 +621,7 @@ class DataExtractor(val extractionElement: Element) {
      * Then the `<tbody>` rows (`<tr>`) are one by one processed to find the ones that match the column (`<td>`)
      * size and data type positions that we care about.
      */
-    val bookChapters: Map<ScanGroup, List<BookChapter>> by lazy {
+    val bookChapters: Map<ScanGroup, List<BookChapter>> by unexpectedErrorCatchingLazy {
         data class RawTable(val self: Element, val thead: Element, val tbody: Element)
         data class AnalyzedTable(val raw: RawTable, val columnDataTypes: Map<ChaptersTableColumnDataType, Int>, val dataRows: List<Elements>)
 
@@ -617,7 +721,7 @@ class DataExtractor(val extractionElement: Element) {
         override fun compareTo(other: ChapterNumber): Int = comparator.compare(this, other)
 
         companion object {
-            val comparator: Comparator<ChapterNumber> by lazy { compareBy({ it.main }, { it.sub }) }
+            val comparator: Comparator<ChapterNumber> by unexpectedErrorCatchingLazy { compareBy({ it.main }, { it.sub }) }
             val chapterNumberRegex: Regex = """(?:chapter|ch\.?)\s*(\d+)(?:\s*[.,-]\s*(\d+)?)?""".toRegex(RegexOption.IGNORE_CASE)
         }
     }

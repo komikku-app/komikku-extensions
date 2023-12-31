@@ -1,6 +1,11 @@
 package eu.kanade.tachiyomi.extension.all.projectsuki
 
+import android.os.Build
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.extension.all.projectsuki.activities.INTENT_BOOK_QUERY_PREFIX
+import eu.kanade.tachiyomi.extension.all.projectsuki.activities.INTENT_READ_QUERY_PREFIX
+import eu.kanade.tachiyomi.extension.all.projectsuki.activities.INTENT_SEARCH_QUERY_PREFIX
+import eu.kanade.tachiyomi.extension.all.projectsuki.activities.ProjectSukiSearchUrlActivity
 import eu.kanade.tachiyomi.lib.randomua.getPrefCustomUA
 import eu.kanade.tachiyomi.lib.randomua.getPrefUAType
 import eu.kanade.tachiyomi.lib.randomua.setRandomUserAgent
@@ -143,9 +148,25 @@ internal val HttpUrl.rawRelative: String?
 internal val reportPrefix: String
     get() = """Error! Report on GitHub (tachiyomiorg/tachiyomi-extensions)"""
 
-/** Just throw an [error], which will get caught by Tachiyomi: the message will be exposed as a [toast][android.widget.Toast]. */
-internal inline fun reportErrorToUser(message: () -> String): Nothing {
-    error("""$reportPrefix: ${message()}""")
+/**
+ * Simple named exception to differentiate it with all other "unexpected" exceptions.
+ * @see unexpectedErrorCatchingLazy
+ */
+internal class ProjectSukiException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+/** Throws a [ProjectSukiException], which will get caught by Tachiyomi: the message will be exposed as a [toast][android.widget.Toast]. */
+internal inline fun reportErrorToUser(locationHint: String? = null, message: () -> String): Nothing {
+    throw ProjectSukiException(
+        buildString {
+            append("[")
+            append(reportPrefix)
+            append("""]: """)
+            append(message())
+            if (!locationHint.isNullOrBlank()) {
+                append(" @$locationHint")
+            }
+        },
+    )
 }
 
 /** Used when chapters don't have a [Language][DataExtractor.ChaptersTableColumnDataType.Language] column (if that ever happens). */
@@ -336,31 +357,94 @@ class ProjectSuki : HttpSource(), ConfigurableSource {
             ?.state
             ?.let { ProjectSukiFilters.SearchMode[it] } ?: ProjectSukiFilters.SearchMode.SMART
 
+        fun BookID.toMangasPageObservable(): Observable<MangasPage> {
+            val rawSManga = SManga.create().apply {
+                url = bookIDToURL().rawRelative ?: reportErrorToUser { "Could not create relative url for bookID: $this" }
+            }
+
+            return client.newCall(mangaDetailsRequest(rawSManga))
+                .asObservableSuccess()
+                .map { response -> mangaDetailsParse(response) }
+                .map { manga -> MangasPage(listOf(manga), hasNextPage = false) }
+        }
+
+        val queryAsURL: HttpUrl? by unexpectedErrorCatchingLazy { query.toHttpUrlOrNull() ?: """${homepageUri}$query""".toHttpUrlOrNull() }
+        val bookUrlMatch by unexpectedErrorCatchingLazy { queryAsURL?.matchAgainst(bookUrlPattern) }
+        val readUrlMatch by unexpectedErrorCatchingLazy { queryAsURL?.matchAgainst(chapterUrlPattern) }
+
         return when {
-            // sent by the url activity, might also be because the user entered a query via $ps:
+            // sent by the url activity, might also be because the user entered a query via $ps-search:
             // but that won't really happen unless the user wants to do that
-            query.startsWith(INTENT_QUERY_PREFIX) -> {
-                val urlQuery = query.removePrefix(INTENT_QUERY_PREFIX)
+            query.startsWith(INTENT_SEARCH_QUERY_PREFIX) -> {
+                val urlQuery = query.removePrefix(INTENT_SEARCH_QUERY_PREFIX)
                 if (urlQuery.isBlank()) error("Empty search query!")
 
                 val rawUrl = """${homepageUri.toASCIIString()}/search?$urlQuery"""
-                val url = rawUrl.toHttpUrlOrNull() ?: reportErrorToUser {
-                    "Invalid search url: $rawUrl"
-                }
+                val url = rawUrl.toHttpUrlOrNull() ?: reportErrorToUser { "Invalid search url: $rawUrl" }
 
                 client.newCall(GET(url, headers))
                     .asObservableSuccess()
-                    .map { response -> searchMangaParse(response, false) }
+                    .map { response -> searchMangaParse(response, overrideHasNextPage = false) }
+            }
+
+            // sent by the book activity
+            query.startsWith(INTENT_BOOK_QUERY_PREFIX) -> {
+                val bookid = query.removePrefix(INTENT_BOOK_QUERY_PREFIX)
+                if (bookid.isBlank()) error("Empty bookid!")
+
+                bookid.toMangasPageObservable()
+            }
+
+            // sent by the read activity
+            query.startsWith(INTENT_READ_QUERY_PREFIX) -> {
+                val bookid = query.removePrefix(INTENT_READ_QUERY_PREFIX)
+                if (bookid.isBlank()) error("Empty bookid!")
+
+                bookid.toMangasPageObservable()
+            }
+
+            bookUrlMatch?.doesMatch == true -> {
+                val bookid = bookUrlMatch!!["bookid"]!!.value
+                if (bookid.isBlank()) error("Empty bookid!")
+
+                bookid.toMangasPageObservable()
+            }
+
+            readUrlMatch?.doesMatch == true -> {
+                val bookid = readUrlMatch!!["bookid"]!!.value
+                if (bookid.isBlank()) error("Empty bookid!")
+
+                bookid.toMangasPageObservable()
             }
 
             // use result from https://projectsuki.com/api/book/search
-            searchMode == ProjectSukiFilters.SearchMode.SMART || searchMode == ProjectSukiFilters.SearchMode.SIMPLE -> {
-                val simpleMode = searchMode == ProjectSukiFilters.SearchMode.SIMPLE
+            searchMode == ProjectSukiFilters.SearchMode.SMART -> {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                    error(
+                        buildString {
+                            append("Please enable ")
+                            append(ProjectSukiFilters.SearchMode.SIMPLE)
+                            append(" Search Mode: ")
+                            append(ProjectSukiFilters.SearchMode.SMART)
+                            append(" mode requires Android API version >= 24, but ")
+                            append(Build.VERSION.SDK_INT)
+                            append(" was found!")
+                        },
+                    )
+                }
 
                 client.newCall(ProjectSukiAPI.bookSearchRequest(json, headers))
                     .asObservableSuccess()
                     .map { response -> ProjectSukiAPI.parseBookSearchResponse(json, response) }
-                    .map { data -> data.toMangasPage(query, simpleMode) }
+                    .map { data -> SmartBookSearchHandler(query, data).mangasPage }
+            }
+
+            // use result from https://projectsuki.com/api/book/search
+            searchMode == ProjectSukiFilters.SearchMode.SIMPLE -> {
+                client.newCall(ProjectSukiAPI.bookSearchRequest(json, headers))
+                    .asObservableSuccess()
+                    .map { response -> ProjectSukiAPI.parseBookSearchResponse(json, response) }
+                    .map { data -> data.simpleSearchMangasPage(query) }
             }
 
             // use https://projectsuki.com/search
@@ -449,11 +533,11 @@ class ProjectSuki : HttpSource(), ConfigurableSource {
             title = data.book.rawTitle
             thumbnail_url = data.book.thumbnail.toUri().toASCIIString()
 
-            author = data.detailsTable[DataExtractor.BookDetail.AUTHOR]
-            artist = data.detailsTable[DataExtractor.BookDetail.ARTIST]
-            status = when (data.detailsTable[DataExtractor.BookDetail.STATUS]?.trim()?.lowercase(Locale.US)) {
+            author = data.details[DataExtractor.BookDetail.Author]?.detailData
+            artist = data.details[DataExtractor.BookDetail.Artist]?.detailData
+            status = when (data.details[DataExtractor.BookDetail.Status]?.detailData?.trim()?.lowercase(Locale.US)) {
                 "ongoing" -> SManga.ONGOING
-                "completed" -> SManga.PUBLISHING_FINISHED
+                "completed" -> SManga.COMPLETED
                 "hiatus" -> SManga.ON_HIATUS
                 "cancelled" -> SManga.CANCELLED
                 else -> SManga.UNKNOWN
@@ -461,7 +545,7 @@ class ProjectSuki : HttpSource(), ConfigurableSource {
 
             description = buildString {
                 if (data.alertData.isNotEmpty()) {
-                    appendLine("Alerts have been found, refreshing the manga later might help in removing them.")
+                    appendLine("Alerts have been found, refreshing the book/manga later might help in removing them.")
                     appendLine()
 
                     data.alertData.forEach {
@@ -469,14 +553,20 @@ class ProjectSuki : HttpSource(), ConfigurableSource {
                         appendLine()
                     }
 
+                    appendLine(DESCRIPTION_DIVIDER)
+                    appendLine()
+
                     appendLine()
                 }
 
                 appendLine(data.description)
                 appendLine()
 
-                data.detailsTable.forEach { (detail, value) ->
-                    append(detail.display)
+                appendLine(DESCRIPTION_DIVIDER)
+                appendLine()
+
+                data.details.values.forEach { (label, value) ->
+                    append(label)
                     append("  ")
                     append(value.trim())
 
@@ -485,11 +575,11 @@ class ProjectSuki : HttpSource(), ConfigurableSource {
             }
 
             update_strategy = when (status) {
-                SManga.CANCELLED, SManga.PUBLISHING_FINISHED -> UpdateStrategy.ONLY_FETCH_ONCE
+                SManga.CANCELLED, SManga.COMPLETED, SManga.PUBLISHING_FINISHED -> UpdateStrategy.ONLY_FETCH_ONCE
                 else -> UpdateStrategy.ALWAYS_UPDATE
             }
 
-            genre = data.detailsTable[DataExtractor.BookDetail.GENRE]!!
+            genre = data.details[DataExtractor.BookDetail.Genre]!!.detailData
         }
     }
 
@@ -563,9 +653,7 @@ class ProjectSuki : HttpSource(), ConfigurableSource {
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
         val pathMatch: PathMatchResult = """${homepageUri.toASCIIString()}/${chapter.url}""".toHttpUrl().matchAgainst(chapterUrlPattern)
         if (!pathMatch.doesMatch) {
-            reportErrorToUser {
-                "chapter url ${chapter.url} does not match expected pattern"
-            }
+            reportErrorToUser { "chapter url ${chapter.url} does not match expected pattern" }
         }
 
         return client.newCall(ProjectSukiAPI.chapterPagesRequest(json, headers, pathMatch["bookid"]!!.value, pathMatch["chapterid"]!!.value))
@@ -584,8 +672,12 @@ class ProjectSuki : HttpSource(), ConfigurableSource {
     /**
      * Not used in this extension, as we override [fetchPageList] to modify the default behaviour.
      */
-    override fun pageListParse(response: Response): List<Page> = reportErrorToUser {
+    override fun pageListParse(response: Response): List<Page> = reportErrorToUser("ProjectSuki.pageListParse") {
         // give a hint on who called this method
-        "invalid ${Thread.currentThread().stackTrace.take(3)}"
+        "invalid ${Thread.currentThread().stackTrace.asSequence().drop(1).take(3).toList()}"
+    }
+
+    companion object {
+        private const val DESCRIPTION_DIVIDER: String = "/=/-/=/-/=/-/=/-/=/-/=/-/=/-/=/"
     }
 }
