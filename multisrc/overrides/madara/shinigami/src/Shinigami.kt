@@ -7,7 +7,6 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 import org.jsoup.nodes.Element
 import java.util.concurrent.TimeUnit
-import kotlin.random.Random
 
 class Shinigami : Madara("Shinigami", "https://shinigami.moe", "id") {
     // moved from Reaper Scans (id) to Shinigami (id)
@@ -26,18 +25,6 @@ class Shinigami : Madara("Shinigami", "https://shinigami.moe", "id") {
         .add("Sec-Fetch-Mode", "navigate")
         .add("Sec-Fetch-Site", "same-origin")
         .add("Upgrade-Insecure-Requests", "1")
-        .add("X-Requested-With", randomString)
-
-    private fun generateRandomString(length: Int): String {
-        val charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.abcdefghijklmnopqrstuvwxyz.0123456789"
-        return (1..length)
-            .map { charset.random() }
-            .joinToString("")
-    }
-
-    private val randomLength = Random.Default.nextInt(13, 21)
-
-    private val randomString = generateRandomString(randomLength)
 
     override val mangaSubString = "semua-series"
 
