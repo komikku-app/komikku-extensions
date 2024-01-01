@@ -17,7 +17,11 @@ If you prefer to directly download the APK files, they are available via https:/
 
 # Requests
 
-Source requests here are meant as up-for-grabs for any developer, thus it's impossible to provide a time estimation for any of them. Furthermore, some sites are impossible to do, usually because of various technical reasons.
+To request a new source or bug fix, [create an issue](https://github.com/tachiyomiorg/tachiyomi-extensions/issues/new/choose).
+
+Not that requesting something does not imply that something will be added or fixed in a timely fashion or at all since the work is volunteer-based. Furthermore, some sources may be impossible to do or prohibitively difficult to maintain.
+
+If you would like to see a request fulfilled and have the necessary skills to do so, consider contributing! Issues are up-for-grabs for any developer if there is no assigned user already.
 
 # Contributing
 
