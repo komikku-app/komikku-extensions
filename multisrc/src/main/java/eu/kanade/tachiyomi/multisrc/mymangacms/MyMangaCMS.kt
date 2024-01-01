@@ -29,6 +29,19 @@ abstract class MyMangaCMS(
     override val lang: String,
 ) : ParsedHttpSource() {
 
+    protected open val parseAuthorString = "Tác giả"
+    protected open val parseAlternativeNameString = "Tên khác"
+    protected open val parseAlternative2ndNameString = "Tên gốc"
+    protected open val parseStatusString = "Tình trạng"
+    protected open val parseStatusOngoingStringLowerCase = "đang tiến hành"
+    protected open val parseStatusOnHoldStringLowerCase = "tạm ngưng"
+    protected open val parseStatusCompletedStringLowerCase = "đã hoàn thành"
+
+    /**
+     * List of words to be removed when parsing alternative names
+     */
+    protected open val removeGenericWords = listOf("manhwa", "engsub")
+
     override val supportsLatest = true
 
     override val client = network.cloudflareClient.newBuilder().apply {
@@ -184,20 +197,23 @@ abstract class MyMangaCMS(
         )
         title = document.select(".series-name").first()!!.text().trim()
 
-        var alternativeNames: String? = null
+        var alternativeNames: String = ""
         document.select(".info-item").forEach {
             val value = it.select(".info-value")
             when (it.select(".info-name").text().trim()) {
-                "Tên khác:" -> alternativeNames = value.joinToString(", ") { name ->
-                    name.text().trim()
+                "$parseAlternativeNameString:" -> alternativeNames += value.joinToString(", ") { name ->
+                    removeGenericWords(name.text()).trim() + ", "
                 }
-                "Tác giả:" -> author = value.joinToString(", ") { auth ->
+                "$parseAlternative2ndNameString:" -> alternativeNames += value.joinToString(", ") { name ->
+                    removeGenericWords(name.text()).trim() + ", "
+                }
+                "$parseAuthorString:" -> author = value.joinToString(", ") { auth ->
                     auth.text().trim()
                 }
-                "Tình trạng:" -> status = when (value.first()!!.text().lowercase().trim()) {
-                    "đang tiến hành" -> SManga.ONGOING
-                    "tạm ngưng" -> SManga.ON_HIATUS
-                    "đã hoàn thành" -> SManga.COMPLETED
+                "$parseStatusString:" -> status = when (value.first()!!.text().lowercase().trim()) {
+                    parseStatusOngoingStringLowerCase -> SManga.ONGOING
+                    parseStatusOnHoldStringLowerCase -> SManga.ON_HIATUS
+                    parseStatusCompletedStringLowerCase -> SManga.COMPLETED
                     else -> SManga.UNKNOWN
                 }
             }
@@ -217,8 +233,8 @@ abstract class MyMangaCMS(
             descElem.text().trim()
         }
 
-        if (!alternativeNames.isNullOrEmpty()) {
-            description = "Tên khác: ${alternativeNames}\n\n" + description
+        if (alternativeNames.isNotEmpty()) {
+            description = "$parseAlternativeNameString: ${alternativeNames}\n\n" + description
         }
 
         genre = document.select("a[href*=the-loai] span.badge")
@@ -229,6 +245,14 @@ abstract class MyMangaCMS(
             .first()!!
             .attr("style")
             .let { backgroundImageRegex.find(it)?.groups?.get(1)?.value }
+    }
+
+    private fun removeGenericWords(name: String): String {
+        val locale = Locale.forLanguageTag(lang)
+
+        return name.split(' ')
+            .filterNot { word -> word.lowercase(locale) in removeGenericWords }
+            .joinToString(" ")
     }
     //endregion
 
@@ -294,30 +318,44 @@ abstract class MyMangaCMS(
     ) : Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray(), state) {
         fun toUriPart() = vals[state].second
     }
-    private class Status : Filter.Select<String>(
-        "Tình trạng",
+    protected class Status(
+        displayName: String = "Tình trạng",
+        statusAll: String = "Tất cả",
+        statusOngoing: String = "Đang tiến hành",
+        statusOnHold: String = "Tạm ngưng",
+        statusCompleted: String = "Hoàn thành",
+    ) : Filter.Select<String>(
+        displayName,
         arrayOf(
-            "Tất cả",
-            "Đang tiến hành",
-            "Tạm ngưng",
-            "Hoàn thành",
+            statusAll,
+            statusOngoing,
+            statusOnHold,
+            statusCompleted,
         ),
     )
-    private class Sort : UriPartFilter(
-        "Sắp xếp",
+    protected class Sort(
+        displayName: String = "Sắp xếp",
+        sortAZ: String = "A-Z",
+        sortZA: String = "Z-A",
+        sortUpdate: String = "Mới cập nhật",
+        sortNew: String = "Truyện mới",
+        sortPopular: String = "Xem nhiều",
+        sortLike: String = "Được thích nhiều",
+    ) : UriPartFilter(
+        displayName,
         arrayOf(
-            Pair("A-Z", "az"),
-            Pair("Z-A", "za"),
-            Pair("Mới cập nhật", "update"),
-            Pair("Truyện mới", "new"),
-            Pair("Xem nhiều", "top"),
-            Pair("Được thích nhiều", "like"),
+            Pair(sortAZ, "az"),
+            Pair(sortZA, "za"),
+            Pair(sortUpdate, "update"),
+            Pair(sortNew, "new"),
+            Pair(sortPopular, "top"),
+            Pair(sortLike, "like"),
         ),
         4,
     )
     open class Genre(name: String, val id: Int) : Filter.TriState(name)
-    private class Author : Filter.Text("Tác giả")
-    private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Thể loại", genres)
+    protected class Author(displayName: String = "Tác giả") : Filter.Text(displayName)
+    protected class GenreList(genres: List<Genre>, displayName: String = "Thể loại") : Filter.Group<Genre>(displayName, genres)
 
     override fun getFilterList(): FilterList = FilterList(
         Author(),

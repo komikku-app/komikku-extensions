@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.mymangacms
 
+import generator.ThemeSourceData.MultiLang
 import generator.ThemeSourceData.SingleLang
 import generator.ThemeSourceGenerator
 
@@ -9,14 +10,30 @@ class MyMangaCMSGenerator : ThemeSourceGenerator {
 
     override val themeClass = "MyMangaCMS"
 
-    override val baseVersionCode: Int = 1
+    override val baseVersionCode: Int = 2
 
     override val sources = listOf(
         SingleLang(
             "TruyenTranhLH",
             "https://truyentranhlh.net",
             "vi",
+            isNsfw = true,
             overrideVersionCode = 9,
+        ),
+        SingleLang(
+            "Manhwa18",
+            "https://manhwa18.com",
+            "en",
+            isNsfw = true,
+            overrideVersionCode = 9,
+        ),
+        MultiLang(
+            "Manhwa18.net",
+            "https://manhwa18.net",
+            listOf("en"),
+            className = "Manhwa18Net",
+            isNsfw = true,
+            overrideVersionCode = 8,
         ),
     )
 

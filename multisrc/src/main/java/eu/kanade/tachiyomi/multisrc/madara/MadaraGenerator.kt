@@ -329,7 +329,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("ManhuaScan.info (unoriginal)", "https://manhuascan.info", "en", isNsfw = true, className = "ManhuaScanInfo"),
         SingleLang("ManhuaUS", "https://manhuaus.com", "en", overrideVersionCode = 5),
         SingleLang("ManhuaZone", "https://manhuazone.org", "en", overrideVersionCode = 1),
-        SingleLang("Manhwa Raw", "https://manhwaraw.com", "ko", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("Manhwa Raw", "https://manhwaraw.com", "ko", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Manhwa-Latino", "https://manhwa-latino.com", "es", isNsfw = true, className = "ManhwaLatino", overrideVersionCode = 7),
         SingleLang("Manhwa-raw", "https://manhwa-raw.com", "all", isNsfw = true, className = "ManhwaDashRaw", overrideVersionCode = 1),
         SingleLang("Manhwa18.app", "https://manhwa18.app", "en", isNsfw = true, className = "Manhwa18app"),
