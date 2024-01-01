@@ -30,6 +30,7 @@ import org.json.JSONObject
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
+import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -100,7 +101,7 @@ class Picacomic : HttpSource(), ConfigurableSource {
             )
         }
 
-        val payload = parts[1]?.let { JSONObject(String(Base64.decode(it, Base64.DEFAULT))) }
+        val payload = parts[1]?.let { JSONObject(Base64.decode(it, Base64.DEFAULT).toString(Charsets.UTF_8)) }
 
         val exp = payload?.getLong("exp")?.let {
             Date(it * 1000)
