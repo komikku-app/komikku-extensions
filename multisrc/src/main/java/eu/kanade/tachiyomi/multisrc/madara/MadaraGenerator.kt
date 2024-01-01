@@ -73,7 +73,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("CoffeeManga.top (unoriginal)", "https://coffeemanga.top", "en", isNsfw = true, className = "CoffeeMangaTop"),
         SingleLang("Colored Manga", "https://coloredmanga.com", "en", overrideVersionCode = 2),
         SingleLang("Comic Scans", "https://www.comicscans.org", "en", isNsfw = false),
-        SingleLang("ComicKiba", "https://comickiba.com", "en", overrideVersionCode = 1),
         SingleLang("Comics Valley", "https://comicsvalley.com", "hi", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ComicsWorld", "https://comicsworld.in", "hi"),
         SingleLang("Comicz.net v2", "https://v2.comiz.net", "all", isNsfw = true, className = "ComiczNetV2"),

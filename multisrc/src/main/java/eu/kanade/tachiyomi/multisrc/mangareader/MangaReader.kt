@@ -73,7 +73,7 @@ abstract class MangaReader : HttpSource(), ConfigurableSource {
 
     open fun updateChapterList(manga: SManga, chapters: List<SChapter>) = Unit
 
-    final override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
         val path = manga.url
         val isVolume = path.endsWith(VOLUME_URL_SUFFIX)
         val type = if (isVolume) volumeType else chapterType
