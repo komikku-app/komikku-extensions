@@ -15,10 +15,10 @@ class MyMangaCMSGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang(
             "TruyenTranhLH",
-            "https://truyentranhlh.net",
+            "https://truyenlh.com",
             "vi",
             isNsfw = true,
-            overrideVersionCode = 9,
+            overrideVersionCode = 10,
         ),
         SingleLang(
             "Manhwa18",
