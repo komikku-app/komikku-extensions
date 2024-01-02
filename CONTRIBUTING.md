@@ -279,12 +279,14 @@ dependencies {
 If you find yourself needing additional functionality, you can add more dependencies to your `build.gradle` file.
 Many of [the dependencies](https://github.com/tachiyomiorg/tachiyomi/blob/master/app/build.gradle.kts) from the main Tachiyomi app are exposed to extensions by default.
 
-> Note that several dependencies are already exposed to all extensions via Gradle version catalog.
-> To view which are available view `libs.versions.toml` under the `gradle` folder
+> [!NOTE]
+> Several dependencies are already exposed to all extensions via Gradle's version catalog.
+> To view which are available check the `gradle/libs.versions.toml` file.
 
 Notice that we're using `compileOnly` instead of `implementation` if the app already contains it. You could use `implementation` instead for a new dependency, or you prefer not to rely on whatever the main app has at the expense of app size.
 
-Note that using `compileOnly` restricts you to versions that must be compatible with those used in [the latest stable version of Tachiyomi](https://github.com/tachiyomiorg/tachiyomi/releases/latest).
+> [!IMPORTANT]
+> Using `compileOnly` restricts you to versions that must be compatible with those used in [the latest stable version of Tachiyomi](https://github.com/tachiyomiorg/tachiyomi/releases/latest).
 
 ### Extension main class
 
@@ -431,6 +433,14 @@ To test if the URL intent filter is working as expected, you can try opening the
 $ adb shell am start -d "<your-link>" -a android.intent.action.VIEW
 ```
 
+> [!CAUTION]
+> The activity does not support any Kotlin Intrinsics specific methods or calls,
+> and using them will causes crashes in the activity. Consider using Java's equivalent
+> methods instead, such as using `String`'s `equals()` instead of using `==`.
+>
+> You can use Kotlin Intrinsics in the extension source class, this limitation only
+> applies to the activity classes.
+
 #### Update strategy
 
 There is some cases where titles in a source will always only have the same chapter list (i.e. immutable), and don't need to be included in a global update of the app because of that, saving a lot of requests and preventing causing unnecessary damage to the source servers. To change the update strategy of a `SManga`, use the `update_strategy` field. You can find below a description of the current possible values.
@@ -452,9 +462,15 @@ override val id: Long = <the-id>
 
 Then the class name and the `name` attribute value can be changed. Also don't forget to update the extension name and class name in the individual Gradle file if it is not a multisrc extension.
 
-**Important:** the package name **needs** to be the same (even if it has the old name), otherwise users will not receive the extension update when it gets published in the repository. If you're changing the name of a multisrc source, you can manually set it in the generator class of the theme by using `pkgName = "oldpackagename"`.
+> [!IMPORTANT]
+> The package name **needs** to be the same (even if it has the old name), otherwise users will not receive the extension update when it gets published in the repository. If you're changing the name of a multisrc source, you can manually set it in the generator class of the theme by using `pkgName = "oldpackagename"`.
 
 The `id` also needs to be explicity set to the old value if you're changing the `lang` attribute.
+
+> [!NOTE]
+> If the source has also changed their theme you can instead just change
+> the `name` field in the source class and in the Gradle file. By doing so
+> a new `id` will be generated and users will be forced to migrate.
 
 ## Multi-source themes
 The `multisrc` module houses source code for generating extensions for cases where multiple source sites use the same site generator tool(usually a CMS) for bootsraping their website and this makes them similar enough to prompt code reuse through inheritance/composition; which from now on we will use the general **theme** term to refer to.
@@ -526,8 +542,7 @@ multisrc
 - `multisrc/overrides/<themepkg>/<sourcepkg>/additional.gradle` defines additional gradle code, this will be copied at the end of the generated gradle file below the theme's `additional.gradle`.
 - `multisrc/overrides/<themepkg>/<sourcepkg>/AndroidManifest.xml` is copied as an override to the default `AndroidManifest.xml` generation if it exists.
 
-> **Note**
->
+> [!NOTE]
 > Files ending with `Gen.kt` (i.e. `multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/<theme>/XxxGen.kt`)
 > are considered helper files and won't be copied to generated sources.
 
@@ -603,7 +618,8 @@ And for a release build of Tachiyomi:
 -W -S -n eu.kanade.tachiyomi/eu.kanade.tachiyomi.ui.main.MainActivity -a eu.kanade.tachiyomi.SHOW_CATALOGUES
 ```
 
-If you're deploying to Android 11 or higher, enable the "Always install with package manager" option in the run configurations.
+> [!IMPORTANT]
+> If you're deploying to Android 11 or higher, enable the "Always install with package manager" option in the run configurations. Without this option enabled, you might face issues such as Android Studio running an older version of the extension without the modifications you might have done.
 
 ## Debugging
 
@@ -624,11 +640,17 @@ You can also elect to simply rely on logs printed from your extension, which
 show up in the [`Logcat`](https://developer.android.com/studio/debug/am-logcat) panel of Android Studio.
 
 ### Inspecting network calls
+
 One of the easiest way to inspect network issues (such as HTTP errors 404, 429, no chapter found etc.) is to use the [`Logcat`](https://developer.android.com/studio/debug/am-logcat) panel of Android Studio and filtering by the `OkHttpClient` tag.
 
 To be able to check the calls done by OkHttp, you need to enable verbose logging in the app, that is not enabled by default and is only included in the Preview versions of Tachiyomi. To enable it, go to More -> Settings -> Advanced -> Verbose logging. After enabling it, don't forget to restart the app.
 
-Inspecting the Logcat allows you to get a good look at the call flow and it's more than enough in most cases where issues occurs. However, alternatively, you can also use an external tool like `mitm-proxy`. For that, refer to the next section.
+Inspecting the Logcat allows you to get a good look at the call flow and it's more than enough in most cases where issues occurs. However, alternatively, you can also use an external tool like `mitm-proxy`. For that, refer to the subsequent sections.
+
+On newer Android Studio versions, you can use its built-in Network Inspector inside the
+App Inspection tool window. This feature provides a nice GUI to inspect the requests made in the app.
+
+To use it, follow the [official documentation](https://developer.android.com/studio/debug/network-profiler) and select Tachiyomi package name in the process list.
 
 ### Using external network inspecting tools
 If you want to take a deeper look into the network flow, such as taking a look into the request and response bodies, you can use an external tool like `mitm-proxy`.
@@ -716,9 +738,10 @@ When you feel confident about your changes, submit a new Pull Request so your co
 
 If you are more comfortable about using Git GUI-based tools, you can refer to [this guide](https://learntodroid.com/how-to-use-git-and-github-in-android-studio/) about the Git integration inside Android Studio, specifically the "How to Contribute to an to Existing Git Repository in Android Studio" section of the guide.
 
-Make sure you have generated the extension icon using the linked Icon Generator tool in the [Tools](#tools) section. The icon must follow the pattern adopted by all other extensions: a square with rounded corners.
+> [!IMPORTANT]
+> Make sure you have generated the extension icon using the linked Icon Generator tool in the [Tools](#tools) section. The icon **must follow the pattern** adopted by all other extensions: a square with rounded corners.
 
-Please **do test your changes by compiling it through Android Studio** before submitting it. Also make sure to follow the PR checklist available in the PR body field when creating a new PR. As a reference, you can find it below.
+Please **do test your changes by compiling it through Android Studio** before submitting it. Obvious untested PRs will not be merged, such as ones created with the GitHub web interface. Also make sure to follow the PR checklist available in the PR body field when creating a new PR. As a reference, you can find it below.
 
 ### Pull Request checklist
 
