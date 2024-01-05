@@ -24,11 +24,13 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-class Webnovel : HttpSource() {
+class WebNovel : HttpSource() {
 
-    override val name = "Webnovel.com"
+    override val name = "WebNovel"
 
     override val baseUrl = "https://www.webnovel.com"
+
+    override val id = 4081135203808920563
 
     private val baseApiUrl = "$baseUrl$BASE_API_ENDPOINT"
 
@@ -52,9 +54,7 @@ class Webnovel : HttpSource() {
     override fun popularMangaRequest(page: Int): Request = searchMangaRequest(
         page = page,
         query = "",
-        filters = FilterList(
-            SortByFilter(default = 1),
-        ),
+        filters = FilterList(SortByFilter(default = 1)),
     )
 
     override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
@@ -63,9 +63,7 @@ class Webnovel : HttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = searchMangaRequest(
         page = page,
         query = "",
-        filters = FilterList(
-            SortByFilter(default = 5),
-        ),
+        filters = FilterList(SortByFilter(default = 5)),
     )
 
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
@@ -92,10 +90,9 @@ class Webnovel : HttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage {
         val browseResponseDto = if (response.request.url.toString().contains(QUERY_SEARCH_PATH)) {
-            response.checkAndParseAs<QuerySearchResponseDto>().browseResponse
+            response.parseAsForWebNovel<QuerySearchResponseDto>().browseResponse
         } else {
-            // Due to the previous line this automatically parses as "BrowseResponseDto"
-            response.checkAndParseAs()
+            response.parseAsForWebNovel()
         }
 
         val manga = browseResponseDto.items.map {
@@ -125,7 +122,7 @@ class Webnovel : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val comic = response.checkAndParseAs<ComicDetailInfoResponseDto>().info
+        val comic = response.parseAsForWebNovel<ComicDetailInfoResponseDto>().info
         return SManga.create().apply {
             title = comic.name
             url = comic.id
@@ -154,15 +151,22 @@ class Webnovel : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val chapterList = response.checkAndParseAs<ComicChapterListDto>()
+        val chapterList = response.parseAsForWebNovel<ComicChapterListDto>()
         val comic = chapterList.comicInfo
         val chapters = chapterList.comicChapters.reversed().asSequence()
 
-        val updateTimes = chapters.map { it.publishTime.toDate() }
-        val filteredChapters = chapters
-            // You can pay to get some chapter earlier than others. This privilege is divided into some tiers
-            // We check if user's tier same or more than chapter's.
-            .filter { it.userLevel >= it.chapterLevel }
+        val accurateUpdateTimes = runCatching {
+            client.newCall(GET("$WEBNOVEL_UPLOAD_TIME/${comic.id}.json"))
+                .execute()
+                .parseAs<Map<String, Long>>()
+        }
+            .getOrDefault(emptyMap())
+
+        val updateTimes = chapters.map { accurateUpdateTimes[it.id] ?: it.publishTime.toDate() }
+
+        // You can pay to get some chapter earlier than others. This privilege is divided into some tiers
+        // We check if user's tier same or more than chapter's.
+        val filteredChapters = chapters.filter { it.userLevel >= it.chapterLevel }
 
         // When new privileged chapter is released oldest privileged chapter becomes normal one (in most cases)
         // but since those normal chapter retain the original upload time we improvise. (This isn't optimal but meh)
@@ -221,7 +225,7 @@ class Webnovel : HttpSource() {
 
     private fun pageListRequest(comicId: String, chapterId: String): Request {
         // Given a high [width] parameter it gives the highest resolution image available
-        return GET("$baseApiUrl/comic/getContent?comicId=$comicId&chapterId=$chapterId&width=${Short.MAX_VALUE}")
+        return GET("$baseApiUrl/comic/getContent?comicId=$comicId&chapterId=$chapterId&width=9999")
     }
 
     data class ChapterPage(
@@ -238,7 +242,7 @@ class Webnovel : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val chapterContent = response.checkAndParseAs<ChapterContentResponseDto>().chapterContent
+        val chapterContent = response.parseAsForWebNovel<ChapterContentResponseDto>().chapterContent
         return chapterContent.pages.map { ChapterPage(it.id, it.url) }
             .also { chapterPageCache[chapterContent.id.toString()] = it }
             .mapIndexed { i, chapterPage -> Page(i, imageUrl = chapterPage.url) }
@@ -277,13 +281,13 @@ class Webnovel : HttpSource() {
         if (!originalRequestUrl.toString().contains(BASE_API_ENDPOINT)) return chain.proceed(originalRequest)
 
         val csrfToken = originalRequest.header("cookie")
-            ?.takeIf { csrfTokenName in it }
-            ?.substringAfter("$csrfTokenName=")
+            ?.takeIf { CSRF_TOKEN_NAME in it }
+            ?.substringAfter("$CSRF_TOKEN_NAME=")
             ?.substringBefore(";")
             ?: throw IOException("Open in WebView to set necessary cookies.")
 
         val newUrl = originalRequestUrl.newBuilder()
-            .addQueryParameter(csrfTokenName, csrfToken)
+            .addQueryParameter(CSRF_TOKEN_NAME, csrfToken)
             .build()
 
         val newRequest = originalRequest.newBuilder().url(newUrl).build()
@@ -324,8 +328,12 @@ class Webnovel : HttpSource() {
         return Date().time - urlGenerationTime <= 570000
     }
 
-    private inline fun <reified T> Response.checkAndParseAs(): T = use {
-        val parsed = json.decodeFromString<ResponseDto<T>>(it.body.string())
+    private inline fun <reified T> Response.parseAs(): T = use {
+        json.decodeFromString<T>(it.body.string())
+    }
+
+    private inline fun <reified T> Response.parseAsForWebNovel(): T = use {
+        val parsed = parseAs<ResponseDto<T>>()
         if (parsed.code != 0) error("Error ${parsed.code}: ${parsed.msg}")
         requireNotNull(parsed.data) { "Response data is null" }
     }
@@ -342,6 +350,8 @@ class Webnovel : HttpSource() {
 
         private val DIGIT_REGEX = "(\\d+)".toRegex()
 
-        private const val csrfTokenName = "_csrfToken"
+        private const val CSRF_TOKEN_NAME = "_csrfToken"
+
+        private const val WEBNOVEL_UPLOAD_TIME = "https://antsylich.github.io/webnovel-upload-time"
     }
 }
