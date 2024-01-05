@@ -66,3 +66,13 @@ Here is a list of known sources that were removed.
 - SetsuScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/11040
 - ShinobiScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14457
 - XXX Yaoi https://github.com/tachiyomiorg/tachiyomi-extensions/issues/9535
+
+### Requested removal by copyright holders
+
+By request of [Kakao Entertainment](https://www.kakaoent.com/):
+
+- 1st Kiss-Manga
+- Bato.to
+- Mangadex
+- NewToki / ManaToki
+- S2Manga

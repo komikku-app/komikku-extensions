@@ -19,7 +19,7 @@ if (System.getenv("CI") == null || System.getenv("CI_MODULE_GEN") == "true") {
      */
     loadAllIndividualExtensions()
     loadAllGeneratedMultisrcExtensions()
-    // loadIndividualExtension("all", "mangadex")
+    // loadIndividualExtension("all", "komga")
     // loadGeneratedMultisrcExtension("en", "guya")
 } else {
     // Running in CI (GitHub Actions)
