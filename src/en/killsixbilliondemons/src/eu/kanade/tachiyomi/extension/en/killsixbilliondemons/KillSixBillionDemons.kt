@@ -128,7 +128,7 @@ class KillSixBillionDemons : HttpSource() {
             fetchChapterListTR(
                 baseUrl + manga.url + pagesOrder,
                 mutableListOf(),
-            ),
+            ).reversed(),
         )
     }
 
