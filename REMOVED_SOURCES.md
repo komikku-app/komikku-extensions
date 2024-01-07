@@ -1,14 +1,16 @@
-**There is no timetable on when or if a source request may be filled (also applies to bug reports and enhancement requests).**
+# Removed sources
 
-### In General the following sources that won't be added as an extension
-- In general heavily paywalled sites
-- Sources that require cracking some app's source code (realistically, no one's going to put in the effort to do it)
-- Sources that are known for filling a lot of DMCA complaints over repositories on GitHub
+Generally, the following types of sources will not be added as extensions:
+- Websites with significant paywalls.
+- Sources that necessitate the cracking of an application's source code (as realistically, such efforts are unlikely to be undertaken).
+- Sources that are known for filing numerous DMCA complaints against repositories on GitHub.
 
-Here is a list of known sources that were removed.
-## Removed sources
+> [!NOTE]
+> There is no specific timeframe for fulfilling source requests, bug reports, or enhancement requests, and it is uncertain whether they will be addressed.
 
-### Too difficult to maintain
+Below is a list of known sources that were removed.
+
+## Too difficult to maintain
 
 - Anchira https://github.com/tachiyomiorg/tachiyomi-extensions/pull/19149
 - Bakai https://github.com/tachiyomiorg/tachiyomi-extensions/pull/17890
@@ -40,7 +42,7 @@ Here is a list of known sources that were removed.
 - Union Mangás https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7065
 - YES Mangás https://github.com/tachiyomiorg/tachiyomi-extensions/pull/7065
 
-### Requested removal by the scanlator team
+## Removal requested by the scanlator team
 
 - ARES Manga https://github.com/tachiyomiorg/tachiyomi-extensions/issues/15396
 - Astra Scans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/13845
@@ -67,7 +69,7 @@ Here is a list of known sources that were removed.
 - ShinobiScans https://github.com/tachiyomiorg/tachiyomi-extensions/issues/14457
 - XXX Yaoi https://github.com/tachiyomiorg/tachiyomi-extensions/issues/9535
 
-### Requested removal by copyright holders
+## Removal requested by copyright holders
 
 By request of [Kakao Entertainment](https://www.kakaoent.com/):
 
