@@ -68,6 +68,13 @@ jobs:
                 "ignoreCase": true,
                 "labels": ["invalid"],
                 "message": "{match} will not be added as they have relations to the Mangá Livre team. Read [this](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
+              },
+              {
+                "type": "both",
+                "regex": ".*(1st\\s*kiss\\s*manga|bato\\.?to|mangadex|newtoki|manatoki|s2manga).*",
+                "ignoreCase": true,
+                "labels": ["invalid"],
+                "message": "{match} will not be added back as it has been removed due to legal reasons. Read [this](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
               }
             ]
           auto-close-ignore-label: do-not-autoclose
