@@ -457,10 +457,10 @@ open class BatoTo(
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.selectFirst("script:containsData(imgHttpLis):containsData(batoWord):containsData(batoPass)")?.html()
+        val script = document.selectFirst("script:containsData(imgHttps):containsData(batoWord):containsData(batoPass)")?.html()
             ?: throw RuntimeException("Couldn't find script with image data.")
 
-        val imgHttpLisString = script.substringAfter("const imgHttpLis =").substringBefore(";").trim()
+        val imgHttpLisString = script.substringAfter("const imgHttps =").substringBefore(";").trim()
         val imgHttpLis = json.parseToJsonElement(imgHttpLisString).jsonArray.map { it.jsonPrimitive.content }
         val batoWord = script.substringAfter("const batoWord =").substringBefore(";").trim()
         val batoPass = script.substringAfter("const batoPass =").substringBefore(";").trim()

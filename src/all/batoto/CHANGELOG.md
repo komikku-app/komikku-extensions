@@ -1,3 +1,9 @@
+## 1.3.31
+
+### Fix
+
+* Update pageListParse logic to handle website changes
+
 ## 1.3.30
 
 ### Refactor
