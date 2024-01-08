@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.reaperscans
 
 import android.util.Base64
-import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -278,56 +277,7 @@ class ReaperScans : ParsedHttpSource() {
 
     // Page
     override fun pageListParse(document: Document): List<Page> {
-        val csrfToken = document.selectFirst("meta[name=csrf-token]")?.attr("content")
-
-        val livewareData = document.selectFirst("div[wire:initial-data*=display-chapter]")
-            ?.attr("wire:initial-data")
-            ?.parseJson<LiveWireDataDto>()
-
-        if (csrfToken == null) error("Couldn't find csrf-token")
-        if (livewareData == null) error("Couldn't find LiveWireData")
-
-        val routeName = livewareData.fingerprint["name"]?.jsonPrimitive?.contentOrNull
-            ?: error("Couldn't find routeName")
-
-        val tunstileName = document.selectFirst("script:containsData(captchacallback)")?.html()
-            ?.let { tunstile.find(it)?.groupValues?.get(1) }
-            ?: error("Couldn't fine Tunstile Name")
-
-        //  Javascript: (Math.random() + 1).toString(36).substring(8)
-        val generateId = { "1.${Random.nextLong().toString(36)}".substring(10) } // Not exactly the same, but results in a 3-5 character string
-        val payload = buildJsonObject {
-            put("fingerprint", livewareData.fingerprint)
-            put("serverMemo", livewareData.serverMemo)
-            putJsonArray("updates") {
-                addJsonObject {
-                    put("type", "callMethod")
-                    putJsonObject("payload") {
-                        put("id", generateId())
-                        put("method", "${"$"}set")
-                        putJsonArray("params") {
-                            add(tunstileName)
-                            add(randomString())
-                        }
-                    }
-                }
-            }
-        }.toString().toRequestBody(JSON_MEDIA_TYPE)
-
-        val headers = Headers.Builder()
-            .add("x-csrf-token", csrfToken)
-            .add("x-livewire", "true")
-            .build()
-
-        val liveWireRequest = POST("$baseUrl/livewire/message/$routeName", headers, payload)
-
-        val liveWireResponse = client.newCall(liveWireRequest).execute()
-
-        val html = runCatching { liveWireResponse.parseJson<LiveWireResponseDto>().effects.html }
-            .getOrElse {
-                Log.e(name, it.stackTraceToString())
-                error("Fuck you Reaper Scans")
-            }
+        val html = document.selectFirst("main")?.html()
 
         return Jsoup.parse(html, baseUrl).select("img").mapIndexed { idx, element ->
             Page(idx, imageUrl = element.imgAttr())
