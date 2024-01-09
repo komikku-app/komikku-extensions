@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.webtoons
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.Filter.Header
 import eu.kanade.tachiyomi.source.model.Filter.Select
 import eu.kanade.tachiyomi.source.model.Filter.Separator
@@ -178,13 +179,32 @@ open class Webtoons(
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/$langCode/search?keyword=$query".toHttpUrlOrNull()?.newBuilder()!!
-        val uriPart = (filters.find { it is SearchType } as? SearchType)?.toUriPart() ?: ""
-
-        url.addQueryParameter("searchType", uriPart)
-        if (uriPart != "WEBTOON" && page > 1) url.addQueryParameter("page", page.toString())
-
-        return GET(url.toString(), headers)
+        if (filters.any { it is GenreFilter && it.state != 0 }) {
+            val url = "$baseUrl/$langCode/genres/".toHttpUrlOrNull()?.newBuilder()?.apply {
+                addPathSegment("${filters.filterIsInstance<GenreFilter>()[0].selected}")
+                addQueryParameter("sortOrder", "${filters.filterIsInstance<SortFilter>()[0].selected}")
+            }
+            return GET(url.toString(), headers)
+        } else if (filters.any { it is StatusFilter && it.state != 0 }) {
+            val url = "$baseUrl/$langCode/originals?".toHttpUrlOrNull()?.newBuilder()?.apply {
+                addQueryParameter("sortOrder", "${filters.filterIsInstance<SortFilter>()[0].selected}")
+                addQueryParameter("webtoonCompleteType", "${filters.filterIsInstance<StatusFilter>()[0].selected}")
+            }
+            return GET(url.toString(), headers)
+        } else {
+            val url = "$baseUrl/$langCode/search?keyword=$query".toHttpUrlOrNull()?.newBuilder()!!
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is SearchType -> {
+                        val uriPart = (filters.find { it is SearchType } as? SearchType)?.toUriPart() ?: ""
+                        url.addQueryParameter("searchType", uriPart)
+                        if (uriPart != "WEBTOON" && page > 1) url.addQueryParameter("page", page.toString())
+                    }
+                    else -> {}
+                }
+            }
+            return GET(url.toString(), headers)
+        }
     }
 
     override fun searchMangaSelector() = "#content > div.card_wrap.search ul:not(#filterLayer) li a"
@@ -229,11 +249,61 @@ open class Webtoons(
 
     override fun getFilterList(): FilterList {
         return FilterList(
-            Header("Query can not be blank"),
+            GenreFilter(),
+            SortFilter(),
             Separator(),
+            Header("Query can not be blank"),
+            StatusFilter(),
             SearchType(getOfficialList()),
         )
     }
+
+    abstract class SelectFilter(displayName: String, private val options: Array<Pair<String, String>>) : Filter.Select<String>(
+        displayName,
+        options.map { it.first }.toTypedArray(),
+    ) {
+        open val selected get() = options[state].second.takeUnless { it.isEmpty() }
+    }
+
+    class GenreFilter : SelectFilter(
+        "Genre",
+        arrayOf(
+            Pair("", ""),
+            Pair("Drama", "drama"),
+            Pair("Fantasy", "fantasy"),
+            Pair("Comedy", "comedy"),
+            Pair("Action", "action"),
+            Pair("Slice of Life", "slice_of_life"),
+            Pair("Romance", "romance"),
+            Pair("Superhero", "super_hero"),
+            Pair("Sci-Fi", "sf"),
+            Pair("Thriller", "thriller"),
+            Pair("Supernatural", "supernatural"),
+            Pair("Mystery", "mystery"),
+            Pair("Sports", "sports"),
+            Pair("Historical", "historical"),
+            Pair("Heartwarming", "heartwarming"),
+            Pair("Horror", "horror"),
+            Pair("Informative", "tiptoon"),
+        ),
+    )
+
+    class SortFilter : SelectFilter(
+        "Sort by",
+        arrayOf(
+            Pair("Popularity", "READ_COUNT"),
+            Pair("Likes", "LIKEIT"),
+            Pair("Date", "UPDATE"),
+        ),
+    )
+    class StatusFilter : SelectFilter(
+        "Status",
+        arrayOf(
+            Pair("", ""),
+            Pair("Ongoing", "ONGOING"),
+            Pair("Completed", "COMPLETED"),
+        ),
+    )
 
     override fun chapterListSelector() = "ul#_episodeList li[id*=episode]"
 
