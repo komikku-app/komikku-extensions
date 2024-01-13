@@ -67,4 +67,6 @@ It might also be good to read our [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 
 ## Disclaimer
 
+This project is not affiliated with Tachiyomi. Don't ask for help about these extensions at the official support means of Tachiyomi. All credits to the codebase goes to the original contributors.
+
 The developer of this application does not have any affiliation with the content providers available.
