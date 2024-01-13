@@ -26,7 +26,7 @@ internal const val INTENT_BOOK_QUERY_PREFIX: String = """${'$'}$SHORT_FORM_ID-bo
  * for what URIs this [Activity](https://developer.android.com/guide/components/activities/intro-activities)
  * can receive.
  *
- * For this specific class you can test the activity by doing (see [CONTRIBUTING](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/CONTRIBUTING.md#url-intent-filter)):
+ * For this specific class you can test the activity by doing (see [CONTRIBUTING](https://github.com/cuong-tran/tachiyomi-extensions/blob/master/CONTRIBUTING.md#url-intent-filter)):
  * ```
  * adb shell am start -d "https://projectsuki.com/book/192047" -a android.intent.action.VIEW
  * ```

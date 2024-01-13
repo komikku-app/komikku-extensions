@@ -46,14 +46,14 @@ jobs:
                 "regex": ".*(hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|colamanhua|mangadig|hitomi\\.la|copymanga|neox|nexo|1manga\\.co|mangafox\\.fun|mangahere\\.onl|mangakakalot\\.fun|manganel(?!o)|mangaonline\\.fun|mangatoday|manga\\.town|onemanga\\.info|koushoku|ksk\\.moe|comikey|leercapitulo|c[uứ]u\\s*truy[eệ]n|day\\s*comics?|constellar\\s*scans|mode\\s*scanlator|bakai|japscan|izakaya|blackout\\s*comics|anchira).*",
                 "ignoreCase": true,
                 "labels": ["invalid"],
-                "message": "{match} will not be added back as it is too difficult to maintain. Read [this](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
+                "message": "{match} will not be added back as it is too difficult to maintain. Read [this](https://github.com/cuong-tran/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
               },
               {
                 "type": "both",
                 "regex": ".*(komiktap|gourmet\\s*scans|mangawow|hikari\\s*scans|knightnoscanlations|mangasy|nartag|xxx\\s*yaoi|luminous|hunters\\s*scan|reset(?:\\s*|-)scan|astra\\s*scans|manga(?:-|\\s*)pro|shinobiscans|plot ?twist ?no ?fansub(?: ?scans?)?|plot-twistnf-scans(?:\\.com)?|mhscans|aresmanga|realm ?scans?|mono ?manga|dat(?:\\s*|-)?gar\\s*scan|remangas|moon ?daisy(?: scans?)?).*",
                 "ignoreCase": true,
                 "labels": ["invalid"],
-                "message": "{match} will not be added back as the scanlator team has requested it to be removed. Read [this](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
+                "message": "{match} will not be added back as the scanlator team has requested it to be removed. Read [this](https://github.com/cuong-tran/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
               },
               {
                 "type": "both",
@@ -67,14 +67,14 @@ jobs:
                 "regex": ".*(slime\\s*read).*",
                 "ignoreCase": true,
                 "labels": ["invalid"],
-                "message": "{match} will not be added as they have relations to the Mangá Livre team. Read [this](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
+                "message": "{match} will not be added as they have relations to the Mangá Livre team. Read [this](https://github.com/cuong-tran/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
               },
               {
                 "type": "both",
                 "regex": ".*(1st\\s*kiss\\s*manga|bato\\.?to|mangadex|newtoki|manatoki|s2manga).*",
                 "ignoreCase": true,
                 "labels": ["invalid"],
-                "message": "{match} will not be added back as it has been removed due to legal reasons. Read [this](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
+                "message": "{match} will not be added back as it has been removed due to legal reasons. Read [this](https://github.com/cuong-tran/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
               }
             ]
           auto-close-ignore-label: do-not-autoclose

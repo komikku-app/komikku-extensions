@@ -18,7 +18,7 @@ import uy.kohesive.injekt.api.get
 import kotlin.random.Random
 
 class MangaRaw : MangaRawTheme("MangaRaw", ""), ConfigurableSource {
-    // See https://github.com/tachiyomiorg/tachiyomi-extensions/commits/master/src/ja/mangaraw
+    // See https://github.com/cuong-tran/tachiyomi-extensions/commits/master/src/ja/mangaraw
     override val versionId = 2
     override val id = 4572869149806246133
 
