@@ -1,8 +1,29 @@
-## 1.3.31
+## 1.4.34
+
+### Fix
+
+* Bato.to: Fix popular/latest in en_US
+* Bato.to: Merge English with English (US)
+
+## 1.4.33
 
 ### Fix
 
 * Update pageListParse logic to handle website changes
+
+## 1.4.32
+
+### Fix
+
+* Bato.to: remove broken mirrors
+* Bato.to: add more mirrors
+* create MIRROR_PREF_ENTRY_VALUES from MIRROR_PREF_ENTRIES
+
+## 1.3.31
+
+### Fix
+
+* Update genres list
 
 ## 1.3.30
 
