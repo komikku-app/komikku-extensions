@@ -226,9 +226,6 @@ A minimal [Android manifest file](https://developer.android.com/guide/topics/man
 Make sure that your new extension's `build.gradle` file follows the following structure:
 
 ```gradle
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = '<My source name>'
     pkgNameSuffix = '<lang>.<mysourcename>'

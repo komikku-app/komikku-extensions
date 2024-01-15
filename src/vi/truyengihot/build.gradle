@@ -1,11 +1,8 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'TruyenGiHot'
     pkgNameSuffix = 'vi.truyengihot'
     extClass = '.TruyenGiHot'
-    extVersionCode = 4
+    extVersionCode = 3
     isNsfw = true
 }
 
