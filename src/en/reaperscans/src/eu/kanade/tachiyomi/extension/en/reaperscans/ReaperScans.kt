@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.reaperscans
 
-import android.util.Base64
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -277,24 +276,10 @@ class ReaperScans : ParsedHttpSource() {
 
     // Page
     override fun pageListParse(document: Document): List<Page> {
-        val html = document.selectFirst("main")?.html()
-
-        return Jsoup.parse(html, baseUrl).select("img").mapIndexed { idx, element ->
-            Page(idx, imageUrl = element.imgAttr())
+        document.select("noscript").remove()
+        return document.select("img.max-w-full").mapIndexed { index, element ->
+            Page(index, imageUrl = element.imgAttr())
         }
-    }
-
-    private fun randomString(): String {
-        val bytes_288 = Random.nextBytes(ByteArray(288))
-        val base64_288 = Base64.encodeToString(bytes_288, Base64.DEFAULT)
-
-        val bytes_16 = Random.nextBytes(ByteArray(16))
-        val base64_16 = Base64.encodeToString(bytes_16, Base64.DEFAULT)
-
-        val bytes_32 = Random.nextBytes(ByteArray(32))
-        val hex32 = bytes_32.joinToString("") { "%02x".format(it) }
-
-        return "0.$base64_288.$base64_16.$hex32"
     }
 
     // Helpers
@@ -356,6 +341,5 @@ class ReaperScans : ParsedHttpSource() {
     companion object {
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
         const val PREFIX_ID_SEARCH = "id:"
-        private val tunstile by lazy { Regex("""set\s*\(\s*\"([^"]*)""") }
     }
 }
