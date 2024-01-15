@@ -201,9 +201,8 @@ src/<lang>/<mysourcename>/
 │   │   └── ic_launcher.png
 │   ├── mipmap-xxhdpi
 │   │   └── ic_launcher.png
-│   ├── mipmap-xxxhdpi
-│   │   └── ic_launcher.png
-│   └── web_hi_res_512.png
+│   └── mipmap-xxxhdpi
+│       └── ic_launcher.png
 └── src
     └── eu
         └── kanade
@@ -739,7 +738,7 @@ When you feel confident about your changes, submit a new Pull Request so your co
 If you are more comfortable about using Git GUI-based tools, you can refer to [this guide](https://learntodroid.com/how-to-use-git-and-github-in-android-studio/) about the Git integration inside Android Studio, specifically the "How to Contribute to an to Existing Git Repository in Android Studio" section of the guide.
 
 > [!IMPORTANT]
-> Make sure you have generated the extension icon using the linked Icon Generator tool in the [Tools](#tools) section. The icon **must follow the pattern** adopted by all other extensions: a square with rounded corners.
+> Make sure you have generated the extension icon using the linked Icon Generator tool in the [Tools](#tools) section. The icon **must follow the pattern** adopted by all other extensions: a square with rounded corners. Make sure to remove the generated `web_hi_res_512.png`.
 
 Please **do test your changes by compiling it through Android Studio** before submitting it. Obvious untested PRs will not be merged, such as ones created with the GitHub web interface. Also make sure to follow the PR checklist available in the PR body field when creating a new PR. As a reference, you can find it below.
 
