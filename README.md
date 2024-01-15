@@ -11,6 +11,23 @@ This repository contains the available extension catalogues for the [Tachiyomi](
 # How to add the repo
 This repo include all previously existed source from Tachiyomi before the removal.
 
+## One-click installation
+One-click installation is only supported by these Tachiyomi versions:
+* Tachiyomi v0.15.2+
+* Tachiyomi Preview r6404+
+* TachiyomiSY v1.10.0+
+* TachiyomiSY Preview r539+
+* Aniyomi Preview r7443+
+
+Navigate to [the website](https://cuong-tran.github.io/tachiyomi-extensions/) and tap "Add to Tachiyomi", then restart the app.
+
+## TachiyomiAZ
+1. Go to Settings → Browse
+2. Tap on "Edit repos" and then "+" button at bottom
+3. Input keiyoushi/extensions
+4. Enjoy!
+
+## Manually
 External repositories add additional sources to **Tachiyomi**. You can add external repositories by going to **More** -> **Settings** -> **Browse** and tapping **Extension repos**.
 
 Once there, you can add repositories by inputting this URL: `https://raw.githubusercontent.com/cuong-tran/tachiyomi-extensions/repo/index.min.json`.
@@ -21,7 +38,9 @@ You can now tap the download button next to extensions to install them.
 
 > You may need to [enable third-party installations](https://tachiyomi.org/docs/faq/browse/extensions#enabling-third-party-installations).
 
-> Link to put on a website to make Tachiyomi app automatically add this repo: `tachiyomi://add-repo?url=https://raw.githubusercontent.com/cuong-tran/tachiyomi-extensions/repo/index.min.json`
+## Others
+If you're not using any of the above fork then manually download and update extensions from the [listing page](https://cuong-tran.github.io/tachiyomi-extensions/extensions/)
+
 
 # Usage
 
