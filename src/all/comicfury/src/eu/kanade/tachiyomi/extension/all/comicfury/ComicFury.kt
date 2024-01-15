@@ -285,7 +285,7 @@ class ComicFury(
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
     override fun imageUrlParse(response: Response): String =
-        throw UnsupportedOperationException("Not Used")
+        throw UnsupportedOperationException()
 
     // Date stuff
 

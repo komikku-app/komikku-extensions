@@ -239,7 +239,7 @@ class Anchira : HttpSource(), ConfigurableSource {
         return GET(page.imageUrl!!.replace("/b/", "/${preferences.imageQuality}/"), headers)
     }
 
-    override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Not used")
+    override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
 
     // Settings
 

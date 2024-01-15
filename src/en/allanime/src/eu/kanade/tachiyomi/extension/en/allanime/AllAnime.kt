@@ -222,7 +222,7 @@ class AllAnime : ConfigurableSource, HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        throw UnsupportedOperationException("Not used")
+        throw UnsupportedOperationException()
     }
 
     override fun getChapterUrl(chapter: SChapter): String {
@@ -272,7 +272,7 @@ class AllAnime : ConfigurableSource, HttpSource() {
     }
 
     override fun imageUrlParse(response: Response): String {
-        throw UnsupportedOperationException("Not used")
+        throw UnsupportedOperationException()
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

@@ -111,7 +111,7 @@ class Xinmeitulu : ParsedHttpSource() {
             Page(index, imageUrl = element.attr("abs:data-original"))
         }
 
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
+    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // Filters
 

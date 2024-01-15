@@ -226,7 +226,7 @@ class EarlyManga : HttpSource() {
     }
 
     override fun imageUrlParse(response: Response): String {
-        throw UnsupportedOperationException("not Used")
+        throw UnsupportedOperationException()
     }
 
     private fun String.parseStatus(): Int {
