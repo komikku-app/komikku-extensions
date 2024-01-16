@@ -215,6 +215,10 @@ src/<lang>/<mysourcename>/
 13 directories, 9 files
 ```
 
+`<lang>` should be an ISO 639-1 compliant language code (two letters or `all`). `<mysourcename>` should be adapted from the site name, and can only contain lowercase ASCII letters and digits.
+
+Your extension code must be placed in the package `eu.kanade.tachiyomi.extension.<lang>.<mysourcename>`.
+
 #### AndroidManifest.xml
 A minimal [Android manifest file](https://developer.android.com/guide/topics/manifest/manifest-intro) is needed for Android to recognize an extension when it's compiled into an APK file. You can also add intent filters inside this file (see [URL intent filter](#url-intent-filter) for more information).
 
