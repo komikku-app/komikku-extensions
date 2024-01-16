@@ -1,6 +1,5 @@
 ext {
     extName = 'Blackout Comics'
-    pkgNameSuffix = 'pt.blackoutcomics'
     extClass = '.BlackoutComics'
     extVersionCode = 1
     isNsfw = true

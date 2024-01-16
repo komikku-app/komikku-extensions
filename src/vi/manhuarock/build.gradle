@@ -1,6 +1,5 @@
 ext {
     extName = "ManhuaRock"
-    pkgNameSuffix = 'vi.manhuarock'
     extClass = ".ManhuaRock"
     extVersionCode = 10
 }

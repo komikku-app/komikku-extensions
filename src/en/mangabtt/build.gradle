@@ -1,6 +1,5 @@
 ext {
     extName = 'MangaBTT'
-    pkgNameSuffix = 'en.mangabtt'
     extClass = '.MangaBTT'
     extVersionCode = 1
     isNsfw = true

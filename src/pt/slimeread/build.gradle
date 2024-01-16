@@ -1,6 +1,5 @@
 ext {
     extName = 'SlimeRead'
-    pkgNameSuffix = 'pt.slimeread'
     extClass = '.SlimeRead'
     extVersionCode = 2
     isNsfw = true

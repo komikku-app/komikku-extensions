@@ -1,6 +1,5 @@
 ext {
     extName = 'RawZ'
-    pkgNameSuffix = 'ja.rawz'
     extClass = '.RawZ'
     extVersionCode = 1
     isNsfw = true

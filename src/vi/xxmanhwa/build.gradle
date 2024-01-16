@@ -1,6 +1,5 @@
 ext {
     extName = 'XXManhwa'
-    pkgNameSuffix = 'vi.xxmanhwa'
     extClass = '.XxManhwa'
     extVersionCode = 1
     isNsfw = true
