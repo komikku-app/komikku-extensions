@@ -7,6 +7,15 @@ Tachiyomi is a free and open source manga reader for Android 6.0 and above.
 
 This repository contains the available extension catalogues for the [Tachiyomi](https://github.com/tachiyomiorg/tachiyomi) app.
 
+# Recommend App
+
+### [TachiyomiSY](https://github.com/jobobby04/TachiyomiSY) got all the original Tachiyomi app and more:
+* TachiyomiSY will continue! It will basing the fork on a new Tachiyomi spiritual successor called Mihon.
+* Cool migrate feature allow to migrate multiple mangas at once, very convenient if source's package changes or dropped.
+
+### [Mihon](https://github.com/mihonapp/mihon) is said to be Tachiyomi's spiritual successor
+
+### [Tachiyomi](https://github.com/tachiyomiorg/TachiyomiSY) the original
 
 # How to add the repo
 This repo include all previously existed source from Tachiyomi before the removal.
