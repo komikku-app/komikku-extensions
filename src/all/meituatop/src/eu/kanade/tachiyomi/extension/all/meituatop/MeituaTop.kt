@@ -49,9 +49,10 @@ class MeituaTop : HttpSource() {
         return MangasPage(mangas, hasNextPage)
     }
 
-    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException("Not used.")
+    // Latest: uses for Feed feature
+    override fun latestUpdatesRequest(page: Int) = popularMangaRequest(page)
 
-    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException("Not used.")
+    override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.isNotEmpty()) {
@@ -95,13 +96,21 @@ class MeituaTop : HttpSource() {
 
     override fun getFilterList() = FilterList(
         Filter.Header("Category (ignored for text search)"),
-        RegionFilter(),
+        RegionFilter(getRegionList()),
     )
 
-    private class RegionFilter : Filter.Select<String>(
+    private class RegionFilter(regionList: Array<String>) : Filter.Select<String>(
         "Region",
-        arrayOf("All", "国产美女", "韩国美女", "台湾美女", "日本美女", "欧美美女", "泰国美女"),
+        regionList,
     )
+
+    private fun getRegionList(): Array<String> {
+        return if (Locale.getDefault().equals("zh")) {
+            arrayOf("全部", "国产美女", "韩国美女", "台湾美女", "日本美女", "欧美美女", "泰国美女")
+        } else {
+            arrayOf("All", "Chinese beauty", "Korean beauty", "Taiwanese beauty", "Japanese beauty", "European and American beauty", "Thailand beauty")
+        }
+    }
 
     private fun String.pageNumber() = numberRegex.findAll(this).last().value.toInt()
 
