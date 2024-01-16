@@ -6,7 +6,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
 
-class ManhuaES : Madara("Manhua ES", "https://manhuaes.com", "en") {
+class ManhuaES : Madara("Manhua ES", "https://manhuaaz.com", "en") {
 
     // The website does not flag the content.
     override val filterNonMangaItems = false
