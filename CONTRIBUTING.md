@@ -754,3 +754,4 @@ Please **do test your changes by compiling it through Android Studio** before su
 - Add the `isNsfw = true` flag in `build.gradle` when appropriate
 - Explicitly kept the `id` if a source's name or language were changed
 - Test the modifications by compiling and running the extension through Android Studio
+- Have removed `web_hi_res_512.png` when adding a new extension
