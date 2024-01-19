@@ -6,7 +6,7 @@ ext {
     extName = 'Picacomic'
     pkgNameSuffix = 'zh.picacomic'
     extClass = '.Picacomic'
-    extVersionCode = 4
+    extVersionCode = 5
     isNsfw = true
 }
 
