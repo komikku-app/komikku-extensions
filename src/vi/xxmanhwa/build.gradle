@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'XXManhwa'
+    pkgNameSuffix = 'vi.xxmanhwa'
+    extClass = '.XxManhwa'
+    extVersionCode = 1
+    isNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
