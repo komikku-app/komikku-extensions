@@ -4,9 +4,9 @@ apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Pururin'
-    pkgNameSuffix = 'en.pururin'
-    extClass = '.Pururin'
-    extVersionCode = 6
+    pkgNameSuffix = 'all.pururin'
+    extClass = '.PururinFactory'
+    extVersionCode = 7
     isNsfw = true
 }
 
