@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = "ManhuaRock"
+    pkgNameSuffix = 'vi.manhuarock'
+    extClass = ".ManhuaRock"
+    extVersionCode = 10
+}
+
+apply from: "$rootDir/common.gradle"
