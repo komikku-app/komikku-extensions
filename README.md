@@ -9,6 +9,9 @@ This repository contains the available extension catalogues for the [Tachiyomi](
 
 # Recommend App
 
+### [Komikku](https://github.com/cuong-tran/komikku) based mostly on TachiyomiSY:
+* Add built-in and official extensions source to this repo so user can just insatll extensions like before
+
 ### [TachiyomiSY](https://github.com/jobobby04/TachiyomiSY) got all the original Tachiyomi app and more:
 * TachiyomiSY will continue! It will basing the fork on a new Tachiyomi spiritual successor called Mihon.
 * Cool migrate feature allow to migrate multiple mangas at once, very convenient if source's package changes or dropped.
@@ -52,6 +55,8 @@ If you're not using any of the above fork then manually download and update exte
 
 
 # Usage
+
+[Getting started](https://keiyoushi.github.io/docs/guides/getting-started#adding-the-extension-repo)
 
 Extension sources can be downloaded, installed, and uninstalled via the main Tachiyomi app. They are installed and uninstalled like regular apps, in `.apk` format.
 
