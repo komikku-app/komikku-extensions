@@ -2,7 +2,7 @@ package eu.kanade.tachiyomi.extension.en.asurascansus
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 
-class AsuraScansUs : Madara("Asura Scans.us", "https://asurascans.us", "en") {
+class AsuraScansUs : Madara("Asura Scans.us (unoriginal)", "https://asurascans.us", "en") {
     // Redirected from: https://mangagoyaoi.com
     override val useNewChapterEndpoint = true
 

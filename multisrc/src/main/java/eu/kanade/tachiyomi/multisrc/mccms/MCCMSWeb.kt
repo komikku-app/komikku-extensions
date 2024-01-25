@@ -13,7 +13,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.select.Evaluator
 import rx.Observable
 
-// https://github.com/cuong-tran/tachiyomi-extensions/blob/e0b4fcbce8aa87742da22e7fa60b834313f53533/multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/mccms/MCCMS.kt
+// https://github.com/tachiyomiorg/tachiyomi-extensions/blob/e0b4fcbce8aa87742da22e7fa60b834313f53533/multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/mccms/MCCMS.kt
 open class MCCMSWeb(
     name: String,
     baseUrl: String,

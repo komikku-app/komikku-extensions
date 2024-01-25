@@ -222,7 +222,7 @@ class AllAnime : ConfigurableSource, HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        throw UnsupportedOperationException()
+        throw UnsupportedOperationException("Not used")
     }
 
     override fun getChapterUrl(chapter: SChapter): String {
