@@ -20,6 +20,7 @@ class WPComicsGenerator : ThemeSourceGenerator {
         SingleLang("NhatTruyen", "https://nhattruyento.com", "vi", isNsfw = true, overrideVersionCode = 15),
         // Original website: https://www.nhattruyens.com
         SingleLang("NhatTruyenS", "https://nhattruyens.com", "vi", isNsfw = true, overrideVersionCode = 1),
+        SingleLang("TruyenChon (Dead)", "http://truyenchon.com", "vi", overrideVersionCode = 3, className = "TruyenChon"),
         SingleLang("XOXO Comics", "https://xoxocomic.com", "en", className = "XoxoComics", overrideVersionCode = 3),
     )
 
