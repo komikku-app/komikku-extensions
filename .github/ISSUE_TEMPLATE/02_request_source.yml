@@ -45,14 +45,10 @@ body:
       label: Acknowledgements
       description: Your issue will be closed if you haven't done these steps.
       options:
-        - label: I have checked that the extension does not already exist on the [website extensions list](https://tachiyomi.org/extensions/) or the app.
-          required: true
-        - label: I have checked that the extension is not on [the removed sources list](https://github.com/cuong-tran/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md).
+        - label: I have checked that the extension does not already exist by searching the [GitHub repository](https://github.com/cuong-tran/tachiyomi-extensions/) and verified it does not appear in the code base.
           required: true
         - label: I have searched the existing issues and this is a new ticket, **NOT** a duplicate or related to another open or closed issue.
           required: true
-        - label: I have checked that the extension does not already exist by searching the [GitHub repository](https://github.com/cuong-tran/tachiyomi-extensions/) and verified it does not appear in the code base.
-          required:
         - label: I have written a meaningful title with the source name.
           required: true
         - label: I have admitted that I am a clown by having checked this box, as I have not read these acknowledgements.

@@ -3,7 +3,7 @@ name: Mirror Sync
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "master" ]
   workflow_dispatch: # Manual dispatch
   schedule:
     - cron: "0 */8 * * *"

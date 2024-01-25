@@ -2,9 +2,9 @@ name: Issue moderator
 
 on:
   issues:
-    types: [opened, edited, reopened]
+    types: [ opened, edited, reopened ]
   issue_comment:
-    types: [created]
+    types: [ created ]
 
 jobs:
   autoclose:
@@ -41,11 +41,6 @@ jobs:
             [
               {
                 "type": "body",
-                "regex": ".*DELETE THIS SECTION IF YOU HAVE READ AND ACKNOWLEDGED IT.*",
-                "message": "The acknowledgment section was not removed."
-              },
-              {
-                "type": "body",
                 "regex": ".*\\* (Tachiyomi version|Android version|Device): \\?.*",
                 "message": "Requested information in the template was not filled out."
               },
@@ -69,37 +64,9 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(?:fail(?:ed|ure|s|ing)?|can\\s*(?:no|')?t|(?:not|un)(?:.*able)?|(?<!n[o']?t )blocked by|error) (?:to )?.*(?:install|update(?:d|ing)?)?(?: extensions?)?",
+                "regex": ".*(?:fail(?:ed|ure|s|ing)?|can\\s*(?:no|')?t|(?:not|un)(?:.*able)?|(?<!n[o']?t )blocked by|error) (?:to )?.*(?:install|update(?:d|ing)?)(?: extensions?)?",
                 "ignoreCase": true,
                 "message": "Uninstall the extension before updating. If that does not work, uninstall it from your device's settings by navigating to your device's Settings -> Apps and uninstall it from there by looking for **Tachiyomi: <extension name>**.\n\nThis is usually caused your previous extension having a different signature from the updated extension, making Android refuse to update it."
-              },
-              {
-                "type": "both",
-                "regex": ".*(hq\\s*dragon|manga\\s*host|supermangas|superhentais|union\\s*mangas|yes\\s*mangas|manhuascan|manhwahot|leitor\\.?net|manga\\s*livre|tsuki\\s*mangas|manga\\s*yabu|mangas\\.in|mangas\\.pw|hentaikai|toptoon\\+?|colamanhua|mangadig|hitomi\\.la|copymanga|neox|nexo|1manga\\.co|mangafox\\.fun|mangahere\\.onl|mangakakalot\\.fun|manganel(?!o)|mangaonline\\.fun|mangatoday|manga\\.town|onemanga\\.info|koushoku|ksk\\.moe|comikey|leercapitulo|c[uứ]u\\s*truy[eệ]n|day\\s*comics?|constellar\\s*scans|mode\\s*scanlator|bakai|japscan|izakaya|blackout\\s*comics|anchira).*",
-                "ignoreCase": true,
-                "labels": ["invalid"],
-                "message": "{match} will not be added back as it is too difficult to maintain. Read [this](https://github.com/cuong-tran/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
-              },
-              {
-                "type": "both",
-                "regex": ".*(komiktap|gourmet\\s*scans|mangawow|hikari\\s*scans|knightnoscanlations|mangasy|nartag|xxx\\s*yaoi|luminous|hunters\\s*scan|reset(?:\\s*|-)scan|astra\\s*scans|manga(?:-|\\s*)pro|shinobiscans|plot ?twist ?no ?fansub(?: ?scans?)?|plot-twistnf-scans(?:\\.com)?|mhscans|aresmanga|realm ?scans?|mono ?manga|dat(?:\\s*|-)?gar\\s*scan|remangas|moon ?daisy(?: scans?)?).*",
-                "ignoreCase": true,
-                "labels": ["invalid"],
-                "message": "{match} will not be added back as the scanlator team has requested it to be removed. Read [this](https://github.com/cuong-tran/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
-              },
-              {
-                "type": "both",
-                "regex": ".*(slime\\s*read).*",
-                "ignoreCase": true,
-                "labels": ["invalid"],
-                "message": "{match} will not be added as they have relations to the Mangá Livre team. Read [this](https://github.com/cuong-tran/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
-              },
-              {
-                "type": "both",
-                "regex": ".*(1st\\s*kiss\\s*manga|bato\\.?to|mangadex|newtoki|manatoki|s2manga).*",
-                "ignoreCase": true,
-                "labels": ["invalid"],
-                "message": "{match} will not be added back as it has been removed due to legal reasons. Read [this](https://github.com/cuong-tran/tachiyomi-extensions/blob/master/REMOVED_SOURCES.md) for more information."
               }
             ]
           auto-close-ignore-label: do-not-autoclose
