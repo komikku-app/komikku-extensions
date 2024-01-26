@@ -6,9 +6,10 @@ import java.util.Locale
 
 class Zinmanhwa : Madara(
     "Zinmanga.io",
-    "https://zinmanhwa.io",     // original URL: https://zinmanhwa.com
+    "https://zinmanhwa.io",
     "en",
     dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US),
 ) {
+    // Redirected from URL: https://zinmanhwa.com
     override val id = 1971029352586269399
 }
