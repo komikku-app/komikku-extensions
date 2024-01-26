@@ -30,6 +30,7 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
@@ -67,7 +68,7 @@ class ReaperScans : ParsedHttpSource() {
                 title = it.text()
                 setUrlWithoutDomain(it.attr("href"))
             }
-            thumbnail_url = element.select("img").first()?.imgAttr()
+            thumbnail_url = element.select("img").imgAttr()
         }
     }
 
@@ -84,7 +85,7 @@ class ReaperScans : ParsedHttpSource() {
                 title = it.text().trim()
                 setUrlWithoutDomain(it.attr("href"))
             }
-            thumbnail_url = element.parent()?.parent()?.parent()?.parent()?.select("img")?.first()?.imgAttr()
+            thumbnail_url = element.parent()?.parent()?.parent()?.parent()?.select("img")?.imgAttr()
         }
     }
 
@@ -166,7 +167,7 @@ class ReaperScans : ParsedHttpSource() {
     // Details
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
-            thumbnail_url = document.select("div > img").first()!!.imgAttr()
+            thumbnail_url = document.select("div > img").imgAttr()
             title = document.select("h1").first()!!.text()
 
             status = when (document.select("dt:contains(Release Status)").next().first()!!.text()) {
@@ -332,6 +333,8 @@ class ReaperScans : ParsedHttpSource() {
         hasAttr("data-cfsrc") -> attr("abs:data-cfsrc")
         else -> attr("abs:src")
     }
+
+    private fun Elements.imgAttr(): String = this.first()!!.imgAttr()
 
     // Unused
     override fun searchMangaNextPageSelector() = throw UnsupportedOperationException()
