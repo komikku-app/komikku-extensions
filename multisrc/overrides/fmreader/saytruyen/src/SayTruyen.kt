@@ -8,7 +8,13 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
 import org.jsoup.nodes.Document
 
-class SayTruyen : FMReader("Say Truyen", "https://saytruyenmoi.com", "vi") {
+/**
+ * URL history:
+ *   - Latest: https://saytruyenmoi.com
+ *   - Previous:
+ *    - https://saytruyenvip.com
+ */
+class SayTruyen : FMReader("Say Truyen (Dead)", "https://saytruyenmoi.com", "vi") {
     override fun mangaDetailsParse(document: Document): SManga {
         val info = document.select("div.row").first()!!
         return SManga.create().apply {
