@@ -4,7 +4,7 @@ import eu.kanade.tachiyomi.multisrc.sinmh.SinMH
 import eu.kanade.tachiyomi.source.model.Page
 import org.jsoup.nodes.Document
 
-class Imitui : SinMH("爱米推漫画", "https://www.imitui.com") {
+class Imitui : SinMH("爱米推漫画 (Dead)", "https://www.imitui.com") {
 
     override fun chapterListSelector() = ".chapter-body li > a:not([href^=/comic/app/])"
 

@@ -16,12 +16,11 @@ class SinMHGenerator : ThemeSourceGenerator {
             sourceName = "古风漫画网",
             overrideVersionCode = 6,
         ),
-        SingleLang(
-            name = "Imitui Manhua",
+        SingleLang( // This site blocks IP outside China, now only has movies
+            name = "Imitui Manhua (Dead)",
             baseUrl = "https://www.imitui.com",
             lang = "zh",
             className = "Imitui",
-            sourceName = "爱米推漫画",
             overrideVersionCode = 3,
         ),
         SingleLang( // This site blocks IP outside China
