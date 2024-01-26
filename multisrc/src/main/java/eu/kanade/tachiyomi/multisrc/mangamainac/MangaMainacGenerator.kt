@@ -14,7 +14,7 @@ class MangaMainacGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang("Read Boku No Hero Academia Manga Online", "https://w23.readheroacademia.com/", "en"),
         SingleLang("Read One Punch Man Manga Online", "https://w23.readonepunchman.net/", "en", overrideVersionCode = 1),
-        SingleLang("Read Solo Leveling (Dead)", "https://mysololeveling.com/", "en", overrideVersionCode = 1, className = "ReadSoloLeveling"),
+        SingleLang("Read Solo Leveling", "https://mysololeveling.com/", "en", overrideVersionCode = 1, sourceName = "ReadSoloLeveling (Dead)"),
         SingleLang("Read Berserk Manga Online", "https://berserkmanga.net/", "en"),
         SingleLang("Read Domestic Girlfriend Manga", "https://domesticgirlfriend.net/", "en"),
         SingleLang("Read Black Clover Manga", "https://w6.blackclovermanga2.com/", "en", overrideVersionCode = 1),
