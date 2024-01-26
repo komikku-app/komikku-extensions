@@ -5,8 +5,10 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class Zinmanhwa : Madara(
-    "Zinmanhwa",
-    "https://zinmanhwa.com",
+    "Zinmanga.io",
+    "https://zinmanhwa.io",     // original URL: https://zinmanhwa.com
     "en",
     dateFormat = SimpleDateFormat("dd/MM/yy", Locale.US),
-)
+) {
+    override val id = 1971029352586269399
+}
