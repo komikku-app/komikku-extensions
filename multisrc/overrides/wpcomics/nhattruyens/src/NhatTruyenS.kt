@@ -4,6 +4,13 @@ import eu.kanade.tachiyomi.multisrc.wpcomics.WPComics
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+/**
+ * URL history:
+ *   - Original URL & redirecting: https://nhattruyens.com
+ *   - Latest: https://nhattruyens.com
+ *   - Previous:
+ *    - https://nhattruyens.com
+ */
 class NhatTruyenS : WPComics("NhatTruyenS", "https://nhattruyens.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
     override val popularPath = "truyen-hot"
 

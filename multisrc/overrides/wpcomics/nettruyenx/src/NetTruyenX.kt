@@ -4,7 +4,14 @@ import eu.kanade.tachiyomi.multisrc.wpcomics.WPComics
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class NetTruyenX : WPComics("NetTruyenX", "https://www.nettruyenx.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
+/**
+ * URL history:
+ *   - Original URL & redirecting: https://nettruyenx.com
+ *   - Latest: https://nettruyenx.com
+ *   - Previous:
+ *    - https://nettruyenx.com
+ */
+class NetTruyenX : WPComics("NetTruyenX", "https://nettruyenx.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
     override val popularPath = "truyen-tranh-hot"
     override val replaceSearchPathOld = "/tim-truyen?status=2&"
     override val replaceSearchPathNew = "/truyen-full?"

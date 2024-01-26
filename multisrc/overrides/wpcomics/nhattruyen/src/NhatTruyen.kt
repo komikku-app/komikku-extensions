@@ -4,6 +4,13 @@ import eu.kanade.tachiyomi.multisrc.wpcomics.WPComics
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+/**
+ * URL history:
+ *   - Original URL & redirecting: https://www.nhattruyen.com
+ *   - Latest: https://nhattruyento.com
+ *   - Previous:
+ *    - https://nhattruyenmax.com
+ */
 class NhatTruyen : WPComics("NhatTruyen", "https://nhattruyento.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
     override val searchPath = "the-loai"
 
