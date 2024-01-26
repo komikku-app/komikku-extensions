@@ -49,7 +49,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("AZManhwa", "https://azmanhwa.net", "en"),
         SingleLang("Azora", "https://azoramoon.com", "ar", overrideVersionCode = 7),
         SingleLang("Babel Wuxia", "https://babelwuxia.com", "en", overrideVersionCode = 1),
-        SingleLang("Bakaman", "https://bakaman.net", "th", overrideVersionCode = 1),
+        SingleLang("Bakaman", "https://bakaman.net", "th", overrideVersionCode = 1, isNsfw = true),
         SingleLang("Banana Manga", "https://bananamanga.net", "en", isNsfw = true),
         SingleLang("BarManga", "https://barmanga.com", "es"),
         SingleLang("BestManga", "https://bestmanga.club", "ru", overrideVersionCode = 1),
