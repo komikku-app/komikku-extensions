@@ -70,11 +70,3 @@ Below is a list of known sources that were removed.
 - XXX Yaoi https://github.com/tachiyomiorg/tachiyomi-extensions/issues/9535
 
 ## Removal requested by copyright holders
-
-By request of [Kakao Entertainment](https://www.kakaoent.com/):
-
-- 1st Kiss-Manga
-- Bato.to
-- Mangadex
-- NewToki / ManaToki
-- S2Manga
