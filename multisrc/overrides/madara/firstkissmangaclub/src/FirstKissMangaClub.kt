@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import java.util.concurrent.TimeUnit
 
 class FirstKissMangaClub : Madara(
-    "1stKissManga.Club",
+    "1stKissManga.Club (Dead)",
     "https://1stkissmanga.club",
     "en",
 ) {
