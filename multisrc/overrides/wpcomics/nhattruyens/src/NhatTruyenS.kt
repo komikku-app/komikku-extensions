@@ -9,9 +9,10 @@ import java.util.Locale
  *   - Original URL & redirecting: https://nhattruyens.com
  *   - Latest: https://nhattruyens.com
  *   - Previous:
+ *    - https://nettruyenus.net
  *    - https://nhattruyens.com
  */
-class NhatTruyenS : WPComics("NhatTruyenS", "https://nhattruyens.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
+class NhatTruyenS : WPComics("NhatTruyenS (Bad)", "https://nhattruyens.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
     override val popularPath = "truyen-hot"
 
     override fun getGenreList(): Array<Pair<String?, String>> = arrayOf(
