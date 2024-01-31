@@ -1,5 +1,5 @@
 | Build | Support Server |
-|-------|---------|
+|-------|----------------|
 | [![CI](https://github.com/cuong-tran/tachiyomi-extensions/actions/workflows/build_push.yml/badge.svg?branch=master)](https://github.com/cuong-tran/tachiyomi-extensions/actions/workflows/build_push.yml) | [![Discord](https://img.shields.io/discord/349436576037732353.svg?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/tachiyomi) |
 
 # ![app icon](./.github/readme-images/app-icon.png)Tachiyomi Extensions
@@ -25,6 +25,7 @@ This repo include all previously existed source from Tachiyomi before the remova
 
 ## One-click installation
 One-click installation is only supported by these Tachiyomi versions:
+* Komikku
 * Tachiyomi v0.15.2+
 * Tachiyomi Preview r6404+
 * TachiyomiSY v1.10.0+
@@ -68,9 +69,12 @@ If you prefer to directly download the APK files, they are available via https:/
 
 To request a new source or bug fix, [create an issue](https://github.com/cuong-tran/tachiyomi-extensions/issues/new/choose).
 
-Note that requesting something does not imply that something will be added or fixed in a timely fashion or at all since the work is volunteer-based. Furthermore, some sources may be impossible to do or prohibitively difficult to maintain.
+Please note that creating an issue does not mean that the source will be added or fixed in a timely
+fashion, because the work is volunteer-based. Some sources may also be impossible to do or prohibitively
+difficult to maintain.
 
-If you would like to see a request fulfilled and have the necessary skills to do so, consider contributing! Issues are up-for-grabs for any developer if there is no assigned user already.
+If you would like to see a request fulfilled and have the necessary skills to do so, consider contributing!
+Issues are up-for-grabs for any developer if there is no assigned user already.
 
 # Contributing
 
@@ -100,6 +104,9 @@ It might also be good to read our [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 
 ## Disclaimer
 
-This project is not affiliated with Tachiyomi. Don't ask for help about these extensions at the official support means of Tachiyomi. All credits to the codebase goes to the original contributors.
+This project does not have any affiliation with the content providers available.
+
+This project is not affiliated with Mihon/Tachiyomi. Don't ask for help about these extensions at the
+official support means of Mihon/Tachiyomi. All credits to the codebase goes to the original contributors.
 
 The developer of this application does not have any affiliation with the content providers available.
