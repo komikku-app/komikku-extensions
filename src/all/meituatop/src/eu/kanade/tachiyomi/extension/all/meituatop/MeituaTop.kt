@@ -49,10 +49,10 @@ class MeituaTop : HttpSource() {
         return MangasPage(mangas, hasNextPage)
     }
 
-    // Latest: uses for Feed feature
-    override fun latestUpdatesRequest(page: Int) = popularMangaRequest(page)
+    // Latest
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
 
-    override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
+    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.isNotEmpty()) {

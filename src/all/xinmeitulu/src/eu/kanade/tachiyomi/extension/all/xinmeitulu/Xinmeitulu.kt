@@ -29,12 +29,12 @@ class Xinmeitulu : ParsedHttpSource() {
 
     override val client = network.client.newBuilder().addInterceptor(::contentTypeIntercept).build()
 
-    // Latest : have Latest so we can use Feed features
+    // Latest
 
-    override fun latestUpdatesRequest(page: Int) = popularMangaRequest(page)
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
-    override fun latestUpdatesSelector() = popularMangaSelector()
-    override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
+    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException()
+    override fun latestUpdatesSelector() = throw UnsupportedOperationException()
+    override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException()
 
     // Popular
 
