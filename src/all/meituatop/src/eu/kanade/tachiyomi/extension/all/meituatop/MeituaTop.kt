@@ -49,7 +49,6 @@ class MeituaTop : HttpSource() {
         return MangasPage(mangas, hasNextPage)
     }
 
-    // Latest
     override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
 
     override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException()

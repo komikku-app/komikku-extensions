@@ -50,9 +50,9 @@ class Xinmeitulu : ParsedHttpSource() {
 
     // Search
 
-    override fun searchMangaFromElement(element: Element) = latestUpdatesFromElement(element)
-    override fun searchMangaNextPageSelector() = latestUpdatesNextPageSelector()
-    override fun searchMangaSelector() = latestUpdatesSelector()
+    override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
+    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
+    override fun searchMangaSelector() = popularMangaSelector()
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val filterList = filters.let { if (it.isEmpty()) getFilterList() else it }
 
