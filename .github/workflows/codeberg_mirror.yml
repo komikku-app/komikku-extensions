@@ -17,5 +17,5 @@ jobs:
           fetch-depth: 0
       - uses: pixta-dev/repository-mirroring-action@v1
         with:
-          target_repo_url: "git@codeberg.org:cuong-tran/tachiyomi-extensions.git"
+          target_repo_url: "git@codeberg.org:cuong-tran/komikku-extensions.git"
           ssh_private_key: ${{ secrets.CODEBERG_SSH }}
