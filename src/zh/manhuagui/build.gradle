@@ -1,7 +1,7 @@
 ext {
     extName = 'ManHuaGui'
     extClass = '.Manhuagui'
-    extVersionCode = 19 + 3
+    extVersionCode = 20 + 3
     isNsfw = true
 }
 
@@ -9,4 +9,6 @@ apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(":lib:i18n"))
+    implementation(project(":lib:lzstring"))
+    implementation(project(":lib:unpacker"))
 }
