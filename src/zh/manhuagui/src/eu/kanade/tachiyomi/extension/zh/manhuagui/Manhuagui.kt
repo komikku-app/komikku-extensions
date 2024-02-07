@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.zh.manhuagui
 import android.app.Application
 import android.content.SharedPreferences
 import app.cash.quickjs.QuickJs
+import eu.kanade.tachiyomi.lib.i18n.Intl
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -70,6 +71,15 @@ class Manhuagui(
     private val mobileWebsiteUrl = "https://m.$baseHost"
     private val json: Json by injectLazy()
     private val baseHttpUrl: HttpUrl = baseUrl.toHttpUrl()
+
+    private val intl by lazy {
+        Intl(
+            language = Locale.getDefault().language,
+            baseLanguage = "en",
+            availableLanguages = setOf("en", "zh"),
+            classLoader = this::class.java.classLoader!!,
+        )
+    }
 
     // Add rate limit to fix manga thumbnail load failure
     override val client: OkHttpClient =
@@ -308,7 +318,7 @@ class Manhuagui(
                 document.select("#__VIEWSTATE").first()!!.remove()
             } else {
                 // "You need to enable R18 switch and restart Tachiyomi to read this manga"
-                error(R18_NEED_ENABLE)
+                error(intl["R18_NEED_ENABLE"])
             }
         }
         val latestChapterHref = document.select("div.book-detail > ul.detail-list > li.status > span > a.blue").first()?.attr("href")
@@ -354,11 +364,11 @@ class Manhuagui(
          *      at eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchPresenter$search$1$4.call(GlobalSearchPresenter.kt:34)
          * Parse manga.title here can solve it.
          */
-        manga.title = document.select("div.book-title > h1:nth-child(1)").text().trim()
-        manga.description = document.select("div#intro-all").text().trim()
+        manga.title = document.select("div.book-title > h1:nth-child(1)").text()
+        manga.description = document.select("div#intro-all").text()
         manga.thumbnail_url = document.select("p.hcover > img").attr("abs:src")
-        manga.author = document.select("span:contains(漫画作者) > a , span:contains(漫畫作者) > a").text().trim().replace(" ", ", ")
-        manga.genre = document.select("span:contains(漫画剧情) > a , span:contains(漫畫劇情) > a").text().trim()
+        manga.author = document.select("span:contains(漫画作者) > a , span:contains(漫畫作者) > a").text().replace(" ", ", ")
+        manga.genre = document.select("span:contains(漫画剧情) > a , span:contains(漫畫劇情) > a").text()
             .split(' ').joinToString(transform = ::translateGenre)
         manga.status = when (document.select("div.book-detail > ul.detail-list > li.status > span > span").first()?.text()) {
             "连载中" -> SManga.ONGOING
@@ -393,7 +403,7 @@ class Manhuagui(
         // will always exist if this manga is R18 limited whether R18 verification cookies has been sent or not.
         // But it will not interfere parse mechanism below.
         if (document.select("#erroraudit_show").first() != null && !getShowR18()) {
-            error(R18_NOT_EFFECTIVE) // "R18 setting didn't enabled or became effective"
+            error(intl["R18_NOT_EFFECTIVE"]) // "R18 setting didn't enabled or became effective"
         }
 
         val html = document.html()
@@ -416,10 +426,10 @@ class Manhuagui(
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
         val mainSiteRateLimitPreference = androidx.preference.ListPreference(screen.context).apply {
             key = MAINSITE_RATELIMIT_PREF
-            title = MAINSITE_RATELIMIT_PREF_TITLE
+            title = intl["MAINSITE_RATELIMIT_PREF_TITLE"]
             entries = ENTRIES_ARRAY
             entryValues = ENTRIES_ARRAY
-            summary = MAINSITE_RATELIMIT_PREF_SUMMARY
+            summary = intl["MAINSITE_RATELIMIT_PREF_SUMMARY"]
 
             setDefaultValue(MAINSITE_RATELIMIT_DEFAULT_VALUE)
             setOnPreferenceChangeListener { _, newValue ->
@@ -435,10 +445,10 @@ class Manhuagui(
 
         val imgCDNRateLimitPreference = androidx.preference.ListPreference(screen.context).apply {
             key = IMAGE_CDN_RATELIMIT_PREF
-            title = IMAGE_CDN_RATELIMIT_PREF_TITLE
+            title = intl["IMAGE_CDN_RATELIMIT_PREF_TITLE"]
             entries = ENTRIES_ARRAY
             entryValues = ENTRIES_ARRAY
-            summary = IMAGE_CDN_RATELIMIT_PREF_SUMMARY
+            summary = intl["IMAGE_CDN_RATELIMIT_PREF_SUMMARY"]
 
             setDefaultValue(IMAGE_CDN_RATELIMIT_DEFAULT_VALUE)
             setOnPreferenceChangeListener { _, newValue ->
@@ -455,8 +465,8 @@ class Manhuagui(
         // Simplified/Traditional Chinese version website switch
         val zhHantPreference = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = SHOW_ZH_HANT_WEBSITE_PREF
-            title = SHOW_ZH_HANT_WEBSITE_PREF_TITLE
-            summary = SHOW_ZH_HANT_WEBSITE_PREF_SUMMARY
+            title = intl["SHOW_ZH_HANT_WEBSITE_PREF_TITLE"]
+            summary = intl["SHOW_ZH_HANT_WEBSITE_PREF_SUMMARY"]
 
             setOnPreferenceChangeListener { _, newValue ->
                 try {
@@ -472,8 +482,8 @@ class Manhuagui(
         // R18+ switch
         val r18Preference = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = SHOW_R18_PREF
-            title = SHOW_R18_PREF_TITLE
-            summary = SHOW_R18_PREF_SUMMARY
+            title = intl["SHOW_R18_PREF_TITLE"]
+            summary = intl["SHOW_R18_PREF_SUMMARY"]
 
             setOnPreferenceChangeListener { _, newValue ->
                 try {
@@ -488,8 +498,8 @@ class Manhuagui(
 
         val mirrorURLPreference = androidx.preference.CheckBoxPreference(screen.context).apply {
             key = USE_MIRROR_URL_PREF
-            title = USE_MIRROR_URL_PREF_TITLE
-            summary = USE_MIRROR_URL_PREF_SUMMARY
+            title = intl["USE_MIRROR_URL_PREF_TITLE"]
+            summary = intl["USE_MIRROR_URL_PREF_SUMMARY"]
 
             setDefaultValue(false)
             setOnPreferenceChangeListener { _, newValue ->
@@ -522,106 +532,106 @@ class Manhuagui(
 
     override fun getFilterList() = FilterList(
         SortFilter(
-            SORT_BY,
+            intl["SORT_BY"],
             arrayOf(
-                Pair(SORT_BY_POPULAR, "view"), // Same to popularMangaRequest()
-                Pair(SORT_BY_RELEASE, ""), // Publish date
-                Pair(SORT_BY_UPDATE, "update"),
-                Pair(SORT_BY_RATE, "rate"),
+                Pair(intl["SORT_BY_POPULAR"], "view"), // Same to popularMangaRequest()
+                Pair(intl["SORT_BY_RELEASE"], ""), // Publish date
+                Pair(intl["SORT_BY_UPDATE"], "update"),
+                Pair(intl["SORT_BY_RATE"], "rate"),
             ),
         ),
         LocaleFilter(
-            BY_REGION,
+            intl["BY_REGION"],
             arrayOf(
-                Pair(REGION_ALL, ""), // all
-                Pair(REGION_JAPAN, "japan"),
-                Pair(REGION_HONGKONG, "hongkong"),
-                Pair(REGION_OTHER, "other"),
-                Pair(REGION_EUROPE, "europe"),
-                Pair(REGION_CHINA, "china"),
-                Pair(REGION_KOREA, "korea"),
+                Pair(intl["REGION_ALL"], ""), // all
+                Pair(intl["REGION_JAPAN"], "japan"),
+                Pair(intl["REGION_HONGKONG"], "hongkong"),
+                Pair(intl["REGION_OTHER"], "other"),
+                Pair(intl["REGION_EUROPE"], "europe"),
+                Pair(intl["REGION_CHINA"], "china"),
+                Pair(intl["REGION_KOREA"], "korea"),
             ),
         ),
         GenreFilter(
-            BY_GENRE,
+            intl["BY_GENRE"],
             arrayOf(
-                Pair(GENRE_ALL, ""),
-                Pair(GENRE_rexue, "rexue"),
-                Pair(GENRE_maoxian, "maoxian"),
-                Pair(GENRE_mohuan, "mohuan"),
-                Pair(GENRE_shengui, "shengui"),
-                Pair(GENRE_gaoxiao, "gaoxiao"),
-                Pair(GENRE_mengxi, "mengxi"),
-                Pair(GENRE_aiqing, "aiqing"),
-                Pair(GENRE_kehuan, "kehuan"),
-                Pair(GENRE_mofa, "mofa"),
-                Pair(GENRE_gedou, "gedou"),
-                Pair(GENRE_wuxia, "wuxia"),
-                Pair(GENRE_jizhan, "jizhan"),
-                Pair(GENRE_zhanzheng, "zhanzheng"),
-                Pair(GENRE_jingji, "jingji"),
-                Pair(GENRE_tiyu, "tiyu"),
-                Pair(GENRE_xiaoyuan, "xiaoyuan"),
-                Pair(GENRE_shenghuo, "shenghuo"),
-                Pair(GENRE_lizhi, "lizhi"),
-                Pair(GENRE_lishi, "lishi"),
-                Pair(GENRE_weiniang, "weiniang"),
-                Pair(GENRE_zhainan, "zhainan"),
-                Pair(GENRE_funv, "funv"),
-                Pair(GENRE_danmei, "danmei"),
-                Pair(GENRE_baihe, "baihe"),
-                Pair(GENRE_hougong, "hougong"),
-                Pair(GENRE_zhiyu, "zhiyu"),
-                Pair(GENRE_meishi, "meishi"),
-                Pair(GENRE_tuili, "tuili"),
-                Pair(GENRE_xuanyi, "xuanyi"),
-                Pair(GENRE_kongbu, "kongbu"),
-                Pair(GENRE_sige, "sige"),
-                Pair(GENRE_zhichang, "zhichang"),
-                Pair(GENRE_zhentan, "zhentan"),
-                Pair(GENRE_shehui, "shehui"),
-                Pair(GENRE_yinyue, "yinyue"),
-                Pair(GENRE_wudao, "wudao"),
-                Pair(GENRE_zazhi, "zazhi"),
-                Pair(GENRE_heidao, "heidao"),
+                Pair(intl["GENRE_ALL"], ""),
+                Pair(intl["GENRE_rexue"], "rexue"),
+                Pair(intl["GENRE_maoxian"], "maoxian"),
+                Pair(intl["GENRE_mohuan"], "mohuan"),
+                Pair(intl["GENRE_shengui"], "shengui"),
+                Pair(intl["GENRE_gaoxiao"], "gaoxiao"),
+                Pair(intl["GENRE_mengxi"], "mengxi"),
+                Pair(intl["GENRE_aiqing"], "aiqing"),
+                Pair(intl["GENRE_kehuan"], "kehuan"),
+                Pair(intl["GENRE_mofa"], "mofa"),
+                Pair(intl["GENRE_gedou"], "gedou"),
+                Pair(intl["GENRE_wuxia"], "wuxia"),
+                Pair(intl["GENRE_jizhan"], "jizhan"),
+                Pair(intl["GENRE_zhanzheng"], "zhanzheng"),
+                Pair(intl["GENRE_jingji"], "jingji"),
+                Pair(intl["GENRE_tiyu"], "tiyu"),
+                Pair(intl["GENRE_xiaoyuan"], "xiaoyuan"),
+                Pair(intl["GENRE_shenghuo"], "shenghuo"),
+                Pair(intl["GENRE_lizhi"], "lizhi"),
+                Pair(intl["GENRE_lishi"], "lishi"),
+                Pair(intl["GENRE_weiniang"], "weiniang"),
+                Pair(intl["GENRE_zhainan"], "zhainan"),
+                Pair(intl["GENRE_funv"], "funv"),
+                Pair(intl["GENRE_danmei"], "danmei"),
+                Pair(intl["GENRE_baihe"], "baihe"),
+                Pair(intl["GENRE_hougong"], "hougong"),
+                Pair(intl["GENRE_zhiyu"], "zhiyu"),
+                Pair(intl["GENRE_meishi"], "meishi"),
+                Pair(intl["GENRE_tuili"], "tuili"),
+                Pair(intl["GENRE_xuanyi"], "xuanyi"),
+                Pair(intl["GENRE_kongbu"], "kongbu"),
+                Pair(intl["GENRE_sige"], "sige"),
+                Pair(intl["GENRE_zhichang"], "zhichang"),
+                Pair(intl["GENRE_zhentan"], "zhentan"),
+                Pair(intl["GENRE_shehui"], "shehui"),
+                Pair(intl["GENRE_yinyue"], "yinyue"),
+                Pair(intl["GENRE_wudao"], "wudao"),
+                Pair(intl["GENRE_zazhi"], "zazhi"),
+                Pair(intl["GENRE_heidao"], "heidao"),
             ),
         ),
         ReaderFilter(
-            BY_AUDIENCE,
+            intl["BY_AUDIENCE"],
             arrayOf(
-                Pair(AUDIENCE_ALL, ""),
-                Pair(AUDIENCE_shaonv, "shaonv"),
-                Pair(AUDIENCE_shaonian, "shaonian"),
-                Pair(AUDIENCE_qingnian, "qingnian"),
-                Pair(AUDIENCE_ertong, "ertong"),
-                Pair(AUDIENCE_tongyong, "tongyong"),
+                Pair(intl["AUDIENCE_ALL"], ""),
+                Pair(intl["AUDIENCE_shaonv"], "shaonv"),
+                Pair(intl["AUDIENCE_shaonian"], "shaonian"),
+                Pair(intl["AUDIENCE_qingnian"], "qingnian"),
+                Pair(intl["AUDIENCE_ertong"], "ertong"),
+                Pair(intl["AUDIENCE_tongyong"], "tongyong"),
             ),
         ),
         PublishDateFilter(
-            BY_YEAR,
+            intl["BY_YEAR"],
             arrayOf(
-                Pair(YEAR_ALL, ""),
-                Pair(YEAR_2020, "2020"),
-                Pair(YEAR_2019, "2019"),
-                Pair(YEAR_2018, "2018"),
-                Pair(YEAR_2017, "2017"),
-                Pair(YEAR_2016, "2016"),
-                Pair(YEAR_2015, "2015"),
-                Pair(YEAR_2014, "2014"),
-                Pair(YEAR_2013, "2013"),
-                Pair(YEAR_2012, "2012"),
-                Pair(YEAR_2011, "2011"),
-                Pair(YEAR_2010, "2010"),
-                Pair(YEAR_200x, "200x"),
-                Pair(YEAR_199x, "199x"),
-                Pair(YEAR_198x, "198x"),
-                Pair(YEAR_197x, "197x"),
+                Pair(intl["YEAR_ALL"], ""),
+                Pair(intl["YEAR_2020"], "2020"),
+                Pair(intl["YEAR_2019"], "2019"),
+                Pair(intl["YEAR_2018"], "2018"),
+                Pair(intl["YEAR_2017"], "2017"),
+                Pair(intl["YEAR_2016"], "2016"),
+                Pair(intl["YEAR_2015"], "2015"),
+                Pair(intl["YEAR_2014"], "2014"),
+                Pair(intl["YEAR_2013"], "2013"),
+                Pair(intl["YEAR_2012"], "2012"),
+                Pair(intl["YEAR_2011"], "2011"),
+                Pair(intl["YEAR_2010"], "2010"),
+                Pair(intl["YEAR_200x"], "200x"),
+                Pair(intl["YEAR_199x"], "199x"),
+                Pair(intl["YEAR_198x"], "198x"),
+                Pair(intl["YEAR_197x"], "197x"),
             ),
         ),
         FirstLetterFilter(
-            BY_FIRST_LETER,
+            intl["BY_FIRST_LETER"],
             arrayOf(
-                Pair(FIRST_LETTER_ALL, ""),
+                Pair(intl["FIRST_LETTER_ALL"], ""),
                 Pair("A", "a"),
                 Pair("B", "b"),
                 Pair("C", "c"),
@@ -652,11 +662,11 @@ class Manhuagui(
             ),
         ),
         StatusFilter(
-            BY_PROGRESS,
+            intl["BY_PROGRESS"],
             arrayOf(
-                Pair(PROGRESS_ALL, ""),
-                Pair(PROGRESS_ONGOING, "lianzai"),
-                Pair(PROGRESS_COMPLETED, "wanjie"),
+                Pair(intl["PROGRESS_ALL"], ""),
+                Pair(intl["PROGRESS_ONGOING"], "lianzai"),
+                Pair(intl["PROGRESS_COMPLETED"], "wanjie"),
             ),
         ),
     )
@@ -696,172 +706,49 @@ class Manhuagui(
         pairs: Array<Pair<String, String>>,
     ) : UriPartFilter(displayName, pairs)
 
-    private val isChinese = Locale.getDefault().equals("zh")
-
-    private val SHOW_R18_PREF_TITLE = if (isChinese) "显示R18作品" else "Show R18 contents"
-    private val SHOW_R18_PREF_SUMMARY = if (isChinese) {
-        "请确认您的IP不在漫画柜的屏蔽列表内，例如中国大陆IP。需要重启软件以生效。\n开启后如需关闭，需要到Tachiyomi高级设置内清除Cookies后才能生效。"
-    } else {
-        "Please make sure your IP is not in Manhuagui's ban list, e.g., China mainland IP. Tachiyomi restart required. If you want to close this switch after enabled it, you need to clear cookies in Tachiyomi advanced setting too."
-    }
-
-    private val SHOW_ZH_HANT_WEBSITE_PREF_TITLE = if (isChinese) "使用繁体版网站" else "Use traditional chinese version website"
-    private val SHOW_ZH_HANT_WEBSITE_PREF_SUMMARY = if (isChinese) "需要重启软件以生效。" else "You need to restart Tachiyomi"
-
-    private val USE_MIRROR_URL_PREF_TITLE = if (isChinese) "使用镜像网址" else "Use mirror URL"
-    private val USE_MIRROR_URL_PREF_SUMMARY = if (isChinese) "使用镜像网址: mhgui.com，部分漫画可能无法观看。" else "Use mirror url. Some manga may be hidden."
-
-    private val MAINSITE_RATELIMIT_PREF_TITLE = if (isChinese) "主站每十秒连接数限制" else "Ratelimit permits per 10 seconds for main website"
-    private val MAINSITE_RATELIMIT_PREF_SUMMARY = if (isChinese) {
-        "此值影响更新书架时发起连接请求的数量。调低此值可能减小IP被屏蔽的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s"
-    } else {
-        "This value affects network request amount for updating library. Lower this value may reduce the chance to get IP Ban, but loading speed will be slower too. Tachiyomi restart required."
-    }
-
-    private val IMAGE_CDN_RATELIMIT_PREF_TITLE = if (isChinese) "图片CDN每秒连接数限制" else "Ratelimit permits per second for image CDN"
-    private val IMAGE_CDN_RATELIMIT_PREF_SUMMARY = if (isChinese) {
-        "此值影响加载图片时发起连接请求的数量。调低此值可能减小IP被屏蔽的几率，但加载速度也会变慢。需要重启软件以生效。\n当前值：%s"
-    } else {
-        "This value affects network request amount for loading image. Lower this value may reduce the chance to get IP Ban, but loading speed will be slower too. Tachiyomi restart required."
-    }
-
-    private val R18_NEED_ENABLE = if (isChinese) "您需要打开R18作品显示开关并重启软件才能阅读此作品" else "You need to enable R18 switch and restart Tachiyomi to read this manga"
-    private val R18_NOT_EFFECTIVE = if (isChinese) "R18作品显示开关未开启或未生效" else "R18 setting didn't enabled or became effective"
-
-    private val BY_PROGRESS = if (isChinese) "按进度" else "By progress"
-    private val PROGRESS_ALL = if (isChinese) "全部" else "All"
-    private val PROGRESS_ONGOING = if (isChinese) "连载" else "Ongoing"
-    private val PROGRESS_COMPLETED = if (isChinese) "完结" else "Completed"
-
-    private val SORT_BY = if (isChinese) "排序方式" else "Sort by"
-    private val SORT_BY_POPULAR = if (isChinese) "人气最旺" else "Most view"
-    private val SORT_BY_RELEASE = if (isChinese) "最新发布" else "Latest release"
-    private val SORT_BY_UPDATE = if (isChinese) "最新更新" else "Latest update"
-    private val SORT_BY_RATE = if (isChinese) "评分最高" else "Most rate"
-
-    private val BY_REGION = if (isChinese) "按地区" else "By region"
-    private val REGION_ALL = if (isChinese) "全部" else "All"
-    private val REGION_JAPAN = if (isChinese) "日本" else "Japan"
-    private val REGION_HONGKONG = if (isChinese) "港台" else "Hongkong"
-    private val REGION_OTHER = if (isChinese) "其它" else "Other"
-    private val REGION_EUROPE = if (isChinese) "欧美" else "Europe"
-    private val REGION_CHINA = if (isChinese) "内地" else "China"
-    private val REGION_KOREA = if (isChinese) "韩国" else "Korea"
-
-    private val BY_GENRE = if (isChinese) "按剧情" else "By genre"
-    private val GENRE_ALL = if (isChinese) "全部" else "All"
-    private val GENRE_rexue = translateGenre("热血")
-    private val GENRE_maoxian = translateGenre("冒险")
-    private val GENRE_mohuan = translateGenre("魔幻")
-    private val GENRE_shengui = translateGenre("神鬼")
-    private val GENRE_gaoxiao = translateGenre("搞笑")
-    private val GENRE_mengxi = translateGenre("萌系")
-    private val GENRE_aiqing = translateGenre("爱情")
-    private val GENRE_kehuan = translateGenre("科幻")
-    private val GENRE_mofa = translateGenre("魔法")
-    private val GENRE_gedou = translateGenre("格斗")
-    private val GENRE_wuxia = translateGenre("武侠")
-    private val GENRE_jizhan = translateGenre("机战")
-    private val GENRE_zhanzheng = translateGenre("战争")
-    private val GENRE_jingji = translateGenre("竞技")
-    private val GENRE_tiyu = translateGenre("体育")
-    private val GENRE_xiaoyuan = translateGenre("校园")
-    private val GENRE_shenghuo = translateGenre("生活")
-    private val GENRE_lizhi = translateGenre("励志")
-    private val GENRE_lishi = translateGenre("历史")
-    private val GENRE_weiniang = translateGenre("伪娘")
-    private val GENRE_zhainan = translateGenre("宅男")
-    private val GENRE_funv = translateGenre("腐女")
-    private val GENRE_danmei = translateGenre("耽美")
-    private val GENRE_baihe = translateGenre("百合")
-    private val GENRE_hougong = translateGenre("后宫")
-    private val GENRE_zhiyu = translateGenre("治愈")
-    private val GENRE_meishi = translateGenre("美食")
-    private val GENRE_tuili = translateGenre("推理")
-    private val GENRE_xuanyi = translateGenre("悬疑")
-    private val GENRE_kongbu = translateGenre("恐怖")
-    private val GENRE_sige = translateGenre("四格")
-    private val GENRE_zhichang = translateGenre("职场")
-    private val GENRE_zhentan = translateGenre("侦探")
-    private val GENRE_shehui = translateGenre("社会")
-    private val GENRE_yinyue = translateGenre("音乐")
-    private val GENRE_wudao = translateGenre("舞蹈")
-    private val GENRE_zazhi = translateGenre("杂志")
-    private val GENRE_heidao = translateGenre("黑道")
-
     private fun translateGenre(it: String): String {
-        if (isChinese) return it
         return when (it) {
-            "热血" -> "Passionate"
-            "冒险" -> "Adventure"
-            "魔幻" -> "Fantasy"
-            "神鬼" -> "Gods and ghosts"
-            "搞笑" -> "Funny"
-            "萌系" -> "Cute"
-            "爱情" -> "Love"
-            "科幻" -> "Science fiction"
-            "魔法" -> "Magic"
-            "格斗" -> "Fighting"
-            "武侠" -> "Martial arts"
-            "机战" -> "Aircraft warfare"
-            "战争" -> "War"
-            "竞技" -> "Sports"
-            "体育" -> "Physical education"
-            "校园" -> "Campus"
-            "生活" -> "Life"
-            "励志" -> "Inspirational"
-            "历史" -> "History"
-            "伪娘" -> "Femboy"
-            "宅男" -> "Otaku"
-            "腐女" -> "Fujoshi"
-            "耽美" -> "Boys love"
-            "百合" -> "Lily"
-            "后宫" -> "Harem"
-            "治愈" -> "Cure"
-            "美食" -> "Gourmet food"
-            "推理" -> "Reasoning"
-            "悬疑" -> "Suspense"
-            "恐怖" -> "Fear"
-            "四格" -> "4-panel strip"
-            "职场" -> "Workplace"
-            "侦探" -> "Detective"
-            "社会" -> "Society"
-            "音乐" -> "Music"
-            "舞蹈" -> "Dance"
-            "杂志" -> "Magazine"
-            "黑道" -> "Underworld"
+            "热血" -> intl["GENRE_rexue"]
+            "冒险" -> intl["GENRE_maoxian"]
+            "魔幻" -> intl["GENRE_mohuan"]
+            "神鬼" -> intl["GENRE_shengui"]
+            "搞笑" -> intl["GENRE_gaoxiao"]
+            "萌系" -> intl["GENRE_mengxi"]
+            "爱情" -> intl["GENRE_aiqing"]
+            "科幻" -> intl["GENRE_kehuan"]
+            "魔法" -> intl["GENRE_mofa"]
+            "格斗" -> intl["GENRE_gedou"]
+            "武侠" -> intl["GENRE_wuxia"]
+            "机战" -> intl["GENRE_jizhan"]
+            "战争" -> intl["GENRE_zhanzheng"]
+            "竞技" -> intl["GENRE_jingji"]
+            "体育" -> intl["GENRE_tiyu"]
+            "校园" -> intl["GENRE_xiaoyuan"]
+            "生活" -> intl["GENRE_shenghuo"]
+            "励志" -> intl["GENRE_lizhi"]
+            "历史" -> intl["GENRE_lishi"]
+            "伪娘" -> intl["GENRE_weiniang"]
+            "宅男" -> intl["GENRE_zhainan"]
+            "腐女" -> intl["GENRE_funv"]
+            "耽美" -> intl["GENRE_danmei"]
+            "百合" -> intl["GENRE_baihe"]
+            "后宫" -> intl["GENRE_hougong"]
+            "治愈" -> intl["GENRE_zhiyu"]
+            "美食" -> intl["GENRE_meishi"]
+            "推理" -> intl["GENRE_tuili"]
+            "悬疑" -> intl["GENRE_xuanyi"]
+            "恐怖" -> intl["GENRE_kongbu"]
+            "四格" -> intl["GENRE_sige"]
+            "职场" -> intl["GENRE_zhichang"]
+            "侦探" -> intl["GENRE_zhentan"]
+            "社会" -> intl["GENRE_shehui"]
+            "音乐" -> intl["GENRE_yinyue"]
+            "舞蹈" -> intl["GENRE_wudao"]
+            "杂志" -> intl["GENRE_zazhi"]
+            "黑道" -> intl["GENRE_heidao"]
             else -> it
         }
     }
-
-    private val BY_AUDIENCE = if (isChinese) "按受众" else "By audience"
-    private val AUDIENCE_ALL = if (isChinese) "全部" else "All"
-    private val AUDIENCE_shaonv = if (isChinese) "少女" else "Girl"
-    private val AUDIENCE_shaonian = if (isChinese) "少年" else "Juvenile"
-    private val AUDIENCE_qingnian = if (isChinese) "青年" else "Youth"
-    private val AUDIENCE_ertong = if (isChinese) "儿童" else "Child"
-    private val AUDIENCE_tongyong = if (isChinese) "通用" else "Universal"
-
-    private val BY_YEAR = if (isChinese) "按年份" else "By year"
-    private val YEAR_ALL = if (isChinese) "全部" else "All"
-    private val YEAR_2020 = if (isChinese) "2020年" else "2020"
-    private val YEAR_2019 = if (isChinese) "2019年" else "2019"
-    private val YEAR_2018 = if (isChinese) "2018年" else "2018"
-    private val YEAR_2017 = if (isChinese) "2017年" else "2017"
-    private val YEAR_2016 = if (isChinese) "2016年" else "2016"
-    private val YEAR_2015 = if (isChinese) "2015年" else "2015"
-    private val YEAR_2014 = if (isChinese) "2014年" else "2014"
-    private val YEAR_2013 = if (isChinese) "2013年" else "2013"
-    private val YEAR_2012 = if (isChinese) "2012年" else "2012"
-    private val YEAR_2011 = if (isChinese) "2011年" else "2011"
-    private val YEAR_2010 = if (isChinese) "2010年" else "2010"
-    private val YEAR_200x = if (isChinese) "00年代" else "20s"
-    private val YEAR_199x = if (isChinese) "90年代" else "90s"
-    private val YEAR_198x = if (isChinese) "80年代" else "80s"
-    private val YEAR_197x = if (isChinese) "更早" else "Earlier"
-
-    private val BY_FIRST_LETER = if (isChinese) "按字母" else "By first leter"
-    private val FIRST_LETTER_ALL = if (isChinese) "全部" else "All"
 
     companion object {
         private const val SHOW_R18_PREF = "showR18Default"
