@@ -1,15 +1,18 @@
-name: CI
+name: Build push
 
 on:
   push:
     branches:
       - master
+      - merge-keiyoushi
     paths:
       - '**'
       - '!**.md'
       - '!.github/**'
       - '.github/scripts/**'
       - '.github/workflows/build_push.yml'
+  # Manual trigger
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}
@@ -79,7 +82,7 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.multisrcMatrix) }}
     steps:
-      - name: Checkout master branch
+      - name: Checkout ${{ github.ref_name }} branch
         uses: actions/checkout@v4
 
       - name: Set up JDK
@@ -127,7 +130,7 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.individualMatrix) }}
     steps:
-      - name: Checkout master branch
+      - name: Checkout ${{ github.ref_name }} branch
         uses: actions/checkout@v4
 
       - name: Set up JDK
@@ -182,15 +185,12 @@ jobs:
           java-version: 17
           distribution: temurin
 
-      - name: Checkout master branch
+      - name: Checkout ${{ github.ref_name }} branch
         uses: actions/checkout@v4
-        with:
-          ref: master
-          path: master
 
       - name: Create repo artifacts
         run: |
-          cd master
+          cd ${{ github.ref_name }}
           python ./.github/scripts/move-apks.py
           INSPECTOR_LINK="$(curl -s "https://api.github.com/repos/keiyoushi/extensions-inspector/releases/latest" | jq -r '.assets[0].browser_download_url')"
           curl -L "$INSPECTOR_LINK" -o ./Inspector.jar
@@ -206,4 +206,4 @@ jobs:
       - name: Deploy repo
         run: |
           cd repo
-          ../master/.github/scripts/commit-repo.sh
+          ../${{ github.ref_name }}/.github/scripts/commit-repo.sh ../${{ github.ref_name }}/repo
