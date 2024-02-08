@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="MangaWorldGenerator" type="JetRunConfigurationType" nameIsGenerated="true">
-    <module name="tachiyomi-extensions.multisrc.main" />
+    <module name="komikku-extensions.multisrc.main" />
     <option name="MAIN_CLASS_NAME" value="eu.kanade.tachiyomi.multisrc.mangaworld.MangaWorldGenerator" />
     <method v="2">
       <option name="Make" enabled="true" />
