@@ -1,0 +1,39 @@
+name: Auto merge keiyoushi
+
+on:
+  schedule:
+    - cron: "0 */8 * * *"
+  workflow_dispatch: # Manual dispatch
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    name: Auto merge keiyoushi
+    if: github.repository == 'cuong-tran/komikku-extensions'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+        with:
+          ref: merge-keiyoushi
+          path: merge-keiyoushi
+          fetch-depth: 0
+          token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
+
+      - name: Merging
+        run: |
+          cd merge-keiyoushi
+          git remote add keiyoushi https://github.com/keiyoushi/extensions-source
+          git fetch keiyoushi
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git merge --no-edit keiyoushi/main
+
+      - name: Push to repo
+        run: |
+          cd merge-keiyoushi
+          git push
