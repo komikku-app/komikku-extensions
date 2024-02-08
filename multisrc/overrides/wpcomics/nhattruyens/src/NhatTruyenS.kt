@@ -1,6 +1,9 @@
 package eu.kanade.tachiyomi.extension.vi.nhattruyens
 
 import eu.kanade.tachiyomi.multisrc.wpcomics.WPComics
+import eu.kanade.tachiyomi.source.model.MangasPage
+import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Response
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -14,6 +17,25 @@ import java.util.Locale
  */
 class NhatTruyenS : WPComics("NhatTruyenS (Bad)", "https://nhattruyens.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
     override val popularPath = "truyen-hot"
+
+    /**
+     * Remove fake-manga ads
+     */
+    override fun searchMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+
+        val mangas = document.select(searchMangaSelector())
+            .filter { element -> element.select("figure > div > a[rel='nofollow']").isNullOrEmpty() }
+            .map { element ->
+                searchMangaFromElement(element)
+            }
+
+        val hasNextPage = searchMangaNextPageSelector()?.let { selector ->
+            document.select(selector).first()
+        } != null
+
+        return MangasPage(mangas, hasNextPage)
+    }
 
     override fun getGenreList(): Array<Pair<String?, String>> = arrayOf(
         null to "Tất cả",
