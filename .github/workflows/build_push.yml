@@ -187,6 +187,8 @@ jobs:
 
       - name: Checkout ${{ github.ref_name }} branch
         uses: actions/checkout@v4
+        with:
+          path: ${{ github.ref_name }}
 
       - name: Create repo artifacts
         run: |
