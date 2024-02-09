@@ -208,4 +208,4 @@ jobs:
       - name: Deploy repo
         run: |
           cd repo
-          ../${{ github.ref_name }}/.github/scripts/commit-repo.sh ../${{ github.ref_name }}/repo
+          ../${{ github.ref_name }}/.github/scripts/commit-repo.sh ../${{ github.ref_name }}/repo/
