@@ -421,6 +421,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("SkyManga.xyz", "https://skymanga.xyz", "en", isNsfw = true, className = "SkyMangaXyz"),
         SingleLang("Sleepy Translations", "https://sleepytranslations.com", "en", overrideVersionCode = 1),
         SingleLang("Solo Leveling", "https://readsololeveling.online", "en"),
+        SingleLang("StoneScape", "https://stonescape.xyz", "en"),
         SingleLang("Sugar Babies", "https://sugarbbscan.com", "en", overrideVersionCode = 2),
         SingleLang("Summanga", "https://summanga.com", "en", isNsfw = true),
         SingleLang("Sunshine Butterfly Scans", "https://sunshinebutterflyscan.com", "en", isNsfw = true, overrideVersionCode = 1),
@@ -489,7 +490,7 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("Comic Arab", "https://comicarab.com", "ar", isNsfw = true, sourceName = "كوميك العرب"),
         SingleLang("3asq", "https://3asq.org", "ar", className = "Manga3asq", sourceName = "مانجا العاشق", overrideVersionCode = 2),
         SingleLang("Mangalek", "https://manga-lek.net", "ar", sourceName = "مانجا ليك", overrideVersionCode = 4),
-        SingleLang("Mangalink", "https://manga-link.net", "ar", sourceName = "ﻣﺎﻧﺠﺎ لينك"),
+        SingleLang("Mangalink", "https://manga-link.com", "ar", sourceName = "ﻣﺎﻧﺠﺎ لينك", overrideVersionCode = 1),
     )
 
     companion object {
