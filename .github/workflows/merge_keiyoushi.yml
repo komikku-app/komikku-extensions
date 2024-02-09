@@ -1,4 +1,4 @@
-name: Auto merge keiyoushi
+name: Merge keiyoushi
 
 on:
   schedule:
@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   auto-merge:
-    name: Auto merge keiyoushi
+    name: Merge keiyoushi
     if: github.repository == 'cuong-tran/komikku-extensions'
     runs-on: ubuntu-latest
 
