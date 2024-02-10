@@ -103,6 +103,7 @@ class Xinmeitulu : ParsedHttpSource() {
             str.replace("拍摄机构：", "${translate("拍摄机构")}: ")
                 .replace("相关编号：", "${translate("相关编号")}: ")
                 .replace("图片数量：", "${translate("图片数量")}: ")
+                .replace("发行日期：", "${translate("发行日期")}: ")
                 .replace("出镜模特：", "${translate("出镜模特")}: ")
                 .replace("别名：", "\n${translate("别名")}: ")
                 .replace("生日：", "\n${translate("生日")}: ")
@@ -122,7 +123,7 @@ class Xinmeitulu : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         setUrlWithoutDomain(element.selectFirst("link[rel=canonical]")!!.attr("abs:href"))
-        name = "Gallery"
+        name = "Gallery" // Recheck how it affect download
     }
 
     override fun pageListParse(document: Document) =
@@ -169,6 +170,7 @@ class Xinmeitulu : ParsedHttpSource() {
             "拍摄机构" -> "Studio"
             "相关编号" -> "Issue number"
             "图片数量" -> "Photos"
+            "发行日期" -> "Release date"
             "出镜模特" -> "Model"
             "别名" -> "Alias"
             "生日" -> "Birthday"
