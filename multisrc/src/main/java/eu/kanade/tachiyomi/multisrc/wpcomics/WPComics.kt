@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.multisrc.wpcomics
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
@@ -12,7 +11,6 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
@@ -101,17 +99,6 @@ abstract class WPComics(
 
             GET(url.toString().replace(replaceSearchPathOld, replaceSearchPathNew), headers)
         }
-    }
-
-    /**
-     * NetTruyen/NhatTruyen redirect back to catalog page if searching query is not found.
-     * That makes both sites always return un-relevant results when searching should return empty.
-     */
-    override fun searchMangaParse(response: Response): MangasPage {
-        if (response.request.url.queryParameter(name = "keyword") == null) {
-            return MangasPage(mangas = listOf(), hasNextPage = false)
-        }
-        return super.searchMangaParse(response)
     }
 
     override fun searchMangaSelector() = "div.items div.item"
