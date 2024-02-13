@@ -27,9 +27,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       individualMatrix: ${{ steps.generate-matrices.outputs.individualMatrix }}
-      multisrcMatrix: ${{ steps.generate-matrices.outputs.multisrcMatrix }}
-    env:
-      CI_MODULE_GEN: true
     steps:
       - name: Clone repo
         uses: actions/checkout@v4
@@ -37,25 +34,12 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v2
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: 17
-          distribution: temurin
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Generate multisrc sources
-        run: ./gradlew :multisrc:generateExtensions
-
       - name: Get number of modules
         run: |
           set -x
-          ./gradlew -q projects | grep '.*extensions\:\(individual\|multisrc\)\:.*\:.*' > projects.txt
+          projects=(src/*/*)
 
-          echo "NUM_INDIVIDUAL_MODULES=$(cat projects.txt | grep '.*\:individual\:.*' | wc -l)" >> $GITHUB_ENV
-          echo "NUM_MULTISRC_MODULES=$(cat projects.txt | grep '.*\:multisrc\:.*' | wc -l)" >> $GITHUB_ENV
+          echo "NUM_INDIVIDUAL_MODULES=${#projects[@]}" >> $GITHUB_ENV
 
       - id: generate-matrices
         name: Create output matrices
@@ -63,65 +47,13 @@ jobs:
         with:
           script: |
             const numIndividualModules = process.env.NUM_INDIVIDUAL_MODULES;
-            const numMultisrcModules = process.env.NUM_MULTISRC_MODULES;
             const chunkSize = process.env.CI_CHUNK_SIZE;
 
             const numIndividualChunks = Math.ceil(numIndividualModules / chunkSize);
-            const numMultisrcChunks = Math.ceil(numMultisrcModules / chunkSize);
 
             console.log(`Individual modules: ${numIndividualModules} (${numIndividualChunks} chunks of ${chunkSize})`);
-            console.log(`Multi-source modules: ${numMultisrcModules} (${numMultisrcChunks} chunks of ${chunkSize})`);
 
             core.setOutput('individualMatrix', { 'chunk': [...Array(numIndividualChunks).keys()] });
-            core.setOutput('multisrcMatrix', { 'chunk': [...Array(numMultisrcChunks).keys()] });
-
-  build_multisrc:
-    name: Build multisrc modules
-    needs: prepare
-    runs-on: ubuntu-latest
-    strategy:
-      matrix: ${{ fromJSON(needs.prepare.outputs.multisrcMatrix) }}
-    steps:
-      - name: Checkout ${{ github.ref_name }} branch
-        uses: actions/checkout@v4
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: 17
-          distribution: temurin
-
-      - name: Prepare signing key
-        run: |
-          echo ${{ secrets.SIGNING_KEY }} | base64 -d > signingkey.jks
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Generate sources from the multi-source library
-        env:
-          CI_MODULE_GEN: "true"
-        run: ./gradlew :multisrc:generateExtensions
-
-      - name: Build extensions (chunk ${{ matrix.chunk }})
-        env:
-          CI_MULTISRC: "true"
-          CI_CHUNK_NUM: ${{ matrix.chunk }}
-          ALIAS: ${{ secrets.ALIAS }}
-          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease
-
-      - name: Upload APKs (chunk ${{ matrix.chunk }})
-        uses: actions/upload-artifact@v4
-        if: github.repository == 'cuong-tran/komikku-extensions'
-        with:
-          name: "multisrc-apks-${{ matrix.chunk }}"
-          path: "**/*.apk"
-          retention-days: 1
-
-      - name: Clean up CI files
-        run: rm signingkey.jks
 
   build_individual:
     name: Build individual modules
@@ -148,7 +80,6 @@ jobs:
 
       - name: Build extensions (chunk ${{ matrix.chunk }})
         env:
-          CI_MULTISRC: "false"
           CI_CHUNK_NUM: ${{ matrix.chunk }}
           ALIAS: ${{ secrets.ALIAS }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -169,7 +100,6 @@ jobs:
   publish_repo:
     name: Publish repo
     needs:
-      - build_multisrc
       - build_individual
     if: github.repository == 'cuong-tran/komikku-extensions'
     runs-on: ubuntu-latest
