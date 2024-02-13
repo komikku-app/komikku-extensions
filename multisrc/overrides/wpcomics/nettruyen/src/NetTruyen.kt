@@ -15,8 +15,7 @@ import java.util.Locale
  *    - https://nettruyen.net
  */
 class NetTruyen : WPComics("NetTruyen", "https://www.nettruyenss.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
-    override val replaceSearchPathOld = "/tim-truyen?status=2&"
-    override val replaceSearchPathNew = "/truyen-full?"
+    override fun String.replaceSearchPath() = replace("/$searchPath?status=2&", "/truyen-full?")
 
     /**
      * NetTruyen/NhatTruyen redirect back to catalog page if searching query is not found.
