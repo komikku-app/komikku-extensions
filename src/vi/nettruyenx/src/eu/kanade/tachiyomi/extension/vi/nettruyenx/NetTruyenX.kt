@@ -13,8 +13,6 @@ import java.util.Locale
  */
 class NetTruyenX : WPComics("NetTruyenX", "https://nettruyenx.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
     override val popularPath = "truyen-tranh-hot"
-    override val replaceSearchPathOld = "/tim-truyen?status=2&"
-    override val replaceSearchPathNew = "/truyen-full?"
 
     override fun getGenreList(): Array<Pair<String?, String>> = arrayOf(
         null to "Tất cả",
