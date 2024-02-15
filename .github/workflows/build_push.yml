@@ -88,7 +88,7 @@ jobs:
 
       - name: Upload APKs (chunk ${{ matrix.chunk }})
         uses: actions/upload-artifact@v4
-        if: github.repository == 'cuong-tran/komikku-extensions'
+        if: "github.repository == 'cuong-tran/komikku-extensions'"
         with:
           name: "individual-apks-${{ matrix.chunk }}"
           path: "**/*.apk"
@@ -101,7 +101,7 @@ jobs:
     name: Publish repo
     needs:
       - build_individual
-    if: github.repository == 'cuong-tran/komikku-extensions'
+    if: "github.repository == 'cuong-tran/komikku-extensions'"
     runs-on: ubuntu-latest
     steps:
       - name: Download APK artifacts
@@ -132,6 +132,8 @@ jobs:
       - name: Checkout repo branch
         uses: actions/checkout@v4
         with:
+          # repository: cuong-tran/komikku-extensions
+          # token: ${{ secrets.BOT_PAT }}
           ref: repo
           path: repo
 

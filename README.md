@@ -1,6 +1,6 @@
 | Build | Support Server |
 |-------|----------------|
-| [![Master](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml/badge.svg?branch=master)](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml) [![Auto](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml/badge.svg?branch=merge-keiyoushi)](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml) | [![Discord](https://img.shields.io/discord/349436576037732353.svg?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/tachiyomi) |
+| Master: [![Master](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml/badge.svg?branch=master)](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml) or Auto: [![Auto](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml/badge.svg?branch=merge-keiyoushi)](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml) | [![Discord](https://img.shields.io/discord/349436576037732353.svg?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/tachiyomi) |
 
 # Tachiyomi/Mihon/Komikku Extensions
 Tachiyomi is a free and open source manga reader for Android 6.0 and above.

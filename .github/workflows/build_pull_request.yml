@@ -72,6 +72,5 @@ jobs:
 
       - name: Build extensions (chunk ${{ matrix.chunk }})
         env:
-          CI_MULTISRC: "false"
           CI_CHUNK_NUM: ${{ matrix.chunk }}
         run: ./gradlew assembleDebug

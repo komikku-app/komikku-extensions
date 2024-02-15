@@ -10,6 +10,7 @@ on:
 
 jobs:
   codeberg:
+    if: "github.repository == 'cuong-tran/komikku-extensions'"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
