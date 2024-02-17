@@ -22,11 +22,12 @@ class NetTruyen : WPComics("NetTruyen", "https://www.nettruyenss.com", "vi", Sim
      * That makes both sites always return un-relevant results when searching should return empty.
      */
     override fun searchMangaParse(response: Response): MangasPage {
-        if (response.request.url.queryParameter(name = "keyword") == null) {
+        if (response.request.url.queryParameter(name = queryParam) == null) {
             return MangasPage(mangas = listOf(), hasNextPage = false)
         }
         return super.searchMangaParse(response)
     }
+
     override fun getGenreList(): Array<Pair<String?, String>> = arrayOf(
         null to "Tất cả",
         "action-95" to "Action",
