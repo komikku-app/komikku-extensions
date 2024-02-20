@@ -51,10 +51,9 @@ class Photos18 : HttpSource(), ConfigurableSource {
             SManga.create().apply {
                 url = link.attr("href").stripLang()
                 title = link.ownText()
-                thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img"))!!.attr("data-src")
+                thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img"))!!.attr("src")
                 genre = cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()
                 status = SManga.COMPLETED
-                initialized = true
             }
         }
         val isLastPage = document.selectFirst(Evaluator.Class("next")).run {
@@ -81,9 +80,13 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
 
-    override fun fetchMangaDetails(manga: SManga): Observable<SManga> = Observable.just(manga)
-
-    override fun mangaDetailsParse(response: Response) = throw UnsupportedOperationException()
+    override fun mangaDetailsParse(response: Response): SManga {
+        val document = response.asJsoup()
+        return SManga.create().apply {
+            thumbnail_url = document.selectFirst("div#content div.imgHolder")!!
+                .selectFirst(Evaluator.Tag("img"))!!.attr("src")
+        }
+    }
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         val chapter = SChapter.create().apply {
@@ -100,7 +103,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
         val document = response.asJsoup()
         val images = document.selectFirst(Evaluator.Id("content"))!!.select(Evaluator.Tag("img"))
         return images.mapIndexed { index, image ->
-            Page(index, imageUrl = image.attr("data-src"))
+            Page(index, imageUrl = image.attr("src"))
         }
     }
 
