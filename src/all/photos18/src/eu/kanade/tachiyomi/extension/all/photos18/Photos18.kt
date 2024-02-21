@@ -23,6 +23,7 @@ import org.jsoup.select.Evaluator
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.net.URLDecoder
 
 class Photos18 : HttpSource(), ConfigurableSource {
     override val name = "Photos18"
@@ -45,6 +46,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
         parseCategories(document)
+        requestKeywords()
         val mangas = document.selectFirst(Evaluator.Id("videos"))!!.children().map {
             val cardBody = it.selectFirst(Evaluator.Class("card-body"))!!
             val link = cardBody.selectFirst(Evaluator.Tag("a"))!!
@@ -117,6 +119,11 @@ class Photos18 : HttpSource(), ConfigurableSource {
         } else {
             CategoryFilter(categories)
         },
+        if (keywords.isEmpty()) {
+            Filter.Header("Tap 'Reset' to load keywords")
+        } else {
+            KeywordFilter(keywords)
+        },
     )
 
     private open class QueryFilter(
@@ -155,6 +162,36 @@ class Photos18 : HttpSource(), ConfigurableSource {
             items.mapTo(this) {
                 val value = it.text().substringBefore(" (")
                 val queryValue = it.selectFirst(Evaluator.Tag("a"))!!.attr("href").substringAfterLast('/')
+                Pair(value, queryValue)
+            }
+        }
+    }
+
+    // TODO: create a new query with selected keywords instead of using queryParams
+    private class KeywordFilter(keywords: List<Pair<String, String>>) : QueryFilter(
+        "Keyword",
+        keywords.map { it.first }.toTypedArray(),
+        "q",
+        keywords.map { it.second }.toTypedArray(),
+    )
+
+    private var keywords: List<Pair<String, String>> = emptyList()
+
+    private fun requestKeywords() {
+        if (keywords.isNotEmpty()) return
+        parseKeywords(
+            client.newCall(GET("$baseUrlWithLang/node/keywords".toHttpUrl(), headers))
+                .execute().asJsoup(),
+        )
+    }
+
+    private fun parseKeywords(document: Document) {
+        val items = document.select("div.content form#keywordForm ~ a.tag")
+        keywords = buildList(items.size + 1) {
+            add(Pair("All", ""))
+            items.mapTo(this) {
+                val value = it.text()
+                val queryValue = URLDecoder.decode(it.attr("href").substringAfterLast('/'), "UTF-8")
                 Pair(value, queryValue)
             }
         }
