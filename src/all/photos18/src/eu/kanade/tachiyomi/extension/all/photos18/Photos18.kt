@@ -64,12 +64,13 @@ class Photos18 : HttpSource(), ConfigurableSource {
         val mangas = document.selectFirst(Evaluator.Id("videos"))!!.children().map {
             val cardBody = it.selectFirst(Evaluator.Class("card-body"))!!
             val link = cardBody.selectFirst(Evaluator.Tag("a"))!!
+            val category = cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()
             SManga.create().apply {
-                url = link.attr("href").stripLang()
+                url = link.attr("href")
                 title = link.ownText()
                 thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img"))!!.attr("src")
-                genre = intl[cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()]
-                description = ""
+                genre = intl[category]
+                description = category
                 status = SManga.COMPLETED
             }
         }
@@ -79,17 +80,22 @@ class Photos18 : HttpSource(), ConfigurableSource {
         return MangasPage(mangas, !isLastPage)
     }
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrlWithLang?sort=created&page=$page".toHttpUrl(), headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrlWithLang/sort/created?page=$page".toHttpUrl(), headers)
 
     override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = baseUrlWithLang.toHttpUrl().newBuilder()
-            .addQueryParameter("q", query)
-            .addQueryParameter("page", page.toString())
+        if (query.isNotBlank())
+            url.addQueryParameter("q", query.trim())
+        url.addQueryParameter("page", page.toString())
 
-        for (filter in filters) {
-            if (filter is QueryFilter) filter.addQueryTo(url)
+        filters.forEach {
+            when (it) {
+                is KeywordFilter -> if (query.isBlank()) it.addQueryTo(url)
+                is QueryFilter -> it.addQueryTo(url)
+                else -> {}
+            }
         }
 
         return GET(url.build(), headers)
@@ -99,10 +105,15 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
+        val category = document.select("nav li.breadcrumb-item:nth-child(2) a")
         return SManga.create().apply {
             thumbnail_url = document.selectFirst("div#content div.imgHolder")!!
                 .selectFirst(Evaluator.Tag("img"))!!.attr("src")
             status = SManga.COMPLETED
+            if (category.toString().contains("href=\"/cat/")) {
+                genre = intl[category.text()]
+                description = category.text()
+            }
         }
     }
 
