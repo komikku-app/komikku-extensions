@@ -14,6 +14,9 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -57,7 +60,6 @@ class Photos18 : HttpSource(), ConfigurableSource {
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
         parseCategories(document)
-        requestKeywords()
         val mangas = document.selectFirst(Evaluator.Id("videos"))!!.children().map {
             val cardBody = it.selectFirst(Evaluator.Class("card-body"))!!
             val link = cardBody.selectFirst(Evaluator.Tag("a"))!!
@@ -124,19 +126,22 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
 
-    override fun getFilterList() = FilterList(
-        SortFilter(),
-        if (categories.isEmpty()) {
-            Filter.Header("Tap 'Reset' to load categories")
-        } else {
-            CategoryFilter(categories)
-        },
-        if (keywords.isEmpty()) {
-            Filter.Header("Tap 'Reset' to load keywords")
-        } else {
-            KeywordFilter(keywords)
-        },
-    )
+    override fun getFilterList(): FilterList {
+        launchIO { fetchKeywords() }
+        return FilterList(
+            SortFilter(),
+            if (categories.isEmpty()) {
+                Filter.Header("Tap 'Reset' to load categories")
+            } else {
+                CategoryFilter(categories)
+            },
+            if (keywordsList.isEmpty()) {
+                Filter.Header("Tap 'Reset' to load keywords")
+            } else {
+                KeywordFilter(keywordsList)
+            },
+        )
+    }
 
     private open class QueryFilter(
         name: String,
@@ -187,19 +192,44 @@ class Photos18 : HttpSource(), ConfigurableSource {
         keywords.map { it.second }.toTypedArray(),
     )
 
-    private var keywords: List<Pair<String, String>> = emptyList()
+    private var keywordsList: List<Pair<String, String>> = emptyList()
 
-    private fun requestKeywords() {
-        if (keywords.isNotEmpty()) return
-        parseKeywords(
-            client.newCall(GET("$baseUrlWithLang/node/keywords".toHttpUrl(), headers))
-                .execute().asJsoup(),
-        )
+    /**
+     * Inner variable to control how much tries the keywords request was called.
+     */
+    private var fetchKeywordsAttempts: Int = 0
+
+    /**
+     * Fetch the keywords from the source to be used in the filters.
+     */
+    private fun fetchKeywords() {
+        if (fetchKeywordsAttempts < 3 && keywordsList.isEmpty()) {
+            try {
+                keywordsList = client.newCall(keywordsRequest()).execute()
+                    .use { parseKeywords(it.asJsoup()) }
+            } catch (_: Exception) {
+            } finally {
+                fetchKeywordsAttempts++
+            }
+        }
     }
 
-    private fun parseKeywords(document: Document) {
+    /**
+     * The request to the search page (or another one) that have the keywords list.
+     */
+    private fun keywordsRequest(): Request {
+        return GET("$baseUrlWithLang/node/keywords".toHttpUrl(), headers)
+    }
+
+    /**
+     * Get the genres from the search page document.
+     *
+     * @param document The search page document
+     */
+
+    private fun parseKeywords(document: Document): List<Pair<String, String>> {
         val items = document.select("div.content form#keywordForm ~ a.tag")
-        keywords = buildList(items.size + 1) {
+        return buildList(items.size + 1) {
             add(Pair("None", ""))
             items.mapTo(this) {
                 val value = it.text()
@@ -208,6 +238,10 @@ class Photos18 : HttpSource(), ConfigurableSource {
             }
         }
     }
+
+    private val scope = CoroutineScope(Dispatchers.IO)
+
+    private fun launchIO(block: () -> Unit) = scope.launch { block() }
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)!!
