@@ -40,7 +40,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
         add("Referer", baseUrl)
     }
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrlWithLang/sort/views?page=$page", headers)
+    override fun popularMangaRequest(page: Int) = GET("$baseUrlWithLang?sort=hits&page=$page".toHttpUrl(), headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
@@ -62,7 +62,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
         return MangasPage(mangas, !isLastPage)
     }
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrlWithLang/?page=$page", headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrlWithLang?sort=created&page=$page".toHttpUrl(), headers)
 
     override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
 
@@ -85,6 +85,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
         return SManga.create().apply {
             thumbnail_url = document.selectFirst("div#content div.imgHolder")!!
                 .selectFirst(Evaluator.Tag("img"))!!.attr("src")
+            status = SManga.COMPLETED
         }
     }
 
