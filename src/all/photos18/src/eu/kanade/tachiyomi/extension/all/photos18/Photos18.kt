@@ -30,6 +30,7 @@ import uy.kohesive.injekt.api.get
 import java.net.URLDecoder
 import java.util.Locale
 
+@Suppress("unused")
 class Photos18 : HttpSource(), ConfigurableSource {
     override val name = "Photos18"
     override val lang = "all"
@@ -67,8 +68,8 @@ class Photos18 : HttpSource(), ConfigurableSource {
                 url = link.attr("href").stripLang()
                 title = link.ownText()
                 thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img"))!!.attr("src")
-                genre = cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()
-                description = intl[cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()]
+                genre = intl[cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()]
+                description = ""
                 status = SManga.COMPLETED
             }
         }
@@ -162,37 +163,40 @@ class Photos18 : HttpSource(), ConfigurableSource {
         state = 2,
     )
 
-    private class CategoryFilter(categories: List<Pair<String, String>>) : QueryFilter(
-        "Category",
-        categories.map { it.first }.toTypedArray(),
-        "category_id",
-        categories.map { it.second }.toTypedArray(),
-    )
+    class Category(val name: String, val value: String)
 
-    private var categories: List<Pair<String, String>> = emptyList()
+    private var categories: List<Category> = emptyList()
+
+    private class CategoryFilter(categories: List<Category>) : QueryFilter(
+        "Category",
+        categories.map { it.name }.toTypedArray(),
+        "category_id",
+        categories.map { it.value }.toTypedArray(),
+    )
 
     private fun parseCategories(document: Document) {
         if (categories.isNotEmpty()) return
         val items = document.selectFirst(Evaluator.Id("w3"))!!.children()
         categories = buildList(items.size + 1) {
-            add(Pair("All", ""))
+            add(Category("All", ""))
             items.mapTo(this) {
-                val value = it.text().substringBefore(" (")
+                val value = it.text().substringBefore(" (").trim()
                 val queryValue = it.selectFirst(Evaluator.Tag("a"))!!.attr("href").substringAfterLast('/')
-                Pair(intl[value], queryValue)
+                Category(intl[value], queryValue)
             }
         }
     }
 
-    // TODO: create a new query with selected keywords instead of using queryParams
-    private class KeywordFilter(keywords: List<Pair<String, String>>) : QueryFilter(
-        "Keyword",
-        keywords.map { it.first }.toTypedArray(),
-        "q",
-        keywords.map { it.second }.toTypedArray(),
-    )
+    class Keyword(val name: String, val value: String)
 
-    private var keywordsList: List<Pair<String, String>> = emptyList()
+    private var keywordsList: List<Keyword> = emptyList()
+
+    private class KeywordFilter(keywords: List<Keyword>) : QueryFilter(
+        "Keyword",
+        keywords.map { it.name }.toTypedArray(),
+        "q",
+        keywords.map { it.value }.toTypedArray(),
+    )
 
     /**
      * Inner variable to control how much tries the keywords request was called.
@@ -227,14 +231,14 @@ class Photos18 : HttpSource(), ConfigurableSource {
      * @param document The search page document
      */
 
-    private fun parseKeywords(document: Document): List<Pair<String, String>> {
+    private fun parseKeywords(document: Document): List<Keyword> {
         val items = document.select("div.content form#keywordForm ~ a.tag")
         return buildList(items.size + 1) {
-            add(Pair("None", ""))
+            add(Keyword("None", ""))
             items.mapTo(this) {
                 val value = it.text()
                 val queryValue = URLDecoder.decode(it.attr("href").substringAfterLast('/'), "UTF-8")
-                Pair(intl[value], queryValue)
+                Keyword(intl[value], queryValue)
             }
         }
     }
