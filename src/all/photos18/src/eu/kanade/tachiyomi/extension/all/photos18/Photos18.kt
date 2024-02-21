@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.all.photos18
 import android.app.Application
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.lib.i18n.Intl
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
@@ -24,6 +25,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.URLDecoder
+import java.util.Locale
 
 class Photos18 : HttpSource(), ConfigurableSource {
     override val name = "Photos18"
@@ -34,6 +36,15 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     private val baseUrlWithLang get() = if (useTrad) baseUrl else "$baseUrl/zh-hans"
     private fun String.stripLang() = removePrefix("/zh-hans")
+
+    private val intl by lazy {
+        Intl(
+            language = Locale.getDefault().language,
+            baseLanguage = "en",
+            availableLanguages = setOf("en", "zh"),
+            classLoader = this::class.java.classLoader!!,
+        )
+    }
 
     override val client = network.client.newBuilder().followRedirects(false).build()
 
@@ -55,6 +66,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
                 title = link.ownText()
                 thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img"))!!.attr("src")
                 genre = cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()
+                description = intl[cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()]
                 status = SManga.COMPLETED
             }
         }
@@ -162,7 +174,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
             items.mapTo(this) {
                 val value = it.text().substringBefore(" (")
                 val queryValue = it.selectFirst(Evaluator.Tag("a"))!!.attr("href").substringAfterLast('/')
-                Pair(value, queryValue)
+                Pair(intl[value], queryValue)
             }
         }
     }
@@ -188,11 +200,11 @@ class Photos18 : HttpSource(), ConfigurableSource {
     private fun parseKeywords(document: Document) {
         val items = document.select("div.content form#keywordForm ~ a.tag")
         keywords = buildList(items.size + 1) {
-            add(Pair("All", ""))
+            add(Pair("None", ""))
             items.mapTo(this) {
                 val value = it.text()
                 val queryValue = URLDecoder.decode(it.attr("href").substringAfterLast('/'), "UTF-8")
-                Pair(value, queryValue)
+                Pair(intl[value], queryValue)
             }
         }
     }
