@@ -60,7 +60,6 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        parseCategories(document)
         val mangas = document.selectFirst(Evaluator.Id("videos"))!!.children().map {
             val cardBody = it.selectFirst(Evaluator.Class("card-body"))!!
             val link = cardBody.selectFirst(Evaluator.Tag("a"))!!
@@ -86,8 +85,9 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = baseUrlWithLang.toHttpUrl().newBuilder()
-        if (query.isNotBlank())
+        if (query.isNotBlank()) {
             url.addQueryParameter("q", query.trim())
+        }
         url.addQueryParameter("page", page.toString())
 
         filters.forEach {
@@ -139,18 +139,19 @@ class Photos18 : HttpSource(), ConfigurableSource {
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
 
     override fun getFilterList(): FilterList {
+        launchIO { fetchCategories() }
         launchIO { fetchKeywords() }
         return FilterList(
             SortFilter(),
-            if (categories.isEmpty()) {
+            if (categoryList.isEmpty()) {
                 Filter.Header("Tap 'Reset' to load categories")
             } else {
-                CategoryFilter(categories)
+                CategoryFilter(categoryList)
             },
-            if (keywordsList.isEmpty()) {
+            if (keywordList.isEmpty()) {
                 Filter.Header("Tap 'Reset' to load keywords")
             } else {
-                KeywordFilter(keywordsList)
+                KeywordFilter(keywordList)
             },
         )
     }
@@ -176,7 +177,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     class Category(val name: String, val value: String)
 
-    private var categories: List<Category> = emptyList()
+    private var categoryList: List<Category> = emptyList()
 
     private class CategoryFilter(categories: List<Category>) : QueryFilter(
         "Category",
@@ -185,10 +186,41 @@ class Photos18 : HttpSource(), ConfigurableSource {
         categories.map { it.value }.toTypedArray(),
     )
 
-    private fun parseCategories(document: Document) {
-        if (categories.isNotEmpty()) return
+    /**
+     * Inner variable to control how much tries the categories request was called.
+     */
+    private var fetchCategoriesAttempts: Int = 0
+
+    /**
+     * Fetch the categories from the source to be used in the filters.
+     */
+    private fun fetchCategories() {
+        if (fetchCategoriesAttempts < 3 && categoryList.isEmpty()) {
+            try {
+                categoryList = client.newCall(categoriesRequest()).execute()
+                    .use { parseCategories(it.asJsoup()) }
+            } catch (_: Exception) {
+            } finally {
+                fetchCategoriesAttempts++
+            }
+        }
+    }
+
+    /**
+     * The request to the search page (or another one) that have the categories list.
+     */
+    private fun categoriesRequest(): Request {
+        return GET(baseUrlWithLang.toHttpUrl(), headers)
+    }
+
+    /**
+     * Get the categories from the search page document.
+     *
+     * @param document The search page document
+     */
+    private fun parseCategories(document: Document): List<Category> {
         val items = document.selectFirst(Evaluator.Id("w3"))!!.children()
-        categories = buildList(items.size + 1) {
+        return buildList(items.size + 1) {
             add(Category("All", ""))
             items.mapTo(this) {
                 val value = it.text().substringBefore(" (").trim()
@@ -200,7 +232,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     class Keyword(val name: String, val value: String)
 
-    private var keywordsList: List<Keyword> = emptyList()
+    private var keywordList: List<Keyword> = emptyList()
 
     private class KeywordFilter(keywords: List<Keyword>) : QueryFilter(
         "Keyword",
@@ -218,9 +250,9 @@ class Photos18 : HttpSource(), ConfigurableSource {
      * Fetch the keywords from the source to be used in the filters.
      */
     private fun fetchKeywords() {
-        if (fetchKeywordsAttempts < 3 && keywordsList.isEmpty()) {
+        if (fetchKeywordsAttempts < 3 && keywordList.isEmpty()) {
             try {
-                keywordsList = client.newCall(keywordsRequest()).execute()
+                keywordList = client.newCall(keywordsRequest()).execute()
                     .use { parseKeywords(it.asJsoup()) }
             } catch (_: Exception) {
             } finally {
@@ -237,11 +269,10 @@ class Photos18 : HttpSource(), ConfigurableSource {
     }
 
     /**
-     * Get the genres from the search page document.
+     * Get the keywords from the search page document.
      *
      * @param document The search page document
      */
-
     private fun parseKeywords(document: Document): List<Keyword> {
         val items = document.select("div.content form#keywordForm ~ a.tag")
         return buildList(items.size + 1) {
