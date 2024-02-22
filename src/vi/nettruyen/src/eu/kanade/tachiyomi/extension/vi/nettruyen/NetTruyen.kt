@@ -9,12 +9,13 @@ import java.util.Locale
 /**
  * URL history:
  *   - Original URL & redirecting: https://www.nettruyen.com
- *   - Latest: https://www.nettruyenss.com
+ *   - Latest: https://www.nettruyenbb.com
  *   - Previous:
+ *    - https://www.nettruyenss.com
  *    - https://www.nettruyenclub.com
  *    - https://nettruyen.net
  */
-class NetTruyen : WPComics("NetTruyen", "https://www.nettruyenss.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
+class NetTruyen : WPComics("NetTruyen", "https://www.nettruyenbb.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
     override fun String.replaceSearchPath() = replace("/$searchPath?status=2&", "/truyen-full?")
 
     /**
