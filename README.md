@@ -1,15 +1,15 @@
 | Build | Support Server |
 |-------|----------------|
-| Master: [![Master](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml/badge.svg?branch=master)](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml) or Auto: [![Auto](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml/badge.svg?branch=merge-keiyoushi)](https://github.com/cuong-tran/komikku-extensions/actions/workflows/build_push.yml) | [![Discord](https://img.shields.io/discord/349436576037732353.svg?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/tachiyomi) |
+| Master: [![Master](https://github.com/komikku-app/komikku-extensions/actions/workflows/build_push.yml/badge.svg?branch=master)](https://github.com/komikku-app/komikku-extensions/actions/workflows/build_push.yml) or Auto: [![Auto](https://github.com/komikku-app/komikku-extensions/actions/workflows/build_push.yml/badge.svg?branch=merge-keiyoushi)](https://github.com/komikku-app/komikku-extensions/actions/workflows/build_push.yml) | [![Discord](https://img.shields.io/discord/349436576037732353.svg?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/tachiyomi) |
 
 # Tachiyomi/Mihon/Komikku Extensions
 Tachiyomi is a free and open source manga reader for Android 6.0 and above.
 
-This repository contains the available extension catalogues for the Tachiyomi/Mihon app and is built-in with [Komikku](https://github.com/cuong-tran/komikku) app.
+This repository contains the available extension catalogues for the Tachiyomi/Mihon app and is built-in with [Komikku](https://github.com/komikku-app/komikku) app.
 
 # Recommend App
 
-### [Komikku](https://github.com/cuong-tran/komikku) based mostly on TachiyomiSY:
+### [Komikku](https://github.com/komikku-app/komikku) based mostly on TachiyomiSY:
 * Add built-in and official extensions source to this repo so user can just insatll extensions like before
 
 ### [TachiyomiSY](https://github.com/jobobby04/TachiyomiSY) got all the original Tachiyomi app and more:
@@ -32,7 +32,7 @@ One-click installation is only supported by these Tachiyomi versions:
 * TachiyomiSY Preview r539+
 * Aniyomi Preview r7443+
 
-Navigate to [the website](https://cuong-tran.github.io/komikku-extensions/) and tap "Add to Tachiyomi", then restart the app.
+Navigate to [the website](https://komikku-app.github.io/komikku-extensions/) and tap "Add to Tachiyomi", then restart the app.
 
 ## TachiyomiAZ
 1. Go to Settings → Browse
@@ -43,7 +43,7 @@ Navigate to [the website](https://cuong-tran.github.io/komikku-extensions/) and 
 ## Manually
 External repositories add additional sources to **Tachiyomi**. You can add external repositories by going to **More** -> **Settings** -> **Browse** and tapping **Extension repos**.
 
-Once there, you can add repositories by inputting this URL: `https://raw.githubusercontent.com/cuong-tran/komikku-extensions/repo/index.min.json`.
+Once there, you can add repositories by inputting this URL: `https://raw.githubusercontent.com/komikku-app/komikku-extensions/repo/index.min.json`.
 
 Once you've added a repository, go to Browse -> Extensions and refresh the extensions list.
 
@@ -52,7 +52,7 @@ You can now tap the download button next to extensions to install them.
 > You may need to [enable third-party installations](https://tachiyomi.org/docs/faq/browse/extensions#enabling-third-party-installations).
 
 ## Others
-If you're not using any of the above fork then manually download and update extensions from the [listing page](https://cuong-tran.github.io/komikku-extensions/extensions/)
+If you're not using any of the above fork then manually download and update extensions from the [listing page](https://komikku-app.github.io/komikku-extensions/extensions/)
 
 
 # Usage
@@ -63,11 +63,11 @@ Extension sources can be downloaded, installed, and uninstalled via the main Tac
 
 ## Downloads
 
-If you prefer to directly download the APK files, they are available via https://tachiyomi.org/extensions/ or directly in this GitHub repository in the [`repo` branch](https://github.com/cuong-tran/komikku-extensions/tree/repo/apk).
+If you prefer to directly download the APK files, they are available via https://tachiyomi.org/extensions/ or directly in this GitHub repository in the [`repo` branch](https://github.com/komikku-app/komikku-extensions/tree/repo/apk).
 
 # Requests
 
-To request a new source or bug fix, [create an issue](https://github.com/cuong-tran/komikku-extensions/issues/new/choose).
+To request a new source or bug fix, [create an issue](https://github.com/komikku-app/komikku-extensions/issues/new/choose).
 
 Please note that creating an issue does not mean that the source will be added or fixed in a timely
 fashion, because the work is volunteer-based. Some sources may also be impossible to do or prohibitively
@@ -80,7 +80,7 @@ Issues are up-for-grabs for any developer if there is no assigned user already.
 
 Contributions are welcome!
 
-Check out the repo's [issue backlog](https://github.com/cuong-tran/komikku-extensions/issues) for source requests and bug reports.
+Check out the repo's [issue backlog](https://github.com/komikku-app/komikku-extensions/issues) for source requests and bug reports.
 
 To get started with development, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
