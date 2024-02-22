@@ -133,7 +133,7 @@ jobs:
       - name: Checkout repo branch
         uses: actions/checkout@v4
         with:
-          repository: komikku-app/komikku-extensions
+          repository: komikku-app/extensions
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: repo
           path: repo
