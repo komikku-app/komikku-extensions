@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.extension.all.photos18
 import android.app.Application
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.lib.i18n.Intl
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
@@ -28,7 +27,6 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.URLDecoder
-import java.util.Locale
 
 @Suppress("unused")
 class Photos18 : HttpSource(), ConfigurableSource {
@@ -40,15 +38,6 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     private val baseUrlWithLang get() = if (useTrad) baseUrl else "$baseUrl/zh-hans"
     private fun String.stripLang() = removePrefix("/zh-hans")
-
-    private val intl by lazy {
-        Intl(
-            language = Locale.getDefault().language,
-            baseLanguage = "en",
-            availableLanguages = setOf("en", "zh"),
-            classLoader = this::class.java.classLoader!!,
-        )
-    }
 
     override val client = network.client.newBuilder().followRedirects(false).build()
 
@@ -68,7 +57,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
                 url = link.attr("href")
                 title = link.ownText()
                 thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img"))!!.attr("src")
-                genre = intl[category]
+                genre = translate(category)
                 description = category
                 status = SManga.COMPLETED
             }
@@ -106,12 +95,15 @@ class Photos18 : HttpSource(), ConfigurableSource {
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
         val category = document.select("nav li.breadcrumb-item:nth-child(2) a")
+
+        // Update entry's details in case language is switched
         return SManga.create().apply {
+            title = document.select("title").text().trim()
             thumbnail_url = document.selectFirst("div#content div.imgHolder")!!
                 .selectFirst(Evaluator.Tag("img"))!!.attr("src")
             status = SManga.COMPLETED
             if (category.toString().contains("href=\"/cat/")) {
-                genre = intl[category.text()]
+                genre = translate(category.text())
                 description = category.text()
             }
         }
@@ -228,7 +220,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
             items.mapTo(this) {
                 val value = it.text().substringBefore(" (").trim()
                 val queryValue = it.selectFirst(Evaluator.Tag("a"))!!.attr("href").substringAfterLast('/')
-                Category(intl[value], queryValue)
+                Category(translate(value), queryValue)
             }
         }
     }
@@ -256,7 +248,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
             items.mapTo(this) {
                 val value = it.text()
                 val queryValue = URLDecoder.decode(it.attr("href").substringAfterLast('/'), "UTF-8")
-                Keyword(intl[value], queryValue)
+                Keyword(translate(value), queryValue)
             }
         }
     }
