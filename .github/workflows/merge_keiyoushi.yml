@@ -12,7 +12,7 @@ concurrency:
 jobs:
   auto-merge:
     name: Merge keiyoushi
-    if: github.repository == 'cuong-tran/komikku-extensions'
+    if: github.repository == 'komikku-app/komikku-extensions'
     runs-on: ubuntu-latest
 
     steps:
