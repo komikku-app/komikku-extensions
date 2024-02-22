@@ -54,7 +54,8 @@ class Photos18 : HttpSource(), ConfigurableSource {
             val link = cardBody.selectFirst(Evaluator.Tag("a"))!!
             val category = cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()
             SManga.create().apply {
-                url = link.attr("href")
+                // stripLang() so both lang (traditional or simplified) will have same entries catalog
+                url = link.attr("href").stripLang()
                 title = link.ownText()
                 thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img"))!!.attr("src")
                 genre = translate(category)
@@ -92,6 +93,10 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
 
+    override fun mangaDetailsRequest(manga: SManga): Request {
+        return GET("$baseUrlWithLang${manga.url}".toHttpUrl(), headers)
+    }
+
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
         val category = document.select("nav li.breadcrumb-item:nth-child(2) a")
@@ -102,7 +107,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
             thumbnail_url = document.selectFirst("div#content div.imgHolder")!!
                 .selectFirst(Evaluator.Tag("img"))!!.attr("src")
             status = SManga.COMPLETED
-            if (category.toString().contains("href=\"/cat/")) {
+            if (category.toString().contains("href=\"(/zh-hans)?/cat/".toRegex())) {
                 genre = translate(category.text())
                 description = category.text()
             }
