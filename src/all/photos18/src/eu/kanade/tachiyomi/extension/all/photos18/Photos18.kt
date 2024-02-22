@@ -219,7 +219,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
      * @param document The search page document
      */
     private fun parseCategories(document: Document): List<Category> {
-        val items = document.selectFirst(Evaluator.Id("w3"))!!.children()
+        val items = document.selectFirst(Evaluator.Id("w2"))!!.children()
         return buildList(items.size + 1) {
             add(Category("All", ""))
             items.mapTo(this) {
