@@ -22,7 +22,7 @@ jobs:
           ref: merge-keiyoushi
           path: merge-keiyoushi
           fetch-depth: 0
-          token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
+          token: ${{ secrets.BOT_PAT }}
 
       - name: Merging
         run: |
