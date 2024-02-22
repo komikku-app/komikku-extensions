@@ -32,7 +32,7 @@ One-click installation is only supported by these Tachiyomi versions:
 * TachiyomiSY Preview r539+
 * Aniyomi Preview r7443+
 
-Navigate to [the website](https://komikku-app.github.io/komikku-extensions/) and tap "Add to Tachiyomi", then restart the app.
+Navigate to [the website](https://komikku-app.github.io/) and tap "Add to Tachiyomi", then restart the app.
 
 ## TachiyomiAZ
 1. Go to Settings → Browse
@@ -43,7 +43,7 @@ Navigate to [the website](https://komikku-app.github.io/komikku-extensions/) and
 ## Manually
 External repositories add additional sources to **Tachiyomi**. You can add external repositories by going to **More** -> **Settings** -> **Browse** and tapping **Extension repos**.
 
-Once there, you can add repositories by inputting this URL: `https://raw.githubusercontent.com/komikku-app/komikku-extensions/repo/index.min.json`.
+Once there, you can add repositories by inputting this URL: `https://raw.githubusercontent.com/komikku-app/extensions/repo/index.min.json`
 
 Once you've added a repository, go to Browse -> Extensions and refresh the extensions list.
 
@@ -52,12 +52,12 @@ You can now tap the download button next to extensions to install them.
 > You may need to [enable third-party installations](https://tachiyomi.org/docs/faq/browse/extensions#enabling-third-party-installations).
 
 ## Others
-If you're not using any of the above fork then manually download and update extensions from the [listing page](https://komikku-app.github.io/komikku-extensions/extensions/)
+If you're not using any of the above fork then manually download and update extensions from the [listing page](https://komikku-app.github.io/extensions/extensions/)
 
 
 # Usage
 
-[Getting started](https://keiyoushi.github.io/docs/guides/getting-started#adding-the-extension-repo)
+[Getting started](https://komikku-app.github.io/docs/guides/getting-started#adding-the-extension-repo)
 
 Extension sources can be downloaded, installed, and uninstalled via the main Tachiyomi app. They are installed and uninstalled like regular apps, in `.apk` format.
 
