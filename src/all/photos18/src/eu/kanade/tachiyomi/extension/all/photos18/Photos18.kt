@@ -140,7 +140,6 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     override fun getFilterList(): FilterList {
         launchIO { fetchCategories() }
-        launchIO { fetchKeywords() }
         return FilterList(
             SortFilter(),
             if (categoryList.isEmpty()) {
@@ -197,8 +196,12 @@ class Photos18 : HttpSource(), ConfigurableSource {
     private fun fetchCategories() {
         if (fetchCategoriesAttempts < 3 && categoryList.isEmpty()) {
             try {
-                categoryList = client.newCall(categoriesRequest()).execute()
-                    .use { parseCategories(it.asJsoup()) }
+                client.newCall(categoriesRequest()).execute()
+                    .let {
+                        val document = it.asJsoup()
+                        categoryList = parseCategories(document)
+                        keywordList = parseKeywords(document)
+                    }
             } catch (_: Exception) {
             } finally {
                 fetchCategoriesAttempts++
@@ -210,7 +213,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
      * The request to the search page (or another one) that have the categories list.
      */
     private fun categoriesRequest(): Request {
-        return GET(baseUrlWithLang.toHttpUrl(), headers)
+        return GET("$baseUrlWithLang/node/keywords".toHttpUrl(), headers)
     }
 
     /**
@@ -240,33 +243,6 @@ class Photos18 : HttpSource(), ConfigurableSource {
         "q",
         keywords.map { it.value }.toTypedArray(),
     )
-
-    /**
-     * Inner variable to control how much tries the keywords request was called.
-     */
-    private var fetchKeywordsAttempts: Int = 0
-
-    /**
-     * Fetch the keywords from the source to be used in the filters.
-     */
-    private fun fetchKeywords() {
-        if (fetchKeywordsAttempts < 3 && keywordList.isEmpty()) {
-            try {
-                keywordList = client.newCall(keywordsRequest()).execute()
-                    .use { parseKeywords(it.asJsoup()) }
-            } catch (_: Exception) {
-            } finally {
-                fetchKeywordsAttempts++
-            }
-        }
-    }
-
-    /**
-     * The request to the search page (or another one) that have the keywords list.
-     */
-    private fun keywordsRequest(): Request {
-        return GET("$baseUrlWithLang/node/keywords".toHttpUrl(), headers)
-    }
 
     /**
      * Get the keywords from the search page document.
