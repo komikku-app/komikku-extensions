@@ -16,19 +16,16 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
-import org.jsoup.select.Evaluator
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.URLDecoder
 
-@Suppress("unused")
 class Photos18 : HttpSource(), ConfigurableSource {
     override val name = "Photos18"
     override val lang = "all"
@@ -41,35 +38,34 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     override val client = network.client.newBuilder().followRedirects(false).build()
 
-    override fun headersBuilder() = Headers.Builder().apply {
-        add("Referer", baseUrl)
-    }
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
 
-    override fun popularMangaRequest(page: Int) = GET("$baseUrlWithLang?sort=hits&page=$page".toHttpUrl(), headers)
+    override fun popularMangaRequest(page: Int) = GET("$baseUrlWithLang?sort=likes&page=$page", headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        val mangas = document.selectFirst(Evaluator.Id("videos"))!!.children().map {
-            val cardBody = it.selectFirst(Evaluator.Class("card-body"))!!
-            val link = cardBody.selectFirst(Evaluator.Tag("a"))!!
-            val category = cardBody.selectFirst(Evaluator.Tag("label"))!!.ownText()
+        val mangas = document.select("#videos div.card").map { card ->
+            val cardBody = card.select(".card-body")
+            val link = cardBody.select("a")
+            val category = cardBody.select("div label.badge").text()
             SManga.create().apply {
                 // stripLang() so both lang (traditional or simplified) will have same entries catalog
                 url = link.attr("href").stripLang()
-                title = link.ownText()
-                thumbnail_url = baseUrl + it.selectFirst(Evaluator.Tag("img"))!!.attr("src")
+                title = link.text()
+                thumbnail_url = baseUrl + card.select("img").attr("src")
                 genre = translate(category)
                 description = category
                 status = SManga.COMPLETED
             }
         }
-        val isLastPage = document.selectFirst(Evaluator.Class("next")).run {
+        val isLastPage = document.selectFirst("nav .pagination .next").run {
             this == null || hasClass("disabled")
         }
         return MangasPage(mangas, !isLastPage)
     }
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrlWithLang/sort/created?page=$page".toHttpUrl(), headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrlWithLang/sort/created?page=$page", headers)
 
     override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
 
@@ -94,7 +90,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
 
     override fun mangaDetailsRequest(manga: SManga): Request {
-        return GET("$baseUrlWithLang${manga.url}".toHttpUrl(), headers)
+        return GET("$baseUrlWithLang${manga.url}", headers)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
@@ -104,8 +100,8 @@ class Photos18 : HttpSource(), ConfigurableSource {
         // Update entry's details in case language is switched
         return SManga.create().apply {
             title = document.select("title").text().trim()
-            thumbnail_url = document.selectFirst("div#content div.imgHolder")!!
-                .selectFirst(Evaluator.Tag("img"))!!.attr("src")
+            thumbnail_url = document.select("div#content div.imgHolder")
+                .select("img").attr("src")
             status = SManga.COMPLETED
             if (category.toString().contains("href=\"(/zh-hans)?/cat/".toRegex())) {
                 genre = translate(category.text())
@@ -127,7 +123,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        val images = document.selectFirst(Evaluator.Id("content"))!!.select(Evaluator.Tag("img"))
+        val images = document.select("div#content a img")
         return images.mapIndexed { index, image ->
             Page(index, imageUrl = image.attr("src"))
         }
@@ -168,7 +164,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
         arrayOf("Latest", "Popular", "Trend", "Recommended", "Best"),
         "sort",
         arrayOf("created", "hits", "views", "score", "likes"),
-        state = 2,
+        state = 0,
     )
 
     class Category(val name: String, val value: String)
@@ -210,7 +206,7 @@ class Photos18 : HttpSource(), ConfigurableSource {
      * The request to the search page (or another one) that have the categories list.
      */
     private fun categoriesRequest(): Request {
-        return GET("$baseUrlWithLang/node/keywords".toHttpUrl(), headers)
+        return GET("$baseUrlWithLang/node/keywords", headers)
     }
 
     /**
@@ -219,12 +215,12 @@ class Photos18 : HttpSource(), ConfigurableSource {
      * @param document The search page document
      */
     private fun parseCategories(document: Document): List<Category> {
-        val items = document.selectFirst(Evaluator.Id("w2"))!!.children()
+        val items = document.select("#w2 a")
         return buildList(items.size + 1) {
             add(Category("All", ""))
             items.mapTo(this) {
                 val value = it.text().substringBefore(" (").trim()
-                val queryValue = it.selectFirst(Evaluator.Tag("a"))!!.attr("href").substringAfterLast('/')
+                val queryValue = it.attr("href").substringAfterLast('/')
                 Category(translate(value), queryValue)
             }
         }
@@ -252,7 +248,10 @@ class Photos18 : HttpSource(), ConfigurableSource {
             add(Keyword("None", ""))
             items.mapTo(this) {
                 val value = it.text()
-                val queryValue = URLDecoder.decode(it.attr("href").substringAfterLast('/'), "UTF-8")
+                val queryValue = URLDecoder.decode(
+                    it.attr("href").substringAfterLast('/'),
+                    "UTF-8",
+                )
                 Keyword(translate(value), queryValue)
             }
         }
@@ -262,9 +261,8 @@ class Photos18 : HttpSource(), ConfigurableSource {
 
     private fun launchIO(block: () -> Unit) = scope.launch { block() }
 
-    private val preferences by lazy {
+    private val preferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)!!
-    }
 
     private val useTrad get() = preferences.getBoolean("ZH_HANT", false)
 
