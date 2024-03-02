@@ -77,6 +77,8 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ matrix.chunk != 0 }}
 
       - name: Build extensions (chunk ${{ matrix.chunk }})
         env:
