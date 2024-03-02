@@ -17,13 +17,13 @@ class SortFilter : SelectFilter("Sort by", sortFilterOptions) {
         when (part) {
             "search" -> {
                 when (state) {
-                    2 -> ""
+                    0 -> "" // Trending
                     else -> selected
                 }
             }
             "tag" -> {
                 when (state) {
-                    0 -> ""
+                    2 -> "" // Popular
                     else -> selected
                 }
             }
