@@ -2,4 +2,6 @@ package eu.kanade.tachiyomi.extension.all.xarthunter
 
 import eu.kanade.tachiyomi.multisrc.masonry.Masonry
 
-class XArtHunter : Masonry("XArt Hunter", "https://www.xarthunter.com", "all")
+class XArtHunter : Masonry("XArt Hunter", "https://www.xarthunter.com", "all") {
+    override val useAlternativeLatestRequest = true
+}

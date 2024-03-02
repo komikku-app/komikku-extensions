@@ -23,6 +23,7 @@ abstract class Masonry(
     override val baseUrl: String,
     override val lang: String,
 ) : ParsedHttpSource() {
+    protected open val useAlternativeLatestRequest = false
 
     override val supportsLatest = true
 
@@ -57,9 +58,38 @@ abstract class Masonry(
         thumbnail_url = element.selectFirst("img")?.imgAttr()
     }
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/updates/sort/newest/mpage/$page/", headers)
-    }
+    /**
+     * Archive is sorted as post's ID
+     *
+     * Newest is sorted as post's date
+     *
+     * /updates/sort/newest/ is similar to
+     *   => /updates/sort/newest/mpage/1/ (a bit out of sync)
+     *   => /archive/
+     *   => /archive/page/1/
+     *   => /updates/sort/filter/ord/newest/content/0/quality/0/tags/0/
+     *   => /updates/sort/filter/ord/newest/content/0/quality/0/tags/0/mpage/1/
+     *
+     * /updates/sort/newest/mpage/2/ is similar to
+     *   => /archive/page/2/
+     *   => /updates/sort/filter/ord/newest/content/0/quality/0/tags/0/mpage/2/
+     */
+    override fun latestUpdatesRequest(page: Int) =
+        if (useAlternativeLatestRequest)
+            alternativeLatestRequest(page)
+        else
+            defaultLatestRequest(page)
+
+    private fun defaultLatestRequest(page: Int) =
+        GET("$baseUrl/updates/sort/newest/mpage/$page/", headers)
+
+    /**
+     * Some sites doesn't support page for /updates/sort/newest/
+     *  - JoyMii
+     *  - XArt
+     */
+    private fun alternativeLatestRequest(page: Int) =
+        GET("$baseUrl/archive/page/$page/", headers)
 
     override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
     override fun latestUpdatesSelector() = popularMangaSelector()
