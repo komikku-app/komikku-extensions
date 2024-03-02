@@ -47,7 +47,6 @@ abstract class Masonry(
     }
 
     override fun popularMangaParse(response: Response): MangasPage {
-        getTags()
         return super.popularMangaParse(response)
     }
 
@@ -79,10 +78,11 @@ abstract class Masonry(
      *   => /updates/sort/filter/ord/newest/content/0/quality/0/tags/0/mpage/2/
      */
     override fun latestUpdatesRequest(page: Int) =
-        if (useAlternativeLatestRequest)
+        if (useAlternativeLatestRequest) {
             alternativeLatestRequest(page)
-        else
+        } else {
             defaultLatestRequest(page)
+        }
 
     private fun defaultLatestRequest(page: Int) =
         GET("$baseUrl/updates/sort/newest/mpage/$page/", headers)
@@ -109,11 +109,11 @@ abstract class Masonry(
 
             GET(url, headers)
         } else {
-            val tagFilter = filters.filterIsInstance<TagFilter>().firstOrNull()
+            val tagsFilter = filters.filterIsInstance<TagsFilter>().first()
             val sortFilter = filters.filterIsInstance<SortFilter>().first()
 
             val url = baseUrl.toHttpUrl().newBuilder().apply {
-                if (tagFilter == null || tagFilter.selected == "") {
+                if (tagsFilter.state.none { it.state }) {
                     when (sortFilter.state) {
                         0 -> {
                             // Trending: use /updates/sort/ since it won't be available with Filter
@@ -136,7 +136,11 @@ abstract class Masonry(
                 } else {
                     // tag/ will support pages for both newest & popular on all sites, so no need to change
                     addPathSegment("tag")
-                    addPathSegment(tagFilter.selected)
+                    addPathSegment(
+                        tagsFilter.state
+                            .filter { it.state }
+                            .joinToString("+") { it.uriPart },
+                    )
                     sortFilter.getUriPartIfNeeded("tag").also {
                         // Only EliteBabes supports Pages for tag/sort/trending
                         if (it.isBlank()) {
@@ -153,7 +157,7 @@ abstract class Masonry(
         }
     }
 
-    private var tags = emptyList<Pair<String, String>>()
+    private var tags = emptyList<Tag>()
     private var tagsFetchAttempt = 0
 
     private fun getTags() {
@@ -163,12 +167,10 @@ abstract class Masonry(
                     .execute().asJsoup()
                     .select("#filter-a span:has(> input)")
                     .mapNotNull {
-                        Pair(
+                        Tag(
                             it.select("label").text(),
                             it.select("input").attr("value"),
                         )
-                    }.let {
-                        listOf(Pair("", "")) + it
                     }
             }
             tagsFetchAttempt++
@@ -176,6 +178,7 @@ abstract class Masonry(
     }
 
     override fun getFilterList(): FilterList {
+        getTags()
         val filters = mutableListOf(
             Filter.Header("Filters ignored with text search"),
             Filter.Separator(),
@@ -188,7 +191,7 @@ abstract class Masonry(
             )
         } else {
             filters.add(
-                TagFilter(tags),
+                TagsFilter(tags),
             )
         }
 

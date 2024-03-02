@@ -37,4 +37,9 @@ private val sortFilterOptions = listOf(
     Pair("Popular", "sort/popular"),
 )
 
-class TagFilter(options: List<Pair<String, String>>) : SelectFilter("Tags", options)
+class Tag(val name: String, val uriPart: String)
+
+class TagCheckBox(name: String, val uriPart: String) : Filter.CheckBox(name)
+
+class TagsFilter(tags: List<Tag>) :
+    Filter.Group<TagCheckBox>("Tags", tags.map { TagCheckBox(it.name, it.uriPart) })
