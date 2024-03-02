@@ -32,11 +32,15 @@ abstract class Masonry(
     override fun headersBuilder() = super.headersBuilder()
         .set("Referer", "$baseUrl/")
 
+    /**
+     * /updates/sort/popular/ doesn't support pages on all sites so we use filter instead
+     * Some time, it has a bit different content comparing to filter so we still query it
+     */
     override fun popularMangaRequest(page: Int): Request {
         val url = when (page) {
             1 -> baseUrl
-            2 -> "$baseUrl/archive/"
-            else -> "$baseUrl/archive/page/${page - 1}/"
+            2 -> "$baseUrl/updates/sort/popular/"
+            else -> "$baseUrl/updates/sort/filter/ord/popular/content/0/quality/0/tags/0/mpage/${page - 2}/"
         }
 
         return GET(url, headers)
