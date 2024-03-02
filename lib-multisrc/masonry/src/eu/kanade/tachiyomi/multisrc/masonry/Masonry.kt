@@ -90,7 +90,7 @@ abstract class Masonry(
     /**
      * Some sites doesn't support page for /updates/sort/newest/
      *  - JoyMii
-     *  - XArt
+     *  - XArt (doesn't work at all)
      */
     private fun alternativeLatestRequest(page: Int) =
         GET("$baseUrl/archive/page/$page/", headers)
@@ -114,19 +114,31 @@ abstract class Masonry(
 
             val url = baseUrl.toHttpUrl().newBuilder().apply {
                 if (tagFilter == null || tagFilter.selected == "") {
-                    addPathSegment("updates")
-                    sortFilter.getUriPartIfNeeded("search").also {
-                        if (it.isBlank()) {
-                            addEncodedPathSegments("page/$page/")
-                        } else {
-                            addEncodedPathSegments(it)
-                            addEncodedPathSegments("mpage/$page/")
+                    when (sortFilter.state) {
+                        0 -> {
+                            // Trending: use /updates/sort/ since it won't be available with Filter
+                            addPathSegment("updates")
+                            sortFilter.getUriPartIfNeeded("search").also {
+                                // Only EliteBabes & MetArt supports Pages for updates/sort/trending
+                                if (it.isBlank()) {
+                                    addEncodedPathSegments("page/$page/")
+                                } else {
+                                    addEncodedPathSegments(it)
+                                    addEncodedPathSegments("mpage/$page/")
+                                }
+                            }
                         }
+                        // Using a more effective request comparing to the /updates/sort/newest/
+                        1 -> latestUpdatesRequest(page)
+                        // Using a more effective request comparing to the /updates/sort/popular/
+                        2 -> popularMangaRequest(page)
                     }
                 } else {
+                    // tag/ will support pages for both newest & popular on all sites, so no need to change
                     addPathSegment("tag")
                     addPathSegment(tagFilter.selected)
                     sortFilter.getUriPartIfNeeded("tag").also {
+                        // Only EliteBabes supports Pages for tag/sort/trending
                         if (it.isBlank()) {
                             addEncodedPathSegments("page/$page/")
                         } else {
