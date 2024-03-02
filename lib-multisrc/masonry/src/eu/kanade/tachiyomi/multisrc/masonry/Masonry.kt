@@ -85,15 +85,16 @@ abstract class Masonry(
         }
 
     private fun defaultLatestRequest(page: Int) =
-        GET("$baseUrl/updates/sort/newest/mpage/$page/", headers)
+        GET("$baseUrl/archive/page/$page/", headers)
 
     /**
      * Some sites doesn't support page for /updates/sort/newest/
      *  - JoyMii
      *  - XArt (doesn't work at all)
+     * This URL is often not consistent
      */
     private fun alternativeLatestRequest(page: Int) =
-        GET("$baseUrl/archive/page/$page/", headers)
+        GET("$baseUrl/updates/sort/newest/mpage/$page/", headers)
 
     override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
     override fun latestUpdatesSelector() = popularMangaSelector()
