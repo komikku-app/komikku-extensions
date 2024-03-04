@@ -14,10 +14,44 @@ import okhttp3.Request
 import okhttp3.Response
 
 class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
+    /**
+     * Missing:
+     *  - https://www.hegrehub.com
+     *  - https://playmatehunter.com
+     */
     private val collections: List<Pair<String, String>> = listOf(
         Pair("SexArt Models", "https://www.sexarthub.com"),
         Pair("Femjoy Models", "https://www.femangels.com"),
         Pair("Playboy Centerfolds", "https://www.centerfoldhunter.com"),
+        Pair("Rylsky Art", "https://www.rylskyhunter.com"),
+        Pair("Penthouse Sexy Pets", "https://www.penthousehub.com"),
+        Pair("Zemani", "https://www.zemanihunter.com"),
+        Pair("MetArt Heaven", "https://www.metheaven.com"),
+        Pair("MetArt X Models", "https://www.metxhunter.com"),
+        Pair("Erotic & Beauty", "https://www.eroticandbeauty.com"),
+        Pair("Als Scan", "https://www.alshunter.com"),
+        Pair("Digital Desire", "https://www.digitalsweeties.com"),
+        Pair("Errotica Babes", "https://www.erroticahunter.com"),
+        Pair("MPL Studios", "https://www.mplhunter.com"),
+        Pair("Photodromm Models", "https://www.drommhub.com"),
+        Pair("W4B - Watch 4 Beauty", "https://www.w4bhub.com"),
+        Pair("Domai Erotica", "https://www.domerotica.com"),
+        Pair("The Life Erotic", "https://www.tlehunter.com"),
+        Pair("Gravure Idols & Asian Glamour", "https://www.jperotica.com"),
+        Pair("Nubiles", "https://www.nubileshunter.com"),
+        Pair("Goddess Models", "https://www.goddesshunter.com"),
+        Pair("Erotic In Mind", "https://www.eroticinmind.com"),
+        Pair("Eternal Babes - Desire Girls", "https://www.eternalbabes.com"),
+        Pair("Viv Thomas", "https://www.vivhunter.com"),
+        Pair("Japanese Beauties", "https://www.jpbeauties.com"),
+        Pair("Pinup Models", "https://www.pinuphunter.com"),
+        Pair("X-Art", "https://www.xarthub.com"),
+        Pair("WoW Girls", "https://www.wowsweeties.com"),
+        Pair("Holy Randall", "https://www.randallhub.com"),
+        Pair("Gravure Models", "https://www.gravurehunter.com"),
+        Pair("Showy Beauty", "https://www.showyhub.com"),
+        Pair("Stunning18", "https://www.stunningsweeties.com"),
+        Pair("Amour Angels", "https://www.amourhub.com"),
     )
 
     private class CollectionsFilter(val collections: List<Pair<String, String>>) :
