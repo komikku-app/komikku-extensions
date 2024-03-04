@@ -3,7 +3,7 @@ name: CI-komikku
 on:
   push:
     branches:
-      - master
+      # - master
       - merge-keiyoushi
     paths:
       - '**'

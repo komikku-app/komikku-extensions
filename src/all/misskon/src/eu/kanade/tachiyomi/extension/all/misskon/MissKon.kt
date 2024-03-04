@@ -50,7 +50,6 @@ class MissKon : HttpSource() {
                     thumbnail_url = element.select("div.post-thumbnail img").attr("src")
                     val meta = element.select("p.post-meta")
                     description = "View: ${meta.select("span.post-views").text()}"
-                    // genre = meta.select("span.post-cats").text()
                     genre = meta.select("span.post-cats a").joinToString { it.text() }
                 }
             }
@@ -99,6 +98,7 @@ class MissKon : HttpSource() {
 
             description = "View: $view\n" +
                 "${info.html()
+                    .replace("<input.*?>".toRegex(), password)
                     .replace("<.+?>".toRegex(), "")}\n" +
                 "Password: $password\n" +
                 downloadLinks
