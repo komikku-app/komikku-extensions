@@ -27,7 +27,7 @@ class MissKon : HttpSource() {
         val mangas = document.select("div#top-posts-14 a")
             .map { element ->
                 SManga.create().apply {
-                    url = element.attr("href").removePrefix(baseUrl)
+                    setUrlWithoutDomain(element.absUrl("href"))
                     title = element.attr("title")
                     thumbnail_url = element.select("img").attr("src")
                         .replace("https://i0.wp.com/", "https://")
@@ -44,8 +44,8 @@ class MissKon : HttpSource() {
         val mangas = document.select("div#main-content div.post-listing article.item-list")
             .map { element ->
                 SManga.create().apply {
-                    val post = element.select("h2.post-box-title a")
-                    url = post.attr("href").removePrefix(baseUrl)
+                    val post = element.select("h2.post-box-title a").first()!!
+                    setUrlWithoutDomain(post.absUrl("href"))
                     title = post.text()
                     thumbnail_url = element.select("div.post-thumbnail img").attr("src")
                     val meta = element.select("p.post-meta")
@@ -113,16 +113,16 @@ class MissKon : HttpSource() {
             .select("div.page-link a")
             .map {
                 SChapter.create().apply {
-                    url = it.attr("href").removePrefix(baseUrl)
+                    setUrlWithoutDomain(it.absUrl("href"))
                     name = "Page ${it.text()}"
                 }
-            }.reversed() + listOf(
-            SChapter.create().apply {
-                url = postUrl.removePrefix(baseUrl)
-                name = "Page 1"
-            },
-
-        )
+            }.reversed() +
+            listOf(
+                SChapter.create().apply {
+                    setUrlWithoutDomain(postUrl)
+                    name = "Page 1"
+                },
+            )
     }
 
     override fun pageListParse(response: Response): List<Page> = response.asJsoup()
