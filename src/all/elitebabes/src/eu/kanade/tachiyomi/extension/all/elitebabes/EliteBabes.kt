@@ -14,6 +14,12 @@ import okhttp3.Request
 import okhttp3.Response
 
 class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
+    private val listOfHubs: List<Tag> = listOf(
+        Tag("Sex Art Hub", "https://www.sexarthub.com"),
+        Tag("Fem Angels", "https://www.femangels.com"),
+        Tag("Centerfold Hunter", "https://www.centerfoldhunter.com"),
+    )
+
     override fun getFilterList(): FilterList {
         getTags()
         val filters = mutableListOf(
@@ -27,7 +33,7 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
                 Filter.Header("Press 'reset' to attempt to load tags"),
             )
         } else {
-            (listOf(Tag("Sex Art Hub", "https://www.sexarthub.com")) + tags)
+            (listOfHubs + tags)
                 .let {
                     filters.add(
                         TagsFilter(it),
@@ -40,15 +46,15 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val tagsFilter = filters.filterIsInstance<TagsFilter>().first()
-        return if (tagsFilter.state[0].state) {
-            GET("https://www.sexarthub.com", headers)
+        return if (tagsFilter.state.subList(0, listOfHubs.size).any { it.state }) {
+            GET(tagsFilter.state.first { it.state }.uriPart, headers)
         } else {
             super.searchMangaRequest(page, query, filters)
         }
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        return if (response.request.url.toString().contains("^https://www\\.sexarthub\\.com".toRegex())) {
+        return if (listOfHubs.map { it.uriPart }.any { response.request.url.toString().contains(it) }) {
             MangasPage(
                 mangas = response.asJsoup().select("div.item a[href]:has(img)")
                     .map { element ->
