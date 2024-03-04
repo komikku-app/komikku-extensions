@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.elitebabes
 
 import eu.kanade.tachiyomi.multisrc.masonry.Masonry
+import eu.kanade.tachiyomi.multisrc.masonry.SelectFilter
 import eu.kanade.tachiyomi.multisrc.masonry.SortFilter
-import eu.kanade.tachiyomi.multisrc.masonry.Tag
 import eu.kanade.tachiyomi.multisrc.masonry.TagsFilter
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
@@ -14,11 +14,14 @@ import okhttp3.Request
 import okhttp3.Response
 
 class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
-    private val listOfHubs: List<Tag> = listOf(
-        Tag("Sex Art Hub", "https://www.sexarthub.com"),
-        Tag("Fem Angels", "https://www.femangels.com"),
-        Tag("Centerfold Hunter", "https://www.centerfoldhunter.com"),
+    private val collections: List<Pair<String, String>> = listOf(
+        Pair("SexArt Models", "https://www.sexarthub.com"),
+        Pair("Femjoy Models", "https://www.femangels.com"),
+        Pair("Playboy Centerfolds", "https://www.centerfoldhunter.com"),
     )
+
+    private class CollectionsFilter(val collections: List<Pair<String, String>>) :
+        SelectFilter("Collections", collections)
 
     override fun getFilterList(): FilterList {
         getTags()
@@ -26,6 +29,8 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
             Filter.Header("Filters ignored with text search"),
             Filter.Separator(),
             SortFilter(),
+            Filter.Separator(),
+            CollectionsFilter(collections),
         )
 
         if (tags.isEmpty()) {
@@ -33,28 +38,29 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
                 Filter.Header("Press 'reset' to attempt to load tags"),
             )
         } else {
-            (listOfHubs + tags)
-                .let {
-                    filters.add(
-                        TagsFilter(it),
-                    )
-                }
+            tags.let {
+                filters.add(
+                    TagsFilter(it),
+                )
+            }
         }
+
+        filters.add(Filter.Separator())
 
         return FilterList(filters)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val tagsFilter = filters.filterIsInstance<TagsFilter>().first()
-        return if (tagsFilter.state.subList(0, listOfHubs.size).any { it.state }) {
-            GET(tagsFilter.state.first { it.state }.uriPart, headers)
-        } else {
+        val collectionsFilter = filters.filterIsInstance<CollectionsFilter>().firstOrNull()
+        return if (collectionsFilter == null || collectionsFilter.selected == "") {
             super.searchMangaRequest(page, query, filters)
+        } else {
+            GET(collectionsFilter.selected, headers)
         }
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        return if (listOfHubs.map { it.uriPart }.any { response.request.url.toString().contains(it) }) {
+        return if (collections.map { it.second }.any { response.request.url.toString().contains(it) }) {
             MangasPage(
                 mangas = response.asJsoup().select("div.item a[href]:has(img)")
                     .map { element ->
