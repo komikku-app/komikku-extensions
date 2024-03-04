@@ -10,6 +10,9 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
@@ -161,20 +164,22 @@ abstract class Masonry(
     private var tags = emptyList<Tag>()
     private var tagsFetchAttempt = 0
 
-    private fun getTags() {
-        if (tags.isEmpty() && tagsFetchAttempt < 3) {
-            runCatching {
-                tags = client.newCall(GET("$baseUrl/updates/sort/newest/", headers))
-                    .execute().asJsoup()
-                    .select("#filter-a span:has(> input)")
-                    .mapNotNull {
-                        Tag(
-                            it.select("label").text(),
-                            it.select("input").attr("value"),
-                        )
-                    }
+    protected open fun getTags() {
+        launchIO {
+            if (tags.isEmpty() && tagsFetchAttempt < 3) {
+                runCatching {
+                    tags = client.newCall(GET("$baseUrl/updates/sort/newest/", headers))
+                        .execute().asJsoup()
+                        .select("#filter-a span:has(> input)")
+                        .mapNotNull {
+                            Tag(
+                                it.select("label").text(),
+                                it.select("input").attr("value"),
+                            )
+                        }
+                }
+                tagsFetchAttempt++
             }
-            tagsFetchAttempt++
         }
     }
 
@@ -246,4 +251,8 @@ abstract class Masonry(
             else -> attr("abs:src")
         }
     }
+
+    private val scope = CoroutineScope(Dispatchers.IO)
+
+    private fun launchIO(block: () -> Unit) = scope.launch { block() }
 }
