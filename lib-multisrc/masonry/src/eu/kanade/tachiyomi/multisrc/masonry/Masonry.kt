@@ -161,7 +161,7 @@ abstract class Masonry(
         }
     }
 
-    private var tags = emptyList<Tag>()
+    protected var tags = emptyList<Tag>()
     private var tagsFetchAttempt = 0
 
     protected open fun getTags() {
@@ -242,7 +242,7 @@ abstract class Masonry(
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    protected fun Element.imgAttr(): String? {
+    private fun Element.imgAttr(): String {
         return when {
             hasAttr("srcset") -> attr("abs:srcset").substringBefore(" ")
             hasAttr("data-cfsrc") -> attr("abs:data-cfsrc")
@@ -251,6 +251,8 @@ abstract class Masonry(
             else -> attr("abs:src")
         }
     }
+
+    protected fun imgElmAttr(element: Element) = element.imgAttr()
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
