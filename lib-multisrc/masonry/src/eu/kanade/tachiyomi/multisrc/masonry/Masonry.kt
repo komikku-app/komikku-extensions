@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.multisrc.masonry
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
@@ -19,7 +18,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import java.lang.UnsupportedOperationException
 
 abstract class Masonry(
     override val name: String,
@@ -49,11 +47,7 @@ abstract class Masonry(
         return GET(url, headers)
     }
 
-    override fun popularMangaParse(response: Response): MangasPage {
-        return super.popularMangaParse(response)
-    }
-
-    override fun popularMangaSelector() = ".list-gallery:not(.static) figure:not(:has(a[href*=/video/]))"
+    override fun popularMangaSelector() = ".list-gallery:not(.static) figure:not(:has(a[href*='/video/']))"
     override fun popularMangaNextPageSelector() = ".pagination-a li.next"
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
@@ -252,7 +246,7 @@ abstract class Masonry(
         }
     }
 
-    protected fun imgElmAttr(element: Element) = element.imgAttr()
+    protected fun imgElmAttr(element: Element?) = element?.imgAttr()
 
     private val scope = CoroutineScope(Dispatchers.IO)
 

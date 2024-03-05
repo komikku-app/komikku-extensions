@@ -20,6 +20,7 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
      *  - https://playmatehunter.com
      */
     private val collections: List<Pair<String, String>> = listOf(
+        Pair("Default", "-"),
         Pair("SexArt Models", "https://www.sexarthub.com"),
         Pair("Femjoy Models", "https://www.femangels.com"),
         Pair("Playboy Centerfolds", "https://www.centerfoldhunter.com"),
@@ -54,17 +55,19 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
         Pair("Amour Angels", "https://www.amourhub.com"),
     )
 
-    private class CollectionsFilter(val collections: List<Pair<String, String>>) :
+    private class CollectionsFilter(collections: List<Pair<String, String>>) :
         SelectFilter("Collections", collections)
 
     override fun getFilterList(): FilterList {
         getTags()
         val filters = mutableListOf(
-            Filter.Header("Filters ignored with text search"),
+            Filter.Header("Non-default collections ignore other filters"),
+            CollectionsFilter(collections),
             Filter.Separator(),
+            Filter.Separator(),
+            Filter.Header("Filters below are ignored with text search"),
             SortFilter(),
             Filter.Separator(),
-            CollectionsFilter(collections),
         )
 
         if (tags.isEmpty()) {
@@ -85,8 +88,8 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val collectionsFilter = filters.filterIsInstance<CollectionsFilter>().firstOrNull()
-        return if (collectionsFilter == null || collectionsFilter.selected == "") {
+        val collectionsFilter = filters.filterIsInstance<CollectionsFilter>().first()
+        return if (collectionsFilter.state == 0) {
             super.searchMangaRequest(page, query, filters)
         } else {
             GET(collectionsFilter.selected, headers)
@@ -94,7 +97,8 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        return if (collections.map { it.second }.any { response.request.url.toString().contains(it) }) {
+        val requestUrl = response.request.url.toString()
+        return if (collections.map { it.second }.any { requestUrl.matches("^$it".toRegex()) }) {
             MangasPage(
                 mangas = response.asJsoup().select("div.item a[href]:has(img)")
                     .map { element ->
