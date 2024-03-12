@@ -68,7 +68,8 @@ class ArabsHentai : ParsedHttpSource() {
 
     // =============================== Search ===============================
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/page/$page/?s=$query".toHttpUrl().newBuilder()
+        val url = "$baseUrl/page/$page/".toHttpUrl().newBuilder()
+        url.addQueryParameter("s", query)
         filters.forEach { filter ->
             when (filter) {
                 is GenresOpFilter -> url.addQueryParameter("op", filter.toUriPart())
@@ -116,8 +117,8 @@ class ArabsHentai : ParsedHttpSource() {
                 }
                 val genres = mutableListOf<String>()
                 selectFirst("#manga-info")?.run {
-                    description = select(".wp-content p").text() +
-                        "\n" + select(otherNameSelector).text() + "أسماء أُخرى: "
+                    description = "\u061C" + select(".wp-content p").text() +
+                        "\n" + "أسماء أُخرى: " + select(otherNameSelector).text()
                     status = select(seriesStatusSelector).text().parseStatus()
                     author = select(seriesAuthorSelector).text()
                     artist = select(seriesArtistSelector).text()
