@@ -21,6 +21,7 @@ import uy.kohesive.injekt.api.get
 import java.util.Calendar
 
 class HentaiSlayer : ParsedHttpSource(), ConfigurableSource {
+
     override val name = "هنتاي سلاير"
 
     override val baseUrl = "https://hentaislayer.net"
@@ -42,32 +43,27 @@ class HentaiSlayer : ParsedHttpSource(), ConfigurableSource {
     }
 
     // ============================== Popular ===============================
-    override fun popularMangaRequest(page: Int) =
-        GET("$baseUrl/manga?page=$page", headers)
+    override fun popularMangaRequest(page: Int) = GET("$baseUrl/manga?page=$page", headers)
 
-    override fun popularMangaSelector() =
-        "div > div:has(div#card-real)"
+    override fun popularMangaSelector() = "div > div:has(div#card-real)"
 
-    override fun popularMangaFromElement(element: Element) =
-        SManga.create().apply {
-            element.selectFirst("div#card-real a")?.run {
-                setUrlWithoutDomain(absUrl("href"))
-                selectFirst("figure")?.run {
-                    selectFirst("img.object-cover")?.run {
-                        thumbnail_url = imgAttr()
-                        title = attr("alt")
-                    }
-                    genre = select("span p.drop-shadow-sm").text()
+    override fun popularMangaFromElement(element: Element) = SManga.create().apply {
+        with(element.selectFirst("div#card-real a")!!) {
+            setUrlWithoutDomain(absUrl("href"))
+            with(selectFirst("figure")!!) {
+                with(selectFirst("img.object-cover")!!) {
+                    thumbnail_url = imgAttr()
+                    title = attr("alt")
                 }
+                genre = select("span p.drop-shadow-sm").text()
             }
         }
+    }
 
-    override fun popularMangaNextPageSelector() =
-        "ul.pagination > li:last-child:not(.pagination-disabled)"
+    override fun popularMangaNextPageSelector() = "ul.pagination > li:last-child:not(.pagination-disabled)"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) =
-        GET("$baseUrl/latest-${getLatestTypes()}?page=$page", headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/latest-${getLatestTypes()}?page=$page", headers)
 
     override fun latestUpdatesSelector() = popularMangaSelector()
 
@@ -76,11 +72,7 @@ class HentaiSlayer : ParsedHttpSource(), ConfigurableSource {
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
     // =============================== Search ===============================
-    override fun searchMangaRequest(
-        page: Int,
-        query: String,
-        filters: FilterList,
-    ): Request {
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = "$baseUrl/manga?title=$query".toHttpUrl().newBuilder()
         filters.forEach { filter ->
             when (filter) {
@@ -105,58 +97,48 @@ class HentaiSlayer : ParsedHttpSource(), ConfigurableSource {
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     // =========================== Manga Details ============================
-    override fun mangaDetailsParse(document: Document) =
-        SManga.create().apply {
-            document.selectFirst("main section")?.run {
-                selectFirst("img#manga-cover")?.run {
-                    thumbnail_url = imgAttr()
-                    title = attr("alt")
-                }
-                selectFirst("section > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2)")?.run {
-                    status = parseStatus(select("a[href*='?status=']").text())
-                    genre = select("a[href*='?type=']").text()
-                    author = select("p:has(span:contains(المؤلف)) span:nth-child(2)").text()
-                    artist = select("p:has(span:contains(الرسام)) span:nth-child(2)").text()
-                }
-                var desc = "\u061C"
-                selectFirst("section > div:nth-child(1) > div:nth-child(2)")?.run {
-                    select("h1").text().takeIf { it.isNotEmpty() }?.let {
-                        title = it
-                    }
-                    genre =
-                        select("a[href*='?genre=']")
-                            .map { it.text() }
-                            .let {
-                                listOf(genre) + it
-                            }
-                            .joinToString()
-                    select("h2").text().takeIf { it.isNotEmpty() }?.let {
-                        desc += "أسماء أُخرى: $it\n"
-                    }
-                }
-                description = desc + select("#description").text()
+    override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        with(document.selectFirst("main section")!!) {
+            thumbnail_url = selectFirst("img#manga-cover")!!.imgAttr()
+            with(selectFirst("section > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2)")!!) {
+                status = parseStatus(select("a[href*='?status=']").text())
+                genre = select("a[href*='?type=']").text()
+                author = select("p:has(span:contains(المؤلف)) span:nth-child(2)").text()
+                artist = select("p:has(span:contains(الرسام)) span:nth-child(2)").text()
             }
+            var desc = "\u061C"
+            with(selectFirst("section > div:nth-child(1) > div:nth-child(2)")!!) {
+                title = selectFirst("h1")!!.text()
+                genre = select("a[href*='?genre=']")
+                    .map { it.text() }
+                    .let {
+                        listOf(genre) + it
+                    }
+                    .joinToString()
+                select("h2").text().takeIf { it.isNotEmpty() }?.let {
+                    desc += "أسماء أُخرى: $it\n"
+                }
+            }
+            description = desc + select("#description").text()
         }
+    }
 
-    private fun parseStatus(status: String) =
-        when {
-            status.contains("مستمر") -> SManga.ONGOING
-            status.contains("متوقف") -> SManga.CANCELLED
-            status.contains("مكتمل") -> SManga.COMPLETED
-            else -> SManga.UNKNOWN
-        }
+    private fun parseStatus(status: String) = when {
+        status.contains("مستمر") -> SManga.ONGOING
+        status.contains("متوقف") -> SManga.CANCELLED
+        status.contains("مكتمل") -> SManga.COMPLETED
+        else -> SManga.UNKNOWN
+    }
 
     // ============================== Chapters ==============================
-    override fun chapterListSelector() =
-        "main section #chapters-list a#chapter-item"
+    override fun chapterListSelector() = "main section #chapters-list a#chapter-item"
 
-    override fun chapterFromElement(element: Element) =
-        SChapter.create().apply {
-            setUrlWithoutDomain(element.attr("href"))
-            name = "\u061C" + element.select("#item-title").text() // Add unicode ARABIC LETTER MARK to ensure all titles are right to left
+    override fun chapterFromElement(element: Element) = SChapter.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        name = "\u061C" + element.select("#item-title").text() // Add unicode ARABIC LETTER MARK to ensure all titles are right to left
 
-            date_upload = parseRelativeDate(element.select("#item-title + span").text()) ?: 0L
-        }
+        date_upload = parseRelativeDate(element.select("#item-title + span").text()) ?: 0L
+    }
 
     /**
      * Parses dates in this form:
@@ -173,17 +155,16 @@ class HentaiSlayer : ParsedHttpSource(), ConfigurableSource {
         val now = Calendar.getInstance()
 
         // Map English unit to Java unit
-        val javaUnit =
-            when (unit) {
-                "year", "yr" -> Calendar.YEAR
-                "month" -> Calendar.MONTH
-                "week", "wk" -> Calendar.WEEK_OF_MONTH
-                "day" -> Calendar.DAY_OF_MONTH
-                "hour", "hr" -> Calendar.HOUR
-                "minute", "min" -> Calendar.MINUTE
-                "second", "sec" -> Calendar.SECOND
-                else -> return null
-            }
+        val javaUnit = when (unit) {
+            "year", "yr" -> Calendar.YEAR
+            "month" -> Calendar.MONTH
+            "week", "wk" -> Calendar.WEEK_OF_MONTH
+            "day" -> Calendar.DAY_OF_MONTH
+            "hour", "hr" -> Calendar.HOUR
+            "minute", "min" -> Calendar.MINUTE
+            "second", "sec" -> Calendar.SECOND
+            else -> return null
+        }
 
         now.add(javaUnit, -number)
 
@@ -197,7 +178,7 @@ class HentaiSlayer : ParsedHttpSource(), ConfigurableSource {
         }
     }
 
-    override fun imageUrlParse(document: Document) = throw UnsupportedOperationException()
+    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     private fun Element.imgAttr(): String? {
         return when {
@@ -209,28 +190,25 @@ class HentaiSlayer : ParsedHttpSource(), ConfigurableSource {
         }
     }
 
-    override fun getFilterList() =
-        FilterList(
-            GenresFilter(),
-            TypeFilter(),
-            StatusFilter(),
-        )
+    override fun getFilterList() = FilterList(
+        GenresFilter(),
+        TypeFilter(),
+        StatusFilter(),
+    )
 
     // ============================== Settings ==============================
     companion object {
         private const val LATEST_PREF = "LatestType"
-        private val LATEST_PREF_ENTRIES get() =
-            arrayOf(
-                "مانجا",
-                "مانهوا",
-                "كوميكس",
-            )
-        private val LATEST_PREF_ENTRY_VALUES get() =
-            arrayOf(
-                "manga",
-                "manhwa",
-                "comics",
-            )
+        private val LATEST_PREF_ENTRIES get() = arrayOf(
+            "مانجا",
+            "مانهوا",
+            "كوميكس",
+        )
+        private val LATEST_PREF_ENTRY_VALUES get() = arrayOf(
+            "manga",
+            "manhwa",
+            "comics",
+        )
         private val LATEST_PREF_DEFAULT = LATEST_PREF_ENTRY_VALUES[0]
     }
 
