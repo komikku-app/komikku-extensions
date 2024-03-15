@@ -6,15 +6,17 @@ import okhttp3.Response
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-/**
- * URL history:
- *   - Original URL & redirecting: https://www.nhattruyen.com
- *   - Latest: https://nhattruyento.com
- *   - Previous:
- *    - https://nhattruyenmax.com
- */
-class NhatTruyen : WPComics("NhatTruyen", "https://nhattruyento.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
+class NhatTruyen : WPComics("NhatTruyen", "https://nhattruyenup.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
     override val searchPath = "the-loai"
+
+    /**
+     * URL history:
+     *   - Original URL & redirecting: https://www.nhattruyen.com
+     *   - Latest: https://nhattruyenup.com
+     *   - Previous:
+     *    - https://nhattruyento.com
+     *    - https://nhattruyenmax.com
+     */
 
     /**
      * NetTruyen/NhatTruyen redirect back to catalog page if searching query is not found.
