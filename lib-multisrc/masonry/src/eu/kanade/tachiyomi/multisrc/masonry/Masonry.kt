@@ -199,9 +199,9 @@ abstract class Masonry(
         launchIO {
             if (tags.isEmpty() && tagsFetchAttempt < 3) {
                 runCatching {
-                    tags = client.newCall(GET("$baseUrl/updates/sort/newest/", headers))
+                    tags = client.newCall(GET("$baseUrl/updates/", headers))
                         .execute().asJsoup()
-                        .select("#filter-a span:has(> input)")
+                        .select("#filter-a span[data-placeholder='Tags'] span:has(> input)")
                         .mapNotNull {
                             Tag(
                                 it.select("label").text(),
