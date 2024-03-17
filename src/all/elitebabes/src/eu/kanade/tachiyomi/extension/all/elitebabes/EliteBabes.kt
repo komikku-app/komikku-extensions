@@ -21,7 +21,7 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
      *  - https://www.hegrehub.com
      *  - https://playmatehunter.com
      */
-    private val collections: List<Pair<String, String>> = listOf(
+    private val highlights: List<Pair<String, String>> = listOf(
         Pair("Default", "-"),
         Pair("SexArt Models", "https://www.sexarthub.com"),
         Pair("Femjoy Models", "https://www.femangels.com"),
@@ -57,8 +57,8 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
         Pair("Amour Angels", "https://www.amourhub.com"),
     )
 
-    private class CollectionsFilter(collections: List<Pair<String, String>>) :
-        SelectFilter("Collections", collections)
+    private class HighlightsFilter(highlights: List<Pair<String, String>>) :
+        SelectFilter("Highlights", highlights)
 
     class ChannelFilter(channels: List<Pair<String, String>>) : SelectFilter("Channels", channels)
 
@@ -99,20 +99,20 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
             } +
             listOf(
                 Filter.Separator(),
-                Filter.Header("Non-default collections ignore other filters"),
-                CollectionsFilter(collections),
+                Filter.Header("Non-default highlights ignore Tags, Models & Channels filters"),
+                HighlightsFilter(highlights),
             )
 
         return FilterList(filters)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val collectionsFilter = filters.filterIsInstance<CollectionsFilter>().first()
+        val highlightsFilter = filters.filterIsInstance<HighlightsFilter>().first()
         val channelFilter = filters.filterIsInstance<ChannelFilter>().first()
         val sortFilter = filters.filterIsInstance<SortFilter>().first()
 
         return when {
-            collectionsFilter.state != 0 -> GET(collectionsFilter.selected, headers)
+            highlightsFilter.state != 0 -> GET(highlightsFilter.selected, headers)
             channelFilter.state != 0 -> {
                 val channelUri = channelFilter.selected
                 val sortUri = "s"
@@ -137,8 +137,8 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
 
     override fun searchMangaParse(response: Response): MangasPage {
         val requestUrl = response.request.url.toString()
-        return if (collections.map { it.second }.any { requestUrl.matches("^$it".toRegex()) }) {
-            /* Handle filter for collections */
+        return if (highlights.map { it.second }.any { requestUrl.matches("^$it".toRegex()) }) {
+            /* Handle filter for highlights */
             MangasPage(
                 mangas = response.asJsoup().select("div.item a[href]:has(img)")
                     .map { element ->
