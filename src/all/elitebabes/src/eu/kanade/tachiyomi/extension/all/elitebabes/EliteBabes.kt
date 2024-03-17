@@ -2,8 +2,6 @@ package eu.kanade.tachiyomi.extension.all.elitebabes
 
 import eu.kanade.tachiyomi.multisrc.masonry.Masonry
 import eu.kanade.tachiyomi.multisrc.masonry.SelectFilter
-import eu.kanade.tachiyomi.multisrc.masonry.SortFilter
-import eu.kanade.tachiyomi.multisrc.masonry.TagsFilter
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -59,30 +57,12 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
         SelectFilter("Collections", collections)
 
     override fun getFilterList(): FilterList {
-        getTags()
-        val filters = mutableListOf(
-            Filter.Header("Non-default collections ignore other filters"),
-            CollectionsFilter(collections),
-            Filter.Separator(),
-            Filter.Separator(),
-            Filter.Header("Filters below are ignored with text search"),
-            SortFilter(),
-            Filter.Separator(),
-        )
-
-        if (tags.isEmpty()) {
-            filters.add(
-                Filter.Header("Press 'reset' to attempt to load tags"),
+        val filters = super.getFilterList().list +
+            listOf(
+                Filter.Separator(),
+                Filter.Header("Non-default collections ignore other filters"),
+                CollectionsFilter(collections),
             )
-        } else {
-            tags.let {
-                filters.add(
-                    TagsFilter(it),
-                )
-            }
-        }
-
-        filters.add(Filter.Separator())
 
         return FilterList(filters)
     }
@@ -99,13 +79,14 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     override fun searchMangaParse(response: Response): MangasPage {
         val requestUrl = response.request.url.toString()
         return if (collections.map { it.second }.any { requestUrl.matches("^$it".toRegex()) }) {
+            /* Handle filter for collections */
             MangasPage(
                 mangas = response.asJsoup().select("div.item a[href]:has(img)")
                     .map { element ->
                         SManga.create().apply {
                             setUrlWithoutDomain(element.absUrl("href"))
                             title = element.select("img").attr("alt")
-                            thumbnail_url = element.select("img").first()?.let { imgElmAttr(it) }
+                            thumbnail_url = element.select("img").first()?.imgAttr()
                         }
                     },
                 hasNextPage = false,

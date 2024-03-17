@@ -1,8 +1,10 @@
 package eu.kanade.tachiyomi.multisrc.masonry
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
@@ -100,7 +102,8 @@ abstract class Masonry(
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         return if (query.isNotEmpty()) {
-            val url = "$baseUrl/search/post/".toHttpUrl().newBuilder()
+            val searchType = filters.filterIsInstance<SearchTypeFilter>().first().selected
+            val url = "$baseUrl/search/$searchType/".toHttpUrl().newBuilder()
                 .addPathSegment(query.trim())
                 .addEncodedPathSegments("mpage/$page/")
                 .build()
@@ -155,8 +158,10 @@ abstract class Masonry(
         }
     }
 
-    protected var tags = emptyList<Tag>()
     private var tagsFetchAttempt = 0
+    private var tags = emptyList<Tag>()
+    private val scope = CoroutineScope(Dispatchers.IO)
+    private fun launchIO(block: () -> Unit) = scope.launch { block() }
 
     protected open fun getTags() {
         launchIO {
@@ -180,8 +185,9 @@ abstract class Masonry(
     override fun getFilterList(): FilterList {
         getTags()
         val filters = mutableListOf(
-            Filter.Header("Filters ignored with text search"),
+            SearchTypeFilter(searchTypeOptions),
             Filter.Separator(),
+            Filter.Header("Filters are ignored when text search"),
             SortFilter(),
         )
 
@@ -197,6 +203,11 @@ abstract class Masonry(
 
         return FilterList(filters)
     }
+
+    protected open val searchTypeOptions = listOf(
+        Pair("Galleries", "post"),
+        Pair("Models", "model"),
+    )
 
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
     override fun searchMangaSelector() = popularMangaSelector()
@@ -215,14 +226,109 @@ abstract class Masonry(
     }
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        return Observable.just(
-            listOf(
-                SChapter.create().apply {
-                    name = "Gallery"
-                    url = manga.url
-                },
-            ),
-        )
+        return when {
+            manga.url.contains("/models?/".toRegex()) ->
+                client.newCall(modelChapterListRequest(manga))
+                    .asObservableSuccess()
+                    .map { response ->
+                        chapterListParse(response)
+                    }
+            else ->
+                Observable.just(
+                    listOf(
+                        SChapter.create().apply {
+                            name = "Gallery"
+                            url = manga.url
+                        },
+                    ),
+                )
+        }
+    }
+
+    override fun popularMangaParse(response: Response): MangasPage {
+        return when {
+            response.request.url.toString().contains("/models?/".toRegex()) -> {
+                val document = response.asJsoup()
+
+                val mangas = document.select(popularMangaSelector()).map { element ->
+                    modelMangaFromElement(element)
+                }
+
+                val hasNextPage = popularMangaNextPageSelector().let { selector ->
+                    document.select(selector).first()
+                } != null
+
+                MangasPage(mangas, hasNextPage)
+            }
+            else -> super.popularMangaParse(response)
+        }
+    }
+
+    override fun mangaDetailsParse(response: Response): SManga {
+        return when {
+            response.request.url.toString().contains("/model/".toRegex()) ->
+                modelMangaDetailsParse(response.asJsoup())
+            else ->
+                mangaDetailsParse(response.asJsoup())
+        }
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        return when {
+            response.request.url.toString().contains("/model/".toRegex()) ->
+                response.asJsoup()
+                    .select(modelChapterListSelector()).map { modelChapterFromElement(it) }
+            else ->
+                super.chapterListParse(response)
+        }
+    }
+
+    /* Models */
+    protected open fun modelChapterListRequest(manga: SManga): Request {
+        val url = (baseUrl + manga.url).toHttpUrl().newBuilder().apply {
+            addEncodedPathSegments("sort/latest")
+        }.build()
+        return GET(url, headers)
+    }
+
+    protected open fun modelChapterListSelector() = popularMangaSelector()
+
+    protected open fun modelMangaFromElement(element: Element): SManga {
+        val sourceName = this.name
+        return SManga.create().apply {
+            element.selectFirst("div.img-overlay a")!!.run {
+                title = "${text()} @$sourceName"
+                artist = text()
+                author = sourceName
+                setUrlWithoutDomain(absUrl("href"))
+            }
+            thumbnail_url = element.selectFirst("img")?.imgAttr()
+            status = SManga.ONGOING
+            update_strategy = UpdateStrategy.ALWAYS_UPDATE
+        }
+    }
+
+    protected open fun modelMangaDetailsParse(document: Document) = SManga.create().apply {
+        document.selectFirst("article.module-model")?.run {
+            val info = selectFirst(".header-model").also {
+                artist = selectFirst("h1")?.text()
+            }
+                ?.select("ul.list-inline li")
+                ?.eachText()?.joinToString(" ")
+            description = "$info\n" + select("div.module-more ul li")
+                .eachText().joinToString("\n")
+        }
+        genre = (listOf(artist) + document.select("article.module-model + p a[href*=/model-tag/]").eachText()).joinToString()
+        status = SManga.ONGOING
+    }
+
+    protected open fun modelChapterFromElement(element: Element): SChapter {
+        return SChapter.create().apply {
+            with(element.selectFirst(".img-overlay p a")!!) {
+                setUrlWithoutDomain(absUrl("href"))
+                name = text()
+            }
+        }
     }
 
     override fun chapterListSelector() = throw UnsupportedOperationException()
@@ -236,7 +342,7 @@ abstract class Masonry(
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    private fun Element.imgAttr(): String {
+    protected fun Element.imgAttr(): String {
         return when {
             hasAttr("srcset") -> attr("abs:srcset").substringBefore(" ")
             hasAttr("data-cfsrc") -> attr("abs:data-cfsrc")
@@ -245,10 +351,4 @@ abstract class Masonry(
             else -> attr("abs:src")
         }
     }
-
-    protected fun imgElmAttr(element: Element?) = element?.imgAttr()
-
-    private val scope = CoroutineScope(Dispatchers.IO)
-
-    private fun launchIO(block: () -> Unit) = scope.launch { block() }
 }
