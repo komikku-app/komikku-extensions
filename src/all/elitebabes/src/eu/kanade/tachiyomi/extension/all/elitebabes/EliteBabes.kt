@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.elitebabes
 
+import eu.kanade.tachiyomi.multisrc.masonry.ChannelFilter
 import eu.kanade.tachiyomi.multisrc.masonry.Masonry
 import eu.kanade.tachiyomi.multisrc.masonry.SelectFilter
 import eu.kanade.tachiyomi.network.GET
@@ -13,6 +14,8 @@ import okhttp3.Response
 
 class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     /**
+     * External sites which ref link back to main site.
+     * This is like highlight from Channels, without sorting
      * Missing:
      *  - https://www.hegrehub.com
      *  - https://playmatehunter.com
@@ -56,8 +59,40 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     private class CollectionsFilter(collections: List<Pair<String, String>>) :
         SelectFilter("Collections", collections)
 
+    private var channelsFetchAttempt = 0
+    private var channels = emptyList<Pair<String, String>>()
+
+    private fun getChannels() {
+        launchIO {
+            if (channels.isEmpty() && channelsFetchAttempt < 3) {
+                runCatching {
+                    channels = listOf(Pair("All channels", "updates")) +
+                        client.newCall(GET("$baseUrl/erotic-art-channels/", headers))
+                            .execute().asJsoup()
+                            .select("ul.list-gallery figure a")
+                            .mapNotNull {
+                                Pair(
+                                    it.select("img").attr("alt"),
+                                    it.attr("href")
+                                        .removeSuffix("/")
+                                        .substringAfterLast("/"),
+                                )
+                            }
+                }
+                channelsFetchAttempt++
+            }
+        }
+    }
+
     override fun getFilterList(): FilterList {
+        getChannels()
         val filters = super.getFilterList().list +
+            if (channels.isEmpty()) {
+                Filter.Header("Press 'reset' to attempt to load channels")
+            } else {
+                Filter.Header("Channel is ignored when any tag is selected")
+                ChannelFilter(channels)
+            } +
             listOf(
                 Filter.Separator(),
                 Filter.Header("Non-default collections ignore other filters"),
