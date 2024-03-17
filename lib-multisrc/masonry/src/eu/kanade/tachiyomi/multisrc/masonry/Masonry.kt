@@ -103,8 +103,8 @@ abstract class Masonry(
     override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val searchType = filters.filterIsInstance<SearchTypeFilter>().first().selected
         return if (query.isNotEmpty()) {
-            val searchType = filters.filterIsInstance<SearchTypeFilter>().first().selected
             val url = "$baseUrl/search/$searchType/".toHttpUrl().newBuilder()
                 .addPathSegment(query.trim())
                 .addEncodedPathSegments("mpage/$page/")
@@ -151,34 +151,39 @@ abstract class Masonry(
                         }
                     }
                     else -> {
-                        when (sortFilter.selected) {
-                            "trending" -> {
-                                // Trending: use /updates/sort/ since it won't be available with site's search
-                                addPathSegment("updates")
-                                sortFilter.getUriPartIfNeeded("updates").also {
-                                    // Only EliteBabes & MetArt supports Pages for updates/sort/trending
-                                    if (it.isBlank()) {
-                                        addEncodedPathSegments("page/$page/")
+                        val channel = when (searchType) {
+                            "model" -> "models"
+                            else -> "updates"
+                        }
+                        if (sortFilter.selected == "trending" || channel != "updates") {
+                            // Trending: use /updates/sort/ since it won't be available with site's search
+                            addPathSegment(channel)
+                            sortFilter.getUriPartIfNeeded(channel).also {
+                                // Only EliteBabes & MetArt supports Pages for updates/sort/trending
+                                if (it.isBlank()) {
+                                    addEncodedPathSegments("page/$page/")
+                                } else {
+                                    addEncodedPathSegments("sort/$it")
+                                    addEncodedPathSegments("mpage/$page/")
+                                }
+                            }
+                        } else {
+                            when (sortFilter.selected) {
+                                "newest" -> {
+                                    // Using a more effective request comparing to the /updates/sort/newest/ (some sites doesn't support)
+                                    if (useAlternativeLatestRequest) {
+                                        addEncodedPathSegments("updates/sort/newest/mpage/$page")
                                     } else {
-                                        addEncodedPathSegments("sort/$it")
-                                        addEncodedPathSegments("mpage/$page/")
+                                        addEncodedPathSegments("archive/page/$page/")
                                     }
                                 }
-                            }
-                            "newest" -> {
-                                // Using a more effective request comparing to the /updates/sort/newest/ (some sites doesn't support)
-                                if (useAlternativeLatestRequest) {
-                                    addEncodedPathSegments("updates/sort/newest/mpage/$page")
-                                } else {
-                                    addEncodedPathSegments("archive/page/$page/")
-                                }
-                            }
-                            "popular" -> {
-                                // Using a more effective request comparing to the /updates/sort/popular/ (doesn't support page)
-                                when (page) {
-                                    1 -> addPathSegment("")
-                                    2 -> addEncodedPathSegments("updates/sort/popular")
-                                    else -> addEncodedPathSegments("updates/sort/filter/ord/popular/content/0/quality/0/tags/0/mpage/${page - 2}")
+                                "popular" -> {
+                                    // Using a more effective request comparing to the /updates/sort/popular/ (doesn't support page)
+                                    when (page) {
+                                        1 -> addPathSegment("")
+                                        2 -> addEncodedPathSegments("updates/sort/popular")
+                                        else -> addEncodedPathSegments("updates/sort/filter/ord/popular/content/0/quality/0/tags/0/mpage/${page - 2}")
+                                    }
                                 }
                             }
                         }
@@ -221,6 +226,7 @@ abstract class Masonry(
             Filter.Header("Other filters are ignored when doing text search"),
             SearchTypeFilter(searchTypeOptions),
             Filter.Separator(),
+            Filter.Header("Some source might not support Trending"),
             SortFilter(),
             Filter.Separator(),
         )
@@ -348,6 +354,7 @@ abstract class Masonry(
 
     protected open fun modelChapterListRequest(manga: SManga): Request {
         val url = (baseUrl + manga.url).toHttpUrl().newBuilder().apply {
+            // Must use sort/latest to get correct title (instead of description), also will list chapters in timely manner
             addEncodedPathSegments("sort/latest")
         }.build()
         return GET(url, headers)
@@ -356,15 +363,17 @@ abstract class Masonry(
     protected open fun modelChapterListSelector() = popularMangaSelector()
 
     protected open fun modelMangaFromElement(element: Element): SManga {
-        val sourceName = this.name
+        val sourceName = name
         return SManga.create().apply {
-            element.selectFirst("div.img-overlay a")!!.run {
-                title = "${text()} @$sourceName"
-                artist = text()
-                author = sourceName
+            element.selectFirst("a:has(img)")!!.apply {
                 setUrlWithoutDomain(absUrl("href"))
+            }.selectFirst("img")!!.run {
+                val name = attr("alt")
+                artist = name
+                author = sourceName
+                title = "$name @$sourceName"
+                thumbnail_url = imgAttr()
             }
-            thumbnail_url = element.selectFirst("img")?.imgAttr()
             status = SManga.ONGOING
             update_strategy = UpdateStrategy.ALWAYS_UPDATE
         }
@@ -386,6 +395,7 @@ abstract class Masonry(
 
     protected open fun modelChapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
+            // Use img-overlay to get correct set's name without duplicate model's name
             with(element.selectFirst(".img-overlay p a")!!) {
                 setUrlWithoutDomain(absUrl("href"))
                 name = text()

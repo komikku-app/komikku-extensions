@@ -16,15 +16,15 @@ class SortFilter : SelectFilter("Sort by", sortFilterOptions) {
     fun getUriPartIfNeeded(channel: String) =
         when (channel) {
             "updates" -> {
-                when (state) {
-                    0 -> "" // Trending
+                when (selected) {
+                    "trending" -> "" // Trending
                     else -> selected
                 }
             }
             // tag & channel
             else -> {
-                when (state) {
-                    2 -> "" // Popular
+                when (selected) {
+                    "popular" -> "" // Popular
                     else -> selected
                 }
             }
@@ -37,7 +37,7 @@ private val sortFilterOptions = listOf(
     Pair("Popular", "popular"),
 )
 
-class SearchTypeFilter(options: List<Pair<String, String>>) : SelectFilter("Search query for", options)
+class SearchTypeFilter(options: List<Pair<String, String>>) : SelectFilter("Browse & Search query for", options)
 
 class Tag(val name: String, val uriPart: String)
 
