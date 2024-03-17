@@ -215,6 +215,9 @@ abstract class Masonry(
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
 
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        document.selectFirst("header#top h1")?.run {
+            title = text()
+        }
         document.selectFirst("p.link-btn")?.run {
             artist = select("a[href*=/model/]").eachText().joinToString()
             author = selectFirst("a")?.text()
