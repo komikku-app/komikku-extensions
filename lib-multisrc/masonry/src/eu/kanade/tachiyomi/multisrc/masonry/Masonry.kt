@@ -115,11 +115,11 @@ abstract class Masonry(
 
             val url = baseUrl.toHttpUrl().newBuilder().apply {
                 if (tagsFilter.state.none { it.state }) {
-                    when (sortFilter.state) {
-                        0 -> {
-                            // Trending: use /updates/sort/ since it won't be available with Filter
                             addPathSegment("updates")
                             sortFilter.getUriPartIfNeeded("search").also {
+                    when (sortFilter.selected) {
+                        "trending" -> {
+                            // Trending: use /updates/sort/ since it won't be available with site's search
                                 // Only EliteBabes & MetArt supports Pages for updates/sort/trending
                                 if (it.isBlank()) {
                                     addEncodedPathSegments("page/$page/")
@@ -129,10 +129,22 @@ abstract class Masonry(
                                 }
                             }
                         }
-                        // Using a more effective request comparing to the /updates/sort/newest/
-                        1 -> latestUpdatesRequest(page)
-                        // Using a more effective request comparing to the /updates/sort/popular/
-                        2 -> popularMangaRequest(page)
+                        "newest" -> {
+                            // Using a more effective request comparing to the /updates/sort/newest/ (some sites doesn't support)
+                            if (useAlternativeLatestRequest) {
+                                addEncodedPathSegments("updates/sort/newest/mpage/$page")
+                            } else {
+                                addEncodedPathSegments("archive/page/$page/")
+                            }
+                        }
+                        "popular" -> {
+                            // Using a more effective request comparing to the /updates/sort/popular/ (doesn't support page)
+                            when (page) {
+                                1 -> addPathSegment("")
+                                2 -> addEncodedPathSegments("updates/sort/popular")
+                                else -> addEncodedPathSegments("updates/sort/filter/ord/popular/content/0/quality/0/tags/0/mpage/${page - 2}")
+                            }
+                        }
                     }
                 } else {
                     // tag/ will support pages for both newest & popular on all sites, so no need to change
