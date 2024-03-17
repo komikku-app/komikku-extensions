@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.vi.nettruyenx
+package eu.kanade.tachiyomi.extension.vi.nettruyenco
 
 import eu.kanade.tachiyomi.multisrc.wpcomics.WPComics
 import eu.kanade.tachiyomi.source.model.SManga
@@ -6,9 +6,9 @@ import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class NetTruyenX : WPComics(
-    "NetTruyenX (unoriginal)",
-    "https://nettruyenx.com",
+class NetTruyenCO : WPComics(
+    "NetTruyenCO (unoriginal)",
+    "https://nettruyenco.vn",
     "vi",
     SimpleDateFormat("dd/MM/yy", Locale.getDefault()),
     null,
@@ -23,7 +23,7 @@ class NetTruyenX : WPComics(
                 status = info.select("li.status p.col-xs-8").text().toStatus()
                 genre = info.select("li.kind p.col-xs-8 a").joinToString { it.text() }
                 val otherName = info.select("h2.other-name").text()
-                description = info.select("div.detail-content div div:nth-child(4)").text() +
+                description = info.select("div.detail-content div div.nth-child(3)").text() +
                     if (otherName.isNotBlank()) "\n\n ${intl["OTHER_NAME"]}: $otherName" else ""
                 thumbnail_url = imageOrNull(info.select("div.col-image img").first()!!)
             }

@@ -2,4 +2,8 @@ plugins {
     id("lib-multisrc")
 }
 
-baseVersionCode = 4 + 2
+baseVersionCode = 5 + 2
+
+dependencies {
+    api(project(":lib:i18n"))
+}
