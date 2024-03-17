@@ -91,8 +91,8 @@ abstract class Masonry(
     /**
      * Some sites doesn't support page for /updates/sort/newest/
      *  - JoyMii
-     *  - XArt (doesn't work at all)
-     * This URL is often not consistent
+     *  - XArt (doesn't have any content at all)
+     * This URL is often not showing consistent contents
      */
     private fun alternativeLatestRequest(page: Int) =
         GET("$baseUrl/updates/sort/newest/mpage/$page/", headers)
@@ -112,50 +112,39 @@ abstract class Masonry(
 
             GET(url, headers)
         } else {
-            val tagsFilter = filters.filterIsInstance<TagsFilter>().first()
             val sortFilter = filters.filterIsInstance<SortFilter>().first()
+            val tagsFilter = filters.filterIsInstance<TagsFilter>().first()
 
             val url = baseUrl.toHttpUrl().newBuilder().apply {
                 if (tagsFilter.state.none { it.state }) {
-                    var channelUri = "updates"
-                    var sortUri = "sort"
-                    runCatching {
-                        val channelFilter = filters.filterIsInstance<ChannelFilter>().first()
-                        if (channelFilter.state != 0) {
-                            channelUri = channelFilter.selected
-                            sortUri = "s"
-                        }
-                    }
-
-                    if (channelUri != "updates" || sortFilter.selected == "trending") {
-                        // Trending: use /updates/sort/ since it won't be available with site's search
-                        addPathSegment(channelUri)
-                        sortFilter.getUriPartIfNeeded(channelUri).also {
-                            // Only EliteBabes & MetArt supports Pages for updates/sort/trending
-                            if (it.isBlank()) {
-                                addEncodedPathSegments("page/$page/")
-                            } else {
-                                addEncodedPathSegments("$sortUri/$it")
-                                addEncodedPathSegments("mpage/$page/")
-                            }
-                        }
-                    } else {
-                        when (sortFilter.selected) {
-                            "newest" -> {
-                                // Using a more effective request comparing to the /updates/sort/newest/ (some sites doesn't support)
-                                if (useAlternativeLatestRequest) {
-                                    addEncodedPathSegments("updates/sort/newest/mpage/$page")
+                    when (sortFilter.selected) {
+                        "trending" -> {
+                            // Trending: use /updates/sort/ since it won't be available with site's search
+                            addPathSegment("updates")
+                            sortFilter.getUriPartIfNeeded("updates").also {
+                                // Only EliteBabes & MetArt supports Pages for updates/sort/trending
+                                if (it.isBlank()) {
+                                    addEncodedPathSegments("page/$page/")
                                 } else {
-                                    addEncodedPathSegments("archive/page/$page/")
+                                    addEncodedPathSegments("sort/$it")
+                                    addEncodedPathSegments("mpage/$page/")
                                 }
                             }
-                            "popular" -> {
-                                // Using a more effective request comparing to the /updates/sort/popular/ (doesn't support page)
-                                when (page) {
-                                    1 -> addPathSegment("")
-                                    2 -> addEncodedPathSegments("updates/sort/popular")
-                                    else -> addEncodedPathSegments("updates/sort/filter/ord/popular/content/0/quality/0/tags/0/mpage/${page - 2}")
-                                }
+                        }
+                        "newest" -> {
+                            // Using a more effective request comparing to the /updates/sort/newest/ (some sites doesn't support)
+                            if (useAlternativeLatestRequest) {
+                                addEncodedPathSegments("updates/sort/newest/mpage/$page")
+                            } else {
+                                addEncodedPathSegments("archive/page/$page/")
+                            }
+                        }
+                        "popular" -> {
+                            // Using a more effective request comparing to the /updates/sort/popular/ (doesn't support page)
+                            when (page) {
+                                1 -> addPathSegment("")
+                                2 -> addEncodedPathSegments("updates/sort/popular")
+                                else -> addEncodedPathSegments("updates/sort/filter/ord/popular/content/0/quality/0/tags/0/mpage/${page - 2}")
                             }
                         }
                     }
@@ -183,10 +172,10 @@ abstract class Masonry(
         }
     }
 
+    private val scope = CoroutineScope(Dispatchers.IO)
+    protected fun launchIO(block: () -> Unit) = scope.launch { block() }
     private var tagsFetchAttempt = 0
     private var tags = emptyList<Tag>()
-    private val scope = CoroutineScope(Dispatchers.IO)
-    private fun launchIO(block: () -> Unit) = scope.launch { block() }
 
     protected open fun getTags() {
         launchIO {

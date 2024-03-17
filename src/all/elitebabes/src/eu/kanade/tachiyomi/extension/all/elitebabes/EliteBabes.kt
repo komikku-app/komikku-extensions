@@ -1,14 +1,15 @@
 package eu.kanade.tachiyomi.extension.all.elitebabes
 
-import eu.kanade.tachiyomi.multisrc.masonry.ChannelFilter
 import eu.kanade.tachiyomi.multisrc.masonry.Masonry
 import eu.kanade.tachiyomi.multisrc.masonry.SelectFilter
+import eu.kanade.tachiyomi.multisrc.masonry.SortFilter
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 
@@ -59,6 +60,8 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     private class CollectionsFilter(collections: List<Pair<String, String>>) :
         SelectFilter("Collections", collections)
 
+    class ChannelFilter(channels: List<Pair<String, String>>) : SelectFilter("Channels", channels)
+
     private var channelsFetchAttempt = 0
     private var channels = emptyList<Pair<String, String>>()
 
@@ -87,10 +90,11 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     override fun getFilterList(): FilterList {
         getChannels()
         val filters = super.getFilterList().list +
+            Filter.Separator() +
+            Filter.Header("Channels will ignore Tags & Models filter") +
             if (channels.isEmpty()) {
                 Filter.Header("Press 'reset' to attempt to load channels")
             } else {
-                Filter.Header("Channel is ignored when any tag is selected")
                 ChannelFilter(channels)
             } +
             listOf(
@@ -104,10 +108,30 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val collectionsFilter = filters.filterIsInstance<CollectionsFilter>().first()
-        return if (collectionsFilter.state == 0) {
-            super.searchMangaRequest(page, query, filters)
-        } else {
-            GET(collectionsFilter.selected, headers)
+        val channelFilter = filters.filterIsInstance<ChannelFilter>().first()
+        val sortFilter = filters.filterIsInstance<SortFilter>().first()
+
+        return when {
+            collectionsFilter.state != 0 -> GET(collectionsFilter.selected, headers)
+            channelFilter.state != 0 -> {
+                val channelUri = channelFilter.selected
+                val sortUri = "s"
+
+                val url = baseUrl.toHttpUrl().newBuilder().apply {
+                    addPathSegment(channelUri)
+                    sortFilter.getUriPartIfNeeded(channelUri).also {
+                        if (it.isBlank()) {
+                            addEncodedPathSegments("page/$page/")
+                        } else {
+                            addEncodedPathSegments("$sortUri/$it")
+                            addEncodedPathSegments("mpage/$page/")
+                        }
+                    }
+                }.build()
+
+                GET(url, headers)
+            }
+            else -> super.searchMangaRequest(page, query, filters)
         }
     }
 

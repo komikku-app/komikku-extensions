@@ -37,8 +37,6 @@ private val sortFilterOptions = listOf(
     Pair("Popular", "popular"),
 )
 
-class ChannelFilter(channels: List<Pair<String, String>>) : SelectFilter("Channels", channels)
-
 class SearchTypeFilter(options: List<Pair<String, String>>) : SelectFilter("Search query for", options)
 
 class Tag(val name: String, val uriPart: String)
