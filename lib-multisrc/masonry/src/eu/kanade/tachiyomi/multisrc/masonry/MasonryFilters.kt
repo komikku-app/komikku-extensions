@@ -13,8 +13,8 @@ abstract class SelectFilter(
 }
 
 class SortFilter : SelectFilter("Sort by", sortFilterOptions) {
-    fun getUriPartIfNeeded(part: String) =
-        when (part) {
+    fun getUriPartIfNeeded(channel: String) =
+        when (channel) {
             "updates" -> {
                 when (state) {
                     0 -> "" // Trending
@@ -45,3 +45,6 @@ class TagCheckBox(name: String, val uriPart: String) : Filter.CheckBox(name)
 
 class TagsFilter(tags: List<Tag>) :
     Filter.Group<TagCheckBox>("Tags", tags.map { TagCheckBox(it.name, it.uriPart) })
+
+class ModelTagsFilter(tags: List<Tag>) :
+    Filter.Group<TagCheckBox>("Model Tags", tags.map { TagCheckBox(it.name, it.uriPart) })

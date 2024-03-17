@@ -114,55 +114,73 @@ abstract class Masonry(
         } else {
             val sortFilter = filters.filterIsInstance<SortFilter>().first()
             val tagsFilter = filters.filterIsInstance<TagsFilter>().first()
+            val modelTagsFilter = filters.filterIsInstance<ModelTagsFilter>().first()
 
             val url = baseUrl.toHttpUrl().newBuilder().apply {
-                if (tagsFilter.state.none { it.state }) {
-                    when (sortFilter.selected) {
-                        "trending" -> {
-                            // Trending: use /updates/sort/ since it won't be available with site's search
-                            addPathSegment("updates")
-                            sortFilter.getUriPartIfNeeded("updates").also {
-                                // Only EliteBabes & MetArt supports Pages for updates/sort/trending
-                                if (it.isBlank()) {
-                                    addEncodedPathSegments("page/$page/")
-                                } else {
-                                    addEncodedPathSegments("sort/$it")
-                                    addEncodedPathSegments("mpage/$page/")
-                                }
-                            }
-                        }
-                        "newest" -> {
-                            // Using a more effective request comparing to the /updates/sort/newest/ (some sites doesn't support)
-                            if (useAlternativeLatestRequest) {
-                                addEncodedPathSegments("updates/sort/newest/mpage/$page")
+                when {
+                    tagsFilter.state.any { it.state } -> {
+                        // tag/ will support pages for both newest & popular on all sites, so no need to change
+                        addPathSegment("tag")
+                        addPathSegment(
+                            tagsFilter.state
+                                .filter { it.state }
+                                .joinToString("+") { it.uriPart },
+                        )
+                        sortFilter.getUriPartIfNeeded("tag").also {
+                            // Only EliteBabes supports Pages for tag/sort/trending
+                            if (it.isBlank()) {
+                                addEncodedPathSegments("page/$page/")
                             } else {
-                                addEncodedPathSegments("archive/page/$page/")
-                            }
-                        }
-                        "popular" -> {
-                            // Using a more effective request comparing to the /updates/sort/popular/ (doesn't support page)
-                            when (page) {
-                                1 -> addPathSegment("")
-                                2 -> addEncodedPathSegments("updates/sort/popular")
-                                else -> addEncodedPathSegments("updates/sort/filter/ord/popular/content/0/quality/0/tags/0/mpage/${page - 2}")
+                                addEncodedPathSegments("sort/$it")
+                                addEncodedPathSegments("mpage/$page/")
                             }
                         }
                     }
-                } else {
-                    // tag/ will support pages for both newest & popular on all sites, so no need to change
-                    addPathSegment("tag")
-                    addPathSegment(
-                        tagsFilter.state
-                            .filter { it.state }
-                            .joinToString("+") { it.uriPart },
-                    )
-                    sortFilter.getUriPartIfNeeded("tag").also {
-                        // Only EliteBabes supports Pages for tag/sort/trending
-                        if (it.isBlank()) {
-                            addEncodedPathSegments("page/$page/")
-                        } else {
-                            addEncodedPathSegments("sort/$it")
-                            addEncodedPathSegments("mpage/$page/")
+                    modelTagsFilter.state.any { it.state } -> {
+                        // model-tag/ only support single tag
+                        addPathSegment("model-tag")
+                        addPathSegment(modelTagsFilter.state.first { it.state }.uriPart)
+                        sortFilter.getUriPartIfNeeded("model-tag").also {
+                            // Only EliteBabes supports Pages for tag/sort/trending
+                            if (it.isBlank()) {
+                                addEncodedPathSegments("page/$page/")
+                            } else {
+                                addEncodedPathSegments("sort/$it")
+                                addEncodedPathSegments("mpage/$page/")
+                            }
+                        }
+                    }
+                    else -> {
+                        when (sortFilter.selected) {
+                            "trending" -> {
+                                // Trending: use /updates/sort/ since it won't be available with site's search
+                                addPathSegment("updates")
+                                sortFilter.getUriPartIfNeeded("updates").also {
+                                    // Only EliteBabes & MetArt supports Pages for updates/sort/trending
+                                    if (it.isBlank()) {
+                                        addEncodedPathSegments("page/$page/")
+                                    } else {
+                                        addEncodedPathSegments("sort/$it")
+                                        addEncodedPathSegments("mpage/$page/")
+                                    }
+                                }
+                            }
+                            "newest" -> {
+                                // Using a more effective request comparing to the /updates/sort/newest/ (some sites doesn't support)
+                                if (useAlternativeLatestRequest) {
+                                    addEncodedPathSegments("updates/sort/newest/mpage/$page")
+                                } else {
+                                    addEncodedPathSegments("archive/page/$page/")
+                                }
+                            }
+                            "popular" -> {
+                                // Using a more effective request comparing to the /updates/sort/popular/ (doesn't support page)
+                                when (page) {
+                                    1 -> addPathSegment("")
+                                    2 -> addEncodedPathSegments("updates/sort/popular")
+                                    else -> addEncodedPathSegments("updates/sort/filter/ord/popular/content/0/quality/0/tags/0/mpage/${page - 2}")
+                                }
+                            }
                         }
                     }
                 }
@@ -198,21 +216,26 @@ abstract class Masonry(
 
     override fun getFilterList(): FilterList {
         getTags()
+        getModelTags()
         val filters = mutableListOf(
+            Filter.Header("Other filters are ignored when doing text search"),
             SearchTypeFilter(searchTypeOptions),
             Filter.Separator(),
-            Filter.Header("Filters are ignored when text search"),
             SortFilter(),
+            Filter.Separator(),
         )
 
         if (tags.isEmpty()) {
-            filters.add(
-                Filter.Header("Press 'reset' to attempt to load tags"),
-            )
+            filters.add(Filter.Header("Press 'reset' to attempt to load tags"))
         } else {
-            filters.add(
-                TagsFilter(tags),
-            )
+            filters.add(TagsFilter(tags))
+        }
+
+        filters.add(Filter.Header("Model filters are ignored when Tags filter is selected.\nTrending is supported if only 1 Model's tag is selected."))
+        if (modelTags.isEmpty()) {
+            filters.add(Filter.Header("Press 'reset' to attempt to load Model tags"))
+        } else {
+            filters.add(ModelTagsFilter(modelTags))
         }
 
         return FilterList(filters)
@@ -301,6 +324,28 @@ abstract class Masonry(
     }
 
     /* Models */
+    private var modelTagsFetchAttempt = 0
+    private var modelTags = emptyList<Tag>()
+
+    protected open fun getModelTags() {
+        launchIO {
+            if (modelTags.isEmpty() && modelTagsFetchAttempt < 3) {
+                runCatching {
+                    modelTags = client.newCall(GET("$baseUrl/models/", headers))
+                        .execute().asJsoup()
+                        .select("#filter-b span[data-placeholder='Tags'] span:has(> input)")
+                        .mapNotNull {
+                            Tag(
+                                "M: " + it.select("label").text(),
+                                it.select("input").attr("value"),
+                            )
+                        }
+                }
+                modelTagsFetchAttempt++
+            }
+        }
+    }
+
     protected open fun modelChapterListRequest(manga: SManga): Request {
         val url = (baseUrl + manga.url).toHttpUrl().newBuilder().apply {
             addEncodedPathSegments("sort/latest")
@@ -335,7 +380,7 @@ abstract class Masonry(
             description = "$info\n" + select("div.module-more ul li")
                 .eachText().joinToString("\n")
         }
-        genre = (listOf(artist) + document.select("article.module-model + p a[href*=/model-tag/]").eachText()).joinToString()
+        genre = (listOf(artist) + document.select("article.module-model + p a[href*=/model-tag/]").eachText().map { "M: $it" }).joinToString()
         status = SManga.ONGOING
     }
 
