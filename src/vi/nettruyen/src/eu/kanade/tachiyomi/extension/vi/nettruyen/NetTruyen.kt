@@ -6,9 +6,13 @@ import okhttp3.Response
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class NetTruyen : WPComics("NetTruyen", "https://www.nettruyenff.com", "vi", SimpleDateFormat("dd/MM/yy", Locale.getDefault()), null) {
-    override fun String.replaceSearchPath() = replace("/$searchPath?status=2&", "/truyen-full?")
-
+class NetTruyen : WPComics(
+    "NetTruyen",
+    "https://www.nettruyenff.com",
+    "vi",
+    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.getDefault()),
+    gmtOffset = null,
+) {
     /**
      * NetTruyen/NhatTruyen redirect back to catalog page if searching query is not found.
      * That makes both sites always return un-relevant results when searching should return empty.

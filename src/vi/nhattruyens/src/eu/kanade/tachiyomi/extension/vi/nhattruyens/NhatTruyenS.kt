@@ -13,8 +13,8 @@ class NhatTruyenS : WPComics(
     "NhatTruyenS (unoriginal)",
     "https://nhattruyens.com",
     "vi",
-    SimpleDateFormat("dd/MM/yy", Locale.getDefault()),
-    null,
+    dateFormat = SimpleDateFormat("dd/MM/yy", Locale.getDefault()),
+    gmtOffset = null,
 ) {
     override val popularPath = "truyen-hot"
 

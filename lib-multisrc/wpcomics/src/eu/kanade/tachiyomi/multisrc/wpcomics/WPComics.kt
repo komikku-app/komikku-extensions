@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -25,7 +24,7 @@ import java.util.Locale
 abstract class WPComics(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String,
+    final override val lang: String,
     protected val dateFormat: SimpleDateFormat = SimpleDateFormat("HH:mm - dd/MM/yyyy Z", Locale.US),
     protected val gmtOffset: String? = "+0500",
 ) : ParsedHttpSource() {
@@ -34,23 +33,19 @@ abstract class WPComics(
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0")
-        .add("Referer", baseUrl)
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
 
-    open val intl by lazy {
-        Intl(
-            language = lang,
-            baseLanguage = "en",
-            availableLanguages = setOf("en", "vi", "ja"),
-            classLoader = this::class.java.classLoader!!,
-        )
-    }
+    open val intl = Intl(
+        language = lang,
+        baseLanguage = "en",
+        availableLanguages = setOf("en", "vi", "ja"),
+        classLoader = this::class.java.classLoader!!,
+    )
 
-    private fun List<String>.doesInclude(thisWord: String): Boolean = this.any { it.contains(thisWord, ignoreCase = true) }
+    protected fun List<String>.doesInclude(thisWord: String): Boolean = this.any { it.contains(thisWord, ignoreCase = true) }
 
     // Popular
-
     open val popularPath = "hot"
 
     override fun popularMangaRequest(page: Int): Request {
@@ -72,7 +67,6 @@ abstract class WPComics(
     override fun popularMangaNextPageSelector() = "a.next-page, a[rel=next]"
 
     // Latest
-
     override fun latestUpdatesRequest(page: Int): Request {
         return GET(baseUrl + if (page > 1) "?page=$page" else "", headers)
     }
@@ -84,11 +78,8 @@ abstract class WPComics(
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
     // Search
-
     protected open val searchPath = "tim-truyen"
     protected open val queryParam = "keyword"
-
-    protected open fun String.replaceSearchPath() = this
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = "$baseUrl/$searchPath".toHttpUrl().newBuilder()
@@ -107,7 +98,7 @@ abstract class WPComics(
             addQueryParameter("sort", "0")
         }
 
-        return GET(url.toString().replaceSearchPath(), headers)
+        return GET(url.toString(), headers)
     }
 
     override fun searchMangaSelector() = "div.items div.item"
@@ -125,7 +116,6 @@ abstract class WPComics(
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     // Details
-
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
             document.select("article#item-detail").let { info ->
@@ -141,8 +131,8 @@ abstract class WPComics(
     }
 
     open fun String?.toStatus(): Int {
-        val ongoingWords = listOf("Updating", intl["STATUS_ONGOING"])
-        val completedWords = listOf("Complete", intl["STATUS_COMPLETED"])
+        val ongoingWords = listOf("Ongoing", "Updating", "Đang tiến hành", "連載中")
+        val completedWords = listOf("Complete", "Completed", "Hoàn thành", "完結済み")
         return when {
             this == null -> SManga.UNKNOWN
             ongoingWords.doesInclude(this) -> SManga.ONGOING
@@ -152,7 +142,6 @@ abstract class WPComics(
     }
 
     // Chapters
-
     override fun chapterListSelector() = "div.list-chapter li.row:not(.heading)"
 
     override fun chapterFromElement(element: Element): SChapter {
@@ -206,9 +195,8 @@ abstract class WPComics(
     }
 
     // Pages
-
-    // sources sometimes have an image element with an empty attr that isn't really an image
     open fun imageOrNull(element: Element): String? {
+        // sources sometimes have an image element with an empty attr that isn't really an image
         fun Element.hasValidAttr(attr: String): Boolean {
             val regex = Regex("""https?://.*""", RegexOption.IGNORE_CASE)
             return when {
@@ -237,7 +225,6 @@ abstract class WPComics(
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // Filters
-
     protected class StatusFilter(name: String, pairs: List<Pair<String?, String>>) : UriPartFilter(name, pairs)
 
     protected class GenreFilter(name: String, pairs: List<Pair<String?, String>>) : UriPartFilter(name, pairs)
