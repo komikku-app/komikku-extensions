@@ -41,13 +41,18 @@ jobs:
           echo "name:        ${{ steps.import-gpg.outputs.name }}"
           echo "email:       ${{ steps.import-gpg.outputs.email }}"
 
-      - name: Merging
+      - name: Merging Master
+        run: |
+          cd merge-keiyoushi
+          git merge --no-edit origin/master
+
+      - name: Merging Keiyoushi
         run: |
           cd merge-keiyoushi
           git remote add keiyoushi https://github.com/keiyoushi/extensions-source
           git fetch keiyoushi
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
+          # git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # git config --global user.name "github-actions[bot]"
           git merge -S --no-edit keiyoushi/main
 
       - name: Push to repo
