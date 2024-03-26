@@ -28,7 +28,7 @@ abstract class Gmanga(
     override val name: String,
     override val baseUrl: String,
     final override val lang: String,
-    protected val cdnUrl: String = baseUrl,
+    protected open val cdnUrl: String = baseUrl,
 ) : HttpSource() {
 
     override val supportsLatest = true
@@ -49,6 +49,7 @@ abstract class Gmanga(
 
     override fun latestUpdatesParse(response: Response): MangasPage {
         val releases = response.parseAs<LatestChaptersDto>().releases
+            .filterNot { it.manga.isNovel }
 
         val entries = releases.map { it.manga.toSManga(::createThumbnail) }
             .distinctBy { it.url }

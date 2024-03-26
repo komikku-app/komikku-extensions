@@ -24,6 +24,7 @@ class Dilar :
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
     override val baseUrl: String = getMirrorPref()!!
+    override val cdnUrl = baseUrl
 
     override fun chaptersRequest(manga: SManga): Request {
         val mangaId = manga.url.substringAfterLast("/")
@@ -45,7 +46,7 @@ class Dilar :
                 entries = MIRROR_PREF_ENTRIES
                 entryValues = MIRROR_PREF_ENTRY_VALUES
                 setDefaultValue(MIRROR_PREF_DEFAULT_VALUE)
-                summary = "%s"
+                summary = "%s\nقد تحتاج إلى إزالة الإدخالات من المكتبة و\"مسح قاعدة البيانات\""
 
                 setOnPreferenceChangeListener { _, newValue ->
                     val selected = newValue as String
