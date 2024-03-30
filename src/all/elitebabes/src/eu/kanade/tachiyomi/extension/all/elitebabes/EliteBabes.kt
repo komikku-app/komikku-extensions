@@ -169,10 +169,10 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
                     addPathSegment(channelUri)
                     sortFilter.getUriPartIfNeeded(channelUri).also {
                         if (it.isBlank()) {
-                            addEncodedPathSegments("page/$page/")
+                            addPathSegments("page/$page/")
                         } else {
-                            addEncodedPathSegments("$sortUri/$it")
-                            addEncodedPathSegments("mpage/$page/")
+                            addPathSegments("$sortUri/$it")
+                            addPathSegments("mpage/$page/")
                         }
                     }
                 }.build()

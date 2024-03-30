@@ -115,7 +115,7 @@ abstract class Masonry(
         return if (query.isNotEmpty()) {
             val url = "$baseUrl/search/$searchType/".toHttpUrl().newBuilder()
                 .addPathSegment(query.trim())
-                .addEncodedPathSegments("mpage/$page/")
+                .addPathSegments("mpage/$page/")
                 .build()
 
             GET(url, headers)
@@ -140,10 +140,10 @@ abstract class Masonry(
                         sortFilter.getUriPartIfNeeded("tag").also {
                             // Only EliteBabes supports Pages for tag/sort/trending
                             if (it.isBlank()) {
-                                addEncodedPathSegments("page/$page/")
+                                addPathSegments("page/$page/")
                             } else {
-                                addEncodedPathSegments("sort/$it")
-                                addEncodedPathSegments("mpage/$page/")
+                                addPathSegments("sort/$it")
+                                addPathSegments("mpage/$page/")
                             }
                         }
                     }
@@ -163,10 +163,10 @@ abstract class Masonry(
                             sortFilter.getUriPartIfNeeded("model-tag").also {
                                 // Only EliteBabes supports Pages for tag/sort/trending
                                 if (it.isBlank()) {
-                                    addEncodedPathSegments("page/$page/")
+                                    addPathSegments("page/$page/")
                                 } else {
-                                    addEncodedPathSegments("sort/$it")
-                                    addEncodedPathSegments("mpage/$page/")
+                                    addPathSegments("sort/$it")
+                                    addPathSegments("mpage/$page/")
                                 }
                             }
                         } else {
@@ -200,10 +200,10 @@ abstract class Masonry(
                             sortFilter.getUriPartIfNeeded(channel).also {
                                 // Only EliteBabes & MetArt supports Pages for updates/sort/trending
                                 if (it.isBlank()) {
-                                    addEncodedPathSegments("page/$page/")
+                                    addPathSegments("page/$page/")
                                 } else {
-                                    addEncodedPathSegments("sort/$it")
-                                    addEncodedPathSegments("mpage/$page/")
+                                    addPathSegments("sort/$it")
+                                    addPathSegments("mpage/$page/")
                                 }
                             }
                         } else {
@@ -211,9 +211,9 @@ abstract class Masonry(
                                 "newest" -> {
                                     // Using a more effective request comparing to the /updates/sort/newest/ (some sites doesn't support)
                                     if (useAlternativeLatestRequest) {
-                                        addEncodedPathSegments("updates/sort/newest/mpage/$page")
+                                        addPathSegments("updates/sort/newest/mpage/$page")
                                     } else {
-                                        addEncodedPathSegments("archive/page/$page/")
+                                        addPathSegments("archive/page/$page/")
                                     }
                                 }
 
@@ -221,8 +221,8 @@ abstract class Masonry(
                                     // Using a more effective request comparing to the /updates/sort/popular/ (doesn't support page)
                                     when (page) {
                                         1 -> addPathSegment("")
-                                        2 -> addEncodedPathSegments("updates/sort/popular")
-                                        else -> addEncodedPathSegments("updates/sort/filter/ord/popular/content/0/quality/0/tags/0/mpage/${page - 2}")
+                                        2 -> addPathSegments("updates/sort/popular")
+                                        else -> addPathSegments("updates/sort/filter/ord/popular/content/0/quality/0/tags/0/mpage/${page - 2}")
                                     }
                                 }
                             }
@@ -418,7 +418,7 @@ abstract class Masonry(
         val url = (baseUrl + manga.url).toHttpUrl().newBuilder().apply {
             /* Must use sort/latest to get correct title (instead of description),
               also will list chapters in timely manner */
-            addEncodedPathSegments("sort/latest")
+            addPathSegments("sort/latest")
         }.build()
         return GET(url, headers)
     }
