@@ -19,6 +19,13 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
+/**
+ * - Better popular/latest browsing, fixed some place only 1 page was available or none at all.
+ * - Support browse/search for models & model's collection (/models/)
+ * - Support model's tags filter (/model-tag/)
+ * - Support multiple tags filter
+ * TODO: support more model's filter
+ */
 abstract class Masonry(
     override val name: String,
     override val baseUrl: String,
@@ -151,10 +158,7 @@ abstract class Masonry(
                         }
                     }
                     else -> {
-                        val channel = when (searchType) {
-                            "model" -> "models"
-                            else -> "updates"
-                        }
+                        val channel = getBrowseChannelUri(searchType)
                         if (sortFilter.selected == "trending" || channel != "updates") {
                             // Trending: use /updates/sort/ since it won't be available with site's search
                             addPathSegment(channel)
@@ -245,6 +249,16 @@ abstract class Masonry(
         }
 
         return FilterList(filters)
+    }
+
+    /**
+     * The Uri used to browse for popular/trending/newest galleries:
+     * - <domain>/models/
+     * - <domain>/updates/
+     */
+    protected open fun getBrowseChannelUri(searchType: String): String = when (searchType) {
+        "model" -> "models"
+        else -> "updates"
     }
 
     protected open val searchTypeOptions = listOf(

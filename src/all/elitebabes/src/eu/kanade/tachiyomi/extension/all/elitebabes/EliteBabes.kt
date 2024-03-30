@@ -8,11 +8,19 @@ import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 
+/**
+ * - Support Highlight (galleries collection which are put on various external domain)
+ * - Support Channels (filter as gallery's author, i.e. click on title's author such as MetArt) (/erotic-art-channels/)
+ * - Support Collections (/collections/)
+ */
 class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     /**
      * External sites which ref link back to main site.
@@ -135,6 +143,24 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
         }
     }
 
+    /**
+     * The Uri used to browse for popular/trending/newest:
+     * - <domain>/models/
+     * - <domain>/collections/
+     * - <domain>/updates/
+     */
+    override fun getBrowseChannelUri(searchType: String): String = when (searchType) {
+        "model" -> "models"
+        "collection" -> "collections"
+        else -> "updates"
+    }
+
+    override val searchTypeOptions = listOf(
+        Pair("Galleries", "post"),
+        Pair("Models", "model"),
+        Pair("Collections", "collection"),
+    )
+
     override fun searchMangaParse(response: Response): MangasPage {
         val requestUrl = response.request.url.toString()
         return when {
@@ -152,7 +178,52 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
                     hasNextPage = false,
                 )
             }
+            response.request.url.toString().contains("/collections/") -> {
+                val mangaFromElement = ::collectionMangaFromElement
+
+                val document = response.asJsoup()
+                val mangas = document.select(searchMangaSelector()).map { element ->
+                    mangaFromElement(element)
+                }
+                val hasNextPage = searchMangaNextPageSelector().let { document.select(it).first() } != null
+
+                MangasPage(mangas, hasNextPage)
+            }
             else -> super.searchMangaParse(response)
         }
+    }
+
+    private fun collectionMangaFromElement(element: Element): SManga {
+        return SManga.create().apply {
+            element.selectFirst(".img-overlay p a")!!.run {
+                setUrlWithoutDomain(absUrl("href"))
+                title = text()
+            }
+            thumbnail_url = element.selectFirst("a img")?.imgAttr()
+            status = SManga.ONGOING
+            update_strategy = UpdateStrategy.ALWAYS_UPDATE
+        }
+    }
+
+    override fun mangaDetailsParse(response: Response): SManga {
+        return when {
+            response.request.url.toString().contains("/collection/nr/") ->
+                collectionMangaDetailsParse(response.asJsoup())
+            else ->
+                super.mangaDetailsParse(response)
+        }
+    }
+
+    private fun collectionMangaDetailsParse(document: Document) = SManga.create().apply {
+        document.selectFirst("article.module-model")?.run {
+            selectFirst(".header-model").run {
+                title = selectFirst("h1")!!.text()
+                thumbnail_url = selectFirst("figure img")?.imgAttr()
+                description = select("ul.list-inline li")
+                    .eachText().joinToString()
+            }
+            author = select("p:contains(by) a").text()
+        }
+        status = SManga.ONGOING
     }
 }
