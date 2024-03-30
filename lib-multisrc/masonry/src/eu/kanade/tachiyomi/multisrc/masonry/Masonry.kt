@@ -59,7 +59,8 @@ abstract class Masonry(
     override fun popularMangaSelector() = "$galleryListSelector $gallerySelector"
 
     // Add fake selector for updates/sort/popular because it only has 1 page
-    override fun popularMangaNextPageSelector() = ".pagination-a li.next, main#content .link-btn a.overlay-a[href='/updates/sort/popular/']"
+    override fun popularMangaNextPageSelector() =
+        ".pagination-a li.next, main#content .link-btn a.overlay-a[href='/updates/sort/popular/']"
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
         element.selectFirst("a")!!.also {
@@ -146,6 +147,7 @@ abstract class Masonry(
                             }
                         }
                     }
+
                     modelTagsFilter.state.any { it.state } ||
                         modelAgeFilter.state != 0 ||
                         modelCountriesFilter.state.any { it.state } -> {
@@ -309,8 +311,11 @@ abstract class Masonry(
 
     override fun searchMangaParse(response: Response): MangasPage {
         val mangaFromElement = when {
-            /* Support both models browsing /models/ to make each model a title with multiple chapters of her galleries
-            and model search /model/ to show each gallery as a separated title (just like normal browsing) */
+            /* Support all three:
+             - models browsing /models/ to make each model a title with multiple chapters of her galleries
+             - model search /search/model/ to show each gallery as a separated title (just like normal browsing)
+             - and model-tag
+              They all return model-entries */
             response.request.url.toString()
                 .contains("/model(s|-tag)?/".toRegex()) -> ::modelMangaFromElement
 
@@ -348,6 +353,7 @@ abstract class Masonry(
         return when {
             response.request.url.toString().contains("/model/") ->
                 modelMangaDetailsParse(response.asJsoup())
+
             else ->
                 mangaDetailsParse(response.asJsoup())
         }
@@ -356,6 +362,7 @@ abstract class Masonry(
     override fun chapterListRequest(manga: SManga) = when {
         manga.url.contains("/model/") ->
             modelChapterListRequest(manga)
+
         else ->
             GET(baseUrl + manga.url, headers)
     }
@@ -444,7 +451,10 @@ abstract class Masonry(
                 select("p.read-more, div.module-more > p, div.module-more ul li")
                     .eachText().joinToString("\n")
         }
-        genre = (listOf(artist) + document.select("article.module-model + p a[href*=/model-tag/]").eachText().map { "M: $it" }).joinToString()
+        genre = (
+            listOf(artist) + document.select("article.module-model + p a[href*=/model-tag/]")
+                .eachText().map { "M: $it" }
+            ).joinToString()
         status = SManga.ONGOING
     }
 
