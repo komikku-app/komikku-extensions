@@ -270,7 +270,7 @@ abstract class Masonry(
         val mangaFromElement = when {
             /* Support both models browsing /models/ to make each model a title with multiple chapters of her galleries
             and model search /model/ to show each gallery as a separated title (just like normal browsing) */
-            response.request.url.toString().contains("/models?/".toRegex()) -> ::modelMangaFromElement
+            response.request.url.toString().contains("/model(s|-tag)?/".toRegex()) -> ::modelMangaFromElement
             else -> ::searchMangaFromElement
         }
 
@@ -381,13 +381,14 @@ abstract class Masonry(
 
     protected open fun modelMangaDetailsParse(document: Document) = SManga.create().apply {
         document.selectFirst("article.module-model")?.run {
-            val info = selectFirst(".header-model").also {
+            val stats = selectFirst(".header-model").also {
                 artist = selectFirst("h1")?.text()
             }
                 ?.select("ul.list-inline li")
                 ?.eachText()?.joinToString()
-            description = "$info\n" + select("div.module-more ul li")
-                .eachText().joinToString("\n")
+            description = "$stats\n" +
+                select("p.read-more, div.module-more > p, div.module-more ul li")
+                    .eachText().joinToString("\n")
         }
         genre = (listOf(artist) + document.select("article.module-model + p a[href*=/model-tag/]").eachText().map { "M: $it" }).joinToString()
         status = SManga.ONGOING
