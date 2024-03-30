@@ -7,6 +7,8 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
+import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.util.asJsoup
@@ -20,6 +22,7 @@ import org.jsoup.nodes.Element
  * - Support Highlight (galleries collection which are put on various external domain)
  * - Support Channels (filter as gallery's author, i.e. click on title's author such as MetArt) (/erotic-art-channels/)
  * - Support Collections (/collections/)
+ * - Support browse Boards (/boards/) & /search for Pins (/pins/)
  */
 class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     /**
@@ -147,11 +150,13 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
      * The Uri used to browse for popular/trending/newest:
      * - <domain>/models/
      * - <domain>/collections/
+     * - <domain>/pins/
      * - <domain>/updates/
      */
     override fun getBrowseChannelUri(searchType: String): String = when (searchType) {
         "model" -> "models"
         "collection" -> "collections"
+        "list_item" -> "pins"
         else -> "updates"
     }
 
@@ -159,6 +164,7 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
         Pair("Galleries", "post"),
         Pair("Models", "model"),
         Pair("Collections", "collection"),
+        Pair("Pins", "list_item"),
     )
 
     override fun searchMangaParse(response: Response): MangasPage {
@@ -182,9 +188,24 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
                 val mangaFromElement = ::collectionMangaFromElement
 
                 val document = response.asJsoup()
-                val mangas = document.select(searchMangaSelector()).map { element ->
-                    mangaFromElement(element)
-                }
+                val mangas = document.select(searchMangaSelector())
+                    .map { element -> mangaFromElement(element) }
+                val hasNextPage = searchMangaNextPageSelector().let { document.select(it).first() } != null
+
+                MangasPage(mangas, hasNextPage)
+            }
+            /* Support all three:
+             - boards browsing /e/
+             - pins browsing
+             - pin search
+              They all return pin-entries */
+            response.request.url.toString().contains("/(e|pins|list_item)/".toRegex()) -> {
+                val mangaFromElement = ::pinMangaFromElement
+
+                val document = response.asJsoup()
+                val mangas =
+                    document.select("$galleryListSelector > li:not(:has(.icon-play, a[href*='/video/']))")
+                        .map { element -> mangaFromElement(element) }
                 val hasNextPage = searchMangaNextPageSelector().let { document.select(it).first() } != null
 
                 MangasPage(mangas, hasNextPage)
@@ -205,10 +226,27 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
         }
     }
 
+    private fun pinMangaFromElement(element: Element): SManga {
+        return SManga.create().apply {
+            element.selectFirst("figure > a:has(img)")!!.apply {
+                setUrlWithoutDomain(absUrl("href"))
+            }.selectFirst("img")!!.run {
+                title = attr("alt")
+                thumbnail_url = imgAttr()
+            }
+            genre = element.select("div.img-overlay > p > a[href*='/e/']").text().removePrefix("@")
+            author = element.select("div.img-overlay > p:contains(Brought By) > a").text()
+            artist = element.select("ul > li > a[href*='/model/'] > img").attr("alt").trim()
+            status = SManga.COMPLETED
+        }
+    }
+
     override fun mangaDetailsParse(response: Response): SManga {
         return when {
             response.request.url.toString().contains("/collection/nr/") ->
                 collectionMangaDetailsParse(response.asJsoup())
+            response.request.url.toString().contains("/pin/") ->
+                pinMangaDetailsParse(response.asJsoup())
             else ->
                 super.mangaDetailsParse(response)
         }
@@ -225,5 +263,40 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
             author = select("p:contains(by) a").text()
         }
         status = SManga.ONGOING
+    }
+
+    private fun pinMangaDetailsParse(document: Document): SManga {
+        return SManga.create().apply {
+            thumbnail_url = document.selectFirst("figure > img")?.imgAttr()
+            title = document.select("figure div.img-overlay > h1").text()
+            genre = document.select("figure div.img-overlay > p > a[href*='/e/']").text().removePrefix("@")
+            author = document.select("figure div.img-overlay > p:contains(Brought By) > a").text()
+            artist = document.select("ul > li > a[href*='/model/'] > img").attr("alt").trim()
+            status = SManga.COMPLETED
+        }
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        return when {
+            response.request.url.toString().contains("/pin/") ->
+                listOf(
+                    SChapter.create().apply {
+                        name = "Photo"
+                        setUrlWithoutDomain(response.request.url.toString())
+                    },
+                )
+            else ->
+                super.chapterListParse(response)
+        }
+    }
+
+    override fun pageListParse(document: Document): List<Page> {
+        val isPin = document.select("link[href*='/pin/']").isNotEmpty()
+        return if (isPin) {
+            document.select(".list-gallery-wide figure img[src^=https://cdn.]")
+                .mapIndexed { idx, img -> Page(idx, imageUrl = img.imgAttr()) }
+        } else {
+            super.pageListParse(document)
+        }
     }
 }
