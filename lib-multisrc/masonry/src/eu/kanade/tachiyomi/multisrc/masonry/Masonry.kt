@@ -223,7 +223,7 @@ abstract class Masonry(
         getTags()
         getModelTags()
         val filters = mutableListOf(
-            Filter.Header("Other filters are ignored when doing text search"),
+            Filter.Header("Other filters are ignored when doing text search\nText search only support Galleries & Models"),
             SearchTypeFilter(searchTypeOptions),
             Filter.Separator(),
             Filter.Header("Some source might not support Trending"),
