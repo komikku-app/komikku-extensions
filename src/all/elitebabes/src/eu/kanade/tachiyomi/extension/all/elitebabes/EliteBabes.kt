@@ -80,10 +80,10 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
         launchIO {
             if (channels.isEmpty() && channelsFetchAttempt < 3) {
                 runCatching {
-                    channels = listOf(Pair("Off", "updates")) +
+                    channels = listOf(Pair("Off", "")) +
                         client.newCall(GET("$baseUrl/erotic-art-channels/", headers))
                             .execute().asJsoup()
-                            .select("ul.list-gallery figure a")
+                            .select("ul.list-gallery figure > a")
                             .mapNotNull {
                                 Pair(
                                     it.select("img").attr("alt"),
@@ -98,18 +98,54 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
         }
     }
 
+    class BoardFilter(boards: List<Pair<String, String>>) : SelectFilter("Boards", boards)
+
+    private var boardsFetchAttempt = 0
+    private var boards = emptyList<Pair<String, String>>()
+
+    private fun getBoards() {
+        launchIO {
+            if (boards.isEmpty() && boardsFetchAttempt < 3) {
+                runCatching {
+                    boards = listOf(Pair("Off", "")) +
+                        client.newCall(GET("$baseUrl/boards/", headers))
+                            .execute().asJsoup()
+                            .select("ul.list-gallery figure > a")
+                            .mapNotNull {
+                                Pair(
+                                    it.select("img").attr("alt"),
+                                    it.attr("href")
+                                        .removeSuffix("/")
+                                        .substringAfterLast("/"),
+                                )
+                            }
+                }
+                boardsFetchAttempt++
+            }
+        }
+    }
+
     override fun getFilterList(): FilterList {
         getChannels()
+        getBoards()
         val filters = listOf(
-            Filter.Header("Highlights ignore Browse/Search, Tags, Models & Channels filters"),
+            Filter.Header("Highlights ignore Browse/Search, Tags, Models & Channels/Boards filters"),
             HighlightsFilter(highlights),
             Filter.Separator(),
         ) + listOf(
-            Filter.Header("Channels supports Sort but ignore Browse/Search, Tags & Models filter"),
+            Filter.Header("Channels supports Sort but ignore Browse/Search, Tags Models & Boards filter"),
             if (channels.isEmpty()) {
                 Filter.Header("Press 'reset' to attempt to load channels")
             } else {
                 ChannelFilter(channels)
+            },
+            Filter.Separator(),
+        ) + listOf(
+            Filter.Header("Boards supports Sort but ignore Browse/Search, Tags & Models filter"),
+            if (boards.isEmpty()) {
+                Filter.Header("Press 'reset' to attempt to load boards")
+            } else {
+                BoardFilter(boards)
             },
             Filter.Separator(),
         ) + super.getFilterList().list
@@ -120,6 +156,7 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val highlightsFilter = filters.filterIsInstance<HighlightsFilter>().first()
         val channelFilter = filters.filterIsInstance<ChannelFilter>().first()
+        val boardFilter = filters.filterIsInstance<BoardFilter>().first()
         val sortFilter = filters.filterIsInstance<SortFilter>().first()
 
         return when {
@@ -137,6 +174,21 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
                             addEncodedPathSegments("$sortUri/$it")
                             addEncodedPathSegments("mpage/$page/")
                         }
+                    }
+                }.build()
+
+                GET(url, headers)
+            }
+            boardFilter.state != 0 -> {
+                val boardUri = boardFilter.selected
+                val sortUri = "sort"
+
+                val url = baseUrl.toHttpUrl().newBuilder().apply {
+                    addPathSegment("e")
+                    addPathSegment(boardUri)
+                    addPathSegments("$sortUri/${sortFilter.selected}")
+                    if (page > 1) {
+                        addPathSegments("mpage/$page/")
                     }
                 }.build()
 
