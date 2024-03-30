@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.masonry
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -19,7 +18,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 abstract class Masonry(
     override val name: String,
@@ -273,26 +271,6 @@ abstract class Masonry(
         update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        return when {
-            manga.url.contains("/models?/".toRegex()) ->
-                client.newCall(modelChapterListRequest(manga))
-                    .asObservableSuccess()
-                    .map { response ->
-                        chapterListParse(response)
-                    }
-            else ->
-                Observable.just(
-                    listOf(
-                        SChapter.create().apply {
-                            name = "Gallery"
-                            url = manga.url
-                        },
-                    ),
-                )
-        }
-    }
-
     override fun popularMangaParse(response: Response): MangasPage {
         return when {
             response.request.url.toString().contains("/models?/".toRegex()) -> {
@@ -321,14 +299,24 @@ abstract class Masonry(
         }
     }
 
+    override fun chapterListRequest(manga: SManga) = when {
+        manga.url.contains("/model/") ->
+            modelChapterListRequest(manga)
+        else ->
+            GET(baseUrl + manga.url, headers)
+    }
+
     override fun chapterListParse(response: Response): List<SChapter> {
-        return when {
-            response.request.url.toString().contains("/model/".toRegex()) ->
-                response.asJsoup()
-                    .select(modelChapterListSelector()).map { modelChapterFromElement(it) }
-            else ->
-                super.chapterListParse(response)
-        }
+        return response.asJsoup()
+            .selectFirst(galleryListSelector)?.run {
+                select(gallerySelector)
+                    .map { chapterFromElement(it) }
+            } ?: listOf(
+            SChapter.create().apply {
+                name = "Gallery"
+                setUrlWithoutDomain(response.request.url.toString())
+            },
+        )
     }
 
     /* Models */
@@ -356,13 +344,12 @@ abstract class Masonry(
 
     protected open fun modelChapterListRequest(manga: SManga): Request {
         val url = (baseUrl + manga.url).toHttpUrl().newBuilder().apply {
-            // Must use sort/latest to get correct title (instead of description), also will list chapters in timely manner
+            /* Must use sort/latest to get correct title (instead of description),
+              also will list chapters in timely manner */
             addEncodedPathSegments("sort/latest")
         }.build()
         return GET(url, headers)
     }
-
-    protected open fun modelChapterListSelector() = popularMangaSelector()
 
     protected open fun modelMangaFromElement(element: Element): SManga {
         val sourceName = name
@@ -395,7 +382,7 @@ abstract class Masonry(
         status = SManga.ONGOING
     }
 
-    protected open fun modelChapterFromElement(element: Element): SChapter {
+    override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
             // Use img-overlay to get correct set's name without duplicate model's name
             with(element.selectFirst(".img-overlay p a")!!) {
@@ -406,7 +393,6 @@ abstract class Masonry(
     }
 
     override fun chapterListSelector() = throw UnsupportedOperationException()
-    override fun chapterFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select(".list-gallery a[href^=https://cdn.]").mapIndexed { idx, img ->
