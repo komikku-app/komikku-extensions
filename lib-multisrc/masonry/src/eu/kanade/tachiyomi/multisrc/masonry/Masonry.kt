@@ -23,8 +23,8 @@ import org.jsoup.nodes.Element
  * - Better popular/latest browsing, fixed some place only 1 page was available or none at all.
  * - Support browse/search for models & model's collection (/models/)
  * - Support model's tags filter (/model-tag/)
+ * - Support advanced models filter
  * - Support multiple tags filter
- * TODO: support more model's filter
  */
 abstract class Masonry(
     override val name: String,
@@ -122,6 +122,9 @@ abstract class Masonry(
             val sortFilter = filters.filterIsInstance<SortFilter>().first()
             val tagsFilter = filters.filterIsInstance<TagsFilter>().first()
             val modelTagsFilter = filters.filterIsInstance<ModelTagsFilter>().first()
+            val modelAgeFilter = filters.filterIsInstance<AgesFilter>().first()
+            val modelCountriesFilter =
+                filters.filterIsInstance<ModelCountriesFilter>().first()
 
             val url = baseUrl.toHttpUrl().newBuilder().apply {
                 when {
@@ -143,20 +146,50 @@ abstract class Masonry(
                             }
                         }
                     }
-                    modelTagsFilter.state.any { it.state } -> {
-                        // model-tag/ only support single tag
-                        addPathSegment("model-tag")
-                        addPathSegment(modelTagsFilter.state.first { it.state }.uriPart)
-                        sortFilter.getUriPartIfNeeded("model-tag").also {
-                            // Only EliteBabes supports Pages for tag/sort/trending
-                            if (it.isBlank()) {
-                                addEncodedPathSegments("page/$page/")
-                            } else {
-                                addEncodedPathSegments("sort/$it")
-                                addEncodedPathSegments("mpage/$page/")
+                    modelTagsFilter.state.any { it.state } ||
+                        modelAgeFilter.state != 0 ||
+                        modelCountriesFilter.state.any { it.state } -> {
+                        val modelTags = modelTagsFilter.state.filter { it.state }
+
+                        if (modelTags.size == 1 && modelAgeFilter.state == 0 &&
+                            modelCountriesFilter.state.none { it.state }
+                        ) {
+                            // Use: /model-tag/, only support single tag
+                            // Some model-tag won't support trending
+                            addPathSegment("model-tag")
+                            addPathSegment(modelTags.first { it.state }.uriPart)
+                            sortFilter.getUriPartIfNeeded("model-tag").also {
+                                // Only EliteBabes supports Pages for tag/sort/trending
+                                if (it.isBlank()) {
+                                    addEncodedPathSegments("page/$page/")
+                                } else {
+                                    addEncodedPathSegments("sort/$it")
+                                    addEncodedPathSegments("mpage/$page/")
+                                }
                             }
+                        } else {
+                            // Use: /models/sort/filter/ord/popular/age/<#>/country/<name>+<name>/tags/<tag>+<tag>/mpage/<#>/
+                            val modelCountries = modelCountriesFilter.state.filter { it.state }
+                            addPathSegments("models/sort/filter/ord")
+                            addPathSegment(if (sortFilter.selected == "newest") "newest" else "popular")
+                            addPathSegment("age")
+                            addPathSegment(modelAgeFilter.selected)
+                            addPathSegment("country")
+                            if (modelCountries.isEmpty()) {
+                                addPathSegment("0")
+                            } else {
+                                addPathSegment(modelCountries.joinToString("+") { it.uriPart })
+                            }
+                            addPathSegment("tags")
+                            if (modelTags.isEmpty()) {
+                                addPathSegment("0")
+                            } else {
+                                addPathSegment(modelTags.joinToString("+") { it.uriPart })
+                            }
+                            addPathSegments("mpage/$page/")
                         }
                     }
+
                     else -> {
                         val channel = getBrowseChannelUri(searchType)
                         if (sortFilter.selected == "trending" || channel != "updates") {
@@ -181,6 +214,7 @@ abstract class Masonry(
                                         addEncodedPathSegments("archive/page/$page/")
                                     }
                                 }
+
                                 "popular" -> {
                                     // Using a more effective request comparing to the /updates/sort/popular/ (doesn't support page)
                                     when (page) {
@@ -241,12 +275,19 @@ abstract class Masonry(
             filters.add(TagsFilter(tags))
         }
 
+        filters.add(Filter.Separator())
         filters.add(Filter.Header("Model filters are ignored when Tags filter is selected.\nTrending is supported if only 1 Model's tag is selected."))
         if (modelTags.isEmpty()) {
             filters.add(Filter.Header("Press 'reset' to attempt to load Model tags"))
         } else {
             filters.add(ModelTagsFilter(modelTags))
         }
+        if (modelCountries.isEmpty()) {
+            filters.add(Filter.Header("Press 'reset' to attempt to load Model countries"))
+        } else {
+            filters.add(ModelCountriesFilter(modelCountries))
+        }
+        filters.add(AgesFilter())
 
         return FilterList(filters)
     }
@@ -270,7 +311,9 @@ abstract class Masonry(
         val mangaFromElement = when {
             /* Support both models browsing /models/ to make each model a title with multiple chapters of her galleries
             and model search /model/ to show each gallery as a separated title (just like normal browsing) */
-            response.request.url.toString().contains("/model(s|-tag)?/".toRegex()) -> ::modelMangaFromElement
+            response.request.url.toString()
+                .contains("/model(s|-tag)?/".toRegex()) -> ::modelMangaFromElement
+
             else -> ::searchMangaFromElement
         }
 
@@ -333,19 +376,30 @@ abstract class Masonry(
     /* Models */
     private var modelTagsFetchAttempt = 0
     private var modelTags = emptyList<Tag>()
+    private var modelCountries = emptyList<Country>()
 
     protected open fun getModelTags() {
         launchIO {
-            if (modelTags.isEmpty() && modelTagsFetchAttempt < 3) {
+            if (modelTagsFetchAttempt < 3 && (modelTags.isEmpty() || modelCountries.isEmpty())) {
                 runCatching {
-                    modelTags = client.newCall(GET("$baseUrl/models/", headers))
-                        .execute().asJsoup()
-                        .select("#filter-b span[data-placeholder='Tags'] span:has(> input)")
-                        .mapNotNull {
-                            Tag(
-                                "M: " + it.select("label").text(),
-                                it.select("input").attr("value"),
-                            )
+                    client.newCall(GET("$baseUrl/models/", headers))
+                        .execute().asJsoup().run {
+                            modelTags =
+                                select("#filter-b span[data-placeholder='Tags'] span:has(> input)")
+                                    .mapNotNull {
+                                        Tag(
+                                            "M: " + it.select("label").text(),
+                                            it.select("input").attr("value"),
+                                        )
+                                    }
+                            modelCountries =
+                                select("#filter-b span[data-placeholder='Country'] span:has(> input)")
+                                    .mapNotNull {
+                                        Country(
+                                            it.select("label").text(),
+                                            it.select("input").attr("value"),
+                                        )
+                                    }
                         }
                 }
                 modelTagsFetchAttempt++
