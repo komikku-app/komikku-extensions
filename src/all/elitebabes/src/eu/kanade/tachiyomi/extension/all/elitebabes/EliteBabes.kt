@@ -290,6 +290,7 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
             author = element.select("div.img-overlay > p:contains(Brought By) > a").text()
             artist = element.select("ul > li > a[href*='/model/'] > img").attr("alt").trim()
             status = SManga.COMPLETED
+            update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
         }
     }
 
