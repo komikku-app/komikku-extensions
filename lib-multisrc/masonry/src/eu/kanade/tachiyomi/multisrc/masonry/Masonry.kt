@@ -252,7 +252,23 @@ abstract class Masonry(
         Pair("Models", "model"),
     )
 
-    override fun searchMangaParse(response: Response) = popularMangaParse(response)
+    override fun searchMangaParse(response: Response): MangasPage {
+        val mangaFromElement = when {
+            /* Support both models browsing /models/ to make each model a title with multiple chapters of her galleries
+            and model search /model/ to show each gallery as a separated title (just like normal browsing) */
+            response.request.url.toString().contains("/models?/".toRegex()) -> ::modelMangaFromElement
+            else -> ::searchMangaFromElement
+        }
+
+        val document = response.asJsoup()
+        val mangas = document.select(searchMangaSelector()).map { element ->
+            mangaFromElement(element)
+        }
+        val hasNextPage = searchMangaNextPageSelector().let { document.select(it).first() } != null
+
+        return MangasPage(mangas, hasNextPage)
+    }
+
     override fun searchMangaSelector() = popularMangaSelector()
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
@@ -271,28 +287,9 @@ abstract class Masonry(
         update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
     }
 
-    override fun popularMangaParse(response: Response): MangasPage {
-        return when {
-            response.request.url.toString().contains("/models?/".toRegex()) -> {
-                val document = response.asJsoup()
-
-                val mangas = document.select(popularMangaSelector()).map { element ->
-                    modelMangaFromElement(element)
-                }
-
-                val hasNextPage = popularMangaNextPageSelector().let { selector ->
-                    document.select(selector).first()
-                } != null
-
-                MangasPage(mangas, hasNextPage)
-            }
-            else -> super.popularMangaParse(response)
-        }
-    }
-
     override fun mangaDetailsParse(response: Response): SManga {
         return when {
-            response.request.url.toString().contains("/model/".toRegex()) ->
+            response.request.url.toString().contains("/model/") ->
                 modelMangaDetailsParse(response.asJsoup())
             else ->
                 mangaDetailsParse(response.asJsoup())
@@ -374,7 +371,7 @@ abstract class Masonry(
                 artist = selectFirst("h1")?.text()
             }
                 ?.select("ul.list-inline li")
-                ?.eachText()?.joinToString(" ")
+                ?.eachText()?.joinToString()
             description = "$info\n" + select("div.module-more ul li")
                 .eachText().joinToString("\n")
         }
