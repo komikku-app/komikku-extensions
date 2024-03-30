@@ -49,7 +49,9 @@ abstract class Masonry(
         return GET(url, headers)
     }
 
-    override fun popularMangaSelector() = ".list-gallery:not(.static) figure:not(:has(a[href*='/video/']))"
+    protected open val galleryListSelector = ".list-gallery:not(.static)"
+    protected open val gallerySelector = "figure:not(:has(.icon-play, a[href*='/video/']))"
+    override fun popularMangaSelector() = "$galleryListSelector $gallerySelector"
 
     // Add fake selector for updates/sort/popular because it only has 1 page
     override fun popularMangaNextPageSelector() = ".pagination-a li.next, main#content .link-btn a.overlay-a[href='/updates/sort/popular/']"
