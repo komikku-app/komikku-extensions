@@ -26,6 +26,7 @@ import org.jsoup.nodes.Element
  * - Support model's tags filter (/model-tag/)
  * - Support advanced models filter
  * - Support multiple tags filter
+ * - Support video via WebView
  */
 abstract class Masonry(
     override val name: String,
@@ -56,7 +57,8 @@ abstract class Masonry(
     }
 
     protected open val galleryListSelector = ".list-gallery:not(.static)"
-    protected open val gallerySelector = "figure:not(:has(.icon-play, a[href*='/video/']))"
+    protected open val gallerySelector = "figure"
+    protected open val isVideoSelector = ".icon-play, a[href*='/video/']"
     override fun popularMangaSelector() = "$galleryListSelector $gallerySelector"
 
     // Add fake selector for updates/sort/popular because it only has 1 page
@@ -374,6 +376,13 @@ abstract class Masonry(
             // select separately so if a model doesn't have any content then it will return an empty list
             select(gallerySelector)
                 .map { chapterFromElement(it) }
+        } ?: response.asJsoup().selectFirst(isVideoSelector)?.run {
+            listOf(
+                SChapter.create().apply {
+                    name = "Video"
+                    setUrlWithoutDomain(response.request.url.toString())
+                },
+            )
         } ?: listOf(
             SChapter.create().apply {
                 name = "Gallery"
@@ -464,11 +473,12 @@ abstract class Masonry(
      * This is mainly used for model as a manga with each of her galleries as a chapter
      */
     override fun chapterFromElement(element: Element): SChapter {
+        val isVideo = element.selectFirst(isVideoSelector) != null
         return SChapter.create().apply {
             // Use img-overlay to get correct set's name without duplicate model's name
             with(element.selectFirst(".img-overlay > p > a")!!) {
                 setUrlWithoutDomain(absUrl("href"))
-                name = text()
+                name = if (isVideo) "Video: ${text()}" else text()
             }
         }
     }
@@ -476,9 +486,19 @@ abstract class Masonry(
     override fun chapterListSelector() = throw UnsupportedOperationException()
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select(".list-gallery a[href^=https://cdn.]").mapIndexed { idx, img ->
-            Page(idx, imageUrl = img.absUrl("href"))
-        }
+        return document.select(".list-gallery a[href^=https://cdn.], video[poster^=https://cdn.]")
+            .mapIndexed { idx, img ->
+                Page(
+                    idx,
+                    imageUrl = with(img) {
+                        when {
+                            hasAttr("href") -> absUrl("href")
+                            hasAttr("poster") -> absUrl("poster")
+                            else -> imgAttr()
+                        }
+                    },
+                )
+            }
     }
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException()
