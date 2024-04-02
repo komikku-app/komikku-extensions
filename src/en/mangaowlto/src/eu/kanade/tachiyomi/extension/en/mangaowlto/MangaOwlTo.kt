@@ -32,10 +32,13 @@ class MangaOwlTo(
     private val preferences: SharedPreferences =
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-    private val defaultDomain: String =
-        preferences.getString(MIRROR_PREF_KEY, MIRROR_PREF_DEFAULT_VALUE)!!
+    private val defaultDomain: String
+        get() = when {
+            System.getenv("CI") == "true" -> MIRROR_PREF_ENTRIES.joinToString("#, ")
+            else -> preferences.getString(MIRROR_PREF_KEY, MIRROR_PREF_DEFAULT_VALUE)!!
+        }
 
-    override val baseUrl = "https://$defaultDomain"
+    override val baseUrl by lazy { defaultDomain }
 
     private val apiUrl = "https://api.$defaultDomain/v1"
 
@@ -145,12 +148,12 @@ class MangaOwlTo(
     companion object {
         private const val MIRROR_PREF_KEY = "MIRROR"
         private val MIRROR_PREF_ENTRIES get() = arrayOf(
-            "mangaowl.to",
-            "mangabuddy.to",
-            "mangafreak.to",
-            "toonily.to",
-            "manganato.so",
-            "mangakakalot.so", // Redirected from mangago.to
+            "https://mangaowl.to",
+            "https://mangabuddy.to",
+            "https://mangafreak.to",
+            "https://toonily.to",
+            "https://manganato.so",
+            "https://mangakakalot.so", // Redirected from mangago.to
         )
         private val MIRROR_PREF_ENTRY_VALUES get() = arrayOf(
             "mangaowl.to",
