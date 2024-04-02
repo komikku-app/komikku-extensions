@@ -235,13 +235,7 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
                 /* Handle filter for highlights */
                 MangasPage(
                     mangas = response.asJsoup().select("div.item a[href]:has(img)")
-                        .map { element ->
-                            SManga.create().apply {
-                                setUrlWithoutDomain(element.absUrl("href"))
-                                title = element.select("img").attr("alt")
-                                thumbnail_url = element.select("img").first()?.imgAttr()
-                            }
-                        },
+                        .map { element -> highlightMangaFromElement(element) },
                     hasNextPage = false,
                 )
             }
@@ -275,17 +269,19 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
         }
     }
 
-    private fun collectionMangaFromElement(element: Element): SManga {
-        return SManga.create().apply {
-            element.selectFirst(".img-overlay p a")!!.run {
-                setUrlWithoutDomain(absUrl("href"))
-                title = text()
-            }
-            thumbnail_url = element.selectFirst("a img")?.imgAttr()
+    private fun highlightMangaFromElement(element: Element) = SManga.create().apply {
+        setUrlWithoutDomain(element.absUrl("href"))
+        title = element.select("img").attr("alt")
+        thumbnail_url = element.select("img").first()?.imgAttr()
+        status = SManga.COMPLETED
+        update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
+    }
+
+    private fun collectionMangaFromElement(element: Element) =
+        super.popularMangaFromElement(element).apply {
             status = SManga.ONGOING
             update_strategy = UpdateStrategy.ALWAYS_UPDATE
         }
-    }
 
     private fun pinMangaFromElement(element: Element): SManga {
         return SManga.create().apply {
@@ -295,8 +291,8 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
                 title = attr("alt")
                 thumbnail_url = imgAttr()
             }
-            genre = element.select("div.img-overlay > p > a[href*='/e/']").text().removePrefix("@")
-            author = element.select("div.img-overlay > p:contains(Brought By) > a").text()
+            genre = element.select(".img-overlay > p > a[href*='/e/']").text().removePrefix("@")
+            author = element.select(".img-overlay > p:contains(Brought By) > a").text()
             artist = element.select("ul > li > a[href*='/model/'] > img").attr("alt").trim()
             status = SManga.COMPLETED
             update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
@@ -330,9 +326,9 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
     private fun pinMangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
             thumbnail_url = document.selectFirst("figure > img")?.imgAttr()
-            title = document.select("figure div.img-overlay > h1").text()
-            genre = document.select("figure div.img-overlay > p > a[href*='/e/']").text().removePrefix("@")
-            author = document.select("figure div.img-overlay > p:contains(Brought By) > a").text()
+            title = document.select("figure .img-overlay > h1").text()
+            genre = document.select("figure .img-overlay > p > a[href*='/e/']").text().removePrefix("@")
+            author = document.select("figure .img-overlay > p:contains(Brought By) > a").text()
             artist = document.select("ul > li > a[href*='/model/'] > img").attr("alt").trim()
             status = SManga.COMPLETED
         }

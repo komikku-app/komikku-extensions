@@ -64,11 +64,11 @@ abstract class Masonry(
         ".pagination-a li.next, main#content .link-btn a.overlay-a[href='/updates/sort/popular/']"
 
     override fun popularMangaFromElement(element: Element) = SManga.create().apply {
-        element.selectFirst("a")!!.also {
-            setUrlWithoutDomain(it.absUrl("href"))
-            title = it.attr("title")
+        element.selectFirst(".img-overlay > p > a")!!.run {
+            setUrlWithoutDomain(absUrl("href"))
+            title = text()
         }
-        thumbnail_url = element.selectFirst("img")?.imgAttr()
+        thumbnail_url = element.selectFirst("a img")?.imgAttr()
     }
 
     /**
@@ -365,18 +365,16 @@ abstract class Masonry(
     override fun chapterListRequest(manga: SManga) = when {
         manga.url.contains("/model/") ->
             modelChapterListRequest(manga)
-
         else ->
             GET(baseUrl + manga.url, headers)
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        return response.asJsoup()
-            // select separately so if a model only has video then it will return empty list
-            .selectFirst(galleryListSelector)?.run {
-                select(gallerySelector)
-                    .map { chapterFromElement(it) }
-            } ?: listOf(
+        return response.asJsoup().selectFirst(galleryListSelector)?.run {
+            // select separately so if a model doesn't have any content then it will return an empty list
+            select(gallerySelector)
+                .map { chapterFromElement(it) }
+        } ?: listOf(
             SChapter.create().apply {
                 name = "Gallery"
                 setUrlWithoutDomain(response.request.url.toString())
@@ -462,10 +460,13 @@ abstract class Masonry(
         status = SManga.ONGOING
     }
 
+    /**
+     * This is mainly used for model as a manga with each of her galleries as a chapter
+     */
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
             // Use img-overlay to get correct set's name without duplicate model's name
-            with(element.selectFirst(".img-overlay p a")!!) {
+            with(element.selectFirst(".img-overlay > p > a")!!) {
                 setUrlWithoutDomain(absUrl("href"))
                 name = text()
             }
