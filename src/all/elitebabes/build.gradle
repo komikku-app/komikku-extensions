@@ -3,7 +3,7 @@ ext {
     extClass = '.EliteBabes'
     themePkg = 'masonry'
     baseUrl = 'https://www.elitebabes.com'
-    overrideVersionCode = 0
+    overrideVersionCode = 0 + 1
     isNsfw = true
 }
 
