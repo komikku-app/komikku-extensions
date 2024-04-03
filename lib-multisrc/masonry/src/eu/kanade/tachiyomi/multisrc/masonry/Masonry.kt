@@ -58,7 +58,8 @@ abstract class Masonry(
 
     protected open val galleryListSelector = ".list-gallery:not(.static)"
     protected open val gallerySelector = "figure"
-    protected open val isVideoSelector = ".icon-play, a[href*='/video/']"
+    protected open val videoTitleSelector = ".icon-play, a[href*='/video/']"
+    protected open val videoSelector = "video[poster^=https://cdn.]"
     override fun popularMangaSelector() = "$galleryListSelector $gallerySelector"
 
     // Add fake selector for updates/sort/popular because it only has 1 page
@@ -295,6 +296,9 @@ abstract class Masonry(
         }
         filters.add(AgesFilter())
 
+        filters.add(Filter.Separator())
+        filters.add(Filter.Header("Open WebView to watch video (chapter with only 1 photo)"))
+
         return FilterList(filters)
     }
 
@@ -373,11 +377,12 @@ abstract class Masonry(
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        return response.asJsoup().selectFirst(galleryListSelector)?.run {
+        val document = response.asJsoup()
+        return document.selectFirst(galleryListSelector)?.run {
             // select separately so if a model doesn't have any content then it will return an empty list
             select(gallerySelector)
                 .map { chapterFromElement(it) }
-        } ?: response.asJsoup().selectFirst(isVideoSelector)?.run {
+        } ?: document.selectFirst(videoSelector)?.run {
             listOf(
                 SChapter.create().apply {
                     name = "Video"
@@ -474,7 +479,7 @@ abstract class Masonry(
      * This is mainly used for model as a manga with each of her galleries as a chapter
      */
     override fun chapterFromElement(element: Element): SChapter {
-        val isVideo = element.selectFirst(isVideoSelector) != null
+        val isVideo = element.selectFirst(videoTitleSelector) != null
         return SChapter.create().apply {
             // Use img-overlay to get correct set's name without duplicate model's name
             with(element.selectFirst(".img-overlay > p > a")!!) {
@@ -487,7 +492,7 @@ abstract class Masonry(
     override fun chapterListSelector() = throw UnsupportedOperationException()
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select(".list-gallery a[href^=https://cdn.], video[poster^=https://cdn.]")
+        return document.select(".list-gallery a[href^=https://cdn.], $videoSelector")
             .mapIndexed { idx, img ->
                 Page(
                     idx,
