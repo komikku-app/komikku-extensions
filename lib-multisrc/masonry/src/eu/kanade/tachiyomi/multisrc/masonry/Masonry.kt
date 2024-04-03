@@ -133,21 +133,27 @@ abstract class Masonry(
             val url = baseUrl.toHttpUrl().newBuilder().apply {
                 when {
                     tagsFilter.state.any { it.state } -> {
-                        // tag/ will support pages for both newest & popular on all sites, so no need to change
-                        addPathSegment("tag")
-                        addPathSegment(
-                            tagsFilter.state
-                                .filter { it.state }
-                                .joinToString("+") { it.uriPart },
-                        )
-                        sortFilter.getUriPartIfNeeded("tag").also {
-                            // Only EliteBabes supports Pages for tag/sort/trending
-                            if (it.isBlank()) {
-                                addPathSegments("page/$page/")
-                            } else {
-                                addPathSegments("sort/$it")
-                                addPathSegments("mpage/$page/")
+                        val tags = tagsFilter.state.filter { it.state }
+                        if (tags.size == 1) {
+                            // Use /tag/ for single tag
+                            addPathSegment("tag")
+                            addPathSegment(tags.joinToString("+") { it.uriPart })
+                            sortFilter.getUriPartIfNeeded("tag").also {
+                                if (it.isBlank()) {
+                                    addPathSegments("page/$page/")
+                                } else {
+                                    addPathSegments("sort/$it")
+                                    addPathSegments("mpage/$page/")
+                                }
                             }
+                        } else {
+                            // Use: /updates/sort/filter/ord/<popular|newest>/content/<pix/vid>/quality/0/tags/<tag>+<tag>/mpage/<#>/
+                            addPathSegments("updates/sort/filter/ord")
+                            addPathSegment(if (sortFilter.selected == "newest") "newest" else "popular")
+                            addPathSegments("content/0/quality/0")
+                            addPathSegment("tags")
+                            addPathSegment(tags.joinToString("+") { it.uriPart })
+                            addPathSegments("mpage/$page/")
                         }
                     }
 
@@ -164,7 +170,6 @@ abstract class Masonry(
                             addPathSegment("model-tag")
                             addPathSegment(modelTags.first { it.state }.uriPart)
                             sortFilter.getUriPartIfNeeded("model-tag").also {
-                                // Only EliteBabes supports Pages for tag/sort/trending
                                 if (it.isBlank()) {
                                     addPathSegments("page/$page/")
                                 } else {
@@ -173,7 +178,7 @@ abstract class Masonry(
                                 }
                             }
                         } else {
-                            // Use: /models/sort/filter/ord/popular/age/<#>/country/<name>+<name>/tags/<tag>+<tag>/mpage/<#>/
+                            // Use: /models/sort/filter/ord/<popular|newest>/age/<#>/country/<name>+<name>/tags/<tag>+<tag>/mpage/<#>/
                             val modelCountries = modelCountriesFilter.state.filter { it.state }
                             addPathSegments("models/sort/filter/ord")
                             addPathSegment(if (sortFilter.selected == "newest") "newest" else "popular")
@@ -186,11 +191,7 @@ abstract class Masonry(
                                 addPathSegment(modelCountries.joinToString("+") { it.uriPart })
                             }
                             addPathSegment("tags")
-                            if (modelTags.isEmpty()) {
-                                addPathSegment("0")
-                            } else {
-                                addPathSegment(modelTags.joinToString("+") { it.uriPart })
-                            }
+                            addPathSegment(modelTags.joinToString("+") { it.uriPart })
                             addPathSegments("mpage/$page/")
                         }
                     }
