@@ -20,7 +20,8 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 /**
- * - Better popular/latest browsing, fixed some place only 1 page was available or none at all.
+ * Features:
+ * - Better popular/latest browsing, support Popular with more pages.
  * - Support browse/search for models & model's collection (/models/)
  * - Support model's tags filter (/model-tag/)
  * - Support advanced models filter
@@ -298,6 +299,8 @@ abstract class Masonry(
      * The Uri used to browse for popular/trending/newest galleries:
      * - <domain>/models/
      * - <domain>/updates/
+     *
+     * @param searchType is value of [searchTypeOptions]
      */
     protected open fun getBrowseChannelUri(searchType: String): String = when (searchType) {
         "model" -> "models"
@@ -369,6 +372,7 @@ abstract class Masonry(
 
     override fun chapterListParse(response: Response): List<SChapter> {
         return response.asJsoup()
+            // select separately so if a model only has video then it will return empty list
             .selectFirst(galleryListSelector)?.run {
                 select(gallerySelector)
                     .map { chapterFromElement(it) }

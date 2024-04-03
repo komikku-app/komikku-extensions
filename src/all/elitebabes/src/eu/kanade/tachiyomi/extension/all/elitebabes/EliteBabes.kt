@@ -19,6 +19,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 /**
+ * Features:
  * - Support Highlight (galleries collection which are put on various external domain)
  * - Support Channels (filter as gallery's author, i.e. click on title's author such as MetArt) (/erotic-art-channels/)
  * - Support Collections (/collections/)
@@ -67,6 +68,15 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
         Pair("Stunning18", "https://www.stunningsweeties.com/"),
         Pair("Amour Angels", "https://www.amourhub.com/"),
     )
+
+    override val baseUrl
+        get() = when {
+            System.getenv("CI") == "true" ->
+                (highlights + listOf(Pair("", "https://www.elitebabes.com/")))
+                    .filterIndexed { idx, _ -> idx != 0 }
+                    .joinToString("#, ") { it.second }
+            else -> "https://www.elitebabes.com"
+        }
 
     private class HighlightsFilter(highlights: List<Pair<String, String>>) :
         SelectFilter("Highlights", highlights)
@@ -204,17 +214,16 @@ class EliteBabes : Masonry("Elite Babes", "https://www.elitebabes.com", "all") {
      * - <domain>/collections/
      * - <domain>/pins/
      * - <domain>/updates/
+     *
+     * @param searchType is value of [searchTypeOptions]
      */
     override fun getBrowseChannelUri(searchType: String): String = when (searchType) {
-        "model" -> "models"
         "collection" -> "collections"
         "list_item" -> "pins"
-        else -> "updates"
+        else -> super.getBrowseChannelUri(searchType)
     }
 
-    override val searchTypeOptions = listOf(
-        Pair("Galleries", "post"),
-        Pair("Models", "model"),
+    override val searchTypeOptions = super.searchTypeOptions + listOf(
         Pair("Collections", "collection"),
         Pair("Pins", "list_item"),
     )
