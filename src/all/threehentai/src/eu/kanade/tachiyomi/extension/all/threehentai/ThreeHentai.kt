@@ -1,15 +1,16 @@
-package eu.kanade.tachiyomi.extension.all.nhentai
+package eu.kanade.tachiyomi.extension.all.threehentai
 
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getArtists
-import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getGroups
-import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getNumPages
-import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTagDescription
-import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTags
-import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTime
+import eu.kanade.tachiyomi.extension.all.threehentai.ThreeHentaiUtils.getArtists
+import eu.kanade.tachiyomi.extension.all.threehentai.ThreeHentaiUtils.getCodes
+import eu.kanade.tachiyomi.extension.all.threehentai.ThreeHentaiUtils.getGroups
+import eu.kanade.tachiyomi.extension.all.threehentai.ThreeHentaiUtils.getNumPages
+import eu.kanade.tachiyomi.extension.all.threehentai.ThreeHentaiUtils.getTagDescription
+import eu.kanade.tachiyomi.extension.all.threehentai.ThreeHentaiUtils.getTags
+import eu.kanade.tachiyomi.extension.all.threehentai.ThreeHentaiUtils.getTime
 import eu.kanade.tachiyomi.lib.randomua.addRandomUAPreferenceToScreen
 import eu.kanade.tachiyomi.lib.randomua.getPrefCustomUA
 import eu.kanade.tachiyomi.lib.randomua.getPrefUAType
@@ -37,16 +38,14 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-open class NHentai(
+open class ThreeHentai(
     override val lang: String,
-    private val nhLang: String,
+    private val h3Lang: String,
 ) : ConfigurableSource, ParsedHttpSource() {
 
-    final override val baseUrl = "https://nhentai.net"
+    final override val baseUrl = "https://3hentai.net"
 
-    override val id by lazy { if (lang == "all") 7309872737163460316 else super.id }
-
-    override val name = "NHentai"
+    override val name = "3Hentai"
 
     override val supportsLatest = true
 
@@ -94,23 +93,30 @@ open class NHentai(
         addRandomUAPreferenceToScreen(screen)
     }
 
-    override fun latestUpdatesRequest(page: Int) = GET(if (nhLang.isBlank()) "$baseUrl/?page=$page" else "$baseUrl/language/$nhLang/?page=$page", headers)
+    override fun latestUpdatesRequest(page: Int) = GET(if (h3Lang.isBlank()) "$baseUrl/$page" else "$baseUrl/language/$h3Lang/$page", headers)
 
-    override fun latestUpdatesSelector() = "#content .container:not(.index-popular) .gallery"
+    override fun latestUpdatesSelector() = "#main-content .listing-container .doujin"
 
     override fun latestUpdatesFromElement(element: Element) = SManga.create().apply {
-        setUrlWithoutDomain(element.select("a").attr("href"))
-        title = element.select("a > div").text().replace("\"", "").let {
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        title = element.selectFirst("a > .title")!!.text().replace("\"", "").let {
             if (displayFullTitle) it.trim() else it.shortenTitle()
         }
-        thumbnail_url = element.select(".cover img").first()!!.let { img ->
+        thumbnail_url = element.selectFirst(".cover img")!!.let { img ->
             if (img.hasAttr("data-src")) img.attr("abs:data-src") else img.attr("abs:src")
         }
     }
 
-    override fun latestUpdatesNextPageSelector() = "#content > section.pagination > a.next"
+    override fun latestUpdatesNextPageSelector() = "#main-content nav .pagination .page-item .page-link[rel=next]"
 
-    override fun popularMangaRequest(page: Int) = GET(if (nhLang.isBlank()) "$baseUrl/search/?q=\"\"&sort=popular&page=$page" else "$baseUrl/language/$nhLang/popular?page=$page", headers)
+    override fun popularMangaRequest(page: Int) = GET(
+        when {
+            h3Lang.isBlank() -> "$baseUrl/search?q=pages%3A>0&sort=popular-7d&page=$page"
+            page == 1 -> "$baseUrl/language/$h3Lang?sort=popular-7d"
+            else -> "$baseUrl/language/$h3Lang/$page?sort=popular-7d"
+        },
+        headers,
+    )
 
     override fun popularMangaFromElement(element: Element) = latestUpdatesFromElement(element)
 
@@ -136,9 +142,9 @@ open class NHentai(
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val fixedQuery = query.ifEmpty { "\"\"" }
+        val fixedQuery = query.trim()
         val filterList = if (filters.isEmpty()) getFilterList() else filters
-        val nhLangSearch = if (nhLang.isBlank()) "" else "+$nhLang "
+        val h3LangSearch = if (h3Lang.isBlank()) "" else "+$h3Lang "
         val advQuery = combineQuery(filterList)
         val favoriteFilter = filterList.findInstance<FavoriteFilter>()
         val isOkayToSort = filterList.findInstance<UploadedFilter>()?.state?.isBlank() ?: true
@@ -146,14 +152,14 @@ open class NHentai(
             filterList.findInstance<OffsetPageFilter>()?.state?.toIntOrNull()?.plus(page) ?: page
 
         if (favoriteFilter?.state == true) {
-            val url = "$baseUrl/favorites".toHttpUrl().newBuilder()
+            val url = "$baseUrl/user/panel/favorites".toHttpUrl().newBuilder()
                 .addQueryParameter("q", "$fixedQuery $advQuery")
                 .addQueryParameter("page", offsetPage.toString())
 
             return GET(url.build(), headers)
         } else {
             val url = "$baseUrl/search".toHttpUrl().newBuilder()
-                .addQueryParameter("q", "$fixedQuery $nhLangSearch$advQuery")
+                .addQueryParameter("q", "$fixedQuery $h3LangSearch$advQuery")
                 .addQueryParameter("page", offsetPage.toString())
 
             if (isOkayToSort) {
@@ -187,18 +193,18 @@ open class NHentai(
 
     data class AdvSearchEntry(val name: String, val text: String, val exclude: Boolean)
 
-    private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/g/$id", headers)
+    private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/d/$id", headers)
 
     private fun searchMangaByIdParse(response: Response, id: String): MangasPage {
         val details = mangaDetailsParse(response)
-        details.url = "/g/$id/"
+        details.url = "/d/$id"
         return MangasPage(listOf(details), false)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        if (response.request.url.toString().contains("/login/")) {
+        if (response.request.url.toString().contains("/login")) {
             val document = response.asJsoup()
-            if (document.select(".fa-sign-in").isNotEmpty()) {
+            if (document.select("input[value=Login to my account]").isNotEmpty()) {
                 throw Exception("Log in via WebView to view favorites")
             }
         }
@@ -213,20 +219,20 @@ open class NHentai(
     override fun searchMangaNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val fullTitle = document.select("#info > h1").text().replace("\"", "").trim()
+        val fullTitle = document.select("#main-info > h1").text().replace("\"", "").trim()
 
         return SManga.create().apply {
             title = if (displayFullTitle) fullTitle else fullTitle.shortenTitle()
-            thumbnail_url = document.select("#cover > a > img").attr("data-src")
+            thumbnail_url = document.select("#main-cover img").attr("data-src")
             status = SManga.COMPLETED
             artist = getArtists(document)
             author = artist
+            val code = getCodes(document)
             // Some people want these additional details in description
             description = "Full English and Japanese titles:\n"
-                .plus("$fullTitle\n")
-                .plus("${document.select("div#info h3").text()}\n\n")
+                .plus("$fullTitle\n\n")
+                .plus(code ?: "")
                 .plus("Pages: ${getNumPages(document)}\n")
-                .plus("Favorited by: ${document.select("div#info i.fa-heart + span span").text().removeSurrounding("(", ")")}\n")
                 .plus(getTagDescription(document))
             genre = getTags(document)
             update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
@@ -252,11 +258,8 @@ open class NHentai(
     override fun chapterListSelector() = throw UnsupportedOperationException()
 
     override fun pageListParse(document: Document): List<Page> {
-        val script = document.select("script:containsData(media_server)").first()!!.data()
-        val mediaServer = Regex("""media_server\s*:\s*(\d+)""").find(script)?.groupValues!![1]
-
-        return document.select("div.thumbs a > img").mapIndexed { i, img ->
-            Page(i, "", img.attr("abs:data-src").replace("t.nh", "i.nh").replace("t\\d+.nh".toRegex(), "i$mediaServer.nh").replace("t.", "."))
+        return document.select("#thumbnail-gallery .single-thumb a > img").mapIndexed { i, img ->
+            Page(i, "", img.attr("abs:data-src").replace("t.", "."))
         }
     }
 
@@ -268,7 +271,7 @@ open class NHentai(
         CategoryFilter(),
         GroupFilter(),
         ArtistFilter(),
-        ParodyFilter(),
+        SeriesFilter(),
         CharactersFilter(),
         Filter.Header("Uploaded valid units are h, d, w, m, y."),
         Filter.Header("example: (>20d)"),
@@ -287,7 +290,7 @@ open class NHentai(
     class CategoryFilter : AdvSearchEntryFilter("Categories")
     class GroupFilter : AdvSearchEntryFilter("Groups")
     class ArtistFilter : AdvSearchEntryFilter("Artists")
-    class ParodyFilter : AdvSearchEntryFilter("Parodies")
+    class SeriesFilter : AdvSearchEntryFilter("Series")
     class CharactersFilter : AdvSearchEntryFilter("Characters")
     class UploadedFilter : AdvSearchEntryFilter("Uploaded")
     class PagesFilter : AdvSearchEntryFilter("Pages")
@@ -310,9 +313,9 @@ open class NHentai(
         ),
     )
 
-    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
-        Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
-        fun toUriPart() = vals[state].second
+    private open class UriPartFilter(displayName: String, val pairs: Array<Pair<String, String>>) :
+        Filter.Select<String>(displayName, pairs.map { it.first }.toTypedArray()) {
+        fun toUriPart() = pairs[state].second
     }
 
     private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T
