@@ -441,15 +441,15 @@ abstract class Masonry(
     }
 
     protected open fun modelMangaFromElement(element: Element): SManga {
-        val sourceName = name
         return SManga.create().apply {
-            element.selectFirst("a:has(img)")!!.apply {
+            element.selectFirst(".img-overlay > p > a")!!.run {
+                val model = text()
+                artist = model
+                author = name
+                title = "$model @$name"
                 setUrlWithoutDomain(absUrl("href"))
-            }.selectFirst("img")!!.run {
-                val name = attr("alt")
-                artist = name
-                author = sourceName
-                title = "$name @$sourceName"
+            }
+            element.selectFirst("a > img")?.run {
                 thumbnail_url = imgAttr()
             }
             status = SManga.ONGOING
@@ -460,7 +460,9 @@ abstract class Masonry(
     protected open fun modelMangaDetailsParse(document: Document) = SManga.create().apply {
         document.selectFirst("article.module-model")?.run {
             val stats = selectFirst(".header-model").also {
-                artist = selectFirst("h1")?.text()
+                val model = selectFirst("h1")?.text()
+                artist = model
+                title = "$model @$name"
             }
                 ?.select("ul.list-inline li")
                 ?.eachText()?.joinToString()
