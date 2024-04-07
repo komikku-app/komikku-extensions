@@ -224,7 +224,7 @@ open class NHentai(
             // Some people want these additional details in description
             description = "Full English and Japanese titles:\n"
                 .plus("$fullTitle\n")
-                .plus("${document.select("div#info h2").text()}\n\n")
+                .plus("${document.select("div#info h3").text()}\n\n")
                 .plus("Pages: ${getNumPages(document)}\n")
                 .plus("Favorited by: ${document.select("div#info i.fa-heart + span span").text().removeSurrounding("(", ")")}\n")
                 .plus(getTagDescription(document))
@@ -263,6 +263,7 @@ open class NHentai(
     override fun getFilterList(): FilterList = FilterList(
         Filter.Header("Separate tags with commas (,)"),
         Filter.Header("Prepend with dash (-) to exclude"),
+        Filter.Header("Add quote (\"...\") for exact match"),
         TagFilter(),
         CategoryFilter(),
         GroupFilter(),
