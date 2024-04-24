@@ -419,7 +419,6 @@ abstract class GalleryAdults(
     protected open fun Element.getTime(): Long {
         return selectFirst(timeSelector)
             ?.attr("datetime")
-            ?.replace("T", " ")
             .toDate(simpleDateFormat)
     }
 
@@ -664,8 +663,9 @@ abstract class GalleryAdults(
     override fun getFilterList(): FilterList {
         getGenres()
         val filters = emptyList<Filter<*>>().toMutableList()
-        if (useIntermediateSearch)
+        if (useIntermediateSearch) {
             filters.add(Filter.Header("HINT: Separate search term with comma (,)"))
+        }
 
         filters.add(SortOrderFilter(getSortOrderURIs()))
 
@@ -700,8 +700,9 @@ abstract class GalleryAdults(
 
         filters.add(Filter.Separator())
 
-        if (supportSpeechless)
+        if (supportSpeechless) {
             filters.add(SpeechlessFilter())
+        }
         filters.add(FavoriteFilter())
 
         return FilterList(filters)
