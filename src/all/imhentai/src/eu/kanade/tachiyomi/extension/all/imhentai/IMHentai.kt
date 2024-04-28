@@ -1,11 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.imhentai
 
-import android.content.SharedPreferences
-import androidx.preference.PreferenceScreen
-import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.multisrc.galleryadults.GalleryAdults
-import eu.kanade.tachiyomi.multisrc.galleryadults.GalleryAdultsUtils.cleanTag
-import eu.kanade.tachiyomi.multisrc.galleryadults.GalleryAdultsUtils.imgAttr
+import eu.kanade.tachiyomi.multisrc.galleryadults.cleanTag
+import eu.kanade.tachiyomi.multisrc.galleryadults.imgAttr
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -25,36 +22,8 @@ class IMHentai(
 ) {
     override val supportsLatest = true
     override val useIntermediateSearch: Boolean = true
-    override val supportAdvanceSearch: Boolean = true
+    override val supportAdvancedSearch: Boolean = true
     override val supportSpeechless: Boolean = true
-
-    private val SharedPreferences.shortTitle
-        get() = getBoolean(PREF_SHORT_TITLE, false)
-
-    private val shortenTitleRegex = Regex("""(\[[^]]*]|[({][^)}]*[)}])""")
-
-    private fun String.shortenTitle() = this.replace(shortenTitleRegex, "").trim()
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        SwitchPreferenceCompat(screen.context).apply {
-            key = PREF_SHORT_TITLE
-            title = "Display Short Titles"
-            summaryOff = "Showing Long Titles"
-            summaryOn = "Showing short Titles"
-            setDefaultValue(false)
-        }.also(screen::addPreference)
-
-        super.setupPreferenceScreen(screen)
-    }
-
-    override fun Element.mangaTitle(selector: String) =
-        mangaFullTitle(selector).let {
-            if (preferences.shortTitle) it?.shortenTitle() else it
-        }
-
-    private fun Element.mangaFullTitle(selector: String) =
-        selectFirst(selector)?.text()
-            ?.replace("\"", "")?.trim()
 
     override fun Element.mangaLang() =
         select("a:has(.thumb_flag)").attr("href")
@@ -119,7 +88,7 @@ class IMHentai(
                         .let { if (it.isNotBlank()) "$tag: $it" else null }
                 } +
                 listOfNotNull(
-                    selectFirst(".pages")?.ownText()?.cleanTag(),
+                    selectFirst(".pages")?.ownText(),
                     selectFirst(".subtitle")?.ownText()
                         .let { altTitle -> if (!altTitle.isNullOrBlank()) "Alternate Title: $altTitle" else null },
                 )
@@ -191,8 +160,4 @@ class IMHentai(
     }
 
     override val idPrefixUri = "gallery"
-
-    companion object {
-        private const val PREF_SHORT_TITLE = "pref_short_title"
-    }
 }

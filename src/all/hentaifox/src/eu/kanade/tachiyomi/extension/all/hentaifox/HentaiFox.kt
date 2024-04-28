@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.hentaifox
 
 import eu.kanade.tachiyomi.multisrc.galleryadults.GalleryAdults
-import eu.kanade.tachiyomi.multisrc.galleryadults.GalleryAdultsUtils.toDate
+import eu.kanade.tachiyomi.multisrc.galleryadults.toDate
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import okhttp3.HttpUrl
@@ -35,11 +35,14 @@ class HentaiFox(
         .split(' ').let {
             when {
                 it.contains(langCode) -> mangaLang
-                // search result doesn't have "data-languages"
+                // search result doesn't have "data-languages" which will return a list with 1 blank element
                 it.size > 1 || (it.size == 1 && it.first().isNotBlank()) -> "other"
+                // if we don't know which language to filter then set to mangaLang to not filter at all
                 else -> mangaLang
             }
         }
+
+    override fun Element.mangaTitle(selector: String): String? = mangaFullTitle(selector)
 
     override fun Element.getTime(): Long {
         return selectFirst(".pages:contains(Posted:)")?.ownText()
@@ -72,15 +75,15 @@ class HentaiFox(
 
     /**
      * Convert space( ) typed in search-box into plus(+) in URL. Then:
-     * - ignore the word preceding by a special character (e.g. school-girl will ignore girl)
+     * - ignore the word preceding by a special character (e.g. 'school-girl' will ignore 'girl')
      *    => replace to plus(+),
      * - use plus(+) for separate terms, as AND condition.
      * - use double quote(") to search for exact match.
      */
     override fun buildQueryString(tags: List<String>, query: String): String {
-        return (tags + query).filterNot { it.isBlank() }.joinToString("+") {
-            // replace any special character
-            it.trim().replace(Regex("""[^a-zA-Z0-9"]+"""), "+")
+        val regexSpecialCharacters = Regex("""[^a-zA-Z0-9"]+(?=[a-zA-Z0-9"])""")
+        return (tags + query + mangaLang).filterNot { it.isBlank() }.joinToString("+") {
+            it.trim().replace(regexSpecialCharacters, "+")
         }
     }
 
