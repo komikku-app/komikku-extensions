@@ -1,0 +1,96 @@
+name: Auto cherry-pick Keiyoushi
+
+on:
+  schedule:
+    - cron: "0 */8 * * *"
+  workflow_dispatch: # Manual dispatch
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    name: Auto cherry-pick Keiyoushi
+    if: github.repository == 'komikku-app/komikku-extensions'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          path: master
+          fetch-depth: 100
+          token: ${{ secrets.BOT_PAT }}
+
+      - name: Import GPG key
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          workdir: master
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: GPG user IDs
+        run: |
+          echo "fingerprint: ${{ steps.import-gpg.outputs.fingerprint }}"
+          echo "keyid:       ${{ steps.import-gpg.outputs.keyid }}"
+          echo "name:        ${{ steps.import-gpg.outputs.name }}"
+          echo "email:       ${{ steps.import-gpg.outputs.email }}"
+
+      - name: Cherry-picking
+        run: |
+          cd master
+          
+          git fetch origin keiyoushi
+          git checkout keiyoushi
+          git remote add keiyoushi-remote https://github.com/keiyoushi/extensions-source
+          git fetch keiyoushi-remote
+
+          upcoming_changes=`git log keiyoushi..keiyoushi-remote/main --pretty="%h"`
+          
+          # Read the upcoming changes' hash into an array
+          upcoming_changes_hash=()
+          while read -r line; do
+            upcoming_changes_hash+=("$line")
+          done <<< "$upcoming_changes"
+          
+          git checkout master
+          # Loop through indices in reverse order
+          for (( i=${#upcoming_changes_hash[@]}; i>0; i-- )); do
+            if [ ! -z "${upcoming_changes_hash[i]}" -a "${upcoming_changes_hash[i]}" != " " ]; then
+              git cherry-pick "${upcoming_changes_hash[i]}"
+            fi
+          done
+          
+          git push
+
+          echo "LATEST_HASH=${upcoming_changes_hash[1]}" >> $GITHUB_ENV
+
+      - name: Merging keiyoushi-remote to keiyoushi
+        run: |
+          cd master
+          git checkout keiyoushi
+          latest_commit_hash=${{ env.LATEST_HASH }}
+          if [ ! -z "$latest_commit_hash" -a "$latest_commit_hash" != " " ]; then
+            git merge "$latest_commit_hash" --no-ff --no-edit
+          fi
+
+          git push
+
+      - name: Merging master to merge-keiyoushi
+        run: |
+          cd master
+          git fetch origin merge-keiyoushi
+          git checkout merge-keiyoushi
+          git merge --no-edit master
+
+      - name: Merging keiyoushi-remote to merge-keiyoushi
+        run: |
+          cd master
+          git merge -S --no-edit keiyoushi-remote/main
+
+          git push
