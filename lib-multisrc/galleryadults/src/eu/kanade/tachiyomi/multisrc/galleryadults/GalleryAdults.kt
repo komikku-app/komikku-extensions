@@ -82,7 +82,7 @@ abstract class GalleryAdults(
     protected fun Element.mangaFullTitle(selector: String) =
         selectFirst(selector)?.text()
 
-    private fun String.shortenTitle() = this.replace(shortenTitleRegex, "").trim()
+    protected fun String.shortenTitle() = this.replace(shortenTitleRegex, "").trim()
 
     /* List detail */
     protected class SMangaDto(
