@@ -2,69 +2,25 @@ package eu.kanade.tachiyomi.extension.all.misskon
 
 import eu.kanade.tachiyomi.source.model.Filter
 
-class Tag(val name: String, val uri: String)
-class TagsFilter(displayName: String, private val tags: List<Tag>) :
-    Filter.Select<String>(displayName, tags.map { it.name }.toTypedArray()) {
-    fun toUriPart() = tags[state].uri
+class TopDays(val name: String, val uri: String)
+
+class TopDaysFilter(displayName: String, private val days: Array<TopDays>) :
+    Filter.Select<String>(displayName, days.map { it.name }.toTypedArray()) {
+    fun toUriPart() = days[state].uri
 }
 
-fun getTagsList() = listOf(
-    Tag("Latest", ""),
-    Tag("[MTCos] 喵糖映画", "mtcos"),
-    Tag("Bimilstory", "bimilstory"),
-    Tag("BLUECAKE", "bluecake"),
-    Tag("BoLoli", "bololi"),
-    Tag("CANDY", "candy"),
-    Tag("Cosplay", "cosplay"),
-    Tag("CreamSoda", "creamsoda"),
-    Tag("DJAWA", "djawa"),
-    Tag("Espacia Korea", "espacia-korea"),
-    Tag("Fantasy Story", "fantasy-story"),
-    Tag("FEILIN", "feilin"),
-    Tag("FToow", "ftoow"),
-    Tag("GIRLT", "girlt"),
-    Tag("HIGH FANTASY", "high-fantasy"),
-    Tag("HuaYan", "huayan"),
-    Tag("HuaYang", "huayang"),
-    Tag("IMISS", "imiss"),
-    Tag("ISHOW", "ishow"),
-    Tag("KelaGirls", "kelagirls"),
-    Tag("KIMLEMON", "kimlemon"),
-    Tag("Kimoe", "kimoe"),
-    Tag("LegBaby", "legbaby"),
-    Tag("Loozy", "loozy"),
-    Tag("MF", "mf"),
-    Tag("MFStar", "mfstar"),
-    Tag("MiiTao", "miitao"),
-    Tag("MintYe", "mintye"),
-    Tag("MISSLEG", "missleg"),
-    Tag("MiStar", "mistar"),
-    Tag("Moon Night Snap", "moon-night-snap"),
-    Tag("MTMeng", "mtmeng"),
-    Tag("MyGirl", "mygirl"),
-    Tag("Paranhosu", "paranhosu"),
-    Tag("PartyCat", "partycat"),
-    Tag("Pure Media", "pure-media"),
-    Tag("QingDouKe", "qingdouke"),
-    Tag("RuiSG", "ruisg"),
-    Tag("SAINT Photolife", "saint-photolife"),
-    Tag("SLADY", "slady"),
-    Tag("SWEETBOX", "sweetbox"),
-    Tag("TASTE", "taste"),
-    Tag("TGOD", "tgod"),
-    Tag("TouTiao", "toutiao"),
-    Tag("TuiGirl", "tuigirl"),
-    Tag("Tukmo", "tukmo"),
-    Tag("UGIRLS", "ugirls"),
-    Tag("UGIRLS - Ai You Wu App", "ugirls-ai-you-wu-app"),
-    Tag("UXING", "uxing"),
-    Tag("WingS", "wings"),
-    Tag("XiaoYu", "xiaoyu"),
-    Tag("XingYan", "xingyan"),
-    Tag("XIUREN", "xiuren"),
-    Tag("Yo-U", "yo-u"),
-    Tag("YouMei", "youmei"),
-    Tag("YouMi", "youmi"),
-    Tag("YouMi尤蜜", "youmiapp"),
-    Tag("YouWu", "youwu"),
+fun getTopDaysList() = arrayOf(
+    TopDays("<Select>", ""),
+) + topDaysList()
+
+fun topDaysList() = arrayOf(
+    TopDays("Top 3 days", "top3"),
+    TopDays("Top week", "top7"),
+    TopDays("Top month", "top30"),
+    TopDays("Top 2 months", "top60"),
 )
+
+class TagsFilter(displayName: String, private val tags: List<Pair<String, String>>) :
+    Filter.Select<String>(displayName, tags.map { it.first }.toTypedArray()) {
+    fun toUriPart() = tags[state].second
+}
