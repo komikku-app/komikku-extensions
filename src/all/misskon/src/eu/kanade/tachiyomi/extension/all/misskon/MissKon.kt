@@ -121,6 +121,21 @@ class MissKon : ConfigurableSource, HttpSource() {
 
     override fun searchMangaParse(response: Response) = latestUpdatesParse(response)
 
+    /* Related titles */
+    override val supportsRelatedMangasAndSearch = true
+
+    override fun relatedMangaListParse(response: Response): List<SManga> {
+        val document = response.asJsoup()
+        return document.select(".yarpp-related a.yarpp-thumbnail").map { element ->
+            SManga.create().apply {
+                setUrlWithoutDomain(element.attr("href"))
+                title = element.attr("title")
+                thumbnail_url = element.selectFirst("img")?.attr("src")!!
+            }
+        }
+    }
+
+    /* Details */
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
         return SManga.create().apply {
