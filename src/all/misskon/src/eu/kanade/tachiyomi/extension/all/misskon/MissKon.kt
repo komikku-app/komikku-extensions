@@ -1,6 +1,12 @@
 package eu.kanade.tachiyomi.extension.all.misskon
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.ConfigurableSource
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -8,34 +14,58 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.util.Locale
 
-class MissKon : HttpSource() {
+class MissKon : ConfigurableSource, HttpSource() {
     override val name = "MissKon (MrCong)"
     override val lang = "all"
     override val supportsLatest = true
 
     override val baseUrl = "https://misskon.com"
 
-    override fun popularMangaRequest(page: Int) = GET(baseUrl, headers)
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
 
-    override fun popularMangaParse(response: Response): MangasPage {
-        val document = response.asJsoup()
-        val mangas = document.select("div#top-posts-14 a")
-            .map { element ->
-                SManga.create().apply {
-                    setUrlWithoutDomain(element.absUrl("href"))
-                    title = element.attr("title")
-                    thumbnail_url = element.select("img").attr("src")
-                        .replace("https://i0.wp.com/", "https://")
-                        .replace("\\?resize=.*".toRegex(), "")
-                }
-            }
-        return MangasPage(mangas, hasNextPage = false)
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
+
+    private val SharedPreferences.topDays
+        get() = getString(PREF_TOP_DAYS, DEFAULT_TOP_DAYS)
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_TOP_DAYS
+            title = "Default Top-Days used for Popular"
+            summary = "%s"
+            entries = topDaysList().map { it.name }.toTypedArray()
+            entryValues = topDaysList().indices.map { it.toString() }.toTypedArray()
+            setDefaultValue(DEFAULT_TOP_DAYS)
+        }.also(screen::addPreference)
+    }
+
+    override fun popularMangaRequest(page: Int): Request {
+        val topDays = (preferences.topDays?.toInt() ?: 0) + 1
+        val topDaysFilter = TopDaysFilter(
+            "",
+            arrayOf(
+                getTopDaysList()[0],
+                getTopDaysList()[topDays],
+            ),
+        ).apply { state = 1 }
+        return searchMangaRequest(page, "", FilterList(topDaysFilter))
+    }
+
+    override fun popularMangaParse(response: Response) = latestUpdatesParse(response)
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/$page", headers)
 
@@ -58,31 +88,54 @@ class MissKon : HttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = "$baseUrl/tag".toHttpUrl().newBuilder()
-        (filters.first() as TagsFilter).let { tags ->
-            when (tags.state) {
-                0 -> {
-                    if (query.isNotEmpty()) {
-                        url.addPathSegment(
-                            query.trim().replace(" ", "-")
-                                .lowercase(Locale.getDefault()),
-                        )
-                    } else {
-                        return latestUpdatesRequest(page)
-                    }
-                }
-                else -> tags.toUriPart().let { url.addPathSegment(it) }
+        val tagFilter = filters.filterIsInstance<TagsFilter>().firstOrNull()
+        val topDaysFilter = filters.filterIsInstance<TopDaysFilter>().firstOrNull()
+        val url = baseUrl.toHttpUrl().newBuilder()
+        when {
+            query.isNotBlank() -> {
+                // Convert search to tag, would support "Related titles" feature
+                url.addPathSegment("tag")
+                url.addPathSegment(
+                    query.trim().removePrefix("Coser@")
+                        .replace(" ", "-")
+                        .lowercase(Locale.getDefault()),
+                )
+
+                url.addPathSegment("page")
+                url.addPathSegment(page.toString())
             }
+            topDaysFilter != null && topDaysFilter.state > 0 -> {
+                url.addPathSegment(topDaysFilter.toUriPart())
+            }
+            tagFilter != null && tagFilter.state > 0 -> {
+                url.addPathSegment("tag")
+                url.addPathSegment(tagFilter.toUriPart())
+
+                url.addPathSegment("page")
+                url.addPathSegment(page.toString())
+            }
+            else -> return latestUpdatesRequest(page)
         }
-
-        url.addPathSegment("page")
-        url.addPathSegment(page.toString())
-
-        return GET(url.toString(), headers)
+        return GET(url.build(), headers)
     }
 
     override fun searchMangaParse(response: Response) = latestUpdatesParse(response)
 
+    /* Related titles */
+    override val supportsRelatedMangasAndSearch = true
+
+    override fun relatedMangaListParse(response: Response): List<SManga> {
+        val document = response.asJsoup()
+        return document.select(".yarpp-related a.yarpp-thumbnail").map { element ->
+            SManga.create().apply {
+                setUrlWithoutDomain(element.attr("href"))
+                title = element.attr("title")
+                thumbnail_url = element.selectFirst("img")?.attr("src")!!
+            }
+        }
+    }
+
+    /* Details */
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
         return SManga.create().apply {
@@ -102,9 +155,22 @@ class MissKon : HttpSource() {
                     .replace("<.+?>".toRegex(), "")}\n" +
                 "Password: $password\n" +
                 downloadLinks
-            genre = document.select("p.post-tag a").joinToString { it.text() }
+            genre = parseTags(document)
             thumbnail_url = document.selectFirst("div#fukie2.entry p img")?.attr("src")
         }
+    }
+
+    private fun parseTags(document: Document): String {
+        return document.select("p.post-tag a")
+            .also { tags ->
+                tags.map {
+                    val uri = it.attr("href")
+                        .removeSuffix("/")
+                        .substringAfterLast('/')
+                    tagList[it.text()] = uri
+                }
+            }
+            .joinToString { it.text() }
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
@@ -132,9 +198,54 @@ class MissKon : HttpSource() {
 
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
 
+    /* Filters */
+    private val tagList: MutableMap<String, String> = mutableMapOf()
+
+    private val scope = CoroutineScope(Dispatchers.IO)
+    private fun launchIO(block: () -> Unit) = scope.launch { block() }
+    private var tagsFetchAttempt = 0
+
+    private fun getTags() {
+        launchIO {
+            if (tagList.isEmpty() && tagsFetchAttempt < 3) {
+                val result = runCatching {
+                    client.newCall(GET("$baseUrl/sets/", headers))
+                        .execute().asJsoup()
+                        .select(".entry .tag-counterz a[href*=/tag/]")
+                        .mapNotNull {
+                            Pair(
+                                it.select("strong").text(),
+                                it.attr("href")
+                                    .removeSuffix("/")
+                                    .substringAfterLast('/'),
+                            )
+                        }
+                }
+                if (result.isSuccess) {
+                    tagList["<Select>"] = ""
+                    tagList.putAll(result.getOrNull() ?: emptyList())
+                }
+                tagsFetchAttempt++
+            }
+        }
+    }
+
     override fun getFilterList(): FilterList {
+        getTags()
         return FilterList(
-            TagsFilter("Tag", getTagsList()),
+            Filter.Header("Not support searching."),
+            TopDaysFilter("Top days", getTopDaysList()),
+            if (tagList.isEmpty()) {
+                Filter.Header("Hit refresh to load Tags")
+            } else {
+                TagsFilter("Tag", tagList.toList())
+            },
+            Filter.Header("Not support both filters at same time."),
         )
+    }
+
+    companion object {
+        private const val PREF_TOP_DAYS = "pref_top_days"
+        private const val DEFAULT_TOP_DAYS = "1"
     }
 }
