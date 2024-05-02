@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.Locale
@@ -78,9 +78,9 @@ class MissKon : ConfigurableSource, HttpSource() {
                     setUrlWithoutDomain(post.absUrl("href"))
                     title = post.text()
                     thumbnail_url = element.select("div.post-thumbnail img").attr("src")
-                    val meta = element.select("p.post-meta")
-                    description = "View: ${meta.select("span.post-views").text()}"
-                    genre = meta.select("span.post-cats a").joinToString { it.text() }
+                    val meta = element.selectFirst("p.post-meta")
+                    description = "View: ${meta?.select("span.post-views")?.text() ?: "---"}"
+                    genre = meta?.parseTags()
                 }
             }
         val isLastPage = document.selectFirst("div#main-content div.pagination span.current + a.page")
@@ -96,9 +96,9 @@ class MissKon : ConfigurableSource, HttpSource() {
                 // Convert search to tag, would support "Related titles" feature
                 url.addPathSegment("tag")
                 url.addPathSegment(
-                    query.trim().removePrefix("Coser@")
-                        .replace(" ", "-")
-                        .lowercase(Locale.getDefault()),
+                    query.trim().replace(" ", "-")
+                        .lowercase(Locale.getDefault())
+                        .removePrefix("coser@"),
                 )
 
                 url.addPathSegment("page")
@@ -155,13 +155,13 @@ class MissKon : ConfigurableSource, HttpSource() {
                     .replace("<.+?>".toRegex(), "")}\n" +
                 "Password: $password\n" +
                 downloadLinks
-            genre = parseTags(document)
+            genre = document.parseTags()
             thumbnail_url = document.selectFirst("div#fukie2.entry p img")?.attr("src")
         }
     }
 
-    private fun parseTags(document: Document): String {
-        return document.select("p.post-tag a")
+    private fun Element.parseTags(selector: String = ".post-tag a"): String {
+        return select(selector)
             .also { tags ->
                 tags.map {
                     val uri = it.attr("href")
