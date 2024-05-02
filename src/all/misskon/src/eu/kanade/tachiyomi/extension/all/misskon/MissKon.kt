@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -21,6 +22,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.Locale
@@ -126,7 +128,7 @@ class MissKon : ConfigurableSource, HttpSource() {
 
     override fun relatedMangaListParse(response: Response): List<SManga> {
         val document = response.asJsoup()
-        return document.select(".yarpp-related a.yarpp-thumbnail").map { element ->
+        return document.select(".content > .yarpp-related a.yarpp-thumbnail").map { element ->
             SManga.create().apply {
                 setUrlWithoutDomain(element.attr("href"))
                 title = element.attr("title")
@@ -135,8 +137,16 @@ class MissKon : ConfigurableSource, HttpSource() {
         }
     }
 
+    private val downloadLinks = mutableMapOf<String, String>()
+    private val servicesLogo = mapOf(
+        "Google Drive" to "https://upload.wikimedia.org/wikipedia/commons/f/fb/Google_Drive_-_New_Logo.png",
+        "MediaFire" to "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/MediaFire_logo.png/640px-MediaFire_logo.png",
+        "Terabox" to "https://i0.wp.com/terabox.blog/wp-content/uploads/2024/02/terabox-logo-1.webp",
+    )
+
     /* Details */
     override fun mangaDetailsParse(response: Response): SManga {
+        downloadLinks.clear()
         val document = response.asJsoup()
         return SManga.create().apply {
             title = document.select(".post-title span").text()
@@ -145,8 +155,12 @@ class MissKon : ConfigurableSource, HttpSource() {
 
             val password = info.select("input").attr("value")
             val downloadAvailable = document.select("div#fukie2.entry a[href]:has(i.fa-download)")
-            val downloadLinks = downloadAvailable.joinToString("\n") {
-                "${it.text()}: ${it.attr("href")}"
+            val downloadLinks = downloadAvailable.joinToString("\n") { element ->
+                val serviceText = element.text()
+                val link = element.attr("href")
+                val service = servicesLogo.filter { serviceText.lowercase().contains(it.key.lowercase()) }.map { it.key }.firstOrNull()
+                downloadLinks[if (!service.isNullOrBlank()) service else "Other"] = link
+                "$serviceText: $link"
             }
 
             description = "View: $view\n" +
@@ -160,7 +174,7 @@ class MissKon : ConfigurableSource, HttpSource() {
         }
     }
 
-    private fun Element.parseTags(selector: String = ".post-tag a"): String {
+    private fun Element.parseTags(selector: String = ".post-tag a, .post-cats a"): String {
         return select(selector)
             .also { tags ->
                 tags.map {
@@ -175,7 +189,7 @@ class MissKon : ConfigurableSource, HttpSource() {
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val postUrl = response.request.url.toString()
-        return response.asJsoup()
+        val pages = response.asJsoup()
             .select("div.page-link a")
             .map {
                 SChapter.create().apply {
@@ -189,6 +203,30 @@ class MissKon : ConfigurableSource, HttpSource() {
                     name = "Page 1"
                 },
             )
+
+        val downloadChapters = downloadLinks.map { entry ->
+            SChapter.create().apply {
+                name = entry.key
+                url = entry.value
+            }
+        }
+        return downloadChapters + pages
+    }
+
+    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
+        return if (downloadLinks.contains(chapter.name)) {
+            val pages = listOf(
+                Page(0, imageUrl = servicesLogo[chapter.name]),
+                Page(1, imageUrl = chapter.url),
+            )
+            Observable.just(pages)
+        } else {
+            client.newCall(pageListRequest(chapter))
+                .asObservableSuccess()
+                .map { response ->
+                    pageListParse(response)
+                }
+        }
     }
 
     override fun pageListParse(response: Response): List<Page> = response.asJsoup()
@@ -234,6 +272,7 @@ class MissKon : ConfigurableSource, HttpSource() {
         getTags()
         return FilterList(
             Filter.Header("Not support searching."),
+            Filter.Header("Chapter with service name such as Google Drive, MediaFire, Terabox: Open WebView on page 2 to view download links."),
             TopDaysFilter("Top days", getTopDaysList()),
             if (tagList.isEmpty()) {
                 Filter.Header("Hit refresh to load Tags")
