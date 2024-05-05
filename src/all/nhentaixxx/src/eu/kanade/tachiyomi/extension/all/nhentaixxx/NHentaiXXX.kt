@@ -68,7 +68,7 @@ class NHentaiXXX(
             .joinToString { it.ownText().cleanTag() }
     }
 
-    override fun pageRequestForm(document: Document, totalPages: String): FormBody {
+    override fun pageRequestForm(document: Document, totalPages: String, loadedPages: Int): FormBody {
         val token = document.select("[name=csrf-token]").attr("content")
         val serverNumber = document.serverNumber()
 
@@ -76,7 +76,7 @@ class NHentaiXXX(
             .add("u_id", document.inputIdValueOf(galleryIdSelector))
             .add("g_id", document.inputIdValueOf(loadIdSelector))
             .add("img_dir", document.inputIdValueOf(loadDirSelector))
-            .add("visible_pages", "10")
+            .add("visible_pages", loadedPages.toString())
             .add("total_pages", totalPages)
             .add("type", "2") // 1 would be "more", 2 is "all remaining"
             .apply {
