@@ -73,8 +73,8 @@ class HentaiEra(
 
     /* Pages */
     override val idPrefixUri = "gallery"
+    override val thumbnailSelector = ".gthumb"
     override val pageUri = "view"
-    override val pageSelector = ".gthumb"
 
     /* Filters */
     override fun tagsParser(document: Document): List<Genre> {
