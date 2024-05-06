@@ -1,12 +1,11 @@
 package eu.kanade.tachiyomi.extension.all.hentaiera
 
 import eu.kanade.tachiyomi.multisrc.galleryadults.GalleryAdults
+import eu.kanade.tachiyomi.multisrc.galleryadults.Genre
 import eu.kanade.tachiyomi.multisrc.galleryadults.SearchFlagFilter
 import eu.kanade.tachiyomi.multisrc.galleryadults.SortOrderFilter
-import eu.kanade.tachiyomi.multisrc.galleryadults.cleanTag
 import eu.kanade.tachiyomi.multisrc.galleryadults.imgAttr
 import eu.kanade.tachiyomi.source.model.FilterList
-import okhttp3.FormBody
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -37,7 +36,11 @@ class HentaiEra(
                 .apply {
                     state = 0
                 }
-            searchMangaRequest(page, "", FilterList(popularFilter))
+            if (useBasicSearch) {
+                basicSearchRequest(page, "", FilterList(popularFilter))
+            } else {
+                searchMangaRequest(page, "", FilterList(popularFilter))
+            }
         } else {
             super.popularMangaRequest(page)
         }
@@ -45,19 +48,22 @@ class HentaiEra(
 
     /* Details */
     override fun Element.getInfo(tag: String): String {
-        return select("li:has(.tags_text:contains($tag)) .tag .item_name").map {
-            it?.run {
+        return select("li:has(.tags_text:contains($tag)) a.tag")
+            .joinToString {
+                val name = it.selectFirst(".item_name")?.ownText() ?: ""
+                if (tag.contains(regexTag)) {
+                    genres[name] = it.attr("href")
+                        .removeSuffix("/").substringAfterLast('/')
+                }
                 listOf(
-                    ownText().cleanTag(),
-                    select(".split_tag").text()
-                        .trim()
+                    name,
+                    it.select(".split_tag").text()
                         .removePrefix("| ")
-                        .cleanTag(),
+                        .trim(),
                 )
                     .filter { s -> s.isNotBlank() }
                     .joinToString()
             }
-        }.joinToString()
     }
 
     override fun Element.getCover() =
@@ -71,10 +77,10 @@ class HentaiEra(
     override val pageSelector = ".gthumb"
 
     /* Filters */
-    override fun tagsParser(document: Document): List<Pair<String, String>> {
+    override fun tagsParser(document: Document): List<Genre> {
         return document.select(".galleries .gallery_title a")
             .mapNotNull {
-                Pair(
+                Genre(
                     it.ownText(),
                     it.attr("href")
                         .removeSuffix("/").substringAfterLast('/'),

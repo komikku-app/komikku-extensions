@@ -2,10 +2,10 @@ package eu.kanade.tachiyomi.extension.all.nhentaixxx
 
 import eu.kanade.tachiyomi.multisrc.galleryadults.GalleryAdults
 import eu.kanade.tachiyomi.multisrc.galleryadults.SortOrderFilter
-import eu.kanade.tachiyomi.multisrc.galleryadults.cleanTag
 import eu.kanade.tachiyomi.multisrc.galleryadults.imgAttr
 import eu.kanade.tachiyomi.source.model.FilterList
 import okhttp3.FormBody
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -44,7 +44,11 @@ class NHentaiXXX(
                 .apply {
                     state = 0
                 }
-            searchMangaRequest(page, "", FilterList(popularFilter))
+            if (useBasicSearch) {
+                basicSearchRequest(page, "", FilterList(popularFilter))
+            } else {
+                searchMangaRequest(page, "", FilterList(popularFilter))
+            }
         } else {
             super.popularMangaRequest(page)
         }
@@ -64,8 +68,22 @@ class NHentaiXXX(
     }
 
     override fun Element.getInfo(tag: String): String {
-        return select(".tags:contains($tag:) .tag_btn .tag_name")
-            .joinToString { it.ownText().cleanTag() }
+        return select(".tags:contains($tag:) a.tag_btn")
+            .joinToString {
+                val name = it.selectFirst(".tag_name")?.ownText() ?: ""
+                if (tag.contains(regexTag)) {
+                    genres[name] = it.attr("href")
+                        .removeSuffix("/").substringAfterLast('/')
+                }
+                listOf(
+                    name,
+                    it.select(".split_tag").text()
+                        .removePrefix("| ")
+                        .trim(),
+                )
+                    .filter { s -> s.isNotBlank() }
+                    .joinToString()
+            }
     }
 
     override fun pageRequestForm(document: Document, totalPages: String, loadedPages: Int): FormBody {
@@ -86,19 +104,15 @@ class NHentaiXXX(
             .build()
     }
 
+    override fun Element.getServer(): String {
+        val domain = baseUrl.toHttpUrl().host
+        return serverNumber()
+            ?.let { "i$it.$domain" }
+            ?: getCover()!!.toHttpUrl().host
+    }
+
     override fun Element.parseJson() =
         selectFirst("script:containsData(parseJSON)")?.data()
             ?.substringAfter("$.parseJSON('{\"fl\":")
             ?.substringBefore(",\"th\":")?.trim()
-
-    override fun tagsParser(document: Document): List<Pair<String, String>> {
-        return document.select(".tags_items a.tag_btn")
-            .mapNotNull {
-                Pair(
-                    it.selectFirst(".tag_name")?.ownText() ?: "",
-                    it.attr("href")
-                        .removeSuffix("/").substringAfterLast('/'),
-                )
-            }
-    }
 }
