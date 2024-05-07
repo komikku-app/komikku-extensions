@@ -241,11 +241,12 @@ class MissKon : ConfigurableSource, HttpSource() {
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private fun launchIO(block: () -> Unit) = scope.launch { block() }
+    private var tagsFetched = false
     private var tagsFetchAttempt = 0
 
     private fun getTags() {
         launchIO {
-            if (tagList.isEmpty() && tagsFetchAttempt < 3) {
+            if (!tagsFetched && tagsFetchAttempt < 3) {
                 val result = runCatching {
                     client.newCall(GET("$baseUrl/sets/", headers))
                         .execute().asJsoup()
@@ -262,6 +263,7 @@ class MissKon : ConfigurableSource, HttpSource() {
                 if (result.isSuccess) {
                     tagList["<Select>"] = ""
                     tagList.putAll(result.getOrNull() ?: emptyList())
+                    tagsFetched = true
                 }
                 tagsFetchAttempt++
             }
