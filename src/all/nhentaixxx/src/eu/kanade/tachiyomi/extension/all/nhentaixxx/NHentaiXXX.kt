@@ -60,6 +60,8 @@ class NHentaiXXX(
 
     override val favoritePath = "favorites"
 
+    override val idPrefixUri = "g"
+
     override fun loginRequired(document: Document, url: String): Boolean {
         return (
             url.contains("/$favoritePath/") &&
