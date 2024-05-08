@@ -1,9 +1,15 @@
 package eu.kanade.tachiyomi.extension.all.hentairox
 
+import eu.kanade.tachiyomi.multisrc.galleryadults.AdvancedTextFilter
+import eu.kanade.tachiyomi.multisrc.galleryadults.FavoriteFilter
 import eu.kanade.tachiyomi.multisrc.galleryadults.GalleryAdults
 import eu.kanade.tachiyomi.multisrc.galleryadults.Genre
+import eu.kanade.tachiyomi.multisrc.galleryadults.GenresFilter
+import eu.kanade.tachiyomi.multisrc.galleryadults.SortOrderFilter
+import eu.kanade.tachiyomi.multisrc.galleryadults.SpeechlessFilter
 import eu.kanade.tachiyomi.multisrc.galleryadults.imgAttr
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.model.FilterList
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import org.jsoup.nodes.Document
@@ -39,6 +45,55 @@ class HentaiRox(
             super.popularMangaRequest(page)
         }
     }
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        // Basic search
+        val sortOrderFilter = filters.filterIsInstance<SortOrderFilter>().firstOrNull()
+        val genresFilter = filters.filterIsInstance<GenresFilter>().firstOrNull()
+        val selectedGenres = genresFilter?.state?.filter { it.state } ?: emptyList()
+        val favoriteFilter = filters.filterIsInstance<FavoriteFilter>().firstOrNull()
+
+        // Speechless
+        val speechlessFilter = filters.filterIsInstance<SpeechlessFilter>().firstOrNull()
+
+        // Advanced search
+        val advancedSearchFilters = filters.filterIsInstance<AdvancedTextFilter>()
+
+        return when {
+            favoriteFilter?.state == true ->
+                favoriteFilterSearchRequest(page, query, filters)
+            supportSpeechless && speechlessFilter?.state == true ->
+                speechlessFilterSearchRequest(page, query, filters)
+            supportAdvancedSearch && advancedSearchFilters.any { it.state.isNotBlank() } ->
+                advancedSearchRequest(page, query, filters)
+            selectedGenres.size == 1 && query.isBlank() ->
+                tagBrowsingSearchRequest(page, query, filters)
+            useIntermediateSearch ->
+                intermediateSearchRequest(page, query, filters)
+            useBasicSearch && (selectedGenres.size > 1 || query.isNotBlank()) ->
+                basicSearchRequest(page, query, filters)
+            sortOrderFilter?.state == 2 ->
+                topRatedRequest(page)
+            sortOrderFilter?.state == 1 ->
+                latestUpdatesRequest(page)
+            else ->
+                popularMangaRequest(page)
+        }
+    }
+
+    private fun topRatedRequest(page: Int): Request {
+        val url = baseUrl.toHttpUrl().newBuilder().apply {
+            addPathSegments("top-rated")
+            addPageUri(page)
+        }
+        return GET(url.build(), headers)
+    }
+
+    override fun getSortOrderURIs() = listOf(
+        Pair("Popular", "pp"),
+        Pair("Latest", "lt"),
+        Pair("Top Rated", "tr"),
+    )
 
     /**
      * Convert space( ) typed in search-box into plus(+) in URL. Then:
