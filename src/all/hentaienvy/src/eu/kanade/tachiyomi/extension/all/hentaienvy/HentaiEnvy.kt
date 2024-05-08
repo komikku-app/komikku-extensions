@@ -86,4 +86,6 @@ class HentaiEnvy(
             Filter.Header("String query search doesn't support Sort"),
         ) + super.getFilterList().list,
     )
+
+    override fun relatedMangaListSelector() = ".related_thumbs ${popularMangaSelector()}"
 }

@@ -95,4 +95,6 @@ class HentaiEra(
         SearchFlagFilter("Artist CG", "ac"),
         SearchFlagFilter("Game CG", "gc"),
     )
+
+    override fun relatedMangaListSelector() = ".related_section ${popularMangaSelector()}"
 }

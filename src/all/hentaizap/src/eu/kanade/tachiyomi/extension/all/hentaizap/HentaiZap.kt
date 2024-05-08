@@ -176,4 +176,6 @@ class HentaiZap(
         Pair("Downloads", "dl"),
         Pair("Top Rated", "tr"),
     )
+
+    override fun relatedMangaListSelector() = ".rl_th ${popularMangaSelector()}"
 }
