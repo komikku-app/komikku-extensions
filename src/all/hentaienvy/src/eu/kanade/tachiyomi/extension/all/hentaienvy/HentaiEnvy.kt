@@ -83,7 +83,7 @@ class HentaiEnvy(
     override fun getFilterList() = FilterList(
         listOf(
             Filter.Header("HINT: Separate search term with comma (,)"),
-            Filter.Header("String query search doesn't support Sort order"),
+            Filter.Header("String query search doesn't support Sort"),
         ) + super.getFilterList().list,
     )
 }
