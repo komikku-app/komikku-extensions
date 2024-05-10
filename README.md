@@ -1,26 +1,27 @@
-| Build | Support Server |
-|-------|----------------|
-| Master: [![Master](https://github.com/komikku-app/komikku-extensions/actions/workflows/build_push.yml/badge.svg?branch=master)](https://github.com/komikku-app/komikku-extensions/actions/workflows/build_push.yml) or Auto: [![Auto](https://github.com/komikku-app/komikku-extensions/actions/workflows/build_push.yml/badge.svg?branch=merge-keiyoushi)](https://github.com/komikku-app/komikku-extensions/actions/workflows/build_push.yml) | [![Discord](https://img.shields.io/discord/349436576037732353.svg?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/tachiyomi) |
+| Build | Up to date | Support Server |
+|-------|------------|----------------|
+| [![Build](https://img.shields.io/github/actions/workflow/status/komikku-app/komikku-extensions/build_push_komikku.yml?labelColor=27303D)](https://github.com/komikku-app/komikku-extensions/actions/workflows/build_push_komikku.yml) | [![Updated](https://img.shields.io/github/actions/workflow/status/komikku-app/komikku-extensions/auto_cherry_pick.yml?label=Updated&labelColor=27303D)](https://github.com/komikku-app/komikku-extensions/actions/workflows/auto_cherry_pick.yml) | [![Mihon Discord](https://img.shields.io/discord/1195734228319617024.svg?label=Mihon&labelColor=06599d&color=043b69&logo=discord&logoColor=FFFFFF)](https://discord.gg/mihon) [![Tachiyomi Discord](https://img.shields.io/discord/349436576037732353.svg?label=Tachiyomi&labelColor=2e84c1&color=68a3cb&logo=discord&logoColor=FFFFFF)](https://discord.gg/tachiyomi) |
 
-# Tachiyomi/Mihon/Komikku Extensions
-Tachiyomi is a free and open source manga reader for Android 6.0 and above.
-
-This repository contains the available extension catalogues for the Tachiyomi/Mihon app and is built-in with [Komikku](https://github.com/komikku-app/komikku) app.
+# Komikku / Mihon / Tachiyomi Extensions
+This repository contains the available extension catalogues is built-in with [Komikku](https://github.com/komikku-app/komikku) app while also usable for the Mihon / Tachiyomi app.
 
 This repository automatically merges any updates from [Keiyoushi](https://github.com/keiyoushi/extensions) every 8 hours to have the best of community contributions. Beside from that, it has a few of my developed extensions or some improvements. Enjoy!
+
+Some extensions from this repo provide better support for Komikku's feature showing related titles.
 
 # Recommend App
 
 ### [Komikku](https://github.com/komikku-app/komikku) based mostly on TachiyomiSY, features of Komikku include:
 - [x] Built-in & official extensions repository
+- [x] Show list of related titles (must enable in Settings/Browse) for all sources.
 - [x] Bulk selection to add to library & change categories of multiple entries all at once, everywhere.
 It can detect duplication being added and give option to allow/skip one by one or allow/skip all duplication.
 Also allow long-click to add/remove single entry to/from library, everywhere.
 - [x] Feed now supports all extensions
 - [x] More Feed items (20 for now)
-- [x] Search for sources when too many sources installed
+- [x] Search for sources in Browse screen when too many sources installed
+- [x] Quick NSFW sources filter in both Extensions/Browse screen
 - [x] Show which source is NSFW in Browse tab
-- [x] Filter to show 18+ only sources/extensions browse
 - [x] Settings button to jump to source's package settings page (to uninstall unwanted sources)
 
 ### [TachiyomiSY](https://github.com/jobobby04/TachiyomiSY) got all the original Tachiyomi app and more:
