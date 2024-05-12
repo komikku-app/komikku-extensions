@@ -100,4 +100,6 @@ class HentaiFox(
             Filter.Header("HINT: Use double quote (\") for exact match"),
         ) + super.getFilterList().list,
     )
+
+    override fun relatedMangaListSelector() = ".rel_div ${popularMangaSelector()}"
 }
