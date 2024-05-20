@@ -36,6 +36,31 @@ val POPULAR_QUERY: String = buildQuery {
     """
 }
 
+val RECOMMENDATIONS_QUERY: String = buildQuery {
+    """
+        query(
+            %id: String
+            %size: Int
+            %language: String
+            %page: Int
+        ) {
+            queryRecommendations(
+                type: "chapter"
+                _id: %id
+                size: %size
+                page: %page
+                search: {language: %language}
+            ) {
+                chapters {
+                    _id
+                    name
+                    firstPics
+                }
+            }
+        }
+    """
+}
+
 val SEARCH_QUERY: String = buildQuery {
     """
         query(

@@ -89,6 +89,17 @@ open class NineNineNineHentai(
 
     override fun popularMangaParse(response: Response) = browseMangaParse<PopularResponse>(response)
 
+    override fun relatedMangaListRequest(manga: SManga): Request {
+        val payload = GraphQL(
+            RecommendationVariables(manga.url, size, 1, siteLang),
+            RECOMMENDATIONS_QUERY,
+        ).toJsonRequestBody()
+
+        return POST(apiUrl, headers, payload)
+    }
+
+    override fun relatedMangaListParse(response: Response) = recommendationMangaParse(response).mangas
+
     override fun latestUpdatesRequest(page: Int) = searchMangaRequest(page, "", FilterList())
     override fun latestUpdatesParse(response: Response) = searchMangaParse(response)
 
@@ -264,6 +275,19 @@ open class NineNineNineHentai(
             manga.toSManga(useShortTitle)
         }
         preference.dateMap = dateMap
+        val hasNextPage = mangas.size == size
+
+        return MangasPage(entries, hasNextPage)
+    }
+
+    private fun recommendationMangaParse(response: Response): MangasPage {
+        val res = response.parseAs<Data<RecommendationResponse>>()
+        val mangas = res.data.chapters.chapters
+        val useShortTitle = preference.shortTitle
+        val entries = mangas.map { manga ->
+            manga.toSManga(useShortTitle)
+        }
+
         val hasNextPage = mangas.size == size
 
         return MangasPage(entries, hasNextPage)

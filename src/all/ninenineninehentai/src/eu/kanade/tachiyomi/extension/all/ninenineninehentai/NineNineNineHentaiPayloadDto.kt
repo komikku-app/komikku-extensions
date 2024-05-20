@@ -17,6 +17,14 @@ data class PopularVariables(
 )
 
 @Serializable
+data class RecommendationVariables(
+    val id: String,
+    val size: Int,
+    val page: Int,
+    val language: String,
+)
+
+@Serializable
 data class SearchVariables(
     val size: Int,
     val page: Int,
