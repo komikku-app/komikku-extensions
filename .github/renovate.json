@@ -1,6 +1,8 @@
 {
+  "labels": ["Dependencies"],
+  "rebaseWhen": "conflicted",
   "extends": [
-    "config:recommended"
+    "config:best-practices"
   ],
   "schedule": ["on sunday"],
   "includePaths": [
