@@ -124,8 +124,6 @@ class MissKon : ConfigurableSource, HttpSource() {
     override fun searchMangaParse(response: Response) = latestUpdatesParse(response)
 
     /* Related titles */
-    override val supportsRelatedMangasAndSearch = true
-
     override fun relatedMangaListParse(response: Response): List<SManga> {
         val document = response.asJsoup()
         return document.select(".content > .yarpp-related a.yarpp-thumbnail").map { element ->
