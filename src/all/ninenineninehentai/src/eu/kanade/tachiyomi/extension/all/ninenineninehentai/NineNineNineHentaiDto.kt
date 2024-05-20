@@ -16,6 +16,9 @@ data class Data<T>(val data: T)
 @Serializable
 data class Edges<T>(val edges: List<T>)
 
+@Serializable
+data class Chapters<T>(val chapters: List<T>)
+
 interface BrowseResponse {
     val chapters: Edges<ChapterResponse>
 }
@@ -29,6 +32,11 @@ data class PopularResponse(
 data class SearchResponse(
     @SerialName("queryChapters") override val chapters: Edges<ChapterResponse>,
 ) : BrowseResponse
+
+@Serializable
+data class RecommendationResponse(
+    @SerialName("queryRecommendations") val chapters: Chapters<ChapterResponse>,
+)
 
 @Serializable
 data class DetailsResponse(

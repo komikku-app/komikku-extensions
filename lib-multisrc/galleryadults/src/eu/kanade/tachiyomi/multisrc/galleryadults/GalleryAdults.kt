@@ -492,7 +492,6 @@ abstract class GalleryAdults(
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     /* Related titles */
-    override val supportsRelatedMangasAndSearch = true
     override fun relatedMangaListSelector() = ".related ${popularMangaSelector()}"
 
     /* Details */
