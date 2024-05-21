@@ -163,7 +163,7 @@ and [negative refspecs](https://github.blog/2020-10-19-git-2-29-released/#user-c
 
 ## Getting help
 
-- Join [the Discord server](https://discord.gg/tachiyomi) for online help and to ask questions while developing your extension. When doing so, please ask it in the `#programming` channel.
+- Join [the Discord server](https://discord.gg/85jB7V5AJR) for online help and to ask questions while developing your extension. When doing so, please ask it in the `#programming` channel.
 - There are some features and tricks that are not explored in this document. Refer to existing extension code for examples.
 
 ## Writing an extension
