@@ -28,10 +28,15 @@ class HentaiZap(
     lang = lang,
 ) {
     override val supportsLatest = true
+    override val supportSpeechless: Boolean = true
 
     override fun Element.mangaLang() =
         select("a:has(.th_lg)").attr("href")
             .removeSuffix("/").substringAfterLast("/")
+            .let {
+                // Include Speechless in search results
+                if (it == LANGUAGE_SPEECHLESS) mangaLang else it
+            }
 
     /* Popular */
     override fun popularMangaRequest(page: Int): Request {
@@ -47,8 +52,6 @@ class HentaiZap(
     }
 
     /* Search */
-    override val supportSpeechless = true
-
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         // Basic search
         val genresFilter = filters.filterIsInstance<GenresFilter>().firstOrNull()
@@ -86,7 +89,7 @@ class HentaiZap(
         val categoryFilters = filters.filterIsInstance<CategoryFilters>().firstOrNull()
 
         // Only for query string or multiple tags
-        val url = "$baseUrl/search".toHttpUrl().newBuilder().apply {
+        val url = "$baseUrl/search/".toHttpUrl().newBuilder().apply {
             addQueryParameter("filter", "yes")
             getSortOrderURIs().forEachIndexed { index, pair ->
                 addQueryParameter(pair.second, toBinary(sortOrderFilter?.state == index))
@@ -102,7 +105,7 @@ class HentaiZap(
             }
             addPageUri(page)
         }
-        return GET(url.build())
+        return GET(url.build(), headers)
     }
 
     override val favoritePath = "inc/user.php?act=favs"

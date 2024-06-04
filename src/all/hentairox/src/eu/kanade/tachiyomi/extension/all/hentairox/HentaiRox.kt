@@ -24,10 +24,15 @@ class HentaiRox(
     lang = lang,
 ) {
     override val supportsLatest = true
+    override val supportSpeechless: Boolean = true
 
     override fun Element.mangaLang() =
         select("a:has(.thumb_flag)").attr("href")
             .removeSuffix("/").substringAfterLast("/")
+            .let {
+                // Include Speechless in search results
+                if (it == LANGUAGE_SPEECHLESS) mangaLang else it
+            }
 
     override fun Element.mangaTitle(selector: String): String? =
         mangaFullTitle(selector.takeIf { it != ".caption" } ?: ".gallery_title").let {
@@ -36,12 +41,14 @@ class HentaiRox(
 
     override fun popularMangaRequest(page: Int): Request {
         return if (mangaLang.isBlank()) {
+            // Popular browsing for LANGUAGE_MULTI
             val url = baseUrl.toHttpUrl().newBuilder().apply {
                 addPathSegments("top-rated")
                 addPageUri(page)
             }
             return GET(url.build(), headers)
         } else {
+            // Popular browsing for other languages: using source's popular page
             super.popularMangaRequest(page)
         }
     }

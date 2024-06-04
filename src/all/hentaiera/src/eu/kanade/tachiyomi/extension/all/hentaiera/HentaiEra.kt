@@ -20,10 +20,15 @@ class HentaiEra(
 ) {
     override val supportsLatest = true
     override val useIntermediateSearch: Boolean = true
+    override val supportSpeechless: Boolean = true
 
     override fun Element.mangaLang() =
         select("a:has(.g_flag)").attr("href")
             .removeSuffix("/").substringAfterLast("/")
+            .let {
+                // Include Speechless in search results
+                if (it == LANGUAGE_SPEECHLESS) mangaLang else it
+            }
 
     override fun Element.mangaTitle(selector: String): String? =
         mangaFullTitle(selector.takeIf { it != ".caption" } ?: ".gallery_title").let {
@@ -32,6 +37,7 @@ class HentaiEra(
 
     override fun popularMangaRequest(page: Int): Request {
         return if (mangaLang.isBlank()) {
+            // Popular browsing for LANGUAGE_MULTI
             val popularFilter = SortOrderFilter(getSortOrderURIs())
                 .apply {
                     state = 0
@@ -42,6 +48,7 @@ class HentaiEra(
                 searchMangaRequest(page, "", FilterList(popularFilter))
             }
         } else {
+            // Popular browsing for other languages: using source's popular page
             super.popularMangaRequest(page)
         }
     }
