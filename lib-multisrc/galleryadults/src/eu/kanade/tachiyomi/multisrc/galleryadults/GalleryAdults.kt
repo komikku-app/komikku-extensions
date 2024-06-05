@@ -35,6 +35,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -460,39 +461,48 @@ abstract class GalleryAdults(
         } else {
             val hasNextPage = document.select(searchMangaNextPageSelector()).isNotEmpty()
             val mangas = document.select(searchMangaSelector())
-                .map {
-                    SMangaDto(
-                        title = it.mangaTitle()!!,
-                        url = it.mangaUrl()!!,
-                        thumbnail = it.mangaThumbnail(),
-                        lang = it.mangaLang(),
-                    )
-                }
-                .let { unfiltered ->
-                    val results = unfiltered.filter { mangaLang.isBlank() || it.lang == mangaLang }
-                    // return at least 1 title if all mangas in current page is of other languages
-                    if (results.isEmpty() && hasNextPage) listOf(unfiltered[0]) else results
-                }
-                .map {
-                    SManga.create().apply {
-                        title = it.title
-                        setUrlWithoutDomain(it.url)
-                        thumbnail_url = it.thumbnail
-                    }
-                }
-
+                .searchMangaFromElements(hasNextPage)
             return MangasPage(mangas, hasNextPage)
         }
     }
 
+    protected open fun Elements.searchMangaFromElements(hasNextPage: Boolean): List<SManga> {
+        return map {
+            SMangaDto(
+                title = it.mangaTitle()!!,
+                url = it.mangaUrl()!!,
+                thumbnail = it.mangaThumbnail(),
+                lang = it.mangaLang(),
+            )
+        }
+            .let { unfiltered ->
+                val results = unfiltered.filter { mangaLang.isBlank() || it.lang == mangaLang }
+                // return at least 1 title if all mangas in current page is of other languages
+                if (results.isEmpty() && hasNextPage) listOf(unfiltered[0]) else results
+            }
+            .map {
+                SManga.create().apply {
+                    title = it.title
+                    setUrlWithoutDomain(it.url)
+                    thumbnail_url = it.thumbnail
+                }
+            }
+    }
+
     override fun searchMangaSelector() = popularMangaSelector()
 
-    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
+    override fun searchMangaFromElement(element: Element): SManga = throw UnsupportedOperationException()
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     /* Related titles */
     override fun relatedMangaListSelector() = ".related ${popularMangaSelector()}"
+
+    override fun relatedMangaListParse(response: Response): List<SManga> {
+        return response.asJsoup()
+            .select(relatedMangaListSelector())
+            .searchMangaFromElements(hasNextPage = false)
+    }
 
     /* Details */
     protected open val mangaDetailInfoSelector = ".gallery_top"
