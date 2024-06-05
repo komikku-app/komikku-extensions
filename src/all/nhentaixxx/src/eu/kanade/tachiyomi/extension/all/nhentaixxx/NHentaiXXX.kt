@@ -20,6 +20,9 @@ class NHentaiXXX(
 ) {
     override val supportsLatest = true
 
+    // This site treats all Speechless as English
+    override val supportSpeechless: Boolean = mangaLang == LANGUAGE_ENGLISH
+
     private val languages: List<Pair<String, String>> = listOf(
         Pair(LANGUAGE_ENGLISH, "1"),
         Pair(LANGUAGE_JAPANESE, "2"),
@@ -40,6 +43,7 @@ class NHentaiXXX(
 
     override fun popularMangaRequest(page: Int): Request {
         return if (mangaLang.isBlank()) {
+            // Popular browsing for LANGUAGE_MULTI
             val popularFilter = SortOrderFilter(getSortOrderURIs())
                 .apply {
                     state = 0
@@ -50,6 +54,7 @@ class NHentaiXXX(
                 searchMangaRequest(page, "", FilterList(popularFilter))
             }
         } else {
+            // Popular browsing for other languages: using source's popular page
             super.popularMangaRequest(page)
         }
     }
