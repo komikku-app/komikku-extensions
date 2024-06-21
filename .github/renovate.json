@@ -2,9 +2,9 @@
   "labels": ["Dependencies"],
   "rebaseWhen": "conflicted",
   "extends": [
+    ":semanticCommits",
     "config:best-practices"
   ],
-  "schedule": ["on sunday"],
   "includePaths": [
     "buildSrc/gradle/**",
     "gradle/**",
