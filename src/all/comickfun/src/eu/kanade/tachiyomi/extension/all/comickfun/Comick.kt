@@ -209,6 +209,7 @@ abstract class Comick(
     override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
 
     /** Manga Search **/
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun fetchSearchManga(
         page: Int,
         query: String,
@@ -218,6 +219,7 @@ abstract class Comick(
             // url deep link
             val slugOrHid = query.substringAfter(SLUG_SEARCH_PREFIX)
             val manga = SManga.create().apply { this.url = "/comic/$slugOrHid#" }
+            @Suppress("DEPRECATION")
             fetchMangaDetails(manga).map {
                 MangasPage(listOf(it), false)
             }
@@ -358,6 +360,7 @@ abstract class Comick(
         return GET("$apiUrl$mangaUrl?tachiyomi=true", headers)
     }
 
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         return client.newCall(mangaDetailsRequest(manga))
             .asObservableSuccess()
@@ -399,6 +402,27 @@ abstract class Comick(
 
     override fun getMangaUrl(manga: SManga): String {
         return "$baseUrl${manga.url.removeSuffix("#")}"
+    }
+
+    /** Related titles **/
+    override fun relatedMangaListRequest(manga: SManga): Request {
+        // Migration from slug based urls to hid based ones
+        if (!manga.url.endsWith("#")) {
+            throw Exception("Migrate from Comick to Comick")
+        }
+
+        val mangaUrl = manga.url.removeSuffix("#")
+        val url = "$apiUrl$mangaUrl".toHttpUrl().newBuilder().apply {
+            addPathSegment("recommendations")
+            addQueryParameter("tachiyomi", "true")
+        }.build()
+
+        return GET(url, headers)
+    }
+
+    override fun relatedMangaListParse(response: Response): List<SManga> {
+        val result = response.parseAs<List<RelatedManga>>()
+        return result.map(RelatedManga::toSManga)
     }
 
     /** Manga Chapter List **/
@@ -510,5 +534,7 @@ abstract class Comick(
         private const val SCORE_POSITION_DEFAULT = "top"
         private const val LIMIT = 20
         private const val CHAPTERS_LIMIT = 99999
+
+        internal const val FALLBACK_COVER_BASEURL = "https://meo.comick.pictures/"
     }
 }

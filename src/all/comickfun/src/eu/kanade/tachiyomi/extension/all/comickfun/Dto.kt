@@ -185,6 +185,13 @@ class Chapter(
 }
 
 @Serializable
+class RelatedManga(
+    private val relates: SearchManga,
+) {
+    fun toSManga() = relates.toSManga()
+}
+
+@Serializable
 class PageList(
     val chapter: ChapterPageData,
 )
