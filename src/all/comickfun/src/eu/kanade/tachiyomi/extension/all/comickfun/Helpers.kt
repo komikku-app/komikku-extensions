@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.comickfun
 
+import android.os.Build
+import eu.kanade.tachiyomi.extension.all.comickfun.Comick.Companion.FALLBACK_COVER_BASEURL
 import eu.kanade.tachiyomi.source.model.SManga
 import org.jsoup.parser.Parser
 import java.text.SimpleDateFormat
@@ -7,8 +9,14 @@ import java.util.Locale
 import java.util.TimeZone
 
 private val dateFormat by lazy {
-    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.ENGLISH).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.ENGLISH).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+    } else {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
     }
 }
 private val markdownLinksRegex = "\\[([^]]+)]\\(([^)]+)\\)".toRegex()
@@ -40,12 +48,12 @@ internal fun Int?.parseStatus(translationComplete: Boolean?): Int {
     }
 }
 
-internal fun parseCover(thumbnailUrl: String?, mdCovers: List<MDcovers>): String? {
+internal fun parseCover(coverUrl: String?, mdCovers: List<MDcovers>): String? {
     val b2key = mdCovers.firstOrNull()?.b2key
-        ?: return thumbnailUrl
+        ?: return coverUrl
     val vol = mdCovers.firstOrNull()?.vol.orEmpty()
 
-    return thumbnailUrl?.replaceAfterLast("/", "$b2key#$vol")
+    return (coverUrl ?: FALLBACK_COVER_BASEURL).replaceAfterLast("/", "$b2key#$vol")
 }
 
 internal fun beautifyChapterName(vol: String, chap: String, title: String): String {
