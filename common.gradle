@@ -27,7 +27,9 @@ android {
         minSdk AndroidConfig.minSdk
         targetSdk AndroidConfig.targetSdk
         applicationIdSuffix project.parent.name + "." + project.name
-        versionCode theme == null ? extVersionCode : theme.baseVersionCode + overrideVersionCode
+        Integer kmkVersionCode = project.ext.find("kmkVersionCode") ?: 0
+        Integer kmkBaseVersionCode = theme == null ? 0 : theme.ext.find("kmkBaseVersionCode") ?: 0
+        versionCode theme == null ? extVersionCode + kmkVersionCode : theme.baseVersionCode + overrideVersionCode + kmkBaseVersionCode + kmkVersionCode
         versionName "1.4.$versionCode"
         base {
             archivesName = "tachiyomi-$applicationIdSuffix-v$versionName"
