@@ -1,9 +1,10 @@
 ext {
+    kmkVersionCode = 1
     extName = 'Elite Babes'
     extClass = '.EliteBabes'
     themePkg = 'masonry'
     baseUrl = 'https://www.elitebabes.com'
-    overrideVersionCode = 0 + 1
+    overrideVersionCode = 0
     isNsfw = true
 }
 
