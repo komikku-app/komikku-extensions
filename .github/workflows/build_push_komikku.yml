@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@88425854a36845f9c881450d9660b5fd46bee142 # v3
+        uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3
 
       - name: Get number of modules
         run: |
@@ -76,7 +76,7 @@ jobs:
           echo ${{ secrets.SIGNING_KEY }} | base64 -d > signingkey.jks
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@dbbdc275be76ac10734476cc723d82dfe7ec6eda # v3
+        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3
         with:
           cache-read-only: ${{ matrix.chunk != 0 }}
 
