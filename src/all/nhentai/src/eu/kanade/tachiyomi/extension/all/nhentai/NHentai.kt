@@ -138,7 +138,7 @@ open class NHentai(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val fixedQuery = query.ifEmpty { "\"\"" }
         val filterList = if (filters.isEmpty()) getFilterList() else filters
-        val nhLangSearch = if (nhLang.isBlank()) "" else "+$nhLang "
+        val nhLangSearch = if (nhLang.isBlank()) "" else "+language:$nhLang "
         val advQuery = combineQuery(filterList)
         val favoriteFilter = filterList.findInstance<FavoriteFilter>()
         val isOkayToSort = filterList.findInstance<UploadedFilter>()?.state?.isBlank() ?: true
@@ -166,26 +166,17 @@ open class NHentai(
         }
     }
 
-    private fun combineQuery(filters: FilterList): String {
-        val stringBuilder = StringBuilder()
-        val advSearch = filters.filterIsInstance<AdvSearchEntryFilter>().flatMap { filter ->
-            val splitState = filter.state.split(",").map(String::trim).filterNot(String::isBlank)
-            splitState.map {
-                AdvSearchEntry(filter.name, it.removePrefix("-"), it.startsWith("-"))
-            }
+    private fun combineQuery(filters: FilterList): String = buildString {
+        filters.filterIsInstance<AdvSearchEntryFilter>().forEach { filter ->
+            filter.state.split(",")
+                .map(String::trim)
+                .filterNot(String::isBlank)
+                .forEach { tag ->
+                    if (tag.startsWith("-")) append("-")
+                    append(filter.name, "\"", tag.removePrefix("-"), "\" ")
+                }
         }
-
-        advSearch.forEach { entry ->
-            if (entry.exclude) stringBuilder.append("-")
-            stringBuilder.append("${entry.name}:")
-            stringBuilder.append(entry.text)
-            stringBuilder.append(" ")
-        }
-
-        return stringBuilder.toString()
     }
-
-    data class AdvSearchEntry(val name: String, val text: String, val exclude: Boolean)
 
     private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/g/$id", headers)
 
