@@ -1,9 +1,0 @@
-ext {
-    kmkVersionCode = 1
-    extName = 'Meitua.top'
-    extClass = '.MeituaTop'
-    extVersionCode = 6
-    isNsfw = true
-}
-
-apply from: "$rootDir/common.gradle"
