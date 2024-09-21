@@ -21,7 +21,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.URLDecoder
@@ -110,13 +109,13 @@ class Photos18 : HttpSource(), ConfigurableSource {
         }
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
         val chapter = SChapter.create().apply {
             url = manga.url
             name = manga.title
             chapter_number = -2f
         }
-        return Observable.just(listOf(chapter))
+        return listOf(chapter)
     }
 
     override fun chapterListParse(response: Response) = throw UnsupportedOperationException()
