@@ -168,7 +168,6 @@ class MissKon : ConfigurableSource, HttpSource() {
                 "Password: $password\n" +
                 downloadLinks
             genre = document.parseTags()
-            thumbnail_url = document.selectFirst("div#fukie2.entry p img")?.attr("src")
         }
     }
 
