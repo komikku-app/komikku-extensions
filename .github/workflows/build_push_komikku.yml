@@ -29,7 +29,7 @@ jobs:
       individualMatrix: ${{ steps.generate-matrices.outputs.individualMatrix }}
     steps:
       - name: Clone repo
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
 
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3
@@ -63,7 +63,7 @@ jobs:
       matrix: ${{ fromJSON(needs.prepare.outputs.individualMatrix) }}
     steps:
       - name: Checkout ${{ github.ref_name }} branch
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
 
       - name: Set up JDK
         uses: actions/setup-java@b36c23c0d998641eff861008f374ee103c25ac73 # v4
@@ -89,7 +89,7 @@ jobs:
         run: ./gradlew -p src assembleRelease
 
       - name: Upload APKs (chunk ${{ matrix.chunk }})
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4
+        uses: actions/upload-artifact@604373da6381bf24206979c74d06a550515601b9 # v4
         if: github.repository == 'komikku-app/komikku-extensions'
         with:
           name: "individual-apks-${{ matrix.chunk }}"
@@ -118,7 +118,7 @@ jobs:
           distribution: temurin
 
       - name: Checkout ${{ github.ref_name }} branch
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
         with:
           ref: ${{ github.ref_name }}
           path: ${{ github.ref_name }}
@@ -133,7 +133,7 @@ jobs:
           python ./.github/scripts/create-repo.py
 
       - name: Checkout repo branch
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
         with:
           repository: komikku-app/extensions
           token: ${{ secrets.BOT_PAT }}
