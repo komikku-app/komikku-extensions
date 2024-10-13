@@ -48,13 +48,13 @@ jobs:
           git fetch origin keiyoushi
           git checkout keiyoushi
           echo "Last commit: `git log -1 --oneline`"
-          git remote add keiyoushi-remote https://github.com/keiyoushi/extensions-source
-          git fetch keiyoushi-remote
-          echo "Last commit: `git log -1 --oneline keiyoushi-remote/main`"
+          git remote add keiyoushi-upstream https://github.com/keiyoushi/extensions-source
+          git fetch keiyoushi-upstream
+          echo "Last commit: `git log -1 --oneline keiyoushi-upstream/main`"
 
           echo "Incoming commits:"
-          echo "`git log keiyoushi..keiyoushi-remote/main --oneline`"
-          upcoming_changes=`git log keiyoushi..keiyoushi-remote/main --pretty="%h"`
+          echo "`git log keiyoushi..keiyoushi-upstream/main --oneline`"
+          upcoming_changes=`git log keiyoushi..keiyoushi-upstream/main --pretty="%h"`
           
           # Read the upcoming changes' hash into an array
           upcoming_changes_hash=()
@@ -79,15 +79,15 @@ jobs:
 
           echo "LATEST_HASH=${latest_hash}" >> $GITHUB_ENV
 
-      - name: Merging keiyoushi-remote to keiyoushi
+      - name: Merging keiyoushi-upstream to keiyoushi
         run: |
           cd master
           git checkout keiyoushi
           echo "Last commit: `git log -1 --oneline`"
           latest_commit_hash=${{ env.LATEST_HASH }}
           if [ ! -z "$latest_commit_hash" -a "$latest_commit_hash" != " " ]; then
-            echo "Merging commit '$latest_commit_hash' from 'keiyoushi-remote' into keiyoushi"
-            git merge "$latest_commit_hash" --no-ff -m "Merge branch 'keiyoushi-remote' into keiyoushi"
+            echo "Merging commit '$latest_commit_hash' from 'keiyoushi-upstream' into keiyoushi"
+            git merge "$latest_commit_hash" --no-ff -m "Merge branch 'keiyoushi-upstream' into keiyoushi"
           fi
 
           echo "Last commit: `git log -1 --oneline`"
@@ -102,11 +102,11 @@ jobs:
           git merge --no-edit master
           echo "Last commit: `git log -1 --oneline`"
 
-      - name: Merging keiyoushi-remote to merge-keiyoushi
+      - name: Merging keiyoushi-upstream to merge-keiyoushi
         run: |
           cd master
-          echo "Merging 'keiyoushi-remote/main' into merge-keiyoushi"
-          git merge -S --no-edit keiyoushi-remote/main
+          echo "Merging 'keiyoushi-upstream/main' into merge-keiyoushi"
+          git merge -S --no-edit keiyoushi-upstream/main
           echo "Last commit: `git log -1 --oneline`"
 
       - name: Pushing to repo
