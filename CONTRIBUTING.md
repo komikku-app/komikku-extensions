@@ -741,6 +741,15 @@ knowledge of gradlew and your OS):
 $ ./gradlew src:<lang>:<source>:assembleDebug
 ```
 
+If for some reason you decide to build the APK from the command line, you can use the following
+command (because you're doing things differently than expected, I assume you have some
+knowledge of gradlew and your OS):
+
+```console
+// For a single apk, use this command
+$ ./gradlew src:<lang>:<source>:assembleDebug
+```
+
 ## Submitting the changes
 
 When you feel confident about your changes, submit a new Pull Request so your code can be reviewed and merged if it's approved. We encourage following a [GitHub Standard Fork & Pull Request Workflow](https://gist.github.com/Chaser324/ce0505fbed06b947d962) and following the good practices of the workflow, such as not commiting directly to `master`: always create a new branch for your changes.
