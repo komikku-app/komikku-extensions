@@ -1,8 +1,8 @@
 ext {
-    extName = 'VyvyManga'
-    extClass = '.VyvyManga'
+    extName = 'Yaoi Manga'
+    extClass = '.YaoiManga'
     themePkg = 'madara'
-    baseUrl = 'https://vyvymanga.org'
+    baseUrl = 'https://yaoimanga.es'
     overrideVersionCode = 0
     isNsfw = true
 }
