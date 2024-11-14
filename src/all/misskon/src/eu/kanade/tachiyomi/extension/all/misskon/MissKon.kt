@@ -79,7 +79,7 @@ class MissKon : ConfigurableSource, HttpSource() {
                     val post = element.select("h2.post-box-title a").first()!!
                     setUrlWithoutDomain(post.absUrl("href"))
                     title = post.text()
-                    thumbnail_url = element.select("div.post-thumbnail img").attr("src")
+                    thumbnail_url = element.selectFirst("div.post-thumbnail img")?.imgAttr()
                     val meta = element.selectFirst("p.post-meta")
                     description = "View: ${meta?.select("span.post-views")?.text() ?: "---"}"
                     genre = meta?.parseTags()
@@ -130,7 +130,7 @@ class MissKon : ConfigurableSource, HttpSource() {
             SManga.create().apply {
                 setUrlWithoutDomain(element.attr("href"))
                 title = element.attr("title")
-                thumbnail_url = element.selectFirst("img")?.attr("src")!!
+                thumbnail_url = element.selectFirst("img")?.imgAttr()
             }
         }
     }
@@ -228,7 +228,7 @@ class MissKon : ConfigurableSource, HttpSource() {
 
     override fun pageListParse(response: Response): List<Page> = response.asJsoup()
         .select("div#fukie2.entry p img").mapIndexed { index, image ->
-            Page(index, imageUrl = image.attr("src"))
+            Page(index, imageUrl = image.imgAttr())
         }
 
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
@@ -280,6 +280,17 @@ class MissKon : ConfigurableSource, HttpSource() {
             },
             Filter.Header("Not support both filters at same time."),
         )
+    }
+
+    private fun Element.imgAttr(): String {
+        return when {
+            hasAttr("data-original") -> attr("abs:data-original")
+            hasAttr("data-src") -> attr("abs:data-src")
+            hasAttr("data-bg") -> attr("abs:data-bg")
+            hasAttr("data-srcset") -> attr("abs:data-srcset")
+            hasAttr("data-srcset") -> attr("abs:data-srcset")
+            else -> attr("abs:src")
+        }
     }
 
     companion object {
