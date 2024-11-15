@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -21,16 +20,16 @@ import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.util.Locale
 
 class MissKon : ConfigurableSource, HttpSource() {
     override val name = "MissKon (MrCong)"
     override val lang = "all"
     override val supportsLatest = true
+    override val versionId = 2
 
     override val baseUrl = "https://misskon.com"
 
@@ -79,7 +78,7 @@ class MissKon : ConfigurableSource, HttpSource() {
                     val post = element.select("h2.post-box-title a").first()!!
                     setUrlWithoutDomain(post.absUrl("href"))
                     title = post.text()
-                    thumbnail_url = element.select("div.post-thumbnail img").attr("src")
+                    thumbnail_url = element.selectFirst("div.post-thumbnail img")?.imgAttr()
                     val meta = element.selectFirst("p.post-meta")
                     description = "View: ${meta?.select("span.post-views")?.text() ?: "---"}"
                     genre = meta?.parseTags()
@@ -95,16 +94,14 @@ class MissKon : ConfigurableSource, HttpSource() {
         val url = baseUrl.toHttpUrl().newBuilder()
         when {
             query.isNotBlank() -> {
-                // Convert search to tag, would support "Related titles" feature
-                url.addPathSegment("tag")
-                url.addPathSegment(
-                    query.trim().replace(" ", "-")
-                        .lowercase(Locale.getDefault())
-                        .removePrefix("coser@"),
-                )
-
-                url.addPathSegment("page")
-                url.addPathSegment(page.toString())
+                if (listOf("photo", "photos", "video", "videos").contains(query.trim())) {
+                    return GET("$baseUrl/search")
+                }
+                if (page > 1) {
+                    url.addPathSegment("page")
+                    url.addPathSegment(page.toString())
+                }
+                url.addQueryParameter("s", query.trim())
             }
             topDaysFilter != null && topDaysFilter.state > 0 -> {
                 url.addPathSegment(topDaysFilter.toUriPart())
@@ -130,21 +127,13 @@ class MissKon : ConfigurableSource, HttpSource() {
             SManga.create().apply {
                 setUrlWithoutDomain(element.attr("href"))
                 title = element.attr("title")
-                thumbnail_url = element.selectFirst("img")?.attr("src")!!
+                thumbnail_url = element.selectFirst("img")?.imgAttr()
             }
         }
     }
 
-    private val downloadLinks = mutableMapOf<String, String>()
-    private val servicesLogo = mapOf(
-        "Google Drive" to "https://upload.wikimedia.org/wikipedia/commons/f/fb/Google_Drive_-_New_Logo.png",
-        "MediaFire" to "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/MediaFire_logo.png/640px-MediaFire_logo.png",
-        "Terabox" to "https://i0.wp.com/terabox.blog/wp-content/uploads/2024/02/terabox-logo-1.webp",
-    )
-
     /* Details */
     override fun mangaDetailsParse(response: Response): SManga {
-        downloadLinks.clear()
         val document = response.asJsoup()
         return SManga.create().apply {
             title = document.select(".post-title span").text()
@@ -156,8 +145,6 @@ class MissKon : ConfigurableSource, HttpSource() {
             val downloadLinks = downloadAvailable.joinToString("\n") { element ->
                 val serviceText = element.text()
                 val link = element.attr("href")
-                val service = servicesLogo.filter { serviceText.lowercase().contains(it.key.lowercase()) }.map { it.key }.firstOrNull()
-                downloadLinks[if (!service.isNullOrBlank()) service else "Other"] = link
                 "$serviceText: $link"
             }
 
@@ -169,6 +156,14 @@ class MissKon : ConfigurableSource, HttpSource() {
                 downloadLinks
             genre = document.parseTags()
         }
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        throw UnsupportedOperationException()
+    }
+
+    override fun pageListParse(response: Response): List<Page> {
+        throw UnsupportedOperationException()
     }
 
     private fun Element.parseTags(selector: String = ".post-tag a, .post-cats a"): String {
@@ -184,51 +179,42 @@ class MissKon : ConfigurableSource, HttpSource() {
             .joinToString { it.text() }
     }
 
-    override fun chapterListParse(response: Response): List<SChapter> {
-        val postUrl = response.request.url.toString()
-        val pages = response.asJsoup()
-            .select("div.page-link a")
-            .map {
-                SChapter.create().apply {
-                    setUrlWithoutDomain(it.absUrl("href"))
-                    name = "Page ${it.text()}"
-                }
-            }.reversed() +
-            listOf(
-                SChapter.create().apply {
-                    setUrlWithoutDomain(postUrl)
-                    name = "Page 1"
-                },
-            )
-
-        val downloadChapters = downloadLinks.map { entry ->
+    override suspend fun getChapterList(manga: SManga): List<SChapter> {
+        return listOf(
             SChapter.create().apply {
-                name = entry.key
-                url = entry.value
-            }
-        }
-        return downloadChapters + pages
+                setUrlWithoutDomain(manga.url)
+                name = "Gallery"
+            },
+        )
     }
 
-    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
-        return if (downloadLinks.contains(chapter.name)) {
-            val pages = listOf(
-                Page(0, imageUrl = servicesLogo[chapter.name]),
-                Page(1, imageUrl = chapter.url),
-            )
-            Observable.just(pages)
-        } else {
-            client.newCall(pageListRequest(chapter))
-                .asObservableSuccess()
-                .map { response ->
-                    pageListParse(response)
+    override suspend fun getPageList(chapter: SChapter): List<Page> {
+        val chapterPage = mutableListOf<String>()
+        client.newCall(pageListRequest(chapter))
+            .execute().use { response ->
+                val document = response.asJsoup()
+                val pages = document
+                    .select("div.page-link:first-child a")
+                    .mapNotNull {
+                        it.absUrl("href")
+                    }
+
+                chapterPage += parseImageList(document).toMutableList()
+
+                pages.forEach { url ->
+                    val request = GET(url, headers)
+                    chapterPage += parseImageList(client.newCall(request).execute().asJsoup())
                 }
+            }
+
+        return chapterPage.mapIndexed { index, url ->
+            Page(index, imageUrl = url)
         }
     }
 
-    override fun pageListParse(response: Response): List<Page> = response.asJsoup()
-        .select("div#fukie2.entry p img").mapIndexed { index, image ->
-            Page(index, imageUrl = image.attr("src"))
+    private fun parseImageList(document: Document): List<String> = document
+        .select("div#fukie2.entry p img").map { image ->
+            image.imgAttr()
         }
 
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
@@ -270,16 +256,24 @@ class MissKon : ConfigurableSource, HttpSource() {
     override fun getFilterList(): FilterList {
         getTags()
         return FilterList(
-            Filter.Header("Not support searching."),
-            Filter.Header("Chapter with service name such as Google Drive, MediaFire, Terabox: Open WebView on page 2 to view download links."),
             TopDaysFilter("Top days", getTopDaysList()),
             if (tagList.isEmpty()) {
                 Filter.Header("Hit refresh to load Tags")
             } else {
                 TagsFilter("Tag", tagList.toList())
             },
-            Filter.Header("Not support both filters at same time."),
         )
+    }
+
+    private fun Element.imgAttr(): String {
+        return when {
+            hasAttr("data-original") -> attr("abs:data-original")
+            hasAttr("data-src") -> attr("abs:data-src")
+            hasAttr("data-bg") -> attr("abs:data-bg")
+            hasAttr("data-srcset") -> attr("abs:data-srcset")
+            hasAttr("data-srcset") -> attr("abs:data-srcset")
+            else -> attr("abs:src")
+        }
     }
 
     companion object {
