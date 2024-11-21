@@ -1,8 +1,8 @@
 ext {
-    extName = 'SaikoMangaRaw'
-    extClass = '.SaikoMangaRaw'
+    extName = 'LegendScanlations'
+    extClass = '.LegendScanlations'
     themePkg = 'madara'
-    baseUrl = 'https://saikomangaraw.com'
+    baseUrl = 'https://legendscanlations.com'
     overrideVersionCode = 0
     isNsfw = false
 }
