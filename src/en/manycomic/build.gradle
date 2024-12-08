@@ -1,9 +1,10 @@
 ext {
+    kmkVersionCode = 1
     extName = 'ManyComic'
     extClass = '.ManyComic'
     themePkg = 'madara'
     baseUrl = 'https://manycomic.com'
-    overrideVersionCode = 2
+    overrideVersionCode = 1
     isNsfw = true
 }
 
