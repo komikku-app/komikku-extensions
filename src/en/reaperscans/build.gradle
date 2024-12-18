@@ -1,5 +1,4 @@
 ext {
-    kmkVersionCode = 1
     extName = 'Reaper Scans'
     extClass = '.ReaperScans'
     themePkg = 'heancms'
