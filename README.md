@@ -3,7 +3,7 @@
 | [![Build](https://img.shields.io/github/actions/workflow/status/komikku-app/komikku-extensions/build_push_komikku.yml?labelColor=27303D)](https://github.com/komikku-app/komikku-extensions/actions/workflows/build_push_komikku.yml) | [![Updated](https://img.shields.io/github/actions/workflow/status/komikku-app/komikku-extensions/auto_cherry_pick.yml?label=Updated&labelColor=27303D)](https://github.com/komikku-app/komikku-extensions/actions/workflows/auto_cherry_pick.yml) | [![Discord](https://img.shields.io/discord/1242381704459452488?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/85jB7V5AJR) |
 
 # Komikku / Mihon / Tachiyomi Extensions
-This repository contains the available extension catalogues is built-in with [Komikku](https://github.com/komikku-app/komikku) app while also usable for the Mihon / Tachiyomi app.
+This repository contains the available extension catalogues is built-in with [Komikku](https://github.com/komikku-app/komikku) app while also usable for the Mihon / Tachiyomi app or other forks.
 
 This repository automatically merges any updates from [Keiyoushi](https://github.com/keiyoushi/extensions) every 8 hours to have the best of community contributions. Beside from that, it has a few of my developed extensions or some improvements. Enjoy!
 
@@ -53,7 +53,7 @@ Navigate to [the website](https://komikku-app.github.io/) and tap "Add to Tachiy
 4. Enjoy!
 
 ## Manually
-External repositories add additional sources to **Tachiyomi**. You can add external repositories by going to **More** -> **Settings** -> **Browse** and tapping **Extension repos**.
+External repositories add additional sources to **Komikku**. You can add external repositories by going to **More** -> **Settings** -> **Browse** and tapping **Extension repos**.
 
 Once there, you can add repositories by inputting this URL: `https://raw.githubusercontent.com/komikku-app/extensions/repo/index.min.json`
 
@@ -61,7 +61,7 @@ Once you've added a repository, go to Browse -> Extensions and refresh the exten
 
 You can now tap the download button next to extensions to install them.
 
-> You may need to [enable third-party installations](https://tachiyomi.org/docs/faq/browse/extensions#enabling-third-party-installations).
+> You may need to [enable third-party installations](https://mihon.app/docs/faq/browse/extensions#enabling-third-party-installations).
 
 ## Others
 If you're not using any of the above fork then manually download and update extensions from the [listing page](https://komikku-app.github.io/extensions/extensions/)
@@ -71,11 +71,11 @@ If you're not using any of the above fork then manually download and update exte
 
 [Getting started](https://komikku-app.github.io/docs/guides/getting-started#adding-the-extension-repo)
 
-Extension sources can be downloaded, installed, and uninstalled via the main Tachiyomi app. They are installed and uninstalled like regular apps, in `.apk` format.
+Extension sources can be downloaded, installed, and uninstalled via the main Komikku app. They are installed and uninstalled like regular apps, in `.apk` format.
 
 ## Downloads
 
-If you prefer to directly download the APK files, they are available via https://tachiyomi.org/extensions/ or directly in this GitHub repository in the [`repo` branch](https://github.com/komikku-app/komikku-extensions/tree/repo/apk).
+If you prefer to directly download the APK files, they are available via https://komikku-app.github.io/extensions/ or directly in this GitHub repository in the [`repo` branch](https://github.com/komikku-app/komikku-extensions/tree/repo/apk).
 
 # Requests
 
