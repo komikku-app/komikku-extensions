@@ -2,7 +2,7 @@ ext {
     kmkVersionCode = 1
     extName = 'Comick'
     extClass = '.ComickFactory'
-    extVersionCode = 50
+    extVersionCode = 51
     isNsfw = true
 }
 
