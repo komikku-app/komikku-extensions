@@ -18,7 +18,7 @@ class ReadcomicNet : ParsedHttpSource() {
 
     override val name = "ReadComicNet"
 
-    override val baseUrl = "https://readcomic.net"
+    override val baseUrl = "https://readcomic.me"
 
     override val lang = "en"
 
@@ -149,7 +149,7 @@ class ReadcomicNet : ParsedHttpSource() {
     override fun imageUrlParse(document: Document): String = ""
 
     // [...document.querySelectorAll(".search-checks li")].map((el) => `Genre("${el.innerText}", "${el.innerText.replaceAll(" ","+")}")`).join(',\n')
-    // on https://readcomic.net/advanced-search
+    // on https://readcomic.me/advanced-search
     private fun getGenreList() = listOf(
         Genre("Marvel", "Marvel"),
         Genre("DC Comics", "DC+Comics"),
