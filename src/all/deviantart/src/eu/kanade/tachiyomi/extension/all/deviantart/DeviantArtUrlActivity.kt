@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.pt.slimeread
+package eu.kanade.tachiyomi.extension.all.deviantart
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
@@ -7,32 +7,28 @@ import android.os.Bundle
 import android.util.Log
 import kotlin.system.exitProcess
 
-/**
- * Springboard that accepts https://slimeread.com/manga/<id>/<slug> intents
- * and redirects them to the main Tachiyomi process.
- */
-class SlimeReadUrlActivity : Activity() {
-
-    private val tag = javaClass.simpleName
-
+class DeviantArtUrlActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
-        if (pathSegments != null && pathSegments.size > 1) {
-            val item = pathSegments[1]
+
+        if (pathSegments != null && pathSegments.size >= 3) {
+            val username = pathSegments[0]
+            val folderId = pathSegments[2]
+
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"
-                putExtra("query", "${SlimeRead.PREFIX_SEARCH}$item")
+                putExtra("query", "gallery:$username/$folderId")
                 putExtra("filter", packageName)
             }
 
             try {
                 startActivity(mainIntent)
             } catch (e: ActivityNotFoundException) {
-                Log.e(tag, e.toString())
+                Log.e("DeviantArtUrlActivity", e.toString())
             }
         } else {
-            Log.e(tag, "could not parse uri from intent $intent")
+            Log.e("DeviantArtUrlActivity", "Could not parse URI from intent $intent")
         }
 
         finish()
