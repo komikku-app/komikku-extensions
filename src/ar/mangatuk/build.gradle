@@ -1,8 +1,8 @@
 ext {
-    extName = 'Spider Scans'
-    extClass = '.SpiderScans'
+    extName = 'MangaTuk'
+    extClass = '.MangaTuk'
     themePkg = 'madara'
-    baseUrl = 'https://spidyscans.xyz'
+    baseUrl = 'https://mangatuk.com'
     overrideVersionCode = 0
     isNsfw = true
 }
