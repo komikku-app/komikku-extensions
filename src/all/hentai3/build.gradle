@@ -1,4 +1,5 @@
 ext {
+    kmkVersionCode = 1
     extName = '3Hentai'
     extClass = '.Hentai3Factory'
     extVersionCode = 1
@@ -6,3 +7,7 @@ ext {
 }
 
 apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(":lib:randomua"))
+}
