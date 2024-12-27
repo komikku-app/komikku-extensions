@@ -1,0 +1,9 @@
+ext {
+    kmkVersionCode = 6
+    extName = 'MissKon (MrCong)'
+    extClass = '.MissKon'
+    extVersionCode = 1
+    isNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
