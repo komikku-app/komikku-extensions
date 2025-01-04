@@ -135,8 +135,8 @@ jobs:
       - name: Checkout repo branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
-          repository: komikku-app/extensions
-          token: ${{ secrets.BOT_PAT }}
+          repository: baka-bon/extensions
+          token: ${{ secrets.BAKABON_PAT }}
           ref: repo
           path: repo
 
