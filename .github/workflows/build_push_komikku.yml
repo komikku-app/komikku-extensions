@@ -31,9 +31,6 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@f9c9c575b8b21b6485636a91ffecd10e558c62f6 # v3
-
       - name: Get number of modules
         run: |
           set -x
