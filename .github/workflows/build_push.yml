@@ -142,7 +142,7 @@ jobs:
       - name: Merge repo
         run: |
           cd repo
-          python ../${{ github.ref_name }}/.github/scripts/merge-repo.py '${{ needs.prepare.outputs.delete }}'
+          python ../${{ github.ref_name }}/.github/scripts/merge-repo.py '${{ needs.prepare.outputs.delete }}' '${{ github.ref_name }}/repo'
 
       - name: Import GPG key
         id: import-gpg
