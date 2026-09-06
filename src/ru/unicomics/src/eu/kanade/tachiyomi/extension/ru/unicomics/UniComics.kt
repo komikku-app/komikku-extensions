@@ -12,7 +12,6 @@ import keiyoushi.annotation.Source
 import keiyoushi.network.rateLimit
 import keiyoushi.utils.asJsoup
 import okhttp3.Headers
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -58,7 +57,8 @@ abstract class UniComics : HttpSource() {
         return SManga.create().apply {
             this.title = title
             setUrlWithoutDomain(url)
-            thumbnail_url = element.selectFirst(".comic-image-link img, img")?.absUrl("src")
+            thumbnail_url = element.selectFirst(".comic-image-link img")?.absUrl("src")
+                ?: element.selectFirst(".comic-thumb img, .cover-series img")?.absUrl("src")
         }
     }
 
@@ -75,17 +75,8 @@ abstract class UniComics : HttpSource() {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.isNotEmpty()) {
-            val url = HttpUrl.Builder()
-                .scheme("https")
-                .host("yandex.ru")
-                .addPathSegments("search/site/")
-                .addQueryParameter("searchid", "14915852")
-                .addQueryParameter("text", query)
-                .addQueryParameter("web", "0")
-                .addQueryParameter("l10n", "ru")
-                .addQueryParameter("p", (page - 1).toString())
-                .build()
-            return GET(url, headers)
+            val encodedQuery = java.net.URLEncoder.encode(query, "UTF-8")
+            return GET("$baseUrl/map?search=$encodedQuery", headers)
         }
 
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
@@ -110,28 +101,6 @@ abstract class UniComics : HttpSource() {
     override fun searchMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
 
-        if (response.request.url.host.contains("yandex")) {
-            if (document.selectFirst(".CheckboxCaptcha, .captcha__captcha") != null) {
-                throw Exception("Пройдите капчу Yandex в WebView (слишком много запросов)")
-            }
-
-            val mangas = document.select(".b-serp-item__title-link").mapNotNull { a ->
-                val href = a.absUrl("href")
-                if (!href.contains("unicomics.ru")) return@mapNotNull null
-
-                val urlString = href.replace("/comics/issue/", "/comics/series/")
-                    .replace("/comics/online/", "/comics/series/")
-                val seriesUrl = ISSUE_REGEX.replace(urlString, "")
-
-                SManga.create().apply {
-                    setUrlWithoutDomain(seriesUrl)
-                    title = a.text().substringBefore(" (").substringBefore(" №")
-                }
-            }
-            val hasNext = document.selectFirst(".b-pager__next") != null
-            return MangasPage(mangas.distinctBy { it.url }, hasNext)
-        }
-
         if (response.request.url.encodedPath.contains(PATH_EVENTS)) {
             val mangas = document.select(".events-grid .event-card, .list_events").mapNotNull { element ->
                 val a = element.selectFirst("a") ?: return@mapNotNull null
@@ -148,9 +117,31 @@ abstract class UniComics : HttpSource() {
             return MangasPage(mangas, false)
         }
 
+        if (response.request.url.encodedPath.contains("/map")) {
+            val queryLower = response.request.url.queryParameter("search")?.lowercase() ?: ""
+            val linkSelector = "a[href^=/comics/series/]"
+            val mangas = document.select(linkSelector).mapNotNull { a ->
+                val href = a.attr("href")
+                if (!href.startsWith("/comics/series/")) return@mapNotNull null
+                val title = a.text().trim()
+                if (title.isEmpty()) return@mapNotNull null
+                if (queryLower.isNotEmpty() && title.lowercase().contains(queryLower).not() &&
+                    href.lowercase().contains(queryLower).not()
+                ) {
+                    return@mapNotNull null
+                }
+
+                SManga.create().apply {
+                    setUrlWithoutDomain(href)
+                    this.title = title
+                }
+            }.take(30)
+            return MangasPage(mangas, false)
+        }
+
         val mangas = document.select(".comics-grid .comic-card").mapNotNull { element ->
             popularMangaFromElement(element)
-        }
+        }.distinctBy { it.url }
         val hasNextPage = document.selectFirst("select.mobilePageSelector option[selected] ~ option") != null
 
         return MangasPage(mangas, hasNextPage)
@@ -178,6 +169,19 @@ abstract class UniComics : HttpSource() {
         return client.newCall(searchMangaRequest(page, query, filters))
             .asObservableSuccess()
             .map { response -> searchMangaParse(response) }
+            .map { mangasPage ->
+                val updatedMangas = mangasPage.mangas.map { manga ->
+                    try {
+                        val detailResponse = client.newCall(GET("$baseUrl${manga.url}", headers)).execute()
+                        val details = mangaDetailsParse(detailResponse)
+                        manga.thumbnail_url = details.thumbnail_url
+                        manga
+                    } catch (e: Exception) {
+                        manga
+                    }
+                }
+                MangasPage(updatedMangas, mangasPage.hasNextPage)
+            }
     }
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
