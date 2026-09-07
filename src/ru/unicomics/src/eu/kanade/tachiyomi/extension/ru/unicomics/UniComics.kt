@@ -18,6 +18,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
 import rx.Observable
+import rx.schedulers.Schedulers
 import kotlin.time.Duration.Companion.seconds
 
 @Source
@@ -75,8 +76,14 @@ abstract class UniComics : HttpSource() {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         if (query.isNotEmpty()) {
-            val encodedQuery = java.net.URLEncoder.encode(query, "UTF-8")
-            return GET("$baseUrl/map?search=$encodedQuery", headers)
+            // The site has no real search backend (/map ignores the search param),
+            // so filtering and pagination happen client-side in searchMangaParse.
+            // Round-trip query and page through the request URL for the parser.
+            val url = "$baseUrl/map".toHttpUrl().newBuilder()
+                .addQueryParameter("search", query)
+                .addQueryParameter("page", page.toString())
+                .build()
+            return GET(url, headers)
         }
 
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
@@ -118,16 +125,20 @@ abstract class UniComics : HttpSource() {
         }
 
         if (response.request.url.encodedPath.contains("/map")) {
-            val queryLower = response.request.url.queryParameter("search")?.lowercase() ?: ""
-            val linkSelector = "a[href^=/comics/series/]"
-            val mangas = document.select(linkSelector).mapNotNull { a ->
+            val queryLower = response.request.url.queryParameter("search")?.lowercase().orEmpty()
+            val queryTokens = QUERY_TOKEN_REGEX.findAll(queryLower).map { it.value }.toList()
+            if (queryTokens.isEmpty()) return MangasPage(emptyList(), false)
+
+            // Filter before dedup: /map lists every series twice (RU and EN titles
+            // sharing one slug), so a query matching only one variant must survive.
+            val filtered = document.select("a[href^=/comics/series/]").mapNotNull { a ->
                 val href = a.attr("href")
                 if (!href.startsWith("/comics/series/")) return@mapNotNull null
                 val title = a.text().trim()
                 if (title.isEmpty()) return@mapNotNull null
-                if (queryLower.isNotEmpty() && title.lowercase().contains(queryLower).not() &&
-                    href.lowercase().contains(queryLower).not()
-                ) {
+                val titleLower = title.lowercase()
+                val hrefLower = href.lowercase()
+                if (queryTokens.all { token -> titleLower.contains(token) || hrefLower.contains(token) }.not()) {
                     return@mapNotNull null
                 }
 
@@ -135,8 +146,13 @@ abstract class UniComics : HttpSource() {
                     setUrlWithoutDomain(href)
                     this.title = title
                 }
-            }.take(30)
-            return MangasPage(mangas, false)
+            }.distinctBy { it.url }
+
+            val page = response.request.url.queryParameter("page")?.toIntOrNull()?.coerceAtLeast(1) ?: 1
+            val fromIndex = (page - 1) * SEARCH_PAGE_SIZE
+            if (fromIndex >= filtered.size) return MangasPage(emptyList(), false)
+            val toIndex = minOf(fromIndex + SEARCH_PAGE_SIZE, filtered.size)
+            return MangasPage(filtered.subList(fromIndex, toIndex), toIndex < filtered.size)
         }
 
         val mangas = document.select(".comics-grid .comic-card").mapNotNull { element ->
@@ -168,19 +184,32 @@ abstract class UniComics : HttpSource() {
         }
         return client.newCall(searchMangaRequest(page, query, filters))
             .asObservableSuccess()
-            .map { response -> searchMangaParse(response) }
-            .map { mangasPage ->
-                val updatedMangas = mangasPage.mangas.map { manga ->
-                    try {
-                        val detailResponse = client.newCall(GET("$baseUrl${manga.url}", headers)).execute()
-                        val details = mangaDetailsParse(detailResponse)
-                        manga.thumbnail_url = details.thumbnail_url
-                        manga
-                    } catch (e: Exception) {
-                        manga
-                    }
+            .flatMap { response ->
+                val mangasPage = searchMangaParse(response)
+                if (mangasPage.mangas.none { it.thumbnail_url.isNullOrEmpty() }) {
+                    return@flatMap Observable.just(mangasPage)
                 }
-                MangasPage(updatedMangas, mangasPage.hasNextPage)
+                // /map entries carry no covers, fetch them with bounded parallelism.
+                // Results that already have thumbnails (filter/browse searches) skip this.
+                Observable.from(mangasPage.mangas.mapIndexed { index, manga -> index to manga })
+                    .flatMap({ (index, manga) ->
+                        Observable.fromCallable {
+                            if (manga.thumbnail_url.isNullOrEmpty()) {
+                                try {
+                                    client.newCall(GET("$baseUrl${manga.url}", headers)).execute().use { detailResponse ->
+                                        manga.thumbnail_url = mangaDetailsParse(detailResponse).thumbnail_url
+                                    }
+                                } catch (e: Exception) {
+                                    // keep the result, just without a cover
+                                }
+                            }
+                            index to manga
+                        }.subscribeOn(Schedulers.io())
+                    }, COVER_FETCH_CONCURRENCY)
+                    .toList()
+                    .map { enriched ->
+                        MangasPage(enriched.sortedBy { it.first }.map { it.second }, mangasPage.hasNextPage)
+                    }
             }
     }
 
@@ -314,6 +343,9 @@ abstract class UniComics : HttpSource() {
         private const val PATH_URL = "/comics/series/"
         private const val PATH_PUBLISHERS = "/comics/publishers"
         private const val PATH_EVENTS = "/comics/events"
+        private const val SEARCH_PAGE_SIZE = 30
+        private const val COVER_FETCH_CONCURRENCY = 5
+        private val QUERY_TOKEN_REGEX = "[\\p{L}\\p{N}]+".toRegex()
 
         private val ISSUE_REGEX = "-\\d+/?$".toRegex()
         private val CHAPTER_NUMBER_REGEX = "№\\s*(\\d+(?:\\.\\d+)?)".toRegex()
